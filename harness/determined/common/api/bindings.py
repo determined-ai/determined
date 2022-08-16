@@ -1098,6 +1098,44 @@ class v1DeleteCheckpointsRequest:
             "checkpointUuids": self.checkpointUuids,
         }
 
+class v1DeleteProjectResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteProjectResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
+class v1DeleteWorkspaceResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteWorkspaceResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
 class v1Device:
     def __init__(
         self,
@@ -4472,12 +4510,14 @@ class v1Project:
         self,
         *,
         archived: bool,
+        errorMessage: str,
         id: int,
         immutable: bool,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
+        state: "v1WorkspaceState",
         userId: int,
         username: str,
         workspaceId: int,
@@ -4498,6 +4538,8 @@ class v1Project:
         self.immutable = immutable
         self.userId = userId
         self.workspaceName = workspaceName
+        self.state = state
+        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4515,6 +4557,8 @@ class v1Project:
             immutable=obj["immutable"],
             userId=obj["userId"],
             workspaceName=obj.get("workspaceName", None),
+            state=v1WorkspaceState(obj["state"]),
+            errorMessage=obj["errorMessage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -4532,6 +4576,8 @@ class v1Project:
             "immutable": self.immutable,
             "userId": self.userId,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
+            "state": self.state.value,
+            "errorMessage": self.errorMessage,
         }
 
 class v1PutProjectNotesRequest:
@@ -6342,12 +6388,14 @@ class v1Workspace:
         self,
         *,
         archived: bool,
+        errorMessage: str,
         id: int,
         immutable: bool,
         name: str,
         numExperiments: int,
         numProjects: int,
         pinned: bool,
+        state: "v1WorkspaceState",
         userId: int,
         username: str,
     ):
@@ -6360,6 +6408,8 @@ class v1Workspace:
         self.pinned = pinned
         self.userId = userId
         self.numExperiments = numExperiments
+        self.state = state
+        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -6373,6 +6423,8 @@ class v1Workspace:
             pinned=obj["pinned"],
             userId=obj["userId"],
             numExperiments=obj["numExperiments"],
+            state=v1WorkspaceState(obj["state"]),
+            errorMessage=obj["errorMessage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -6386,7 +6438,15 @@ class v1Workspace:
             "pinned": self.pinned,
             "userId": self.userId,
             "numExperiments": self.numExperiments,
+            "state": self.state.value,
+            "errorMessage": self.errorMessage,
         }
+
+class v1WorkspaceState(enum.Enum):
+    WORKSPACE_STATE_UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
+    WORKSPACE_STATE_DELETING = "WORKSPACE_STATE_DELETING"
+    WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
+    WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",
@@ -6833,7 +6893,7 @@ def delete_DeleteProject(
     session: "client.Session",
     *,
     id: int,
-) -> None:
+) -> "v1DeleteProjectResponse":
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -6845,7 +6905,7 @@ def delete_DeleteProject(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1DeleteProjectResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteProject", _resp)
 
 def delete_DeleteTemplate(
@@ -6871,7 +6931,7 @@ def delete_DeleteWorkspace(
     session: "client.Session",
     *,
     id: int,
-) -> None:
+) -> "v1DeleteWorkspaceResponse":
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -6883,7 +6943,7 @@ def delete_DeleteWorkspace(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1DeleteWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(

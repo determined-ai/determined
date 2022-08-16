@@ -822,10 +822,10 @@ export const getWorkspaceProjects: DetApi<
 };
 
 export const deleteWorkspace: DetApi<
-  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, Type.DeletionStatus
 > = {
   name: 'deleteWorkspace',
-  postProcess: noOp,
+  postProcess: decoder.mapDeletionStatus,
   request: (params) => detApi.Workspaces.deleteWorkspace(
     params.id,
   ),
@@ -955,10 +955,10 @@ export const patchProject: DetApi<
 };
 
 export const deleteProject: DetApi<
-  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, Type.DeletionStatus
 > = {
   name: 'deleteProject',
-  postProcess: noOp,
+  postProcess: decoder.mapDeletionStatus,
   request: (params) => detApi.Projects.deleteProject(params.id),
 };
 

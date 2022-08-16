@@ -669,8 +669,23 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
     numExperiments: data.numExperiments,
     numProjects: data.numProjects,
     pinned: data.pinned,
+    state: mapWorkspaceState(data.state),
     userId: data.userId,
   };
+};
+
+export const mapDeletionStatus = (response: Sdk.V1DeleteProjectResponse
+| Sdk.V1DeleteWorkspaceResponse): types.DeletionStatus => {
+  return { completed: response.completed };
+};
+
+export const mapWorkspaceState = (state: Sdk.V1WorkspaceState): types.WorkspaceState => {
+  return {
+    [Sdk.V1WorkspaceState.DELETED]: types.WorkspaceState.Deleted,
+    [Sdk.V1WorkspaceState.DELETEFAILED]: types.WorkspaceState.DeleteFailed,
+    [Sdk.V1WorkspaceState.DELETING]: types.WorkspaceState.Deleting,
+    [Sdk.V1WorkspaceState.UNSPECIFIED]: types.WorkspaceState.Unspecified,
+  }[state];
 };
 
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
@@ -684,6 +699,7 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
     notes: data.notes,
     numActiveExperiments: data.numActiveExperiments,
     numExperiments: data.numExperiments,
+    state: mapWorkspaceState(data.state),
     userId: data.userId,
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName ?? '',

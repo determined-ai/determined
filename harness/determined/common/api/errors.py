@@ -79,3 +79,9 @@ class CorruptCertificateCacheException(Exception):
 class EmptyResultException(BadResponseException):
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class DeleteFailedException(APIException):
+    def __init__(self, error_message: str) -> None:
+        self.message = error_message
+        self.status_code = 200

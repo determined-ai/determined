@@ -183,7 +183,14 @@ message DeleteWorkspaceRequest {
 }
 
 // Response to DeleteWorkspaceRequest.
-message DeleteWorkspaceResponse {}
+message DeleteWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "completed" ] }
+  };
+
+  // Status of deletion.
+  bool completed = 1;
+}
 
 // Request for archiving a workspace.
 message ArchiveWorkspaceRequest {

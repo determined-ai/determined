@@ -30,7 +30,9 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <p>Are you sure you want to delete <strong>&quot;{workspace.name}&quot;</strong>?</p>
-        <p>All projects and notes within it will also be deleted. This cannot be undone.</p>
+        <p>All projects, experiments, and notes within it will also be deleted.
+          This cannot be undone.
+        </p>
         <label className={css.label} htmlFor="name">
           Enter workspace name to confirm deletion.
         </label>

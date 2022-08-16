@@ -125,7 +125,14 @@ message DeleteProjectRequest {
 }
 
 // Response to DeleteProjectRequest.
-message DeleteProjectResponse {}
+message DeleteProjectResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "completed" ] }
+  };
+
+  // Status of deletion.
+  bool completed = 1;
+}
 
 // Request to move a project into a workspace.
 message MoveProjectRequest {

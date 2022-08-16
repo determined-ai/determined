@@ -4,6 +4,7 @@ package determined.project.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/projectv1";
 
 import "determined/checkpoint/v1/checkpoint.proto";
+import "determined/workspace/v1/workspace.proto";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
@@ -26,12 +27,14 @@ message Project {
     json_schema: {
       required: [
         "archived",
+        "error_message",
         "id",
         "immutable",
         "name",
         "notes",
         "num_active_experiments",
         "num_experiments",
+        "state",
         "user_id",
         "username",
         "workspace_id"
@@ -66,6 +69,10 @@ message Project {
   int32 user_id = 12;
   // The name of the associated workspace.
   string workspace_name = 13;
+  // State of project during deletion.
+  determined.workspace.v1.WorkspaceState state = 14;
+  // Message stored from errors on async-deleting a project.
+  string error_message = 15;
 }
 
 // ProjectModel is a checkpoint associated with a project.

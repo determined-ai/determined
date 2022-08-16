@@ -8,7 +8,7 @@ import {
   themeLightHpe,
 } from 'shared/themes';
 import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState } from 'types';
+  SlotState, WorkspaceState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -56,7 +56,7 @@ const stateColorMapping = {
 };
 
 export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
-SlotState | JobState
+SlotState | JobState | WorkspaceState
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,

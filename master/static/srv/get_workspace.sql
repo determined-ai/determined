@@ -7,6 +7,7 @@ exp_count AS (
   WHERE project_id IN (SELECT id FROM p)
 )
 SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id,
+  'WORKSPACE_STATE_' || w.state AS state, w.error_message,
   (SELECT COUNT(*) FROM p) AS num_projects,
   (SELECT count FROM exp_count) AS num_experiments,
   (SELECT COUNT(*) > 0 FROM workspace_pins

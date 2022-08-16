@@ -10,7 +10,7 @@ import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer,
-  getFullPaginationConfig, userRenderer } from 'components/Table';
+  getFullPaginationConfig, stateRenderer, userRenderer } from 'components/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
@@ -158,6 +158,13 @@ const WorkspaceList: React.FC = () => {
         key: 'archived',
         render: checkmarkRenderer,
         title: 'Archived',
+      },
+      {
+        dataIndex: 'state',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
+        key: 'state',
+        render: stateRenderer,
+        title: 'State',
       },
       {
         align: 'right',

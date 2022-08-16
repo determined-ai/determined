@@ -7,6 +7,7 @@ WITH pe AS (
   WHERE project_id = $1
 )
 SELECT p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes, w.name as workspace_name,
+  'WORKSPACE_STATE_' || p.state AS state, p.error_message,
   (p.archived OR w.archived) AS archived,
   MAX(pe.num_experiments) AS num_experiments,
   MAX(pe.num_active_experiments) AS num_active_experiments,
