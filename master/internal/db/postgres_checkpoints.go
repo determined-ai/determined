@@ -25,10 +25,10 @@ WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound 
 // CheckpointByUUIDs looks up a checkpoint by list of UUIDS, returning nil if error.
 func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
 	var checkpoints []model.Checkpoint
-	if err := db.query(`
+	if err := db.queryRows(`
 	SELECT * FROM checkpoints_view c WHERE c.uuid 
-	IN (SELECT UNNEST($1::uuid[]));`, checkpoints, ckptUUIDs); err != nil {
-		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids.")
+	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
+		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
 	return checkpoints, nil
 }

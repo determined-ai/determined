@@ -735,6 +735,8 @@ def set_gc_policy(args: Namespace) -> None:
             args.master, "experiments/{}/preview_gc".format(args.experiment_id), params=policy
         )
         response = r.json()
+        print("checkpoints and metric from api")
+        print(response)
         checkpoints = response["checkpoints"]
         metric_name = response["metric_name"]
 

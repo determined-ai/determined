@@ -83,15 +83,31 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	// We need to write a db method to get all checkpoints objects for the given list of checkpoints uuids.
-	// Use checkpoints_view for this. This needs to be a json object. Look at CheckpointByUUID in postgres_trial.go.
-	// You can then marshal the model.Checkpoint struct. So that experiment.py can access it properly.
 
-	// Get metric name for experiments from experiment table (see how they extract it from GCRaw method.)
-
-	// Ssh in into latest master and use the GET checkpoints query (from checkpoints_view) and see how it performs.
-	return m.db.ExperimentCheckpointsToGCRaw(
+	checkpointUUIDs, err := m.db.ExperimentCheckpointsToGCRaw(
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
+	if err != nil {
+		return nil, err
+	}
+	checkpointsDB, err := m.db.CheckpointByUUIDs(checkpointUUIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	exp_config, err := m.db.ExperimentConfig(args.ExperimentID)
+	if err != nil {
+		return nil, err
+	}
+	var checkpoints []map[string]interface{}
+	for i, cDB := range checkpointsDB {
+		checkpoints[i]["trial_id"] = cDB.CheckpointTrainingMetadata.TrialID
+		//cStep := cDB.
+		checkpoints[i]["step"] = ""
+	}
+	metricName := exp_config.Searcher().Metric()
+	checkpoints_metric := map[string]interface{}{"checkpoints": checkpointsDB, "metric_name": metricName}
+
+	return checkpoints_metric, nil
 }
 
 // @Summary Get individual file from modal definitions for download.
