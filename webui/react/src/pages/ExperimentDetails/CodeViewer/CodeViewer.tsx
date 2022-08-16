@@ -50,6 +50,7 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
 
 enum PageError {
   decode = 'Could not decode file.',
+  empty = 'Empty file.',
   fetch = 'Unable to fetch file.',
   none = ''
 }
@@ -237,6 +238,8 @@ const CodeViewer: React.FC<Props> = ({
     let text = '';
     try {
       text = decodeURIComponent(escape(window.atob(file)));
+
+      if (!text) setPageError(PageError.empty); // Emmits a "Empty file" error message
     } catch {
       setPageError(PageError.decode);
     }
@@ -289,9 +292,9 @@ const CodeViewer: React.FC<Props> = ({
   ]);
 
   const getSyntaxHighlight = useCallback(() => {
-    if (String(activeFile?.key).includes('py')) return 'python';
+    if (String(activeFile?.key).includes('.py')) return 'python';
 
-    if (String(activeFile?.key).includes('md')) return 'markdown';
+    if (String(activeFile?.key).includes('.md')) return 'markdown';
 
     return 'yaml';
   }, [ activeFile ]);
