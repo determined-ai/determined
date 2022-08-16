@@ -241,10 +241,11 @@ def test_run_asha_batches_exp() -> None:
     config["description"] = "custom searcher"
 
     max_length = 3000
-    max_trials = 5
+    max_trials = 16
     num_rungs = 3
+    divisor = 4
 
-    search_method = ASHASearchMethod(max_length, max_trials, num_rungs)
+    search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
     search_runner = SearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
@@ -252,16 +253,22 @@ def test_run_asha_batches_exp() -> None:
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
 
-    assert response.experiment.numTrials == 5
+    assert response.experiment.numTrials == 16
     assert search_method.pending_trials == 0
-    assert search_method.completed_trials == 5
+    assert search_method.completed_trials == 16
     assert len(search_method.searcher_state.trials_closed) == len(search_method.closed_trials)
 
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id)
-    for trial in response_trials.trials:
+    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+
+    # 16 trials in rung 1 (#batches = 187)
+    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
+    # at least 4 trials in rung 2 (#batches = 750)
+    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
+    # at least 1 trial in rung 3 (#batches = 3000)
+    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
+
+    for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-        # number of batch for rung[0] = 750
-        assert trial.totalBatchesProcessed >= 750
 
 
 @dataclass
@@ -319,7 +326,7 @@ class ASHASearchMethod(SearchMethod):
         max_length: int,
         max_trials: int,
         num_rungs: int,
-        divisor: int = 2,
+        divisor: int,
         max_concurrent_trials: int = 0,
     ) -> None:
         super().__init__()
@@ -485,7 +492,6 @@ class ASHASearchMethod(SearchMethod):
             ops.append(
                 ValidateAfter(request_id=create.request_id, length=self.rungs[0].units_needed)
             )
-
             self.trial_rungs[create.request_id] = 0
 
         if len(self.rungs[0].metrics) == self.max_trials:
@@ -510,8 +516,8 @@ class ASHASearchMethod(SearchMethod):
     def sample_params(self) -> Dict[str, object]:
         hparams = {
             "global_batch_size": 10,
-            "metrics_base": np.random.uniform(0.2, 0.7),
-            "metrics_progression": "decreasing",
+            "metrics_base": 0.05 * (len(self.trial_rungs)+1),
+            "metrics_progression": "constant",
         }
         logging.info(f"hparams={hparams}")
         return hparams
