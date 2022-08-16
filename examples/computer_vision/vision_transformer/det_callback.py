@@ -8,24 +8,37 @@ from transformers import (
 )
 
 import os
-
 import determined as det
+import logging
+
+import weakref
+import importlib.util
 
 
 class DetCallback(TrainerCallback):
 
-    def __init__(self, core_context: det.core.Context, args: typing.Dict, filter_metrics: typing.List = None,
+    def __init__(self, args: typing.Dict, filter_metrics: typing.List = None,
                  tokenizer=None, tokenizer_options=None,
                  checkpoint_metadata: typing.Dict = None) -> None:
         super().__init__()
 
-        self.core_context = core_context
+        assert is_determined_available(), "DetCallback requires determined to be installed. Run `pip install determined`."
+        import determined
+        self._det = determined
+        distributed = self._det.core.DistributedContext.from_torch_distributed()
+        self.core_context = self._det.core.init(distributed=distributed)
+        self.core_context.__enter__()
+        weakref.finalize(self, exit_context, self.core_context)
+
         self.filter_metrics = filter_metrics
         self.user_checkpoint_metadata = checkpoint_metadata
         self.tokenizer = tokenizer
         self.tokenizer_options = tokenizer_options
         self.load_last_checkpoint(args)
+
         self.last_eval_metrics = None
+        self.searcher_ops = self.core_context.searcher.operations()
+        self.current_op = next(self.searcher_ops)
 
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
                **kwargs):
@@ -62,7 +75,7 @@ class DetCallback(TrainerCallback):
                 return "train"
 
     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        info = det.get_cluster_info()
+        info = self._det.get_cluster_info()
         assert info is not None
         if state.is_world_process_zero:
             save_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
@@ -87,7 +100,7 @@ class DetCallback(TrainerCallback):
         pass
 
     def load_last_checkpoint(self, args):
-        info = det.get_cluster_info()
+        info = self._det.get_cluster_info()
         assert info is not None
         latest_checkpoint = info.latest_checkpoint
 
@@ -105,6 +118,22 @@ class DetCallback(TrainerCallback):
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.core_context.preempt.should_preempt():
             return
+        if state.epoch and state.is_world_process_zero:
+            self.current_op.report_progress(state.epoch)
+            if round(state.epoch) >= self.current_op.length:
+                self.current_op.report_completed(self.last_eval_metrics['eval_loss'])
+                try:
+                    self.current_op = next(self.searcher_ops)
+                except StopIteration:
+                    control.should_training_stop = True
+
+
+def is_determined_available():
+    return importlib.util.find_spec("determined") is not None
+
+
+def exit_context(context):
+    context.__exit__(None, None, None)
 
 
 def override_training_args(training_args):

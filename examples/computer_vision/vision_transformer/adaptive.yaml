@@ -1,4 +1,4 @@
-name: single search
+name: adaptive
 #workspace: Deepspeed
 #project: VisionTransformer
 debug: false
@@ -9,10 +9,26 @@ environment:
     - NCCL_SOCKET_IFNAME=ens,eth,ib
 resources:
   slots_per_trial: 2
+records_per_epoch: 100
 searcher:
-  name: single
-  max_length: 3
+  name: adaptive_asha
+  max_length:
+    epochs: 3
+  max_trials: 10
   metric: eval_loss
+hyperparameters:
+  learning_rate:
+    type: log
+    base: 10
+    minval: -2
+    maxval: -1
+    count: 2
+  adam_epsilon:
+    type: log
+    base: 10
+    minval: -2
+    maxval: -1
+    count: 2
 entrypoint: >-
   python -m determined.launch.torch_distributed
   python image_classification.py 

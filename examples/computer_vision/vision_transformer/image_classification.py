@@ -163,7 +163,7 @@ def collate_fn(examples):
     return {"pixel_values": pixel_values, "labels": labels}
 
 
-def main(core_context):
+def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -354,7 +354,7 @@ def main(core_context):
         data_collator=collate_fn,
     )
 
-    det_callback = DetCallback(core_context, training_args, filter_metrics=['loss', 'accuracy'],
+    det_callback = DetCallback(training_args, filter_metrics=['loss', 'accuracy'],
                                checkpoint_metadata={'feature_extractor': feature_extractor})
     trainer.add_callback(det_callback)
 
@@ -392,6 +392,4 @@ def main(core_context):
 
 
 if __name__ == "__main__":
-    distributed = det.core.DistributedContext.from_torch_distributed()
-    with det.core.init(distributed=distributed) as core_context:
-        main(core_context)
+    main()

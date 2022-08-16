@@ -11,7 +11,7 @@ resources:
   slots_per_trial: 2
 searcher:
   name: grid
-  max_length: 1
+  max_length: 3
   metric: eval_loss
 hyperparameters:
   learning_rate:
