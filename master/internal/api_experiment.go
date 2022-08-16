@@ -1577,9 +1577,13 @@ func (a *apiServer) GetModelDef(
 }
 
 func (a *apiServer) MoveExperiment(
-	_ context.Context, req *apiv1.MoveExperimentRequest,
+	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	p, err := a.GetProjectByID(req.DestinationProjectId)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	p, err := a.GetProjectByID(req.DestinationProjectId, *curUser)
 	if err != nil {
 		return nil, err
 	}

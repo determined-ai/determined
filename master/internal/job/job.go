@@ -63,7 +63,8 @@ func (j *Jobs) getJobs(
 	ctx *actor.Context,
 	resourcePool string,
 	desc bool,
-	states []jobv1.State) ([]*jobv1.Job, error) {
+	states []jobv1.State,
+) ([]*jobv1.Job, error) {
 	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
 	if err != nil {
 		return nil, err
