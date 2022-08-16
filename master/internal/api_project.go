@@ -233,7 +233,7 @@ func (a *apiServer) DeleteProject(
 	}
 
 	holder := &projectv1.Project{}
-	err = a.m.db.QueryProto("deletable_project", holder, req.Id, user.User.Id, user.User.Admin)
+	err = a.m.db.QueryProto("deletable_project", holder, req.Id)
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
 			req.Id)
@@ -245,7 +245,7 @@ func (a *apiServer) DeleteProject(
 	}
 
 	if len(expList) == 0 {
-		err = a.m.db.QueryProto("delete_project", holder, req.Id, user.User.Id, user.User.Admin)
+		err = a.m.db.QueryProto("delete_project", holder, req.Id)
 		return &apiv1.DeleteProjectResponse{Completed: (err == nil)},
 			errors.Wrapf(err, "error deleting project (%d)", req.Id)
 	}

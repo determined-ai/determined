@@ -318,14 +318,13 @@ func (a *apiServer) DeleteWorkspace(
 	}
 
 	holder := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id, user.User.Id,
-		user.User.Admin)
+	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not deletable by this user",
 			req.Id)
 	}
 
-  projects := []*projectv1.Project{}
+	projects := []*projectv1.Project{}
 	err = a.m.db.QueryProtof(
 		"get_workspace_projects",
 		[]interface{}{"id ASC"},
@@ -339,8 +338,7 @@ func (a *apiServer) DeleteWorkspace(
 		return nil, err
 	}
 	if len(projects) == 0 {
-		err = a.m.db.QueryProto("delete_workspace", holder, req.Id, user.User.Id,
-			user.User.Admin)
+		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
 		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)},
 			errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
 	}
