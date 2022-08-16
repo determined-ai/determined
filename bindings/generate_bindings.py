@@ -498,7 +498,6 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
         items = schema.get("items")
         if items is None:
             raise ValueError(path, schema)
-            return Sequence(Any())
         return Sequence(classify_type(enums, path + ".items", items))
 
     raise ValueError(f"unhandled schema: {schema} @ {path}")
@@ -541,7 +540,7 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
                 required = set(schema.get("required", []))
                 members = {
                     k: Parameter(
-                        k, classify_type(enums, path, v), (k in required), "definitions"
+                        k, classify_type(enums, f"{path}.{k}", v), (k in required), "definitions"
                     )
                     for k, v in schema["properties"].items()
                 }
