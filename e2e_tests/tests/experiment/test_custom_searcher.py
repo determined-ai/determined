@@ -6,7 +6,6 @@ import uuid
 from dataclasses import dataclass
 from typing import Dict, List, Set
 
-import numpy as np
 import pytest
 
 from determined.common.api import bindings
@@ -516,7 +515,7 @@ class ASHASearchMethod(SearchMethod):
     def sample_params(self) -> Dict[str, object]:
         hparams = {
             "global_batch_size": 10,
-            "metrics_base": 0.05 * (len(self.trial_rungs)+1),
+            "metrics_base": 0.05 * (len(self.trial_rungs) + 1),
             "metrics_progression": "constant",
         }
         logging.info(f"hparams={hparams}")
