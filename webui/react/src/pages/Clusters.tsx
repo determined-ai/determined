@@ -1,6 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useParams } from 'react-router';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
@@ -28,7 +29,7 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 const Clusters: React.FC = () => {
   const { tab } = useParams<Params>();
   const basePath = paths.clusters();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const { agents, cluster: overview, resourcePools } = useStore();
@@ -39,8 +40,8 @@ const Clusters: React.FC = () => {
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-  }, [ basePath, history ]);
+    navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
+  }, [ basePath, navigate ]);
 
   return (
     <Page

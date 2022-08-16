@@ -1,6 +1,7 @@
 import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useParams } from 'react-router';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
@@ -65,7 +66,7 @@ const ResourcepoolDetail: React.FC = () => {
 
   const { tab } = useParams<Params>();
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const [ canceler ] = useState(new AbortController());
 
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
@@ -105,8 +106,8 @@ const ResourcepoolDetail: React.FC = () => {
     if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
-    history.replace(`${basePath}/${key}`);
-  }, [ history, pool ]);
+    navigate(`${basePath}/${key}`, { replace: true });
+  }, [ navigate, pool ]);
 
   const renderPoolConfig = useCallback(() => {
     if (!pool) return;
@@ -138,7 +139,7 @@ const ResourcepoolDetail: React.FC = () => {
   return (
     <Page className={css.poolDetailPage}>
       <Section>
-        <div className={css.nav} onClick={() => history.replace(paths.cluster())}>
+        <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
           <Icon name="arrow-left" size="tiny" />
           <div className={css.icon}>
             <PoolLogo type={pool.type} />
