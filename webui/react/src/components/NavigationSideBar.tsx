@@ -184,7 +184,7 @@ const NavigationSideBar: React.FC = () => {
               </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon name="add-small" size="tiny" />
+                  <Icon name="jupyter-lab" />
                 </Button>
               ) : null}
             </div>
