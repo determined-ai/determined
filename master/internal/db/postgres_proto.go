@@ -15,10 +15,11 @@ import (
 // QueryProto returns the result of the query. Any placeholder parameters are replaced
 // with supplied args. Enum values must be the full name of the enum.
 func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{}) error {
-	return errors.Wrapf(
-		db.queryRowsWithParser(db.queries.getOrLoad(queryName), protoParser, v, args...),
-		"error running query: %v", queryName,
-	)
+	err := db.queryRowsWithParser(db.queries.getOrLoad(queryName), protoParser, v, args...)
+	if err == ErrNotFound {
+		return err
+	}
+	return errors.Wrapf(err, "error running query: %v", queryName)
 }
 
 // QueryProtof returns the result of the formated query. Any placeholder parameters are replaced
