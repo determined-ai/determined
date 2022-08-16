@@ -170,8 +170,6 @@ def update_stack(
     )
     stack_output = get_output(stack_name, boto3_session)
 
-    stop_master(stack_output[constants.cloudformation.MASTER_ID], boto3_session)
-
     if stack_uses_spot(stack_name, boto3_session):
         clean_up_spot(stack_name, boto3_session, disable_tqdm=True)
     else:
