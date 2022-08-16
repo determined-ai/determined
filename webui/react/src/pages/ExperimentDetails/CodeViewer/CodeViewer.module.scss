@@ -1,14 +1,14 @@
 .base {
   display: grid;
-  grid-template-columns: minmax(auto, 30%) auto;
-  grid-template-rows: auto;
+  grid-template-columns: minmax(15%, auto) minmax(40%, auto);
+  grid-template-rows: 38px auto;
   height: 100%;
+  max-width: 100vw;
 
   .fileTree {
     background-color: transparent;
     color: var(--theme-background-on-strong);
     height: 100%;
-    overflow-x: scroll;
     padding: 0;
 
     span {
@@ -75,7 +75,7 @@
   grid-row: 2/6;
 }
 .editor {
-  grid-column: 2 / auto;
+  grid-column: 2 / 3;
   grid-row: 2 / 3;
 
   @media screen and (max-width: 1024px) {
