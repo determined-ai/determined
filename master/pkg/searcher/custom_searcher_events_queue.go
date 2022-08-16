@@ -22,8 +22,8 @@ type (
 	}
 
 	searcherEventQueueJSON struct {
-		EventsJSON []json.RawMessage
-		EventCount int32
+		EventsJSON []json.RawMessage `json:"custom_searcher_events"`
+		EventCount int32             `json:"custom_searcher_event_count"`
 	}
 )
 
