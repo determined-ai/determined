@@ -1,6 +1,5 @@
-import React, { ReactNode, useEffect, useState } from 'react';
-import { Redirect, Switch } from 'react-router-dom';
-import { CompatRoute } from 'react-router-dom-v5-compat';
+import React, { useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom-v5-compat';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -17,6 +16,7 @@ const Router: React.FC<Props> = (props: Props) => {
   const storeDispatch = useStoreDispatch();
   const [ canceler ] = useState(new AbortController());
   const checkAuth = useAuthCheck(canceler);
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
@@ -33,25 +33,18 @@ const Router: React.FC<Props> = (props: Props) => {
   }, [ canceler ]);
 
   return (
-    <Switch>
+    <Routes>
       {props.routes.map((config) => {
-        const { component, ...route } = config;
+        const { element, ...route } = config;
 
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <CompatRoute {...route} key={route.id} />;
+          if (!auth.checked) return <Route {...route} element={element} key={route.id} />;
           return (
-            <CompatRoute
+            <Route
               {...route}
+              element={(<Navigate state={filterOutLoginLocation(location)} to={paths.login()} />)}
               key={route.id}
-              render={({ location }: {location: Location}): ReactNode => (
-                <Redirect
-                  to={{
-                    pathname: paths.login(),
-                    state: { loginRedirect: filterOutLoginLocation(location) },
-                  }}
-                />
-              )}
             />
           );
         } else if (route.redirect) {
@@ -61,19 +54,23 @@ const Router: React.FC<Props> = (props: Props) => {
           * redirect will occur when encountered in the `Switch` traversal.
           */
           if (route.path === '*') {
-            return <Redirect key={route.id} to={route.redirect} />;
+            return (
+              <Route
+                element={<Navigate to={route.redirect} />}
+                key={route.id}
+                path={route.redirect}
+              />
+            );
           } else {
             return (
-              <CompatRoute exact={route.exact} key={route.id} path={route.path}>
-                <Redirect to={route.redirect} />;
-              </CompatRoute>
+              <Route element={<Navigate to={route.redirect} />} key={route.id} path={route.path} />
             );
           }
         }
 
-        return <CompatRoute {...route} component={component} key={route.id} />;
+        return <Route {...route} element={element} key={route.id} path={route.path} />;
       })}
-    </Switch>
+    </Routes>
   );
 };
 
