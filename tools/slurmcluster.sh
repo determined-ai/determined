@@ -29,6 +29,7 @@ HELPEND=$(($LINENO - 1))
 
 INTUNNEL=1
 TUNNEL=1
+DEVLAUNCHER=
 
 if [[ $1 == '-n' ]]; then
     INTUNNEL=
@@ -46,18 +47,23 @@ if [[ $1 == '-p' ]]; then
     PODMAN=1
     shift
 fi
+if [[ $1 == '-d' ]]; then
+    DEVLAUNCHER=1
+    shift
+fi
 if [[ $1 == '-a' ]]; then
     PULL_AUTH=1
     shift
 fi
 
 if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
-    echo "Usage: $0 [-h] [-n] [-x] [-t] {cluster}"
+    echo "Usage: $0 [-h] [-n] [-x] [-t] [-p] [-d] [-a] {cluster}"
     echo "  -h     This help message.   Options are order sensitive."
     echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
     echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
     echo "  -t     Force debug level to trace regardless of cluster configuration value."
     echo "  -p     Use podman as a container host (otherwise singlarity)."
+    echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
     echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
     echo
     echo "Documentation:"
@@ -66,6 +72,7 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
 fi
 
 CLUSTER=$1
+CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1')
 
 function lookup() {
     echo "${!1}"
@@ -116,17 +123,29 @@ USERPORT_cameronquilici=8093
 USERPORT_cobble=8092
 
 USERPORT=$(lookup "USERPORT_$USER")
-if [ -z $USERPORT ]; then
+if [[ -z $USERPORT ]]; then
     echo "$0: User $USER does not have a configured port, update the script."
     exit 1
 fi
 
-if [ $CLUSTER == "casablanca-login" ]; then
+if [[ $CLUSTER == "casablanca-login" ]]; then
    CLUSTER=casablanca_login
-elif [ $CLUSTER != "casablanca" -a $CLUSTER != "horizon"  -a $CLUSTER != "shuco" -a $CLUSTER != "mosaic"  ]; then
-    echo "$0: Cluster name $CLUSTER does not have a configuration.  Specify one of: casablanca, casablanca-login, horizon, shuco, mosaic"
+elif [[ $CLUSTER == "casablanca-mgmt1" ]]; then
+   CLUSTER=casablanca
+elif [[ ! " ${CLUSTERS[*]} " =~ " $CLUSTER "  ]]; then
+    echo "$0: Cluster name $CLUSTER does not have a configuration.  Specify one of: ${CLUSTERS[*]}"
     exit 1
 fi
+
+# Update your JETTY HTTP/SSL username/port pair from loadDevLauncher.sh
+DEV_LAUNCHER_PORT_stokc=18084
+DEV_LAUNCHER_PORT_rcorujo=18085
+DEV_LAUNCHER_PORT_phillipgaisford=18086
+DEV_LAUNCHER_PORT_pankaj=18087
+DEV_LAUNCHER_PORT_alyssa=18088
+DEV_LAUNCHER_PORT_jerryharrow=18090
+DEV_LAUNCHER_PORT_cobble=18092
+DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USER")
 
 # Configuration for casablanca (really casablanca-mgmt1)
 OPT_name_casablanca=casablanca-mgmt1.us.cray.com
@@ -190,6 +209,29 @@ OPT_PROTOCOL_mosaic=http
 OPT_RENDEVOUSIFACE_mosaic=bond0
 OPT_REMOTEUSER_mosaic=root@
 
+# Configuration for osprey
+OPT_name_osprey=osprey.us.cray.com
+OPT_LAUNCHERHOST_osprey=localhost
+OPT_LAUNCHERPORT_osprey=8181
+OPT_LAUNCHERPROTOCOL_osprey=http
+OPT_CHECKPOINTPATH_osprey=/lus/scratch/foundation_engineering/determined-cp
+OPT_DEBUGLEVEL_osprey=debug
+OPT_MASTERHOST_osprey=osprey
+OPT_MASTERPORT_osprey=$USERPORT
+OPT_TRESSUPPORTED_osprey=false
+OPT_PROTOCOL_osprey=http
+
+# Configuration for swan
+OPT_name_swan=swan.hpcrb.rdlabs.ext.hpe.com
+OPT_LAUNCHERHOST_swan=localhost
+OPT_LAUNCHERPORT_swan=8181
+OPT_LAUNCHERPROTOCOL_swan=http
+OPT_CHECKPOINTPATH_swan=/lus/scratch/foundation_engineering/determined-cp
+OPT_DEBUGLEVEL_swan=debug
+OPT_MASTERHOST_swan=swan
+OPT_MASTERPORT_swan=$USERPORT
+OPT_TRESSUPPORTED_swan=false
+OPT_PROTOCOL_swan=http
 
 export OPT_LAUNCHERHOST=$(lookup "OPT_LAUNCHERHOST_$CLUSTER")
 export OPT_LAUNCHERPORT=$(lookup "OPT_LAUNCHERPORT_$CLUSTER")
@@ -201,6 +243,14 @@ export OPT_MASTERPORT=$(lookup "OPT_MASTERPORT_$CLUSTER")
 export OPT_TRESSUPPORTED=$(lookup "OPT_TRESSUPPORTED_$CLUSTER")
 export OPT_RENDEVOUSIFACE=$(lookup "OPT_RENDEVOUSIFACE_$CLUSTER")
 export OPT_REMOTEUSER=$(lookup "OPT_REMOTEUSER_$CLUSTER")
+
+if [[ -n $DEVLAUNCHER ]]; then
+    if [ -z $DEV_LAUNCHER_PORT ]; then
+        echo "$0: User $USER does not have a configured DEV_LAUNCHER_PORT, update the script."
+        exit 1
+    fi
+    OPT_LAUNCHERPORT=$DEV_LAUNCHER_PORT
+fi
 
 
 SLURMCLUSTER=$(lookup "OPT_name_$CLUSTER")
