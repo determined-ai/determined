@@ -192,6 +192,36 @@ func (a *apiServer) PatchProject(
 		errors.Wrapf(err, "error updating project (%d) in database", currProject.Id)
 }
 
+func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
+	expList []*model.Experiment,
+) (err error) {
+	holder := &projectv1.Project{}
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		log.WithError(err).Errorf("failed to access user and delete project %d", projectID)
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
+		return err
+	}
+
+	log.Errorf("deleting project %d experiments", projectID)
+	for _, exp := range expList {
+		if err = a.deleteExperiment(exp, user); err != nil {
+			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
+			_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
+			return err
+		}
+	}
+	log.Errorf("project %d experiments deleted successfully", projectID)
+	err = a.m.db.QueryProto("delete_project", holder, projectID, user.ID, user.Admin)
+	if err != nil {
+		log.WithError(err).Errorf("failed to delete project %d", projectID)
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
+		return err
+	}
+	log.Errorf("project %d deleted successfully", projectID)
+	return nil
+}
+
 func (a *apiServer) DeleteProject(
 	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
 	error,
@@ -203,16 +233,27 @@ func (a *apiServer) DeleteProject(
 	}
 
 	holder := &projectv1.Project{}
-	err = a.m.db.QueryProto("delete_project", holder, req.Id)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error deleting project (%d)", req.Id)
-	}
+	err = a.m.db.QueryProto("deletable_project", holder, req.Id, user.User.Id, user.User.Admin)
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
 			req.Id)
 	}
 
-	return &apiv1.DeleteProjectResponse{}, nil
+	expList, err := a.m.db.ProjectExperiments(int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(expList) == 0 {
+		err = a.m.db.QueryProto("delete_project", holder, req.Id, user.User.Id, user.User.Admin)
+		return &apiv1.DeleteProjectResponse{Completed: (err == nil)},
+			errors.Wrapf(err, "error deleting project (%d)", req.Id)
+	}
+	go func() {
+		_ = a.deleteProject(ctx, req.Id, expList)
+	}()
+	return &apiv1.DeleteProjectResponse{Completed: false},
+		errors.Wrapf(err, "error deleting project (%d)", req.Id)
 }
 
 func (a *apiServer) MoveProject(

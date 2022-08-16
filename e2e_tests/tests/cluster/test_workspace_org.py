@@ -353,11 +353,6 @@ def test_workspace_org() -> None:
             bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
 
     finally:
-        # Clean out experiments, projects, workspaces.
-        # In dependency order:
-        for e in test_experiments:
-            bindings.delete_DeleteExperiment(sess, experimentId=e.id)
-        for p in test_projects:
-            bindings.delete_DeleteProject(sess, id=p.id)
+        # Clean out workspaces and all dependencies.
         for w in test_workspaces:
             bindings.delete_DeleteWorkspace(sess, id=w.id)

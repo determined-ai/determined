@@ -5,7 +5,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
@@ -25,7 +25,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
-  }, []);
+  }, [ ]);
 
   const handleDescriptionInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setDescription(e.target.value);
@@ -36,28 +36,40 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       <div className={css.base}>
         <div>
           <label className={css.label} htmlFor="name">Name</label>
-          <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
+          {/* Input doesnt have value prop due to cusor jump to the end of text */}
+          <Input defaultValue="" id="name" maxLength={80} onChange={handleNameInput} />
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
-          <Input id="description" value={description} onChange={handleDescriptionInput} />
+          {/* Input doesnt have value prop due to cusor jump to the end of text */}
+          <Input defaultValue="" id="description" onChange={handleDescriptionInput} />
         </div>
       </div>
     );
-  }, [ description, handleDescriptionInput, handleNameInput, name ]);
+  }, [ handleDescriptionInput, handleNameInput ]);
 
   const handleOk = useCallback(async () => {
     try {
       const response = await createProject({ description, name, workspaceId });
       routeToReactUrl(paths.projectDetails(response.id));
     } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to create project.',
-        silent: false,
-        type: ErrorType.Server,
-      });
+      if (e instanceof DetError) {
+        handleError(e, {
+          level: e.level,
+          publicMessage: e.publicMessage,
+          publicSubject: 'Unable to create project.',
+          silent: false,
+          type: e.type,
+        });
+      } else {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to create project.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
     }
   }, [ name, workspaceId, description ]);
 

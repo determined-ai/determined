@@ -12,7 +12,7 @@ import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
-  relativeTimeRenderer, userRenderer } from 'components/Table';
+  relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -221,6 +221,13 @@ const WorkspaceDetails: React.FC = () => {
         key: 'archived',
         render: checkmarkRenderer,
         title: 'Archived',
+      },
+      {
+        dataIndex: 'state',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
+        key: 'state',
+        render: stateRenderer,
+        title: 'State',
       },
       {
         align: 'right',

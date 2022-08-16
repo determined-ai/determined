@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
+import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren } from 'react';
 
@@ -74,17 +75,16 @@ const TaskActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menuItems: React.ReactNode[] = [];
+  const menuItems: MenuProps['items'] = [];
 
-  if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
+  if (isKillable) menuItems.push({ key: Action.Kill, label: 'Kill' });
 
-  menuItems.push(
-    <Menu.Item key={Action.ViewLogs}>
-      <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
-    </Menu.Item>,
-  );
+  menuItems.push({
+    key: Action.ViewLogs,
+    label: <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>,
+  });
 
-  const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
+  const menu = <Menu items={menuItems} onClick={handleMenuClick} />;
 
   return children ? (
     <Dropdown

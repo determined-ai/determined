@@ -1,7 +1,6 @@
 from attrdict import AttrMap
 from datetime import datetime
 import traceback
-import numpy as np
 import torch
 import deepspeed
 import pathlib
@@ -176,7 +175,6 @@ class GPT2Trial(DeepSpeedTrial):
         ):
             torch.distributed.barrier()
             time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            rank = torch.distributed.get_rank()
             megatron_utils.print_rank_0(
                 "time: {} | exiting the program at iteration {}".format(
                     time_str, self.neox_args.iteration
@@ -231,7 +229,6 @@ class GPT2Trial(DeepSpeedTrial):
         ) = build_datasets_from_neox_args(self.neox_args)
         self.timers("train/valid/test data dataset").stop()
         self.timers.log(["train/valid/test data dataset"])
-
         return DataLoader(
             self.train_data,
             batch_size=self.neox_args.train_micro_batch_size_per_gpu,

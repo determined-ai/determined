@@ -19,7 +19,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -88,7 +87,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		resources.Slots = 0
 	}
-	poolName, err := sproto.GetResourcePool(
+
+	poolName, err := a.m.rm.ResolveResourcePool(
 		a.m.system, resources.ResourcePool, resources.Slots, true)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())

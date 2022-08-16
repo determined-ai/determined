@@ -117,23 +117,6 @@ describe('Workload Utilities', () => {
     });
   });
 
-  describe('isMetricsWorkload', () => {
-    it('should validate metric workload', () => {
-      const metricWorkload = { metrics: {}, totalBatches: 100 };
-      expect(utils.isMetricsWorkload(metricWorkload)).toBe(true);
-    });
-
-    it('should invalidate checkpoint workload', () => {
-      const checkpointWorkload = { state: CheckpointState.Active, totalBatches: 100, uuid: 'abc' };
-      expect(utils.isMetricsWorkload(checkpointWorkload)).toBe(false);
-    });
-
-    it('should invalidate unknown workload', () => {
-      const unknownWorkload = { totalBatches: 100 };
-      expect(utils.isMetricsWorkload(unknownWorkload)).toBe(false);
-    });
-  });
-
   describe('workloadsToStep', () => {
     it('should convert workloads to steps', () => {
       const results = utils.workloadsToSteps(WORKLOADS);

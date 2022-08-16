@@ -25,15 +25,6 @@ export const hasCheckpointStep = (step: Type.Step): boolean => {
   return !!step.checkpoint && step.checkpoint.state !== Type.CheckpointState.Deleted;
 };
 
-export const isMetricsWorkload = (
-  workload: Type.MetricsWorkload | Type.CheckpointWorkload,
-): workload is Type.MetricsWorkload => {
-  if ('uuid' in workload || 'resources' in workload) return false;
-  if ('metrics' in workload) return true;
-  // we can't determine which one it is.
-  return false;
-};
-
 export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] => {
   const stepsDict: Record<number, Partial<Type.Step>> = {};
 

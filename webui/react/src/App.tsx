@@ -10,6 +10,7 @@ import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
+import { useFetchUsers } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import usePolling from 'hooks/usePolling';
@@ -35,6 +36,7 @@ const AppView: React.FC = () => {
   const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
   const fetchInfo = useFetchInfo(canceler);
+  const fetchUsers = useFetchUsers(canceler);
 
   useTheme();
   useKeyTracker();
@@ -43,6 +45,12 @@ const AppView: React.FC = () => {
 
   // Poll every 10 minutes
   usePolling(fetchInfo, { interval: 600000 });
+
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      fetchUsers();
+    }
+  }, [ auth.isAuthenticated, fetchUsers ]);
 
   useEffect(() => {
     /*

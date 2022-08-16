@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from time import sleep
 from typing import Any, List, Sequence
 
 from determined.cli.session import setup_session
@@ -101,7 +102,7 @@ def list_workspace_projects(args: Namespace) -> None:
 
 @authentication.required
 def create_workspace(args: Namespace) -> None:
-    content = bindings.v1PostWorkspaceRequest(args.name)
+    content = bindings.v1PostWorkspaceRequest(name=args.name)
     w = bindings.post_PostWorkspace(setup_session(args), body=content).workspace
 
     if args.json:
@@ -128,20 +129,28 @@ def describe_workspace(args: Namespace) -> None:
 def delete_workspace(args: Namespace) -> None:
     sess = setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
-    if w.numExperiments > 0:
-        raise errors.ForbiddenException(
-            authentication.must_cli_auth().get_session_user(),
-            "Workspaces with associated experiments currently cannot be deleted. "
-            "Use archive to hide workspaces.",
-        )
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
-        "in the unrecoverable deletion of all associated projects. For a \n"
-        "recoverable alternative, see the 'archive' command. Do you still \n"
+        "in the unrecoverable deletion of all associated projects and experiments.\n"
+        "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        bindings.delete_DeleteWorkspace(sess, id=w.id)
-        print(f"Successfully deleted workspace {args.workspace_name}.")
+        resp = bindings.delete_DeleteWorkspace(sess, id=w.id)
+        if resp.completed:
+            print(f"Successfully deleted workspace {args.workspace_name}.")
+        else:
+            print(f"Started deletion of workspace {args.workspace_name}...")
+            while True:
+                sleep(2)
+                try:
+                    w = bindings.get_GetWorkspace(sess, id=w.id).workspace
+                    if w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+                        raise errors.DeleteFailedException(w.errorMessage)
+                    elif w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+                        print(f"Remaining project count: {w.numProjects}")
+                except errors.NotFoundException:
+                    print("Workspace deleted successfully.")
+                    break
     else:
         print("Aborting workspace deletion.")
 

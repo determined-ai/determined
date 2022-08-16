@@ -14,14 +14,10 @@ import Icon from 'shared/components/Icon/Icon';
 import { ExperimentAction as Action, ExperimentAction, ExperimentBase, TrialDetails } from 'types';
 import { canUserActionExperiment } from 'utils/experiment';
 import { openCommand } from 'utils/wait';
-import { getWorkload, isMetricsWorkload } from 'utils/workload';
 
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
-  const workloadsWithSomeMetric = trial.workloads
-    .map(getWorkload)
-    .filter((workload) => isMetricsWorkload(workload) && !!workload.metrics);
-  return isTerminal && workloadsWithSomeMetric.length === 0;
+  return isTerminal && trial.workloadCount === 0;
 };
 
 interface Props {

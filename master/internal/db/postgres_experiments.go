@@ -51,6 +51,30 @@ func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, er
 	return int(p.Id), nil
 }
 
+// ProjectExperiments returns a list of experiments within a project.
+func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err error) {
+	rows, err := db.sql.Queryx(`
+SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+		 job_id, u.username as username
+FROM experiments e
+JOIN users u ON (e.owner_id = u.id)
+WHERE e.project_id = $1`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var exp model.Experiment
+		if err = rows.StructScan(&exp); err != nil {
+			return nil, errors.Wrap(err, "unable to read experiment from db")
+		}
+		experiments = append(experiments, &exp)
+	}
+	return experiments, nil
+}
+
 // ExperimentLabelUsage returns a flattened and deduplicated list of all the
 // labels in use across all experiments.
 func (db *PgDB) ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error) {

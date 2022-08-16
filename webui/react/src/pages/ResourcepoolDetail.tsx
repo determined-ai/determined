@@ -97,11 +97,15 @@ const ResourcepoolDetail: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler, fetchStats ]);
 
+  useEffect(() => {
+    setTabKey(tab || DEFAULT_TAB_KEY);
+  }, [ tab ]);
+
   const handleTabChange = useCallback((key) => {
     if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+    history.replace(`${basePath}/${key}`);
   }, [ history, pool ]);
 
   const renderPoolConfig = useCallback(() => {
@@ -154,20 +158,20 @@ const ResourcepoolDetail: React.FC = () => {
       </Section>
       <Section>
         <Tabs
+          activeKey={tabKey}
           className="no-padding"
-          defaultActiveKey={tabKey}
           destroyInactiveTabPane={true}
           onChange={handleTabChange}>
-          <TabPane key="active" tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
+          <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
             <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
           </TabPane>
-          <TabPane key="queued" tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
+          <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
             <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
           </TabPane>
-          <TabPane key="stats" tab="Stats">
+          <TabPane key={TabType.Stats} tab="Stats">
             <ClustersQueuedChart poolStats={poolStats} />
           </TabPane>
-          <TabPane key="configuration" tab="Configuration">
+          <TabPane key={TabType.Configuration} tab="Configuration">
             {renderPoolConfig()}
           </TabPane>
         </Tabs>

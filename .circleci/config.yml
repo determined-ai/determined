@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.1-dev0
+    default: 0.19.2-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -175,11 +175,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ecee7c1
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9119094
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094
 
   login-docker:
     parameters:
@@ -679,7 +679,7 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci --no-enable-ip-alias --subnetwork default
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
@@ -767,7 +767,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
         type: string
     steps:
       - set-cluster-id:
@@ -780,7 +780,7 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --no-enable-ip-alias --subnetwork default
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
@@ -1860,7 +1860,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.11"
+        default: "1.21.12"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1945,7 +1945,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.11"
+        default: "1.21.12"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1971,7 +1971,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
         type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2564,7 +2564,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2583,7 +2583,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2599,10 +2599,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.18.5
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2621,10 +2621,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.18.5
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
@@ -2857,7 +2857,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2872,7 +2872,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2884,10 +2884,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.18.5
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2902,10 +2902,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.18.5
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.18.5
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
 
   weekly-vuln-scan:
     triggers:

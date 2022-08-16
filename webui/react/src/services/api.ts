@@ -7,8 +7,6 @@ import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
-export { isLoginFailure } from './utils';
-
 /* Authentication */
 
 export const login = generateDetApi<
@@ -189,6 +187,14 @@ export const moveExperiment = generateDetApi<
   Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
 >(Config.moveExperiment);
 
+export const getExperimentFileTree = generateDetApi<
+  Service.ExperimentIdParams, Api.V1GetModelDefTreeResponse, Api.V1FileNode[]
+>(Config.getExperimentFileTree);
+
+export const getExperimentFileFromTree = generateDetApi<
+  Api.V1GetModelDefFileRequest, Api.V1GetModelDefFileResponse, string
+>(Config.getExperimentFileFromTree);
+
 /* Tasks */
 
 export const getTask = generateDetApi<
@@ -272,7 +278,7 @@ export const createWorkspace = generateDetApi<
 >(Config.createWorkspace);
 
 export const deleteWorkspace = generateDetApi<
-  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, Type.DeletionStatus
 >(Config.deleteWorkspace);
 
 export const patchWorkspace = generateDetApi<
@@ -314,7 +320,7 @@ export const createProject = generateDetApi<
 >(Config.createProject);
 
 export const deleteProject = generateDetApi<
-  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, Type.DeletionStatus
 >(Config.deleteProject);
 
 export const patchProject = generateDetApi<

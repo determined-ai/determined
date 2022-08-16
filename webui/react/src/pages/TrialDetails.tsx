@@ -16,7 +16,7 @@ import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparamet
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner';
 import { ApiState } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted } from 'shared/utils/service';
@@ -45,6 +45,7 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 const TrialDetailsComp: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
+  const [ isFetching, setIsFetching ] = useState(false);
   const history = useHistory();
   const routeParams = useParams<Params>();
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
@@ -61,11 +62,15 @@ const TrialDetailsComp: React.FC = () => {
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
 
+    setIsFetching(true);
     try {
       const response = await getExperimentDetails(
         { id: trial.experimentId },
         { signal: canceler.signal },
       );
+
+      setIsFetching(false);
+
       setExperiment(response);
 
       // Experiment id does not exist in route, reroute to the one with it
@@ -73,6 +78,8 @@ const TrialDetailsComp: React.FC = () => {
         history.replace(paths.trialDetails(trial.id, trial.experimentId));
       }
     } catch (e) {
+      setIsFetching(false);
+
       handleError(e, {
         publicMessage: 'Failed to load experiment details.',
         publicSubject: 'Unable to fetch Trial Experiment Detail',
@@ -99,8 +106,10 @@ const TrialDetailsComp: React.FC = () => {
   }, [ canceler, trialDetails.error, trialId ]);
 
   const handleTabChange = useCallback((key) => {
+    setIsFetching(true);
     setTabKey(key);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+    setIsFetching(false);
   }, [ basePath, history ]);
 
   const handleViewLogs = useCallback(() => {
@@ -170,36 +179,38 @@ const TrialDetailsComp: React.FC = () => {
         hidePreview={tabKey === TabType.Logs}
         trial={trial}
         onViewLogs={handleViewLogs}>
-        <Tabs
-          activeKey={tabKey}
-          className="no-padding"
-          tabBarExtraContent={(
-            <RoutePagination
-              currentId={trialId}
-              ids={experiment.trialIds ?? []}
-              tooltipLabel="Trial"
-              onSelectId={(selectedTrialId) => {
-                history.push(paths.trialDetails(selectedTrialId, experiment?.id));
-              }}
-            />
-          )}
-          onChange={handleTabChange}>
-          <TabPane key={TabType.Overview} tab="Overview">
-            <TrialDetailsOverview experiment={experiment} trial={trial} />
-          </TabPane>
-          <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-            {isSingleTrialExperiment(experiment) ?
-              <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} /> :
-              <TrialRangeHyperparameters experiment={experiment} trial={trial} />
-            }
-          </TabPane>
-          <TabPane key={TabType.Profiler} tab="Profiler">
-            <TrialDetailsProfiles experiment={experiment} trial={trial} />
-          </TabPane>
-          <TabPane key={TabType.Logs} tab="Logs">
-            <TrialDetailsLogs experiment={experiment} trial={trial} />
-          </TabPane>
-        </Tabs>
+        <Spinner spinning={isFetching}>
+          <Tabs
+            activeKey={tabKey}
+            className="no-padding"
+            tabBarExtraContent={(
+              <RoutePagination
+                currentId={trialId}
+                ids={experiment.trialIds ?? []}
+                tooltipLabel="Trial"
+                onSelectId={(selectedTrialId) => {
+                  history.push(paths.trialDetails(selectedTrialId, experiment?.id));
+                }}
+              />
+            )}
+            onChange={handleTabChange}>
+            <TabPane key={TabType.Overview} tab="Overview">
+              <TrialDetailsOverview experiment={experiment} trial={trial} />
+            </TabPane>
+            <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
+              {isSingleTrialExperiment(experiment) ?
+                <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} /> :
+                <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+              }
+            </TabPane>
+            <TabPane key={TabType.Profiler} tab="Profiler">
+              <TrialDetailsProfiles experiment={experiment} trial={trial} />
+            </TabPane>
+            <TabPane key={TabType.Logs} tab="Logs">
+              <TrialDetailsLogs experiment={experiment} trial={trial} />
+            </TabPane>
+          </Tabs>
+        </Spinner>
       </TrialLogPreview>
     </Page>
   );

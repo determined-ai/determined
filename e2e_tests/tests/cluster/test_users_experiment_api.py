@@ -17,7 +17,7 @@ def test_experimental_experiment_api_determined_disabled() -> None:
     context_path = pathlib.Path(conf.fixtures_path("no_op"))
     model_def_path = pathlib.Path(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
 
-    model_context = context.Context.from_local(context_path)
+    model_context = context.read_legacy_context(context_path)
 
     with model_def_path.open("r") as fin:
         dai_experiment_config = util.safe_load_yaml_with_exceptions(fin)

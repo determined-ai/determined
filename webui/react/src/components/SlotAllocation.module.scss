@@ -59,6 +59,7 @@ ul.detailedLegends {
   margin-bottom: 8px;
 
   .queued {
-    color: var(--theme-status-active)
+    color: var(--theme-status-active);
+    cursor: pointer;
   }
 }

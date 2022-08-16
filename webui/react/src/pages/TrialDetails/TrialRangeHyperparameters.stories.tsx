@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
+import { CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
   RunState, TrialDetails } from 'types';
 import { generateExperiments } from 'utils/task';
@@ -207,6 +207,23 @@ const TrialRangeHyperparametersContainer = () => {
     },
     id: 1,
     name: 'Sample Experiment',
+    originalConfig: `
+      entrypoint: model_def:MNistTrial
+      hyperparameters:
+        dropout1: {maxval: 0.8, minval: 0.2, type: double}
+        dropout2: {maxval: 0.8, minval: 0.2, type: double}
+        global_batch_size: 64
+        learning_rate: {maxval: 1.0, minval: 0.0001, type: double}
+        n_filters1: {maxval: 64, minval: 8, type: int}
+        n_filters2: {maxval: 72, minval: 8, type: int}
+      name: mnist_pytorch_adaptive_search
+      records_per_epoch: 10
+      searcher:
+        max_length: {batches: 937}
+        max_trials: 16
+        metric: validation_loss
+        name: adaptive_asha
+        smaller_is_better: true`,
     parentArchived: false,
     projectId: 1,
     projectName: 'Uncategorized',
@@ -232,44 +249,8 @@ const TrialRangeHyperparametersContainer = () => {
     startTime: '2021-06-09T15:26:58.003220Z',
     state: RunState.Completed,
     totalBatchesProcessed: 58,
-    workloads: [
-      {
-        validation: {
-          endTime: '2021-06-09T15:28:20.278182Z',
-          metrics: {
-            accuracy: 0.9087380573248408,
-            validation_loss: 0.29681510450970977,
-          },
-          totalBatches: 58,
-        },
-      },
-      {
-        checkpoint: {
-          endTime: '2021-06-09T15:28:16.314554Z',
-          resources: {
-            'code/': 0,
-            'code/adaptive.yaml': 678,
-            'code/const.yaml': 434,
-            'code/data.py': 1444,
-            'code/distributed.yaml': 499,
-            'code/layers.py': 568,
-            'code/model_def.py': 3789,
-            'code/README.md': 1407,
-            'state_dict.pth': 13691537,
-          },
-          state: CheckpointState.Completed,
-          totalBatches: 58,
-          uuid: '08b7345e-1dd8-4ec2-a49c-054814d8929e',
-        },
-      },
-      {
-        training: {
-          endTime: '2021-06-09T15:28:16.099435Z',
-          metrics: { loss: 0.9266772866249084 },
-          totalBatches: 58,
-        },
-      },
-    ],
+    totalCheckpointSize: 13700356,
+    workloadCount: 3,
   };
 
   const storeDispatch = useStoreDispatch();

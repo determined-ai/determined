@@ -15,7 +15,7 @@ u AS (
   SELECT username FROM users, p
   WHERE users.id = p.user_id
 )
-SELECT p.id, p.name, p.workspace_id, p.description, p.archived, p.immutable, p.notes,
+SELECT p.id, p.name, 'WORKSPACE_STATE_' || p.state AS state, p.error_message, p.workspace_id, p.description, p.archived, p.immutable, p.notes,
 pe.last_experiment_started_at, pe.num_experiments, pe.num_active_experiments,
 u.username, p.user_id
 FROM p, pe, u;

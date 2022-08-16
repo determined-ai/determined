@@ -6,18 +6,32 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/workspacev1";
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
+// WorkspaceState is used to track progress during a deletion.
+enum WorkspaceState {
+  // Object deletion is not in progress.
+  WORKSPACE_STATE_UNSPECIFIED = 0;
+  // The object is being deleted.
+  WORKSPACE_STATE_DELETING = 1;
+  // The object failed to delete.
+  WORKSPACE_STATE_DELETE_FAILED = 2;
+  // The object finished deleting.
+  WORKSPACE_STATE_DELETED = 3;
+}
+
 // Workspace is a named collection of projects.
 message Workspace {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [
         "archived",
+        "error_message",
         "id",
         "immutable",
         "name",
         "num_experiments",
         "num_projects",
         "pinned",
+        "state",
         "username",
         "user_id"
       ]
@@ -43,6 +57,10 @@ message Workspace {
   int32 user_id = 8;
   // Number of experiments associated with this workspace.
   int32 num_experiments = 9;
+  // State of workspace during deletion.
+  WorkspaceState state = 10;
+  // Message stored from errors on async-deleting a workspace.
+  string error_message = 11;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.

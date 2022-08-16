@@ -774,6 +774,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     totalCheckpointSize?: string;
+    /**
+     * Number of training and validation workloads.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    workloadCount?: number;
 }
 
 /**
@@ -1620,6 +1626,12 @@ export interface V1DeleteModelVersionResponse {
  * @interface V1DeleteProjectResponse
  */
 export interface V1DeleteProjectResponse {
+    /**
+     * Status of deletion.
+     * @type {boolean}
+     * @memberof V1DeleteProjectResponse
+     */
+    completed: boolean;
 }
 
 /**
@@ -1636,6 +1648,12 @@ export interface V1DeleteTemplateResponse {
  * @interface V1DeleteWorkspaceResponse
  */
 export interface V1DeleteWorkspaceResponse {
+    /**
+     * Status of deletion.
+     * @type {boolean}
+     * @memberof V1DeleteWorkspaceResponse
+     */
+    completed: boolean;
 }
 
 /**
@@ -1948,6 +1966,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     config?: any;
+    /**
+     * The original configuration that the user submitted.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    originalConfig: string;
 }
 
 /**
@@ -3102,12 +3126,6 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
-    /**
-     * Trial workloads.
-     * @type {Array<V1WorkloadContainer>}
-     * @memberof V1GetTrialResponse
-     */
-    workloads: Array<V1WorkloadContainer>;
 }
 
 /**
@@ -5084,6 +5102,18 @@ export interface V1Project {
      * @memberof V1Project
      */
     workspaceName?: string;
+    /**
+     * State of project during deletion.
+     * @type {V1WorkspaceState}
+     * @memberof V1Project
+     */
+    state: V1WorkspaceState;
+    /**
+     * Message stored from errors on async-deleting a project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    errorMessage: string;
 }
 
 /**
@@ -7164,6 +7194,30 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     numExperiments: number;
+    /**
+     * State of workspace during deletion.
+     * @type {V1WorkspaceState}
+     * @memberof V1Workspace
+     */
+    state: V1WorkspaceState;
+    /**
+     * Message stored from errors on async-deleting a workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    errorMessage: string;
+}
+
+/**
+ * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.
+ * @export
+ * @enum {string}
+ */
+export enum V1WorkspaceState {
+    UNSPECIFIED = <any> 'WORKSPACE_STATE_UNSPECIFIED',
+    DELETING = <any> 'WORKSPACE_STATE_DELETING',
+    DELETEFAILED = <any> 'WORKSPACE_STATE_DELETE_FAILED',
+    DELETED = <any> 'WORKSPACE_STATE_DELETED'
 }
 
 
@@ -12791,10 +12845,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -12823,6 +12878,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
 
             if (orderBy !== undefined) {
                 localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (states) {
+                localVarQueryParameter['states'] = states;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -14028,11 +14087,12 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options);
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14597,11 +14657,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
-            return InternalApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(fetch, basePath);
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any) {
+            return InternalApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -15026,12 +15087,13 @@ export class InternalApi extends BaseAPI {
      * @param {number} [paginationLimit] The amount of records limited in the results.
      * @param {string} [resourcePool] The target resource-pool for agent resource manager.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
-        return InternalApiFp(this.configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(this.fetch, this.basePath);
+    public getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any) {
+        return InternalApiFp(this.configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, states, options)(this.fetch, this.basePath);
     }
 
     /**

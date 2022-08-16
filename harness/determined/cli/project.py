@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from time import sleep
 from typing import Any, Dict, List, Sequence, Tuple
 
 from determined.cli.session import setup_session
@@ -134,20 +135,28 @@ def describe_project(args: Namespace) -> None:
 def delete_project(args: Namespace) -> None:
     sess = setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-    if p.numExperiments > 0:
-        raise errors.ForbiddenException(
-            authentication.must_cli_auth().get_session_user(),
-            "Projects with associated experiments currently cannot be deleted. "
-            "Use archive to hide projects.",
-        )
     if args.yes or render.yes_or_no(
         'Deleting project "' + args.project_name + '" will result in the \n'
-        "unrecoverable deletion of this project and notes. For a recoverable \n"
-        "alternative, see the 'archive' command. Do you still \n"
+        "unrecoverable deletion of this project and all of its experiments and notes.\n"
+        "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        bindings.delete_DeleteProject(sess, id=p.id)
-        print(f"Successfully deleted project {args.project_name}.")
+        resp = bindings.delete_DeleteProject(sess, id=p.id)
+        if resp.completed:
+            print(f"Successfully deleted project {args.project_name}.")
+        else:
+            print(f"Started deletion of project {args.project_name}...")
+            while True:
+                sleep(2)
+                try:
+                    p = bindings.get_GetProject(sess, id=p.id).project
+                    if p.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+                        raise errors.DeleteFailedException(p.errorMessage)
+                    elif p.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+                        print(f"Remaining experiment count: {p.numExperiments}")
+                except errors.NotFoundException:
+                    print("Project deleted successfully.")
+                    break
     else:
         print("Aborting project deletion.")
 

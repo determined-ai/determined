@@ -5,23 +5,26 @@ import { useHistory, useLocation } from 'react-router-dom';
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import {
   GetHPImportanceResponseMetricHPImportance,
-  V1GetHPImportanceResponse, V1MetricBatchesResponse, V1MetricNamesResponse,
+  V1GetHPImportanceResponse, V1MetricBatchesResponse,
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys } from 'shared/utils/data';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
   Scale,
 } from 'types';
-import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
+
+import { hpImportanceSorter } from '../../utils/experiment';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
@@ -108,21 +111,21 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ filters, setFilters ] = useState<VisualizationFilters>(initFilters);
   const [ activeMetric, setActiveMetric ] = useState<MetricName>(initFilters.metric);
   const [ batches, setBatches ] = useState<number[]>();
-  const [ metrics, setMetrics ] = useState<MetricName[]>();
+  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
   const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
-      hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
-      hasLoaded: batches && metrics,
+      hasData: batches && batches.length !== 0 && metricNames && metricNames.length !== 0,
+      hasLoaded: batches && metricNames,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: ![
         ExperimentSearcherName.Single,
         ExperimentSearcherName.Pbt,
       ].includes(experiment.config.searcher.name),
     };
-  }, [ batches, experiment, metrics ]);
+  }, [ batches, experiment, metricNames ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
@@ -157,39 +160,18 @@ const ExperimentVisualization: React.FC<Props> = ({
   }, [ basePath, history, location, type, typeKey ]);
 
   // Stream available metrics.
+  useMetricNames({
+    errorHandler: () => {
+      setPageError(PageError.MetricNames);
+    },
+    experimentId: experiment.id,
+    metricNames,
+    setMetricNames,
+  });
+
   useEffect(() => {
     if (!isSupported || ui.isPageHidden) return;
-
     const canceler = new AbortController();
-    const trainingMetricsMap: Record<string, boolean> = {};
-    const validationMetricsMap: Record<string, boolean> = {};
-
-    readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(
-        experiment.id,
-        undefined,
-        { signal: canceler.signal },
-      ),
-      (event) => {
-        if (!event) return;
-        /*
-         * The metrics endpoint can intermittently send empty lists,
-         * so we keep track of what we have seen on our end and
-         * only add new metrics we have not seen to the list.
-         */
-        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
-        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
-        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
-        const newMetrics = [
-          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
-        ];
-        setMetrics(newMetrics);
-      },
-    ).catch(() => {
-      setPageError(PageError.MetricNames);
-    });
 
     readStream<V1GetHPImportanceResponse>(
       detApi.StreamingInternal.getHPImportance(
@@ -209,7 +191,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, filters?.metric, isSupported, ui.isPageHidden ]);
+  }, [ experiment.id, filters?.metric, isSupported, metricNames, ui.isPageHidden ]);
 
   // Stream available batches.
   useEffect(() => {
@@ -253,12 +235,12 @@ const ExperimentVisualization: React.FC<Props> = ({
   // Validate active metric against metrics.
   useEffect(() => {
     setActiveMetric((prev) => {
-      const activeMetricFound = (metrics || []).reduce((acc, metric) => {
+      const activeMetricFound = metricNames.reduce((acc, metric) => {
         return acc || (metric.type === prev.type && metric.name === prev.name);
       }, false);
       return activeMetricFound ? prev : searcherMetric.current;
     });
-  }, [ metrics ]);
+  }, [ metricNames ]);
 
   // Update default filter hParams if not previously set.
   useEffect(() => {
@@ -321,7 +303,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       filters={filters}
       fullHParams={fullHParams.current}
       hpImportance={hpImportance}
-      metrics={metrics || []}
+      metrics={metricNames}
       type={typeKey}
       onChange={handleFiltersChange}
       onMetricChange={handleMetricChange}

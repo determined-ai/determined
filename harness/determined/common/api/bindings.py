@@ -47,6 +47,7 @@ class APIHttpError(Exception):
 class ExpCompareTrialsSampleResponseExpTrial:
     def __init__(
         self,
+        *,
         data: "typing.Sequence[v1DataPoint]",
         experimentId: int,
         hparams: "typing.Dict[str, typing.Any]",
@@ -77,6 +78,7 @@ class ExpCompareTrialsSampleResponseExpTrial:
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
+        *,
         error: "typing.Optional[str]" = None,
         experimentProgress: "typing.Optional[float]" = None,
         hpImportance: "typing.Optional[typing.Dict[str, float]]" = None,
@@ -190,6 +192,7 @@ class determinedtaskv1State(enum.Enum):
 class protobufAny:
     def __init__(
         self,
+        *,
         typeUrl: "typing.Optional[str]" = None,
         value: "typing.Optional[str]" = None,
     ):
@@ -215,6 +218,7 @@ class protobufNullValue(enum.Enum):
 class runtimeError:
     def __init__(
         self,
+        *,
         code: "typing.Optional[int]" = None,
         details: "typing.Optional[typing.Sequence[protobufAny]]" = None,
         error: "typing.Optional[str]" = None,
@@ -245,6 +249,7 @@ class runtimeError:
 class runtimeStreamError:
     def __init__(
         self,
+        *,
         details: "typing.Optional[typing.Sequence[protobufAny]]" = None,
         grpcCode: "typing.Optional[int]" = None,
         httpCode: "typing.Optional[int]" = None,
@@ -279,6 +284,7 @@ class runtimeStreamError:
 class trialv1Trial:
     def __init__(
         self,
+        *,
         experimentId: int,
         hparams: "typing.Dict[str, typing.Any]",
         id: int,
@@ -296,6 +302,7 @@ class trialv1Trial:
         totalCheckpointSize: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointUuid: "typing.Optional[str]" = None,
+        workloadCount: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -314,6 +321,7 @@ class trialv1Trial:
         self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
         self.totalCheckpointSize = totalCheckpointSize
+        self.workloadCount = workloadCount
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -335,6 +343,7 @@ class trialv1Trial:
             warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
             taskId=obj.get("taskId", None),
             totalCheckpointSize=obj.get("totalCheckpointSize", None),
+            workloadCount=obj.get("workloadCount", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -356,11 +365,13 @@ class trialv1Trial:
             "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
             "taskId": self.taskId if self.taskId is not None else None,
             "totalCheckpointSize": self.totalCheckpointSize if self.totalCheckpointSize is not None else None,
+            "workloadCount": self.workloadCount if self.workloadCount is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
     def __init__(
         self,
+        *,
         allocationId: str,
     ):
         self.allocationId = allocationId
@@ -379,6 +390,7 @@ class v1AckAllocationPreemptionSignalRequest:
 class v1AddProjectNoteResponse:
     def __init__(
         self,
+        *,
         notes: "typing.Sequence[v1Note]",
     ):
         self.notes = notes
@@ -397,6 +409,7 @@ class v1AddProjectNoteResponse:
 class v1Agent:
     def __init__(
         self,
+        *,
         id: str,
         addresses: "typing.Optional[typing.Sequence[str]]" = None,
         containers: "typing.Optional[typing.Dict[str, v1Container]]" = None,
@@ -451,6 +464,7 @@ class v1Agent:
 class v1AgentUserGroup:
     def __init__(
         self,
+        *,
         agentGid: "typing.Optional[int]" = None,
         agentUid: "typing.Optional[int]" = None,
     ):
@@ -473,6 +487,7 @@ class v1AgentUserGroup:
 class v1AggregateQueueStats:
     def __init__(
         self,
+        *,
         periodStart: str,
         seconds: float,
     ):
@@ -495,6 +510,7 @@ class v1AggregateQueueStats:
 class v1Allocation:
     def __init__(
         self,
+        *,
         allocationId: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         isReady: "typing.Optional[bool]" = None,
@@ -533,6 +549,7 @@ class v1Allocation:
 class v1AllocationAllGatherRequest:
     def __init__(
         self,
+        *,
         allocationId: str,
         data: "typing.Dict[str, typing.Any]",
         numPeers: "typing.Optional[int]" = None,
@@ -563,6 +580,7 @@ class v1AllocationAllGatherRequest:
 class v1AllocationAllGatherResponse:
     def __init__(
         self,
+        *,
         data: "typing.Sequence[typing.Dict[str, typing.Any]]",
     ):
         self.data = data
@@ -581,6 +599,7 @@ class v1AllocationAllGatherResponse:
 class v1AllocationPendingPreemptionSignalRequest:
     def __init__(
         self,
+        *,
         allocationId: str,
     ):
         self.allocationId = allocationId
@@ -599,6 +618,7 @@ class v1AllocationPendingPreemptionSignalRequest:
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
+        *,
         preempt: "typing.Optional[bool]" = None,
     ):
         self.preempt = preempt
@@ -617,6 +637,7 @@ class v1AllocationPreemptionSignalResponse:
 class v1AllocationReadyRequest:
     def __init__(
         self,
+        *,
         allocationId: "typing.Optional[str]" = None,
     ):
         self.allocationId = allocationId
@@ -635,6 +656,7 @@ class v1AllocationReadyRequest:
 class v1AllocationRendezvousInfoResponse:
     def __init__(
         self,
+        *,
         rendezvousInfo: "v1RendezvousInfo",
     ):
         self.rendezvousInfo = rendezvousInfo
@@ -653,6 +675,7 @@ class v1AllocationRendezvousInfoResponse:
 class v1AwsCustomTag:
     def __init__(
         self,
+        *,
         key: str,
         value: str,
     ):
@@ -675,6 +698,7 @@ class v1AwsCustomTag:
 class v1Checkpoint:
     def __init__(
         self,
+        *,
         metadata: "typing.Dict[str, typing.Any]",
         resources: "typing.Dict[str, str]",
         training: "v1CheckpointTrainingMetadata",
@@ -721,6 +745,7 @@ class v1Checkpoint:
 class v1CheckpointTrainingMetadata:
     def __init__(
         self,
+        *,
         experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         experimentId: "typing.Optional[int]" = None,
         hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
@@ -763,6 +788,7 @@ class v1CheckpointTrainingMetadata:
 class v1CheckpointWorkload:
     def __init__(
         self,
+        *,
         state: "determinedcheckpointv1State",
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
@@ -797,6 +823,7 @@ class v1CheckpointWorkload:
 class v1Command:
     def __init__(
         self,
+        *,
         description: str,
         id: str,
         jobId: str,
@@ -855,6 +882,7 @@ class v1Command:
 class v1ComparableTrial:
     def __init__(
         self,
+        *,
         metrics: "typing.Sequence[v1SummarizedMetric]",
         trial: "trialv1Trial",
     ):
@@ -877,6 +905,7 @@ class v1ComparableTrial:
 class v1CompareTrialsResponse:
     def __init__(
         self,
+        *,
         trials: "typing.Sequence[v1ComparableTrial]",
     ):
         self.trials = trials
@@ -895,6 +924,7 @@ class v1CompareTrialsResponse:
 class v1CompleteValidateAfterOperation:
     def __init__(
         self,
+        *,
         op: "typing.Optional[v1ValidateAfterOperation]" = None,
         searcherMetric: "typing.Optional[float]" = None,
     ):
@@ -917,6 +947,7 @@ class v1CompleteValidateAfterOperation:
 class v1Container:
     def __init__(
         self,
+        *,
         id: str,
         state: "determinedcontainerv1State",
         devices: "typing.Optional[typing.Sequence[v1Device]]" = None,
@@ -947,6 +978,7 @@ class v1Container:
 class v1CreateExperimentRequest:
     def __init__(
         self,
+        *,
         activate: "typing.Optional[bool]" = None,
         config: "typing.Optional[str]" = None,
         modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None,
@@ -985,6 +1017,7 @@ class v1CreateExperimentRequest:
 class v1CreateExperimentResponse:
     def __init__(
         self,
+        *,
         config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
     ):
@@ -1007,6 +1040,7 @@ class v1CreateExperimentResponse:
 class v1CurrentUserResponse:
     def __init__(
         self,
+        *,
         user: "v1User",
     ):
         self.user = user
@@ -1025,6 +1059,7 @@ class v1CurrentUserResponse:
 class v1DataPoint:
     def __init__(
         self,
+        *,
         batches: int,
         value: float,
     ):
@@ -1047,6 +1082,7 @@ class v1DataPoint:
 class v1DeleteCheckpointsRequest:
     def __init__(
         self,
+        *,
         checkpointUuids: "typing.Sequence[str]",
     ):
         self.checkpointUuids = checkpointUuids
@@ -1062,9 +1098,48 @@ class v1DeleteCheckpointsRequest:
             "checkpointUuids": self.checkpointUuids,
         }
 
+class v1DeleteProjectResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteProjectResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
+class v1DeleteWorkspaceResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteWorkspaceResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
 class v1Device:
     def __init__(
         self,
+        *,
         brand: "typing.Optional[str]" = None,
         id: "typing.Optional[int]" = None,
         type: "typing.Optional[determineddevicev1Type]" = None,
@@ -1095,6 +1170,7 @@ class v1Device:
 class v1DisableAgentRequest:
     def __init__(
         self,
+        *,
         agentId: "typing.Optional[str]" = None,
         drain: "typing.Optional[bool]" = None,
     ):
@@ -1117,6 +1193,7 @@ class v1DisableAgentRequest:
 class v1DisableAgentResponse:
     def __init__(
         self,
+        *,
         agent: "typing.Optional[v1Agent]" = None,
     ):
         self.agent = agent
@@ -1135,6 +1212,7 @@ class v1DisableAgentResponse:
 class v1DisableSlotResponse:
     def __init__(
         self,
+        *,
         slot: "typing.Optional[v1Slot]" = None,
     ):
         self.slot = slot
@@ -1153,6 +1231,7 @@ class v1DisableSlotResponse:
 class v1EnableAgentResponse:
     def __init__(
         self,
+        *,
         agent: "typing.Optional[v1Agent]" = None,
     ):
         self.agent = agent
@@ -1171,6 +1250,7 @@ class v1EnableAgentResponse:
 class v1EnableSlotResponse:
     def __init__(
         self,
+        *,
         slot: "typing.Optional[v1Slot]" = None,
     ):
         self.slot = slot
@@ -1189,6 +1269,7 @@ class v1EnableSlotResponse:
 class v1ExpCompareMetricNamesResponse:
     def __init__(
         self,
+        *,
         trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
         validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
     ):
@@ -1211,6 +1292,7 @@ class v1ExpCompareMetricNamesResponse:
 class v1ExpCompareTrialsSampleResponse:
     def __init__(
         self,
+        *,
         demotedTrials: "typing.Sequence[int]",
         promotedTrials: "typing.Sequence[int]",
         trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
@@ -1237,11 +1319,13 @@ class v1ExpCompareTrialsSampleResponse:
 class v1Experiment:
     def __init__(
         self,
+        *,
         archived: bool,
         id: int,
         jobId: str,
         name: str,
         numTrials: int,
+        originalConfig: str,
         projectId: int,
         searcherType: str,
         startTime: str,
@@ -1288,6 +1372,7 @@ class v1Experiment:
         self.workspaceName = workspaceName
         self.parentArchived = parentArchived
         self.config = config
+        self.originalConfig = originalConfig
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1317,6 +1402,7 @@ class v1Experiment:
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
             config=obj.get("config", None),
+            originalConfig=obj["originalConfig"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1346,11 +1432,13 @@ class v1Experiment:
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
             "config": self.config if self.config is not None else None,
+            "originalConfig": self.originalConfig,
         }
 
 class v1ExperimentSimulation:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         seed: "typing.Optional[int]" = None,
         trials: "typing.Optional[typing.Sequence[v1TrialSimulation]]" = None,
@@ -1377,6 +1465,7 @@ class v1ExperimentSimulation:
 class v1File:
     def __init__(
         self,
+        *,
         content: str,
         gid: int,
         mode: int,
@@ -1419,6 +1508,7 @@ class v1File:
 class v1FileNode:
     def __init__(
         self,
+        *,
         contentLength: "typing.Optional[int]" = None,
         contentType: "typing.Optional[str]" = None,
         files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
@@ -1468,6 +1558,7 @@ class v1FittingPolicy(enum.Enum):
 class v1GetActiveTasksCountResponse:
     def __init__(
         self,
+        *,
         commands: int,
         notebooks: int,
         shells: int,
@@ -1498,6 +1589,7 @@ class v1GetActiveTasksCountResponse:
 class v1GetAgentResponse:
     def __init__(
         self,
+        *,
         agent: "typing.Optional[v1Agent]" = None,
     ):
         self.agent = agent
@@ -1521,6 +1613,7 @@ class v1GetAgentsRequestSortBy(enum.Enum):
 class v1GetAgentsResponse:
     def __init__(
         self,
+        *,
         agents: "typing.Optional[typing.Sequence[v1Agent]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
@@ -1543,6 +1636,7 @@ class v1GetAgentsResponse:
 class v1GetBestSearcherValidationMetricResponse:
     def __init__(
         self,
+        *,
         metric: "typing.Optional[float]" = None,
     ):
         self.metric = metric
@@ -1561,6 +1655,7 @@ class v1GetBestSearcherValidationMetricResponse:
 class v1GetCheckpointResponse:
     def __init__(
         self,
+        *,
         checkpoint: "typing.Optional[v1Checkpoint]" = None,
     ):
         self.checkpoint = checkpoint
@@ -1579,6 +1674,7 @@ class v1GetCheckpointResponse:
 class v1GetCommandResponse:
     def __init__(
         self,
+        *,
         command: "typing.Optional[v1Command]" = None,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
@@ -1607,6 +1703,7 @@ class v1GetCommandsRequestSortBy(enum.Enum):
 class v1GetCommandsResponse:
     def __init__(
         self,
+        *,
         commands: "typing.Optional[typing.Sequence[v1Command]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
@@ -1629,6 +1726,7 @@ class v1GetCommandsResponse:
 class v1GetCurrentTrialSearcherOperationResponse:
     def __init__(
         self,
+        *,
         completed: "typing.Optional[bool]" = None,
         op: "typing.Optional[v1SearcherOperation]" = None,
     ):
@@ -1660,6 +1758,7 @@ class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
 class v1GetExperimentCheckpointsResponse:
     def __init__(
         self,
+        *,
         checkpoints: "typing.Sequence[v1Checkpoint]",
         pagination: "v1Pagination",
     ):
@@ -1682,6 +1781,7 @@ class v1GetExperimentCheckpointsResponse:
 class v1GetExperimentLabelsResponse:
     def __init__(
         self,
+        *,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.labels = labels
@@ -1700,6 +1800,7 @@ class v1GetExperimentLabelsResponse:
 class v1GetExperimentResponse:
     def __init__(
         self,
+        *,
         experiment: "v1Experiment",
         jobSummary: "typing.Optional[v1JobSummary]" = None,
     ):
@@ -1734,6 +1835,7 @@ class v1GetExperimentTrialsRequestSortBy(enum.Enum):
 class v1GetExperimentTrialsResponse:
     def __init__(
         self,
+        *,
         pagination: "v1Pagination",
         trials: "typing.Sequence[trialv1Trial]",
     ):
@@ -1756,6 +1858,7 @@ class v1GetExperimentTrialsResponse:
 class v1GetExperimentValidationHistoryResponse:
     def __init__(
         self,
+        *,
         validationHistory: "typing.Optional[typing.Sequence[v1ValidationHistoryEntry]]" = None,
     ):
         self.validationHistory = validationHistory
@@ -1789,6 +1892,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
 class v1GetExperimentsResponse:
     def __init__(
         self,
+        *,
         experiments: "typing.Sequence[v1Experiment]",
         pagination: "v1Pagination",
     ):
@@ -1811,6 +1915,7 @@ class v1GetExperimentsResponse:
 class v1GetHPImportanceResponse:
     def __init__(
         self,
+        *,
         trainingMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
         validationMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
     ):
@@ -1833,6 +1938,7 @@ class v1GetHPImportanceResponse:
 class v1GetJobQueueStatsResponse:
     def __init__(
         self,
+        *,
         results: "typing.Sequence[v1RPQueueStat]",
     ):
         self.results = results
@@ -1851,6 +1957,7 @@ class v1GetJobQueueStatsResponse:
 class v1GetJobsResponse:
     def __init__(
         self,
+        *,
         jobs: "typing.Sequence[v1Job]",
         pagination: "v1Pagination",
     ):
@@ -1873,6 +1980,7 @@ class v1GetJobsResponse:
 class v1GetMasterConfigResponse:
     def __init__(
         self,
+        *,
         config: "typing.Dict[str, typing.Any]",
     ):
         self.config = config
@@ -1891,6 +1999,7 @@ class v1GetMasterConfigResponse:
 class v1GetMasterResponse:
     def __init__(
         self,
+        *,
         clusterId: str,
         clusterName: str,
         masterId: str,
@@ -1941,6 +2050,7 @@ class v1GetMasterResponse:
 class v1GetModelDefFileRequest:
     def __init__(
         self,
+        *,
         experimentId: "typing.Optional[int]" = None,
         path: "typing.Optional[str]" = None,
     ):
@@ -1963,6 +2073,7 @@ class v1GetModelDefFileRequest:
 class v1GetModelDefFileResponse:
     def __init__(
         self,
+        *,
         file: "typing.Optional[str]" = None,
     ):
         self.file = file
@@ -1981,6 +2092,7 @@ class v1GetModelDefFileResponse:
 class v1GetModelDefResponse:
     def __init__(
         self,
+        *,
         b64Tgz: str,
     ):
         self.b64Tgz = b64Tgz
@@ -1999,6 +2111,7 @@ class v1GetModelDefResponse:
 class v1GetModelDefTreeResponse:
     def __init__(
         self,
+        *,
         files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
     ):
         self.files = files
@@ -2017,6 +2130,7 @@ class v1GetModelDefTreeResponse:
 class v1GetModelLabelsResponse:
     def __init__(
         self,
+        *,
         labels: "typing.Sequence[str]",
     ):
         self.labels = labels
@@ -2035,6 +2149,7 @@ class v1GetModelLabelsResponse:
 class v1GetModelResponse:
     def __init__(
         self,
+        *,
         model: "v1Model",
     ):
         self.model = model
@@ -2053,6 +2168,7 @@ class v1GetModelResponse:
 class v1GetModelVersionResponse:
     def __init__(
         self,
+        *,
         modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
@@ -2076,6 +2192,7 @@ class v1GetModelVersionsRequestSortBy(enum.Enum):
 class v1GetModelVersionsResponse:
     def __init__(
         self,
+        *,
         model: "v1Model",
         modelVersions: "typing.Sequence[v1ModelVersion]",
         pagination: "v1Pagination",
@@ -2110,6 +2227,7 @@ class v1GetModelsRequestSortBy(enum.Enum):
 class v1GetModelsResponse:
     def __init__(
         self,
+        *,
         models: "typing.Sequence[v1Model]",
         pagination: "v1Pagination",
     ):
@@ -2132,6 +2250,7 @@ class v1GetModelsResponse:
 class v1GetNotebookResponse:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         notebook: "typing.Optional[v1Notebook]" = None,
     ):
@@ -2160,6 +2279,7 @@ class v1GetNotebooksRequestSortBy(enum.Enum):
 class v1GetNotebooksResponse:
     def __init__(
         self,
+        *,
         notebooks: "typing.Optional[typing.Sequence[v1Notebook]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
@@ -2182,6 +2302,7 @@ class v1GetNotebooksResponse:
 class v1GetProjectResponse:
     def __init__(
         self,
+        *,
         project: "v1Project",
     ):
         self.project = project
@@ -2200,6 +2321,7 @@ class v1GetProjectResponse:
 class v1GetResourcePoolsResponse:
     def __init__(
         self,
+        *,
         pagination: "typing.Optional[v1Pagination]" = None,
         resourcePools: "typing.Optional[typing.Sequence[v1ResourcePool]]" = None,
     ):
@@ -2222,6 +2344,7 @@ class v1GetResourcePoolsResponse:
 class v1GetShellResponse:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         shell: "typing.Optional[v1Shell]" = None,
     ):
@@ -2250,6 +2373,7 @@ class v1GetShellsRequestSortBy(enum.Enum):
 class v1GetShellsResponse:
     def __init__(
         self,
+        *,
         pagination: "typing.Optional[v1Pagination]" = None,
         shells: "typing.Optional[typing.Sequence[v1Shell]]" = None,
     ):
@@ -2272,6 +2396,7 @@ class v1GetShellsResponse:
 class v1GetSlotResponse:
     def __init__(
         self,
+        *,
         slot: "typing.Optional[v1Slot]" = None,
     ):
         self.slot = slot
@@ -2290,6 +2415,7 @@ class v1GetSlotResponse:
 class v1GetSlotsResponse:
     def __init__(
         self,
+        *,
         slots: "typing.Optional[typing.Sequence[v1Slot]]" = None,
     ):
         self.slots = slots
@@ -2308,6 +2434,7 @@ class v1GetSlotsResponse:
 class v1GetTaskResponse:
     def __init__(
         self,
+        *,
         task: "typing.Optional[v1Task]" = None,
     ):
         self.task = task
@@ -2326,6 +2453,7 @@ class v1GetTaskResponse:
 class v1GetTelemetryResponse:
     def __init__(
         self,
+        *,
         enabled: bool,
         segmentKey: "typing.Optional[str]" = None,
     ):
@@ -2348,6 +2476,7 @@ class v1GetTelemetryResponse:
 class v1GetTemplateResponse:
     def __init__(
         self,
+        *,
         template: "typing.Optional[v1Template]" = None,
     ):
         self.template = template
@@ -2370,6 +2499,7 @@ class v1GetTemplatesRequestSortBy(enum.Enum):
 class v1GetTemplatesResponse:
     def __init__(
         self,
+        *,
         pagination: "typing.Optional[v1Pagination]" = None,
         templates: "typing.Optional[typing.Sequence[v1Template]]" = None,
     ):
@@ -2392,6 +2522,7 @@ class v1GetTemplatesResponse:
 class v1GetTensorboardResponse:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
@@ -2420,6 +2551,7 @@ class v1GetTensorboardsRequestSortBy(enum.Enum):
 class v1GetTensorboardsResponse:
     def __init__(
         self,
+        *,
         pagination: "typing.Optional[v1Pagination]" = None,
         tensorboards: "typing.Optional[typing.Sequence[v1Tensorboard]]" = None,
     ):
@@ -2449,6 +2581,7 @@ class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
 class v1GetTrialCheckpointsResponse:
     def __init__(
         self,
+        *,
         checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
@@ -2471,6 +2604,7 @@ class v1GetTrialCheckpointsResponse:
 class v1GetTrialProfilerAvailableSeriesResponse:
     def __init__(
         self,
+        *,
         labels: "typing.Sequence[v1TrialProfilerMetricLabels]",
     ):
         self.labels = labels
@@ -2489,6 +2623,7 @@ class v1GetTrialProfilerAvailableSeriesResponse:
 class v1GetTrialProfilerMetricsResponse:
     def __init__(
         self,
+        *,
         batch: "v1TrialProfilerMetricsBatch",
     ):
         self.batch = batch
@@ -2507,28 +2642,26 @@ class v1GetTrialProfilerMetricsResponse:
 class v1GetTrialResponse:
     def __init__(
         self,
+        *,
         trial: "trialv1Trial",
-        workloads: "typing.Sequence[v1WorkloadContainer]",
     ):
         self.trial = trial
-        self.workloads = workloads
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[v1WorkloadContainer.from_json(x) for x in obj["workloads"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "workloads": [x.to_json() for x in self.workloads],
         }
 
 class v1GetTrialWorkloadsResponse:
     def __init__(
         self,
+        *,
         pagination: "v1Pagination",
         workloads: "typing.Sequence[v1WorkloadContainer]",
     ):
@@ -2551,6 +2684,7 @@ class v1GetTrialWorkloadsResponse:
 class v1GetUserResponse:
     def __init__(
         self,
+        *,
         user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
@@ -2569,6 +2703,7 @@ class v1GetUserResponse:
 class v1GetUserSettingResponse:
     def __init__(
         self,
+        *,
         settings: "typing.Sequence[v1UserWebSetting]",
     ):
         self.settings = settings
@@ -2595,6 +2730,7 @@ class v1GetUsersRequestSortBy(enum.Enum):
 class v1GetUsersResponse:
     def __init__(
         self,
+        *,
         pagination: "typing.Optional[v1Pagination]" = None,
         users: "typing.Optional[typing.Sequence[v1User]]" = None,
     ):
@@ -2625,6 +2761,7 @@ class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
 class v1GetWorkspaceProjectsResponse:
     def __init__(
         self,
+        *,
         pagination: "v1Pagination",
         projects: "typing.Sequence[v1Project]",
     ):
@@ -2647,6 +2784,7 @@ class v1GetWorkspaceProjectsResponse:
 class v1GetWorkspaceResponse:
     def __init__(
         self,
+        *,
         workspace: "v1Workspace",
     ):
         self.workspace = workspace
@@ -2670,6 +2808,7 @@ class v1GetWorkspacesRequestSortBy(enum.Enum):
 class v1GetWorkspacesResponse:
     def __init__(
         self,
+        *,
         pagination: "v1Pagination",
         workspaces: "typing.Sequence[v1Workspace]",
     ):
@@ -2692,6 +2831,7 @@ class v1GetWorkspacesResponse:
 class v1IdleNotebookRequest:
     def __init__(
         self,
+        *,
         idle: "typing.Optional[bool]" = None,
         notebookId: "typing.Optional[str]" = None,
     ):
@@ -2714,6 +2854,7 @@ class v1IdleNotebookRequest:
 class v1Job:
     def __init__(
         self,
+        *,
         allocatedSlots: int,
         entityId: str,
         isPreemptible: bool,
@@ -2788,6 +2929,7 @@ class v1Job:
 class v1JobSummary:
     def __init__(
         self,
+        *,
         jobsAhead: int,
         state: "determinedjobv1State",
     ):
@@ -2810,6 +2952,7 @@ class v1JobSummary:
 class v1K8PriorityClass:
     def __init__(
         self,
+        *,
         priorityClass: "typing.Optional[str]" = None,
         priorityValue: "typing.Optional[int]" = None,
     ):
@@ -2832,6 +2975,7 @@ class v1K8PriorityClass:
 class v1KillCommandResponse:
     def __init__(
         self,
+        *,
         command: "typing.Optional[v1Command]" = None,
     ):
         self.command = command
@@ -2850,6 +2994,7 @@ class v1KillCommandResponse:
 class v1KillNotebookResponse:
     def __init__(
         self,
+        *,
         notebook: "typing.Optional[v1Notebook]" = None,
     ):
         self.notebook = notebook
@@ -2868,6 +3013,7 @@ class v1KillNotebookResponse:
 class v1KillShellResponse:
     def __init__(
         self,
+        *,
         shell: "typing.Optional[v1Shell]" = None,
     ):
         self.shell = shell
@@ -2886,6 +3032,7 @@ class v1KillShellResponse:
 class v1KillTensorboardResponse:
     def __init__(
         self,
+        *,
         tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
         self.tensorboard = tensorboard
@@ -2904,6 +3051,7 @@ class v1KillTensorboardResponse:
 class v1LaunchCommandRequest:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         data: "typing.Optional[str]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
@@ -2934,6 +3082,7 @@ class v1LaunchCommandRequest:
 class v1LaunchCommandResponse:
     def __init__(
         self,
+        *,
         command: "v1Command",
         config: "typing.Dict[str, typing.Any]",
     ):
@@ -2956,6 +3105,7 @@ class v1LaunchCommandResponse:
 class v1LaunchNotebookRequest:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
         preview: "typing.Optional[bool]" = None,
@@ -2986,6 +3136,7 @@ class v1LaunchNotebookRequest:
 class v1LaunchNotebookResponse:
     def __init__(
         self,
+        *,
         config: "typing.Dict[str, typing.Any]",
         notebook: "v1Notebook",
     ):
@@ -3008,6 +3159,7 @@ class v1LaunchNotebookResponse:
 class v1LaunchShellRequest:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         data: "typing.Optional[str]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
@@ -3038,6 +3190,7 @@ class v1LaunchShellRequest:
 class v1LaunchShellResponse:
     def __init__(
         self,
+        *,
         config: "typing.Dict[str, typing.Any]",
         shell: "v1Shell",
     ):
@@ -3060,6 +3213,7 @@ class v1LaunchShellResponse:
 class v1LaunchTensorboardRequest:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
@@ -3094,6 +3248,7 @@ class v1LaunchTensorboardRequest:
 class v1LaunchTensorboardResponse:
     def __init__(
         self,
+        *,
         config: "typing.Dict[str, typing.Any]",
         tensorboard: "v1Tensorboard",
     ):
@@ -3116,6 +3271,7 @@ class v1LaunchTensorboardResponse:
 class v1LogEntry:
     def __init__(
         self,
+        *,
         id: int,
         level: "typing.Optional[v1LogLevel]" = None,
         message: "typing.Optional[str]" = None,
@@ -3155,6 +3311,7 @@ class v1LogLevel(enum.Enum):
 class v1LoginRequest:
     def __init__(
         self,
+        *,
         password: str,
         username: str,
         isHashed: "typing.Optional[bool]" = None,
@@ -3181,6 +3338,7 @@ class v1LoginRequest:
 class v1LoginResponse:
     def __init__(
         self,
+        *,
         token: str,
         user: "v1User",
     ):
@@ -3203,6 +3361,7 @@ class v1LoginResponse:
 class v1MarkAllocationResourcesDaemonRequest:
     def __init__(
         self,
+        *,
         allocationId: str,
         resourcesId: "typing.Optional[str]" = None,
     ):
@@ -3225,6 +3384,7 @@ class v1MarkAllocationResourcesDaemonRequest:
 class v1MasterLogsResponse:
     def __init__(
         self,
+        *,
         logEntry: "typing.Optional[v1LogEntry]" = None,
     ):
         self.logEntry = logEntry
@@ -3243,6 +3403,7 @@ class v1MasterLogsResponse:
 class v1MetricBatchesResponse:
     def __init__(
         self,
+        *,
         batches: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.batches = batches
@@ -3261,6 +3422,7 @@ class v1MetricBatchesResponse:
 class v1MetricNamesResponse:
     def __init__(
         self,
+        *,
         searcherMetric: "typing.Optional[str]" = None,
         trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
         validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
@@ -3292,6 +3454,7 @@ class v1MetricType(enum.Enum):
 class v1Metrics:
     def __init__(
         self,
+        *,
         avgMetrics: "typing.Dict[str, typing.Any]",
         batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
     ):
@@ -3314,6 +3477,7 @@ class v1Metrics:
 class v1MetricsWorkload:
     def __init__(
         self,
+        *,
         metrics: "typing.Dict[str, typing.Any]",
         numInputs: int,
         state: "determinedexperimentv1State",
@@ -3348,6 +3512,7 @@ class v1MetricsWorkload:
 class v1Model:
     def __init__(
         self,
+        *,
         creationTime: str,
         id: int,
         lastUpdatedTime: str,
@@ -3410,6 +3575,7 @@ class v1Model:
 class v1ModelVersion:
     def __init__(
         self,
+        *,
         checkpoint: "v1Checkpoint",
         creationTime: str,
         id: int,
@@ -3476,6 +3642,7 @@ class v1ModelVersion:
 class v1MoveExperimentRequest:
     def __init__(
         self,
+        *,
         destinationProjectId: int,
         experimentId: int,
     ):
@@ -3498,6 +3665,7 @@ class v1MoveExperimentRequest:
 class v1MoveProjectRequest:
     def __init__(
         self,
+        *,
         destinationWorkspaceId: int,
         projectId: int,
     ):
@@ -3520,6 +3688,7 @@ class v1MoveProjectRequest:
 class v1Note:
     def __init__(
         self,
+        *,
         contents: str,
         name: str,
     ):
@@ -3542,6 +3711,7 @@ class v1Note:
 class v1Notebook:
     def __init__(
         self,
+        *,
         description: str,
         id: str,
         jobId: str,
@@ -3609,6 +3779,7 @@ class v1OrderBy(enum.Enum):
 class v1Pagination:
     def __init__(
         self,
+        *,
         endIndex: "typing.Optional[int]" = None,
         limit: "typing.Optional[int]" = None,
         offset: "typing.Optional[int]" = None,
@@ -3643,6 +3814,7 @@ class v1Pagination:
 class v1PaginationRequest:
     def __init__(
         self,
+        *,
         limit: "typing.Optional[int]" = None,
         offset: "typing.Optional[int]" = None,
     ):
@@ -3665,6 +3837,7 @@ class v1PaginationRequest:
 class v1PatchExperiment:
     def __init__(
         self,
+        *,
         id: int,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
@@ -3699,6 +3872,7 @@ class v1PatchExperiment:
 class v1PatchExperimentResponse:
     def __init__(
         self,
+        *,
         experiment: "typing.Optional[v1Experiment]" = None,
     ):
         self.experiment = experiment
@@ -3717,6 +3891,7 @@ class v1PatchExperimentResponse:
 class v1PatchModel:
     def __init__(
         self,
+        *,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
@@ -3751,6 +3926,7 @@ class v1PatchModel:
 class v1PatchModelResponse:
     def __init__(
         self,
+        *,
         model: "v1Model",
     ):
         self.model = model
@@ -3769,6 +3945,7 @@ class v1PatchModelResponse:
 class v1PatchModelVersion:
     def __init__(
         self,
+        *,
         checkpoint: "typing.Optional[v1Checkpoint]" = None,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
@@ -3807,6 +3984,7 @@ class v1PatchModelVersion:
 class v1PatchModelVersionResponse:
     def __init__(
         self,
+        *,
         modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
@@ -3825,6 +4003,7 @@ class v1PatchModelVersionResponse:
 class v1PatchProject:
     def __init__(
         self,
+        *,
         description: "typing.Optional[str]" = None,
         name: "typing.Optional[str]" = None,
     ):
@@ -3847,6 +4026,7 @@ class v1PatchProject:
 class v1PatchProjectResponse:
     def __init__(
         self,
+        *,
         project: "v1Project",
     ):
         self.project = project
@@ -3865,6 +4045,7 @@ class v1PatchProjectResponse:
 class v1PatchUser:
     def __init__(
         self,
+        *,
         displayName: "typing.Optional[str]" = None,
     ):
         self.displayName = displayName
@@ -3883,6 +4064,7 @@ class v1PatchUser:
 class v1PatchUserResponse:
     def __init__(
         self,
+        *,
         user: "v1User",
     ):
         self.user = user
@@ -3901,6 +4083,7 @@ class v1PatchUserResponse:
 class v1PatchWorkspace:
     def __init__(
         self,
+        *,
         name: "typing.Optional[str]" = None,
     ):
         self.name = name
@@ -3919,6 +4102,7 @@ class v1PatchWorkspace:
 class v1PatchWorkspaceResponse:
     def __init__(
         self,
+        *,
         workspace: "v1Workspace",
     ):
         self.workspace = workspace
@@ -3937,6 +4121,7 @@ class v1PatchWorkspaceResponse:
 class v1PostAllocationProxyAddressRequest:
     def __init__(
         self,
+        *,
         allocationId: "typing.Optional[str]" = None,
         proxyAddress: "typing.Optional[str]" = None,
     ):
@@ -3959,6 +4144,7 @@ class v1PostAllocationProxyAddressRequest:
 class v1PostCheckpointMetadataRequest:
     def __init__(
         self,
+        *,
         checkpoint: "typing.Optional[v1Checkpoint]" = None,
     ):
         self.checkpoint = checkpoint
@@ -3977,6 +4163,7 @@ class v1PostCheckpointMetadataRequest:
 class v1PostCheckpointMetadataResponse:
     def __init__(
         self,
+        *,
         checkpoint: "typing.Optional[v1Checkpoint]" = None,
     ):
         self.checkpoint = checkpoint
@@ -3995,6 +4182,7 @@ class v1PostCheckpointMetadataResponse:
 class v1PostModelRequest:
     def __init__(
         self,
+        *,
         name: str,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
@@ -4029,6 +4217,7 @@ class v1PostModelRequest:
 class v1PostModelResponse:
     def __init__(
         self,
+        *,
         model: "v1Model",
     ):
         self.model = model
@@ -4047,6 +4236,7 @@ class v1PostModelResponse:
 class v1PostModelVersionRequest:
     def __init__(
         self,
+        *,
         checkpointUuid: str,
         modelName: str,
         comment: "typing.Optional[str]" = None,
@@ -4089,6 +4279,7 @@ class v1PostModelVersionRequest:
 class v1PostModelVersionResponse:
     def __init__(
         self,
+        *,
         modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
@@ -4107,6 +4298,7 @@ class v1PostModelVersionResponse:
 class v1PostProjectRequest:
     def __init__(
         self,
+        *,
         name: str,
         workspaceId: int,
         description: "typing.Optional[str]" = None,
@@ -4133,6 +4325,7 @@ class v1PostProjectRequest:
 class v1PostProjectResponse:
     def __init__(
         self,
+        *,
         project: "v1Project",
     ):
         self.project = project
@@ -4151,6 +4344,7 @@ class v1PostProjectResponse:
 class v1PostTrialProfilerMetricsBatchRequest:
     def __init__(
         self,
+        *,
         batches: "typing.Optional[typing.Sequence[v1TrialProfilerMetricsBatch]]" = None,
     ):
         self.batches = batches
@@ -4169,6 +4363,7 @@ class v1PostTrialProfilerMetricsBatchRequest:
 class v1PostUserRequest:
     def __init__(
         self,
+        *,
         password: "typing.Optional[str]" = None,
         user: "typing.Optional[v1User]" = None,
     ):
@@ -4191,6 +4386,7 @@ class v1PostUserRequest:
 class v1PostUserResponse:
     def __init__(
         self,
+        *,
         user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
@@ -4209,6 +4405,7 @@ class v1PostUserResponse:
 class v1PostUserSettingRequest:
     def __init__(
         self,
+        *,
         setting: "v1UserWebSetting",
         storagePath: str,
     ):
@@ -4231,6 +4428,7 @@ class v1PostUserSettingRequest:
 class v1PostWorkspaceRequest:
     def __init__(
         self,
+        *,
         name: str,
     ):
         self.name = name
@@ -4249,6 +4447,7 @@ class v1PostWorkspaceRequest:
 class v1PostWorkspaceResponse:
     def __init__(
         self,
+        *,
         workspace: "v1Workspace",
     ):
         self.workspace = workspace
@@ -4267,6 +4466,7 @@ class v1PostWorkspaceResponse:
 class v1PreviewHPSearchRequest:
     def __init__(
         self,
+        *,
         config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         seed: "typing.Optional[int]" = None,
     ):
@@ -4289,6 +4489,7 @@ class v1PreviewHPSearchRequest:
 class v1PreviewHPSearchResponse:
     def __init__(
         self,
+        *,
         simulation: "typing.Optional[v1ExperimentSimulation]" = None,
     ):
         self.simulation = simulation
@@ -4307,13 +4508,16 @@ class v1PreviewHPSearchResponse:
 class v1Project:
     def __init__(
         self,
+        *,
         archived: bool,
+        errorMessage: str,
         id: int,
         immutable: bool,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
+        state: "v1WorkspaceState",
         userId: int,
         username: str,
         workspaceId: int,
@@ -4334,6 +4538,8 @@ class v1Project:
         self.immutable = immutable
         self.userId = userId
         self.workspaceName = workspaceName
+        self.state = state
+        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4351,6 +4557,8 @@ class v1Project:
             immutable=obj["immutable"],
             userId=obj["userId"],
             workspaceName=obj.get("workspaceName", None),
+            state=v1WorkspaceState(obj["state"]),
+            errorMessage=obj["errorMessage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -4368,11 +4576,14 @@ class v1Project:
             "immutable": self.immutable,
             "userId": self.userId,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
+            "state": self.state.value,
+            "errorMessage": self.errorMessage,
         }
 
 class v1PutProjectNotesRequest:
     def __init__(
         self,
+        *,
         notes: "typing.Sequence[v1Note]",
         projectId: int,
     ):
@@ -4395,6 +4606,7 @@ class v1PutProjectNotesRequest:
 class v1PutProjectNotesResponse:
     def __init__(
         self,
+        *,
         notes: "typing.Sequence[v1Note]",
     ):
         self.notes = notes
@@ -4413,6 +4625,7 @@ class v1PutProjectNotesResponse:
 class v1PutTemplateResponse:
     def __init__(
         self,
+        *,
         template: "typing.Optional[v1Template]" = None,
     ):
         self.template = template
@@ -4431,6 +4644,7 @@ class v1PutTemplateResponse:
 class v1QueueControl:
     def __init__(
         self,
+        *,
         jobId: str,
         aheadOf: "typing.Optional[str]" = None,
         behindOf: "typing.Optional[str]" = None,
@@ -4469,6 +4683,7 @@ class v1QueueControl:
 class v1QueueStats:
     def __init__(
         self,
+        *,
         queuedCount: int,
         scheduledCount: int,
     ):
@@ -4491,6 +4706,7 @@ class v1QueueStats:
 class v1RPQueueStat:
     def __init__(
         self,
+        *,
         resourcePool: str,
         stats: "v1QueueStats",
         aggregates: "typing.Optional[typing.Sequence[v1AggregateQueueStats]]" = None,
@@ -4517,6 +4733,7 @@ class v1RPQueueStat:
 class v1RendezvousInfo:
     def __init__(
         self,
+        *,
         addresses: "typing.Sequence[str]",
         rank: int,
     ):
@@ -4539,6 +4756,7 @@ class v1RendezvousInfo:
 class v1ResourceAllocationAggregatedEntry:
     def __init__(
         self,
+        *,
         byAgentLabel: "typing.Dict[str, float]",
         byExperimentLabel: "typing.Dict[str, float]",
         byResourcePool: "typing.Dict[str, float]",
@@ -4581,6 +4799,7 @@ class v1ResourceAllocationAggregatedEntry:
 class v1ResourceAllocationAggregatedResponse:
     def __init__(
         self,
+        *,
         resourceEntries: "typing.Sequence[v1ResourceAllocationAggregatedEntry]",
     ):
         self.resourceEntries = resourceEntries
@@ -4604,6 +4823,7 @@ class v1ResourceAllocationAggregationPeriod(enum.Enum):
 class v1ResourceAllocationRawEntry:
     def __init__(
         self,
+        *,
         endTime: "typing.Optional[str]" = None,
         experimentId: "typing.Optional[int]" = None,
         kind: "typing.Optional[str]" = None,
@@ -4654,6 +4874,7 @@ class v1ResourceAllocationRawEntry:
 class v1ResourceAllocationRawResponse:
     def __init__(
         self,
+        *,
         resourceEntries: "typing.Optional[typing.Sequence[v1ResourceAllocationRawEntry]]" = None,
     ):
         self.resourceEntries = resourceEntries
@@ -4672,6 +4893,7 @@ class v1ResourceAllocationRawResponse:
 class v1ResourcePool:
     def __init__(
         self,
+        *,
         agentDockerImage: str,
         agentDockerNetwork: str,
         agentDockerRuntime: str,
@@ -4822,6 +5044,7 @@ class v1ResourcePool:
 class v1ResourcePoolAwsDetail:
     def __init__(
         self,
+        *,
         iamInstanceProfileArn: str,
         imageId: str,
         instanceName: str,
@@ -4904,6 +5127,7 @@ class v1ResourcePoolAwsDetail:
 class v1ResourcePoolDetail:
     def __init__(
         self,
+        *,
         aws: "typing.Optional[v1ResourcePoolAwsDetail]" = None,
         gcp: "typing.Optional[v1ResourcePoolGcpDetail]" = None,
         priorityScheduler: "typing.Optional[v1ResourcePoolPrioritySchedulerDetail]" = None,
@@ -4930,6 +5154,7 @@ class v1ResourcePoolDetail:
 class v1ResourcePoolGcpDetail:
     def __init__(
         self,
+        *,
         bootDiskSize: int,
         bootDiskSourceImage: str,
         externalIp: bool,
@@ -5016,6 +5241,7 @@ class v1ResourcePoolGcpDetail:
 class v1ResourcePoolPrioritySchedulerDetail:
     def __init__(
         self,
+        *,
         defaultPriority: int,
         preemption: bool,
         k8Priorities: "typing.Optional[typing.Sequence[v1K8PriorityClass]]" = None,
@@ -5049,6 +5275,7 @@ class v1ResourcePoolType(enum.Enum):
 class v1RunnableOperation:
     def __init__(
         self,
+        *,
         length: "typing.Optional[str]" = None,
         type: "typing.Optional[v1RunnableType]" = None,
     ):
@@ -5076,6 +5303,7 @@ class v1RunnableType(enum.Enum):
 class v1SSOProvider:
     def __init__(
         self,
+        *,
         name: str,
         ssoUrl: str,
     ):
@@ -5111,6 +5339,7 @@ class v1SchedulerType(enum.Enum):
 class v1SearcherOperation:
     def __init__(
         self,
+        *,
         validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
     ):
         self.validateAfter = validateAfter
@@ -5129,6 +5358,7 @@ class v1SearcherOperation:
 class v1SetCommandPriorityRequest:
     def __init__(
         self,
+        *,
         commandId: "typing.Optional[str]" = None,
         priority: "typing.Optional[int]" = None,
     ):
@@ -5151,6 +5381,7 @@ class v1SetCommandPriorityRequest:
 class v1SetCommandPriorityResponse:
     def __init__(
         self,
+        *,
         command: "typing.Optional[v1Command]" = None,
     ):
         self.command = command
@@ -5169,6 +5400,7 @@ class v1SetCommandPriorityResponse:
 class v1SetNotebookPriorityRequest:
     def __init__(
         self,
+        *,
         notebookId: "typing.Optional[str]" = None,
         priority: "typing.Optional[int]" = None,
     ):
@@ -5191,6 +5423,7 @@ class v1SetNotebookPriorityRequest:
 class v1SetNotebookPriorityResponse:
     def __init__(
         self,
+        *,
         notebook: "typing.Optional[v1Notebook]" = None,
     ):
         self.notebook = notebook
@@ -5209,6 +5442,7 @@ class v1SetNotebookPriorityResponse:
 class v1SetShellPriorityRequest:
     def __init__(
         self,
+        *,
         priority: "typing.Optional[int]" = None,
         shellId: "typing.Optional[str]" = None,
     ):
@@ -5231,6 +5465,7 @@ class v1SetShellPriorityRequest:
 class v1SetShellPriorityResponse:
     def __init__(
         self,
+        *,
         shell: "typing.Optional[v1Shell]" = None,
     ):
         self.shell = shell
@@ -5249,6 +5484,7 @@ class v1SetShellPriorityResponse:
 class v1SetTensorboardPriorityRequest:
     def __init__(
         self,
+        *,
         priority: "typing.Optional[int]" = None,
         tensorboardId: "typing.Optional[str]" = None,
     ):
@@ -5271,6 +5507,7 @@ class v1SetTensorboardPriorityRequest:
 class v1SetTensorboardPriorityResponse:
     def __init__(
         self,
+        *,
         tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
         self.tensorboard = tensorboard
@@ -5289,6 +5526,7 @@ class v1SetTensorboardPriorityResponse:
 class v1SetUserPasswordResponse:
     def __init__(
         self,
+        *,
         user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
@@ -5307,6 +5545,7 @@ class v1SetUserPasswordResponse:
 class v1Shell:
     def __init__(
         self,
+        *,
         description: str,
         id: str,
         jobId: str,
@@ -5381,6 +5620,7 @@ class v1Shell:
 class v1Slot:
     def __init__(
         self,
+        *,
         container: "typing.Optional[v1Container]" = None,
         device: "typing.Optional[v1Device]" = None,
         draining: "typing.Optional[bool]" = None,
@@ -5415,6 +5655,7 @@ class v1Slot:
 class v1SummarizeTrialResponse:
     def __init__(
         self,
+        *,
         metrics: "typing.Sequence[v1SummarizedMetric]",
         trial: "trialv1Trial",
     ):
@@ -5437,6 +5678,7 @@ class v1SummarizeTrialResponse:
 class v1SummarizedMetric:
     def __init__(
         self,
+        *,
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
@@ -5463,6 +5705,7 @@ class v1SummarizedMetric:
 class v1Task:
     def __init__(
         self,
+        *,
         allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None,
         taskId: "typing.Optional[str]" = None,
     ):
@@ -5485,6 +5728,7 @@ class v1Task:
 class v1TaskLogsFieldsResponse:
     def __init__(
         self,
+        *,
         agentIds: "typing.Optional[typing.Sequence[str]]" = None,
         allocationIds: "typing.Optional[typing.Sequence[str]]" = None,
         containerIds: "typing.Optional[typing.Sequence[str]]" = None,
@@ -5523,6 +5767,7 @@ class v1TaskLogsFieldsResponse:
 class v1TaskLogsResponse:
     def __init__(
         self,
+        *,
         id: str,
         level: "v1LogLevel",
         message: str,
@@ -5553,6 +5798,7 @@ class v1TaskLogsResponse:
 class v1Template:
     def __init__(
         self,
+        *,
         config: "typing.Dict[str, typing.Any]",
         name: str,
     ):
@@ -5575,6 +5821,7 @@ class v1Template:
 class v1Tensorboard:
     def __init__(
         self,
+        *,
         description: str,
         id: str,
         jobId: str,
@@ -5645,6 +5892,7 @@ class v1Tensorboard:
 class v1TrialEarlyExit:
     def __init__(
         self,
+        *,
         reason: "TrialEarlyExitExitedReason",
     ):
         self.reason = reason
@@ -5663,6 +5911,7 @@ class v1TrialEarlyExit:
 class v1TrialLogsFieldsResponse:
     def __init__(
         self,
+        *,
         agentIds: "typing.Optional[typing.Sequence[str]]" = None,
         containerIds: "typing.Optional[typing.Sequence[str]]" = None,
         rankIds: "typing.Optional[typing.Sequence[int]]" = None,
@@ -5697,6 +5946,7 @@ class v1TrialLogsFieldsResponse:
 class v1TrialLogsResponse:
     def __init__(
         self,
+        *,
         id: str,
         level: "v1LogLevel",
         message: str,
@@ -5727,6 +5977,7 @@ class v1TrialLogsResponse:
 class v1TrialMetrics:
     def __init__(
         self,
+        *,
         metrics: "typing.Dict[str, typing.Any]",
         stepsCompleted: int,
         trialId: int,
@@ -5761,6 +6012,7 @@ class v1TrialMetrics:
 class v1TrialProfilerMetricLabels:
     def __init__(
         self,
+        *,
         name: str,
         trialId: int,
         agentId: "typing.Optional[str]" = None,
@@ -5795,6 +6047,7 @@ class v1TrialProfilerMetricLabels:
 class v1TrialProfilerMetricsBatch:
     def __init__(
         self,
+        *,
         batches: "typing.Sequence[int]",
         labels: "v1TrialProfilerMetricLabels",
         timestamps: "typing.Sequence[str]",
@@ -5825,6 +6078,7 @@ class v1TrialProfilerMetricsBatch:
 class v1TrialRunnerMetadata:
     def __init__(
         self,
+        *,
         state: str,
     ):
         self.state = state
@@ -5843,6 +6097,7 @@ class v1TrialRunnerMetadata:
 class v1TrialSimulation:
     def __init__(
         self,
+        *,
         occurrences: "typing.Optional[int]" = None,
         operations: "typing.Optional[typing.Sequence[v1RunnableOperation]]" = None,
     ):
@@ -5865,6 +6120,7 @@ class v1TrialSimulation:
 class v1TrialsSampleResponse:
     def __init__(
         self,
+        *,
         demotedTrials: "typing.Sequence[int]",
         promotedTrials: "typing.Sequence[int]",
         trials: "typing.Sequence[v1TrialsSampleResponseTrial]",
@@ -5891,6 +6147,7 @@ class v1TrialsSampleResponse:
 class v1TrialsSampleResponseTrial:
     def __init__(
         self,
+        *,
         data: "typing.Sequence[v1DataPoint]",
         hparams: "typing.Dict[str, typing.Any]",
         trialId: int,
@@ -5917,6 +6174,7 @@ class v1TrialsSampleResponseTrial:
 class v1TrialsSnapshotResponse:
     def __init__(
         self,
+        *,
         trials: "typing.Sequence[v1TrialsSnapshotResponseTrial]",
     ):
         self.trials = trials
@@ -5935,6 +6193,7 @@ class v1TrialsSnapshotResponse:
 class v1TrialsSnapshotResponseTrial:
     def __init__(
         self,
+        *,
         batchesProcessed: int,
         hparams: "typing.Dict[str, typing.Any]",
         metric: float,
@@ -5965,6 +6224,7 @@ class v1TrialsSnapshotResponseTrial:
 class v1UpdateJobQueueRequest:
     def __init__(
         self,
+        *,
         updates: "typing.Sequence[v1QueueControl]",
     ):
         self.updates = updates
@@ -5983,6 +6243,7 @@ class v1UpdateJobQueueRequest:
 class v1User:
     def __init__(
         self,
+        *,
         active: bool,
         admin: bool,
         username: str,
@@ -6025,6 +6286,7 @@ class v1User:
 class v1UserWebSetting:
     def __init__(
         self,
+        *,
         key: str,
         storagePath: "typing.Optional[str]" = None,
         value: "typing.Optional[str]" = None,
@@ -6051,6 +6313,7 @@ class v1UserWebSetting:
 class v1ValidateAfterOperation:
     def __init__(
         self,
+        *,
         length: "typing.Optional[str]" = None,
     ):
         self.length = length
@@ -6069,6 +6332,7 @@ class v1ValidateAfterOperation:
 class v1ValidationHistoryEntry:
     def __init__(
         self,
+        *,
         endTime: str,
         searcherMetric: float,
         trialId: int,
@@ -6095,6 +6359,7 @@ class v1ValidationHistoryEntry:
 class v1WorkloadContainer:
     def __init__(
         self,
+        *,
         checkpoint: "typing.Optional[v1CheckpointWorkload]" = None,
         training: "typing.Optional[v1MetricsWorkload]" = None,
         validation: "typing.Optional[v1MetricsWorkload]" = None,
@@ -6121,13 +6386,16 @@ class v1WorkloadContainer:
 class v1Workspace:
     def __init__(
         self,
+        *,
         archived: bool,
+        errorMessage: str,
         id: int,
         immutable: bool,
         name: str,
         numExperiments: int,
         numProjects: int,
         pinned: bool,
+        state: "v1WorkspaceState",
         userId: int,
         username: str,
     ):
@@ -6140,6 +6408,8 @@ class v1Workspace:
         self.pinned = pinned
         self.userId = userId
         self.numExperiments = numExperiments
+        self.state = state
+        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -6153,6 +6423,8 @@ class v1Workspace:
             pinned=obj["pinned"],
             userId=obj["userId"],
             numExperiments=obj["numExperiments"],
+            state=v1WorkspaceState(obj["state"]),
+            errorMessage=obj["errorMessage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -6166,7 +6438,15 @@ class v1Workspace:
             "pinned": self.pinned,
             "userId": self.userId,
             "numExperiments": self.numExperiments,
+            "state": self.state.value,
+            "errorMessage": self.errorMessage,
         }
+
+class v1WorkspaceState(enum.Enum):
+    WORKSPACE_STATE_UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
+    WORKSPACE_STATE_DELETING = "WORKSPACE_STATE_DELETING"
+    WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
+    WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",
@@ -6613,7 +6893,7 @@ def delete_DeleteProject(
     session: "client.Session",
     *,
     id: int,
-) -> None:
+) -> "v1DeleteProjectResponse":
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -6625,7 +6905,7 @@ def delete_DeleteProject(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1DeleteProjectResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteProject", _resp)
 
 def delete_DeleteTemplate(
@@ -6651,7 +6931,7 @@ def delete_DeleteWorkspace(
     session: "client.Session",
     *,
     id: int,
-) -> None:
+) -> "v1DeleteWorkspaceResponse":
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -6663,7 +6943,7 @@ def delete_DeleteWorkspace(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1DeleteWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(
@@ -7107,12 +7387,14 @@ def get_GetJobs(
     pagination_limit: "typing.Optional[int]" = None,
     pagination_offset: "typing.Optional[int]" = None,
     resourcePool: "typing.Optional[str]" = None,
+    states: "typing.Optional[typing.Sequence[determinedjobv1State]]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
         "orderBy": orderBy.value if orderBy is not None else None,
         "pagination.limit": pagination_limit,
         "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
+        "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
         method="GET",

@@ -20,10 +20,10 @@ def cluster_slots() -> Dict[str, Any]:
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "agents")
+    r = api.get(conf.make_master_url(), "api/v1/agents")
     assert r.status_code == requests.codes.ok, r.text
-    json = r.json()  # type: Dict[str, Any]
-    return {agent["id"]: agent["slots"].values() for agent in json.values()}
+    jvals = r.json()  # type: Dict[str, Any]
+    return {agent["id"]: agent["slots"].values() for agent in jvals["agents"]}
 
 
 def get_master_port(loaded_config: dict) -> str:

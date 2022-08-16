@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Redirect, Switch } from 'react-router-dom';
+import { CompatRoute } from 'react-router-dom-v5-compat';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -38,12 +39,12 @@ const Router: React.FC<Props> = (props: Props) => {
 
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <Route key={route.id} {...route} />;
+          if (!auth.checked) return <CompatRoute {...route} key={route.id} />;
           return (
-            <Route
-              key={route.id}
+            <CompatRoute
               {...route}
-              render={({ location }): ReactNode => (
+              key={route.id}
+              render={({ location }: {location: Location}): ReactNode => (
                 <Redirect
                   to={{
                     pathname: paths.login(),
@@ -63,14 +64,14 @@ const Router: React.FC<Props> = (props: Props) => {
             return <Redirect key={route.id} to={route.redirect} />;
           } else {
             return (
-              <Route exact={route.exact} key={route.id} path={route.path}>
+              <CompatRoute exact={route.exact} key={route.id} path={route.path}>
                 <Redirect to={route.redirect} />;
-              </Route>
+              </CompatRoute>
             );
           }
         }
 
-        return <Route component={component} key={route.id} {...route} />;
+        return <CompatRoute {...route} component={component} key={route.id} />;
       })}
     </Switch>
   );

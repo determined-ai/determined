@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
@@ -71,7 +71,7 @@ export const useTheme = (): void => {
     if (!event.matches) setSystemMode(getSystemMode());
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Set global CSS variables shared across themes.
     Object.keys(globalCssVars).forEach((key) => {
       const value = (globalCssVars as Record<RecordKey, string>)[key];
@@ -97,7 +97,9 @@ export const useTheme = (): void => {
   }, [ handleSchemeChange ]);
 
   // Update darkLight and theme when branding, system mode, or mode changes.
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!info.branding) return;
+
     const darkLight = getDarkLight(ui.mode, systemMode);
     storeDispatch({
       type: StoreAction.SetTheme,
@@ -109,7 +111,7 @@ export const useTheme = (): void => {
   useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ ui.darkLight ]);
 
   // Update setting mode when mode changes.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isSettingsReady) {
       // We have read from the settings, going forward any mode difference requires an update.
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });

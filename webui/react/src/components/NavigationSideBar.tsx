@@ -16,6 +16,7 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { BrandingType } from 'types';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -119,7 +120,7 @@ const NavigationSideBar: React.FC = () => {
         external: true,
         icon: 'pencil',
         label: 'Share Feedback',
-        path: paths.submitProductFeedback(info.branding),
+        path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
         popout: true,
       },
     ],
@@ -162,17 +163,12 @@ const NavigationSideBar: React.FC = () => {
         <header>
           <Dropdown
             content={(
-              <Menu>
-                <Menu.Item key="theme-toggle">
-                  <ThemeToggle />
-                </Menu.Item>
-                <Menu.Item key="settings">
-                  <Link path={paths.settings('account')}>Settings</Link>
-                </Menu.Item>
-                <Menu.Item key="sign-out">
-                  <Link path={paths.logout()}>Sign Out</Link>
-                </Menu.Item>
-              </Menu>
+              <Menu items={[
+                { key: 'theme-toggle', label: <ThemeToggle /> },
+                { key: 'settings', label: <Link path={paths.settings('account')}>Settings</Link> },
+                { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+              ]}
+              />
             )}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
@@ -188,7 +184,7 @@ const NavigationSideBar: React.FC = () => {
               </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon name="add-small" size="tiny" />
+                  <Icon name="jupyter-lab" />
                 </Button>
               ) : null}
             </div>

@@ -1,0 +1,87 @@
+.base {
+  display: grid;
+  grid-template-columns: minmax(auto, 30%) auto;
+  grid-template-rows: auto;
+  height: 100%;
+
+  .fileTree {
+    background-color: transparent;
+    color: var(--theme-background-on-strong);
+    height: 100%;
+    overflow-x: scroll;
+    padding: 0;
+
+    span {
+      white-space: nowrap;
+    }
+  }
+  h5 {
+    color: var(--theme-background-on-strong);
+    margin-top: 5em;
+    text-align: center;
+  }
+  .fileDir {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+
+    .fileInfo {
+      align-items: center;
+      background-color: var(--theme-stage);
+      border-bottom: solid var(--theme-stroke-width) var(--theme-stage-border);
+      border-radius: 0;
+      border-top: solid var(--theme-stroke-width) var(--theme-stage-border);
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5em 1em;
+
+      .buttonContainer {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+
+        .leftChevron {
+          margin-right: 15px;
+        }
+      }
+      .filePath {
+        margin-left: 10px;
+      }
+      .fileDesc {
+        color: var(--theme-stage-on-weak);
+        margin-left: 20px;
+      }
+      .buttonsContainer {
+        display: flex;
+
+        .noBorderButton {
+          border: 0;
+          cursor: pointer;
+          margin-right: 30px;
+          width: 20px;
+        }
+      }
+    }
+
+    @media screen and (max-width: 1024px) {
+      grid-column: 1 / 2;
+    }
+  }
+
+  @media screen and (max-width: 1024px) {
+    grid-template-columns: auto;
+  }
+}
+.pageError {
+  grid-row: 2/6;
+}
+.editor {
+  grid-column: 2 / auto;
+  grid-row: 2 / 3;
+
+  @media screen and (max-width: 1024px) {
+    grid-column: 1 / 2;
+  }
+}
+.hideElement {
+  display: none;
+}

@@ -160,33 +160,33 @@ export const patchUser: DetApi<
 };
 
 export const getUserSetting: DetApi<
-EmptyParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
-  > = {
-    name: 'getUserSetting',
-    postProcess: (response) => response,
-    request: () => detApi.Users.getUserSetting(),
-  };
+  EmptyParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
+> = {
+  name: 'getUserSetting',
+  postProcess: (response) => response,
+  request: () => detApi.Users.getUserSetting(),
+};
 
 export const updateUserSetting: DetApi<
-Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
-  > = {
-    name: 'updateUserSetting',
-    postProcess: (response) => response,
-    request: (params) => detApi.Users.postUserSetting(
-      {
-        setting: params.setting,
-        storagePath: params.storagePath,
-      },
-    ),
-  };
+  Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
+> = {
+  name: 'updateUserSetting',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.postUserSetting(
+    {
+      setting: params.setting,
+      storagePath: params.storagePath,
+    },
+  ),
+};
 
 export const resetUserSetting: DetApi<
   EmptyParams, Api.V1ResetUserSettingResponse, Api.V1ResetUserSettingResponse
-  > = {
-    name: 'resetUserSetting',
-    postProcess: (response) => response,
-    request: () => detApi.Users.resetUserSetting(),
-  };
+> = {
+  name: 'resetUserSetting',
+  postProcess: (response) => response,
+  request: () => detApi.Users.resetUserSetting(),
+};
 
 /* Info */
 
@@ -428,10 +428,7 @@ export const getExpTrials: DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map((trial) => ({
-        workloads: [],
-        ...decoder.decodeV1TrialToTrialItem(trial),
-      })),
+      trials: response.trials.map(decoder.decodeV1TrialToTrialItem),
     };
   },
   request: (params, options) => {
@@ -497,6 +494,30 @@ export const compareTrials: DetApi<
   ),
 };
 
+export const getExperimentFileTree: DetApi<
+  Service.ExperimentIdParams, Api.V1GetModelDefTreeResponse, Api.V1FileNode[]
+> = {
+  name: 'getModelDefTree',
+  postProcess: (response) => response.files || [],
+  request: (params) => {
+    return detApi.Experiments.getModelDefTree(params.experimentId);
+  },
+};
+
+export const getExperimentFileFromTree: DetApi<
+  Api.V1GetModelDefFileRequest, Api.V1GetModelDefFileResponse, string
+> = {
+  name: 'getModelDefFile',
+  postProcess: (response) => response.file || '',
+  request: (params) => {
+    return detApi.Experiments.getModelDefFile(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      params.experimentId!,
+      { path: params.path },
+    );
+  },
+};
+
 type TrialWorkloadFilterOption =
   'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT'
   | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION' | 'FILTER_OPTION_VALIDATION';
@@ -522,7 +543,7 @@ export const getTrialWorkloads: DetApi<
     params.limit,
     params.sortKey || 'batches',
     WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED']
-      || 'FILTER_OPTION_UNSPECIFIED',
+    || 'FILTER_OPTION_UNSPECIFIED',
   ),
 };
 
@@ -618,29 +639,29 @@ export const getModelVersion: DetApi<
 
 export const patchModel: DetApi<
   Service.PatchModelParams, Api.V1PatchModelResponse, Type.ModelItem | undefined>
- = {
-   name: 'patchModel',
-   postProcess: (response) => response.model ? decoder.mapV1Model(response.model) : undefined,
-   request: (params: Service.PatchModelParams) =>
-     detApi.Models.patchModel(
-       params.modelName,
-       params.body,
-     ),
- };
+  = {
+    name: 'patchModel',
+    postProcess: (response) => response.model ? decoder.mapV1Model(response.model) : undefined,
+    request: (params: Service.PatchModelParams) =>
+      detApi.Models.patchModel(
+        params.modelName,
+        params.body,
+      ),
+  };
 
 export const patchModelVersion: DetApi<
   Service.PatchModelVersionParams, Api.V1PatchModelVersionResponse, Type.ModelVersion | undefined>
- = {
-   name: 'patchModelVersion',
-   postProcess: (response) => response.modelVersion ?
-     decoder.mapV1ModelVersion(response.modelVersion) : undefined,
-   request: (params: Service.PatchModelVersionParams) =>
-     detApi.Models.patchModelVersion(
-       params.modelName,
-       params.versionId,
-       params.body,
-     ),
- };
+  = {
+    name: 'patchModelVersion',
+    postProcess: (response) => response.modelVersion ?
+      decoder.mapV1ModelVersion(response.modelVersion) : undefined,
+    request: (params: Service.PatchModelVersionParams) =>
+      detApi.Models.patchModelVersion(
+        params.modelName,
+        params.versionId,
+        params.body,
+      ),
+  };
 
 export const archiveModel: DetApi<
   Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void
@@ -801,10 +822,10 @@ export const getWorkspaceProjects: DetApi<
 };
 
 export const deleteWorkspace: DetApi<
-  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, Type.DeletionStatus
 > = {
   name: 'deleteWorkspace',
-  postProcess: noOp,
+  postProcess: decoder.mapDeletionStatus,
   request: (params) => detApi.Workspaces.deleteWorkspace(
     params.id,
   ),
@@ -934,10 +955,10 @@ export const patchProject: DetApi<
 };
 
 export const deleteProject: DetApi<
-  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, Type.DeletionStatus
 > = {
   name: 'deleteProject',
-  postProcess: noOp,
+  postProcess: decoder.mapDeletionStatus,
   request: (params) => detApi.Projects.deleteProject(params.id),
 };
 
@@ -1133,6 +1154,7 @@ export const getJobQueue: DetApi<
     params.limit,
     params.resourcePool,
     params.orderBy,
+    decoder.decodeJobStates(params.states),
   ),
 };
 

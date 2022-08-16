@@ -5,7 +5,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 import { paths } from 'routes/utils';
 import { createWorkspace } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
@@ -29,23 +29,34 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
     return (
       <div className={css.base}>
         <label className={css.label} htmlFor="name">Name</label>
-        <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
+        {/* Input doesnt have value prop due to cusor jump to the end of text */}
+        <Input defaultValue="" id="name" maxLength={80} onChange={handleNameInput} />
       </div>
     );
-  }, [ handleNameInput, name ]);
+  }, [ handleNameInput ]);
 
   const handleOk = useCallback(async () => {
     try {
       const response = await createWorkspace({ name });
       routeToReactUrl(paths.workspaceDetails(response.id));
     } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to create workspace.',
-        silent: false,
-        type: ErrorType.Server,
-      });
+      if (e instanceof DetError) {
+        handleError(e, {
+          level: e.level,
+          publicMessage: e.publicMessage,
+          publicSubject: 'Unable to create workspace.',
+          silent: false,
+          type: e.type,
+        });
+      } else {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to create workspace.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
     }
   }, [ name ]);
 

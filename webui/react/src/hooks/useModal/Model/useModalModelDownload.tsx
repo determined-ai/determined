@@ -41,7 +41,6 @@ const useModalModelDownload = ({ onClose }: Props = {}): ModalHooks => {
 
   const getModalProps = useCallback((version: ModelVersion) => {
     return {
-      bodyStyle: { padding: 0 },
       cancelText: 'Okay',
       closable: true,
       content: getModalContent(version),
