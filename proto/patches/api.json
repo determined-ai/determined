@@ -56,6 +56,14 @@
           }
         }
       }
+    },
+    "protobufAny": {
+      "properties": {
+        "typeUrl": {
+          "description": "https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"
+        }
+      },
+      "description": "https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"
     }
   }
 }
