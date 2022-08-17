@@ -269,7 +269,6 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("e.owner_id as user_id").
 		Column("u.username").
 		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
-		// TODO remove Switch from -> to ->>'name' to extra quotes showing in result.
 		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
 		ColumnExpr("e.config->>'name' as NAME").
 		ColumnExpr(
@@ -321,7 +320,6 @@ func (a *apiServer) GetExperiments(
 	default:
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
-
 	query = query.OrderExpr(orderExpr)
 
 	// Filtering
