@@ -1,13 +1,13 @@
 ---
-name: "publish helm chart"
+name: publish helm chart
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release Tag"
-        required: "true"
-        default: "0.0.0"
+        description: Release Tag
+        required: true
+        default: 0.0.0
         type: string
   release:
     types:
