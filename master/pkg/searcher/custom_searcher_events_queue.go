@@ -42,11 +42,6 @@ func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 	return q.events
 }
 
-// SetEvents sets the events.
-func (q *SearcherEventQueue) SetEvents(events []*experimentv1.SearcherEvent) {
-	q.events = events
-}
-
 // RemoveUpTo the given event Id.
 func (q *SearcherEventQueue) RemoveUpTo(eventID int) error {
 	for i, v := range q.events {
@@ -65,23 +60,23 @@ func (q *SearcherEventQueue) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	var searcherEQJSON searcherEventQueueJSON
-	searcherEQJSON.EventsJSON = marshaledPBEvents
-	searcherEQJSON.EventCount = q.eventCount
-	return json.Marshal(searcherEQJSON)
+	return json.Marshal(searcherEventQueueJSON{
+		EventsJSON: marshaledPBEvents,
+		EventCount: q.eventCount,
+	})
 }
 
 // UnmarshalJSON unmarshals searcherEventQueueJSON.
 func (q *SearcherEventQueue) UnmarshalJSON(sJSON []byte) error {
 	var searcherEQJSON searcherEventQueueJSON
-	err := json.Unmarshal(sJSON, &searcherEQJSON)
+	if err := json.Unmarshal(sJSON, &searcherEQJSON); err != nil {
+		return err
+	}
+	events, err := unmarshalPBEvents(searcherEQJSON.EventsJSON)
 	if err != nil {
 		return err
 	}
-	q.events, err = unmarshalPBEvents(searcherEQJSON.EventsJSON)
-	if err != nil {
-		return err
-	}
+	q.events = events
 	q.eventCount = searcherEQJSON.EventCount
 	return nil
 }
@@ -103,8 +98,7 @@ func unmarshalPBEvents(mEvents []json.RawMessage) ([]*experimentv1.SearcherEvent
 	unmarshaledPBEvents := make([]*experimentv1.SearcherEvent, 0)
 	for _, mEvent := range mEvents {
 		var pbEvent experimentv1.SearcherEvent
-		err := protojson.Unmarshal(mEvent, &pbEvent)
-		if err != nil {
+		if err := protojson.Unmarshal(mEvent, &pbEvent); err != nil {
 			return nil,
 				errors.Wrap(err, "failed to save unmarshal events list in (custom) SearcherEventQueue")
 		}
