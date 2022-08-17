@@ -1,7 +1,7 @@
 import json
-import subprocess
 import os
 import random
+import subprocess
 import sys
 import tempfile
 import time
@@ -38,8 +38,8 @@ def wait_for_gc_to_finish(experiment_id: int) -> None:
     print("Did not observe checkpoint gc start or finish!", file=sys.stderr)
 
 
-@pytest.mark.e2e_gpu 
-def test_set_gc_policy() -> None: 
+@pytest.mark.e2e_gpu
+def test_set_gc_policy() -> None:
     exp_id = exp.run_basic_test(
         config_file=conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
         model_def_file=conf.fixtures_path("no_op"),
@@ -49,26 +49,47 @@ def test_set_gc_policy() -> None:
     config = conf.load_config(str(conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml")))
     save_exp_best = config["checkpoint_storage"]["save_experiment_best"]
     save_trial_latest = config["checkpoint_storage"]["save_trial_latest"]
-    save_trial_best = 1 # default because not set in this config
+    save_trial_best = 1  # default because not set in this config
 
-    # Command that uses the same gc policy as initial policy used for the experiment. 
-    run_command_gc_policy(str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id))
+    # Command that uses the same gc policy as initial policy used for the experiment.
+    run_command_gc_policy(
+        str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id)
+    )
 
-    # Command that uses a diff gc policy from the initial policy used for the experiment. 
+    # Command that uses a diff gc policy from the initial policy used for the experiment.
     save_exp_best = 0
     save_trial_latest = 1
-    save_trial_best = 1 
-    run_command_gc_policy(str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id))
+    save_trial_best = 1
+    run_command_gc_policy(
+        str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id)
+    )
 
-def run_command_gc_policy(save_exp_best:str,save_trial_latest:str, save_trial_best:str, exp_id:str) -> None: 
-    command = ["det", "e", "set", "gc-policy", "--test", str(1), "--save-experiment-best", str(save_exp_best),  
-    "--save-trial-best" ,str(save_trial_best),  "--save-trial-latest", str(save_trial_latest), str(exp_id)]
+
+def run_command_gc_policy(
+    save_exp_best: str, save_trial_latest: str, save_trial_best: str, exp_id: str
+) -> None:
+    command = [
+        "det",
+        "e",
+        "set",
+        "gc-policy",
+        "--test",
+        str(1),
+        "--save-experiment-best",
+        str(save_exp_best),
+        "--save-trial-best",
+        str(save_trial_best),
+        "--save-trial-latest",
+        str(save_trial_latest),
+        str(exp_id),
+    ]
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr
     )
+
 
 @pytest.mark.e2e_gpu
 def test_gc_checkpoints_s3(secrets: Dict[str, str]) -> None:

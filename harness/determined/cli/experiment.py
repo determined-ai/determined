@@ -737,7 +737,7 @@ def set_gc_policy(args: Namespace) -> None:
         response = r.json()
         checkpoints = response["checkpoints"]
         metric_name = response["metric_name"]
-        
+
         headers = [
             "Trial ID",
             "# of Batches",
@@ -772,11 +772,15 @@ def set_gc_policy(args: Namespace) -> None:
             )
         )
 
-    if args.yes or args.test or render.yes_or_no(
-        "Changing the checkpoint garbage collection policy of an "
-        "experiment may result\n"
-        "in the unrecoverable deletion of checkpoints.  Do you wish to "
-        "proceed?"
+    if (
+        args.yes
+        or args.test
+        or render.yes_or_no(
+            "Changing the checkpoint garbage collection policy of an "
+            "experiment may result\n"
+            "in the unrecoverable deletion of checkpoints.  Do you wish to "
+            "proceed?"
+        )
     ):
         patch_experiment(args, "change gc policy of", {"checkpoint_storage": policy})
         print("Set GC policy of experiment {} to\n{}".format(args.experiment_id, pformat(policy)))

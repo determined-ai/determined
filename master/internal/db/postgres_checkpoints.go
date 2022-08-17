@@ -3,9 +3,10 @@ package db
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.

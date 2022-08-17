@@ -94,7 +94,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 
-	exp_config, err := m.db.ExperimentConfig(args.ExperimentID)
+	expConfig, err := m.db.ExperimentConfig(args.ExperimentID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +106,10 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		checkpoint["resources"] = cDB.Resources
 		checkpoint["end_time"] = cDB.ReportTime
 		checkpoint["state"] = cDB.State
-		validation_metrics := map[string]interface{}{"validation_metrics": cDB.CheckpointTrainingMetadata.ValidationMetrics}
-		validation := map[string]interface{}{"metrics": validation_metrics}
+		validationMetrics := map[string]interface{}{
+			"validation_metrics": cDB.CheckpointTrainingMetadata.ValidationMetrics,
+		}
+		validation := map[string]interface{}{"metrics": validationMetrics}
 		cStep := map[string]interface{}{
 			"total_batches": cDB.CheckpointTrainingMetadata.StepsCompleted,
 			"validation":    validation,
@@ -115,10 +117,12 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		checkpoint["step"] = cStep
 		checkpoints = append(checkpoints, checkpoint)
 	}
-	metricName := exp_config.Searcher().Metric()
-	checkpoints_metric := map[string]interface{}{"checkpoints": checkpoints, "metric_name": metricName}
+	metricName := expConfig.Searcher().Metric()
+	checkpointsWithMetric := map[string]interface{}{
+		"checkpoints": checkpoints, "metric_name": metricName,
+	}
 
-	return checkpoints_metric, nil
+	return checkpointsWithMetric, nil
 }
 
 // @Summary Get individual file from modal definitions for download.
