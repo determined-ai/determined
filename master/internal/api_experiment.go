@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
@@ -1583,13 +1584,31 @@ func (a *apiServer) MoveExperiment(
 	if err != nil {
 		return nil, err
 	}
-	p, err := a.GetProjectByID(req.DestinationProjectId, *curUser)
+
+	// check that user can view destination project
+	destProject, err := a.GetProjectByID(req.DestinationProjectId, *curUser)
 	if err != nil {
 		return nil, err
 	}
-	if p.Archived {
+	if destProject.Archived {
 		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
 			req.DestinationProjectId)
+	}
+
+	// get experiment info
+	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	// check that user can view source project
+	srcProject, err := a.GetProjectByID(exp.ProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(*curUser, srcProject,
+		destProject); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	holder := &experimentv1.Experiment{}
