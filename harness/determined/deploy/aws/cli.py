@@ -183,6 +183,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.IMAGE_REPO_PREFIX: args.image_repo_prefix,
         constants.cloudformation.MOUNT_EFS_ID: args.efs_id,
         constants.cloudformation.MOUNT_FSX_ID: args.fsx_id,
+        constants.cloudformation.AGENT_REATTACH_ENABLED: args.agent_reattach_enabled,
+        constants.cloudformation.AGENT_RECONNECT_ATTEMPTS: args.agent_reconnect_attempts,
+        constants.cloudformation.AGENT_RECONNECT_BACKOFF: args.agent_reconnect_backoff,
     }
 
     if args.master_config_template_path:
@@ -489,6 +492,23 @@ args_description = Cmd(
                     help="preexisting FSx that will be mounted into the task containers; "
                     "if not provided, a new FSx instance will be created. The agents must be "
                     "able to connect to the FSx instance.",
+                ),
+                Arg(
+                    "--agent-reattach-enabled",
+                    type=str,
+                    help="whether master & agent try to recover running containers after a restart",
+                ),
+                Arg(
+                    "--agent-reconnect-attempts",
+                    type=int,
+                    default=5,
+                    help="max attempts an agent has to reconnect",
+                ),
+                Arg(
+                    "--agent-reconnect-backoff",
+                    type=int,
+                    default=5,
+                    help="time between reconnect attempts, with the exception of the first.",
                 ),
                 Arg(
                     "--yes",

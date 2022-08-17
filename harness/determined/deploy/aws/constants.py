@@ -65,6 +65,9 @@ class cloudformation:
     MASTER_CONFIG_TEMPLATE = "MasterConfigTemplate"
     MOUNT_EFS_ID = "MountEFSId"
     MOUNT_FSX_ID = "MountFSxId"
+    AGENT_REATTACH_ENABLED = "AgentReattachEnabled"
+    AGENT_RECONNECT_ATTEMPTS = "AgentReconnectAttempts"
+    AGENT_RECONNECT_BACKOFF = "AgentReconnectBackoff"
 
 
 class misc:

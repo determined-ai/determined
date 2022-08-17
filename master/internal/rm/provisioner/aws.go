@@ -103,6 +103,8 @@ func newAWSCluster(
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
 			AgentFluentImage:             config.AgentFluentImage,
+			AgentReconnectAttempts:       config.AgentReconnectAttempts,
+			AgentReconnectBackoff:        config.AgentReconnectBackoff,
 			AgentID:                      `$(ec2metadata --instance-id)`,
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.BuildDockerLogString(),

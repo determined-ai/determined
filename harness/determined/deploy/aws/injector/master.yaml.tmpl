@@ -29,12 +29,14 @@ resource_manager:
 resource_pools:
   - pool_name: aux-pool
     max_aux_containers_per_agent: {{ .resource_pools.pools.aux_pool.max_aux_containers_per_agent }}
+    agent_reattach_enabled: {{ .resource_pools.pools.aux_pool.agent_reattach_enabled }}
     provider:
       instance_type: {{ .resource_pools.pools.aux_pool.instance_type }}
       {{- toYaml .resource_pools.aws | nindent 6}}
 
   - pool_name: compute-pool
     max_aux_containers_per_agent: 0
+    agent_reattach_enabled: {{ .resource_pools.pools.compute_pool.agent_reattach_enabled }}
     provider:
       instance_type: {{ .resource_pools.pools.compute_pool.instance_type }}
       cpu_slots_allowed: true
