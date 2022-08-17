@@ -44,7 +44,7 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = [ 'tags', 'name', 'users', 'description' ];
 
 const ModelRegistry: React.FC = () => {
-  const { users } = useStore();
+  const { users, auth: { user } } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ tags, setTags ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
@@ -273,11 +273,14 @@ const ModelRegistry: React.FC = () => {
 
     const menuItems: MenuProps['items'] = [
       { key: MenuKey.SWITCH_ARCHIVED, label: record.archived ? 'Unarchive' : 'Archive' },
-      { danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete Model' },
     ];
 
+    if (user?.id === record.userId || user?.isAdmin) {
+      menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete Model' });
+    }
+
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ showConfirmDelete, switchArchived ]);
+  }, [ showConfirmDelete, switchArchived, user?.id, user?.isAdmin ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelItem) => (
