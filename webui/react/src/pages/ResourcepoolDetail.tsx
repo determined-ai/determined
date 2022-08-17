@@ -41,11 +41,10 @@ enum TabType {
   Stats = 'stats',
   Configuration = 'configuration'
 }
-const DEFAULT_TAB_KEY = TabType.Active;
+export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetail: React.FC = () => {
-
-  const { poolname } = useParams<Params>();
+  const { poolname, tab } = useParams<Params>();
   const { agents, resourcePools } = useStore();
 
   const pool = useMemo(() => {
@@ -63,12 +62,10 @@ const ResourcepoolDetail: React.FC = () => {
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
   }, [ pool, agents ]);
 
-  const { tab } = useParams<Params>();
-
   const history = useHistory();
   const [ canceler ] = useState(new AbortController());
 
-  const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const [ tabKey, setTabKey ] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
   const [ poolStats, setPoolStats ] = useState<V1RPQueueStat>();
 
   const fetchStats = useCallback(async () => {
@@ -98,7 +95,13 @@ const ResourcepoolDetail: React.FC = () => {
   }, [ canceler, fetchStats ]);
 
   useEffect(() => {
-    setTabKey(tab || DEFAULT_TAB_KEY);
+    if (tab || !pool) return;
+    const basePath = paths.resourcePool(pool.name);
+    history.replace(`${basePath}/${DEFAULT_POOL_TAB_KEY}`);
+  }, [ history, pool, tab ]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_POOL_TAB_KEY);
   }, [ tab ]);
 
   const handleTabChange = useCallback((key) => {

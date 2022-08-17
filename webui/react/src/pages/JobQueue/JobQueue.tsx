@@ -16,7 +16,7 @@ import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } fro
 import * as Api from 'services/api-ts-sdk';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
-import { isEqual } from 'shared/utils/data';
+import { clone, isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
@@ -32,7 +32,7 @@ import ManageJob from './ManageJob';
 
 interface Props {
   bodyNoPadding?: boolean,
-  jobState?: JobState,
+  jobState: JobState,
   selectedRp: ResourcePool,
 }
 
@@ -92,7 +92,12 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     } finally {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
-  }, [ canceler.signal, selectedRp.name, settings, jobState ]);
+  }, [ settings.sortDesc,
+    settings.tableLimit,
+    settings.tableOffset,
+    selectedRp.name,
+    jobState,
+    canceler.signal ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -175,7 +180,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             );
           };
           break;
-        case SCHEDULING_VAL_KEY:
+        case SCHEDULING_VAL_KEY: {
+          const replaceIndex = settings.columns.findIndex((column) =>
+            column === 'priority' || column === 'weight' || column === 'resourcePool');
+          const newColumns = clone(settings.columns);
           switch (selectedRp.schedulerType) {
             case Api.V1SchedulerType.SLURM:
               col.title = 'Partition';
@@ -191,7 +199,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
               col.dataIndex = 'weight';
               break;
           }
+          if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
+          if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
           break;
+        }
         case 'jobsAhead':
           if (!isJobOrderAvailable) {
             col.sorter = undefined;
@@ -228,7 +239,13 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ dropDownOnTrigger, selectedRp, jobs, isJobOrderAvailable ]);
+  }, [ isJobOrderAvailable,
+    dropDownOnTrigger,
+    settings.columns,
+    settings.sortKey,
+    settings.sortDesc,
+    selectedRp.schedulerType,
+    updateSettings ]);
 
   useEffect(() => {
     fetchResourcePools();

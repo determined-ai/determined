@@ -1,6 +1,7 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { DEFAULT_POOL_TAB_KEY } from 'pages/ResourcepoolDetail';
 import { Determinedjobv1State } from 'services/api-ts-sdk';
 
 export type JobColumnName =
@@ -12,6 +13,8 @@ export type JobColumnName =
   | 'status'
   | 'slots'
   | 'priority'
+  | 'weight'
+  | 'resourcePool'
   | 'user';
 
 export const DEFAULT_COLUMNS: JobColumnName[] = [
@@ -30,23 +33,25 @@ export const DEFAULT_COLUMN_WIDTHS: Record<JobColumnName, number> = {
   name: 150,
   preemptible: 106,
   priority: 107,
+  resourcePool: 107,
   slots: 74,
   status: 106,
   submissionTime: 117,
   type: 75,
   user: 85,
+  weight: 107,
 };
 
 export interface Settings extends InteractiveTableSettings {
   sortKey: 'jobsAhead';
 }
 
-const routeSpaceForState = (s?: Determinedjobv1State): string =>
-  s === Determinedjobv1State.QUEUED ? '/queued'
-    : s === Determinedjobv1State.SCHEDULED ? '/active'
-      : '';
+const routeSpaceForState = (jobState: Determinedjobv1State): string =>
+  jobState === Determinedjobv1State.QUEUED ? '/queued'
+    : jobState === Determinedjobv1State.SCHEDULED ? '/active'
+      : `/${DEFAULT_POOL_TAB_KEY}`;
 
-const config = (jobState?: Determinedjobv1State): SettingsConfig => ({
+const config = (jobState: Determinedjobv1State): SettingsConfig => ({
   applicableRoutespace: routeSpaceForState(jobState),
   settings: [
     {
