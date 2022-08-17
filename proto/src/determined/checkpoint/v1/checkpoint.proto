@@ -48,7 +48,9 @@ message CheckpointTrainingMetadata {
 // Checkpoint a collection of files saved by a task.
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "uuid", "resources", "metadata", "training" ] }
+    json_schema: {
+      required: [ "uuid", "resources", "metadata", "training", "state" ]
+    }
   };
   // ID of the task which generated this checkpoint.
   string task_id = 1;
