@@ -354,8 +354,7 @@ def main():
         data_collator=collate_fn,
     )
 
-    det_callback = DetCallback(training_args, filter_metrics=['loss', 'accuracy'],
-                               checkpoint_metadata={'feature_extractor': feature_extractor})
+    det_callback = DetCallback(training_args, filter_metrics=['loss', 'accuracy'], tokenizer=feature_extractor)
     trainer.add_callback(det_callback)
 
     # Training

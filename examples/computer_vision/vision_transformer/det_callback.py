@@ -44,36 +44,26 @@ class DetCallback(TrainerCallback):
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
                **kwargs):
         if state.is_world_process_zero:
-            metric_type, metrics = self.process_log(logs)
-            if metric_type == 'train':
+            metrics = self.process_log(logs)
+            if 'loss' in metrics:
                 self.core_context.train.report_training_metrics(steps_completed=state.global_step, metrics=metrics)
-            elif metric_type == 'eval' or metric_type == 'test':
+            elif 'eval_loss' in metrics:
                 self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
                 self.last_eval_metrics = metrics
             else:
                 logging.warning(
-                    f"Metrics not reported: unknown metric type in {logs}. Metrics should start with eval, test or train.")
+                    f"Metrics not reported: unknown metric type in {logs}.")
 
-    def process_log(self, log):
-        metric_type = self._metric_type(log)
-        metrics = log
+    def process_log(self, logs: typing.Dict) -> typing.Dict:
+        metrics = logs
 
         if self.filter_metrics:
             metrics = {}
-            for k, v in log.items():
+            for k, v in logs.items():
                 if any(m in k for m in self.filter_metrics) is True:
                     metrics[k] = v
 
-        return metric_type, metrics
-
-    def _metric_type(self, d):
-        for k, v in d.items():
-            if k.startswith("eval"):
-                return "eval"
-            elif k.startswith("test"):
-                return "test"
-            else:
-                return "train"
+        return metrics
 
     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         info = self._det.get_cluster_info()
@@ -93,7 +83,10 @@ class DetCallback(TrainerCallback):
 
             self.core_context.checkpoint.upload(save_path, det_checkpoint_metadata)
 
-    def _on_save_user_data(self, save_path):
+        if self.core_context.preempt.should_preempt():
+            raise Exception("Process preempted / killed")
+
+    def _on_save_user_data(self, save_path) -> None:
         '''
         User-defined saving of objects from self.checkpoint_metadata under save_path.
         After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
@@ -101,7 +94,7 @@ class DetCallback(TrainerCallback):
         logging.warning("No implementation for _on_save_user_data. "
                         "Objects passed to the callback via checkpoint_metadata will not be saved.")
 
-    def load_last_checkpoint(self, args):
+    def load_last_checkpoint(self, args: typing.Dict) -> None:
         info = self._det.get_cluster_info()
         assert info is not None
         latest_checkpoint = info.latest_checkpoint
@@ -117,10 +110,9 @@ class DetCallback(TrainerCallback):
             checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
             self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
 
-    def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        if self.core_context.preempt.should_preempt():
-            return
+            args.resume_from_checkpoint = checkpoint_path
 
+    def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if state.epoch:
             if state.is_world_process_zero:
                 self.current_op.report_progress(state.epoch)
@@ -142,15 +134,15 @@ class DetCallback(TrainerCallback):
                     control.should_training_stop = True
 
 
-def is_determined_available():
+def is_determined_available() -> bool:
     return importlib.util.find_spec("determined") is not None
 
 
-def exit_context(context):
+def exit_context(context: det.core.Context) -> None:
     context.__exit__(None, None, None)
 
 
-def override_training_args(training_args):
+def override_training_args(training_args: typing.Any) -> typing.Any:
     hparams = det.get_cluster_info().trial.hparams
     for k, v in hparams.items():
         if hasattr(training_args, k):
