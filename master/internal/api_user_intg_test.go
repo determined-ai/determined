@@ -28,17 +28,14 @@ import (
 
 var (
 	pgDB      *db.PgDB
-	authzUser *mocks.UserAuthZ = &mocks.UserAuthZ{}
+	authzUser *mocks.UserAuthZ
 )
 
-func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
+func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 	if pgDB == nil {
 		pgDB = db.MustResolveTestPostgres(t)
 		db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
 		require.NoError(t, etc.SetRootPath("../static/srv"))
-
-		user.AuthZProvider.Register("mock", authzUser)
-		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	}
 
 	api := &apiServer{m: &Master{
@@ -48,14 +45,26 @@ func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User,
 		},
 	}}
 
-	user, err := pgDB.UserByUsername("determined")
-	require.NoError(t, err, "Couldn't get determined user")
-	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "determined"})
+	user, err := pgDB.UserByUsername("admin")
+	require.NoError(t, err, "Couldn't get admin user")
+	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
 	require.NoError(t, err, "Couldn't login")
 	ctx := metadata.NewIncomingContext(context.TODO(),
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
 
-	return api, authzUser, *user, ctx
+	return api, *user, ctx
+}
+
+func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
+	api, curUser, ctx := SetupAPITest(t)
+
+	if authzUser == nil {
+		authzUser = &mocks.UserAuthZ{}
+		user.AuthZProvider.Register("mock", authzUser)
+	}
+	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
+
+	return api, authzUser, curUser, ctx
 }
 
 func TestAuthzGetUsers(t *testing.T) {

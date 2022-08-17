@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -236,26 +238,55 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	return nil
 }
 
+func protoStateDBCaseString(
+	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
+) string {
+	query := fmt.Sprintf("CASE %s::text ", colName)
+	for enum, v := range enumToValue {
+		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
+	}
+	return query + fmt.Sprintf("END AS %s", serializedName)
+}
+
 func (a *apiServer) GetExperiments(
-	_ context.Context, req *apiv1.GetExperimentsRequest,
+	ctx context.Context, req *apiv1.GetExperimentsRequest,
 ) (*apiv1.GetExperimentsResponse, error) {
-	// Construct the experiment filtering expression.
-	var allStates []string
-	for _, state := range req.States {
-		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
-	}
-	stateFilterExpr := strings.Join(allStates, ",")
-	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0, len(req.UserIds))
-	for _, userID := range req.UserIds {
-		userIds = append(userIds, strconv.Itoa(int(userID)))
-	}
-	userIDFilterExpr := strings.Join(userIds, ",")
-	labelFilterExpr := strings.Join(req.Labels, ",")
-	archivedExpr := ""
-	if req.Archived != nil {
-		archivedExpr = strconv.FormatBool(req.Archived.Value)
-	}
+	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
+	query := db.Bun().NewSelect().
+		Model(&resp.Experiments).
+		ModelTableExpr("experiments as e").
+		Column("e.id").
+		ColumnExpr("e.config->>'description' AS description").
+		ColumnExpr("e.config->>'labels' AS labels").
+		ColumnExpr("proto_time(e.start_time) AS start_time").
+		ColumnExpr("proto_time(e.end_time) AS end_time").
+		ColumnExpr(protoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
+		Column("e.archived").
+		ColumnExpr(
+			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials").
+		// Intentionally not sending trial_ids due to performance.
+		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
+		ColumnExpr("e.owner_id as user_id").
+		Column("u.username").
+		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
+		// TODO remove Switch from -> to ->>'name' to extra quotes showing in result.
+		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
+		ColumnExpr("e.config->>'name' as NAME").
+		ColumnExpr(
+			"CASE WHEN NULLIF(e.notes, '') IS NULL THEN NULL ELSE 'omitted' END AS notes").
+		Column("e.job_id").
+		ColumnExpr("e.parent_id AS forked_from").
+		ColumnExpr("CASE WHEN e.progress IS NULL THEN NULL ELSE " +
+			"json_build_object('value', e.progress) END AS progress").
+		ColumnExpr("p.name AS project_name").
+		Column("e.project_id").
+		ColumnExpr("w.id AS workspace_id").
+		ColumnExpr("w.name AS workspace_name").
+		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
+		Column("e.config").
+		Join("JOIN users u ON e.owner_id = u.id").
+		Join("JOIN projects p ON e.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
@@ -291,22 +322,100 @@ func (a *apiServer) GetExperiments(
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 
-	resp := &apiv1.GetExperimentsResponse{}
-	return resp, a.m.db.QueryProtof(
-		"get_experiments",
-		[]interface{}{orderExpr},
-		resp,
-		stateFilterExpr,
-		archivedExpr,
-		userFilterExpr,
-		userIDFilterExpr,
-		labelFilterExpr,
-		req.Description,
-		req.Name,
-		req.ProjectId,
-		req.Offset,
-		req.Limit,
-	)
+	query = query.OrderExpr(orderExpr)
+
+	// Filtering
+	if req.Description != "" {
+		query = query.Where("e.config->>'description' ILIKE ('%%' || ? || '%%')", req.Description)
+	}
+	if req.Name != "" {
+		query = query.Where("e.config->>'name' ILIKE ('%%' || ? || '%%')", req.Name)
+	}
+	if len(req.Labels) > 0 {
+		// In the event labels were removed, if all were removed we insert null,
+		// which previously broke this query.
+		query = query.Where(`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
+				CASE WHEN e.config->'labels'::text = 'null'
+				THEN NULL
+				ELSE e.config->'labels' END
+			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
+	}
+	if req.Archived != nil {
+		query = query.Where("e.archived = ?", req.Archived.Value)
+	}
+	if len(req.States) > 0 {
+		var allStates []string
+		for _, state := range req.States {
+			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+		}
+		query = query.Where("e.state IN (?)", bun.In(allStates))
+	}
+	if len(req.Users) > 0 {
+		query = query.Where("u.username IN (?)", bun.In(req.Users))
+	}
+	if len(req.UserIds) > 0 {
+		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
+	}
+	if req.ProjectId != 0 {
+		query = query.Where("e.project_id = ?", req.ProjectId)
+	}
+
+	var err error
+	resp.Pagination, err = experimentsPagination(query, int(req.Offset), int(req.Limit))
+	if err != nil {
+		return nil, err
+	}
+
+	// Bun bug? Still getting results when Limit == 0.
+	if resp.Pagination.EndIndex-resp.Pagination.StartIndex != 0 {
+		if err = query.Scan(ctx); err != nil {
+			return nil, err
+		}
+	}
+	return resp, nil
+}
+
+func experimentsPagination(query *bun.SelectQuery, offset, limit int) (*apiv1.Pagination, error) {
+	// Count number of items without any limits or offsets.
+	total, err := query.Count(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate end and start indexes.
+	startIndex := offset
+	if offset > total || offset < -total {
+		startIndex = total
+	} else if offset < 0 {
+		startIndex = total + offset
+	}
+
+	endIndex := startIndex + limit
+	switch {
+	case limit == -2:
+		endIndex = startIndex
+	case limit == -1:
+		endIndex = total
+	case limit == 0:
+		endIndex = 100 + startIndex
+		if total < endIndex {
+			endIndex = total
+		}
+	case startIndex+limit > total:
+		endIndex = total
+	}
+
+	// Add start and end index to query.
+	query.Offset(startIndex)
+	query.Limit(endIndex - startIndex)
+
+	return &apiv1.Pagination{
+		Offset:     int32(offset),
+		Limit:      int32(limit),
+		Total:      int32(total),
+		StartIndex: int32(startIndex),
+		EndIndex:   int32(endIndex),
+	}, nil
 }
 
 func (a *apiServer) GetExperimentLabels(_ context.Context,
