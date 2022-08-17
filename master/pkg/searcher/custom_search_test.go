@@ -106,7 +106,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	require.Equal(t, searcherProgress, customSearchMethod.progress(nil, nil))
 
 	// Check removeUpto
-	err = queue.RemoveUpTo(2)
+	err = queue.RemoveUnder(3)
 	require.NoError(t, err)
 	require.Equal(t, expEvents[2:], queue.events)
 }
