@@ -17,8 +17,6 @@ type (
 	SearcherEventQueue struct {
 		events     []*experimentv1.SearcherEvent
 		eventCount int32 // stores the number of events in the queue.
-		// Will help with uniquely identifying an event.
-		searcherEQJSON searcherEventQueueJSON
 	}
 
 	searcherEventQueueJSON struct {
@@ -66,22 +64,25 @@ func (q *SearcherEventQueue) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	q.searcherEQJSON.EventsJSON = marshaledPBEvents
-	q.searcherEQJSON.EventCount = q.eventCount
-	return json.Marshal(q.searcherEQJSON)
+
+	var searcherEQJSON searcherEventQueueJSON
+	searcherEQJSON.EventsJSON = marshaledPBEvents
+	searcherEQJSON.EventCount = q.eventCount
+	return json.Marshal(searcherEQJSON)
 }
 
 // UnmarshalJSON unmarshals searcherEventQueueJSON.
 func (q *SearcherEventQueue) UnmarshalJSON(sJSON []byte) error {
-	err := json.Unmarshal(sJSON, &q.searcherEQJSON)
+	var searcherEQJSON searcherEventQueueJSON
+	err := json.Unmarshal(sJSON, &searcherEQJSON)
 	if err != nil {
 		return err
 	}
-	q.events, err = unmarshalPBEvents(q.searcherEQJSON.EventsJSON)
+	q.events, err = unmarshalPBEvents(searcherEQJSON.EventsJSON)
 	if err != nil {
 		return err
 	}
-	q.eventCount = q.searcherEQJSON.EventCount
+	q.eventCount = searcherEQJSON.EventCount
 	return nil
 }
 
