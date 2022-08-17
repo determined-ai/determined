@@ -99,13 +99,22 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	var checkpoints []map[string]interface{}
-	for i, cDB := range checkpointsDB {
-		checkpoints[i]["trial_id"] = cDB.CheckpointTrainingMetadata.TrialID
-		//cStep := cDB.
-		checkpoints[i]["step"] = ""
+	for _, cDB := range checkpointsDB {
+		checkpoint := make(map[string]interface{})
+		checkpoint["uuid"] = *cDB.UUID
+		checkpoint["trial_id"] = cDB.CheckpointTrainingMetadata.TrialID
+		checkpoint["resources"] = cDB.Resources
+		checkpoint["end_time"] = cDB.ReportTime
+		checkpoint["state"] = cDB.State
+		cStep := map[string]interface{}{
+			"total_batches": cDB.CheckpointTrainingMetadata.StepsCompleted,
+			"validation":    cDB.CheckpointTrainingMetadata.ValidationMetrics,
+		}
+		checkpoint["step"] = cStep
+		checkpoints = append(checkpoints, checkpoint)
 	}
 	metricName := exp_config.Searcher().Metric()
-	checkpoints_metric := map[string]interface{}{"checkpoints": checkpointsDB, "metric_name": metricName}
+	checkpoints_metric := map[string]interface{}{"checkpoints": checkpoints, "metric_name": metricName}
 
 	return checkpoints_metric, nil
 }

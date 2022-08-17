@@ -774,7 +774,7 @@ def set_gc_policy(args: Namespace) -> None:
             )
         )
 
-    if args.yes or render.yes_or_no(
+    if args.yes or args.test or render.yes_or_no(
         "Changing the checkpoint garbage collection policy of an "
         "experiment may result\n"
         "in the unrecoverable deletion of checkpoints.  Do you wish to "
@@ -1136,6 +1136,12 @@ main_cmd = Cmd(
                             action="store_true",
                             default=False,
                             help="automatically answer yes to prompts",
+                        ),
+                        Arg(
+                            "--test",
+                            type=int,
+                            default=False,
+                            help="for an internal e2e test",
                         ),
                     ],
                 ),

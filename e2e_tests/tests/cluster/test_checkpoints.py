@@ -46,9 +46,6 @@ def test_set_gc_policy() -> None:
         expected_trials=1,
     )
 
-    trial_id = exp.experiment_first_trial(exp_id)
-    output_dir = f"e2etest_trial_{trial_id}"
-    os.mkdir(output_dir)
     config = conf.load_config(str(conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml")))
     save_exp_best = config["checkpoint_storage"]["save_experiment_best"]
     save_trial_latest = config["checkpoint_storage"]["save_trial_latest"]
@@ -64,7 +61,7 @@ def test_set_gc_policy() -> None:
     run_command_gc_policy(str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id))
 
 def run_command_gc_policy(save_exp_best:str,save_trial_latest:str, save_trial_best:str, exp_id:str) -> None: 
-    command = ["det", "e", "set", "gc-policy",  "--save-experiment-best", str(save_exp_best),  
+    command = ["det", "e", "set", "gc-policy", "--test", str(1), "--save-experiment-best", str(save_exp_best),  
     "--save-trial-best" ,str(save_trial_best),  "--save-trial-latest", str(save_trial_latest), str(exp_id)]
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
