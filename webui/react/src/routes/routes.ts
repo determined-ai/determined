@@ -154,12 +154,12 @@ const routes: RouteConfig[] = [
   {
     id: 'resourcepool',
     needAuth: true,
-    path: '/resourcepool/:poolname',
+    path: '/resourcepool/:poolname/:tab',
   },
   {
     id: 'resourcepool',
     needAuth: true,
-    path: '/resourcepool/:poolname/:tab',
+    path: '/resourcepool/:poolname',
   },
   {
     icon: 'logs',
