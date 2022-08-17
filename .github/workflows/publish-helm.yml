@@ -16,7 +16,7 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   publish:
     name: publish
-    if: ${{ github.repository == "determined-ai/determined" }}
+    if: github.repository == 'determined-ai/determined'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,13 +24,13 @@ jobs:
       NEW_CHART_DIR: /tmp/newchart
     steps:
       # figure out release ID based on how we were run
-      - if: github.event_name == "release"
+      - if: github.event_name == 'release'
         run: |
           # does github.event have the id in it already?  Hmm...
           #API=repos/{{ github.repository }}/releases/latest
           #gh api $API -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
           printf 'rel_id={{ github.event.release.id }}\n' >> $GITHUB_ENV
-      - if: ${{ github.event_name == "workflow-dispatch" }}
+      - if: github.event_name == 'workflow-dispatch'
         run: |
           API=repos/{{ github.repository }}/releases/latest/{{ inputs.tag }}
           gh api $API -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
