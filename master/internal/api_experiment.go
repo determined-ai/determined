@@ -1606,6 +1606,11 @@ func (a *apiServer) MoveExperiment(
 	if err != nil {
 		return nil, err
 	}
+	if srcProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it.",
+			srcProject.Id)
+	}
+
 	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(*curUser, srcProject,
 		destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())

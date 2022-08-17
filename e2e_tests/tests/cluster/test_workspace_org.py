@@ -344,8 +344,12 @@ def test_workspace_org() -> None:
             bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody2)
         bindings.post_UnarchiveProject(sess, id=made_project.id)
 
-        # Moving an experiment into default project
-        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody2)
+        # Non-admin user cannot move experiment into default project
+        with pytest.raises(errors.ForbiddenException):
+            bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody2)
+
+        # Moving an experiment into default project (by admin)
+        bindings.post_MoveExperiment(admin_sess, experimentId=test_exp_id, body=mbody2)
 
         # Cannot move an experiment into an archived project
         bindings.post_ArchiveProject(sess, id=made_project.id)
