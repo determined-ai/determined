@@ -18,7 +18,7 @@ import importlib.util
 class DetCallback(TrainerCallback):
 
     def __init__(self, args: typing.Dict, filter_metrics: typing.List = None,
-                 tokenizer=None, tokenizer_options=None,
+                 tokenizer: typing.Any = None, tokenizer_options: typing.Dict = None,
                  checkpoint_metadata: typing.Dict = None) -> None:
         super().__init__()
 
@@ -37,6 +37,7 @@ class DetCallback(TrainerCallback):
         self.load_last_checkpoint(args)
 
         self.last_eval_metrics = None
+        self.searcher_metric = self._det.get_cluster_info().trial._config['searcher']['metric']
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
 
@@ -50,14 +51,14 @@ class DetCallback(TrainerCallback):
                 self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
                 self.last_eval_metrics = metrics
             else:
-                # can that even happen?
-                pass
+                logging.warning(
+                    f"Metrics not reported: unknown metric type in {logs}. Metrics should start with eval, test or train.")
 
     def process_log(self, log):
         metric_type = self._metric_type(log)
         metrics = log
 
-        if self.filter_metrics is not None:
+        if self.filter_metrics:
             metrics = {}
             for k, v in log.items():
                 if any(m in k for m in self.filter_metrics) is True:
@@ -79,25 +80,26 @@ class DetCallback(TrainerCallback):
         assert info is not None
         if state.is_world_process_zero:
             save_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
-            det_checkpoint__metadata = {"steps_completed": state.global_step, "trial_id": info.trial.trial_id}
+            det_checkpoint_metadata = {"steps_completed": state.global_step, "trial_id": info.trial.trial_id}
 
             if self.tokenizer_options is not None:
-                det_checkpoint__metadata['tokenizer_options'] = self.tokenizer_options
+                det_checkpoint_metadata['tokenizer_options'] = self.tokenizer_options
 
             if self.tokenizer is not None:
                 self.tokenizer.save_pretrained(os.path.join(save_path, "tokenizer"))
 
             if self.user_checkpoint_metadata is not None:
-                self._on_save(save_path)
+                self._on_save_user_data(save_path)
 
-            self.core_context.checkpoint.upload(save_path, det_checkpoint__metadata)
+            self.core_context.checkpoint.upload(save_path, det_checkpoint_metadata)
 
-    def _on_save(self, save_path):
+    def _on_save_user_data(self, save_path):
         '''
         User-defined saving of objects from self.checkpoint_metadata under save_path.
-        After objects are saved, det handles uploading and downloading objects to/from selected storage.
+        After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
         '''
-        pass
+        logging.warning("No implementation for _on_save_user_data. "
+                        "Objects passed to the callback via checkpoint_metadata will not be saved.")
 
     def load_last_checkpoint(self, args):
         info = self._det.get_cluster_info()
@@ -118,10 +120,22 @@ class DetCallback(TrainerCallback):
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.core_context.preempt.should_preempt():
             return
-        if state.epoch and state.is_world_process_zero:
-            self.current_op.report_progress(state.epoch)
+
+        if state.epoch:
+            if state.is_world_process_zero:
+                self.current_op.report_progress(state.epoch)
+
             if round(state.epoch) >= self.current_op.length:
-                self.current_op.report_completed(self.last_eval_metrics['eval_loss'])
+                if state.is_world_process_zero:
+                    if self.searcher_metric not in self.last_eval_metrics:
+                        logging.warning(
+                            f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
+                            f"of the evaluation metrics in {self.last_eval_metrics}. "
+                            f"Proceeding with state.best_metric.")
+                        self.current_op.report_completed(state.best_metric)
+                    else:
+                        self.current_op.report_completed(self.last_eval_metrics[self.searcher_metric])
+
                 try:
                     self.current_op = next(self.searcher_ops)
                 except StopIteration:

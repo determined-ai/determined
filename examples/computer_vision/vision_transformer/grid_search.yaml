@@ -1,6 +1,4 @@
 name: grid search
-#workspace: Deepspeed
-#project: VisionTransformer
 debug: false
 environment:
   environment_variables:
