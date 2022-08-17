@@ -13,6 +13,7 @@ import {
   stateToLabel,
   terminalRunStates,
 } from 'constants/states';
+import { CharLength } from 'constants/values';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
@@ -362,9 +363,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
               <InlineEditor
-                allowNewline
+                allowNewline={true}
                 disabled={disabled}
-                maxLength={500}
+                maxLength={CharLength.Limit512}
                 placeholder={disabled ? 'Archived' : 'Add description...'}
                 style={{ minWidth: 120 }}
                 value={experiment.description || ''}
@@ -434,7 +435,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.name}>
               <InlineEditor
                 disabled={disabled}
-                maxLength={128}
+                maxLength={CharLength.Limit64}
                 placeholder="experiment name"
                 value={experiment.name}
                 onSave={handleNameUpdate}

@@ -9,6 +9,7 @@ import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
+import { CharLength } from 'constants/values';
 import { useStore } from 'contexts/Store';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import { paths } from 'routes/utils';
@@ -53,7 +54,9 @@ const ModelHeader: React.FC<Props> = ({
     {
       content: (
         <InlineEditor
+          allowNewline={true}
           disabled={model.archived}
+          maxLength={CharLength.Limit512}
           placeholder={model.archived ? 'Archived' : 'Add description...'}
           value={model.description ?? ''}
           onSave={onSaveDescription}
@@ -136,6 +139,7 @@ const ModelHeader: React.FC<Props> = ({
               <InlineEditor
                 allowClear={false}
                 disabled={model.archived}
+                maxLength={CharLength.Limit64}
                 placeholder="Add name..."
                 value={model.name}
                 onSave={onSaveName}

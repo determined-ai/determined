@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
+import { CharLength } from 'constants/values';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
@@ -152,11 +153,15 @@ const useModalModelCreate = (): ModalHooks => {
         <div>
           <h2>Model name</h2>
           {/* Input doesnt have value prop due to cusor jump to the end of text */}
-          <Input defaultValue="" onChange={updateModelName} />
+          <Input defaultValue="" maxLength={CharLength.Limit64} onChange={updateModelName} />
         </div>
         <div>
           <h2>Description <span>(optional)</span></h2>
-          <Input.TextArea defaultValue="" onChange={updateModelDescription} />
+          <Input.TextArea
+            defaultValue=""
+            maxLength={CharLength.Limit512}
+            onChange={updateModelDescription}
+          />
         </div>
         {expandDetails ? (
           <>

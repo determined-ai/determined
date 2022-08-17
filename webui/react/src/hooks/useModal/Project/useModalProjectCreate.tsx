@@ -2,6 +2,7 @@ import { Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { CharLength } from 'constants/values';
 import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -37,12 +38,22 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         <div>
           <label className={css.label} htmlFor="name">Name</label>
           {/* Input doesnt have value prop due to cusor jump to the end of text */}
-          <Input defaultValue="" id="name" maxLength={80} onChange={handleNameInput} />
+          <Input
+            defaultValue=""
+            id="name"
+            maxLength={CharLength.Limit64}
+            onChange={handleNameInput}
+          />
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
           {/* Input doesnt have value prop due to cusor jump to the end of text */}
-          <Input defaultValue="" id="description" onChange={handleDescriptionInput} />
+          <Input
+            defaultValue=""
+            id="description"
+            maxLength={CharLength.Limit512}
+            onChange={handleDescriptionInput}
+          />
         </div>
       </div>
     );

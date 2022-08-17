@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
+import { CharLength } from 'constants/values';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
@@ -51,9 +52,9 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
         <h1 className={css.name}>
           <InlineEditor
             disabled={workspace.immutable ||
-                 workspace.archived
+                workspace.archived
                 || (!curUser?.isAdmin && curUser?.id !== workspace.userId)}
-            maxLength={80}
+            maxLength={CharLength.Limit64}
             value={workspace.name}
             onSave={handleNameChange}
           />

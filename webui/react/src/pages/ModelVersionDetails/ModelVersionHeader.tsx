@@ -9,6 +9,7 @@ import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
+import { CharLength } from 'constants/values';
 import { useStore } from 'contexts/Store';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
@@ -80,7 +81,9 @@ const ModelVersionHeader: React.FC<Props> = ({
     {
       content: (
         <InlineEditor
+          allowNewline={true}
           disabled={modelVersion.model.archived}
+          maxLength={CharLength.Limit512}
           placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
           value={modelVersion.comment ?? ''}
           onSave={onSaveDescription}
@@ -207,6 +210,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
               <InlineEditor
                 allowClear={false}
                 disabled={modelVersion.model.archived}
+                maxLength={CharLength.Limit64}
                 placeholder="Add name..."
                 value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
                 onSave={onSaveName}

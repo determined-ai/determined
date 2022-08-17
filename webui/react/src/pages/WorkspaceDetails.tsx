@@ -14,6 +14,7 @@ import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
 import Toggle from 'components/Toggle';
+import { CharLength } from 'constants/values';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -172,7 +173,9 @@ const WorkspaceDetails: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: Project) => (
       <InlineEditor
+        allowNewline={true}
         disabled={record.archived}
+        maxLength={CharLength.Limit512}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}

@@ -3,6 +3,7 @@ import React, { useCallback } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import Avatar from 'components/UserAvatar';
+import { CharLength } from 'constants/values';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
@@ -57,7 +58,7 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Display Name</label>
         <InlineEditor
-          maxLength={32}
+          maxLength={CharLength.Limit32}
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
           value={auth.user?.displayName || ''}

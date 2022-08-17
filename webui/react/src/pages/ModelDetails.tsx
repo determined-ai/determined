@@ -11,6 +11,7 @@ import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import { CharLength } from 'constants/values';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePolling from 'hooks/usePolling';
@@ -153,7 +154,9 @@ const ModelDetails: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: ModelVersion) => (
       <InlineEditor
+        allowNewline={true}
         disabled={record.model.archived}
+        maxLength={CharLength.Limit512}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         value={record.comment ?? ''}
         onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}

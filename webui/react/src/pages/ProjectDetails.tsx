@@ -24,6 +24,7 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
+import { CharLength } from 'constants/values';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -340,8 +341,9 @@ const ProjectDetails: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
       <InlineEditor
+        allowNewline={true}
         disabled={record.archived}
-        maxLength={500}
+        maxLength={CharLength.Limit512}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}

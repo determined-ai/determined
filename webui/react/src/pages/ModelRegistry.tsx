@@ -15,6 +15,7 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
+import { CharLength } from 'constants/values';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
@@ -304,7 +305,9 @@ const ModelRegistry: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: ModelItem) => (
       <InlineEditor
+        allowNewline={true}
         disabled={record.archived}
+        maxLength={CharLength.Limit512}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveModelDescription(record.name, newDescription)}
