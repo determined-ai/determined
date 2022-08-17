@@ -182,7 +182,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           break;
         case SCHEDULING_VAL_KEY: {
           const replaceIndex = settings.columns.findIndex((column) =>
-            column === 'priority' || column === 'weight' || column === 'resourcePool');
+            [ 'priority', 'weight', 'resourcePool' ].includes(column));
           const newColumns = clone(settings.columns);
           switch (selectedRp.schedulerType) {
             case Api.V1SchedulerType.SLURM:

@@ -46,10 +46,11 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: 'jobsAhead';
 }
 
-const routeSpaceForState = (jobState: Determinedjobv1State): string =>
-  jobState === Determinedjobv1State.QUEUED ? '/queued'
-    : jobState === Determinedjobv1State.SCHEDULED ? '/active'
-      : `/${DEFAULT_POOL_TAB_KEY}`;
+const routeSpaceForState = (jobState: Determinedjobv1State): string => {
+  if (jobState === Determinedjobv1State.QUEUED) return '/queued';
+  if (jobState === Determinedjobv1State.SCHEDULED) return '/active';
+  return `/${DEFAULT_POOL_TAB_KEY}`;
+};
 
 const config = (jobState: Determinedjobv1State): SettingsConfig => ({
   applicableRoutespace: routeSpaceForState(jobState),
