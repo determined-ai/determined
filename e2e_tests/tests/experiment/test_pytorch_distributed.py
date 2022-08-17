@@ -17,7 +17,7 @@ def test_gradient_aggregation() -> None:
     actual_weights = []
     for wl in workloads:
         if wl.metrics:
-            actual_weights.append(wl.metrics["weight"])
+            actual_weights.append(wl.metrics.avgMetrics["weight"])
 
     # independently compute expected metrics
     batch_size = 4

@@ -9,7 +9,7 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import tabulate
 
@@ -20,10 +20,12 @@ from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.session import setup_session
+from determined.cli.util import limit_offset_paginator
+from determined.cli.util import pagination_args_fetchall as pagination_args
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined, session
+from determined.common.experimental import Determined
 
 from .checkpoint import render_checkpoint
 from .project import project_by_name
@@ -205,26 +207,6 @@ def create(args: Namespace) -> None:
         submit_experiment(args)
 
 
-def limit_offset_paginator(
-    method: Callable,
-    agg_field: str,
-    sess: session.Session,
-    limit: int = 200,
-    offset: Optional[int] = None,
-    **kwargs: Any,
-) -> List[Any]:
-    all_objects: List[Any] = []
-    internal_offset = offset or 0
-    while True:
-        r = method(sess, limit=limit, offset=internal_offset, **kwargs)
-        page_objects = getattr(r, agg_field)
-        all_objects += page_objects
-        internal_offset += len(page_objects)
-        if offset is not None or len(page_objects) < limit:
-            break
-    return all_objects
-
-
 @authentication.required
 def delete_experiment(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
@@ -373,8 +355,12 @@ def describe(args: Namespace) -> None:
                 if workload.training:
                     wl_detail = workload.training
                     for name in t_metrics_names:
-                        if wl_detail.metrics and (name in wl_detail.metrics):
-                            t_metrics_fields.append(wl_detail.metrics[name])
+                        if (
+                            wl_detail.metrics
+                            and wl_detail.metrics.avgMetrics
+                            and (name in wl_detail.metrics.avgMetrics)
+                        ):
+                            t_metrics_fields.append(wl_detail.metrics.avgMetrics[name])
                         else:
                             t_metrics_fields.append(None)
                 else:
@@ -396,8 +382,12 @@ def describe(args: Namespace) -> None:
                     validation_state = wl_detail.state.value
                     validation_end_time = wl_detail.endTime
                     for name in v_metrics_names:
-                        if wl_detail.metrics and (name in wl_detail.metrics):
-                            v_metrics_fields.append(wl_detail.metrics[name])
+                        if (
+                            wl_detail.metrics
+                            and wl_detail.metrics.avgMetrics
+                            and (name in wl_detail.metrics.avgMetrics)
+                        ):
+                            v_metrics_fields.append(wl_detail.metrics.avgMetrics[name])
                         else:
                             v_metrics_fields.append(None)
                 else:
@@ -617,7 +607,7 @@ def scalar_training_metrics_names(
             metrics = workload.training.metrics
             if not metrics:
                 continue
-            return set(metrics.keys())
+            return set(metrics.avgMetrics.keys())
 
     return set()
 
@@ -630,7 +620,7 @@ def scalar_validation_metrics_names(
             metrics = workload.validation.metrics
             if not metrics:
                 continue
-            return set(metrics.keys())
+            return set(metrics.avgMetrics.keys())
 
     return set()
 
@@ -820,22 +810,6 @@ def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help)
 
 
-# do not use util.py's pagination_args because default behavior here is
-# to hide pagination and unify all experiment pages into one output
-pagination_args = [
-    Arg(
-        "--limit",
-        type=int,
-        default=200,
-        help="Maximum items per page of results",
-    ),
-    Arg(
-        "--offset",
-        type=int,
-        default=None,
-        help="Number of items to skip before starting page of results",
-    ),
-]
 main_cmd = Cmd(
     "e|xperiment",
     None,

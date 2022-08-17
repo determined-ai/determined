@@ -792,6 +792,7 @@ class v1CheckpointWorkload:
         state: "determinedcheckpointv1State",
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         resources: "typing.Optional[typing.Dict[str, str]]" = None,
         uuid: "typing.Optional[str]" = None,
     ):
@@ -800,6 +801,7 @@ class v1CheckpointWorkload:
         self.state = state
         self.resources = resources
         self.totalBatches = totalBatches
+        self.metadata = metadata
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CheckpointWorkload":
@@ -809,6 +811,7 @@ class v1CheckpointWorkload:
             state=determinedcheckpointv1State(obj["state"]),
             resources=obj.get("resources", None),
             totalBatches=obj["totalBatches"],
+            metadata=obj.get("metadata", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -818,6 +821,7 @@ class v1CheckpointWorkload:
             "state": self.state.value,
             "resources": self.resources if self.resources is not None else None,
             "totalBatches": self.totalBatches,
+            "metadata": self.metadata if self.metadata is not None else None,
         }
 
 class v1Command:
@@ -3478,7 +3482,7 @@ class v1MetricsWorkload:
     def __init__(
         self,
         *,
-        metrics: "typing.Dict[str, typing.Any]",
+        metrics: "v1Metrics",
         numInputs: int,
         state: "determinedexperimentv1State",
         totalBatches: int,
@@ -3495,7 +3499,7 @@ class v1MetricsWorkload:
         return cls(
             endTime=obj.get("endTime", None),
             state=determinedexperimentv1State(obj["state"]),
-            metrics=obj["metrics"],
+            metrics=v1Metrics.from_json(obj["metrics"]),
             numInputs=obj["numInputs"],
             totalBatches=obj["totalBatches"],
         )
@@ -3504,7 +3508,7 @@ class v1MetricsWorkload:
         return {
             "endTime": self.endTime if self.endTime is not None else None,
             "state": self.state.value,
-            "metrics": self.metrics,
+            "metrics": self.metrics.to_json(),
             "numInputs": self.numInputs,
             "totalBatches": self.totalBatches,
         }
@@ -5978,17 +5982,15 @@ class v1TrialMetrics:
     def __init__(
         self,
         *,
-        metrics: "typing.Dict[str, typing.Any]",
+        metrics: "v1Metrics",
         stepsCompleted: int,
         trialId: int,
         trialRunId: int,
-        batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
     ):
         self.trialId = trialId
         self.trialRunId = trialRunId
         self.stepsCompleted = stepsCompleted
         self.metrics = metrics
-        self.batchMetrics = batchMetrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialMetrics":
@@ -5996,8 +5998,7 @@ class v1TrialMetrics:
             trialId=obj["trialId"],
             trialRunId=obj["trialRunId"],
             stepsCompleted=obj["stepsCompleted"],
-            metrics=obj["metrics"],
-            batchMetrics=obj.get("batchMetrics", None),
+            metrics=v1Metrics.from_json(obj["metrics"]),
         )
 
     def to_json(self) -> typing.Any:
@@ -6005,8 +6006,7 @@ class v1TrialMetrics:
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
             "stepsCompleted": self.stepsCompleted,
-            "metrics": self.metrics,
-            "batchMetrics": self.batchMetrics if self.batchMetrics is not None else None,
+            "metrics": self.metrics.to_json(),
         }
 
 class v1TrialProfilerMetricLabels:
@@ -7995,6 +7995,7 @@ def get_GetTrialWorkloads(
     *,
     trialId: int,
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
+    includeBatchMetrics: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
@@ -8002,6 +8003,7 @@ def get_GetTrialWorkloads(
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
         "filter": filter.value if filter is not None else None,
+        "includeBatchMetrics": str(includeBatchMetrics).lower() if includeBatchMetrics is not None else None,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,

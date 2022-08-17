@@ -1,6 +1,7 @@
 import json
 import multiprocessing as mp
-from typing import Set, Union
+import subprocess
+from typing import Dict, List, Set, Union
 
 import pytest
 
@@ -343,3 +344,34 @@ def request_hp_importance(experiment_id):  # type: ignore
             if not valid_importance(metric["hpImportance"][hparam]):
                 return ("Unexpected importance for hparam %s" % hparam, lastResult)
     return None
+
+
+@pytest.mark.e2e_cpu
+def test_trial_describe_metrics() -> None:
+    exp_id = exp.run_basic_test(
+        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), 1
+    )
+    trials = exp.experiment_trials(exp_id)
+    trial_id = trials[0].trial.id
+
+    cmd = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "trial",
+        "describe",
+        "--json",
+        "--metrics",
+        str(trial_id),
+    ]
+
+    output = json.loads(subprocess.check_output(cmd))
+
+    workloads = output["workloads"]
+    assert len(workloads) == 102
+    flattened_batch_metrics: List[Dict[str, float]] = sum(
+        (w["training"]["metrics"]["batchMetrics"] for w in workloads if w["training"]), []
+    )
+    losses = [m["loss"] for m in flattened_batch_metrics]
+
+    assert len(losses) == 100

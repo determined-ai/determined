@@ -83,10 +83,12 @@ class TrainContext:
         body = {
             "trial_run_id": self._run_id,
             "steps_completed": steps_completed,
-            "metrics": metrics,
+            "metrics": {
+                "avg_metrics": metrics,
+            },
         }
         if batch_metrics is not None:
-            body["batch_metrics"] = batch_metrics
+            body["metrics"]["batch_metrics"] = batch_metrics  # type: ignore
         logger.info(
             f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
@@ -167,7 +169,9 @@ class TrainContext:
         body = {
             "trial_run_id": self._run_id,
             "steps_completed": steps_completed,
-            "metrics": reportable_metrics,
+            "metrics": {
+                "avg_metrics": reportable_metrics,
+            },
         }
         logger.info(
             f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"

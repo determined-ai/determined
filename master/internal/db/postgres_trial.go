@@ -192,8 +192,8 @@ VALUES
 			TrialRunID: int(m.TrialRunId),
 			State:      model.CompletedState,
 			Metrics: map[string]interface{}{
-				"avg_metrics":   m.Metrics,
-				"batch_metrics": m.BatchMetrics,
+				"avg_metrics":   m.Metrics.AvgMetrics,
+				"batch_metrics": m.Metrics.BatchMetrics,
 			},
 			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
@@ -241,7 +241,7 @@ VALUES
 			TrialRunID: int(m.TrialRunId),
 			State:      model.CompletedState,
 			Metrics: map[string]interface{}{
-				"validation_metrics": m.Metrics,
+				"validation_metrics": m.Metrics.AvgMetrics,
 			},
 			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
