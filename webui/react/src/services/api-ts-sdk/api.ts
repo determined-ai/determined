@@ -4404,10 +4404,10 @@ export interface V1PatchExperiment {
     description?: string;
     /**
      * Labels attached to the experiment.
-     * @type {Array<any>}
+     * @type {Array<string>}
      * @memberof V1PatchExperiment
      */
-    labels?: Array<any>;
+    labels?: Array<string>;
     /**
      * The experiment name.
      * @type {string}
@@ -4462,10 +4462,10 @@ export interface V1PatchModel {
     metadata?: any;
     /**
      * An updated label list for the model.
-     * @type {Array<any>}
+     * @type {Array<string>}
      * @memberof V1PatchModel
      */
-    labels?: Array<any>;
+    labels?: Array<string>;
     /**
      * Updated notes associated with this model.
      * @type {string}
@@ -4520,10 +4520,10 @@ export interface V1PatchModelVersion {
     comment?: string;
     /**
      * An updated label list for the model version.
-     * @type {Array<any>}
+     * @type {Array<string>}
      * @memberof V1PatchModelVersion
      */
-    labels?: Array<any>;
+    labels?: Array<string>;
     /**
      * Updated text notes for the model version.
      * @type {string}

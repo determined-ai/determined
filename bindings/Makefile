@@ -51,11 +51,11 @@ check: force-gen check/python check/typescript-fetch
 
 .PHONY: check-python
 check/python: build/python
-	test -z "$(shell git status --porcelain $(py_bindings_dest))"
+	test -z "$(shell git status --porcelain $(py_bindings_dest))" || (git diff; false)
 
 .PHONY: check-typescript-fetch
 check/typescript-fetch: build/typescript-fetch
-	test -z "$(shell git status --porcelain $(ts_bindings_dest)/*)"
+	test -z "$(shell git status --porcelain $(ts_bindings_dest)/*)" || (git diff; false)
 
 .PHONY: clean-deps
 clean-deps:
