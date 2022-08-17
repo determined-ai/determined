@@ -522,6 +522,9 @@ commands:
       log-group-prefix:
         type: string
         default: ""
+      reattach-enabled:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Initialize extra arguments
@@ -546,6 +549,14 @@ commands:
           command: |
             if <<parameters.retain-log-group>>; then echo "--retain-log-group" >> /tmp/det-deploy-extra-args; fi
             if [ -n "<<parameters.log-group-prefix>>" ]; then echo "--log-group-prefix <<parameters.log-group-prefix>>" >> /tmp/det-deploy-extra-args; fi
+      - when:
+          condition:
+            equal:
+              [ true, <<parameters.reattach-enabled>> ]
+          steps:
+          - run:
+              name: set reattach-enabled
+              command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
           command: |
@@ -1745,6 +1756,9 @@ jobs:
       enable-cors:
         type: boolean
         default: false
+      reattach-enabled:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1766,6 +1780,7 @@ jobs:
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           enable-cors: <<parameters.enable-cors>>
+          reattach-enabled: <<parameters.reattach-enabled>>
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
@@ -2283,6 +2298,7 @@ workflows:
       - deploy:
           name: deploy-latest-master-cluster
           enable-cors: true
+          reattach-enabled: true
           context: aws
           filters:
             branches:

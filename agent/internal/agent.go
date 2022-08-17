@@ -408,14 +408,15 @@ func (a *agent) connect(ctx *actor.Context) error {
 		}
 	}
 
-	if a.MasterHost != "" {
-		if err := a.connectToMaster(ctx); err != nil {
-			return err
-		}
-		ctx.Log().Infof("successfully connected to master")
-	} else {
-		ctx.Log().Warn("no master address specified; running in standalone mode")
+	if a.MasterHost == "" {
+		return fmt.Errorf("no master address specified")
 	}
+
+	if err := a.connectToMaster(ctx); err != nil {
+		return err
+	}
+	ctx.Log().Infof("successfully connected to master")
+
 	return nil
 }
 

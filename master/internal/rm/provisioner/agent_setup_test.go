@@ -31,6 +31,8 @@ func TestAgentSetupScript(t *testing.T) {
 		AgentNetwork:                 "default",
 		AgentID:                      "test.id",
 		ResourcePool:                 "test-pool",
+		AgentReconnectAttempts:       5,
+		AgentReconnectBackoff:        5,
 	}
 
 	// nolint
@@ -85,6 +87,8 @@ docker run --init --name determined-agent  \
     -e DET_SECURITY_TLS_MASTER_CERT_NAME="certname" \
     -e DET_RESOURCE_POOL="test-pool" \
     -e DET_FLUENT_IMAGE="fluent-test" \
+    -e DET_AGENT_RECONNECT_ATTEMPTS="5" \
+    -e DET_AGENT_RECONNECT_BACKOFF="5" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \
