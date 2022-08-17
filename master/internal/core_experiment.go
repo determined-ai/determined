@@ -106,9 +106,11 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		checkpoint["resources"] = cDB.Resources
 		checkpoint["end_time"] = cDB.ReportTime
 		checkpoint["state"] = cDB.State
+		validation_metrics := map[string]interface{}{"validation_metrics": cDB.CheckpointTrainingMetadata.ValidationMetrics}
+		validation := map[string]interface{}{"metrics": validation_metrics}
 		cStep := map[string]interface{}{
 			"total_batches": cDB.CheckpointTrainingMetadata.StepsCompleted,
-			"validation":    cDB.CheckpointTrainingMetadata.ValidationMetrics,
+			"validation":    validation,
 		}
 		checkpoint["step"] = cStep
 		checkpoints = append(checkpoints, checkpoint)
