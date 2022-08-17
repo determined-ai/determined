@@ -72,7 +72,7 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
 fi
 
 CLUSTER=$1
-CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1')
+CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1', 'raptor')
 
 function lookup() {
     echo "${!1}"
@@ -232,6 +232,18 @@ OPT_MASTERHOST_swan=swan
 OPT_MASTERPORT_swan=$USERPORT
 OPT_TRESSUPPORTED_swan=false
 OPT_PROTOCOL_swan=http
+
+# Configuration for raptor
+OPT_name_raptor=raptor.hpcrb.rdlabs.ext.hpe.com
+OPT_LAUNCHERHOST_raptor=localhost
+OPT_LAUNCHERPORT_raptor=8181
+OPT_LAUNCHERPROTOCOL_raptor=http
+OPT_CHECKPOINTPATH_raptor=/lus/scratch/foundation_engineering/determined-cp
+OPT_DEBUGLEVEL_raptor=debug
+OPT_MASTERHOST_raptor=raptor
+OPT_MASTERPORT_raptor=$USERPORT
+OPT_TRESSUPPORTED_raptor=false
+OPT_PROTOCOL_raptor=http
 
 export OPT_LAUNCHERHOST=$(lookup "OPT_LAUNCHERHOST_$CLUSTER")
 export OPT_LAUNCHERPORT=$(lookup "OPT_LAUNCHERPORT_$CLUSTER")
