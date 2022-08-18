@@ -143,7 +143,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
       const hp = hyperparameters[key] || {};
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
-        return { categories: hp.vals ?? [], key, label: key, type: DimensionType.Categorical };
+        return {
+          categories: hp.vals?.map((val) => JSON.stringify(val)) ?? [],
+          key,
+          label: key,
+          type: DimensionType.Categorical,
+        };
       } else if (hp.type === HyperparameterType.Log) {
         return { key, label: key, logBase: hp.base, type: DimensionType.Logarithmic };
       }
