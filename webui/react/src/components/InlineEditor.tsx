@@ -1,14 +1,13 @@
-import React, {
-  ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './InlineEditor.module.scss';
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   allowClear?: boolean;
   allowNewline?: boolean;
+  allowSpellCheck?: boolean;
   disabled?: boolean;
   focusSignal?: number;
   maxLength?: number;
@@ -16,6 +15,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   onSave?: (newValue: string) => Promise<Error|void>;
   pattern?: RegExp;
   placeholder?: string;
+  resizable?: 'both' | 'horizontal' | 'vertical' | 'none',
   value: string;
 }
 
@@ -25,8 +25,10 @@ const CODE_ESCAPE = 'Escape';
 const InlineEditor: React.FC<Props> = ({
   allowClear = true,
   allowNewline = false,
+  allowSpellCheck = true,
   disabled = false,
   pattern = new RegExp(''),
+  resizable = 'none',
   maxLength,
   placeholder,
   value,
@@ -35,43 +37,39 @@ const InlineEditor: React.FC<Props> = ({
   focusSignal,
   ...props
 }: Props) => {
-  const growWrapRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const [ currentValue, setCurrentValue ] = useState<string>(value);
   const [ isEditable, setIsEditable ] = useState<boolean>(false);
   const [ isSaving, setIsSaving ] = useState<boolean>(false);
   const [ isInvalidValue, setIsInvalidValue ] = useState<boolean>(false);
+  const [ isMaxLength, setIsMaxLength ] = useState<boolean>(false);
   const classes: string = useMemo(() => {
     const classSet = new Set([ css.base ]);
-    if (isEditable) classSet.add(css.editable);
-    if (isSaving) classSet.add(css.loading);
-    if (maxLength && currentValue && currentValue.length === maxLength) {
-      classSet.add(css.maxLength);
-    }
-    if (disabled) classSet.add(css.disabled);
+    classSet.add(isEditable ? css.editable : css.base);
+    classSet.add(isSaving ? css.loading : css.base);
+    classSet.add(isMaxLength ? css.maxLength : css.base);
+    classSet.add(disabled ? css.disabled : css.base);
 
     return `${Array.from(classSet).join(' ')} ${isInvalidValue ? css.shakeAnimation : ''}`;
-  }, [ currentValue, disabled, isEditable, isInvalidValue, isSaving, maxLength ]);
+  }, [ disabled, isEditable, isInvalidValue, isMaxLength, isSaving ]);
 
   useEffect(() => {
-    if (focusSignal != null && !disabled){
+    if (focusSignal && !disabled) {
       setIsEditable(true);
-      textareaRef.current?.focus();
+      editorRef.current?.focus();
     }
-
   }, [ focusSignal, setIsEditable, disabled ]);
 
   const updateEditorValue = useCallback((value: string) => {
     let newValue = value;
-    if (maxLength) newValue = newValue.slice(0, maxLength);
-    if (textareaRef.current) textareaRef.current.value = newValue;
-    if (growWrapRef.current) growWrapRef.current.dataset.value = newValue || placeholder;
-    setCurrentValue(newValue);
-  }, [ maxLength, placeholder ]);
+    if (maxLength) { newValue = newValue.slice(0, maxLength); }
+    if (editorRef.current) { editorRef.current.innerText = newValue; }
+    // setCurrentValue(newValue);
+  }, [ maxLength ]);
 
   const cancel = useCallback(() => {
     updateEditorValue(value);
-    if (onCancel) onCancel();
+    if (onCancel) { onCancel(); }
   }, [ onCancel, updateEditorValue, value ]);
 
   const save = useCallback(async (newValue: string) => {
@@ -91,7 +89,7 @@ const InlineEditor: React.FC<Props> = ({
   }, [ onSave, pattern, updateEditorValue, value ]);
 
   const handleWrapperClick = useCallback(() => {
-    if (disabled) return;
+    if (disabled) { return; }
     setIsEditable(true);
   }, [ disabled ]);
 
@@ -101,35 +99,39 @@ const InlineEditor: React.FC<Props> = ({
    * and not empty, otherwise we assume it is a cancel.
    */
   const handleTextareaBlur = useCallback(() => {
-    if (!textareaRef.current) return;
+    if (!editorRef.current) { return; }
 
-    const newValue = textareaRef.current.value.trim();
-    (!!newValue || allowClear) && newValue !== value ? save(newValue) : cancel();
+    const newValue = allowNewline ? currentValue.trimRight() : currentValue.trim();
+
+    if ((!!newValue || allowClear) && newValue !== value) {
+      save(newValue);
+    } else {
+      cancel();
+    }
 
     // Reset `isEditable` to false if the blur was user triggered.
     setIsEditable(false);
-  }, [ allowClear, cancel, save, value ]);
+  }, [ allowClear, allowNewline, cancel, currentValue, save, value ]);
 
-  const handleTextareaChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+  const handleEditorInput = useCallback((e: React.ChangeEvent<HTMLDivElement>) => {
     setIsInvalidValue(false);
-    const textarea = e.target as HTMLTextAreaElement;
-    let newValue = textarea.value;
-    if (!allowNewline) newValue = newValue.replace(/(\r?\n|\r\n?)/g, '');
-    updateEditorValue(newValue);
-  }, [ allowNewline, updateEditorValue ]);
+    setCurrentValue(e.target.innerText);
+  }, []);
 
-  const handleTextareaKeyPress = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!isEditable) {
+  const handleTextareaKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!isEditable || e.which === 229) {
+      // e.which is to ignore keydown event until IME is confirmed like Japanese and Chinese
       e.preventDefault();
       return;
     }
-    if (e.which === 229) {
-      // Ignore keydown event until IME is confirmed like Japanese and Chinese
+    if (maxLength && editorRef.current && editorRef.current.innerText.length >= maxLength) {
+      if (!e.key.includes('Arrow') && e.key !== 'Backspace' && !e.metaKey) e.preventDefault();
+      setIsMaxLength(true);
       return;
+    } else {
+      setIsMaxLength(false);
     }
-    if (e.code === CODE_ENTER && (!allowNewline || !e.shiftKey)) {
-      e.preventDefault();
-    }
+    if (e.code === CODE_ENTER && (!(allowNewline && e.shiftKey))) e.preventDefault();
     if (e.code === CODE_ESCAPE) {
       // Restore the original value upon escape key.
       updateEditorValue(value);
@@ -137,35 +139,34 @@ const InlineEditor: React.FC<Props> = ({
     } else if (!e.shiftKey && e.code === CODE_ENTER) {
       setIsEditable(false);
     }
-  }, [ allowNewline, isEditable, updateEditorValue, value ]);
+  }, [ allowNewline, isEditable, maxLength, updateEditorValue, value ]);
 
   useEffect(() => {
     updateEditorValue(value);
   }, [ updateEditorValue, value ]);
 
   useEffect(() => {
-    if (!textareaRef.current || document.activeElement !== textareaRef.current) return;
-    isEditable ? textareaRef.current.focus() : textareaRef.current.blur();
+    if (!editorRef.current || document.activeElement !== editorRef.current) { return; }
+    isEditable ? editorRef.current.focus() : editorRef.current.blur();
   }, [ isEditable ]);
 
   return (
-    <div className={classes} {...props}>
-      <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
-        <textarea
-          cols={1}
-          disabled={disabled}
-          maxLength={maxLength}
-          placeholder={placeholder}
-          ref={textareaRef}
-          rows={1}
-          onBlur={handleTextareaBlur}
-          onChange={handleTextareaChange}
-          onKeyDown={handleTextareaKeyPress}
-        />
-        <div className={css.backdrop} />
-        <div className={css.spinner}>
-          <Spinner spinning={isSaving} />
-        </div>
+    <div className={classes} onClick={handleWrapperClick} {...props}>
+      <div
+        className={css.textEditor}
+        contentEditable={!disabled}
+        dir="auto"
+        placeholder={placeholder}
+        ref={editorRef}
+        role="textbox"
+        spellCheck={allowSpellCheck}
+        style={{ resize: resizable }}
+        onBlur={handleTextareaBlur}
+        onInput={handleEditorInput}
+        onKeyDown={handleTextareaKeyDown}
+      />
+      <div className={css.spinner}>
+        <Spinner className={css.spinner} spinning={isSaving} />
       </div>
     </div>
   );
