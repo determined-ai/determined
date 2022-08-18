@@ -23,8 +23,7 @@ class CoreSearchRunner(SearchRunner):
         logging.info("CoreSearchRunner.run")
 
         if self.latest_checkpoint is not None:
-            with self.context.checkpoint.restore_path(self.latest_checkpoint) as path:
-                experiment_id = self.search_method.load(path)
+            experiment_id = self.load_state(self.latest_checkpoint)
         else:
             exp = client.create_experiment(exp_config, context_dir)
             experiment_id = exp.id
@@ -32,6 +31,10 @@ class CoreSearchRunner(SearchRunner):
 
         self.run_experiment(experiment_id)
 
-    def save_state(self, experiment_id: int, event_id: int) -> None:
+    def load_state(self, storage_id: str) -> int:
+        with self.context.checkpoint.restore_path(storage_id) as path:
+            return self.search_method.load(path)
+
+    def save_state(self, experiment_id: int) -> None:
         with self.context.checkpoint.store_path() as (path, storage_id):
-            self.search_method.save(path, experiment_id=experiment_id, event_id=event_id)
+            self.search_method.save(path, experiment_id=experiment_id)

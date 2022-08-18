@@ -289,23 +289,20 @@ class RandomSearchMethod(SearchMethod):
         logging.info(f"hparams={hparams}")
         return hparams
 
-    def save_method_state(self, path: Path, event_id: int) -> None:
-        logging.debug(f"saving checkpoint event_id={event_id}, final_run={self.exception is None}")
-        checkpoint_path = path.joinpath(f"checkpoint-{event_id}")
+    def save_method_state(self, path: Path) -> None:
+        logging.debug(f"saving checkpoint final_run={self.exception is None}")
+        checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("w") as f:
             state = {"final_run": self.exception is None}
             json.dump(state, f)
 
-    def load_method_state(self, path: Path, event_id: Optional[int]) -> None:
-        if event_id is None:
-            # state has never been saved yet
-            return
-        checkpoint_path = path.joinpath(f"checkpoint-{event_id}")
+    def load_method_state(self, path: Path) -> None:
+        checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("r") as f:
             state = json.load(f)
             if state["final_run"]:
                 self.exception = None
-            logging.debug(f"loaded state event_id={event_id}, final_run={self.exception is None}")
+        logging.debug(f"loaded state final_run={self.exception is None}")
 
 
 @pytest.mark.e2e_cpu
@@ -326,7 +323,7 @@ def test_run_asha_batches_exp() -> None:
     divisor = 4
 
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
-    search_runner = SearchRunner(search_method)
+    search_runner = LocalSearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None

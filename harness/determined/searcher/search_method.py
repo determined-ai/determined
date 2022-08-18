@@ -206,20 +206,20 @@ class SearchMethod:
         """
         pass
 
-    def save(self, path: pathlib.Path, *, experiment_id: int, event_id: int) -> None:
+    def save(self, path: pathlib.Path, *, experiment_id: int) -> None:
         """
         This is optionally overridden to save a checkpoint indexed by event id.
         It will be called by the ``SearchRunner`` after receiving operations
         from the ``SearchMethod``
         """
         searcher_state_file = path.joinpath(STATE_FILE)
-        self.save_method_state(path, event_id)
+        self.save_method_state(path)
         d = self.searcher_state.to_dict()
         d["experimentId"] = experiment_id
         with searcher_state_file.open("w") as f:
             json.dump(d, f)
 
-    def save_method_state(self, path: pathlib.Path, event_id: int) -> None:
+    def save_method_state(self, path: pathlib.Path) -> None:
         """
         Override to save method-specific state
         """
@@ -237,10 +237,13 @@ class SearchMethod:
             self.searcher_state.from_dict(state_dict)
             experiment_id = state_dict["experimentId"]  # type: int
 
-        self.load_method_state(path, self.searcher_state.last_event_id)
+        self.load_method_state(path)
         return experiment_id
 
-    def load_method_state(self, path: pathlib.Path, event_id: Optional[int]) -> None:
+    def load_method_state(
+        self,
+        path: pathlib.Path,
+    ) -> None:
         """
         This is optionally implemented to load method-specific search state.
         """

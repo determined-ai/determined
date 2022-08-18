@@ -45,8 +45,13 @@ class SearchRunner:
                 last_event_id = self.search_method.searcher_state.last_event_id
                 first_event = True
                 for event in events.searcherEvents:
-                    skip_posting = first_event and last_event_id is not None and last_event_id < event.id
-                    skip_event = first_event and last_event_id is not None and last_event_id == event.id
+                    assert event.id is not None
+                    skip_posting = (
+                        first_event and last_event_id is not None and last_event_id < event.id
+                    )
+                    skip_event = (
+                        first_event and last_event_id is not None and last_event_id == event.id
+                    )
                     first_event = False
 
                     if skip_event:
@@ -130,9 +135,7 @@ class SearchRunner:
                         raise RuntimeError(f"Unsupported event {event}")
 
                     if skip_posting:
-                        logging.warning(
-                            f"event {event.id} has already been acknowledged by master"
-                        )
+                        logging.warning(f"event {event.id} has already been acknowledged by master")
                     else:
                         body = bindings.v1PostSearcherOperationsRequest(
                             experimentId=self.search_method.searcher_state.experiment_id,
@@ -148,11 +151,11 @@ class SearchRunner:
                     # save state
                     assert event.id is not None  # TODO change proto to make id mandatory
                     self.search_method.searcher_state.last_event_id = event.id
-                    self.save_state(experiment_id, event.id)
+                    self.save_state(experiment_id)
         except KeyboardInterrupt:
             print("Runner interrupted")
 
-    def save_state(self, experiment_id: int, event_id: int) -> None:
+    def save_state(self, experiment_id: int) -> None:
         pass
 
     @staticmethod
@@ -230,11 +233,10 @@ class LocalSearchRunner(SearchRunner):
         self.run_experiment(experiment_id)
         return experiment_id
 
-    def save_state(self, experiment_id: int, event_id: int) -> None:
+    def save_state(self, experiment_id: int) -> None:
         self.search_method.save(
             self._get_state_path(experiment_id),
             experiment_id=experiment_id,
-            event_id=event_id,
         )
 
     def _get_state_path(self, experiment_id: int) -> Path:
