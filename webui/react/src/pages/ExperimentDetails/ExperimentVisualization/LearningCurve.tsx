@@ -61,15 +61,12 @@ const LearningCurve: React.FC<Props> = ({
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
-  console.log({ fullHParams });
-
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
       acc[key] = experiment.hyperparameters[key];
       return acc;
     }, {} as Record<string, Hyperparameter>);
   }, [ experiment.hyperparameters, fullHParams ]);
-  console.log({ hyperparameters });
 
   const handleTrialClick = useCallback((event: MouseEvent, trialId: number) => {
     const href = paths.trialDetails(trialId, experiment.id);
@@ -133,9 +130,11 @@ const LearningCurve: React.FC<Props> = ({
 
         (event.trials || []).forEach((trial) => {
           const id = trial.trialId;
-          //console.log(flattenObject(trial.hparams));
-          //const flatHParams = flattenObject(trial.hparams || {});
-          const flatHParams = trial.hparams;
+
+          // This allows for both typical nested hyperparameters and nested categorgical
+          // hyperparameter values to be shown, with HpTrialTable deciding which are displayed.
+          const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };
+
           const hasHParams = Object.keys(flatHParams).length !== 0;
 
           if (hasHParams && !trialHpMap[id]) {

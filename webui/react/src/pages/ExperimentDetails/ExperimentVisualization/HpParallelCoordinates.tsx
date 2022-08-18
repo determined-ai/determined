@@ -207,7 +207,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
           trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
-          const flatHParams = flattenObject(trial.hparams || {});
+          // This allows for both typical nested hyperparameters and nested categorgical
+          // hyperparameter values to be shown, with HpTrialTable deciding which are displayed.
+          const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };
+
           Object.keys(flatHParams).forEach((hpKey) => {
             const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
