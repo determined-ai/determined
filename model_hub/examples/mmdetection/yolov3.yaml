@@ -5,7 +5,7 @@ data:
       bucket_name: determined-ai-mmdet-data
       ##### Other backends #####
       #backend: s3
-      #bucket_name: fill_in
+      #bucket_name: determined-ai-coco-dataset
       #backend: disk # assumes data available at /run/determined/workdir/data in the container
       #backend: fake
 ##### You can enable profiling with below #####
