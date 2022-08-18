@@ -72,7 +72,7 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
 fi
 
 CLUSTER=$1
-CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1', 'raptor')
+CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1', 'raptor', 'casablanca-login2')
 
 function lookup() {
     echo "${!1}"
@@ -132,6 +132,8 @@ if [[ $CLUSTER == "casablanca-login" ]]; then
    CLUSTER=casablanca_login
 elif [[ $CLUSTER == "casablanca-mgmt1" ]]; then
    CLUSTER=casablanca
+elif [[ $CLUSTER == "casablanca-login2" ]]; then
+   CLUSTER=casablanca_login2
 elif [[ ! " ${CLUSTERS[*]} " =~ " $CLUSTER "  ]]; then
     echo "$0: Cluster name $CLUSTER does not have a configuration.  Specify one of: ${CLUSTERS[*]}"
     exit 1
@@ -181,6 +183,17 @@ OPT_DEBUGLEVEL_casablanca_login=debug
 OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login=true
+
+# Configuration for casablanca-login2 (uses suffix casablanca_login2)
+OPT_name_casablanca_login2=casablanca-login2.us.cray.com
+OPT_LAUNCHERHOST_casablanca_login2=localhost
+OPT_LAUNCHERPORT_casablanca_login2=8443
+OPT_LAUNCHERPROTOCOL_casablanca_login2=http
+OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determined-cp
+OPT_DEBUGLEVEL_casablanca_login2=debug
+OPT_MASTERHOST_casablanca_login2=casablanca-login2
+OPT_MASTERPORT_casablanca_login2=$USERPORT
+OPT_TRESSUPPORTED_casablanca_login2=true
 
 # Configuration for shuco
 OPT_name_shuco=shuco.us.cray.com
