@@ -1,11 +1,11 @@
-import Logger from 'shared/utils/Logger';
+import rootLogger from 'shared/utils/Logger';
 
 import { isString } from './data';
 import { LoggerInterface } from './Logger';
 
 export const ERROR_NAMESPACE = 'EH';
 export const DEFAULT_ERROR_MESSAGE = 'Unknown error encountered.';
-export const DEFAULT_LOGGER = new Logger(ERROR_NAMESPACE);
+export const DEFAULT_LOGGER = rootLogger.extend(ERROR_NAMESPACE);
 
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
