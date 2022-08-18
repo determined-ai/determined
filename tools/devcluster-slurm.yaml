@@ -54,6 +54,10 @@ stages:
           level: $OPT_DEBUGLEVEL
         cache:
           cache_dir: /tmp
+        task_container_defaults:
+          bind_mounts:
+            - host_path: /etc/hosts
+              container_path: /etc/hosts
         resource_manager:
           master_host: $OPT_MASTERHOST
           master_port: $OPT_MASTERPORT
