@@ -48,9 +48,9 @@ For an introduction to using the training API, please see the Training APIs sect
       -  Penn-Fudan Dataset
       -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
-   -  -  PyTorch
-      -  COCO
-      -  :download:`mmdetection_pytorch.tgz </examples/mmdetection_pytorch.tgz>`
+   -  -  PyTorch (:ref:`Model Hub MMDetection <model-hub-mmdetection>`)
+      -  COCO 
+      -  :download:`mmdetection.tgz </examples/mmdetection.tgz>`
 
    -  -  PyTorch
       -  COCO
