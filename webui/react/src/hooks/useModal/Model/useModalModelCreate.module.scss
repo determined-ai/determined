@@ -1,10 +1,7 @@
 .base {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-
   .directions {
     margin: 0;
+    padding-bottom: 12px;
   }
   .expandDetails {
     color: var(--theme-status-active);

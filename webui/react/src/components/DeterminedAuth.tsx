@@ -98,7 +98,13 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         </p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" type="primary">Sign In</Button>
+        <Button
+          disabled={!canSubmit}
+          htmlType="submit"
+          loading={!canSubmit}
+          type="primary">
+          Sign In
+        </Button>
       </Form.Item>
     </Form>
   );

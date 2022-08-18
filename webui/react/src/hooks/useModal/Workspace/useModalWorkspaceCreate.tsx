@@ -1,44 +1,48 @@
-import { Input } from 'antd';
+import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { createWorkspace } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
-import css from './useModalWorkspaceCreate.module.scss';
+interface FormInputs {
+  workspaceName: string;
+}
 
 interface Props {
   onClose?: () => void;
 }
 
 const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
-  const [ name, setName ] = useState('');
+  const [ form ] = Form.useForm<FormInputs>();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
-  const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  }, []);
-
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
-        <label className={css.label} htmlFor="name">Name</label>
-        {/* Input doesnt have value prop due to cusor jump to the end of text */}
-        <Input defaultValue="" id="name" maxLength={80} onChange={handleNameInput} />
-      </div>
+      <Form autoComplete="off" form={form} layout="vertical">
+        <Form.Item
+          label="Workspace Name"
+          name="workspaceName"
+          rules={[ { message: 'Workspace name is required ', required: true } ]}>
+          <Input maxLength={80} />
+        </Form.Item>
+      </Form>
     );
-  }, [ handleNameInput ]);
+  }, [ form ]);
 
   const handleOk = useCallback(async () => {
+    const values = await form.validateFields();
+
     try {
-      const response = await createWorkspace({ name });
-      routeToReactUrl(paths.workspaceDetails(response.id));
+      if (values) {
+        const response = await createWorkspace({ name: values.workspaceName });
+        routeToReactUrl(paths.workspaceDetails(response.id));
+      }
     } catch (e) {
       if (e instanceof DetError) {
         handleError(e, {
@@ -58,14 +62,13 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     }
-  }, [ name ]);
+  }, [ form ]);
 
-  const getModalProps = useCallback((name = ''): ModalFuncProps => {
+  const getModalProps = useCallback((): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',
@@ -73,8 +76,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
   }, [ handleOk, modalContent ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    setName('');
-    openOrUpdate({ ...getModalProps(''), ...initialModalProps });
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
   }, [ getModalProps, openOrUpdate ]);
 
   /**
@@ -82,8 +84,8 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps(name));
-  }, [ getModalProps, modalRef, name, openOrUpdate ]);
+    if (modalRef.current) openOrUpdate(getModalProps());
+  }, [ getModalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };
