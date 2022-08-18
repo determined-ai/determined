@@ -1,10 +1,16 @@
-.idLayout {
-  align-items: center;
-  display: flex;
-}
-.colorLegend {
-  border-radius: var(--theme-border-radius);
-  height: 20px;
-  margin-right: 8px;
-  width: 20px;
+
+.base {
+  .idLayout {
+    align-items: center;
+    display: flex;
+  }
+  .colorLegend {
+    border-radius: var(--theme-border-radius);
+    height: 20px;
+    margin-right: 8px;
+    width: 20px;
+  }
+  :global(.ant-table-cell) {
+    max-width: 400px;
+  }
 }

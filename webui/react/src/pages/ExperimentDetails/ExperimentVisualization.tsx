@@ -86,6 +86,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     name: experiment.config.searcher.metric,
     type: MetricType.Validation,
   });
+  console.log(experiment.hyperparameters);
   const fullHParams = useRef<string[]>(
     (Object.keys(experiment.hyperparameters || {}).filter((key) => {
       // Constant hyperparameters are not useful for visualizations.

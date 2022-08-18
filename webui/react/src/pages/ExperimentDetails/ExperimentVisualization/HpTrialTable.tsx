@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -111,7 +112,11 @@ const HpTrialTable: React.FC<Props> = ({
         if (isNumber(value) && isValidType) {
           return <HumanReadableNumber num={value} />;
         }
-        return value + '';
+        return (
+          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+            {JSON.stringify(value)}
+          </Typography.Paragraph>
+        );
       };
     };
     const hpColumnSorter = (key: string) => {
@@ -157,6 +162,7 @@ const HpTrialTable: React.FC<Props> = ({
 
   return (
     <ResponsiveTable<TrialHParams>
+      className={css.base}
       columns={columns}
       dataSource={dataSource}
       pagination={getPaginationConfig(dataSource.length, pageSize)}
