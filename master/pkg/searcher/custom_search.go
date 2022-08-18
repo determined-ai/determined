@@ -10,11 +10,9 @@ import (
 
 type (
 	customSearchState struct {
-		// store the operations
-		// store the events
 		SearchMethodType     SearchMethodType `json:"search_method_type"`
 		SearcherEventQueue   *SearcherEventQueue
-		customSearchProgress float64
+		CustomSearchProgress float64
 	}
 
 	customSearch struct {
@@ -56,7 +54,7 @@ func (s *customSearch) getSearcherEventQueue() *SearcherEventQueue {
 }
 
 func (s *customSearch) setCustomSearcherProgress(progress float64) {
-	s.customSearchState.customSearchProgress = progress
+	s.customSearchState.CustomSearchProgress = progress
 }
 
 func (s *customSearch) trialProgress(ctx context, requestID model.RequestID,
@@ -94,7 +92,7 @@ func (s *customSearch) progress(
 	trialProgress map[model.RequestID]PartialUnits,
 	trialsClosed map[model.RequestID]bool,
 ) float64 {
-	return s.customSearchState.customSearchProgress
+	return s.customSearchState.CustomSearchProgress
 }
 
 func (s *customSearch) validationCompleted(
