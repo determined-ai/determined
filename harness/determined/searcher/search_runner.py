@@ -178,7 +178,7 @@ class LocalSearchRunner(SearchRunner):
         self,
         exp_config: Dict[str, Any],
         context_dir: Optional[str] = None,
-    ) -> None:
+    ) -> int:
         """
         Run custom search without an experiment id
         """
@@ -209,6 +209,7 @@ class LocalSearchRunner(SearchRunner):
             experiment_id = exp.id
 
         self.run_experiment(experiment_id)
+        return experiment_id
 
     def save_state(self, experiment_id: int, event_id: int) -> None:
         self.search_method.save(

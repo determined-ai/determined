@@ -18,7 +18,6 @@ from determined.searcher.search_method import (
     Create,
     ExitedReason,
     Operation,
-    SearcherState,
     SearchMethod,
     Shutdown,
     ValidateAfter,
@@ -112,8 +111,7 @@ def test_run_random_searcher_exp() -> None:
     with tempfile.TemporaryDirectory() as searcher_dir:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
         search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
-        search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-        experiment_id = search_runner.search_method.searcher_state.experiment_id
+        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -151,16 +149,11 @@ def test_resume_random_searcher_exp() -> None:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length, ex)
         search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
         try:
-            search_runner.run(
-                config, context_dir=conf.fixtures_path("no_op")
-            )
+            experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
             pytest.fail("Expected an exception")
         except MaxRetryError:
-            search_runner.run(
-                config, context_dir=conf.fixtures_path("no_op")
-            )
+            experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
-    experiment_id = search_runner.search_method.searcher_state.experiment_id
     assert client._determined is not None
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
