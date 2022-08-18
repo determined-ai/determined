@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,9 +37,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+const maxResourceDetailsSampleAgeSeconds = 60
 const (
-	slurmSchedulerType                 = "slurm"
-	maxResourceDetailsSampleAgeSeconds = 60
+	slurmSchedulerType    = "slurm"
+	pbsSchedulerType      = "pbs"
+	slurmResourcesCarrier = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
+	pbsResourcesCarrier   = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
 )
 
 // hpcResources is a data type describing the HPC resources available
@@ -204,6 +208,7 @@ type dispatcherResourceManager struct {
 	jobWatcher               *launcherMonitor
 	authToken                string
 	resourceDetails          hpcResourceDetailsCache
+	wlmType                  string
 }
 
 func newDispatcherResourceManager(
@@ -969,6 +974,9 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	ctx.Log().Debug(fmt.Sprintf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId()))
 
 	dispatchID := dispatchInfo.GetDispatchId()
+
+	m.determineWlmType(dispatchInfo, ctx)
+
 	owner := "launcher"
 
 	defer m.resourceQueryPostActions(ctx, dispatchID, owner)
@@ -1016,11 +1024,30 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	m.resourceDetails.lastSample = newSample
 	m.resourceDetails.sampleTime = time.Now()
 	m.resourceDetails.lastSample.DefaultComputePoolPartition,
-		m.resourceDetails.lastSample.DefaultAuxPoolPartition =
-		m.selectDefaultPools(ctx, m.resourceDetails.lastSample.Partitions)
+		m.resourceDetails.lastSample.DefaultAuxPoolPartition = m.selectDefaultPools(
+		ctx, m.resourceDetails.lastSample.Partitions)
 	ctx.Log().Infof("default resource pools are '%s', '%s'",
 		m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
+}
+
+// determineWlmType determines the WLM type of the cluster from the dispatchInfo response.
+func (m *dispatcherResourceManager) determineWlmType(
+	dispatchInfo launcher.DispatchInfo, ctx *actor.Context,
+) {
+	reporter := ""
+	for _, e := range *dispatchInfo.Events {
+		if strings.HasPrefix(e.GetMessage(), "Successfully launched payload") {
+			reporter = e.GetReporter()
+			break
+		}
+	}
+	switch reporter {
+	case slurmResourcesCarrier:
+		m.wlmType = slurmSchedulerType
+	case pbsResourcesCarrier:
+		m.wlmType = pbsSchedulerType
+	}
 }
 
 // hpcResourcesToDebugLog puts a summary of the available HPC resources to the debug log.
@@ -1399,7 +1426,7 @@ func createSlurmResourcesManifest() *launcher.Manifest {
 	payload.SetName("DAI-HPC-Resources")
 	payload.SetId("com.cray.analytics.capsules.hpc.resources")
 	payload.SetVersion("latest")
-	payload.SetCarriers([]string{"com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"})
+	payload.SetCarriers([]string{slurmResourcesCarrier, pbsResourcesCarrier})
 
 	// Create payload launch parameters
 	launchParameters := launcher.NewLaunchParameters()

@@ -53,8 +53,10 @@ func Test_getPortMappings(t *testing.T) {
 		{
 			name: "Verify trial, tensorboard, shell, notebook ports are ignored",
 			args: args{
-				ports: map[string]int{"PODMAN_1": 8080, "trial": 1734, "podmanPortMapping2": 443,
-					"podman3": 3000, "shell": 3299, "notebook": 2988, "tensorboard": 2799},
+				ports: map[string]int{
+					"PODMAN_1": 8080, "trial": 1734, "podmanPortMapping2": 443,
+					"podman3": 3000, "shell": 3299, "notebook": 2988, "tensorboard": 2799,
+				},
 			},
 			want: []string{
 				"8080", "443", "3000",
@@ -513,8 +515,10 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				RawPodSpec:              &expconf.PodSpec{},
 				RawAddCapabilities:      []string{},
 				RawDropCapabilities:     []string{},
-				RawPorts: map[string]int{"Podman_1": 8080,
-					"podmanPortMapping2": 443, "PodMan3": 3000},
+				RawPorts: map[string]int{
+					"Podman_1":           8080,
+					"podmanPortMapping2": 443, "PodMan3": 3000,
+				},
 			}
 
 			ts := &TaskSpec{
