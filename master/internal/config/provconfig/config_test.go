@@ -30,6 +30,8 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 		AgentDockerNetwork:     "default",
 		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 		AgentFluentImage:       aproto.FluentImage,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 	assert.DeepEqual(t, config, expected)
 }
@@ -67,6 +69,8 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 		MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
 		MaxAgentStartingPeriod: model.Duration(30 * time.Second),
 		MaxInstances:           5,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -118,6 +122,8 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 		MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
 		MaxAgentStartingPeriod: model.Duration(30 * time.Second),
 		MaxInstances:           5,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -152,6 +158,8 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MaxInstances:           5,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -212,6 +220,8 @@ boot_disk_source_image: test-source_image3
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MaxInstances:           5,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 	assert.DeepEqual(t, expected, unmarshaled)
 }
