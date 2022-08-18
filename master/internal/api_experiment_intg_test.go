@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"testing"
 	"time"
@@ -51,8 +52,6 @@ var minExpConfig = expconf.ExperimentConfig{
 func TestGetExperiments(t *testing.T) {
 	// Setup.
 	api, _, ctx := SetupAPITest(t)
-	_, err := db.Bun().NewTruncateTable().Table("experiments").Cascade().Exec(ctx)
-	require.NoError(t, err)
 
 	workResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
@@ -63,6 +62,7 @@ func TestGetExperiments(t *testing.T) {
 		Name:        uuid.New().String(),
 	})
 	require.NoError(t, err)
+	pid := projResp.Project.Id
 	_, err = api.ArchiveWorkspace(ctx, &apiv1.ArchiveWorkspaceRequest{
 		Id: workResp.Workspace.Id,
 	})
@@ -98,7 +98,7 @@ func TestGetExperiments(t *testing.T) {
 			RawLabels:      expconf.Labels{"l0": true, "l1": true},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(1)),
-		ProjectID: 1,
+		ProjectID: int(pid),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp0))
 	for i := 0; i < 3; i++ {
@@ -126,13 +126,13 @@ func TestGetExperiments(t *testing.T) {
 		Name:           "name",
 		Notes:          "omitted", // Notes get omitted when non null.
 		JobId:          job0ID,
-		ProjectId:      1,
 		Progress:       &wrappers.DoubleValue{Value: 0},
-		ProjectName:    "Uncategorized",
-		WorkspaceId:    1,
-		WorkspaceName:  "Uncategorized",
-		ParentArchived: false,
+		ProjectName:    projResp.Project.Name,
+		WorkspaceId:    workResp.Workspace.Id,
+		WorkspaceName:  workResp.Workspace.Name,
+		ParentArchived: true,
 		ResourcePool:   "kubernetes",
+		ProjectId:      pid,
 	}
 
 	secondStartTime := time.Now()
@@ -149,7 +149,7 @@ func TestGetExperiments(t *testing.T) {
 			RawLabels:      expconf.Labels{"l0": true},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
-		ProjectID: int(projResp.Project.Id),
+		ProjectID: int(pid),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp1))
 	exp1Expected := &experimentv1.Experiment{
@@ -166,7 +166,7 @@ func TestGetExperiments(t *testing.T) {
 		SearcherType:   "single",
 		Name:           "longername",
 		JobId:          job1ID,
-		ProjectId:      projResp.Project.Id,
+		ProjectId:      pid,
 		Progress:       &wrappers.DoubleValue{Value: 0},
 		ProjectName:    projResp.Project.Name,
 		WorkspaceId:    workResp.Workspace.Id,
@@ -176,89 +176,83 @@ func TestGetExperiments(t *testing.T) {
 	}
 
 	// Filtering tests.
-	getExperimentsTest(t, api, ctx, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
+	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Description: "12345"}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Description: "234"}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Description: "123456"})
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Name: "longername"}, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Name: "name"}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Name: "longlongername"})
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1"}}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0"}}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1", "l3"}})
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(false)}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(true)}, exp1Expected)
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_PAUSED},
 		}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_ERROR},
 		}, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{
 				experimentv1.State_STATE_PAUSED,
 				experimentv1.State_STATE_ERROR,
 			},
 		}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_CANCELED},
 		})
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin"}}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{userResp.User.Username}}, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin", userResp.User.Username}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, &apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
+	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
 
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1}}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{userResp.User.Id}}, exp1Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1, userResp.User.Id}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
-
-	getExperimentsTest(t, api, ctx,
-		&apiv1.GetExperimentsRequest{ProjectId: 1}, exp0Expected)
-	getExperimentsTest(t, api, ctx,
-		&apiv1.GetExperimentsRequest{ProjectId: projResp.Project.Id}, exp1Expected)
-	getExperimentsTest(t, api, ctx, &apiv1.GetExperimentsRequest{ProjectId: -999})
+	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
 
 	// Sort and order by tests.
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy: apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_ASC,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(t, api, ctx,
+	getExperimentsTest(t, api, ctx, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
@@ -266,35 +260,38 @@ func TestGetExperiments(t *testing.T) {
 
 	// Pagination tests.
 	// No experiments should be returned for Limit -2.
-	getExperimentsTest(t, api, ctx, &apiv1.GetExperimentsRequest{Limit: -2})
-	getExperimentsPageTest(t, api, ctx, &apiv1.GetExperimentsRequest{Offset: 1},
+	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: -2})
+	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 0, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(t, api, ctx, &apiv1.GetExperimentsRequest{Limit: 1},
+	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: 1},
 		&apiv1.Pagination{Offset: 0, Limit: 1, StartIndex: 0, EndIndex: 1, Total: 2})
-	getExperimentsPageTest(t, api, ctx, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
+	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 1, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(t, api, ctx, &apiv1.GetExperimentsRequest{Offset: 2},
+	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Offset: 2},
 		&apiv1.Pagination{Offset: 2, Limit: 0, StartIndex: 2, EndIndex: 2, Total: 2})
 
-	getExperimentsPageTest(t, api, ctx, &apiv1.GetExperimentsRequest{Limit: -1},
+	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: -1},
 		&apiv1.Pagination{Offset: 0, Limit: -1, StartIndex: 0, EndIndex: 2, Total: 2})
 }
 
-func getExperimentsPageTest(t *testing.T, api *apiServer, ctx context.Context,
+func getExperimentsPageTest(t *testing.T, api *apiServer, ctx context.Context, pid int32,
 	req *apiv1.GetExperimentsRequest, expected *apiv1.Pagination,
 ) {
+	req.ProjectId = pid
 	res, err := api.GetExperiments(ctx, req)
 	require.NoError(t, err)
 	proto.Equal(expected, res.Pagination)
 	require.Equal(t, expected, res.Pagination)
 }
 
-func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context,
+func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context, pid int32,
 	req *apiv1.GetExperimentsRequest, expected ...*experimentv1.Experiment,
 ) {
+	req.ProjectId = pid
 	res, err := api.GetExperiments(ctx, req)
 	require.NoError(t, err)
-	require.Equal(t, len(expected), len(res.Experiments), "wrong length of result set")
+	require.Equal(t, len(expected), len(res.Experiments),
+		fmt.Sprintf("wrong length of result set with request %+v", req))
 
 	for i := range expected {
 		sort.Strings(expected[i].Labels)
@@ -317,7 +314,8 @@ func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context,
 		res.Experiments[i].EndTime = expected[i].EndTime
 
 		proto.Equal(expected[i], res.Experiments[i]) // Allows require.Equal to compare properly?
-		require.Equal(t, expected[i], res.Experiments[i])
+		require.Equal(t, expected[i], res.Experiments[i],
+			fmt.Sprintf("wrong result request %+v", req))
 	}
 }
 
@@ -331,10 +329,33 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 	// future it won't cause any issues.
 	api, _, ctx := SetupAPITest((*testing.T)(unsafe.Pointer(b)))
 
-	// Create n records in the database.
-	if _, err := db.Bun().NewTruncateTable().Table("experiments").Cascade().Exec(ctx); err != nil {
+	// Create n records in the database from the new user we created.
+	userResp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username:    uuid.New().String(),
+			DisplayName: uuid.New().String(),
+			Active:      true,
+		},
+	})
+	if err != nil {
 		b.Fatal(err)
 	}
+	defer func() {
+		// Delete user and all experiments.
+		if _, err := db.Bun().NewDelete().Table("experiments").
+			Where("owner_id = ?", userResp.User.Id).Exec(ctx); err != nil {
+			b.Fatal(err)
+		}
+		if _, err := db.Bun().NewDelete().Table("jobs").
+			Where("owner_id = ?", userResp.User.Id).Exec(ctx); err != nil {
+			b.Fatal(err)
+		}
+		if _, err := db.Bun().NewDelete().Table("users").
+			Where("id = ?", userResp.User.Id).Exec(ctx); err != nil {
+			b.Fatal(err)
+		}
+	}()
+
 	exp := &model.Experiment{
 		ModelDefinitionBytes: []byte{1, 2, 3},
 		State:                model.PausedState,
@@ -342,7 +363,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 			RawDescription: ptrs.Ptr("desc"),
 			RawName:        expconf.Name{ptrs.Ptr("name")},
 		}).(expconf.ExperimentConfig),
-		OwnerID:   ptrs.Ptr(model.UserID(1)),
+		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
 		ProjectID: 1,
 	}
 	for i := 0; i < n; i++ {
@@ -358,11 +379,14 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var err error
-		res, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{Limit: -1})
+		res, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
+			Limit: -1, UserIds: []int32{int32(userResp.User.Id)},
+		})
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
+	b.StopTimer()
 }
 
 func BenchmarkGetExeriments50(b *testing.B) { benchmarkGetExperiments(b, 50) }
