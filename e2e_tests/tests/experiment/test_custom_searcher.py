@@ -18,16 +18,17 @@ from determined.searcher.search_method import (
     Create,
     ExitedReason,
     Operation,
+    SearcherState,
     SearchMethod,
     Shutdown,
     ValidateAfter,
 )
-from determined.searcher.search_runner import SearchRunner
+from determined.searcher.search_runner import LocalSearchRunner
 from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
-def test_run_custom_searcher_experiment() -> None:
+def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
     # example searcher script
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
@@ -39,7 +40,7 @@ def test_run_custom_searcher_experiment() -> None:
     config["name"] = "single"
     config["description"] = "custom searcher"
     search_method = SingleSearchMethod(config, 500)
-    search_runner = SearchRunner(search_method)
+    search_runner = LocalSearchRunner(search_method, tmp_path)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -109,13 +110,10 @@ def test_run_random_searcher_exp() -> None:
     max_length = 500
 
     with tempfile.TemporaryDirectory() as searcher_dir:
-        search_method = RandomSearchMethod(
-            max_trials, max_concurrent_trials, max_length, Path(searcher_dir)
-        )
-        search_runner = SearchRunner(search_method)
-        experiment_id = search_runner.run(
-            config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir
-        )
+        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
+        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.search_method.searcher_state.experiment_id
 
     assert client._determined is not None
     session = client._determined._session
@@ -143,26 +141,26 @@ def test_resume_random_searcher_exp() -> None:
     max_concurrent_trials = 2
     max_length = 500
 
+    # do not use pytest tmp_path to experience LocalSearchRunner in the wild
     with tempfile.TemporaryDirectory() as searcher_dir:
         logging.info(f"searcher_dir type = {type(searcher_dir)}")
         ex = MaxRetryError(
             HTTPConnectionPool(host="dummyhost", port=8080),
             "http://dummyurl",
         )
-        search_method = RandomSearchMethod(
-            max_trials, max_concurrent_trials, max_length, Path(searcher_dir), ex
-        )
-        search_runner = SearchRunner(search_method)
+        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length, ex)
+        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
         try:
             search_runner.run(
-                config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir
+                config, context_dir=conf.fixtures_path("no_op")
             )
             pytest.fail("Expected an exception")
         except MaxRetryError:
-            experiment_id = search_runner.run(
-                config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir
+            search_runner.run(
+                config, context_dir=conf.fixtures_path("no_op")
             )
 
+    experiment_id = search_runner.search_method.searcher_state.experiment_id
     assert client._determined is not None
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
@@ -182,14 +180,12 @@ class RandomSearchMethod(SearchMethod):
         max_trials: int,
         max_concurrent_trials: int,
         max_length: int,
-        searcher_dir: Path,
         exception: Optional[Exception] = None,
     ) -> None:
         super().__init__()
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
-        self.searcher_dir = searcher_dir
         self.exception = exception
 
         # TODO remove created_trials and closed_trials before merging the feature branch
@@ -300,15 +296,18 @@ class RandomSearchMethod(SearchMethod):
         logging.info(f"hparams={hparams}")
         return hparams
 
-    def save_checkpoint(self, event_id: int) -> None:
+    def save_method_state(self, path: Path, event_id: int) -> None:
         logging.debug(f"saving checkpoint event_id={event_id}, final_run={self.exception is None}")
-        checkpoint_path = self.searcher_dir.joinpath(f"checkpoint-{event_id}")
+        checkpoint_path = path.joinpath(f"checkpoint-{event_id}")
         with checkpoint_path.open("w") as f:
             state = {"final_run": self.exception is None}
             json.dump(state, f)
 
-    def load_checkpoint(self, event_id: int) -> None:
-        checkpoint_path = self.searcher_dir.joinpath(f"checkpoint-{event_id}")
+    def load_method_state(self, path: Path, event_id: Optional[int]) -> None:
+        if event_id is None:
+            # state has never been saved yet
+            return
+        checkpoint_path = path.joinpath(f"checkpoint-{event_id}")
         with checkpoint_path.open("r") as f:
             state = json.load(f)
             if state["final_run"]:

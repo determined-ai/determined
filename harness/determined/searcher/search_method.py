@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import pathlib
 import uuid
 from abc import abstractmethod
 from enum import Enum
@@ -7,6 +8,8 @@ from typing import Any, Dict, List, Optional, Set
 
 from determined.common.api import bindings
 from determined.common.experimental import Checkpoint
+
+STATE_FILE = "state"
 
 
 @dataclasses.dataclass
@@ -31,6 +34,7 @@ class SearcherState:
             "trialsClosed": [str(t) for t in self.trials_closed],
             "trialsCreated": [str(t) for t in self.trials_created],
             "lastEventId": self.last_event_id,
+            "experimentId": self.experiment_id,
             "experimentCompleted": self.experiment_completed,
         }
 
@@ -40,6 +44,7 @@ class SearcherState:
         self.trials_closed = {uuid.UUID(t) for t in d.get("trialsClosed", [])}
         self.trials_created = {uuid.UUID(t) for t in d.get("trialsCreated", [])}
         self.last_event_id = d.get("lastEventId")
+        self.experiment_id = d.get("experimentId")
         self.experiment_completed = d.get("experimentCompleted", False)
 
 
@@ -201,18 +206,42 @@ class SearchMethod:
         """
         pass
 
-    def save_checkpoint(self, event_id: int) -> None:
+    def save(self, path: pathlib.Path, *, experiment_id: int, event_id: int) -> None:
         """
-        This is optionally implemented to save a checkpoint indexed by event id.
+        This is optionally overridden to save a checkpoint indexed by event id.
         It will be called by the ``SearchRunner`` after receiving operations
         from the ``SearchMethod``
         """
+        searcher_state_file = path.joinpath(STATE_FILE)
+        self.save_method_state(path, event_id)
+        d = self.searcher_state.to_dict()
+        d["experimentId"] = experiment_id
+        with searcher_state_file.open("w") as f:
+            json.dump(d, f)
+
+    def save_method_state(self, path: pathlib.Path, event_id: int) -> None:
+        """
+        Override to save method-specific state
+        """
         pass
 
-    def load_checkpoint(self, event_id: int) -> None:
+    def load(self, path: pathlib.Path) -> int:
         """
-        This is optionally implemented to load a checkpoint indexed by event id.
+        Load a checkpoint indexed by event id.
         It will be called by the ``SearchRunner`` before processing new searcher events
-        from the master.
+        from the master. It updates SearcherState
+        """
+        searcher_state_file = path.joinpath(STATE_FILE)
+        with searcher_state_file.open("r") as f:
+            state_dict = json.load(f)
+            self.searcher_state.from_dict(state_dict)
+            experiment_id = state_dict["experimentId"]  # type: int
+
+        self.load_method_state(path, self.searcher_state.last_event_id)
+        return experiment_id
+
+    def load_method_state(self, path: pathlib.Path, event_id: Optional[int]) -> None:
+        """
+        This is optionally implemented to load method-specific search state.
         """
         pass
