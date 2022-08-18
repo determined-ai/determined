@@ -39,7 +39,19 @@ class SearchRunner:
                         [SearchRunner._searcher_event_as_dict(e) for e in events.searcherEvents]
                     )
                 )
+                # the first event is an event we have already processed and told master about it
+                # however, we may not have saved the state after that event if we crashed
+                # after POSTing operations but before saving state
+                last_event_id = self.search_method.searcher_state.last_event_id
+                first_event = True
                 for event in events.searcherEvents:
+                    skip_posting = first_event and last_event_id is not None and last_event_id < event.id
+                    skip_event = first_event and last_event_id is not None and last_event_id == event.id
+                    first_event = False
+
+                    if skip_event:
+                        continue
+
                     if event.initialOperations:
                         logging.info("initial operations")
                         operations = self.search_method.initial_operations()
@@ -116,15 +128,22 @@ class SearchRunner:
                         operations = [Progress(progress)]
                     else:
                         raise RuntimeError(f"Unsupported event {event}")
-                    bindings.post_PostSearcherOperations(
-                        session,
-                        body=bindings.v1PostSearcherOperationsRequest(
+
+                    if skip_posting:
+                        logging.warning(
+                            f"event {event.id} has already been acknowledged by master"
+                        )
+                    else:
+                        body = bindings.v1PostSearcherOperationsRequest(
                             experimentId=self.search_method.searcher_state.experiment_id,
                             searcherOperations=[op._to_searcher_operation() for op in operations],
                             triggeredByEvent=event,
-                        ),
-                        experimentId=experiment_id,
-                    )
+                        )
+                        bindings.post_PostSearcherOperations(
+                            session,
+                            body=body,
+                            experimentId=experiment_id,
+                        )
 
                     # save state
                     assert event.id is not None  # TODO change proto to make id mandatory
