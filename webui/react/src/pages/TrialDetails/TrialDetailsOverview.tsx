@@ -4,7 +4,7 @@ import useMetricNames from 'hooks/useMetricNames';
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ErrorType } from 'shared/utils/error';
-import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
+import { ExperimentBase, MetricName, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 
 import TrialChart from './TrialChart';
@@ -71,6 +71,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         metricNames={metricNames}
         metrics={metrics}
         trialId={trial?.id}
+        trialTerminated={trial ?
+          [ RunState.Completed, RunState.Errored ].includes(trial.state)
+          : false}
         onMetricChange={handleMetricChange}
       />
       <TrialDetailsWorkloads

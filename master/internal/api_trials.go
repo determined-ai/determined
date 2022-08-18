@@ -526,6 +526,9 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	var err error
 
 	var metrics []*apiv1.SummarizedMetric
+	if endBatches == 0 {
+		endBatches = math.MaxInt32
+	}
 
 	for _, name := range metricNames {
 		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||

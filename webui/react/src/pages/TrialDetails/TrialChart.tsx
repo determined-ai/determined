@@ -1,5 +1,5 @@
 import { Empty } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -9,10 +9,12 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
+import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
+import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricName, MetricType, Scale, WorkloadGroup } from 'types';
+import { MetricContainer, MetricName, Scale } from 'types';
 
 interface Props {
   defaultMetricNames: MetricName[];
@@ -21,7 +23,7 @@ interface Props {
   metrics: MetricName[];
   onMetricChange: (value: MetricName[]) => void;
   trialId?: number;
-  workloads?: WorkloadGroup[];
+  trialTerminated: boolean;
 }
 
 const getChartMetricLabel = (metric: MetricName): string => {
@@ -35,31 +37,53 @@ const TrialChart: React.FC<Props> = ({
   metricNames,
   metrics,
   onMetricChange,
-  workloads,
   trialId,
+  trialTerminated,
 }: Props) => {
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
+  const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
+
+  const fetchTrialSummary = useCallback(async () => {
+    if (trialId) {
+      const summ = await compareTrials({
+        maxDatapoints: screen.width > 1600 ? 1500 : 1000,
+        metricNames: metricNames,
+        scale: scale,
+        startBatches: 0,
+        trialIds: [ trialId ],
+      });
+      setTrialSummary(summ[0].metrics);
+    }
+  }, [ metricNames, scale, trialId ]);
+
+  const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
+  useEffect(() => {
+    if (trialTerminated) {
+      stopPolling();
+    }
+  }, [ trialTerminated, stopPolling ]);
+  if (trialTerminated) {
+    stopPolling();
+  }
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
-    metrics.forEach((metric, index) => yValues[index] = {});
 
-    (workloads || []).forEach((wlWrapper) => {
-      metrics.forEach((metric, index) => {
-        const metricsWl = metric.type === MetricType.Training ?
-          wlWrapper.training : wlWrapper.validation;
-        if (!metricsWl || !metricsWl.metrics) return;
+    metrics.forEach((metric, index) => {
+      yValues[index] = {};
 
-        const x = metricsWl.totalBatches;
-        if (!xValues.includes(x)) xValues.push(x);
+      const mWrapper = trialSumm.find((mContainer) =>
+        mContainer.name === metric.name && mContainer.type === metric.type);
+      if (!mWrapper || !mWrapper.data) {
+        return;
+      }
 
-        /**
-         * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-         * dynamic min/max ranges via uPlot.Scales.
-         */
-        const y = metricsWl.metrics[metric.name];
-        yValues[index][x] = Number.isFinite(y) ? y : null;
+      mWrapper.data.forEach((pt) => {
+        if (!xValues.includes(pt.batches)) {
+          xValues.push(pt.batches);
+        }
+        yValues[index][pt.batches] = Number.isFinite(pt.value) ? pt.value : null;
       });
     });
 
@@ -70,7 +94,7 @@ const TrialChart: React.FC<Props> = ({
     });
 
     return [ xValues, ...yValuesArray ];
-  }, [ metrics, workloads ]);
+  }, [ metrics, trialSumm ]);
 
   const chartOptions: Options = useMemo(() => {
     return {
