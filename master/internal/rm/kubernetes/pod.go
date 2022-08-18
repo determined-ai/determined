@@ -83,7 +83,7 @@ type FluentConfig struct {
 
 // DefaultFluentConfig stores defaults for k8s-configurable Fluent Bit-related options.
 var DefaultFluentConfig = FluentConfig{
-	Image: "fluent/fluent-bit:1.6",
+	Image: aproto.FluentImage,
 }
 
 type getPodNodeInfo struct{}

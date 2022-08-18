@@ -10,6 +10,7 @@ import (
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
@@ -28,7 +29,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
-		AgentFluentImage:       "fluent/fluent-bit:1.6",
+		AgentFluentImage:       aproto.FluentImage,
 	}
 	assert.DeepEqual(t, config, expected)
 }
@@ -111,7 +112,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 		MasterURL:              "http://test.master:8080",
 		AWS:                    &awsConfig,
 		AgentDockerImage:       "test_image",
-		AgentFluentImage:       "fluent/fluent-bit:1.6",
+		AgentFluentImage:       aproto.FluentImage,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
@@ -145,7 +146,7 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		MasterURL:              "http://test.master:8080",
 		GCP:                    &expected,
 		AgentDockerImage:       "test_image",
-		AgentFluentImage:       "fluent/fluent-bit:1.6",
+		AgentFluentImage:       aproto.FluentImage,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
@@ -205,7 +206,7 @@ boot_disk_source_image: test-source_image3
 		MasterURL:              "http://test.master:8080",
 		GCP:                    &expectedGCP,
 		AgentDockerImage:       "test_image",
-		AgentFluentImage:       "fluent/fluent-bit:1.6",
+		AgentFluentImage:       aproto.FluentImage,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
