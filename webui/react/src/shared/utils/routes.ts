@@ -5,7 +5,7 @@ import history from '../routes/history';
 import { clone } from './data';
 import rootLogger from './Logger';
 
-export const logger = rootLogger.extend('utils', 'routes');
+const logger = rootLogger.extend('utils', 'routes');
 
 export const isFullPath = (url: string): boolean => {
   try {

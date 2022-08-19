@@ -1,6 +1,5 @@
 import {
   DEFAULT_ERROR_MESSAGE,
-  DEFAULT_LOGGER,
   DetError,
   DetErrorOptions,
   ErrorLevel,
@@ -13,7 +12,6 @@ const DEFAULT_DET_ERROR_OPTIONS: DetErrorOptions = {
   id: 'badbed',
   isUserTriggered: true,
   level: ErrorLevel.Fatal,
-  logger: DEFAULT_LOGGER,
   payload: { abc: 1, def: true, ghi: 'what' },
   publicMessage: 'Public Message',
   publicSubject: 'Public Subject',
