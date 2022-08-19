@@ -790,7 +790,7 @@ def set_gc_policy(args: Namespace) -> None:
         print("Aborting operations.")
 
 
-def get_fmted_checkpoints(unfmted_checkpoints):
+def get_fmted_checkpoints(unfmted_checkpoints: Any) -> Any:
     checkpoints = []
     for cDB in unfmted_checkpoints:
         checkpoint = {}
