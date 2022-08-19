@@ -294,10 +294,10 @@ const TrialTable: React.FC<Props> = ({
 
   useEffect(() => {
 
-    updateSettings({
-      columns: columns.map((c) => c.dataIndex),
-      columnWidths: columns.map((c) => c.defaultWidth),
-    });
+    // updateSettings({
+    //   columns: columns.map((c) => c.dataIndex),
+    //   columnWidths: columns.map((c) => c.defaultWidth),
+    // });
   }, [ columns.length ]);
 
   return (
