@@ -22,6 +22,10 @@ import css from './UserManagement.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   UserManagementSettings } from './UserManagement.settings';
 
+export const USER_TITLE = 'Users';
+export const CREATE_USER = 'New User';
+export const CREAT_USER_LABEL = 'new_user';
+
 const UserManagement: React.FC = () => {
   const [ users, setUsers ] = useState<DetailedUser[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
@@ -185,10 +189,10 @@ const UserManagement: React.FC = () => {
       containerRef={pageRef}
       options={(
         <Space>
-          <Button onClick={onClickCreateUser}>New User</Button>
+          <Button aria-label={CREAT_USER_LABEL} onClick={onClickCreateUser}>{CREATE_USER}</Button>
         </Space>
       )}
-      title="Users">
+      title={USER_TITLE}>
       <div className={css.usersTable}>{table}</div>
       {modalCreateUserContextHolder}
     </Page>
