@@ -8,7 +8,7 @@ export const NAMEPACE_SEPARATOR = '/';
  * Modeled after Syslog RFC 5424
  * https://tools.ietf.org/html/rfc5424
  */
-enum Level {
+export enum Level {
   Error = 'error',
   Warn = 'warn',
   Info = 'info',
@@ -25,10 +25,10 @@ const generateNamespace = (parts: string[], separator = NAMEPACE_SEPARATOR) => {
   return parts.join(separator);
 };
 
-const getLogger = (namespace: string, level: Level) => {
+/** returns the underlying Debug logger. */
+export const getLogger = (namespace: string, level: Level): (...msg: unknown[]) => void => {
   const logger = debug(`${namespace}:${level}`);
-  // debug doesn't seem to match the advertised type definition.
-  return logger as (...msg: unknown[]) => void;
+  return logger;
 };
 
 export interface LoggerInterface {
