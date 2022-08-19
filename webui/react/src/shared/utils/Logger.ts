@@ -39,32 +39,19 @@ export interface LoggerInterface {
   warn(...msg: unknown[]): void;
 }
 
-type LogPredicate = (namespace: string, level: Level) => boolean;
-
 /**
  * log filtering is controlled by localStorage.debug.
  * read more on: https://github.com/debug-js/debug#usage
  */
 class Logger implements LoggerInterface {
   private namespace: string;
-  private isVisible: LogPredicate;
 
   constructor(namespace: string) {
     this.namespace = namespace;
-    this.isVisible = () => true;
-    // debugger;
   }
 
   extend(...namespace: string[]): Logger {
     return new Logger(generateNamespace([ this.namespace, ...namespace ]));
-  }
-
-  /**
-   * set the logic to determine whether to log each
-   * message to console or not.
-  */
-  setVisibility(predicate: LogPredicate): void { // TODO remove me?
-    this.isVisible = predicate;
   }
 
   debug(...msg: unknown[]): void {
@@ -88,7 +75,6 @@ class Logger implements LoggerInterface {
   }
 
   private logWithLevel(level: Level, ...msg: unknown[]): void {
-    if (!this.isVisible(this.namespace, level)) return;
     // TODO: set up and persist loggers.
     getLogger(this.namespace, level)(...msg);
   }
