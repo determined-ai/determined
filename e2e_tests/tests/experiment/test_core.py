@@ -1,9 +1,11 @@
 import json
 import subprocess
+import tempfile
 
 import numpy as np
 import pytest
 
+from determined.common import yaml
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -404,3 +406,65 @@ def test_core_api_distributed_tutorial() -> None:
     exp.run_basic_test(
         conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
     )
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize(
+    "name,searcher_cfg",
+    [
+        (
+            "random",
+            {
+                "metric": "validation_error",
+                "name": "random",
+                "max_length": {
+                    "batches": 3000,
+                },
+                "max_trials": 8,
+                "max_concurrent_trials": 2,
+            },
+        ),
+        (
+            "grid",
+            {
+                "metric": "validation_error",
+                "name": "random",
+                "max_length": {
+                    "batches": 3000,
+                },
+                "max_trials": 8,
+                "max_concurrent_trials": 2,
+            },
+        ),
+    ],
+)
+@pytest.mark.e2e_cpu
+def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-very-many-long-steps.yaml"))
+    config_obj["searcher"] = searcher_cfg
+    config_obj["hyperparameters"]["x"] = {
+        "type": "categorical",
+        # Intentionally give the searcher more to do, in case a bug involves exceeding max
+        # concurrent trials.
+        "vals": list(range(16)),
+    }
+
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config_obj, f)
+        experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), [])
+
+    try:
+        exp.wait_for_experiment_active_workload(experiment_id)
+        trials = exp.experiment_trials(experiment_id)
+        assert len(trials) == 2
+
+        for t in trials:
+            exp.cancel_trial(t.trial.id)
+
+        exp.wait_for_experiment_active_workload(experiment_id)
+        trials = exp.experiment_trials(experiment_id)
+        assert len(trials) == 4
+
+    finally:
+        exp.cancel_single(experiment_id)
