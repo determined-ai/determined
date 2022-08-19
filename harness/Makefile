@@ -98,3 +98,7 @@ gen-deploy-aws-vcpu-mapping:
 .PHONY: aws-master-config-inject
 aws-master-config-inject:
 	python -m determined.deploy.aws.master_config_inject
+
+.PHONY: install
+install:
+	pip install .

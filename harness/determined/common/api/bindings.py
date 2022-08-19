@@ -3814,29 +3814,6 @@ class v1Pagination:
             "total": self.total if self.total is not None else None,
         }
 
-class v1PaginationRequest:
-    def __init__(
-        self,
-        *,
-        limit: "typing.Optional[int]" = None,
-        offset: "typing.Optional[int]" = None,
-    ):
-        self.offset = offset
-        self.limit = limit
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PaginationRequest":
-        return cls(
-            offset=obj.get("offset", None),
-            limit=obj.get("limit", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "offset": self.offset if self.offset is not None else None,
-            "limit": self.limit if self.limit is not None else None,
-        }
-
 class v1PatchExperiment:
     def __init__(
         self,
@@ -7382,16 +7359,16 @@ def get_GetJobQueueStats(
 def get_GetJobs(
     session: "client.Session",
     *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    pagination_limit: "typing.Optional[int]" = None,
-    pagination_offset: "typing.Optional[int]" = None,
     resourcePool: "typing.Optional[str]" = None,
     states: "typing.Optional[typing.Sequence[determinedjobv1State]]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
-        "pagination.limit": pagination_limit,
-        "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
         "states": [x.value for x in states] if states is not None else None,
     }
