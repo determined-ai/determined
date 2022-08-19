@@ -12,6 +12,7 @@ import {
   V1TrialsCollection,
   V1TrialSorter,
   V1TrialTag,
+  Determinedtrialv1State
 } from 'services/api-ts-sdk';
 import {
   isNumber,
@@ -88,6 +89,18 @@ const decodeNumberRangeDict = (d: Array<V1NumberRangeFilter>): NumberRangeDict =
       },
     } : {})).reduce((a, b) => ({ ...a, ...b }), {});
 
+  const encodeStates = (states: string[]): Determinedtrialv1State[] => {
+    const apiStateToTrialStateMap: Record< string, Determinedtrialv1State> = {
+    'ACTIVE' : Determinedtrialv1State.ACTIVEUNSPECIFIED,
+    'PAUSED':Determinedtrialv1State.PAUSED,
+    'KILLED':Determinedtrialv1State.STOPPINGKILLED,
+    'COMPLETE': Determinedtrialv1State.STOPPINGCOMPLETED,
+    'CANCELED': Determinedtrialv1State.CANCELED,
+    'COMPLETED': Determinedtrialv1State.COMPLETED,
+    'ERROR':Determinedtrialv1State.ERROR
+    }
+    return states.map((s) => apiStateToTrialStateMap[s])
+  } 
 export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
   return {
     experimentIds: encodeIdList(f.experimentIds),
@@ -105,6 +118,7 @@ export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
     userIds: encodeIdList(f.userIds),
     validationMetrics: encodeNumberRangeDict(f.validationMetrics ?? {}),
     workspaceIds: encodeIdList(f.workspaceIds),
+    states: encodeStates(f.state ?? [])  
   };
 };
 export const decodeFilters = (f: V1TrialFilters): TrialFilters => ({
