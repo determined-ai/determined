@@ -605,13 +605,6 @@ const ProjectDetails: React.FC = () => {
         openCommand(result as CommandTask);
       }
 
-      if (action === Action.CompareExperiments) {
-        if (settings.row?.length)
-          return routeToReactUrl(
-            paths.experimentComparison(settings.row.map((id) => id.toString())),
-          );
-      }
-
       /*
        * Deselect selected rows since their states may have changed where they
        * are no longer part of the filter criteria.
@@ -632,7 +625,7 @@ const ProjectDetails: React.FC = () => {
         silent: false,
       });
     }
-  }, [ fetchExperiments, sendBatchActions, updateSettings, settings.row ]);
+  }, [ fetchExperiments, sendBatchActions, updateSettings ]);
 
   const showConfirmation = useCallback((action: Action) => {
     Modal.confirm({
@@ -859,7 +852,6 @@ const ProjectDetails: React.FC = () => {
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([
-      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
       {
         body: (
           <div className={css.experimentTab}>
@@ -902,6 +894,7 @@ const ProjectDetails: React.FC = () => {
         options: ExperimentTabOptions,
         title: 'Experiments',
       },
+      { body: <TrialsComparison projectId={projectId} />, key: 'trials', title: 'Trials' },
       {
         body: (
           <PaginatedNotesCard
