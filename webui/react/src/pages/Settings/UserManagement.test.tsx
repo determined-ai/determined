@@ -55,7 +55,7 @@ describe('UserManagement', () => {
 
   it('should render modal for create user when click the button', async () => {
     await waitFor(() => setup());
-    await user.click(await screen.getByLabelText(CREAT_USER_LABEL));
+    await user.click(screen.getByLabelText(CREAT_USER_LABEL));
 
     expect(screen.getAllByText('Create User')).toHaveLength(2);
   });
