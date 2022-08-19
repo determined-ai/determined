@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
 from determined import tensorboard
+from determined.common import api
 from determined.common.api import errors
-from determined.common.experimental.session import Session
 from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
@@ -26,7 +26,7 @@ class TrainContext:
 
     def __init__(
         self,
-        session: Session,
+        session: api.Session,
         trial_id: int,
         run_id: int,
         exp_id: int,

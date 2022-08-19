@@ -48,6 +48,7 @@ import pathlib
 import warnings
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import Checkpoint
 from determined.common.experimental.determined import Determined
 from determined.common.experimental.experiment import (  # noqa: F401
@@ -55,7 +56,6 @@ from determined.common.experimental.experiment import (  # noqa: F401
     ExperimentState,
 )
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
-from determined.common.experimental.session import Session  # noqa: F401
 from determined.common.experimental.trial import (  # noqa: F401
     TrialOrderBy,
     TrialReference,

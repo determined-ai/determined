@@ -4,10 +4,10 @@ from time import sleep
 from typing import Any, Dict, List, Sequence, Tuple
 
 from determined.cli.session import setup_session
+from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.api.bindings import v1Experiment, v1Project, v1Workspace
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import session
 
 from . import render
 from .workspace import list_workspace_projects, pagination_args, workspace_by_name
@@ -60,7 +60,7 @@ def render_project(project: v1Project) -> None:
 
 
 def project_by_name(
-    sess: session.Session, workspace_name: str, project_name: str
+    sess: api.Session, workspace_name: str, project_name: str
 ) -> Tuple[v1Workspace, v1Project]:
     w = workspace_by_name(sess, workspace_name)
     p = bindings.get_GetWorkspaceProjects(sess, id=w.id, name=project_name).projects

@@ -3,7 +3,8 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, cast
 
-from determined.common.experimental import checkpoint, session, trial
+from determined.common import api
+from determined.common.experimental import checkpoint, trial
 
 
 class ExperimentState(enum.Enum):
@@ -65,7 +66,7 @@ class ExperimentReference:
     def __init__(
         self,
         experiment_id: int,
-        session: session.Session,
+        session: api.Session,
     ):
         self._id = experiment_id
         self._session = session

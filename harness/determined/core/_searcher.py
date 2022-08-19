@@ -4,7 +4,7 @@ from typing import Iterator, Optional
 
 import determined as det
 from determined import core
-from determined.common.experimental.session import Session
+from determined.common import api
 
 logger = logging.getLogger("determined.core")
 
@@ -43,7 +43,7 @@ class SearcherOperation:
 
     def __init__(
         self,
-        session: Session,
+        session: api.Session,
         trial_id: int,
         length: int,
         is_chief: bool,
@@ -171,7 +171,7 @@ class SearcherContext:
 
     def __init__(
         self,
-        session: Session,
+        session: api.Session,
         dist: core.DistributedContext,
         trial_id: int,
         run_id: int,
