@@ -735,8 +735,10 @@ def set_gc_policy(args: Namespace) -> None:
             args.master, "experiments/{}/preview_gc".format(args.experiment_id), params=policy
         )
         response = r.json()
-        checkpoints = response["checkpoints"]
+        checkpoints_db = response["checkpoints"]
         metric_name = response["metric_name"]
+
+        checkpoints = get_fmted_checkpoints(unfmted_checkpoints=checkpoints_db)
 
         headers = [
             "Trial ID",
@@ -786,6 +788,26 @@ def set_gc_policy(args: Namespace) -> None:
         print("Set GC policy of experiment {} to\n{}".format(args.experiment_id, pformat(policy)))
     else:
         print("Aborting operations.")
+
+
+def get_fmted_checkpoints(unfmted_checkpoints):
+    checkpoints = []
+    for cDB in unfmted_checkpoints:
+        checkpoint = {}
+        checkpoint["uuid"] = cDB["UUID"]
+        checkpoint["trial_id"] = cDB["TrialID"]
+        checkpoint["resources"] = cDB["Resources"]
+        checkpoint["end_time"] = cDB["ReportTime"]
+        checkpoint["state"] = cDB["State"]
+        validationMetrics = {"validation_metrics": cDB["ValidationMetrics"]}
+        validation = {"metrics": validationMetrics}
+        cStep = {
+            "total_batches": cDB["StepsCompleted"],
+            "validation": validation,
+        }
+        checkpoint["step"] = cStep
+        checkpoints.append(checkpoint)
+    return checkpoints
 
 
 @authentication.required

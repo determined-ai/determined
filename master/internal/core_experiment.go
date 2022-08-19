@@ -98,28 +98,10 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err != nil {
 		return nil, err
 	}
-	var checkpoints []map[string]interface{}
-	for _, cDB := range checkpointsDB {
-		checkpoint := make(map[string]interface{})
-		checkpoint["uuid"] = *cDB.UUID
-		checkpoint["trial_id"] = cDB.CheckpointTrainingMetadata.TrialID
-		checkpoint["resources"] = cDB.Resources
-		checkpoint["end_time"] = cDB.ReportTime
-		checkpoint["state"] = cDB.State
-		validationMetrics := map[string]interface{}{
-			"validation_metrics": cDB.CheckpointTrainingMetadata.ValidationMetrics,
-		}
-		validation := map[string]interface{}{"metrics": validationMetrics}
-		cStep := map[string]interface{}{
-			"total_batches": cDB.CheckpointTrainingMetadata.StepsCompleted,
-			"validation":    validation,
-		}
-		checkpoint["step"] = cStep
-		checkpoints = append(checkpoints, checkpoint)
-	}
+
 	metricName := expConfig.Searcher().Metric()
 	checkpointsWithMetric := map[string]interface{}{
-		"checkpoints": checkpoints, "metric_name": metricName,
+		"checkpoints": checkpointsDB, "metric_name": metricName,
 	}
 
 	return checkpointsWithMetric, nil
