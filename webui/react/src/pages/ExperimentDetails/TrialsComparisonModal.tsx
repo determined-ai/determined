@@ -68,7 +68,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ canceler ] = useState(new AbortController());
   const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
-  const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
+  const [ selectedMetrics, setSelectedMetrics ] = useState<Metric[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
@@ -119,10 +119,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   });
 
   useEffect(() => {
-    setSelectedMetrics(metricNames);
-  }, [ metricNames ]);
+    setSelectedMetrics(metrics);
+  }, [ metrics ]);
 
-  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
+  const onMetricSelect = useCallback((selectedMetrics: Metric[]) => {
     setSelectedMetrics(selectedMetrics);
   }, []);
 
@@ -245,16 +245,16 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
               Metrics
               <MetricSelectFilter
-                defaultMetricNames={metricNames}
+                defaultMetrics={metrics}
                 label=""
-                metricNames={metricNames}
+                metrics={metrics}
                 multiple
                 value={selectedMetrics}
                 onChange={onMetricSelect}
               />
             </div>
           </div>
-          {metricNames.filter((metric) => selectedMetrics
+          {metrics.filter((metric) => selectedMetrics
             .map((m) => m.name)
             .includes(metric.name))
             .map((metric) => (

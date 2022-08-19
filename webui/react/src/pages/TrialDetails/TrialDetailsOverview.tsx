@@ -4,8 +4,9 @@ import useMetricNames from 'hooks/useMetricNames';
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ErrorType } from 'shared/utils/error';
-import { ExperimentBase, MetricName, MetricType, RunState, TrialDetails } from 'types';
+import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
+import { extractMetrics } from 'utils/metric';
 
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';
@@ -47,10 +48,10 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const defaultValidationMetric = metricNames.find((metricName) => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
-    const fallbackMetric = metricNames[0];
+    const fallbackMetric = metrics[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
-    const settingMetrics: MetricName[] = (settings.metric || []).map((metric) => {
+    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
@@ -58,7 +59,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     return { defaultMetrics, metrics };
   }, [ experiment?.config?.searcher, metricNames, settings.metric ]);
 
-  const handleMetricChange = useCallback((value: MetricName[]) => {
+  const handleMetricChange = useCallback((value: Metric[]) => {
     const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
     updateSettings({ metric: newMetrics, tableOffset: 0 });
   }, [ updateSettings ]);
@@ -67,9 +68,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     <div className={css.base}>
       <TrialInfoBox experiment={experiment} trial={trial} />
       <TrialChart
-        defaultMetricNames={defaultMetrics}
-        metricNames={metricNames}
+        defaultMetrics={defaultMetrics}
         metrics={metrics}
+        selectedMetrics={selectedMetrics}
         trialId={trial?.id}
         trialTerminated={trial ?
           [ RunState.Completed, RunState.Errored ].includes(trial.state)
@@ -79,8 +80,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       <TrialDetailsWorkloads
         defaultMetrics={defaultMetrics}
         experiment={experiment}
-        metricNames={metricNames}
-        metrics={metrics}
+        selectedMetrics={metrics}
         settings={settings}
         trial={trial}
         updateSettings={updateSettings}

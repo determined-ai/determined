@@ -148,7 +148,7 @@ require (
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
@@ -169,9 +169,9 @@ require (
 )
 
 require (
-	github.com/uptrace/bun v1.1.2
-	github.com/uptrace/bun/dialect/pgdialect v1.1.2
-	github.com/uptrace/bun/extra/bundebug v1.1.2
+	github.com/uptrace/bun v1.1.4
+	github.com/uptrace/bun/dialect/pgdialect v1.1.4
+	github.com/uptrace/bun/extra/bundebug v1.1.4
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 

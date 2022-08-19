@@ -1,6 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Tag, Tooltip } from 'antd';
-import type { InputRef } from 'antd';
+import { Input, InputRef, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
@@ -9,10 +8,18 @@ import { toHtmlId, truncate } from 'shared/utils/string';
 
 import css from './TagList.module.scss';
 
+export enum TagAction {
+  Add = 'Add',
+  Remove = 'Remove',
+}
+
 interface Props {
   compact?: boolean;
   disabled?: boolean;
   ghost?: boolean;
+  // intended to be used as an alternative to onChange
+  // for atomic tag updates
+  onAction?: (action: TagAction, tag: string) => void;
   onChange?: (tags: string[]) => void;
   tags: string[];
 }
@@ -24,8 +31,8 @@ export const ARIA_LABEL_INPUT = 'new-tag-input';
 const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
-const EditableTagList: React.FC<Props> = (
-  { compact, disabled = false, ghost, tags, onChange }: Props,
+const TagList: React.FC<Props> = (
+  { compact, disabled = false, ghost, tags, onAction, onChange }: Props,
 ) => {
   const initialState = {
     editInputIndex: -1,
@@ -38,8 +45,9 @@ const EditableTagList: React.FC<Props> = (
   const editInputRef = useRef<InputRef>(null);
 
   const handleClose = useCallback((removedTag) => {
+    onAction?.(TagAction.Remove, removedTag);
     onChange?.(tags.filter((tag) => tag !== removedTag));
-  }, [ onChange, tags ]);
+  }, [ onChange, onAction, tags ]);
 
   const handleTagPlus = useCallback(() => {
     setState((state) => ({ ...state, inputVisible: true }));
@@ -65,13 +73,17 @@ const EditableTagList: React.FC<Props> = (
     const oldTag = previousValue?.trim();
     const updatedTags = tags.filter((tag) => tag !== oldTag);
     if (newTag) {
+      if (oldTag && newTag !== oldTag) {
+        onAction?.(TagAction.Remove, oldTag);
+      }
       if (!updatedTags.includes(newTag)) {
         updatedTags.push(newTag);
+        onAction?.(TagAction.Add, newTag);
       }
       onChange?.(updatedTags);
     }
     setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
-  }, [ onChange, tags ]);
+  }, [ onAction, onChange, tags ]);
 
   const { editInputIndex, inputVisible, inputWidth } = state;
 
@@ -159,4 +171,4 @@ const EditableTagList: React.FC<Props> = (
   );
 };
 
-export default EditableTagList;
+export default TagList;

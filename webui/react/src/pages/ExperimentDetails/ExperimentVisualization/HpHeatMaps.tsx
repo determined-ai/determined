@@ -20,11 +20,11 @@ import { Primitive, Range } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
-  ExperimentBase, HyperparameterType, MetricName, MetricType,
+  ExperimentBase, HyperparameterType, Metric, MetricType,
   metricTypeParamMap, Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { metricNameToStr } from 'utils/metric';
+import { metricToStr } from 'utils/metric';
 
 import css from './HpHeatMaps.module.scss';
 
@@ -35,7 +35,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale
   selectedView: ViewType;
 }
@@ -160,7 +160,7 @@ const HpHeatMaps: React.FC<Props> = ({
             xLabel,
             yLabel,
             null,
-            metricNameToStr(selectedMetric),
+            metricToStr(selectedMetric),
             null,
             'trial ID',
           ],

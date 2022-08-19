@@ -17,7 +17,7 @@ import { flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
-  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, Metric,
   metricTypeParamMap, RunState, Scale,
 } from 'types';
 import handleError from 'utils/error';
@@ -33,7 +33,7 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: MetricName
+  selectedMetric: Metric
   selectedScale: Scale;
 }
 

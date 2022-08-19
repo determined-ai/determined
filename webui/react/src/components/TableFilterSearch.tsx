@@ -1,5 +1,4 @@
-import { Button, Input } from 'antd';
-import type { InputRef } from 'antd';
+import { Button, Input, InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -58,6 +57,7 @@ const TableFilterSearch: React.FC<Props> = ({
           ref={inputRef}
           value={search}
           onChange={handleSearchChange}
+          onPressEnter={handleSearch}
         />
       </div>
       <div className={css.footer}>

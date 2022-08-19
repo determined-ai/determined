@@ -182,6 +182,23 @@ export enum Determinedtaskv1State {
 }
 
 /**
+ * - STATE_ACTIVE_UNSPECIFIED: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
+ * @export
+ * @enum {string}
+ */
+export enum Determinedtrialv1State {
+    ACTIVEUNSPECIFIED = <any> 'STATE_ACTIVE_UNSPECIFIED',
+    PAUSED = <any> 'STATE_PAUSED',
+    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
+    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
+    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
+    CANCELED = <any> 'STATE_CANCELED',
+    COMPLETED = <any> 'STATE_COMPLETED',
+    ERROR = <any> 'STATE_ERROR'
+}
+
+/**
  * Series of data points for an experiment trial.
  * @export
  * @interface ExpCompareTrialsSampleResponseExpTrial
@@ -655,6 +672,26 @@ export enum TrialEarlyExitExitedReason {
 }
 
 /**
+ * Specifies a ranking for trials within their experiment.
+ * @export
+ * @interface TrialFiltersRankWithinExp
+ */
+export interface TrialFiltersRankWithinExp {
+    /**
+     * 
+     * @type {V1TrialSorter}
+     * @memberof TrialFiltersRankWithinExp
+     */
+    sorter?: V1TrialSorter;
+    /**
+     * 
+     * @type {number}
+     * @memberof TrialFiltersRankWithinExp
+     */
+    rank?: number;
+}
+
+/**
  * To distinguish the 2 different categories of metrics.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  * @export
  * @enum {string}
@@ -664,6 +701,18 @@ export enum TrialProfilerMetricLabelsProfilerMetricType {
     SYSTEM = <any> 'PROFILER_METRIC_TYPE_SYSTEM',
     TIMING = <any> 'PROFILER_METRIC_TYPE_TIMING',
     MISC = <any> 'PROFILER_METRIC_TYPE_MISC'
+}
+
+/**
+ * - NAMESPACE_TRIALS_UNSPECIFIED: Namespace for columns in the trials table  - NAMESPACE_HPARAMS: Namespace corrspondings to trials->hparams  - NAMESPACE_TRAINING_METRICS: Namespace corrspondings to steps->avg_metrics  - NAMESPACE_VALIDATION_METRICS: Namespace corrspondings to validations->validation_metrics
+ * @export
+ * @enum {string}
+ */
+export enum TrialSorterNamespace {
+    TRIALSUNSPECIFIED = <any> 'NAMESPACE_TRIALS_UNSPECIFIED',
+    HPARAMS = <any> 'NAMESPACE_HPARAMS',
+    TRAININGMETRICS = <any> 'NAMESPACE_TRAINING_METRICS',
+    VALIDATIONMETRICS = <any> 'NAMESPACE_VALIDATION_METRICS'
 }
 
 /**
@@ -1131,6 +1180,134 @@ export interface V1ArchiveWorkspaceResponse {
 /**
  * 
  * @export
+ * @interface V1AugmentedTrial
+ */
+export interface V1AugmentedTrial {
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    trialId: number;
+    /**
+     * The state of the trial.
+     * @type {Determinedtrialv1State}
+     * @memberof V1AugmentedTrial
+     */
+    state: Determinedtrialv1State;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    hparams: any;
+    /**
+     * The training metrics for the trial.
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    trainingMetrics: any;
+    /**
+     * The validation metrics for the trial.
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    validationMetrics: any;
+    /**
+     * The tags for the trial.
+     * @type {any}
+     * @memberof V1AugmentedTrial
+     */
+    tags: any;
+    /**
+     * The start time for the trial.
+     * @type {Date}
+     * @memberof V1AugmentedTrial
+     */
+    startTime: Date;
+    /**
+     * The end time for the trial.
+     * @type {Date}
+     * @memberof V1AugmentedTrial
+     */
+    endTime: Date;
+    /**
+     * The searcher type for the trial.
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    searcherType: string;
+    /**
+     * The trials rank within the experiment, according to the sorter that is provided.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    rankWithinExp?: number;
+    /**
+     * The experiment id for the trial.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    experimentId: number;
+    /**
+     * The experiment name for the trial.
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    experimentName: string;
+    /**
+     * The experiment description for the trial.
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    experimentDescription: string;
+    /**
+     * The labels for the experiment corresponding to the trial.
+     * @type {Array<string>}
+     * @memberof V1AugmentedTrial
+     */
+    experimentLabels: Array<string>;
+    /**
+     * The id of the user who created the experiment corresponding to the trial.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    userId: number;
+    /**
+     * The project id for the trial.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    projectId: number;
+    /**
+     * The workspace id for the trial.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    workspaceId: number;
+    /**
+     * The total number of batches in the trial.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    totalBatches: number;
+    /**
+     * The name of the trials searcher metric.
+     * @type {string}
+     * @memberof V1AugmentedTrial
+     */
+    searcherMetric?: string;
+    /**
+     * The value for the trials searcher metric.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    searcherMetricValue?: number;
+}
+
+/**
+ * 
+ * @export
  * @interface V1AwsCustomTag
  */
 export interface V1AwsCustomTag {
@@ -1547,6 +1724,52 @@ export interface V1CreateExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1CreateTrialsCollectionRequest
+ */
+export interface V1CreateTrialsCollectionRequest {
+    /**
+     * The name for the collection.
+     * @type {string}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    name: string;
+    /**
+     * The project id for the collection.
+     * @type {number}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    projectId: number;
+    /**
+     * The filters for the collection.
+     * @type {V1TrialFilters}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    filters: V1TrialFilters;
+    /**
+     * The sorter for the collection.
+     * @type {V1TrialSorter}
+     * @memberof V1CreateTrialsCollectionRequest
+     */
+    sorter: V1TrialSorter;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1CreateTrialsCollectionResponse
+ */
+export interface V1CreateTrialsCollectionResponse {
+    /**
+     * 
+     * @type {V1TrialsCollection}
+     * @memberof V1CreateTrialsCollectionResponse
+     */
+    collection?: V1TrialsCollection;
+}
+
+/**
  * Response to CurrentUserRequest.
  * @export
  * @interface V1CurrentUserResponse
@@ -1646,6 +1869,14 @@ export interface V1DeleteProjectResponse {
  * @interface V1DeleteTemplateResponse
  */
 export interface V1DeleteTemplateResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteTrialsCollectionResponse
+ */
+export interface V1DeleteTrialsCollectionResponse {
 }
 
 /**
@@ -3155,6 +3386,20 @@ export interface V1GetTrialWorkloadsResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1GetTrialsCollectionsResponse
+ */
+export interface V1GetTrialsCollectionsResponse {
+    /**
+     * The collections belonging to that project.
+     * @type {Array<V1TrialsCollection>}
+     * @memberof V1GetTrialsCollectionsResponse
+     */
+    collections?: Array<V1TrialsCollection>;
+}
+
+/**
  * Response to GetUserRequest.
  * @export
  * @interface V1GetUserResponse
@@ -4322,6 +4567,32 @@ export interface V1Notebook {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1NumberRangeFilter
+ */
+export interface V1NumberRangeFilter {
+    /**
+     * The name of the field on which the filters is applied.
+     * @type {string}
+     * @memberof V1NumberRangeFilter
+     */
+    name?: string;
+    /**
+     * Minimum value for the field. optional.
+     * @type {number}
+     * @memberof V1NumberRangeFilter
+     */
+    min?: number;
+    /**
+     * Maximum value for the field. optional.
+     * @type {number}
+     * @memberof V1NumberRangeFilter
+     */
+    max?: number;
+}
+
+/**
  * Order records in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
  * @export
  * @enum {string}
@@ -4584,6 +4855,92 @@ export interface V1PatchProjectResponse {
      * @memberof V1PatchProjectResponse
      */
     project: V1Project;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchTrialsCollectionRequest
+ */
+export interface V1PatchTrialsCollectionRequest {
+    /**
+     * The ID of the collection to be patched.
+     * @type {number}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    id: number;
+    /**
+     * The new name for the collection.
+     * @type {string}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    name?: string;
+    /**
+     * The new filters for the collection.
+     * @type {V1TrialFilters}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    filters?: V1TrialFilters;
+    /**
+     * The new sorter for the collection.
+     * @type {V1TrialSorter}
+     * @memberof V1PatchTrialsCollectionRequest
+     */
+    sorter?: V1TrialSorter;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchTrialsCollectionResponse
+ */
+export interface V1PatchTrialsCollectionResponse {
+    /**
+     * The patched collection.
+     * @type {V1TrialsCollection}
+     * @memberof V1PatchTrialsCollectionResponse
+     */
+    collection?: V1TrialsCollection;
+}
+
+/**
+ * Request to patch trials. Can either specify a set of filters or set of trial ids as the patch target.
+ * @export
+ * @interface V1PatchTrialsRequest
+ */
+export interface V1PatchTrialsRequest {
+    /**
+     * patch that targets trials matching filters.
+     * @type {V1TrialFilters}
+     * @memberof V1PatchTrialsRequest
+     */
+    filters?: V1TrialFilters;
+    /**
+     * Patch that targets a list of trials.
+     * @type {PatchTrialsRequestIds}
+     * @memberof V1PatchTrialsRequest
+     */
+    trial?: PatchTrialsRequestIds;
+    /**
+     * 
+     * @type {V1TrialPatch}
+     * @memberof V1PatchTrialsRequest
+     */
+    patch: V1TrialPatch;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchTrialsResponse
+ */
+export interface V1PatchTrialsResponse {
+    /**
+     * The number of trials that were patched.
+     * @type {number}
+     * @memberof V1PatchTrialsResponse
+     */
+    rowsAffected?: number;
 }
 
 /**
@@ -5168,6 +5525,52 @@ export interface V1PutTemplateResponse {
      * @memberof V1PutTemplateResponse
      */
     template?: V1Template;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1QueryTrialsRequest
+ */
+export interface V1QueryTrialsRequest {
+    /**
+     * The filters to be appled to the trial.
+     * @type {V1TrialFilters}
+     * @memberof V1QueryTrialsRequest
+     */
+    filters: V1TrialFilters;
+    /**
+     * Sort trials by the given field.
+     * @type {V1TrialSorter}
+     * @memberof V1QueryTrialsRequest
+     */
+    sorter?: V1TrialSorter;
+    /**
+     * Offset for pagination.
+     * @type {number}
+     * @memberof V1QueryTrialsRequest
+     */
+    offset?: number;
+    /**
+     * Limit the number of trials. A value of 0 denotes no limit.
+     * @type {number}
+     * @memberof V1QueryTrialsRequest
+     */
+    limit?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1QueryTrialsResponse
+ */
+export interface V1QueryTrialsResponse {
+    /**
+     * The trials matching the query, with extra data.
+     * @type {Array<V1AugmentedTrial>}
+     * @memberof V1QueryTrialsResponse
+     */
+    trials?: Array<V1AugmentedTrial>;
 }
 
 /**
@@ -6613,6 +7016,26 @@ export interface V1Tensorboard {
 }
 
 /**
+ * A filter structure for filtering times within a given interval.
+ * @export
+ * @interface V1TimeRangeFilter
+ */
+export interface V1TimeRangeFilter {
+    /**
+     * The start of the interval. optional.
+     * @type {Date}
+     * @memberof V1TimeRangeFilter
+     */
+    intervalStart?: Date;
+    /**
+     * The end of the interval. optional.
+     * @type {Date}
+     * @memberof V1TimeRangeFilter
+     */
+    intervalEnd?: Date;
+}
+
+/**
  * Signals to the experiment the trial early exited.
  * @export
  * @interface V1TrialEarlyExit
@@ -6624,6 +7047,104 @@ export interface V1TrialEarlyExit {
      * @memberof V1TrialEarlyExit
      */
     reason: TrialEarlyExitExitedReason;
+}
+
+/**
+ * Filters to be applied to trials. Can be used to query, patch, and create dynamic collections of trials.
+ * @export
+ * @interface V1TrialFilters
+ */
+export interface V1TrialFilters {
+    /**
+     * Filter trials by their corresponding experiment ids.
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    experimentIds?: Array<number>;
+    /**
+     * Filter trials by their corresponding project ids.
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    projectIds?: Array<number>;
+    /**
+     * Filter trials by their corresponding workspace ids.
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    workspaceIds?: Array<number>;
+    /**
+     * Filter trials to those containing ALL validation_metrics within the indicated ranges.
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1TrialFilters
+     */
+    validationMetrics?: Array<V1NumberRangeFilter>;
+    /**
+     * Filter trials to those containing ALL training_metrics within the indicated ranges.
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1TrialFilters
+     */
+    trainingMetrics?: Array<V1NumberRangeFilter>;
+    /**
+     * Filter trials to those containing ALL hyperparameters within the indicated ranges. Nested hparams are specified with dots.
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1TrialFilters
+     */
+    hparams?: Array<V1NumberRangeFilter>;
+    /**
+     * Filter trials according to the creators user id.
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    userIds?: Array<number>;
+    /**
+     * Filter trials according to the name of the searcher used.
+     * @type {string}
+     * @memberof V1TrialFilters
+     */
+    searcher?: string;
+    /**
+     * Filter trials to those containing ANY of the provided tags.
+     * @type {Array<V1TrialTag>}
+     * @memberof V1TrialFilters
+     */
+    tags?: Array<V1TrialTag>;
+    /**
+     * Filter trials according to their rank within the experiment.
+     * @type {TrialFiltersRankWithinExp}
+     * @memberof V1TrialFilters
+     */
+    rankWithinExp?: TrialFiltersRankWithinExp;
+    /**
+     * Filter trials to those starting within the given range.
+     * @type {V1TimeRangeFilter}
+     * @memberof V1TrialFilters
+     */
+    startTime?: V1TimeRangeFilter;
+    /**
+     * Filter trials to those ending within the given range.
+     * @type {V1TimeRangeFilter}
+     * @memberof V1TrialFilters
+     */
+    endTime?: V1TimeRangeFilter;
+    /**
+     * Filter trials to those with any of the given states.
+     * @type {Array<Determinedtrialv1State>}
+     * @memberof V1TrialFilters
+     */
+    states?: Array<Determinedtrialv1State>;
+    /**
+     * Filter trials to those with the given searcher metric.
+     * @type {string}
+     * @memberof V1TrialFilters
+     */
+    searcherMetric?: string;
+    /**
+     * 
+     * @type {V1NumberRangeFilter}
+     * @memberof V1TrialFilters
+     */
+    searcherMetricValue?: V1NumberRangeFilter;
 }
 
 /**
@@ -6731,6 +7252,26 @@ export interface V1TrialMetrics {
 /**
  * 
  * @export
+ * @interface V1TrialPatch
+ */
+export interface V1TrialPatch {
+    /**
+     * 
+     * @type {Array<V1TrialTag>}
+     * @memberof V1TrialPatch
+     */
+    addTag?: Array<V1TrialTag>;
+    /**
+     * 
+     * @type {Array<V1TrialTag>}
+     * @memberof V1TrialPatch
+     */
+    removeTag?: Array<V1TrialTag>;
+}
+
+/**
+ * 
+ * @export
  * @interface V1TrialProfilerMetricLabels
  */
 export interface V1TrialProfilerMetricLabels {
@@ -6830,6 +7371,90 @@ export interface V1TrialSimulation {
      * @memberof V1TrialSimulation
      */
     occurrences?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialSorter
+ */
+export interface V1TrialSorter {
+    /**
+     * The namespace for the sort field.
+     * @type {TrialSorterNamespace}
+     * @memberof V1TrialSorter
+     */
+    namespace: TrialSorterNamespace;
+    /**
+     * The name of the sort field.
+     * @type {string}
+     * @memberof V1TrialSorter
+     */
+    field: string;
+    /**
+     * The ordering for the sort.
+     * @type {V1OrderBy}
+     * @memberof V1TrialSorter
+     */
+    orderBy?: V1OrderBy;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialTag
+ */
+export interface V1TrialTag {
+    /**
+     * The actual tag.
+     * @type {string}
+     * @memberof V1TrialTag
+     */
+    key: string;
+}
+
+/**
+ * Struct that represents a dynamic collection of trials, along with some accompanying metadata.
+ * @export
+ * @interface V1TrialsCollection
+ */
+export interface V1TrialsCollection {
+    /**
+     * The id for the collection.
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    id: number;
+    /**
+     * The id of the user who created the collection.
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    userId: number;
+    /**
+     * The id of the project that the collection belongs to .
+     * @type {number}
+     * @memberof V1TrialsCollection
+     */
+    projectId: number;
+    /**
+     * The name of the collection.
+     * @type {string}
+     * @memberof V1TrialsCollection
+     */
+    name: string;
+    /**
+     * The filters that define the trials within the collection.
+     * @type {V1TrialFilters}
+     * @memberof V1TrialsCollection
+     */
+    filters: V1TrialFilters;
+    /**
+     * A sorter that determines the order for trials in the collection.
+     * @type {V1TrialSorter}
+     * @memberof V1TrialsCollection
+     */
+    sorter: V1TrialSorter;
 }
 
 /**
@@ -20195,26 +20820,96 @@ export class TensorboardsApi extends BaseAPI {
 }
 
 /**
- * TrialsApi - fetch parameter creator
+ * TrialComparisonApi - fetch parameter creator
  * @export
  */
-export const TrialsApiFetchParamCreator = function (configuration?: Configuration) {
+export const TrialComparisonApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @summary Create a Trial Collection for a set of TrialFilters
+         * @param {V1CreateTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/compare`;
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
+            }
+            const localVarPath = `/api/v1/trials/collections`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1CreateTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Removes a TrialCollection
+         * @param {number} [id] The id for the TrialsCollection.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTrialsCollection(id?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/collections/delete`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (id !== undefined) {
+                localVarQueryParameter['id'] = id;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Return all collectiions for a specific project
+         * @param {number} [projectId] The id of the project for which to retrieve all collections.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -20228,32 +20923,8 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
-            if (trialIds) {
-                localVarQueryParameter['trialIds'] = trialIds;
-            }
-
-            if (maxDatapoints !== undefined) {
-                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
-            }
-
-            if (metricNames) {
-                localVarQueryParameter['metricNames'] = metricNames;
-            }
-
-            if (startBatches !== undefined) {
-                localVarQueryParameter['startBatches'] = startBatches;
-            }
-
-            if (endBatches !== undefined) {
-                localVarQueryParameter['endBatches'] = endBatches;
-            }
-
-            if (metricType !== undefined) {
-                localVarQueryParameter['metricType'] = metricType;
-            }
-
-            if (scale !== undefined) {
-                localVarQueryParameter['scale'] = scale;
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -20266,6 +20937,408 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Update tags for trials by the trial ID
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrials.');
+            }
+            const localVarPath = `/api/v1/trials`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Add tags to a TrialCollection
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
+            }
+            const localVarPath = `/api/v1/trials/collections`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchTrialsCollectionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Return trials matching a set of TrialFilters
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
+            }
+            const localVarPath = `/api/v1/trials/query`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1QueryTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * TrialComparisonApi - functional programming interface
+ * @export
+ */
+export const TrialComparisonApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Create a Trial Collection for a set of TrialFilters
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).createTrialsCollection(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Removes a TrialCollection
+         * @param {number} [id] The id for the TrialsCollection.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTrialsCollection(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).deleteTrialsCollection(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Return all collectiions for a specific project
+         * @param {number} [projectId] The id of the project for which to retrieve all collections.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialsCollections(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialsCollections(projectId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Update tags for trials by the trial ID
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrials(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Add tags to a TrialCollection
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Return trials matching a set of TrialFilters
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).queryTrials(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * TrialComparisonApi - factory interface
+ * @export
+ */
+export const TrialComparisonApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Create a Trial Collection for a set of TrialFilters
+         * @param {V1CreateTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).createTrialsCollection(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Removes a TrialCollection
+         * @param {number} [id] The id for the TrialsCollection.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTrialsCollection(id?: number, options?: any) {
+            return TrialComparisonApiFp(configuration).deleteTrialsCollection(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Return all collectiions for a specific project
+         * @param {number} [projectId] The id of the project for which to retrieve all collections.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialsCollections(projectId?: number, options?: any) {
+            return TrialComparisonApiFp(configuration).getTrialsCollections(projectId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Update tags for trials by the trial ID
+         * @param {V1PatchTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrials(body: V1PatchTrialsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).patchTrials(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Add tags to a TrialCollection
+         * @param {V1PatchTrialsCollectionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).patchTrialsCollection(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Return trials matching a set of TrialFilters
+         * @param {V1QueryTrialsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(body: V1QueryTrialsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).queryTrials(body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * TrialComparisonApi - object-oriented interface
+ * @export
+ * @class TrialComparisonApi
+ * @extends {BaseAPI}
+ */
+export class TrialComparisonApi extends BaseAPI {
+    /**
+     * 
+     * @summary Create a Trial Collection for a set of TrialFilters
+     * @param {V1CreateTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).createTrialsCollection(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Removes a TrialCollection
+     * @param {number} [id] The id for the TrialsCollection.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public deleteTrialsCollection(id?: number, options?: any) {
+        return TrialComparisonApiFp(this.configuration).deleteTrialsCollection(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Return all collectiions for a specific project
+     * @param {number} [projectId] The id of the project for which to retrieve all collections.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public getTrialsCollections(projectId?: number, options?: any) {
+        return TrialComparisonApiFp(this.configuration).getTrialsCollections(projectId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Update tags for trials by the trial ID
+     * @param {V1PatchTrialsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public patchTrials(body: V1PatchTrialsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).patchTrials(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Add tags to a TrialCollection
+     * @param {V1PatchTrialsCollectionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).patchTrialsCollection(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Return trials matching a set of TrialFilters
+     * @param {V1QueryTrialsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialComparisonApi
+     */
+    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * TrialsApi - fetch parameter creator
+ * @export
+ */
+export const TrialsApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
         /**
          * 
          * @summary Get the list of trials for an experiment.
@@ -20686,31 +21759,6 @@ export const TrialsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -20883,22 +21931,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
     return {
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-            return TrialsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -21007,24 +22039,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
  * @extends {BaseAPI}
  */
 export class TrialsApi extends BaseAPI {
-    /**
-     * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-     * @param {Array<number>} [trialIds] The requested trial ids.
-     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-     * @param {Array<string>} [metricNames] The names of selected metrics.
-     * @param {number} [startBatches] Sample from metrics after this batch number.
-     * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-        return TrialsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
-    }
-
     /**
      * 
      * @summary Get the list of trials for an experiment.

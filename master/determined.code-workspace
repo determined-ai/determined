@@ -1,13 +1,23 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../agent"
-		},
-		{
-			"path": "../proto"
-		}
-	]
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "../agent"
+    },
+    {
+      "path": "../proto"
+    }
+  ],
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "rebuild",
+        "type": "shell",
+        "command": "make -C proto > /dev/null 2> >(head -n 5)  && make -C master > /dev/null 2> >(head -n 5)",
+      }
+    ]
+  }
 }

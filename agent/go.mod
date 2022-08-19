@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -117,9 +117,9 @@ require (
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
-	github.com/uptrace/bun v1.1.2 // indirect
-	github.com/uptrace/bun/dialect/pgdialect v1.1.2 // indirect
-	github.com/uptrace/bun/extra/bundebug v1.1.2 // indirect
+	github.com/uptrace/bun v1.1.4 // indirect
+	github.com/uptrace/bun/dialect/pgdialect v1.1.4 // indirect
+	github.com/uptrace/bun/extra/bundebug v1.1.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect

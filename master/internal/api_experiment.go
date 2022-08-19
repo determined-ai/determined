@@ -864,6 +864,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
@@ -887,7 +888,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
-			return nil
+			return err
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -1169,6 +1170,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
 	currentTrials map[int32]bool,

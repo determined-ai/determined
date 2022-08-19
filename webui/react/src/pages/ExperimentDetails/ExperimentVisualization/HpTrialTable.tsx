@@ -12,7 +12,7 @@ import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
 import {
-  HyperparametersFlattened, HyperparameterType, MetricName,
+  HyperparametersFlattened, HyperparameterType, Metric,
 } from 'types';
 
 import css from './HpTrialTable.module.scss';
@@ -24,7 +24,7 @@ interface Props {
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
   hyperparameters: HyperparametersFlattened;
-  metric: MetricName;
+  metric: Metric;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
   selectedRowKeys?: number[];

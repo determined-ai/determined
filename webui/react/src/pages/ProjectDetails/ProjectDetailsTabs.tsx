@@ -1,10 +1,12 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useHistory } from 'react-router';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
+import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { sentenceToCamelCase } from 'shared/utils/string';
@@ -31,8 +33,11 @@ interface Props {
 const ProjectDetailsTabs: React.FC<Props> = (
   { project, tabs, fetchProject, curUser }: Props,
 ) => {
+  const history = useHistory();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
+
+  const basePath = paths.projectDetails(project.id);
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -47,8 +52,12 @@ const ProjectDetailsTabs: React.FC<Props> = (
     setActiveTab(tabs.find((tab) => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
 
+  useEffect(() => {
+    history.replace(`${basePath}/${sentenceToCamelCase(activeTab.title)}`);
+  }, [ activeTab.title, basePath, history ]);
+
   /**
-   * prevents stable tab content, e.g. archived state
+   * prevents stale tab content, e.g. archived state
    */
   useEffect(() =>
     setActiveTab(

@@ -66,6 +66,9 @@ $arrow-left: 22px;
   .clear {
     flex-shrink: 1;
   }
+  .selectMode {
+    margin-right: 8px;
+  }
   :global(.ant-select-selection-placeholder) {
     color: var(--theme-float-on-weak);
   }

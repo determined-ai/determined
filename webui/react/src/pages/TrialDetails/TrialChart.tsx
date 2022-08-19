@@ -17,25 +17,25 @@ import { glasbeyColor } from 'shared/utils/color';
 import { MetricContainer, MetricName, Scale } from 'types';
 
 interface Props {
-  defaultMetricNames: MetricName[];
+  defaultMetrics: Metric[];
   id?: string;
-  metricNames: MetricName[];
-  metrics: MetricName[];
-  onMetricChange: (value: MetricName[]) => void;
+  metrics: Metric[];
+  onMetricChange: (value: Metric[]) => void;
+  selectedMetrics: Metric[];
   trialId?: number;
   trialTerminated: boolean;
 }
 
-const getChartMetricLabel = (metric: MetricName): string => {
+const getChartMetricLabel = (metric: Metric): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
   return metric.name;
 };
 
 const TrialChart: React.FC<Props> = ({
-  defaultMetricNames,
-  metricNames,
+  defaultMetrics,
   metrics,
+  selectedMetrics,
   onMetricChange,
   trialId,
   trialTerminated,
@@ -122,10 +122,10 @@ const TrialChart: React.FC<Props> = ({
   const options = (
     <ResponsiveFilters>
       <MetricSelectFilter
-        defaultMetricNames={defaultMetricNames}
-        metricNames={metricNames}
+        defaultMetrics={defaultMetrics}
+        metrics={metrics}
         multiple
-        value={metrics}
+        value={selectedMetrics}
         onChange={onMetricChange}
       />
       <ScaleSelectFilter value={scale} onChange={setScale} />

@@ -1,11 +1,10 @@
 import { Dayjs } from 'dayjs';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
-import { DetailedUser, Job, Metadata, MetricName, MetricType, Note,
+import { DetailedUser, Job, Metadata, Metric, MetricType, Note,
   Scale, TrialWorkloadFilter } from 'types';
 
 import * as Api from './api-ts-sdk/api';
-
 export interface LoginResponse {
   token: string;
   user: DetailedUser;
@@ -22,7 +21,7 @@ export type TrialDetailsParams = SingleEntityParams;
 export interface TrialSummaryBaseParams {
   endBatches?: number,
   maxDatapoints: number,
-  metricNames: MetricName[],
+  metricNames: Metric[],
   metricType?: MetricType,
   scale?: Scale,
   startBatches?: number,

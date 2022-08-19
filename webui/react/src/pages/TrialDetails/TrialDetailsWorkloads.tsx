@@ -17,7 +17,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
 import {
-  CommandTask, ExperimentBase, MetricName,
+  CommandTask, ExperimentBase, Metric,
   Step, TrialDetails, TrialWorkloadFilter, WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
@@ -30,10 +30,9 @@ import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 const { Option } = Select;
 
 export interface Props {
-  defaultMetrics: MetricName[];
+  defaultMetrics: Metric[];
   experiment: ExperimentBase;
-  metricNames: MetricName[];
-  metrics: MetricName[];
+  selectedMetrics: Metric[];
   settings: Settings;
   trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
@@ -42,16 +41,16 @@ export interface Props {
 const TrialDetailsWorkloads: React.FC<Props> = ({
   defaultMetrics,
   experiment,
-  metrics,
+  selectedMetrics,
   settings,
   trial,
   updateSettings,
 }: Props) => {
   const hasFiltersApplied = useMemo(() => {
-    const metricsApplied = !isEqual(metrics, defaultMetrics);
+    const metricsApplied = !isEqual(selectedMetrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
-  }, [ defaultMetrics, metrics, settings.filter ]);
+  }, [ defaultMetrics, selectedMetrics, settings.filter ]);
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -72,30 +71,30 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: MetricName) => {
+    const metricRenderer = (metric: Metric) => {
       const metricCol = (_: string, record: Step) => {
-        const value = extractMetricValue(record, metricName);
+        const value = extractMetricValue(record, metric);
         return <HumanReadableNumber num={value} />;
       };
       return metricCol;
     };
 
-    const { metric, smallerIsBetter } = experiment?.config?.searcher || {};
+    const { metric: searcherMetric, smallerIsBetter } = experiment?.config?.searcher || {};
     const newColumns = [ ...defaultColumns ].map((column) => {
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       return column;
     });
 
-    metrics.forEach((metricName) => {
+    selectedMetrics.forEach((metric) => {
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
-        defaultSortOrder: metric && metric === metricName.name ?
+        defaultSortOrder: searcherMetric && searcherMetric === metric.name ?
           (smallerIsBetter ? 'ascend' : 'descend') : undefined,
-        key: metricName.name,
-        render: metricRenderer(metricName),
+        key: metric.name,
+        render: metricRenderer(metric),
         sorter: (a, b) => {
-          const aVal = extractMetricValue(a, metricName),
-            bVal = extractMetricValue(b, metricName);
+          const aVal = extractMetricValue(a, metric),
+            bVal = extractMetricValue(b, metric);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
           } else if (aVal !== undefined && bVal === undefined){
@@ -103,7 +102,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           }
           return numericSorter(aVal, bVal);
         },
-        title: <MetricBadgeTag metric={metricName} />,
+        title: <MetricBadgeTag metric={metric} />,
       });
     });
 
@@ -114,7 +113,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [ metrics, settings, trial, experiment ]);
+  }, [ selectedMetrics, settings, trial, experiment ]);
 
   const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
   const [ workloadCount, setWorkloadCount ] = useState<number>(0);

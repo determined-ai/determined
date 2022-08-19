@@ -37,8 +37,8 @@ func initTheOneBun(db *sql.DB) {
 	// This will print every query that runs.
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
-	// This will print only the failed queries.
-	theOneBun.AddQueryHook(bundebug.NewQueryHook())
+	// Change this back before merge
+	theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 }
 
 // Bun returns the singleton database connection through the bun library. bun is the database
@@ -82,7 +82,9 @@ func PaginateBun(
 		direction = SortDirectionAsc
 	}
 	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
-	query = query.Order(orderExp)
+
+	// needed this in order to order by e.g. metrics->>'loss'
+	query = query.OrderExpr(orderExp)
 
 	query = query.Offset(offset)
 
