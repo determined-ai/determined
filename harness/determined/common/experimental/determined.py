@@ -2,9 +2,9 @@ import pathlib
 import warnings
 from typing import Any, Dict, List, Optional, Union, cast
 
-from determined.common import context, util, yaml
+from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, session, trial
+from determined.common.experimental import checkpoint, experiment, model, trial
 
 
 class _CreateExperimentResponse:
@@ -62,7 +62,7 @@ class Determined:
         # a REST API call against the master.
         auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
 
-        self._session = session.Session(master, user, auth, cert)
+        self._session = api.Session(master, user, auth, cert)
 
     def create_experiment(
         self,

@@ -4,10 +4,10 @@ from time import sleep
 from typing import Any, List, Sequence
 
 from determined.cli.session import setup_session
+from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.api.bindings import v1Workspace
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import session
 
 from . import render
 
@@ -27,7 +27,7 @@ def render_workspaces(workspaces: Sequence[v1Workspace]) -> None:
     render.tabulate_or_csv(WORKSPACE_HEADERS, values, False)
 
 
-def workspace_by_name(sess: session.Session, name: str) -> v1Workspace:
+def workspace_by_name(sess: api.Session, name: str) -> v1Workspace:
     w = bindings.get_GetWorkspaces(sess, name=name).workspaces
     if len(w) == 0:
         raise errors.EmptyResultException(f'Did not find a workspace with name "{name}".')

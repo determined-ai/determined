@@ -32,7 +32,7 @@ def salt_and_hash(password: str) -> str:
         return password
 
 
-class Session:
+class UsernameTokenPair:
     def __init__(self, username: str, token: str):
         self.username = username
         self.token = token
@@ -58,7 +58,7 @@ class Authentication:
         password: Optional[str],
         try_reauth: bool,
         cert: Optional[certs.Cert],
-    ) -> Session:
+    ) -> UsernameTokenPair:
         session_user = (
             requested_user
             or self.token_store.get_active_user()
@@ -87,7 +87,7 @@ class Authentication:
             token = util.get_det_user_token_from_env()
 
         if token is not None:
-            return Session(session_user, token)
+            return UsernameTokenPair(session_user, token)
 
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
@@ -113,7 +113,7 @@ class Authentication:
 
         self.token_store.set_token(session_user, token)
 
-        return Session(session_user, token)
+        return UsernameTokenPair(session_user, token)
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username

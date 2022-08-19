@@ -12,7 +12,6 @@ import pytest
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import determinedexperimentv1State
-from determined.common.experimental import session
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
 
@@ -198,11 +197,11 @@ def experiment_first_trial(exp_id: int) -> int:
     return trial_id
 
 
-def determined_test_session() -> session.Session:
+def determined_test_session() -> api.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
     authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
-    return session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:

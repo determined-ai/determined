@@ -1,5 +1,3 @@
-import json
-import os
 from typing import Any, Dict, Optional
 
 import requests
@@ -7,34 +5,6 @@ import urllib3
 
 from determined.common import util
 from determined.common.api import authentication, certs, request
-
-
-def get_max_retries_config() -> urllib3.util.retry.Retry:
-    # Allow overriding retry settings when necessary.
-    # `DET_RETRY_CONFIG` env variable can contain `urllib3` `Retry` parameters,
-    # encoded as JSON.
-    # For example:
-    #  - disable retries: {"total":0}
-    #  - shorten the wait times {"total":10,"backoff_factor":0.5,"method_whitelist":false}
-
-    config_data = os.environ.get("DET_RETRY_CONFIG")
-    if config_data is not None:
-        config = json.loads(config_data)
-        return urllib3.util.retry.Retry(**config)
-
-    # Defaults.
-    try:
-        return urllib3.util.retry.Retry(
-            total=20,
-            backoff_factor=0.5,
-            allowed_methods=False,
-        )
-    except TypeError:  # Support urllib3 prior to 1.26
-        return urllib3.util.retry.Retry(
-            total=20,
-            backoff_factor=0.5,
-            method_whitelist=False,  # type: ignore
-        )
 
 
 class Session:

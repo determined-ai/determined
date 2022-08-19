@@ -9,9 +9,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 from determined import core, tensorboard
-from determined.common import storage
+from determined.common import api, storage
 from determined.common.api import bindings
-from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.core")
 
@@ -44,7 +43,7 @@ class CheckpointContext:
         self,
         dist: core.DistributedContext,
         storage_manager: storage.StorageManager,
-        session: Session,
+        session: api.Session,
         task_id: str,
         allocation_id: str,
         tbd_sync_mode: core.TensorboardMode,

@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, List, Optional
 
+from determined.common import api
 from determined.common.declarative_argparse import Arg
-from determined.common.experimental import session
 
 format_args: Dict[str, Arg] = {
     "json": Arg(
@@ -71,7 +71,7 @@ pagination_args_fetchall = make_pagination_args_fetchall()
 def limit_offset_paginator(
     method: Callable,
     agg_field: str,
-    sess: session.Session,
+    sess: api.Session,
     limit: int = 200,
     offset: Optional[int] = None,
     **kwargs: Any,
