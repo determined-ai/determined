@@ -9,7 +9,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
-from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
+from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
 
 from . import aws, constants
@@ -207,7 +207,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     print("Starting Determined Deployment")
     try:
-        deployment_object.deploy(args.yes)
+        deployment_object.deploy(args.yes, args.update_terminate_agents)
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
@@ -509,6 +509,14 @@ args_description = Cmd(
                     type=int,
                     default=5,
                     help="time between reconnect attempts, with the exception of the first.",
+                ),
+                BoolOptArg(
+                    "--update-terminate-agents",
+                    "--no-update-terminate-agents",
+                    dest="update_terminate_agents",
+                    default=True,
+                    true_help="terminate running agents on stack update",
+                    false_help="do not terminate running agents on stack update",
                 ),
                 Arg(
                     "--yes",
