@@ -10,7 +10,7 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Link, { Props } from 'components/Link';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import { checkmarkRenderer, defaultRowClassName, experimentDurationRenderer,
   experimentNameRenderer, experimentProgressRenderer, ExperimentRenderer,
@@ -46,7 +46,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { RecordKey } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { isEqual, isNumber, numberElseUndefined } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
@@ -106,6 +106,8 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
     moveExperimentSettingsConfig,
   );
 
+  const id = numberElseUndefined(projectId);
+
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
   }, [ updateDestinationSettings, project?.workspaceId ]);
@@ -135,6 +137,7 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
   }, [ experimentMap, settings.row, user ]);
 
   const fetchProject = useCallback(async () => {
+    if (!id) return;
     try {
       const response = await getProject({ id }, { signal: canceler.signal });
       setProject((prev) => {
@@ -146,7 +149,7 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal, projectId, pageError ]);
+  }, [ canceler.signal, id, pageError ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -179,7 +182,7 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
       setIsLoading(false);
     }
   }, [ canceler.signal,
-    projectId,
+    id,
     settings.archived,
     settings.label,
     settings.search,
@@ -193,13 +196,13 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
   const fetchLabels = useCallback(async () => {
     try {
       const labels = await getExperimentLabels(
-        { project_id: projectId },
+        { project_id: id },
         { signal: canceler.signal },
       );
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) { handleError(e); }
-  }, [ canceler.signal, projectId ]);
+  }, [ canceler.signal, id ]);
 
   const fetchUsers = useFetchUsers(canceler);
 

@@ -24,14 +24,14 @@ import handleError from 'utils/error';
 import css from './ProjectDetails.module.scss';
 
 interface Props {
-  project: Project
   fetchProject: () => void;
+  project: Project
 }
 
 const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
   const { users, auth: { user } } = useStore();
 
-  const [ project, setProject ] = useState<Project>();
+  // const [ project, setProject ] = useState<Project>();
 
   const handleNewNotesPage = useCallback(async () => {
     if (!project?.id) return;

@@ -1,8 +1,9 @@
 import { TabsProps } from 'antd';
+import React from 'react';
 
-export interface DynamicTabBarProps extends Omit<TabsProps, 'tabBarExtraContent'>
+export type DynamicTabBarProps = Omit<TabsProps, 'tabBarExtraContent'>
 
-const DynamicBarTab = ({
+const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
   type,
   className,
   size: propSize,
@@ -12,5 +13,8 @@ const DynamicBarTab = ({
   addIcon,
   ...props
 }: TabsProps): JSX.Element => {
+  return <></>;
 
 };
+
+export default DynamicTabBar;
