@@ -6,7 +6,6 @@ interface WithPagination {
 }
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
-
 export interface User {
   displayName?: string;
   id: number;
@@ -782,4 +781,16 @@ export interface Project {
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
+}
+
+export enum TrialState {
+  ACTIVEUNSPECIFIED = 'ACTIVE',
+  PAUSED = 'PAUSED',
+  STOPPINGCANCELED = 'CANCELED',
+  STOPPINGKILLED = 'KILLED',
+  STOPPINGCOMPLETED = 'COMPLETED',
+  STOPPINGERROR = 'ERROR',
+  CANCELED = 'CANCELED',
+  COMPLETED ='COMPLETED',
+  ERROR = 'ERROR'
 }

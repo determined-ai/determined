@@ -1,6 +1,7 @@
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { MutableRefObject, useEffect, useMemo } from 'react';
 
+import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
@@ -13,10 +14,10 @@ import { Highlights } from 'hooks/useHighlight';
 import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
-import { MetricType } from 'types';
+import { MetricType, TrialState } from 'types';
 import { metricKeyToName, metricToKey } from 'utils/metric';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
@@ -97,6 +98,53 @@ const TrialTable: React.FC<Props> = ({
       title: 'Exp ID',
     }),
     [ C.filters.experimentIds, C.setFilters ],
+  );
+
+  const trialStateColumn = useMemo(
+    () => ({
+      dataIndex: 'state',
+      defaultWidth: 130,
+      filterDropdown: (filterProps: FilterDropdownProps) => (
+        <TableFilterDropdown
+          {...filterProps}
+          multiple
+          values={C.filters.state}
+          onFilter={(state: string[]) =>
+            C.setFilters?.((filters) => ({ ...filters, state }))
+          }
+          onReset={() => C.setFilters?.((filters) => ({ ...filters, state: [] }))}
+        />
+      ),
+      filters: [
+        TrialState.ACTIVEUNSPECIFIED,
+        TrialState.PAUSED,
+        TrialState.CANCELED,
+        TrialState.COMPLETED,
+        TrialState.ERROR,
+      ].map((value) => ({
+        text: <Badge state={value} type={BadgeType.State} />,
+        value,
+      })),
+      isFiltered: () => !!C.filters.state?.length,
+      key: 'state',
+      render: (_: string, record: V1AugmentedTrial) => {
+        const apiStateToTrialStateMap: Record< Determinedtrialv1State, TrialState> = {
+          [Determinedtrialv1State.ACTIVEUNSPECIFIED]: TrialState.ACTIVEUNSPECIFIED,
+          [Determinedtrialv1State.PAUSED]: TrialState.PAUSED,
+          [Determinedtrialv1State.STOPPINGCANCELED]: TrialState.STOPPINGCANCELED,
+          [Determinedtrialv1State.STOPPINGKILLED]: TrialState.STOPPINGKILLED,
+          [Determinedtrialv1State.STOPPINGCOMPLETED]: TrialState.STOPPINGCOMPLETED,
+          [Determinedtrialv1State.STOPPINGERROR]: TrialState.STOPPINGERROR,
+          [Determinedtrialv1State.CANCELED]: TrialState.CANCELED,
+          [Determinedtrialv1State.COMPLETED]: TrialState.COMPLETED,
+          [Determinedtrialv1State.ERROR]: TrialState.ERROR,
+        };
+        return <Badge state={apiStateToTrialStateMap[record.state]} type={BadgeType.State} />;
+      },
+      sorter: true,
+      title: 'State',
+    }),
+    [ C.filters.state, C.setFilters ],
   );
 
   const expRankColumn = useMemo(
@@ -229,6 +277,7 @@ const TrialTable: React.FC<Props> = ({
     experimentIdColumn,
     expRankColumn,
     tagColumn,
+    trialStateColumn,
     ...hpColumns,
     ...trainingMetricColumns,
     ...validationMetricColumns,
@@ -237,6 +286,7 @@ const TrialTable: React.FC<Props> = ({
     experimentIdColumn,
     expRankColumn,
     tagColumn,
+    trialStateColumn,
     hpColumns,
     trainingMetricColumns,
     validationMetricColumns,
@@ -244,10 +294,10 @@ const TrialTable: React.FC<Props> = ({
 
   useEffect(() => {
 
-    // updateSettings({
-    //   columns: columns.map((c) => c.dataIndex),
-    //   columnWidths: columns.map((c) => c.defaultWidth),
-    // });
+    updateSettings({
+      columns: columns.map((c) => c.dataIndex),
+      columnWidths: columns.map((c) => c.defaultWidth),
+    });
   }, [ columns.length ]);
 
   return (

@@ -8,7 +8,7 @@ import {
   themeLightHpe,
 } from 'shared/themes';
 import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState, WorkspaceState } from 'types';
+  SlotState, TrialState, WorkspaceState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -53,10 +53,19 @@ const stateColorMapping = {
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
+  [TrialState.ACTIVEUNSPECIFIED]: 'active',
+  [TrialState.PAUSED]: 'warning',
+  [TrialState.STOPPINGCANCELED]: 'inactive',
+  [TrialState.STOPPINGKILLED]: 'inactive',
+  [TrialState.STOPPINGCOMPLETED]: 'success',
+  [TrialState.STOPPINGERROR]: 'critical',
+  [TrialState.CANCELED]: 'inactive',
+  [TrialState.COMPLETED]: 'success',
+  [TrialState.ERROR]: 'critical',
 };
 
 export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
-SlotState | JobState | WorkspaceState
+SlotState | JobState | WorkspaceState | TrialState;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,
