@@ -36,7 +36,7 @@ class DetCallback(TrainerCallback):
         self.tokenizer_options = tokenizer_options
         self.load_last_checkpoint(args)
 
-        self.last_eval_metrics = None
+        self.last_metrics = {}
         self.searcher_metric = self._det.get_cluster_info().trial._config['searcher']['metric']
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
@@ -49,9 +49,10 @@ class DetCallback(TrainerCallback):
                 self.core_context.train.report_training_metrics(steps_completed=state.global_step, metrics=metrics)
             elif metric_type == EVAL:
                 self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
-                self.last_eval_metrics = metrics
             else:
                 logging.warning(f"Metrics not reported: metric type = {metric_type}.")
+
+            self.last_metrics.update(metrics)
 
     def get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
         metrics = logs
@@ -130,14 +131,21 @@ class DetCallback(TrainerCallback):
 
             if round(state.epoch) >= self.current_op.length:
                 if state.is_world_process_zero:
-                    if self.searcher_metric not in self.last_eval_metrics:
+                    if self.last_metrics is None:
+                        logging.warning(
+                            f"No training or evaluation metrics has been recorded. Please check your setting for "
+                            f"training metrics (--logging_strategy steps and --logging_steps) or "
+                            f"evaluation metrics (--evaluation_strategy steps and --eval_steps). "
+                            f"Reporting trainer_state.best_metric to the searcher.")
+                        self.current_op.report_completed(state.best_metric)
+                    elif self.searcher_metric not in self.last_metrics:
                         logging.warning(
                             f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
-                            f"of the evaluation metrics in {self.last_eval_metrics}. "
-                            f"Proceeding with state.best_metric.")
+                            f"of the recorded metrics in {self.last_metrics}. "
+                            f"Reporting trainer_state.best_metric to the searcher.")
                         self.current_op.report_completed(state.best_metric)
                     else:
-                        self.current_op.report_completed(self.last_eval_metrics[self.searcher_metric])
+                        self.current_op.report_completed(self.last_metrics[self.searcher_metric])
 
                 try:
                     self.current_op = next(self.searcher_ops)
@@ -165,6 +173,7 @@ EVAL = 'eval_'
 TEST = 'test_'
 TRAIN_AVG = 'train_,'
 TRAIN = 'train_progress'
+
 
 def get_metric_type(d):
     for k, v in d.items():
