@@ -44,30 +44,33 @@ class DetCallback(TrainerCallback):
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
                **kwargs):
         if state.is_world_process_zero:
-            metrics = self.process_log(logs)
-            if 'loss' in metrics:
+            metrics, metric_type = self.get_metrics(logs)
+            if metric_type == TRAIN:
                 self.core_context.train.report_training_metrics(steps_completed=state.global_step, metrics=metrics)
-            elif 'eval_loss' in metrics:
+            elif metric_type == EVAL:
                 self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
                 self.last_eval_metrics = metrics
             else:
-                logging.warning(
-                    f"Metrics not reported: unknown metric type in {logs}.")
+                logging.warning(f"Metrics not reported: metric type = {metric_type}.")
 
-    def process_log(self, logs: typing.Dict) -> typing.Dict:
+    def get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
         metrics = logs
-
+        metric_type = get_metric_type(logs)
         if self.filter_metrics:
             metrics = {}
             for k, v in logs.items():
                 if any(m in k for m in self.filter_metrics) is True:
                     metrics[k] = v
 
-        return metrics
+        return metrics, metric_type
 
     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         info = self._det.get_cluster_info()
-        assert info is not None
+        if info is None:
+            # TODO: modify to support local mode
+            logging.warning('ClusterInfo is None: not running in a task. Skip saving.')
+            return
+
         if state.is_world_process_zero:
             save_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
             det_checkpoint_metadata = {"steps_completed": state.global_step, "trial_id": info.trial.trial_id}
@@ -91,14 +94,18 @@ class DetCallback(TrainerCallback):
         User-defined saving of objects from self.checkpoint_metadata under save_path.
         After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
         '''
-        logging.warning("No implementation for _on_save_user_data. "
-                        "Objects passed to the callback via checkpoint_metadata will not be saved.")
+        raise NotImplementedError("No implementation for _on_save_user_data. "
+                                  "Objects passed to the callback via checkpoint_metadata will not be saved.")
 
     def load_last_checkpoint(self, args: typing.Dict) -> None:
         info = self._det.get_cluster_info()
-        assert info is not None
-        latest_checkpoint = info.latest_checkpoint
 
+        if info is None:
+            # TODO: modify to support local mode
+            logging.warning('ClusterInfo is None: not running in a task. Skip loading.')
+            return
+
+        latest_checkpoint = info.latest_checkpoint
         if latest_checkpoint is not None:
             metadata = self.core_context.checkpoint.get_metadata(latest_checkpoint)
             prev_trial_id = metadata["trial_id"]
@@ -111,6 +118,10 @@ class DetCallback(TrainerCallback):
             self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
 
             args.resume_from_checkpoint = checkpoint_path
+
+    def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.core_context.preempt.should_preempt():
+            control.should_save = True
 
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if state.epoch:
@@ -148,3 +159,20 @@ def override_training_args(training_args: typing.Any) -> typing.Any:
         if hasattr(training_args, k):
             training_args.k = v
     return training_args
+
+
+EVAL = 'eval_'
+TEST = 'test_'
+TRAIN_AVG = 'train_,'
+TRAIN = 'train_progress'
+
+def get_metric_type(d):
+    for k, v in d.items():
+        if k.startswith(EVAL):
+            return EVAL
+        elif k.startswith(TEST):
+            return TEST
+        elif k.startswith(TRAIN):
+            return TRAIN_AVG
+        else:
+            return TRAIN
