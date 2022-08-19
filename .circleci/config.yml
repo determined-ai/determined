@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@2.3.0
+  win: circleci/windows@5.0.0
   slack: circleci/slack@3.4.2
   kubernetes: circleci/kubernetes@0.11.0
   helm: circleci/helm@1.2.0
@@ -1627,9 +1627,6 @@ jobs:
       - run: pip --version
       - run: pip install wheel
       - run: cd harness; python setup.py bdist_wheel -d ../build
-      # Windows needs special treatment of cryptography for unknown reasons.
-      # LMDB also has special requirements that only apply to windows (patch-ng).
-      - run: sh -c "if which conda ; then conda install cryptography patch-ng --yes ; fi"
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
