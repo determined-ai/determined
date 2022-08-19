@@ -544,7 +544,7 @@ func hParamAccessor(hp string) string {
 }
 
 // ApplyTrialPatch applies a patch operation to a set of Trials.
-func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery, 
+func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery,
 	payload *apiv1.TrialPatch) (*bun.UpdateQuery, error) {
 	// takes an update query and adds the Set clauses for the patch
 
@@ -560,13 +560,13 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery,
 			removeTags = append(removeTags, tag.Key)
 		}
 
-		q = q.Set("tags = tags || ? - ?::text[]", addTags, pgdialect.Array(removeTags))
+		q = q.Set("tags = (tags || ?) - ?::text[]", addTags, pgdialect.Array(removeTags))
 	}
 	return q, nil
 }
 
 // TrialsColumnForNamespace returns the correct namespace for a TrialSorter
-func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace, 
+func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
 	field string) (string, error) {
 	if !safeString.MatchString(field) {
 		return "", fmt.Errorf("%s filter %s contains possible SQL injection", namespace, field)
@@ -589,12 +589,12 @@ func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleVa
 	switch {
 	case min != nil && max != nil:
 		return fmt.Sprintf("BETWEEN %f AND %f", min.Value, max.Value)
-	case min != nil :
+	case min != nil:
 		return fmt.Sprintf(" > %f", min.Value)
-	case max != nil :
+	case max != nil:
 		return fmt.Sprintf(" < %f", max.Value)
-	default: 
-	return notNull
+	default:
+		return notNull
 	}
 }
 
@@ -612,7 +612,7 @@ func conditionalForDateTimeRange(q *bun.SelectQuery, column string, dateTime *ap
 }
 
 // FilterTrials queries for Trials matching the supplied TrialFilters.
-func (db *PgDB) FilterTrials(q *bun.SelectQuery, 
+func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 	filters *apiv1.TrialFilters, selectAll bool) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
 
