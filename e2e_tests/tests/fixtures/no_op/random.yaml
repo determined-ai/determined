@@ -1,5 +1,4 @@
 description: noop_random
-debug: true
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
@@ -13,6 +12,6 @@ searcher:
   name: random
   max_trials: 30
   max_length:
-    batches: 505
+    batches: 500
 max_restarts: 0
 entrypoint: model_def:NoOpTrial
