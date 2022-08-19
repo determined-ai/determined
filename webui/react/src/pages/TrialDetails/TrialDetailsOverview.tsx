@@ -25,7 +25,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     updateSettings,
   } = useSettings<Settings>(settingsConfig, { storagePath });
 
-  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+  const [ metrics, setMetrics ] = useState<Metric[]>([]);
   useMetricNames({
     errorHandler: () => {
       try {
@@ -39,14 +39,14 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       }
     },
     experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
+    metrics,
+    setMetrics,
   });
 
-  const { defaultMetrics, metrics } = useMemo(() => {
+  const { defaultMetrics, selectedMetrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
-    const defaultValidationMetric = metricNames.find((metricName) => (
-      metricName.name === validationMetric && metricName.type === MetricType.Validation
+    const defaultValidationMetric = metrics.find((metric) => (
+      metric.name === validationMetric && metric.type === MetricType.Validation
     ));
     const fallbackMetric = metrics[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
@@ -55,12 +55,12 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
-    const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
-    return { defaultMetrics, metrics };
-  }, [ experiment?.config?.searcher, metricNames, settings.metric ]);
+    const selectedMetrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
+    return { defaultMetrics, selectedMetrics };
+  }, [ experiment?.config?.searcher, metrics, settings.metric ]);
 
   const handleMetricChange = useCallback((value: Metric[]) => {
-    const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
+    const newMetrics = value.map((metric) => `${metric.type}|${metric.name}`);
     updateSettings({ metric: newMetrics, tableOffset: 0 });
   }, [ updateSettings ]);
 

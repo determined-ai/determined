@@ -119,6 +119,7 @@ class GetTrialWorkloadsRequestFilterOption(enum.Enum):
 class PatchTrialsRequestIds:
     def __init__(
         self,
+        *,
         ids: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.ids = ids
@@ -143,6 +144,7 @@ class TrialEarlyExitExitedReason(enum.Enum):
 class TrialFiltersRankWithinExp:
     def __init__(
         self,
+        *,
         rank: "typing.Optional[int]" = None,
         sorter: "typing.Optional[v1TrialSorter]" = None,
     ):
@@ -732,6 +734,7 @@ class v1AllocationRendezvousInfoResponse:
 class v1AugmentedTrial:
     def __init__(
         self,
+        *,
         endTime: str,
         experimentDescription: str,
         experimentId: int,
@@ -1195,6 +1198,7 @@ class v1CreateExperimentResponse:
 class v1CreateTrialsCollectionRequest:
     def __init__(
         self,
+        *,
         filters: "v1TrialFilters",
         name: str,
         projectId: int,
@@ -1225,6 +1229,7 @@ class v1CreateTrialsCollectionRequest:
 class v1CreateTrialsCollectionResponse:
     def __init__(
         self,
+        *,
         collection: "typing.Optional[v1TrialsCollection]" = None,
     ):
         self.collection = collection
@@ -2887,6 +2892,7 @@ class v1GetTrialWorkloadsResponse:
 class v1GetTrialsCollectionsResponse:
     def __init__(
         self,
+        *,
         collections: "typing.Optional[typing.Sequence[v1TrialsCollection]]" = None,
     ):
         self.collections = collections
@@ -3995,6 +4001,7 @@ class v1Notebook:
 class v1NumberRangeFilter:
     def __init__(
         self,
+        *,
         max: "typing.Optional[float]" = None,
         min: "typing.Optional[float]" = None,
         name: "typing.Optional[str]" = None,
@@ -4292,6 +4299,7 @@ class v1PatchProjectResponse:
 class v1PatchTrialsCollectionRequest:
     def __init__(
         self,
+        *,
         id: int,
         filters: "typing.Optional[v1TrialFilters]" = None,
         name: "typing.Optional[str]" = None,
@@ -4322,6 +4330,7 @@ class v1PatchTrialsCollectionRequest:
 class v1PatchTrialsCollectionResponse:
     def __init__(
         self,
+        *,
         collection: "typing.Optional[v1TrialsCollection]" = None,
     ):
         self.collection = collection
@@ -4340,6 +4349,7 @@ class v1PatchTrialsCollectionResponse:
 class v1PatchTrialsRequest:
     def __init__(
         self,
+        *,
         patch: "v1TrialPatch",
         filters: "typing.Optional[v1TrialFilters]" = None,
         trial: "typing.Optional[PatchTrialsRequestIds]" = None,
@@ -4366,6 +4376,7 @@ class v1PatchTrialsRequest:
 class v1PatchTrialsResponse:
     def __init__(
         self,
+        *,
         rowsAffected: "typing.Optional[int]" = None,
     ):
         self.rowsAffected = rowsAffected
@@ -4983,6 +4994,7 @@ class v1PutTemplateResponse:
 class v1QueryTrialsRequest:
     def __init__(
         self,
+        *,
         filters: "v1TrialFilters",
         limit: "typing.Optional[int]" = None,
         offset: "typing.Optional[int]" = None,
@@ -5013,6 +5025,7 @@ class v1QueryTrialsRequest:
 class v1QueryTrialsResponse:
     def __init__(
         self,
+        *,
         trials: "typing.Optional[typing.Sequence[v1AugmentedTrial]]" = None,
     ):
         self.trials = trials
@@ -6279,6 +6292,7 @@ class v1Tensorboard:
 class v1TimeRangeFilter:
     def __init__(
         self,
+        *,
         intervalEnd: "typing.Optional[str]" = None,
         intervalStart: "typing.Optional[str]" = None,
     ):
@@ -6320,6 +6334,7 @@ class v1TrialEarlyExit:
 class v1TrialFilters:
     def __init__(
         self,
+        *,
         endTime: "typing.Optional[v1TimeRangeFilter]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         hparams: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
@@ -6491,6 +6506,7 @@ class v1TrialMetrics:
 class v1TrialPatch:
     def __init__(
         self,
+        *,
         addTag: "typing.Optional[typing.Sequence[v1TrialTag]]" = None,
         removeTag: "typing.Optional[typing.Sequence[v1TrialTag]]" = None,
     ):
@@ -6621,6 +6637,7 @@ class v1TrialSimulation:
 class v1TrialSorter:
     def __init__(
         self,
+        *,
         field: str,
         namespace: "TrialSorterNamespace",
         orderBy: "typing.Optional[v1OrderBy]" = None,
@@ -6647,6 +6664,7 @@ class v1TrialSorter:
 class v1TrialTag:
     def __init__(
         self,
+        *,
         key: str,
     ):
         self.key = key
@@ -6665,6 +6683,7 @@ class v1TrialTag:
 class v1TrialsCollection:
     def __init__(
         self,
+        *,
         filters: "v1TrialFilters",
         id: int,
         name: str,

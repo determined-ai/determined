@@ -17,7 +17,7 @@ import { isNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
-  ExperimentBase, MetricName, MetricsWorkload,
+  ExperimentBase, Metric, MetricsWorkload,
   TrialDetails, TrialWorkloadFilter,
 } from 'types';
 import handleError from 'utils/error';
@@ -104,7 +104,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     , [ getCheckpointSize, trialsDetails ],
   );
 
-  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+  const [ metrics, setMetrics ] = useState<Metric[]>([]);
   useMetricNames({
     errorHandler: () => {
       handleError({
@@ -114,8 +114,8 @@ const TrialsComparisonTable: React.FC<TableProps> = (
       });
     },
     experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
+    metrics,
+    setMetrics,
   });
 
   useEffect(() => {

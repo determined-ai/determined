@@ -14,7 +14,7 @@ import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricContainer, MetricName, Scale } from 'types';
+import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
   defaultMetrics: Metric[];
@@ -47,14 +47,14 @@ const TrialChart: React.FC<Props> = ({
     if (trialId) {
       const summ = await compareTrials({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-        metricNames: metricNames,
+        metricNames: metrics,
         scale: scale,
         startBatches: 0,
         trialIds: [ trialId ],
       });
       setTrialSummary(summ[0].metrics);
     }
-  }, [ metricNames, scale, trialId ]);
+  }, [ metrics, scale, trialId ]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
   useEffect(() => {

@@ -5,7 +5,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import useMetricNames from 'hooks/useMetricNames';
+import useMetrics from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import {
@@ -111,21 +111,21 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ filters, setFilters ] = useState<VisualizationFilters>(initFilters);
   const [ activeMetric, setActiveMetric ] = useState<Metric>(initFilters.metric);
   const [ batches, setBatches ] = useState<number[]>();
-  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+  const [ metrics, setMetrics ] = useState<Metric[]>([]);
   const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
-      hasData: batches && batches.length !== 0 && metricNames && metricNames.length !== 0,
-      hasLoaded: batches && metricNames,
+      hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
+      hasLoaded: batches && metrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: ![
         ExperimentSearcherName.Single,
         ExperimentSearcherName.Pbt,
       ].includes(experiment.config.searcher.name),
     };
-  }, [ batches, experiment, metricNames ]);
+  }, [ batches, experiment, metrics ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
@@ -160,13 +160,13 @@ const ExperimentVisualization: React.FC<Props> = ({
   }, [ basePath, history, location, type, typeKey ]);
 
   // Stream available metrics.
-  useMetricNames({
+  useMetrics({
     errorHandler: () => {
       setPageError(PageError.MetricNames);
     },
     experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
+    metrics,
+    setMetrics,
   });
 
   useEffect(() => {
@@ -191,7 +191,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, filters?.metric, isSupported, metricNames, ui.isPageHidden ]);
+  }, [ experiment.id, filters?.metric, isSupported, metrics, ui.isPageHidden ]);
 
   // Stream available batches.
   useEffect(() => {
@@ -235,12 +235,12 @@ const ExperimentVisualization: React.FC<Props> = ({
   // Validate active metric against metrics.
   useEffect(() => {
     setActiveMetric((prev) => {
-      const activeMetricFound = metricNames.reduce((acc, metric) => {
+      const activeMetricFound = metrics.reduce((acc, metric) => {
         return acc || (metric.type === prev.type && metric.name === prev.name);
       }, false);
       return activeMetricFound ? prev : searcherMetric.current;
     });
-  }, [ metricNames ]);
+  }, [ metrics ]);
 
   // Update default filter hParams if not previously set.
   useEffect(() => {
@@ -303,7 +303,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       filters={filters}
       fullHParams={fullHParams.current}
       hpImportance={hpImportance}
-      metrics={metricNames}
+      metrics={metrics}
       type={typeKey}
       onChange={handleFiltersChange}
       onMetricChange={handleMetricChange}

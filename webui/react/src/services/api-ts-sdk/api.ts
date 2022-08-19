@@ -281,6 +281,20 @@ export enum GetTrialWorkloadsRequestFilterOption {
 }
 
 /**
+ * struct for the ids parameter.
+ * @export
+ * @interface PatchTrialsRequestIds
+ */
+export interface PatchTrialsRequestIds {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof PatchTrialsRequestIds
+     */
+    ids?: Array<number>;
+}
+
+/**
  * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
  * @export
  * @interface ProtobufAny
