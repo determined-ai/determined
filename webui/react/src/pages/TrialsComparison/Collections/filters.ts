@@ -24,7 +24,7 @@ export interface TrialFilters {
   projectIds?: string[];
   ranker?: ranker;
   searcher?: string;
-  state?: string[];
+  states?: string[];
   tags?: string[];
   trainingMetrics?: NumberRangeDict;
   userIds?: string[];

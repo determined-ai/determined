@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { useDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
@@ -9,7 +9,7 @@ import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { V1AugmentedTrial, V1OrderBy } from 'services/api-ts-sdk';
 import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
 
@@ -32,9 +32,9 @@ interface Props {
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
-  const { settings: tableSettings, updateSettings } = tableSettingsHook;
+  const { settings: tableSettings } = tableSettingsHook;
 
-  const C = useTrialCollections(projectId);
+  const C = useTrialCollections(projectId, tableSettings);
 
   const trials = useFetchTrials({
     filters: C.filters,
@@ -64,7 +64,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
         bodyScroll>
         <div className={css.container}>
           <div className={css.chart}>
-            <Grid
+            {/* <Grid
               border={true}
               // need to use screen size
               minItemWidth={600}
@@ -85,7 +85,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
                 )) }
               </SyncProvider>
-            </Grid>
+            </Grid> */}
           </div>
           {A.dispatcher}
           <TrialTable

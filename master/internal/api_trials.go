@@ -392,16 +392,16 @@ func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
 		len(f.States) +
 		len(f.SearcherMetric)
 
-	if filtersLength == 0 && 
+	if filtersLength == 0 &&
 		f.RankWithinExp == nil &&
-	 	f.StartTime == nil && f.EndTime == nil && 
-	 	f.SearcherMetricValue == nil {
-			return emptyFilters
+		f.StartTime == nil && f.EndTime == nil &&
+		f.SearcherMetricValue == nil {
+		return emptyFilters
 	}
 	return nil
 }
 
-func (a *apiServer) QueryTrials(ctx context.Context, 
+func (a *apiServer) QueryTrials(ctx context.Context,
 	req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
 	err := checkTrialFiltersEmpty(req.Filters)
 	if err != nil {
@@ -423,6 +423,9 @@ func (a *apiServer) QueryTrials(ctx context.Context,
 		orderColumn, err = a.m.db.TrialsColumnForNamespace(req.Sorter.Namespace, req.Sorter.Field)
 		if err != nil {
 			return nil, fmt.Errorf("error querying for trials, bad order by column %w", err)
+		}
+		if req.Sorter.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
+			orderDirection = db.SortDirectionDescNullsLast
 		}
 	}
 
@@ -453,7 +456,7 @@ func (a *apiServer) QueryTrials(ctx context.Context,
 	return &resp, nil
 }
 
-func (a *apiServer) PatchTrials(ctx context.Context, 
+func (a *apiServer) PatchTrials(ctx context.Context,
 	req *apiv1.PatchTrialsRequest) (*apiv1.PatchTrialsResponse, error) {
 	_, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
@@ -548,7 +551,7 @@ func (a *apiServer) GetTrialsCollections(
 func (a *apiServer) CreateTrialsCollection(
 	ctx context.Context, req *apiv1.CreateTrialsCollectionRequest,
 ) (*apiv1.CreateTrialsCollectionResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, 
+	user, _, err := grpcutil.GetUser(ctx, a.m.db,
 		&a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, fmt.Errorf("couldnt create trials collection %w", err)

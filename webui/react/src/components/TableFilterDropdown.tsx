@@ -14,6 +14,7 @@ interface Props extends FilterDropdownProps {
   multiple?: boolean;
   onFilter?: (keys: string[]) => void;
   onReset?: () => void;
+  placeholder?: string;
   searchable?: boolean;
   validatorRegex?: RegExp;
   values?: string[];
@@ -34,6 +35,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   multiple,
   onFilter,
   onReset,
+  placeholder,
   searchable,
   validatorRegex,
   values = [],
@@ -165,7 +167,7 @@ const TableFilterDropdown: React.FC<Props> = ({
             allowClear
             aria-label={ARIA_LABEL_INPUT}
             bordered={false}
-            placeholder={validatorRegex ? 'enter a filter' : 'search filters'}
+            placeholder={placeholder ?? 'search filters'}
             prefix={<Icon name="search" size="tiny" />}
             ref={inputRef}
             value={search}

@@ -32,18 +32,19 @@ export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
   const prefix = s.sortKey.split('.')[0];
   const namespace = (
     prefix === 'hparams'
-      ? TrialSorterNamespace.TRIALSUNSPECIFIED
-      : prefix === 'validation_metrics'
+      ? TrialSorterNamespace.HPARAMS
+      : prefix === 'validationMetrics'
         ? TrialSorterNamespace.VALIDATIONMETRICS
-        : prefix === 'training_metrics'
+        : prefix === 'trainingMetrics'
           ? TrialSorterNamespace.TRAININGMETRICS
           : TrialSorterNamespace.TRIALSUNSPECIFIED);
+
   const field = namespace === TrialSorterNamespace.TRIALSUNSPECIFIED
-    ? s.sortKey
+    ? camelCaseToSnake(s.sortKey)
     : s.sortKey.split('.').slice(1).join('.');
 
   return {
-    field: camelCaseToSnake(field),
+    field,
     namespace: namespace,
     orderBy: s.orderBy,
   };

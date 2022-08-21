@@ -540,7 +540,7 @@ func hParamAccessor(hp string) string {
 	for _, n := range nesting {
 		nestingWithQuotes = append(nestingWithQuotes, fmt.Sprintf("'%s'", n))
 	}
-	return "hparams->>" + strings.Join(nestingWithQuotes, "->>")
+	return fmt.Sprintf("(hparams->>%s)::float8", strings.Join(nestingWithQuotes, "->>"))
 }
 
 // ApplyTrialPatch applies a patch operation to a set of Trials.
@@ -577,9 +577,9 @@ func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
 	case apiv1.TrialSorter_NAMESPACE_HPARAMS:
 		return hParamAccessor(field), nil
 	case apiv1.TrialSorter_NAMESPACE_TRAINING_METRICS:
-		return fmt.Sprintf("training_metrics->>'%s'", field), nil
+		return fmt.Sprintf("(training_metrics->>'%s')::float8", field), nil
 	case apiv1.TrialSorter_NAMESPACE_VALIDATION_METRICS:
-		return fmt.Sprintf("validation_metrics->>'%s'", field), nil
+		return fmt.Sprintf("(validation_metrics->>'%s')::float8", field), nil
 	default:
 		return field, nil
 	}

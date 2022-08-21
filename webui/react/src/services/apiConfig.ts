@@ -257,9 +257,8 @@ export const queryTrials: DetApi<
     return { trials: response.trials };
   },
   request: (params: Api.V1QueryTrialsRequest) => {
-    return detApi.TrialsComparison.queryTrials(
-      { filters: params.filters, limit: params.limit },
-    );
+    return detApi.TrialsComparison.queryTrials(params);
+
   },
 };
 

@@ -83,7 +83,6 @@ const ProjectDetails: React.FC = () => {
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
 
   if (project?.immutable) {
-    console.log('its immutable');
     return (
       <div className={css.base}>
         <PageHeader

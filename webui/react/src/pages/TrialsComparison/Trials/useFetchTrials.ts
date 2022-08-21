@@ -44,7 +44,7 @@ export const useFetchTrials = ({
 
   }, [ filters, limit, offset, sorter ]);
 
-  usePolling(fetchTrials, { interval: 200000, rerunOnNewFn: true });
+  usePolling(fetchTrials, { interval: 10000, rerunOnNewFn: true });
 
   return trials;
 };
