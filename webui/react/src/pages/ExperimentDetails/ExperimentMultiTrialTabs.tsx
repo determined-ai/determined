@@ -1,14 +1,15 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import React, { useCallback } from 'react';
+import { useParams } from 'react-router';
 
+import DynamicTabs from 'components/DynamicTabs';
 import NotesCard from 'components/NotesCard';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, ExperimentVisualizationType } from 'types';
+import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
 
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
@@ -21,14 +22,6 @@ enum TabType {
   Visualization = 'visualization',
   Notes = 'notes',
 }
-
-interface Params {
-  tab?: TabType;
-  viz?: ExperimentVisualizationType;
-}
-
-const TAB_KEYS = Object.values(TabType);
-const DEFAULT_TAB_KEY = TabType.Visualization;
 
 const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentVisualization');
@@ -43,24 +36,8 @@ export interface Props {
 const ExperimentMultiTrialTabs: React.FC<Props> = (
   { experiment, fetchExperimentDetails, pageRef }: Props,
 ) => {
-  const { tab, viz } = useParams<Params>();
-  const history = useHistory();
-  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
-  const [ tabKey, setTabKey ] = useState(defaultTabKey);
 
   const basePath = paths.experimentDetails(experiment.id);
-
-  const handleTabChange = useCallback((key) => {
-    setTabKey(key);
-    history.replace(`${basePath}/${key}`);
-  }, [ basePath, history ]);
-
-  // Sets the default sub route.
-  useEffect(() => {
-    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
-    }
-  }, [ basePath, history, tab, tabKey ]);
 
   const handleNotesUpdate = useCallback(async (editedNotes: string) => {
     try {
@@ -78,13 +55,12 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
   }, [ experiment.id, fetchExperimentDetails ]);
 
   return (
-    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+    <DynamicTabs basePath={basePath} className="no-padding">
       <TabPane key="visualization" tab="Visualization">
         <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization
             basePath={`${basePath}/${TabType.Visualization}`}
             experiment={experiment}
-            type={viz}
           />
         </React.Suspense>
       </TabPane>
@@ -107,7 +83,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
           onSave={handleNotesUpdate}
         />
       </TabPane>
-    </Tabs>
+    </DynamicTabs>
   );
 };
 

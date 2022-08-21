@@ -8,7 +8,9 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-import { ExperimentVisualizationType, HpImportance, Metric, Scale } from 'types';
+import { HpImportance, Metric, Scale } from 'types';
+
+import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 

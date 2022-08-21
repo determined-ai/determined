@@ -22,7 +22,7 @@ const routes: RouteConfig[] = [
   {
     id: 'projectDetails',
     needAuth: true,
-    path: '/projects/:projectId',
+    path: '/projects/:projectId/:tab',
     title: 'Project',
   },
   {

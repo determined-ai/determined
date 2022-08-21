@@ -1,5 +1,5 @@
 import { Button, Select } from 'antd';
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
@@ -19,7 +19,7 @@ import useModalTrialCollection, { CollectionModalProps } from './useModalCreateC
 export interface TrialsCollectionInterface {
   collection: string;
   collections: TrialsCollection[];
-  controls: ReactNode;
+  controls: JSX.Element;
   fetchCollections: () => Promise<TrialsCollection[] | undefined>;
   filters: TrialFilters;
   modalContextHolder: React.ReactElement;
@@ -158,12 +158,12 @@ export const useTrialCollections = (projectId: string): TrialsCollectionInterfac
   }, [ filters, modalOpen, sorter ]);
 
   const controls = (
-    <div style={{ position: 'fixed', right: '30px' }}>
+    <div>
       <Button onClick={createCollectionFromFilters}>New Collection</Button>
       <Button onClick={saveCollection}>Save Collection</Button>
       <Select
         placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
-        value={settings.collection}
+        value={settings.collection || undefined}
         onChange={(value) => setCollection(value)}>
         {[
           ...collections?.map((collection) => (

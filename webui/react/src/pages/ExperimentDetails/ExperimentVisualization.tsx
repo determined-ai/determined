@@ -1,6 +1,6 @@
 import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
@@ -19,7 +19,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
-  ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
+  ExperimentBase, ExperimentSearcherName,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, Metric, MetricType, RunState,
   Scale,
 } from 'types';
@@ -35,6 +35,12 @@ import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinat
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
+export enum ExperimentVisualizationType {
+  HpParallelCoordinates = 'hp-parallel-coordinates',
+  HpHeatMap = 'hp-heat-map',
+  HpScatterPlots = 'hp-scatter-plots',
+  LearningCurve = 'learning-curve',
+}
 interface Props {
   basePath: string;
   experiment: ExperimentBase;
@@ -76,7 +82,7 @@ const getHpImportanceMap = (
 const ExperimentVisualization: React.FC<Props> = ({
   basePath,
   experiment,
-  type,
+
 }: Props) => {
   const { ui } = useStore();
   const history = useHistory();
@@ -86,6 +92,8 @@ const ExperimentVisualization: React.FC<Props> = ({
     name: experiment.config.searcher.metric,
     type: MetricType.Validation,
   });
+
+  const { viz: type } = useParams<{viz: ExperimentVisualizationType}>();
   const fullHParams = useRef<string[]>(
     (Object.keys(experiment.hyperparameters || {}).filter((key) => {
       // Constant hyperparameters are not useful for visualizations.

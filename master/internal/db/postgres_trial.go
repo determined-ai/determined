@@ -720,7 +720,15 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 	}
 
 	if len(filters.States) > 0 {
-		q.Where("state in (?)", bun.In(filters.States))
+		states := []string{}
+		for s := range filters.States {
+			state_name, ok := trialv1.State_name[int32(s)]
+			if !ok {
+				return nil, fmt.Errorf("invalid state filter %d", s)
+			}
+			states = append(states, state_name)
+		}
+		q.Where("state in (?)", bun.In(states))
 	}
 
 	if filters.SearcherMetric != "" {

@@ -4,6 +4,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import { useDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
@@ -88,16 +89,15 @@ const batchActions = [
 ];
 
 interface Props {
-  projectId?: string;
+  project: Project;
 }
 
-const ExperimentList: React.FC<Props> = ({ projectId }) => {
+const ExperimentList: React.FC<Props> = ({ project }) => {
   const { users, auth: { user } } = useStore();
 
-  const [ project, setProject ] = useState<Project>();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ labels, setLabels ] = useState<string[]>([]);
-  const [ pageError, setPageError ] = useState<Error>();
+
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
@@ -106,7 +106,7 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
     moveExperimentSettingsConfig,
   );
 
-  const id = numberElseUndefined(projectId);
+  const id = project?.id;
 
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
@@ -135,21 +135,6 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, batchActions, user);
   }, [ experimentMap, settings.row, user ]);
-
-  const fetchProject = useCallback(async () => {
-    if (!id) return;
-    try {
-      const response = await getProject({ id }, { signal: canceler.signal });
-      setProject((prev) => {
-        if (isEqual(prev, response)) return prev;
-        return response;
-      });
-    } catch (e) {
-      if (!pageError) setPageError(e as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [ canceler.signal, id, pageError ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -208,8 +193,8 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
-      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
-  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
+      fetchExperiments(), fetchUsers(), fetchLabels() ]);
+  }, [ fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -779,9 +764,10 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
     [ user, handleActionComplete, project ],
   );
 
-  const ExperimentTabOptions = useMemo(() => {
+  const tabBarContent = useMemo(() => {
     return (
       <div className={css.tabOptions}>
+
         <Space className={css.actionList}>
           <Toggle
             checked={settings.archived}
@@ -825,19 +811,7 @@ const ExperimentList: React.FC<Props> = ({ projectId }) => {
     switchShowArchived,
   ]);
 
-  if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find Project ${projectId}` :
-      `Unable to fetch Project ${projectId}`;
-    return <Message title={message} type={MessageType.Warning} />;
-  } else if (!project) {
-    return (
-      <Spinner
-        tip={projectId === '1' ? 'Loading...' : `Loading project ${projectId} details...`}
-      />
-    );
-  }
-
+  useDynamicTabBar(tabBarContent);
   return (
     <Page
       bodyNoPadding

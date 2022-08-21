@@ -61,6 +61,7 @@ const useLearningCurve = (
         });
       });
     });
+
     setSeriesData(newSeriesData);
   }, [ trialIds, metrics, maxBatch ]);
 

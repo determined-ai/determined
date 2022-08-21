@@ -1,12 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 
+import { useDynamicTabBar } from 'components/DynamicTabs';
+import Grid, { GridMode } from 'components/Grid';
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
+import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
 
 import useHighlight from '../../hooks/useHighlight';
@@ -16,11 +20,11 @@ import {
   useTrialCollections,
 } from './Collections/useTrialCollections';
 import useLearningCurveData from './Metrics/useLearningCurveData';
-import useMetricView from './Metrics/useMetricView';
 import { trialsTableSettingsConfig } from './Table/settings';
 import { useFetchTrials } from './Trials/useFetchTrials';
 import css from './TrialsComparison.module.scss';
 
+const initData = [ [] ];
 interface Props {
   projectId: string;
 }
@@ -39,16 +43,11 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     sorter: C.sorter,
   });
 
-  const M = useMetricView(trials.metrics);
-
   const A = useTrialActions({
     filters: C.filters,
     openCreateModal: C.openCreateModal,
     sorter: C.sorter,
   });
-
-  // const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
-  // const pageRef = useRef<HTMLElement>(null);
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);
 
@@ -56,30 +55,37 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const chartSeries = useLearningCurveData(trials.ids, trials.metrics, trials.maxBatch);
 
-  const chartData = M.view?.metric
-    && metricToKey(M.view.metric)
-    && chartSeries?.metrics?.[metricToKey(M.view.metric)];
+  useDynamicTabBar(C.controls);
 
   return (
     <Page className={css.base} containerRef={containerRef}>
       <Section
         bodyBorder
-        bodyScroll
-        filters={M.controls}>
+        bodyScroll>
         <div className={css.container}>
           <div className={css.chart}>
-            {M.view?.metric && chartData && (
-              <LearningCurveChart
-                data={chartData}
-                focusedTrialId={highlights.id}
-                selectedMetric={M.view.metric}
-                selectedScale={M.view.scale}
-                selectedTrialIds={A.selectedTrials}
-                trialIds={trials.ids}
-                xValues={chartSeries.batches}
-                onTrialFocus={highlights.focus}
-              />
-            )}
+            <Grid
+              border={true}
+              // need to use screen size
+              minItemWidth={600}
+              mode={GridMode.AutoFill}>
+              <SyncProvider>
+                {chartSeries && trials.metrics.map((metric) => (
+                  <LearningCurveChart
+                    data={chartSeries.metrics?.[metricToKey(metric)] ?? initData}
+                    focusedTrialId={highlights.id}
+                    key={metricToKey(metric)}
+                    selectedMetric={metric}
+                    selectedScale={Scale.Linear}
+                    selectedTrialIds={A.selectedTrials}
+                    trialIds={trials.ids}
+                    xValues={chartSeries.batches}
+                    onTrialFocus={highlights.focus}
+                  />
+
+                )) }
+              </SyncProvider>
+            </Grid>
           </div>
           {A.dispatcher}
           <TrialTable
@@ -89,8 +95,6 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
             highlights={highlights}
             tableSettingsHook={tableSettingsHook}
             trialsWithMetadata={trials}
-            // handleTableChange={handleTableChange}
-            // pageSize={pageSize}
           />
         </div>
       </Section>

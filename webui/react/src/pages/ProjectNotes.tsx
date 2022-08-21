@@ -1,23 +1,13 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Space } from 'antd';
-import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
-import Link from 'components/Link';
-import Page from 'components/Page';
+import { useDynamicTabBar } from 'components/DynamicTabs';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
-import { useStore } from 'contexts/Store';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
+import { addProjectNote, setProjectNotes } from 'services/api';
 import {
-  activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
-  getExperimentLabels, getExperiments, getProject, killExperiment, openOrCreateTensorBoard,
-  patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
-} from 'services/api';
-import {
-
   Note,
   Project,
-
 } from 'types';
 import handleError from 'utils/error';
 
@@ -29,8 +19,6 @@ interface Props {
 }
 
 const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
-  const { users, auth: { user } } = useStore();
-
   // const [ project, setProject ] = useState<Project>();
 
   const handleNewNotesPage = useCallback(async () => {
@@ -61,20 +49,26 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     } catch (e) { handleError(e); }
   }, [ openNoteDelete, project?.id ]);
 
-  const tabBarExtraContent = (
+  const notesTabBarContent = useMemo(() => (
     <div className={css.tabOptions}>
       <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
     </div>
-  );
+  ), [ handleNewNotesPage ]);
+
+  useDynamicTabBar(notesTabBarContent);
 
   return (
-    <PaginatedNotesCard
-      disabled={project?.archived}
-      notes={project?.notes ?? []}
-      onDelete={handleDeleteNote}
-      onNewPage={handleNewNotesPage}
-      onSave={handleSaveNotes}
-    />
+    <div>
+      <PaginatedNotesCard
+        disabled={project?.archived}
+        notes={project?.notes ?? []}
+        onDelete={handleDeleteNote}
+        onNewPage={handleNewNotesPage}
+        onSave={handleSaveNotes}
+      />
+      {modalProjectNodeDeleteContextHolder}
+    </div>
   );
-
 };
+
+export default ProjectNotes;

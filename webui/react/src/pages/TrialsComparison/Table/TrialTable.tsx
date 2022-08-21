@@ -313,12 +313,12 @@ const TrialTable: React.FC<Props> = ({
       }, total)}
       rowClassName={highlights.rowClassName}
       rowKey="trialId"
-      rowSelection={A.selectedTrials.length ? {
+      rowSelection={{
         getCheckboxProps: () => ({ disabled: A.selectAllMatching }),
         onChange: A.selectTrial,
         preserveSelectedRowKeys: true,
         selectedRowKeys: (A.selectAllMatching ? trials.ids : A.selectedTrials) as number[],
-      } : undefined}
+      }}
       scroll={{ x: 1000 }}
       settings={settings}
       showSorterTooltip={false}

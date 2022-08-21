@@ -48,7 +48,7 @@ const TableBatch: React.FC<Props> = ({
     disabled: a.disabled || selectedRowCount === 0 || (!a.bulk && selectAllMatching),
   })), [ _actions, selectAllMatching, selectedRowCount ]);
 
-  if (selectCount > 0 || onChangeSelectionMode) classes.push(css.show);
+  if (selectCount > 0) classes.push(css.show);
 
   const handleAction = useCallback((action?: string) => {
     /*

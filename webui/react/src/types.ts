@@ -525,13 +525,6 @@ export interface ExperimentOld extends ExperimentItem {
   url: string;
 }
 
-export enum ExperimentVisualizationType {
-  HpParallelCoordinates = 'hp-parallel-coordinates',
-  HpHeatMap = 'hp-heat-map',
-  HpScatterPlots = 'hp-scatter-plots',
-  LearningCurve = 'learning-curve',
-}
-
 interface Allocation {
   isReady: boolean;
   state: CommandState;
