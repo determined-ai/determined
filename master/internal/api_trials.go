@@ -568,9 +568,9 @@ func (a *apiServer) CreateTrialsCollection(
 	}
 
 	collection := db.TrialsCollection{
-		UserId:    int32(user.ID),
+		UserID:    int32(user.ID),
 		Name:      req.Name,
-		ProjectId: req.ProjectId,
+		ProjectID: req.ProjectId,
 		Filters:   req.Filters,
 		Sorter:    req.Sorter,
 	}

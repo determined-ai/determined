@@ -23,7 +23,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, UnknownRecord } from 'shared/types';
 
 import css from './InteractiveTable.module.scss';
-import SkeletonTable from './Skeleton/SkeletonTable';
+import SkeletonTable from './SkeletonTable';
 import { getFullPaginationConfig } from './Table';
 
 /*
@@ -518,8 +518,6 @@ const InteractiveTable: InteractiveTable = ({
       }, Number.MAX_SAFE_INTEGER),
     [ settings.tableLimit, settings.tableOffset ],
   );
-
-  console.log(pagination);
 
   const components = {
     body: {

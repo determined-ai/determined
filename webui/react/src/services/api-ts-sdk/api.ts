@@ -182,20 +182,20 @@ export enum Determinedtaskv1State {
 }
 
 /**
- * - STATE_ACTIVE_UNSPECIFIED: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
+ * - ACTIVE_UNSPECIFIED: The trial is in an active state.  - PAUSED: The trial is in a paused state  - STOPPING_CANCELED: The trial is canceled and is shutting down.  - STOPPING_KILLED: The trial is killed and is shutting down.  - STOPPING_COMPLETED: The trial is completed and is shutting down.  - STOPPING_ERROR: The trial is errored and is shutting down.  - CANCELED: The trial is canceled and is shut down.  - COMPLETED: The trial is completed and is shut down.  - ERROR: The trial is errored and is shut down.
  * @export
  * @enum {string}
  */
 export enum Determinedtrialv1State {
-    ACTIVEUNSPECIFIED = <any> 'STATE_ACTIVE_UNSPECIFIED',
-    PAUSED = <any> 'STATE_PAUSED',
-    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
-    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
-    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
-    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
-    CANCELED = <any> 'STATE_CANCELED',
-    COMPLETED = <any> 'STATE_COMPLETED',
-    ERROR = <any> 'STATE_ERROR'
+    ACTIVEUNSPECIFIED = <any> 'ACTIVE_UNSPECIFIED',
+    PAUSED = <any> 'PAUSED',
+    STOPPINGCANCELED = <any> 'STOPPING_CANCELED',
+    STOPPINGKILLED = <any> 'STOPPING_KILLED',
+    STOPPINGCOMPLETED = <any> 'STOPPING_COMPLETED',
+    STOPPINGERROR = <any> 'STOPPING_ERROR',
+    CANCELED = <any> 'CANCELED',
+    COMPLETED = <any> 'COMPLETED',
+    ERROR = <any> 'ERROR'
 }
 
 /**
@@ -718,15 +718,15 @@ export enum TrialProfilerMetricLabelsProfilerMetricType {
 }
 
 /**
- * - NAMESPACE_TRIALS_UNSPECIFIED: Namespace for columns in the trials table  - NAMESPACE_HPARAMS: Namespace corrspondings to trials->hparams  - NAMESPACE_TRAINING_METRICS: Namespace corrspondings to steps->avg_metrics  - NAMESPACE_VALIDATION_METRICS: Namespace corrspondings to validations->validation_metrics
+ * - TRIALS: Namespace for columns in the trials table  - HPARAMS: Namespace corrspondings to trials->hparams  - TRAINING_METRICS: Namespace corrspondings to steps->avg_metrics  - VALIDATION_METRICS: Namespace corrspondings to validations->validation_metrics
  * @export
  * @enum {string}
  */
 export enum TrialSorterNamespace {
-    TRIALSUNSPECIFIED = <any> 'NAMESPACE_TRIALS_UNSPECIFIED',
-    HPARAMS = <any> 'NAMESPACE_HPARAMS',
-    TRAININGMETRICS = <any> 'NAMESPACE_TRAINING_METRICS',
-    VALIDATIONMETRICS = <any> 'NAMESPACE_VALIDATION_METRICS'
+    TRIALS = <any> 'TRIALS',
+    HPARAMS = <any> 'HPARAMS',
+    TRAININGMETRICS = <any> 'TRAINING_METRICS',
+    VALIDATIONMETRICS = <any> 'VALIDATION_METRICS'
 }
 
 /**

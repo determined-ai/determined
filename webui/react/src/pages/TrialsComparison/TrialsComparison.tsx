@@ -2,10 +2,10 @@ import React, { useEffect, useRef } from 'react';
 
 import { useDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
-import { InteractiveTableSettings } from 'components/InteractiveTable';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';

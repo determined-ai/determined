@@ -8,18 +8,18 @@ import { useDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef,
-  InteractiveTableSettings,
-  onRightClickableCell } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import InteractiveTable, { ColumnDef,
+  InteractiveTableSettings,
+  onRightClickableCell } from 'components/Table/InteractiveTable';
 import { checkmarkRenderer, defaultRowClassName, experimentDurationRenderer,
   experimentNameRenderer, experimentProgressRenderer, ExperimentRenderer,
   getFullPaginationConfig, relativeTimeRenderer, stateRenderer,
-  userRenderer } from 'components/Table';
-import TableBatch from 'components/TableBatch';
-import TableFilterDropdown from 'components/TableFilterDropdown';
-import TableFilterSearch from 'components/TableFilterSearch';
+  userRenderer } from 'components/Table/Table';
+import TableBatch from 'components/Table/TableBatch';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';

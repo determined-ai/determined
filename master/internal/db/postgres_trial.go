@@ -463,13 +463,13 @@ type TrialsAugmented struct {
 	StartTime             time.Time          `bun:"start_time"`
 	EndTime               time.Time          `bun:"end_time"`
 	SearcherType          string             `bun:"searcher_type"`
-	ExperimentId          int32              `bun:"experiment_id"`
+	ExperimentID          int32              `bun:"experiment_id"`
 	ExperimentName        string             `bun:"experiment_name"`
 	ExperimentDescription string             `bun:"experiment_description"`
 	ExperimentLabels      []string           `bun:"experiment_labels"`
-	UserId                int32              `bun:"user_id"`
-	ProjectId             int32              `bun:"project_id"`
-	WorkspaceId           int32              `bun:"workspace_id"`
+	UserID                int32              `bun:"user_id"`
+	ProjectID             int32              `bun:"project_id"`
+	WorkspaceID           int32              `bun:"workspace_id"`
 	TotalBatches          int32              `bun:"total_batches"`
 	SearcherMetric        string             `bun:"searcher_metric"`
 	SearcherMetricValue   float64            `bun:"searcher_metric_value"`
@@ -489,13 +489,13 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 		StartTime:             protoutils.ToTimestamp(t.StartTime),
 		EndTime:               protoutils.ToTimestamp(t.EndTime),
 		SearcherType:          t.SearcherType,
-		ExperimentId:          t.ExperimentId,
+		ExperimentId:          t.ExperimentID,
 		ExperimentName:        t.ExperimentName,
 		ExperimentDescription: t.ExperimentDescription,
 		ExperimentLabels:      t.ExperimentLabels,
-		UserId:                t.UserId,
-		ProjectId:             t.ProjectId,
-		WorkspaceId:           t.WorkspaceId,
+		UserId:                t.UserID,
+		ProjectId:             t.ProjectID,
+		WorkspaceId:           t.WorkspaceID,
 		TotalBatches:          t.TotalBatches,
 		RankWithinExp:         t.RankWithinExp,
 		SearcherMetric:        t.SearcherMetric,
@@ -506,18 +506,19 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 // TrialsCollection is a collection of Trials matching a set of TrialFilters.
 type TrialsCollection struct {
 	ID        int32               `bun:"id,pk,autoincrement"`
-	UserId    int32               `bun:"user_id"`
-	ProjectId int32               `bun:"project_id"`
+	UserID    int32               `bun:"user_id"`
+	ProjectID int32               `bun:"project_id"`
 	Name      string              `bun:"name"`
 	Filters   *apiv1.TrialFilters `bun:"filters,type:jsonb"`
 	Sorter    *apiv1.TrialSorter  `bun:"sorter,type:jsonb"`
 }
 
+// Proto converts TrialsCollection to proto representation.
 func (tc *TrialsCollection) Proto() *apiv1.TrialsCollection {
 	return &apiv1.TrialsCollection{
 		Id:        tc.ID,
-		UserId:    tc.UserId,
-		ProjectId: tc.ProjectId,
+		UserId:    tc.UserID,
+		ProjectId: tc.ProjectID,
 		Name:      tc.Name,
 		Filters:   tc.Filters,
 		Sorter:    tc.Sorter,
@@ -549,7 +550,6 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery,
 	// takes an update query and adds the Set clauses for the patch
 
 	if len(payload.AddTag) > 0 || len(payload.RemoveTag) > 0 {
-
 		addTags := map[string]string{}
 		for _, tag := range payload.AddTag {
 			addTags[tag.Key] = ""
@@ -565,20 +565,20 @@ func (db *PgDB) ApplyTrialPatch(q *bun.UpdateQuery,
 	return q, nil
 }
 
-// TrialsColumnForNamespace returns the correct namespace for a TrialSorter
+// TrialsColumnForNamespace returns the correct namespace for a TrialSorter.
 func (db *PgDB) TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
 	field string) (string, error) {
 	if !safeString.MatchString(field) {
 		return "", fmt.Errorf("%s filter %s contains possible SQL injection", namespace, field)
 	}
 	switch namespace {
-	case apiv1.TrialSorter_NAMESPACE_TRIALS_UNSPECIFIED:
+	case apiv1.TrialSorter_TRIALS:
 		return field, nil
-	case apiv1.TrialSorter_NAMESPACE_HPARAMS:
+	case apiv1.TrialSorter_HPARAMS:
 		return hParamAccessor(field), nil
-	case apiv1.TrialSorter_NAMESPACE_TRAINING_METRICS:
+	case apiv1.TrialSorter_TRAINING_METRICS:
 		return fmt.Sprintf("(training_metrics->>'%s')::float8", field), nil
-	case apiv1.TrialSorter_NAMESPACE_VALIDATION_METRICS:
+	case apiv1.TrialSorter_VALIDATION_METRICS:
 		return fmt.Sprintf("(validation_metrics->>'%s')::float8", field), nil
 	default:
 		return field, nil
@@ -598,7 +598,10 @@ func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleVa
 	}
 }
 
-func conditionalForDateTimeRange(q *bun.SelectQuery, column string, dateTime *apiv1.TimeRangeFilter) {
+func conditionalForDateTimeRange(
+	q *bun.SelectQuery,
+	column string,
+	dateTime *apiv1.TimeRangeFilter) {
 	startTime := dateTime.IntervalStart
 	endTime := dateTime.IntervalEnd
 	switch {
@@ -625,7 +628,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 			r = &apiv1.TrialFilters_RankWithinExp{
 				Rank: 0,
 				Sorter: &apiv1.TrialSorter{
-					Namespace: apiv1.TrialSorter_NAMESPACE_TRIALS_UNSPECIFIED,
+					Namespace: apiv1.TrialSorter_TRIALS,
 					Field:     "trial_id",
 					OrderBy:   apiv1.OrderBy_ORDER_BY_ASC,
 				},
@@ -664,7 +667,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 		}
 		// bun please ignore the first question mark,
 		// it is an operator, not a placeholder
-		q.Where("tags ?| ?", "?", pgdialect.Array(tagKeys))
+		q.Where("tags ?| ?", bun.Safe("?"), pgdialect.Array(tagKeys))
 	}
 
 	if len(filters.ExperimentIds) > 0 {
@@ -696,7 +699,6 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 	}
 
 	for _, f := range filters.Hparams {
-
 		conditional := conditionalForNumberRange(f.Min, f.Max)
 		// this will fail for non-coerceable strings
 		// a request where you ask for string hps in a range is a "Bad Request"
@@ -721,12 +723,8 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 
 	if len(filters.States) > 0 {
 		states := []string{}
-		for s := range filters.States {
-			state_name, ok := trialv1.State_name[int32(s)]
-			if !ok {
-				return nil, fmt.Errorf("invalid state filter %d", s)
-			}
-			states = append(states, state_name)
+		for _, s := range filters.States {
+			states = append(states, s.String())
 		}
 		q.Where("state in (?)", bun.In(states))
 	}

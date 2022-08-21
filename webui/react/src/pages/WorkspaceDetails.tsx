@@ -5,14 +5,14 @@ import { useParams } from 'react-router';
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef,
-  InteractiveTableSettings,
-  onRightClickableCell } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
+import InteractiveTable, { ColumnDef,
+  InteractiveTableSettings,
+  onRightClickableCell } from 'components/Table/InteractiveTable';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
-  relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
+  relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';

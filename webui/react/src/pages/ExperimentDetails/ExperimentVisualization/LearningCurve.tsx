@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
-import TableBatch from 'components/TableBatch';
+import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';

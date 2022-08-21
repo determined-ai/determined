@@ -2,9 +2,9 @@ import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import { ColumnDef } from 'components/InteractiveTable';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table';
+import { ColumnDef } from 'components/Table/InteractiveTable';
+import { relativeTimeRenderer } from 'components/Table/Table';
 import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';

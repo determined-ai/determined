@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { defaultRowClassName } from 'components/Table';
+import { defaultRowClassName } from 'components/Table/Table';
 
 type EventDispatcher<RecordType> = (event: React.MouseEvent, record: RecordType) => void;
 

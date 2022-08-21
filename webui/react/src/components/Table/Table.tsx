@@ -4,7 +4,10 @@ import React from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import TimeAgo from 'components/TimeAgo';
+import TimeDuration from 'components/TimeDuration';
 import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
@@ -18,10 +21,7 @@ import {
 } from 'types';
 import { canBeOpened } from 'utils/task';
 
-import Link from './Link';
 import css from './Table.module.scss';
-import TimeAgo from './TimeAgo';
-import TimeDuration from './TimeDuration';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem | Project | Workspace;
 

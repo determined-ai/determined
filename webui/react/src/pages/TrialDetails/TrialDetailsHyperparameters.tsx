@@ -1,8 +1,11 @@
 import React, { useMemo } from 'react';
 
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
-import SkeletonTable from 'components/Skeleton/SkeletonTable';
-import { defaultRowClassName } from 'components/Table';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
+import { defaultRowClassName } from 'components/Table/Table';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner';
 import { isObject } from 'shared/utils/data';

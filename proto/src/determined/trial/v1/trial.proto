@@ -33,23 +33,23 @@ message CheckpointWorkload {
 // The current state of the trial. see \dT+ trial_state in db
 enum State {
   // The trial is in an active state.
-  STATE_ACTIVE_UNSPECIFIED = 0;
+  ACTIVE_UNSPECIFIED = 0;
   // The trial is in a paused state
-  STATE_PAUSED = 1;
+  PAUSED = 1;
   // The trial is canceled and is shutting down.
-  STATE_STOPPING_CANCELED = 2;
+  STOPPING_CANCELED = 2;
   // The trial is killed and is shutting down.
-  STATE_STOPPING_KILLED = 3;
+  STOPPING_KILLED = 3;
   // The trial is completed and is shutting down.
-  STATE_STOPPING_COMPLETED = 4;
+  STOPPING_COMPLETED = 4;
   // The trial is errored and is shutting down.
-  STATE_STOPPING_ERROR = 5;
+  STOPPING_ERROR = 5;
   // The trial is canceled and is shut down.
-  STATE_CANCELED = 6;
+  CANCELED = 6;
   // The trial is completed and is shut down.
-  STATE_COMPLETED = 7;
+  COMPLETED = 7;
   // The trial is errored and is shut down.
-  STATE_ERROR = 8;
+  ERROR = 8;
 }
 
 // MetricsWorkload is a workload generating metrics.

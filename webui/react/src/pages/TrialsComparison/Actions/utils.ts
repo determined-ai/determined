@@ -1,4 +1,4 @@
-import { Action } from 'components/TableBatch';
+import { Action } from 'components/Table/TableBatch';
 import { openOrCreateTensorBoard } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { CommandTask } from 'types';

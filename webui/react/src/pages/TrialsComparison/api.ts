@@ -5,6 +5,7 @@ import {
   TrialSorter,
 } from 'pages/TrialsComparison/Collections/filters';
 import {
+  Determinedtrialv1State,
   TrialSorterNamespace,
   V1NumberRangeFilter,
   V1OrderBy,
@@ -12,7 +13,6 @@ import {
   V1TrialsCollection,
   V1TrialSorter,
   V1TrialTag,
-  Determinedtrialv1State
 } from 'services/api-ts-sdk';
 import {
   isNumber,
@@ -25,7 +25,7 @@ import { TrialsCollection } from './Collections/collections';
 export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
   if (!s?.sortKey) return {
     field: 'trial_id',
-    namespace: TrialSorterNamespace.TRIALSUNSPECIFIED,
+    namespace: TrialSorterNamespace.TRIALS,
     orderBy: V1OrderBy.DESC,
   };
 
@@ -37,9 +37,9 @@ export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
         ? TrialSorterNamespace.VALIDATIONMETRICS
         : prefix === 'trainingMetrics'
           ? TrialSorterNamespace.TRAININGMETRICS
-          : TrialSorterNamespace.TRIALSUNSPECIFIED);
+          : TrialSorterNamespace.TRIALS);
 
-  const field = namespace === TrialSorterNamespace.TRIALSUNSPECIFIED
+  const field = namespace === TrialSorterNamespace.TRIALS
     ? camelCaseToSnake(s.sortKey)
     : s.sortKey.split('.').slice(1).join('.');
 
@@ -52,7 +52,7 @@ export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
 
 const prefixForNamespace: Record<TrialSorterNamespace, string> = {
   [TrialSorterNamespace.HPARAMS]: 'hparams',
-  [TrialSorterNamespace.TRIALSUNSPECIFIED]: '',
+  [TrialSorterNamespace.TRIALS]: '',
   [TrialSorterNamespace.TRAININGMETRICS]: 'training_metrics',
   [TrialSorterNamespace.VALIDATIONMETRICS]: 'validation_metrics',
 };
@@ -90,18 +90,6 @@ const decodeNumberRangeDict = (d: Array<V1NumberRangeFilter>): NumberRangeDict =
       },
     } : {})).reduce((a, b) => ({ ...a, ...b }), {});
 
-  const encodeStates = (states: string[]): Determinedtrialv1State[] => {
-    const apiStateToTrialStateMap: Record< string, Determinedtrialv1State> = {
-    'ACTIVE' : Determinedtrialv1State.ACTIVEUNSPECIFIED,
-    'PAUSED':Determinedtrialv1State.PAUSED,
-    'KILLED':Determinedtrialv1State.STOPPINGKILLED,
-    'COMPLETE': Determinedtrialv1State.STOPPINGCOMPLETED,
-    'CANCELED': Determinedtrialv1State.CANCELED,
-    'COMPLETED': Determinedtrialv1State.COMPLETED,
-    'ERROR':Determinedtrialv1State.ERROR
-    }
-    return states.map((s) => apiStateToTrialStateMap[s])
-  } 
 export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
   return {
     experimentIds: encodeIdList(f.experimentIds),
@@ -114,12 +102,12 @@ export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
       }
       : undefined,
     searcher: f.searcher,
+    states: f.states as unknown as Determinedtrialv1State[],
     tags: f.tags?.map((tag: string) => ({ key: tag, value: '1' })),
     trainingMetrics: encodeNumberRangeDict(f.trainingMetrics ?? {}),
     userIds: encodeIdList(f.userIds),
     validationMetrics: encodeNumberRangeDict(f.validationMetrics ?? {}),
     workspaceIds: encodeIdList(f.workspaceIds),
-    states: encodeStates(f.state ?? [])  
   };
 };
 export const decodeFilters = (f: V1TrialFilters): TrialFilters => ({

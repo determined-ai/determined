@@ -4,7 +4,7 @@ import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React from 'react';
 
-import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { Pagination, RecordKey, UnknownRecord } from 'shared/types';
 import { alphaNumericSorter, numericSorter } from 'shared/utils/sort';
 import { generateAlphaNumeric } from 'shared/utils/string';

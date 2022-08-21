@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useState } from 'react';
 
-import TableBatch from 'components/TableBatch';
+import TableBatch from 'components/Table/TableBatch';
 
 import { encodeIdList } from '../api';
 import { TrialsCollectionSpec, TrialsSelection } from '../Collections/collections';

@@ -135,7 +135,6 @@ func (a *apiServer) GetWorkspaceProjects(
 		archFilterExpr,
 	)
 	if err != nil {
-		fmt.Printf("%f", err)
 		return nil, err
 	}
 

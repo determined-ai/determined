@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 
 import { isNumber } from 'shared/utils/data';
 
-import SkeletonSection, { Props as SkeletonSectionProps } from './SkeletonSection';
+import SkeletonSection, { Props as SkeletonSectionProps } from '../SkeletonSection';
+
 import css from './SkeletonTable.module.scss';
 
 interface Props extends SkeletonSectionProps {

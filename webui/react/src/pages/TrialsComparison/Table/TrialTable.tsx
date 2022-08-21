@@ -1,15 +1,20 @@
+import { Button, Dropdown } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { MutableRefObject, useEffect, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { getFullPaginationConfig, getPaginationConfig, relativeTimeRenderer } from 'components/Table';
-import TableFilterDropdown from 'components/TableFilterDropdown';
-import TableFilterSearch from 'components/TableFilterSearch';
+import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import {
+  getFullPaginationConfig,
+  getPaginationConfig,
+  relativeTimeRenderer,
+} from 'components/Table/Table';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserAvatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import { Highlights } from 'hooks/useHighlight';
@@ -17,6 +22,7 @@ import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
 import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { StateOfUnion } from 'themes';
@@ -42,6 +48,8 @@ interface Props {
   trialsWithMetadata: TrialsWithMetadata;
 }
 
+const getWidthForField = (field: string) => field.length * 8 + 80;
+
 const TrialTable: React.FC<Props> = ({
   // colorScale,
   collectionsInterface: C,
@@ -56,9 +64,11 @@ const TrialTable: React.FC<Props> = ({
 
   const { users } = useStore();
 
+  const { filters, setFilters } = C;
+
   const idColumn = useMemo(() => ({
     dataIndex: 'id',
-    defaultWidth: 60,
+    defaultWidth: 80,
     key: 'trialId',
     render: (_: string, record: V1AugmentedTrial) => {
       const color = glasbeyColor(record.trialId);
@@ -85,15 +95,15 @@ const TrialTable: React.FC<Props> = ({
           multiple
           searchable
           validatorRegex={/\D/}
-          values={C.filters.experimentIds}
+          values={filters.experimentIds}
           onFilter={(experimentIds: string[]) =>
-            C.setFilters?.((filters) => ({ ...filters, experimentIds }))
+            setFilters?.((filters) => ({ ...filters, experimentIds }))
           }
 
-          onReset={() => C.setFilters?.((filters) => ({ ...filters, experimentIds: [] }))}
+          onReset={() => setFilters?.((filters) => ({ ...filters, experimentIds: [] }))}
         />
       ),
-      isFiltered: () => !!C.filters.experimentIds?.length,
+      isFiltered: () => !!filters.experimentIds?.length,
       key: 'experimentId',
       render: (_: string, record: V1AugmentedTrial) => (
         <Link path={paths.experimentDetails(record.experimentId)}>{record.experimentId}</Link>
@@ -101,73 +111,26 @@ const TrialTable: React.FC<Props> = ({
       sorter: true,
       title: 'Exp ID',
     }),
-    [ C.filters.experimentIds, C.setFilters ],
-  );
-
-  const trialStateColumn = useMemo(
-    () => ({
-      dataIndex: 'state',
-      defaultWidth: 130,
-      filterDropdown: (filterProps: FilterDropdownProps) => (
-        <TableFilterDropdown
-          {...filterProps}
-          multiple
-          values={C.filters.state}
-          onFilter={(state: string[]) =>
-            C.setFilters?.((filters) => ({ ...filters, state }))
-          }
-          onReset={() => C.setFilters?.((filters) => ({ ...filters, state: [] }))}
-        />
-      ),
-      filters: [
-        TrialState.ACTIVEUNSPECIFIED,
-        TrialState.PAUSED,
-        TrialState.CANCELED,
-        TrialState.COMPLETED,
-        TrialState.ERROR,
-      ].map((value) => ({
-        text: <Badge state={value} type={BadgeType.State} />,
-        value,
-      })),
-      isFiltered: () => !!C.filters.state?.length,
-      key: 'state',
-      render: (_: string, record: V1AugmentedTrial) => {
-        const apiStateToTrialStateMap: Record< Determinedtrialv1State, TrialState> = {
-          [Determinedtrialv1State.ACTIVEUNSPECIFIED]: TrialState.ACTIVEUNSPECIFIED,
-          [Determinedtrialv1State.PAUSED]: TrialState.PAUSED,
-          [Determinedtrialv1State.STOPPINGCANCELED]: TrialState.STOPPINGCANCELED,
-          [Determinedtrialv1State.STOPPINGKILLED]: TrialState.STOPPINGKILLED,
-          [Determinedtrialv1State.STOPPINGCOMPLETED]: TrialState.STOPPINGCOMPLETED,
-          [Determinedtrialv1State.STOPPINGERROR]: TrialState.STOPPINGERROR,
-          [Determinedtrialv1State.CANCELED]: TrialState.CANCELED,
-          [Determinedtrialv1State.COMPLETED]: TrialState.COMPLETED,
-          [Determinedtrialv1State.ERROR]: TrialState.ERROR,
-        };
-        return <Badge state={apiStateToTrialStateMap[record.state]} type={BadgeType.State} />;
-      },
-      sorter: true,
-      title: 'State',
-    }),
-    [ C.filters.state, C.setFilters ],
+    [ filters.experimentIds, setFilters ],
   );
 
   const expRankColumn = useMemo(
     () => ({
       dataIndex: 'rank',
-      defaultWidth: 60,
+      defaultWidth: 140,
       filterDropdown: (filterProps: FilterDropdownProps) => (
         <TableFilterSearch
           {...filterProps}
-          value={C.filters.ranker?.rank || ''}
+          value={filters.ranker?.rank || ''}
           onReset={() =>
-            C.setFilters?.((filters) => ({
+            setFilters?.((filters) => ({
               ...filters,
               // TODO handle invalid type assertion below
               ranker: { rank: '', sorter: filters.ranker?.sorter as TrialSorter },
             }))
           }
           onSearch={(r) =>
-            C.setFilters?.((filters) => ({
+            setFilters?.((filters) => ({
               ...filters,
               // TODO handle invalid type assertion below
               ranker: { rank: r, sorter: filters.ranker?.sorter as TrialSorter },
@@ -175,7 +138,7 @@ const TrialTable: React.FC<Props> = ({
           }
         />
       ),
-      isFiltered: () => !!C.filters.ranker?.rank,
+      isFiltered: () => !!filters.ranker?.rank,
       key: 'rank',
       render: (_: string, record: V1AugmentedTrial) => (
         <div className={css.idLayout}>{record.rankWithinExp}</div>
@@ -183,7 +146,7 @@ const TrialTable: React.FC<Props> = ({
       sorter: true,
       title: 'Rank in Exp',
     }),
-    [ C.filters.ranker?.rank, C.setFilters ],
+    [ filters.ranker?.rank, setFilters ],
   );
 
   const hpColumns = useMemo(() => Object
@@ -192,9 +155,9 @@ const TrialTable: React.FC<Props> = ({
     .map((hp) => {
       return {
         dataIndex: hp,
-        defaultWidth: 130,
-        filterDropdown: rangeFilterForPrefix('hparams', C.filters, C.setFilters)(hp),
-        isFiltered: () => rangeFilterIsActive(C.filters, 'hparams', hp),
+        defaultWidth: getWidthForField(hp),
+        filterDropdown: rangeFilterForPrefix('hparams', filters, setFilters)(hp),
+        isFiltered: () => rangeFilterIsActive(filters.hparams, hp),
         key: `hparams.${hp}`,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.hparams[hp];
@@ -208,11 +171,11 @@ const TrialTable: React.FC<Props> = ({
         sorter: true,
         title: <BadgeTag label={hp} tooltip="Hyperparameter">H</BadgeTag>,
       };
-    }), [ C.filters, trials.hparams, C.setFilters ]);
+    }), [ filters, trials.hparams, setFilters ]);
 
   const tagColumn = useMemo(() => ({
     dataIndex: 'tags',
-    defaultWidth: 60,
+    defaultWidth: 70,
     filterDropdown: (filterProps: FilterDropdownProps) => (
       <TableFilterDropdown
         {...filterProps}
@@ -220,29 +183,30 @@ const TrialTable: React.FC<Props> = ({
         placeholder="Filter Tags"
         searchable
         validatorRegex={/[^a-zA-Z0-9]+$/} // TODO need fix ?
-        values={C.filters.tags}
-        onReset={() => C.setFilters?.((filters) => ({ ...filters, tags: [] }))}
+        values={filters.tags}
+        onFilter={(tags) => setFilters?.((filters) => ({ ...filters, tags }))}
+        onReset={() => setFilters?.((filters) => ({ ...filters, tags: [] }))}
       />
     ),
-    isFiltered: () => !!C.filters.tags?.length,
+    isFiltered: () => !!filters.tags?.length,
     key: 'labels',
     render: trialTagsRenderer,
     sorter: false,
     title: 'Tags',
-  }), [ C.filters.tags, C.setFilters ]);
+  }), [ filters.tags, setFilters ]);
 
   const trainingMetricColumns = useMemo(() => trials.metrics
     .filter((metric) => metric.type = MetricType.Training).map((metric) => {
       const key = metricToKey(metric);
       return {
         dataIndex: key,
-        defaultWidth: 100,
+        defaultWidth: getWidthForField(metric.name),
         filterDropdown: rangeFilterForPrefix(
           'trainingMetrics',
-          C.filters,
-          C.setFilters,
+          filters,
+          setFilters,
         )(metric.name),
-        isFiltered: () => rangeFilterIsActive(C.filters, 'trainingMetrics', metric.name),
+        isFiltered: () => rangeFilterIsActive(filters.trainingMetrics, metric.name),
         key: `trainingMetrics.${metric.name}`,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.trainingMetrics?.[metricKeyToName(key)];
@@ -252,20 +216,20 @@ const TrialTable: React.FC<Props> = ({
         title: <MetricBadgeTag metric={metric} />,
 
       };
-    }), [ C.filters, trials.metrics, C.setFilters ]);
+    }), [ filters, trials.metrics, setFilters ]);
 
   const validationMetricColumns = useMemo(() => trials.metrics
     .filter((metric) => metric.type = MetricType.Validation).map((metric) => {
       const key = metricToKey(metric);
       return {
         dataIndex: key,
-        defaultWidth: 100,
+        defaultWidth: getWidthForField(metric.name),
         filterDropdown: rangeFilterForPrefix(
           'validationMetrics',
-          C.filters,
-          C.setFilters,
+          filters,
+          setFilters,
         )(metric.name),
-        isFiltered: () => rangeFilterIsActive(C.filters, 'validationMetrics', metric.name),
+        isFiltered: () => rangeFilterIsActive(filters.validationMetrics, metric.name),
         key: `validationMetrics.${metric.name}`,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.validationMetrics?.[metricKeyToName(key)];
@@ -274,34 +238,32 @@ const TrialTable: React.FC<Props> = ({
         sorter: true,
         title: <MetricBadgeTag metric={metric} />,
       };
-    }), [ C.filters, trials.metrics, C.setFilters ]);
+    }), [ filters, trials.metrics, setFilters ]);
 
   const stateColumn = useMemo(() => ({
     dataIndex: 'state',
-    defaultWidth: 80,
+    defaultWidth: 110,
     filterDropdown: (filterProps: FilterDropdownProps) => (
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={C.filters.states ?? []}
-        onFilter={(states) => C.setFilters?.((filters) => ({ ...filters, states }))}
-        onReset={() => C.setFilters?.((filters) => ({ ...filters, states: undefined }))}
+        values={(filters.states ?? [])}
+        onFilter={(states) => setFilters?.((filters) => ({ ...filters, states }))}
+        onReset={() => setFilters?.((filters) => ({ ...filters, states: undefined }))}
       />
     ),
-    filters: Object.values(RunState)
-      .filter((value) => [
-        RunState.Active,
-        RunState.Paused,
-        RunState.Canceled,
-        RunState.Completed,
-        RunState.Errored,
-      ].includes(value))
-      .map((value) => ({
-        text: <Badge state={value} type={BadgeType.State} />,
-        value,
-      })),
-    isFiltered: () => !!C.filters?.states?.length,
-    key: 'states',
+    filters: [
+      RunState.Active,
+      RunState.Paused,
+      RunState.Canceled,
+      RunState.Completed,
+      RunState.Errored,
+    ].map((value) => ({
+      text: <Badge state={value} type={BadgeType.State} />,
+      value,
+    })),
+    isFiltered: () => !!filters?.states?.length,
+    key: 'state',
     render: (_: string, record: V1AugmentedTrial) => (
       <div className={css.centerVertically}>
         <Badge state={record.state as unknown as StateOfUnion} type={BadgeType.State} />
@@ -309,11 +271,11 @@ const TrialTable: React.FC<Props> = ({
     ),
     sorter: true,
     title: 'State',
-  }), []);
+  }), [ setFilters, filters ]);
 
   const startTimeColumn = useMemo(() => ({
     dataIndex: 'startTime',
-    defaultWidth: 80,
+    defaultWidth: 110,
     key: 'startTime',
     render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
@@ -323,7 +285,7 @@ const TrialTable: React.FC<Props> = ({
 
   const endTimeColumn = useMemo(() => ({
     dataIndex: 'startTime',
-    defaultWidth: 80,
+    defaultWidth: 110,
     key: 'startTime',
     render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
@@ -333,31 +295,31 @@ const TrialTable: React.FC<Props> = ({
 
   const experimentNameColumn = useMemo(() => ({
     dataIndex: 'experimentName',
-    defaultWidth: 80,
+    defaultWidth: 160,
     key: 'experimentName',
     render: (value: string | number | undefined, record: V1AugmentedTrial): React.ReactNode => (
       <Link path={paths.experimentDetails(record.experimentId)}>
         {value === undefined ? '' : value}
       </Link>
     ),
-    sorter: true,
-    title: 'Name',
+    title: 'Experiment Name',
   }), []);
 
   const searcherTypeColumn = useMemo(() => ({
     dataIndex: 'searcherType',
-    defaultWidth: 80,
+    defaultWidth: 120,
     key: 'searcherType',
     title: 'Searcher Type',
   }), []);
 
   const searcherMetricColumn = useMemo(() => ({
     dataIndex: 'searcherMetric',
+    defaultWidth: 120,
     key: 'searcherMetric',
     sorter: true,
     title: (
       <BadgeTag
-        label="Searcher Metric"
+        label="Metric"
         tooltip="Searcher Metric">
         S
       </BadgeTag>
@@ -372,21 +334,22 @@ const TrialTable: React.FC<Props> = ({
         {...filterProps}
         multiple
         searchable
-        values={C.filters.userIds}
-        onFilter={(userIds: string[]) => C.setFilters?.((filters) => ({ ...filters, userIds }))}
-        onReset={() => C.setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
+        values={filters.userIds}
+        onFilter={(userIds: string[]) => setFilters?.((filters) => ({ ...filters, userIds }))}
+        onReset={() => setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
       />
     ),
     filters: users.map((user) => ({ text: getDisplayName(user), value: user.username })),
-    isFiltered: () => !!C.filters.userIds,
+    isFiltered: () => !!filters.userIds,
     key: 'userId',
     render: (_: string, record: V1AugmentedTrial) => <UserAvatar userId={record.userId} />,
     sorter: true,
     title: 'User',
-  }), []);
+  }), [ filters.userIds, setFilters, users ]);
 
   const totalBatchesColumn = useMemo(() => ({
     dataIndex: 'totalBatches',
+    defaultWidth: 120,
     key: 'totalBatches',
     sorter: true,
     title: 'Total Batches',
@@ -394,6 +357,7 @@ const TrialTable: React.FC<Props> = ({
 
   const searcherMetricValueColumn = useMemo(() => ({
     dataIndex: 'searcherMetricValue',
+    defaultWidth: 100,
     key: 'searcherMetricValue',
     render: (_: string, record: V1AugmentedTrial) => (
       <HumanReadableNumber num={record.searcherMetricValue} />
@@ -401,14 +365,32 @@ const TrialTable: React.FC<Props> = ({
     sorter: true,
     title: (
       <BadgeTag
-        label="Searcher Metric Value"
-        tooltip="Searcher Metric">
+        label="Value"
+        tooltip="Searcher Metric Value">
         S
       </BadgeTag>
     ),
   }), []);
 
-  // console.log(metrics);
+  const actionColumn = useMemo(() => ({
+    align: 'right',
+    className: 'fullCell',
+    dataIndex: 'action',
+    defaultWidth: 80,
+    fixed: 'right',
+    key: 'action',
+    render: (_:string, record: V1AugmentedTrial) => (
+      <Dropdown
+        overlay={() => <></>}
+        trigger={[ 'click' ]}>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
+        </Button>
+      </Dropdown>
+    ),
+    title: '',
+    width: 80,
+  }), []);
 
   const columns = useMemo(() => [
     idColumn,
@@ -427,12 +409,13 @@ const TrialTable: React.FC<Props> = ({
     ...hpColumns,
     ...trainingMetricColumns,
     ...validationMetricColumns,
+    actionColumn,
   ].map((col) => ({ defaultWidth: 80, ...col })), [
+    actionColumn,
     idColumn,
     experimentIdColumn,
     expRankColumn,
     tagColumn,
-    trialStateColumn,
     hpColumns,
     trainingMetricColumns,
     validationMetricColumns,
@@ -448,9 +431,10 @@ const TrialTable: React.FC<Props> = ({
   ]);
 
   useEffect(() => {
+    console.log('CCC', columns.map((c) => c.dataIndex));
     updateSettings({
-      columns: columns.map((c) => c.dataIndex),
-      columnWidths: columns.map((c) => c.defaultWidth),
+      columns: columns.map((c) => c.dataIndex).slice(0, -1),
+      columnWidths: columns.map((c) => c.defaultWidth ?? 80),
     });
   }, [ columns.length ]);
 

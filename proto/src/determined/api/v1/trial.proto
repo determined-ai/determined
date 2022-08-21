@@ -84,13 +84,13 @@ message TrialSorter {
   // to access in the db
   enum Namespace {
     // Namespace for columns in the trials table
-    NAMESPACE_TRIALS_UNSPECIFIED = 0;
+    TRIALS = 0;
     // Namespace corrspondings to trials->hparams
-    NAMESPACE_HPARAMS = 1;
+    HPARAMS = 1;
     // Namespace corrspondings to steps->avg_metrics
-    NAMESPACE_TRAINING_METRICS = 2;
+    TRAINING_METRICS = 2;
     // Namespace corrspondings to validations->validation_metrics
-    NAMESPACE_VALIDATION_METRICS = 3;
+    VALIDATION_METRICS = 3;
   }
   // The namespace for the sort field.
   Namespace namespace = 1;
@@ -190,8 +190,6 @@ message AugmentedTrial {
   int32 trial_id = 1;
   // The state of the trial.
   determined.trial.v1.State state = 2;
-  // The trials hyperparameters.
-
   // The hyperparameters for the trial
   google.protobuf.Struct hparams = 3;
   // The training metrics for the trial.

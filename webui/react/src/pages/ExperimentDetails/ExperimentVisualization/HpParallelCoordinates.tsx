@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import TableBatch from 'components/TableBatch';
+import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { openOrCreateTensorBoard } from 'services/api';

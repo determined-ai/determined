@@ -9,7 +9,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys } from 'shared/utils/data';
 import { TrialItem } from 'types';
 
-import SkeletonTable from './Skeleton/SkeletonTable';
+import SkeletonTable from './SkeletonTable';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;

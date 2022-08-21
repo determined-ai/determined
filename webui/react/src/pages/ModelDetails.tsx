@@ -3,13 +3,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
-  relativeTimeRenderer, userRenderer } from 'components/Table';
+  relativeTimeRenderer, userRenderer } from 'components/Table//Table';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';

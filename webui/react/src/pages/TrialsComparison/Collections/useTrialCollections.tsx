@@ -2,7 +2,7 @@ import { Button, Select } from 'antd';
 import React from 'react';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { getTrialsCollections, patchTrialsCollection } from 'services/api';

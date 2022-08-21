@@ -1,5 +1,5 @@
 import { GridListView } from 'components/GridListRadioGroup';
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 

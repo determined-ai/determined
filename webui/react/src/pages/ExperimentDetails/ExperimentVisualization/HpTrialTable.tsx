@@ -3,8 +3,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import ResponsiveTable from 'components/ResponsiveTable';
-import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import ResponsiveTable from 'components/Table/ResponsiveTable';
+import {
+  defaultRowClassName,
+  getPaginationConfig,
+  MINIMUM_PAGE_SIZE,
+} from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,

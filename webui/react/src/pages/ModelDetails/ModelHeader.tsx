@@ -6,7 +6,7 @@ import React, { useCallback, useMemo } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table';
+import { relativeTimeRenderer } from 'components/Table/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
