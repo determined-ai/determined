@@ -133,7 +133,7 @@ class DetCallback(TrainerCallback):
                 if state.is_world_process_zero:
                     if self.last_metrics is None:
                         logging.warning(
-                            f"No training or evaluation metrics has been recorded. Please check your setting for "
+                            f"No training or evaluation metrics has been recorded. Please check your settings for "
                             f"training metrics (--logging_strategy steps and --logging_steps) or "
                             f"evaluation metrics (--evaluation_strategy steps and --eval_steps). "
                             f"Reporting trainer_state.best_metric to the searcher.")
