@@ -41,9 +41,24 @@ def test_launch_single_slot(
     with test_util.set_resources_id_env_var():
         launch.torch_distributed.main(override_args, script)
 
-    mock_subprocess.assert_called_once_with(script)
+    launch_cmd = launch.torch_distributed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
 
-    assert os.environ.get("USE_TORCH_DISTRIBUTED") is None
+    launch_cmd += launch.torch_distributed.create_launch_cmd(
+        len(cluster_info.container_addrs),
+        len(cluster_info.slot_ids),
+        cluster_info.container_rank,
+        "localhost",
+        override_args,
+    )
+    launch_cmd += launch.torch_distributed.create_pid_client_cmd(cluster_info.allocation_id)
+    launch_cmd += launch.torch_distributed.create_log_redirect_cmd()
+    launch_cmd += script
+
+    mock_subprocess.assert_called_once_with(launch_cmd)
+
+    assert os.environ.get("USE_TORCH_DISTRIBUTED") == "True"
 
 
 @mock.patch("subprocess.Popen")
