@@ -1600,6 +1600,9 @@ func (a *apiServer) MoveExperiment(
 	if err != nil {
 		return nil, err
 	}
+	if exp.Archived {
+		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.Id)
+	}
 
 	// check that user can view source project
 	srcProject, err := a.GetProjectByID(exp.ProjectId, *curUser)
