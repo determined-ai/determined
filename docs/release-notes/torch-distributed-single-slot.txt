@@ -1,7 +1,7 @@
 :orphan:
 
-**Breaking Changes**
--  Distributed training: previously, experiments launched with determined.launch.torch_distributed was wrongly skipping
+**Fixes**
+-  Distributed training: previously, experiments launched with determined.launch.torch_distributed were wrongly skipping
 torch.distributed.run for single-slot trials and invoking training scripts directly. As a result, functions such as
 torch.distributed.init_process_group() would fail, but only inside single-slot trials. Now,
 determined.launch.torch_distributed will be more in line with intended behavior as a wrapper around
