@@ -143,7 +143,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
       const hp = hyperparameters[key] || {};
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
-        return { categories: hp.vals ?? [], key, label: key, type: DimensionType.Categorical };
+        return {
+          categories: hp.vals?.map((val) => JSON.stringify(val)) ?? [],
+          key,
+          label: key,
+          type: DimensionType.Categorical,
+        };
       } else if (hp.type === HyperparameterType.Log) {
         return { key, label: key, logBase: hp.base, type: DimensionType.Logarithmic };
       }
@@ -202,11 +207,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
           trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
-          const flatHParams = flattenObject(trial.hparams || {});
+          // This allows for both typical nested hyperparameters and nested categorgical
+          // hyperparameter values to be shown, with HpTrialTable deciding which are displayed.
+          const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };
+
           Object.keys(flatHParams).forEach((hpKey) => {
             const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
-            trialHpMap[hpKey][id] = hpValue;
+            trialHpMap[hpKey][id] = JSON.stringify(hpValue);
           });
 
           trialHpTableMap[id] = {
