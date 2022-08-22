@@ -214,7 +214,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           Object.keys(flatHParams).forEach((hpKey) => {
             const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
-            trialHpMap[hpKey][id] = hpValue;
+            trialHpMap[hpKey][id] = JSON.stringify(hpValue);
           });
 
           trialHpTableMap[id] = {
@@ -243,8 +243,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
         // Gather hparams for trial table.
         const newTrialHps = trialIds.map((id) => trialHpTableMap[id]);
         setTrialHps(newTrialHps);
-
-        console.log(data);
 
         setChartData({
           data,
