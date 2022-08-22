@@ -22,6 +22,7 @@ useNodePortForMaster: false
 # Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
 # openshiftRoute:
   # enabled:
+  # host:
   # termination:
 
 # security:
