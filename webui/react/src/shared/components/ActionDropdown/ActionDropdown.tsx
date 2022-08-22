@@ -29,7 +29,7 @@ interface Props<T extends string> {
    */
   confirmations?: Confirmations<T>
   /**
-   * boolean value for each key determines whether to disable the action or not
+   * whether to disable the action or not.
    */
   disabled?: DisabledActions<T>;
   /**
