@@ -244,6 +244,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
         const newTrialHps = trialIds.map((id) => trialHpTableMap[id]);
         setTrialHps(newTrialHps);
 
+        console.log(data);
+
         setChartData({
           data,
           metricRange,

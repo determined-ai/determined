@@ -11,7 +11,8 @@
     align-self: center;
     display: flex;
     flex-direction: column;
-    min-width: 200px;
+    max-width: 500px;
+    min-width: 250px;
   }
   .title {
     align-self: center;
@@ -88,6 +89,7 @@
   .pointerText {
     background-color: var(--theme-float);
     border-radius: 2px;
+    max-width: 100%;
     padding: 2px 8px;
 
     &::after {
@@ -100,5 +102,8 @@
       top: 0;
       width: 8px;
     }
+  }
+  :global(.ant-typography) {
+    margin: 0;
   }
 }
