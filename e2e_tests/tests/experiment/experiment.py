@@ -12,7 +12,6 @@ import pytest
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import determinedexperimentv1State
-from determined.common.experimental import session
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
 
@@ -198,11 +197,11 @@ def experiment_first_trial(exp_id: int) -> int:
     return trial_id
 
 
-def determined_test_session() -> session.Session:
+def determined_test_session() -> api.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
     authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
-    return session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
@@ -216,13 +215,23 @@ def experiment_state(experiment_id: int) -> determinedexperimentv1State:
     return r.experiment.state
 
 
-def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
-    r1 = bindings.get_GetExperimentTrials(determined_test_session(), experimentId=experiment_id)
+class TrialPlusWorkload:
+    def __init__(
+        self, trial: bindings.trialv1Trial, workloads: Sequence[bindings.v1WorkloadContainer]
+    ):
+        self.trial = trial
+        self.workloads = workloads
+
+
+def experiment_trials(experiment_id: int) -> List[TrialPlusWorkload]:
+    sess = determined_test_session()
+    r1 = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id)
     src_trials = r1.trials
     trials = []
     for trial in src_trials:
-        r2 = bindings.get_GetTrial(determined_test_session(), trialId=trial.id)
-        trials.append(r2)  # includes trial and workload
+        r2 = bindings.get_GetTrial(sess, trialId=trial.id)
+        r3 = bindings.get_GetTrialWorkloads(sess, trialId=trial.id, limit=1000)
+        trials.append(TrialPlusWorkload(r2.trial, r3.workloads))
     return trials
 
 
@@ -235,6 +244,10 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
 
         trial = trials[0].trial
         assert trial.state == determinedexperimentv1State.STATE_CANCELED
+
+
+def cancel_trial(trial_id: int) -> None:
+    bindings.post_KillTrial(determined_test_session(), id=trial_id)
 
 
 def is_terminal_state(state: determinedexperimentv1State) -> bool:

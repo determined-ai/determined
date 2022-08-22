@@ -1,6 +1,7 @@
 import json
 import subprocess
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, Iterator, Tuple
 
@@ -17,6 +18,7 @@ DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devclus
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
+DEVCLUSTER_MASTER_LOG_PATH = DEVCLUSTER_LOG_PATH / "master.log"
 
 
 @pytest.mark.managed_devcluster
@@ -309,3 +311,32 @@ def test_agent_reconnect_trigger_schedule(
         managed_cluster_restarts.restart_proxy(wait_for_reconnect=False)
         managed_cluster_restarts.restart_agent()
         raise
+
+
+@pytest.mark.managed_devcluster
+def test_queued_experiment_restarts_with_correct_allocation_id(
+    managed_cluster_restarts: ManagedCluster,
+) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        ["--config", "resources.slots_per_trial=9999"],
+    )
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_ACTIVE)
+
+    managed_cluster_restarts.kill_master()
+    log_marker = str(uuid.uuid4())
+    managed_cluster_restarts.log_marker(log_marker)
+    managed_cluster_restarts.restart_master()
+
+    err = 'duplicate key value violates unique constraint \\"allocations_allocation_id_key\\"'
+    past_marker = False
+    with open(DEVCLUSTER_MASTER_LOG_PATH) as lf:
+        for line in lf.readlines():
+            if not past_marker:
+                if log_marker in line:
+                    past_marker = True
+                continue
+
+            if err in line:
+                pytest.fail(f"allocation id save failure after restart: {line}")

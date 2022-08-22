@@ -107,7 +107,7 @@ func defaultAgentConfig() Options {
 		BindIP:              "0.0.0.0",
 		BindPort:            9090,
 		Fluent: FluentOptions{
-			Image:         "fluent/fluent-bit:1.9.3",
+			Image:         aproto.FluentImage,
 			Port:          24224,
 			ContainerName: "determined-fluent-test",
 		},

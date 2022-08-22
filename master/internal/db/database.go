@@ -111,6 +111,7 @@ type DB interface {
 		labelsJSON []byte, offset, limit int,
 	) (model.TrialProfilerMetricsBatchBatch, error)
 	ProjectByName(workspaceName string, projectName string) (projectID int, err error)
+	ProjectExperiments(id int) (experiments []*model.Experiment, err error)
 	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)

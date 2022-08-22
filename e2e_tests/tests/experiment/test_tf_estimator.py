@@ -105,7 +105,7 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
 
     trial = exp.experiment_trials(experiment_id)[0]
     last_validation = exp.workloads_with_validation(trial.workloads)[-1]
-    metrics = last_validation.metrics
+    metrics = last_validation.metrics.avgMetrics
     label_sum = 2 * sum(range(16))
     assert metrics["label_sum_fn"] == label_sum
     assert metrics["label_sum_cls"] == label_sum

@@ -9,6 +9,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -27,6 +28,8 @@ type Config struct {
 	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
 	AgentDockerImage       string            `json:"agent_docker_image"`
 	AgentFluentImage       string            `json:"agent_fluent_image"`
+	AgentReconnectAttempts int               `json:"agent_reconnect_attempts"`
+	AgentReconnectBackoff  int               `json:"agent_reconnect_backoff"`
 	AWS                    *AWSClusterConfig `union:"type,aws" json:"-"`
 	GCP                    *GCPClusterConfig `union:"type,gcp" json:"-"`
 	MaxIdleAgentPeriod     model.Duration    `json:"max_idle_agent_period"`
@@ -41,11 +44,13 @@ func DefaultConfig() *Config {
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
-		AgentFluentImage:       "fluent/fluent-bit:1.6",
+		AgentFluentImage:       aproto.FluentImage,
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MinInstances:           0,
 		MaxInstances:           5,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 }
 

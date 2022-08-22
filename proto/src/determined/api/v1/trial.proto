@@ -231,12 +231,10 @@ message GetTrialRequest {
 // Response to GetTrialRequest.
 message GetTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial", "workloads" ] }
+    json_schema: { required: [ "trial" ] }
   };
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
-  // Trial workloads.
-  repeated WorkloadContainer workloads = 2;
 }
 
 // Get the list of workloads for a trial.
@@ -270,6 +268,8 @@ message GetTrialWorkloadsRequest {
   string sort_key = 5;
   // Filter workloads with validation and/or checkpoint information.
   FilterOption filter = 6;
+  // Include per-batch metrics.
+  bool include_batch_metrics = 7;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {

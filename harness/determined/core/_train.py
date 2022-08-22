@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
 from determined import tensorboard
+from determined.common import api
 from determined.common.api import errors
-from determined.common.experimental.session import Session
 from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
@@ -26,7 +26,7 @@ class TrainContext:
 
     def __init__(
         self,
-        session: Session,
+        session: api.Session,
         trial_id: int,
         run_id: int,
         exp_id: int,
@@ -83,10 +83,12 @@ class TrainContext:
         body = {
             "trial_run_id": self._run_id,
             "steps_completed": steps_completed,
-            "metrics": metrics,
+            "metrics": {
+                "avg_metrics": metrics,
+            },
         }
         if batch_metrics is not None:
-            body["batch_metrics"] = batch_metrics
+            body["metrics"]["batch_metrics"] = batch_metrics  # type: ignore
         logger.info(
             f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
@@ -167,7 +169,9 @@ class TrainContext:
         body = {
             "trial_run_id": self._run_id,
             "steps_completed": steps_completed,
-            "metrics": reportable_metrics,
+            "metrics": {
+                "avg_metrics": reportable_metrics,
+            },
         }
         logger.info(
             f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"

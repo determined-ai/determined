@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/trialv1";
 
 import "google/protobuf/struct.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -25,6 +26,8 @@ message CheckpointWorkload {
   map<string, int64> resources = 5;
   // Total number of batches as of this workload's completion.
   int32 total_batches = 8;
+  // User defined metadata associated with the checkpoint.
+  google.protobuf.Struct metadata = 9;
 }
 
 // MetricsWorkload is a workload generating metrics.
@@ -39,7 +42,7 @@ message MetricsWorkload {
   // The current validation state.
   determined.experiment.v1.State state = 3;
   // Metrics.
-  google.protobuf.Struct metrics = 4;
+  determined.common.v1.Metrics metrics = 40;
   // Number of inputs processed.
   int32 num_inputs = 5 [deprecated = true];
   // Total number of batches as of this workload's completion.
@@ -97,6 +100,8 @@ message Trial {
   string task_id = 14;
   // The sum of sizes of all resources in all checkpoints for the trial.
   uint64 total_checkpoint_size = 15;
+  // Number of training and validation workloads.
+  int32 workload_count = 18;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
@@ -159,8 +164,6 @@ message TrialEarlyExit {
     EXITED_REASON_UNSPECIFIED = 0;
     // Indicates the trial exited due to an invalid hyperparameter.
     EXITED_REASON_INVALID_HP = 1;
-    // Indicates the trial exited due to a user requested stop.
-    EXITED_REASON_USER_REQUESTED_STOP = 2;
     // Indicates the trial exited due to an invalid hyperparameter
     // in the trial init.
     EXITED_REASON_INIT_INVALID_HP = 3;
@@ -182,10 +185,10 @@ message TrialMetrics {
   int32 trial_run_id = 2;
   // The number of batches trained on when these metrics were reported.
   int32 steps_completed = 3;
-  // The metrics for this bit of training (reduced over the reporting period).
-  google.protobuf.Struct metrics = 7;
-  // The batch metrics for this bit of training.
-  repeated google.protobuf.Struct batch_metrics = 8;
+  // The metrics for this bit of training, including:
+  // - avg_metrics: metrics reduced over the reporting period).
+  // - batch_metrics: (optional) per-batch metrics.
+  determined.common.v1.Metrics metrics = 9;
 }
 
 // The rendezvous info for the trial to rendezvous with sibling containers.

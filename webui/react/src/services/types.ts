@@ -97,6 +97,11 @@ export interface GetTaskParams {
   taskId: string;
 }
 
+export interface GetExperimentFileFromTreeParams {
+  experimentId: number;
+  filePath: string;
+}
+
 export interface GetModelsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
@@ -232,6 +237,7 @@ export interface GetResourceAllocationAggregatedParams {
 
 export interface GetJobQParams extends PaginationParams, FetchOptions {
   resourcePool: string;
+  states?: Api.Determinedjobv1State[];
 }
 
 export interface GetJobsResponse extends Api.V1GetJobsResponse {

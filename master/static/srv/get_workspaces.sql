@@ -9,6 +9,7 @@ exp_count_by_project AS (
 )
 SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id,
 (pins.id IS NOT NULL) AS pinned,
+'WORKSPACE_STATE_' || w.state AS state, w.error_message,
 (SELECT COUNT(*) FROM projects WHERE workspace_id = w.id) AS num_projects,
 (SELECT SUM(count) FROM exp_count_by_project WHERE project_id IN
   (SELECT id FROM projects WHERE workspace_id = w.id)) AS num_experiments

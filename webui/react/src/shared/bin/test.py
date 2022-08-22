@@ -6,9 +6,9 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-SHARED_WEB_REPO='https://github.com/determined-ai/shared-web'
-SAAS_REPO='ssh://git@github.com/determined-ai/saas'
-CORE_REPO='https://github.com/determined-ai/determined'
+SHARED_WEB_REPO='https://github.com/determined-ai/shared-web.git'
+SAAS_REPO='git@github.com:determined-ai/saas.git'
+CORE_REPO='https://github.com/determined-ai/determined.git'
 SHARED_DIR = 'src/shared'
 
 repos = {

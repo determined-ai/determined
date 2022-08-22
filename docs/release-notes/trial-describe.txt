@@ -1,0 +1,10 @@
+:orphan:
+
+**Improvements**
+
+- API: `GetTrialWorkloads` can now optionally include per-batch metrics when ``includeBatchMetrics`` query parameter is set.
+
+**Breaking Changes**
+
+-  CLI: ``det trial describe --json`` output format has changed. Fixed a bug where ``det trial describe --json --metrics`` would fail for trials with a very large number of steps.
+-  API: Response format for metrics has been standardized to return aggregated and per-batch metrics in a uniform way. ``GetTrialWorkloads``, ``GetTrials`` API response format has changed. ``ReportTrialTrainingMetrics``, ``ReportTrialValidationMetrics`` API request format has changed as well.

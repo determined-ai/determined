@@ -431,7 +431,7 @@ export interface CoreApiGenericCheckpoint {
 }
 
 export interface TrialPagination extends WithPagination {
-  trials: TrialDetails[];
+  trials: TrialItem[];
 }
 
 type HpValue = Primitive | RawJson
@@ -451,7 +451,8 @@ export interface TrialItem extends StartEndTimes {
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  workloads: WorkloadGroup[];
+  totalCheckpointSize: number;
+  workloadCount: number;
 }
 
 export interface TrialWorkloads extends WithPagination {
@@ -510,8 +511,12 @@ export interface ProjectExperiment extends ExperimentItem {
   workspaceName: string;
 }
 
-// TODO remove ExperimentBase, the extra info that was in it got migrated to ExperimentItem
-export type ExperimentBase = ProjectExperiment;
+export interface ExperimentBase extends ProjectExperiment {
+  config: ExperimentConfig;
+  configRaw: RawJson; // Readonly unparsed config object.
+  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+  originalConfig: string;
+}
 
 // TODO we should be able to remove ExperimentOld but leaving this off.
 export interface ExperimentOld extends ExperimentItem {
@@ -736,11 +741,23 @@ export interface Workspace {
   numExperiments: number;
   numProjects: number;
   pinned: boolean;
+  state: WorkspaceState;
   userId: number;
 }
 
 export interface WorkspacePagination extends WithPagination {
   workspaces: Workspace[];
+}
+
+export interface DeletionStatus {
+  completed: boolean;
+}
+
+export enum WorkspaceState {
+  Deleted = 'DELETED',
+  DeleteFailed = 'DELETE_FAILED',
+  Deleting = 'DELETING',
+  Unspecified = 'UNSPECIFIED',
 }
 
 export interface Note {
@@ -757,6 +774,7 @@ export interface Project {
   notes: Note[];
   numActiveExperiments: number;
   numExperiments: number;
+  state: WorkspaceState;
   userId: number;
   workspaceId: number;
   workspaceName: string;

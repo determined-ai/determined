@@ -33,9 +33,12 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.RETAIN_LOG_GROUP,
         constants.cloudformation.IMAGE_REPO_PREFIX,
         constants.cloudformation.MASTER_CONFIG_TEMPLATE,
+        constants.cloudformation.AGENT_REATTACH_ENABLED,
+        constants.cloudformation.AGENT_RECONNECT_ATTEMPTS,
+        constants.cloudformation.AGENT_RECONNECT_BACKOFF,
     ]
 
-    def deploy(self, no_prompt: bool) -> None:
+    def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:
         cfn_parameters = self.consolidate_parameters()
         self.before_deploy_print()
         with open(self.template_path) as f:
@@ -49,5 +52,6 @@ class Simple(base.DeterminedDeployment):
             parameters=cfn_parameters,
             no_prompt=no_prompt,
             deployment_type=self.deployment_type,
+            update_terminate_agents=update_terminate_agents,
         )
         self.print_results()

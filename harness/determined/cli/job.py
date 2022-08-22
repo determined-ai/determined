@@ -8,10 +8,10 @@ import yaml
 
 from determined.cli import render
 from determined.cli.session import setup_session
-from determined.cli.util import format_args, pagination_args
+from determined.cli.util import format_args, limit_offset_paginator, make_pagination_args
+from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Session
 
 
 @authentication.required
@@ -20,57 +20,64 @@ def ls(args: Namespace) -> None:
     pools = bindings.get_GetResourcePools(setup_session(args))
     is_priority = check_is_priority(pools, args.resource_pool)
 
-    response = bindings.get_GetJobs(
-        session,
-        resourcePool=args.resource_pool,
-        pagination_limit=args.limit,
-        pagination_offset=args.offset,
-        orderBy=bindings.v1OrderBy.ORDER_BY_ASC
-        if not args.reverse
-        else bindings.v1OrderBy.ORDER_BY_DESC,
+    order_by = (
+        bindings.v1OrderBy.ORDER_BY_ASC if not args.reverse else bindings.v1OrderBy.ORDER_BY_DESC
     )
-    if args.yaml:
-        print(yaml.safe_dump(response.to_json(), default_flow_style=False))
-    elif args.json:
-        print(json.dumps(response.to_json(), indent=4, default=str))
-    else:
-        headers = [
-            "#",
-            "ID",
-            "Type",
-            "Job Name",
-            "Priority" if is_priority else "Weight",
-            "Submitted",
-            "Slots (acquired/needed)",
-            "Status",
-            "User",
-        ]
+    jobs: List[bindings.v1Job] = limit_offset_paginator(
+        bindings.get_GetJobs,
+        "jobs",
+        session,
+        limit=args.limit,
+        offset=args.offset,
+        pages=args.pages,
+        orderBy=order_by,
+    )
 
-        def computed_job_name(job: bindings.v1Job) -> str:
-            if job.type == bindings.determinedjobv1Type.TYPE_EXPERIMENT:
-                return f"{job.name} ({job.entityId})"
-            else:
-                return job.name
+    if args.yaml or args.json:
+        data = {
+            "jobs": [v.to_json() for v in jobs],
+        }
+        if args.yaml:
+            print(yaml.safe_dump(data, default_flow_style=False))
+        elif args.json:
+            print(json.dumps(data, indent=4, default=str))
+        return
 
-        values = [
-            [
-                j.summary.jobsAhead
-                if j.summary is not None and j.summary.jobsAhead > -1
-                else "N/A",
-                j.jobId,
-                j.type.value,
-                computed_job_name(j),
-                j.priority if is_priority else j.weight,
-                pytz.utc.localize(
-                    datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
-                ),
-                f"{j.allocatedSlots}/{j.requestedSlots}",
-                j.summary.state.value if j.summary is not None else "N/A",
-                j.username,
-            ]
-            for j in response.jobs
+    headers = [
+        "#",
+        "ID",
+        "Type",
+        "Job Name",
+        "Priority" if is_priority else "Weight",
+        "Submitted",
+        "Slots (acquired/needed)",
+        "Status",
+        "User",
+    ]
+
+    def computed_job_name(job: bindings.v1Job) -> str:
+        if job.type == bindings.determinedjobv1Type.TYPE_EXPERIMENT:
+            return f"{job.name} ({job.entityId})"
+        else:
+            return job.name
+
+    values = [
+        [
+            j.summary.jobsAhead if j.summary is not None and j.summary.jobsAhead > -1 else "N/A",
+            j.jobId,
+            j.type.value,
+            computed_job_name(j),
+            j.priority if is_priority else j.weight,
+            pytz.utc.localize(
+                datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
+            ),
+            f"{j.allocatedSlots}/{j.requestedSlots}",
+            j.summary.state.value if j.summary is not None else "N/A",
+            j.username,
         ]
-        render.tabulate_or_csv(headers, values, as_csv=args.csv)
+        for j in jobs
+    ]
+    render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
 
 @authentication.required
@@ -84,7 +91,7 @@ def update(args: Namespace) -> None:
         aheadOf=args.ahead_of,
     )
     bindings.post_UpdateJobQueue(
-        setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
+        setup_session(args), body=bindings.v1UpdateJobQueueRequest(updates=[update])
     )
 
 
@@ -98,7 +105,7 @@ def process_updates(args: Namespace) -> None:
 
 def _single_update(
     job_id: str,
-    session: Session,
+    session: api.Session,
     priority: str = "",
     weight: str = "",
     resource_pool: str = "",
@@ -113,7 +120,7 @@ def _single_update(
         behindOf=behind_of if behind_of != "" else None,
         aheadOf=ahead_of if ahead_of != "" else None,
     )
-    bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest([update]))
+    bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest(updates=[update]))
 
 
 def check_is_priority(pools: bindings.v1GetResourcePoolsResponse, resource_pool: str) -> bool:
@@ -176,7 +183,7 @@ args_description = [
                         type=str,
                         help="The target resource pool, if any.",
                     ),
-                    *pagination_args,
+                    *make_pagination_args(limit=100, supports_reverse=True),
                     Group(
                         format_args["json"],
                         format_args["yaml"],

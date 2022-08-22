@@ -159,6 +159,7 @@ def update_stack(
     boto3_session: boto3.session.Session,
     deployment_type: str,
     parameters: Optional[List] = None,
+    update_terminate_agents: bool = True,
 ) -> None:
     cfn = boto3_session.client("cloudformation")
     ec2 = boto3_session.client("ec2")
@@ -170,14 +171,13 @@ def update_stack(
     )
     stack_output = get_output(stack_name, boto3_session)
 
-    stop_master(stack_output[constants.cloudformation.MASTER_ID], boto3_session)
-
-    if stack_uses_spot(stack_name, boto3_session):
-        clean_up_spot(stack_name, boto3_session, disable_tqdm=True)
-    else:
-        terminate_running_agents(
-            stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
-        )
+    if update_terminate_agents:
+        if stack_uses_spot(stack_name, boto3_session):
+            clean_up_spot(stack_name, boto3_session, disable_tqdm=True)
+        else:
+            terminate_running_agents(
+                stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
+            )
 
     try:
         if parameters:
@@ -345,6 +345,7 @@ def deploy_stack(
     no_prompt: bool,
     deployment_type: str,
     parameters: Optional[List] = None,
+    update_terminate_agents: bool = True,
 ) -> None:
     cfn = boto3_session.client("cloudformation")
     cfn.validate_template(TemplateBody=template_body)
@@ -379,7 +380,14 @@ def deploy_stack(
                     print("Update canceled.")
                     sys.exit(1)
 
-        update_stack(stack_name, template_body, boto3_session, deployment_type, parameters)
+        update_stack(
+            stack_name,
+            template_body,
+            boto3_session,
+            deployment_type,
+            parameters,
+            update_terminate_agents=update_terminate_agents,
+        )
     else:
         print("False - Creating Stack")
 

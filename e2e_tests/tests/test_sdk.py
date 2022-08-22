@@ -90,8 +90,7 @@ def test_experiment_manipulation(client: _client.Determined) -> None:
     # Create another experiment and kill its trial.
     exp = _make_live_experiment(client)
     exp.get_trials()[0].kill()
-    # TODO(DET-6707): don't mark single-trial experiments with a killed trial as COMPLETED.
-    assert exp.wait() == _client.ExperimentState.COMPLETED
+    assert exp.wait() == _client.ExperimentState.CANCELED
 
     # Make sure that the experiment we deleted earlier does actually delete.
     with pytest.raises(errors.APIException):

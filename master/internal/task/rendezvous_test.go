@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
@@ -28,8 +29,8 @@ func TestRendezvous(t *testing.T) {
 			t1 := model.AllocationID(uuid.New().String())
 			c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 			r := newRendezvous(nil, t1, resourcesList{
-				c1: &ResourcesWithState{Rank: 0},
-				c2: &ResourcesWithState{Rank: 1},
+				c1: &taskmodel.ResourcesWithState{Rank: 0},
+				c2: &taskmodel.ResourcesWithState{Rank: 1},
 			})
 
 			var ws []RendezvousWatcher
@@ -92,7 +93,7 @@ func TestRendezvousValidation(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1 := sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
-		c1: &ResourcesWithState{Rank: 0},
+		c1: &taskmodel.ResourcesWithState{Rank: 0},
 	})
 
 	_, err := r.watch(WatchRendezvousInfo{ResourcesID: sproto.ResourcesID(cproto.NewID())})
@@ -109,8 +110,8 @@ func TestTerminationInRendezvous(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
-		c1: &ResourcesWithState{Rank: 0},
-		c2: &ResourcesWithState{Rank: 1},
+		c1: &taskmodel.ResourcesWithState{Rank: 0},
+		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
 
 	r.resources[c1].Started = &sproto.ResourcesStarted{
@@ -135,8 +136,8 @@ func TestUnwatchInRendezvous(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
-		c1: &ResourcesWithState{Rank: 0},
-		c2: &ResourcesWithState{Rank: 1},
+		c1: &taskmodel.ResourcesWithState{Rank: 0},
+		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
 
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
@@ -159,8 +160,8 @@ func TestRendezvousTimeout(t *testing.T) {
 	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
-		c1: &ResourcesWithState{Rank: 0},
-		c2: &ResourcesWithState{Rank: 1},
+		c1: &taskmodel.ResourcesWithState{Rank: 0},
+		c2: &taskmodel.ResourcesWithState{Rank: 1},
 	})
 
 	_, err := r.watch(WatchRendezvousInfo{ResourcesID: c1})

@@ -22,6 +22,7 @@ type (
 		TrialsCreated       map[model.RequestID]bool         `json:"trials_created"`
 		TrialsClosed        map[model.RequestID]bool         `json:"trials_closed"`
 		Exits               map[model.RequestID]bool         `json:"exits"`
+		Cancels             map[model.RequestID]bool         `json:"cancels"`
 		Failures            map[model.RequestID]bool         `json:"failures"`
 		TrialProgress       map[model.RequestID]PartialUnits `json:"trial_progress"`
 		Shutdown            bool                             `json:"shutdown"`
@@ -50,6 +51,7 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 			TrialsCreated:       map[model.RequestID]bool{},
 			TrialsClosed:        map[model.RequestID]bool{},
 			Exits:               map[model.RequestID]bool{},
+			Cancels:             map[model.RequestID]bool{},
 			Failures:            map[model.RequestID]bool{},
 			TrialProgress:       map[model.RequestID]PartialUnits{},
 			CompletedOperations: map[string]ValidateAfter{},
@@ -99,6 +101,8 @@ func (s *Searcher) TrialExitedEarly(
 	switch exitedReason {
 	case model.InvalidHP, model.InitInvalidHP:
 		delete(s.TrialProgress, requestID)
+	case model.UserCanceled:
+		s.Cancels[requestID] = true
 	case model.Errored:
 		// Only workload.Errored is considered a failure (since failures cause an experiment
 		// to be in the failed state).
@@ -144,7 +148,10 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	}
 	s.Record(operations)
 	if s.TrialsRequested == len(s.TrialsClosed) {
-		shutdown := Shutdown{Failure: len(s.Failures) >= s.TrialsRequested}
+		shutdown := Shutdown{
+			Cancel:  len(s.Cancels) >= s.TrialsRequested,
+			Failure: len(s.Failures) >= s.TrialsRequested,
+		}
 		s.Record([]Operation{shutdown})
 		operations = append(operations, shutdown)
 	}

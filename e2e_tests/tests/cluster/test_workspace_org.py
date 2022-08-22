@@ -2,9 +2,10 @@ from typing import List
 
 import pytest
 
+from determined.common import api
 from determined.common.api import authentication, bindings, errors
-from determined.common.experimental import session
 from tests import config as conf
+from tests.cluster.test_users import ADMIN_CREDENTIALS
 from tests.experiment import run_basic_test, wait_for_experiment_state
 
 
@@ -12,7 +13,11 @@ from tests.experiment import run_basic_test, wait_for_experiment_state
 def test_workspace_org() -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, None, None, None)
+    sess = api.Session(master_url, None, None, None)
+    admin_auth = authentication.Authentication(
+        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
+    )
+    admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
 
     test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []
@@ -70,10 +75,18 @@ def test_workspace_org() -> None:
         with pytest.raises(errors.APIException):
             bindings.patch_PatchWorkspace(sess, body=w_patch, id=default_workspace.id)
         with pytest.raises(errors.APIException):
+            bindings.post_ArchiveWorkspace(admin_sess, id=default_workspace.id)
+        with pytest.raises(errors.APIException):
+            bindings.post_UnarchiveWorkspace(admin_sess, id=default_workspace.id)
+        with pytest.raises(errors.APIException):
+            bindings.delete_DeleteWorkspace(admin_sess, id=default_workspace.id)
+
+        # A non admin user gets forbidden trying to modify the default workspace.
+        with pytest.raises(errors.ForbiddenException):
             bindings.post_ArchiveWorkspace(sess, id=default_workspace.id)
-        with pytest.raises(errors.APIException):
+        with pytest.raises(errors.ForbiddenException):
             bindings.post_UnarchiveWorkspace(sess, id=default_workspace.id)
-        with pytest.raises(errors.APIException):
+        with pytest.raises(errors.ForbiddenException):
             bindings.delete_DeleteWorkspace(sess, id=default_workspace.id)
 
         # Sort test and default workspaces.
@@ -185,10 +198,18 @@ def test_workspace_org() -> None:
         with pytest.raises(errors.APIException):
             bindings.patch_PatchProject(sess, body=p_patch, id=default_project.id)
         with pytest.raises(errors.APIException):
+            bindings.post_ArchiveProject(admin_sess, id=default_project.id)
+        with pytest.raises(errors.APIException):
+            bindings.post_UnarchiveProject(admin_sess, id=default_project.id)
+        with pytest.raises(errors.APIException):
+            bindings.delete_DeleteProject(admin_sess, id=default_project.id)
+
+        # A non admin user gets forbidden trying to modify the default project.
+        with pytest.raises(errors.ForbiddenException):
             bindings.post_ArchiveProject(sess, id=default_project.id)
-        with pytest.raises(errors.APIException):
+        with pytest.raises(errors.ForbiddenException):
             bindings.post_UnarchiveProject(sess, id=default_project.id)
-        with pytest.raises(errors.APIException):
+        with pytest.raises(errors.ForbiddenException):
             bindings.delete_DeleteProject(sess, id=default_project.id)
 
         # Sort workspaces' projects.
@@ -231,7 +252,7 @@ def test_workspace_org() -> None:
         # Default project cannot be moved.
         with pytest.raises(errors.APIException):
             bindings.post_MoveProject(
-                sess,
+                admin_sess,
                 projectId=default_project.id,
                 body=bindings.v1MoveProjectRequest(
                     destinationWorkspaceId=workspace2.id,
@@ -332,11 +353,6 @@ def test_workspace_org() -> None:
             bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
 
     finally:
-        # Clean out experiments, projects, workspaces.
-        # In dependency order:
-        for e in test_experiments:
-            bindings.delete_DeleteExperiment(sess, experimentId=e.id)
-        for p in test_projects:
-            bindings.delete_DeleteProject(sess, id=p.id)
+        # Clean out workspaces and all dependencies.
         for w in test_workspaces:
             bindings.delete_DeleteWorkspace(sess, id=w.id)

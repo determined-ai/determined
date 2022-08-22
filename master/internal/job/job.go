@@ -5,154 +5,28 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/shopspring/decimal"
+	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.
-const DecimalExp = 1000
-
-// K8sExp is a constant used by decimal.Decimal objects to denote the exponent for Kubernetes
-// labels as k8s labels are limited to 63 characters.
-const K8sExp = 30
-
-var (
-	// JobsActorAddr is the address of the jobs actor.
-	JobsActorAddr = actor.Addr("jobs")
-	// HeadAnchor is an internal anchor for the head of the job queue.
-	HeadAnchor = model.JobID("INTERNAL-head")
-	// TailAnchor is an internal anchor for the tail of the job queue.
-	TailAnchor = model.JobID("INTERNAL-tail")
-)
-
-// RMJobInfo packs information available only to the RM that updates frequently.
-type RMJobInfo struct { // rename ?
-	JobsAhead      int
-	State          SchedulingState
-	RequestedSlots int
-	AllocatedSlots int
-}
-
-// GetJobSummary requests a summary of the job.
-type GetJobSummary struct {
-	JobID        model.JobID
-	ResourcePool string
-}
-
-// GetJob requests a job representation from a job.
-type GetJob struct{}
-
-// GetJobQ is used to get all job information in one go to avoid any inconsistencies.
-type GetJobQ struct {
-	ResourcePool string
-}
-
-// DeleteJob instructs the RM to clean up all metadata associated with a job external to
-// Determined.
-type DeleteJob struct {
-	JobID model.JobID
-}
-
-// DeleteJobResponse returns to the caller if the cleanup was successful or not.
-type DeleteJobResponse struct {
-	Err <-chan error
-}
-
-// EmptyDeleteJobResponse returns a response with an empty error chan.
-func EmptyDeleteJobResponse() DeleteJobResponse {
-	return DeleteJobResponseOf(nil)
-}
-
-// DeleteJobResponseOf returns a response containing the specified error.
-func DeleteJobResponseOf(input error) DeleteJobResponse {
-	respC := make(chan error, 1)
-	respC <- input
-	return DeleteJobResponse{Err: respC}
-}
-
-// GetJobQStats requests stats for a queue.
-// Expected response: jobv1.QueueStats.
-type GetJobQStats struct {
-	ResourcePool string
-}
-
-type (
-	// SetGroupWeight sets the weight of a group in the fair share scheduler.
-	SetGroupWeight struct {
-		Weight       float64
-		ResourcePool string
-		Handler      *actor.Ref
-	}
-	// SetGroupPriority sets the priority of the group in the priority scheduler.
-	SetGroupPriority struct {
-		Priority     int
-		ResourcePool string
-		Handler      *actor.Ref
-	}
-	// SetResourcePool switches the resource pool that the job belongs to.
-	SetResourcePool struct {
-		ResourcePool string
-		Handler      *actor.Ref
-	}
-	// MoveJob requests the job to be moved within a priority queue relative to another job.
-	MoveJob struct {
-		ID     model.JobID
-		Anchor model.JobID
-		Ahead  bool
-	}
-)
-
-// RegisterJobPosition gets sent from the resource pool to experiment/command actors.
-// It notifies the task of its new position.
-type RegisterJobPosition struct {
-	JobID       model.JobID
-	JobPosition decimal.Decimal
-}
-
-// RecoverJobPosition gets sent from the experiment or command actor to the resource pool.
-// Notifies the resource pool of the position of the job.
-type RecoverJobPosition struct {
-	JobID        model.JobID
-	JobPosition  decimal.Decimal
-	ResourcePool string
-}
-
-// RegisterJob Registers an active job with the jobs actor.
-// Used as to denote a child actor.
-type RegisterJob struct {
-	JobID    model.JobID
-	JobActor *actor.Ref
-}
-
-// UnregisterJob removes a job from the jobs actor.
-type UnregisterJob struct {
-	JobID model.JobID
-}
-
 // Jobs manage jobs.
 type Jobs struct {
-	RMRef     *actor.Ref
+	rm        rm.ResourceManager
 	actorByID map[model.JobID]*actor.Ref
 }
 
-// AQueue is a map of jobID to RMJobInfo.
-type AQueue = map[model.JobID]*RMJobInfo
-
-// ErrJobNotFound returns a standard job error.
-func ErrJobNotFound(jobID model.JobID) error {
-	return fmt.Errorf("job %s not found", jobID)
-}
-
 // NewJobs creates a new jobs actor.
-func NewJobs(rmRef *actor.Ref) *Jobs {
+func NewJobs(rm rm.ResourceManager) *Jobs {
 	return &Jobs{
-		RMRef:     rmRef,
+		rm:        rm,
 		actorByID: make(map[model.JobID]*actor.Ref),
 	}
 }
@@ -175,23 +49,22 @@ func (j *Jobs) parseV1JobMsgs(
 }
 
 // jobQSnapshot asks for a fresh consistent snapshot of the job queue from the RM.
-func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, error) {
-	aResp := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: resourcePool})
-	if err := aResp.Error(); err != nil {
+func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (sproto.AQueue, error) {
+	resp, err := j.rm.GetJobQ(ctx, sproto.GetJobQ{ResourcePool: resourcePool})
+	if err != nil {
 		ctx.Log().WithError(err).Error("getting job queue info from RM")
 		return nil, err
 	}
 
-	jobQ, ok := aResp.Get().(AQueue)
-	if !ok {
-		err := fmt.Errorf("unexpected response type: %T from RM", aResp.Get())
-		ctx.Log().WithError(err).Error("")
-		return nil, err
-	}
-	return jobQ, nil
+	return resp, nil
 }
 
-func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*jobv1.Job, error) {
+func (j *Jobs) getJobs(
+	ctx *actor.Context,
+	resourcePool string,
+	desc bool,
+	states []jobv1.State,
+) ([]*jobv1.Job, error) {
 	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
 	if err != nil {
 		return nil, err
@@ -205,7 +78,7 @@ func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*j
 			jobRefs = append(jobRefs, jobRef)
 		}
 	}
-	jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
+	jobs, err := j.parseV1JobMsgs(ctx.AskAll(sproto.GetJob{}, jobRefs...).GetAll())
 	if err != nil {
 		ctx.Log().WithError(err).Error("parsing responses from job actors")
 		return nil, err
@@ -216,8 +89,14 @@ func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*j
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {
+			// interesting that the update is a side effect
+			// of the getJobs function. I am guessing that
+			// I should leave it, regardless of filters?
 			UpdateJobQInfo(v1Job, jRMInfo)
-			jobsInRM = append(jobsInRM, v1Job)
+
+			if states == nil || slices.Contains(states, v1Job.Summary.State) {
+				jobsInRM = append(jobsInRM, v1Job)
+			}
 		}
 	}
 
@@ -246,7 +125,7 @@ func (j *Jobs) setJobPriority(ctx *actor.Context, jobID model.JobID, priority in
 		return errors.New("priority must be between 1 and 99")
 	}
 	jobActor := j.actorByID[jobID]
-	resp := ctx.Ask(jobActor, SetGroupPriority{
+	resp := ctx.Ask(jobActor, sproto.SetGroupPriority{
 		Priority: priority,
 	})
 	return resp.Error()
@@ -257,21 +136,25 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
-	case RegisterJob:
+	case sproto.RegisterJob:
 		j.actorByID[msg.JobID] = msg.JobActor
 
-	case UnregisterJob:
+	case sproto.UnregisterJob:
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC)
+		jobs, err := j.getJobs(
+			ctx,
+			msg.ResourcePool,
+			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+			msg.States)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
 		}
 		ctx.Respond(jobs)
 
-	case GetJobSummary:
+	case sproto.GetJobSummary:
 		jobs, err := j.jobQSnapshot(ctx, msg.ResourcePool)
 		if err != nil {
 			ctx.Respond(err)
@@ -280,7 +163,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		jobInfo, ok := jobs[msg.JobID]
 		if !ok || jobInfo == nil {
 			// job is not active.
-			ctx.Respond(ErrJobNotFound(msg.JobID))
+			ctx.Respond(sproto.ErrJobNotFound(msg.JobID))
 			return nil
 		}
 		summary := jobv1.JobSummary{
@@ -295,7 +178,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			jobID := model.JobID(update.JobId)
 			jobActor := j.actorByID[jobID]
 			if jobActor == nil {
-				ctx.Respond(ErrJobNotFound(jobID))
+				ctx.Respond(sproto.ErrJobNotFound(jobID))
 				return nil
 			}
 			switch action := update.GetAction().(type) {
@@ -309,7 +192,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, "weight must be greater than 0")
 					continue
 				}
-				resp := ctx.Ask(jobActor, SetGroupWeight{
+				resp := ctx.Ask(jobActor, sproto.SetGroupWeight{
 					Weight: float64(action.Weight),
 				})
 				if err := resp.Error(); err != nil {
@@ -320,30 +203,26 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, "resource pool must be set")
 					continue
 				}
-				resp := ctx.Ask(jobActor, SetResourcePool{
+				resp := ctx.Ask(jobActor, sproto.SetResourcePool{
 					ResourcePool: action.ResourcePool,
 				})
 				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_AheadOf:
-				resp := ctx.Ask(j.RMRef, MoveJob{
+				if err := j.rm.MoveJob(ctx, sproto.MoveJob{
 					ID:     jobID,
 					Anchor: model.JobID(action.AheadOf),
 					Ahead:  true,
-				})
-				err := resp.Error()
-				if err != nil {
+				}); err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_BehindOf:
-				resp := ctx.Ask(j.RMRef, MoveJob{
+				if err := j.rm.MoveJob(ctx, sproto.MoveJob{
 					ID:     jobID,
 					Anchor: model.JobID(action.BehindOf),
 					Ahead:  false,
-				})
-				err := resp.Error()
-				if err != nil {
+				}); err != nil {
 					errors = append(errors, err.Error())
 				}
 			default:
@@ -363,7 +242,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 }
 
 // UpdateJobQInfo updates the job with the RMJobInfo.
-func UpdateJobQInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
+func UpdateJobQInfo(job *jobv1.Job, rmInfo *sproto.RMJobInfo) {
 	if job == nil {
 		panic("nil job ptr")
 	}

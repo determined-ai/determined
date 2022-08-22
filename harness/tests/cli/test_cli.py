@@ -125,21 +125,21 @@ def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_
 
 def test_read_context(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": ""}) as tree:
-        model_def, _ = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py", "C.py"}
 
 
 def test_read_context_with_detignore(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": ""}) as tree:
-        model_def, _ = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py", "C.py"}
 
     with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": "", ".detignore": "\nA.py\n"}) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"B.py", "C.py"}
 
     with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": "", ".detignore": "\n*.py\n"}) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert model_def == []
 
 
@@ -153,7 +153,7 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
             Path("subdir").joinpath("B.py"): "",
         },
     ) as tree:
-        model_def, _ = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {
             "A.py",
             "B.py",
@@ -172,7 +172,7 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
             Path("subdir").joinpath("B.py"): "",
         },
     ) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"B.py", "subdir", "subdir/B.py"}
 
     with FileTree(
@@ -185,7 +185,7 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
             ".detignore": "\nsubdir/A.py\n",
         },
     ) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py", "subdir", "subdir/B.py"}
 
     with FileTree(
@@ -198,14 +198,14 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
             ".detignore": "\n*.py\n",
         },
     ) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert len(model_def) == 1
 
     with FileTree(
         tmp_path,
         {"A.py": "", "B.py": "", "subdir/A.py": "", "subdir/B.py": "", ".detignore": "\nsubdir\n"},
     ) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py"}
 
     with FileTree(
@@ -218,7 +218,7 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
             ".detignore": "\nsubdir/\n",
         },
     ) as tree:
-        model_def, size = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py"}
 
 
@@ -232,7 +232,7 @@ def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
             "subdir/__pycache__/A.cpython-37.pyc": "",
         },
     ) as tree:
-        model_def, _ = context.read_context(tree)
+        model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "subdir", "subdir/A.py"}
 
 

@@ -82,7 +82,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.1-dev0
+    Default: 0.19.2-dev0
 
   DBPassword:
     Type: String
@@ -156,6 +156,21 @@ Parameters:
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
 
+  AgentReattachEnabled:
+    Type: String
+    Description: Whether master & agent try to recover running containers after a restart.
+    Default: false
+
+  AgentReconnectAttempts:
+    Type: Number
+    Description: Max attempts an agent has to reconnect
+    Default: 5
+
+  AgentReconnectBackoff:
+    Type: Number
+    Description: Time between reconnect attempts, with the exception of the first.
+    Default: 5
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -209,12 +224,14 @@ Parameters:
       resource_pools:
         - pool_name: aux-pool
           max_aux_containers_per_agent: {{ .resource_pools.pools.aux_pool.max_aux_containers_per_agent }}
+          agent_reattach_enabled: {{ .resource_pools.pools.aux_pool.agent_reattach_enabled }}
           provider:
             instance_type: {{ .resource_pools.pools.aux_pool.instance_type }}
             {{- toYaml .resource_pools.aws | nindent 6}}
 
         - pool_name: compute-pool
           max_aux_containers_per_agent: 0
+          agent_reattach_enabled: {{ .resource_pools.pools.compute_pool.agent_reattach_enabled }}
           provider:
             instance_type: {{ .resource_pools.pools.compute_pool.instance_type }}
             cpu_slots_allowed: true
@@ -504,7 +521,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /determined/det-${AWS::StackName}
+      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
@@ -715,8 +732,10 @@ Resources:
                 aux_pool:
                   max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
                   instance_type: ${AuxAgentInstanceType}
+                  agent_reattach_enabled: ${AgentReattachEnabled}
                 compute_pool:
                   instance_type: ${ComputeAgentInstanceType}
+                  agent_reattach_enabled: ${AgentReattachEnabled}
               aws:
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
@@ -741,6 +760,8 @@ Resources:
                 ssh_key_name: ${Keypair}
                 tag_key: det-${AWS::StackName}
                 tag_value: det-agent-${AWS::StackName}
+                agent_reconnect_attempts: ${AgentReconnectAttempts}
+                agent_reconnect_backoff: ${AgentReconnectBackoff}
 
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}

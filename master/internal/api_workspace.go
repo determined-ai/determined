@@ -12,46 +12,84 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetWorkspaceByID(id int32, userID int32,
-	rejectImmutable bool,
+func (a *apiServer) GetWorkspaceByID(
+	id int32, curUser model.User, rejectImmutable bool,
 ) (*workspacev1.Workspace, error) {
+	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", id)
 	w := &workspacev1.Workspace{}
-	switch err := a.m.db.QueryProto("get_workspace", w, id, userID); err {
-	case db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "workspace (%d) not found", id)
-	default:
-		if rejectImmutable && w.Immutable {
-			return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
-		}
-		if rejectImmutable && w.Archived {
-			return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
-		}
-		return w, errors.Wrapf(err,
-			"error fetching workspace (%d) from database", id)
+
+	if err := a.m.db.QueryProto("get_workspace", w, id, curUser.ID); errors.Is(err, db.ErrNotFound) {
+		return nil, notFoundErr
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "error fetching workspace (%d) from database", id)
 	}
+
+	if ok, err := workspace.AuthZProvider.Get().CanGetWorkspace(curUser, w); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, notFoundErr
+	}
+
+	if rejectImmutable && w.Immutable {
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
+	}
+	if rejectImmutable && w.Archived {
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
+	}
+	return w, nil
+}
+
+func (a *apiServer) getWorkspaceAndCheckCanDoActions(ctx context.Context, workspaceID int32,
+	rejectImmutable bool, canDoActions ...func(model.User, *workspacev1.Workspace) error,
+) (*workspacev1.Workspace, model.User, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, model.User{}, err
+	}
+	w, err := a.GetWorkspaceByID(workspaceID, *curUser, rejectImmutable)
+	if err != nil {
+		return nil, model.User{}, err
+	}
+
+	for _, canDoAction := range canDoActions {
+		if err = canDoAction(*curUser, w); err != nil {
+			return nil, model.User{}, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
+	return w, *curUser, nil
 }
 
 func (a *apiServer) GetWorkspace(
 	ctx context.Context, req *apiv1.GetWorkspaceRequest,
 ) (*apiv1.GetWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
 
-	w, err := a.GetWorkspaceByID(req.Id, user.User.Id, false)
+	w, err := a.GetWorkspaceByID(req.Id, *curUser, false)
 	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
-func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
-	req *apiv1.GetWorkspaceProjectsRequest) (*apiv1.GetWorkspaceProjectsResponse,
-	error,
-) {
+func (a *apiServer) GetWorkspaceProjects(
+	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
+) (*apiv1.GetWorkspaceProjectsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = a.GetWorkspaceByID(req.Id, *curUser, false); err != nil {
+		return nil, err
+	}
+
 	nameFilter := req.Name
 	archFilterExpr := ""
 	if req.Archived != nil {
@@ -87,7 +125,7 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 	}
 
 	resp := &apiv1.GetWorkspaceProjectsResponse{}
-	err := a.m.db.QueryProtof(
+	err = a.m.db.QueryProtof(
 		"get_workspace_projects",
 		[]interface{}{orderExpr},
 		&resp.Projects,
@@ -100,13 +138,19 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 		return nil, err
 	}
 
+	resp.Projects, err = workspace.AuthZProvider.Get().
+		FilterWorkspaceProjects(*curUser, resp.Projects)
+	if err != nil {
+		return nil, err
+	}
+
 	return resp, a.paginate(&resp.Pagination, &resp.Projects, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetWorkspaces(
 	ctx context.Context, req *apiv1.GetWorkspacesRequest,
 ) (*apiv1.GetWorkspacesResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -154,28 +198,40 @@ func (a *apiServer) GetWorkspaces(
 		nameFilter,
 		archFilterExpr,
 		pinFilterExpr,
-		user.User.Id,
+		curUser.ID,
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	resp.Workspaces, err = workspace.AuthZProvider.Get().
+		FilterWorkspaces(*curUser, resp.Workspaces)
+	if err != nil {
+		return nil, err
+	}
+
 	return resp, a.paginate(&resp.Pagination, &resp.Workspaces, req.Offset, req.Limit)
 }
 
 func (a *apiServer) PostWorkspace(
 	ctx context.Context, req *apiv1.PostWorkspaceRequest,
 ) (*apiv1.PostWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
+	if err = workspace.AuthZProvider.Get().CanCreateWorkspace(*curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
 
 	w := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("insert_workspace", w, req.Name, user.User.Id)
-
+	err = a.m.db.QueryProto("insert_workspace", w, req.Name, curUser.ID)
 	if err == nil && w.Id > 0 {
 		holder := &workspacev1.Workspace{}
-		err = a.m.db.QueryProto("pin_workspace", holder, w.Id, user.User.Id)
+		err = a.m.db.QueryProto("pin_workspace", holder, w.Id, curUser.ID)
+		if err == nil {
+			w.Pinned = true
+		}
 	}
 
 	return &apiv1.PostWorkspaceResponse{Workspace: w},
@@ -185,19 +241,18 @@ func (a *apiServer) PostWorkspace(
 func (a *apiServer) PatchWorkspace(
 	ctx context.Context, req *apiv1.PatchWorkspaceRequest,
 ) (*apiv1.PatchWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	// Verify current workspace exists and can be edited.
-	currWorkspace, err := a.GetWorkspaceByID(req.Id, user.User.Id, true)
+	currWorkspace, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, true)
 	if err != nil {
 		return nil, err
 	}
 
 	madeChanges := false
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
+		if err = workspace.AuthZProvider.Get().
+			CanSetWorkspacesName(currUser, currWorkspace); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
 		log.Infof("workspace (%d) name changing from \"%s\" to \"%s\"",
 			currWorkspace.Id, currWorkspace.Name, req.Workspace.Name.Value)
 		madeChanges = true
@@ -210,31 +265,81 @@ func (a *apiServer) PatchWorkspace(
 
 	finalWorkspace := &workspacev1.Workspace{}
 	err = a.m.db.QueryProto("update_workspace",
-		finalWorkspace, currWorkspace.Id, currWorkspace.Name, user.User.Id)
+		finalWorkspace, currWorkspace.Id, currWorkspace.Name, currUser.ID)
 
 	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
 		errors.Wrapf(err, "error updating workspace (%d) in database", currWorkspace.Id)
+}
+
+func (a *apiServer) deleteWorkspace(
+	ctx context.Context, workspaceID int32, projects []*projectv1.Project,
+) {
+	log.Errorf("deleting workspace %d projects", workspaceID)
+	holder := &workspacev1.Workspace{}
+	for _, pj := range projects {
+		expList, err := a.m.db.ProjectExperiments(int(pj.Id))
+		if err != nil {
+			log.WithError(err).Errorf("error fetching experiments on project %d while deleting workspace %d",
+				pj.Id, workspaceID)
+			_ = a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID, err.Error())
+			return
+		}
+		err = a.deleteProject(ctx, pj.Id, expList)
+		if err != nil {
+			log.WithError(err).Errorf("error deleting project %d while deleting workspace %d", pj.Id,
+				workspaceID)
+			_ = a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID, err.Error())
+			return
+		}
+	}
+	err := a.m.db.QueryProto("delete_workspace", holder, workspaceID)
+	if err != nil {
+		log.WithError(err).Errorf("failed to delete workspace %d", workspaceID)
+		_ = a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID, err.Error())
+		return
+	}
+	log.Errorf("workspace %d deleted successfully", workspaceID)
 }
 
 func (a *apiServer) DeleteWorkspace(
 	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
+		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("delete_workspace", holder, req.Id, user.User.Id,
-		user.User.Admin)
-
+	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not deletable by this user",
 			req.Id)
 	}
 
-	return &apiv1.DeleteWorkspaceResponse{},
+	projects := []*projectv1.Project{}
+	err = a.m.db.QueryProtof(
+		"get_workspace_projects",
+		[]interface{}{"id ASC"},
+		&projects,
+		req.Id,
+		"",
+		"",
+		"",
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(projects) == 0 {
+		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
+		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)},
+			errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
+	}
+	go func() {
+		a.deleteWorkspace(ctx, req.Id, projects)
+	}()
+	return &apiv1.DeleteWorkspaceResponse{Completed: false},
 		errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
 }
 
@@ -242,56 +347,54 @@ func (a *apiServer) ArchiveWorkspace(
 	ctx context.Context, req *apiv1.ArchiveWorkspaceRequest) (*apiv1.ArchiveWorkspaceResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
+		workspace.AuthZProvider.Get().CanArchiveWorkspace)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("archive_workspace", holder, req.Id, true,
-		user.User.Id, user.User.Admin)
-
+	if err = a.m.db.QueryProto("archive_workspace", holder, req.Id, true); err != nil {
+		return nil, errors.Wrapf(err, "error archiving workspace (%d)", req.Id)
+	}
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not archive-able by this user",
 			req.Id)
 	}
-
-	return &apiv1.ArchiveWorkspaceResponse{},
-		errors.Wrapf(err, "error archiving workspace (%d)", req.Id)
+	return &apiv1.ArchiveWorkspaceResponse{}, nil
 }
 
 func (a *apiServer) UnarchiveWorkspace(
 	ctx context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
+		workspace.AuthZProvider.Get().CanUnarchiveWorkspace)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("archive_workspace", holder, req.Id, false,
-		user.User.Id, user.User.Admin)
-
-	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not unarchive-able by this user",
-			req.Id)
+	if err = a.m.db.QueryProto("archive_workspace", holder, req.Id, false); err != nil {
+		return nil, errors.Wrapf(err, "error unarchiving workspace (%d)", req.Id)
 	}
-
-	return &apiv1.UnarchiveWorkspaceResponse{},
-		errors.Wrapf(err, "error unarchiving workspace (%d)", req.Id)
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err,
+			"workspace (%d) does not exist or not unarchive-able by this user", req.Id)
+	}
+	return &apiv1.UnarchiveWorkspaceResponse{}, nil
 }
 
 func (a *apiServer) PinWorkspace(
 	ctx context.Context, req *apiv1.PinWorkspaceRequest,
 ) (*apiv1.PinWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	_, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
+		workspace.AuthZProvider.Get().CanPinWorkspace)
 	if err != nil {
 		return nil, err
 	}
 
-	holder := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("pin_workspace", holder, req.Id, user.User.Id)
+	err = a.m.db.QueryProto("pin_workspace", &workspacev1.Workspace{}, req.Id, currUser.ID)
 
 	return &apiv1.PinWorkspaceResponse{},
 		errors.Wrapf(err, "error pinning workspace (%d)", req.Id)
@@ -300,13 +403,13 @@ func (a *apiServer) PinWorkspace(
 func (a *apiServer) UnpinWorkspace(
 	ctx context.Context, req *apiv1.UnpinWorkspaceRequest,
 ) (*apiv1.UnpinWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	_, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
+		workspace.AuthZProvider.Get().CanUnpinWorkspace)
 	if err != nil {
 		return nil, err
 	}
 
-	holder := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("unpin_workspace", holder, req.Id, user.User.Id)
+	err = a.m.db.QueryProto("unpin_workspace", &workspacev1.Workspace{}, req.Id, currUser.ID)
 
 	return &apiv1.UnpinWorkspaceResponse{},
 		errors.Wrapf(err, "error un-pinning workspace (%d)", req.Id)

@@ -12,7 +12,7 @@ import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
-  relativeTimeRenderer, userRenderer } from 'components/Table';
+  relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -75,9 +75,9 @@ const WorkspaceDetails: React.FC = () => {
       const response = await getWorkspaceProjects({
         archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
         id,
-        limit: settings.tableLimit,
+        limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
         name: settings.name,
-        offset: settings.tableOffset,
+        offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
         sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
         users: settings.user,
@@ -101,6 +101,7 @@ const WorkspaceDetails: React.FC = () => {
     settings.tableLimit,
     settings.tableOffset,
     settings.user,
+    settings.view,
     workspace?.archived ]);
 
   const fetchUsers = useFetchUsers(canceler);
@@ -221,6 +222,13 @@ const WorkspaceDetails: React.FC = () => {
         key: 'archived',
         render: checkmarkRenderer,
         title: 'Archived',
+      },
+      {
+        dataIndex: 'state',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
+        key: 'state',
+        render: stateRenderer,
+        title: 'State',
       },
       {
         align: 'right',

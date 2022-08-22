@@ -14,9 +14,8 @@ import pexpect
 import pytest
 from pexpect import spawn
 
-from determined.common import constants, yaml
+from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
-from determined.common.experimental import session
 from tests import command
 from tests import config as conf
 from tests import experiment as exp
@@ -193,7 +192,7 @@ def test_post_user_api(clean_auth: None) -> None:
     user = bindings.v1User(active=True, admin=False, username=new_username)
     body = bindings.v1PostUserRequest(password="", user=user)
     resp = bindings.post_PostUser(
-        session.Session(master_url, "admin", authentication.cli_auth, None), body=body
+        api.Session(master_url, "admin", authentication.cli_auth, None), body=body
     )
     assert resp.to_json()["user"]["username"] == new_username
 
@@ -908,7 +907,7 @@ def test_change_displayname(clean_auth: None) -> None:
     authentication.cli_auth = authentication.Authentication(
         conf.make_master_url(), requested_user=original_name, password="", try_reauth=True
     )
-    sess = session.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
+    sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
 
     # Get API bindings object for the created test user
     all_users = bindings.get_GetUsers(sess).users

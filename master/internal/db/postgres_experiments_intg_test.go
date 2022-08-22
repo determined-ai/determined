@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -430,16 +431,18 @@ func TestCheckpointMetadata(t *testing.T) {
 				m = &trialv1.TrialMetrics{
 					TrialId:        int32(tr.ID),
 					StepsCompleted: stepsCompleted,
-					Metrics: &structpb.Struct{
-						Fields: map[string]*structpb.Value{
-							defaultSearcherMetric: {
-								Kind: &structpb.Value_NumberValue{
-									NumberValue: metricValue,
+					Metrics: &commonv1.Metrics{
+						AvgMetrics: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								defaultSearcherMetric: {
+									Kind: &structpb.Value_NumberValue{
+										NumberValue: metricValue,
+									},
 								},
 							},
 						},
+						BatchMetrics: []*structpb.Struct{},
 					},
-					BatchMetrics: []*structpb.Struct{},
 				}
 				err := db.AddValidationMetrics(context.TODO(), m)
 				require.NoError(t, err)

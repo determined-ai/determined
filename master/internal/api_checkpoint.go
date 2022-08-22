@@ -103,9 +103,10 @@ func (a *apiServer) DeleteCheckpoints(
 		taskID := model.NewTaskID()
 		conv := &protoconverter.ProtoConverter{}
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
-		ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID,
-			jobSubmissionTime, taskSpec, exp.ID, exp.Config.AsLegacy(),
-			checkpointUUIDs, false, agentUserGroup, curUser, nil)
+		ckptGCTask := newCheckpointGCTask(
+			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exp.ID,
+			exp.Config.AsLegacy(), checkpointUUIDs, false, agentUserGroup, curUser, nil,
+		)
 		a.m.system.MustActorOf(addr, ckptGCTask)
 	}
 

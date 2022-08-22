@@ -1,5 +1,6 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
-CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
+CODEGEN_VER = 2.4.27
+CODEGEN_BIN := swagger-codegen-cli-$(CODEGEN_VER).jar
 py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
 py_generator := generate_bindings.py
@@ -13,7 +14,7 @@ get-deps: deps/$(CODEGEN_BIN)
 
 deps/$(CODEGEN_BIN):
 	mkdir -p deps
-	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/$(CODEGEN_BIN) \
+	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
 .PHONY: force-gen
@@ -50,11 +51,11 @@ check: force-gen check/python check/typescript-fetch
 
 .PHONY: check-python
 check/python: build/python
-	test -z "$(shell git status --porcelain $(py_bindings_dest))"
+	test -z "$(shell git status --porcelain $(py_bindings_dest))" || (git diff; false)
 
 .PHONY: check-typescript-fetch
 check/typescript-fetch: build/typescript-fetch
-	test -z "$(shell git status --porcelain $(ts_bindings_dest)/*)"
+	test -z "$(shell git status --porcelain $(ts_bindings_dest)/*)" || (git diff; false)
 
 .PHONY: clean-deps
 clean-deps:

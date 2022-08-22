@@ -41,11 +41,10 @@ enum TabType {
   Stats = 'stats',
   Configuration = 'configuration'
 }
-const DEFAULT_TAB_KEY = TabType.Active;
+export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetail: React.FC = () => {
-
-  const { poolname } = useParams<Params>();
+  const { poolname, tab } = useParams<Params>();
   const { agents, resourcePools } = useStore();
 
   const pool = useMemo(() => {
@@ -63,12 +62,10 @@ const ResourcepoolDetail: React.FC = () => {
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
   }, [ pool, agents ]);
 
-  const { tab } = useParams<Params>();
-
   const history = useHistory();
   const [ canceler ] = useState(new AbortController());
 
-  const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const [ tabKey, setTabKey ] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
   const [ poolStats, setPoolStats ] = useState<V1RPQueueStat>();
 
   const fetchStats = useCallback(async () => {
@@ -97,11 +94,21 @@ const ResourcepoolDetail: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler, fetchStats ]);
 
+  useEffect(() => {
+    if (tab || !pool) return;
+    const basePath = paths.resourcePool(pool.name);
+    history.replace(`${basePath}/${DEFAULT_POOL_TAB_KEY}`);
+  }, [ history, pool, tab ]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_POOL_TAB_KEY);
+  }, [ tab ]);
+
   const handleTabChange = useCallback((key) => {
     if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+    history.replace(`${basePath}/${key}`);
   }, [ history, pool ]);
 
   const renderPoolConfig = useCallback(() => {
@@ -154,20 +161,20 @@ const ResourcepoolDetail: React.FC = () => {
       </Section>
       <Section>
         <Tabs
+          activeKey={tabKey}
           className="no-padding"
-          defaultActiveKey={tabKey}
           destroyInactiveTabPane={true}
           onChange={handleTabChange}>
-          <TabPane key="active" tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
+          <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
             <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
           </TabPane>
-          <TabPane key="queued" tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
+          <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
             <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
           </TabPane>
-          <TabPane key="stats" tab="Stats">
+          <TabPane key={TabType.Stats} tab="Stats">
             <ClustersQueuedChart poolStats={poolStats} />
           </TabPane>
-          <TabPane key="configuration" tab="Configuration">
+          <TabPane key={TabType.Configuration} tab="Configuration">
             {renderPoolConfig()}
           </TabPane>
         </Tabs>

@@ -12,9 +12,8 @@ import psutil
 
 import determined as det
 from determined import constants, gpu
-from determined.common import util
+from determined.common import api, util
 from determined.common.api import bindings, certs, request
-from determined.common.experimental import Session, get_max_retries_config
 from determined.util import force_create_symlink
 
 
@@ -67,7 +66,7 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
 
 
 def do_rendezvous_rm_provided(
-    sess: Session, allocation_id: str, resources_id: str
+    sess: api.Session, allocation_id: str, resources_id: str
 ) -> "det.RendezvousInfo":
     resp = bindings.get_AllocationRendezvousInfo(
         sess, allocationId=allocation_id, resourcesId=resources_id
@@ -78,7 +77,7 @@ def do_rendezvous_rm_provided(
 
 
 def do_rendezvous_slurm(
-    sess: Session, allocation_id: str, resources_id: str
+    sess: api.Session, allocation_id: str, resources_id: str
 ) -> "det.RendezvousInfo":
     rank_str = os.environ.get("SLURM_PROCID")
     assert rank_str, "Unable to complete rendezvous without SLURM_PROCID"
@@ -164,7 +163,7 @@ RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
 RESOURCES_TYPE_SLURM_JOB = "slurm-job"
 
 
-def do_rendezvous(sess: Session, allocation_id: str) -> None:
+def do_rendezvous(sess: api.Session, allocation_id: str) -> None:
     r_id = os.environ.get("DET_RESOURCES_ID")
     assert r_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
 
@@ -192,7 +191,7 @@ def proxy_ifaces() -> List[str]:
     return proxy_ifaces.split(",")
 
 
-def set_proxy_address(sess: Session, allocation_id: str) -> None:
+def set_proxy_address(sess: api.Session, allocation_id: str) -> None:
     proxy_ip, resolution_error = None, None
     for proxy_iface in proxy_ifaces():
         try:
@@ -216,7 +215,7 @@ def set_proxy_address(sess: Session, allocation_id: str) -> None:
     )
 
 
-def do_proxy(sess: Session, allocation_id: str) -> None:
+def do_proxy(sess: api.Session, allocation_id: str) -> None:
     r_type = os.environ.get("DET_RESOURCES_TYPE")
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
@@ -255,12 +254,12 @@ if __name__ == "__main__":
     logging.debug("running prep_container")
 
     cert = certs.default_load(info.master_url)
-    sess = Session(
+    sess = api.Session(
         info.master_url,
         util.get_det_username_from_env(),
         None,
         cert,
-        max_retries=get_max_retries_config(),
+        max_retries=util.get_max_retries_config(),
     )
 
     if args.trial:

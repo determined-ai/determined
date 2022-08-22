@@ -22,6 +22,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/determined-ai/determined/master/internal"
@@ -113,7 +114,9 @@ func trialDetailAPITests(
 			assert.NilError(t, err, "failed to marshal metrics")
 			err = protojson.Unmarshal(b, &m)
 			assert.NilError(t, err, "failed to unmarshal metrics")
-			metrics.Metrics = &m
+			metrics.Metrics = &commonv1.Metrics{
+				AvgMetrics: &m,
+			}
 
 			err = pgDB.AddTrainingMetrics(context.Background(), &metrics)
 			assert.NilError(t, err, "failed to insert step")
@@ -123,12 +126,82 @@ func trialDetailAPITests(
 
 			tlCl, err := cl.GetTrial(ctx, &req)
 			assert.NilError(t, err, "failed to fetch api details")
-			assert.Equal(t, len(tlCl.Workloads), 1, "mismatching workload length")
+			assert.Equal(t, tlCl.Trial.WorkloadCount, int32(1), "mismatching workload length")
 		})
 	}
 
 	for idx, tc := range testCases {
 		runTestCase(t, tc, idx)
+	}
+}
+
+func TestTrialWorkloadsHugeMetrics(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	defer cancel()
+	assert.NilError(t, err, "failed to start master")
+
+	trialWorkloadsAPIHugeMetrics(t, creds, cl, pgDB)
+}
+
+func makeMetrics() *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"loss1": {
+				Kind: &structpb.Value_NumberValue{
+					NumberValue: rand.Float64(),
+				},
+			},
+			"loss2": {
+				Kind: &structpb.Value_NumberValue{
+					NumberValue: rand.Float64(),
+				},
+			},
+		},
+	}
+}
+
+func trialWorkloadsAPIHugeMetrics(
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
+) {
+	_, trial := setupTrial(t, pgDB)
+
+	batchMetrics := []*structpb.Struct{}
+	const stepSize = 1
+	for j := 0; j < stepSize; j++ {
+		batchMetrics = append(batchMetrics, makeMetrics())
+	}
+
+	metrics := trialv1.TrialMetrics{
+		TrialId:        int32(trial.ID),
+		StepsCompleted: stepSize,
+		Metrics: &commonv1.Metrics{
+			AvgMetrics:   makeMetrics(),
+			BatchMetrics: batchMetrics,
+		},
+	}
+
+	err := pgDB.AddTrainingMetrics(context.Background(), &metrics)
+	assert.NilError(t, err, "failed to insert step")
+
+	_, err = pgDB.RawQuery("test_insert_huge_metrics", trial.ID, 100000)
+	assert.NilError(t, err, "failed to insert huge amount of metrics")
+
+	req := apiv1.GetTrialWorkloadsRequest{
+		TrialId:             int32(trial.ID),
+		IncludeBatchMetrics: true,
+		Limit:               1,
+	}
+	ctx, _ := context.WithTimeout(creds, 30*time.Second)
+	resp, err := cl.GetTrialWorkloads(ctx, &req)
+	assert.NilError(t, err, "failed to fetch trial workloads")
+
+	for _, workloadContainer := range resp.Workloads {
+		training := workloadContainer.GetTraining()
+		if training == nil {
+			continue
+		}
+		assert.Equal(t, len(training.Metrics.BatchMetrics) > 0, true)
 	}
 }
 

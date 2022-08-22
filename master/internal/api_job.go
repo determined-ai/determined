@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -16,7 +15,7 @@ import (
 func (a *apiServer) GetJobs(
 	_ context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	actorResp := a.m.system.AskAt(job.JobsActorAddr, req)
+	actorResp := a.m.system.AskAt(sproto.JobsActorAddr, req)
 	if err := actorResp.Error(); err != nil {
 		return nil, err
 	}
@@ -25,23 +24,19 @@ func (a *apiServer) GetJobs(
 		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 
-	if req.Pagination == nil {
-		req.Pagination = &apiv1.PaginationRequest{}
+	if req.Limit == 0 {
+		req.Limit = 100
 	}
 
 	resp = &apiv1.GetJobsResponse{Jobs: jobs}
-	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
+	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Offset, req.Limit)
 }
 
 // GetJobQueueStats retrieves job queue stats for a set of resource pools.
 func (a *apiServer) GetJobQueueStats(
 	_ context.Context, req *apiv1.GetJobQueueStatsRequest,
-) (resp *apiv1.GetJobQueueStatsResponse, err error) {
-	resp = &apiv1.GetJobQueueStatsResponse{
-		Results: make([]*apiv1.RPQueueStat, 0),
-	}
-
-	err = a.ask(sproto.GetCurrentRM(a.m.system).Address(), req, &resp)
+) (*apiv1.GetJobQueueStatsResponse, error) {
+	resp, err := a.m.rm.GetJobQueueStatsRequest(a.m.system, req)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +49,7 @@ func (a *apiServer) UpdateJobQueue(
 ) (resp *apiv1.UpdateJobQueueResponse, err error) {
 	resp = &apiv1.UpdateJobQueueResponse{}
 
-	actorResp := a.m.system.AskAt(job.JobsActorAddr, req)
+	actorResp := a.m.system.AskAt(sproto.JobsActorAddr, req)
 	if err := actorResp.Error(); err != nil {
 		return nil, err
 	}

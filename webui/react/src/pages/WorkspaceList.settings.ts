@@ -8,6 +8,7 @@ export type WorkspaceColumnName =
   | 'archived'
   | 'name'
   | 'numProjects'
+  | 'state'
   | 'userId';
 
 export const DEFAULT_COLUMNS: WorkspaceColumnName[] = [
@@ -27,6 +28,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<WorkspaceColumnName, number> = {
   archived: 75,
   name: 150,
   numProjects: 74,
+  state: 74,
   userId: 85,
 };
 

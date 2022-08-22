@@ -9,7 +9,7 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import tabulate
 
@@ -20,10 +20,12 @@ from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.session import setup_session
+from determined.cli.util import default_pagination_args as pagination_args
+from determined.cli.util import limit_offset_paginator
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined, session
+from determined.common.experimental import Determined
 
 from .checkpoint import render_checkpoint
 from .project import project_by_name
@@ -134,7 +136,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
-    model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
+    model_context = context.read_legacy_context(args.model_def)
 
     additional_body_fields = {}
     if args.git:
@@ -205,26 +207,6 @@ def create(args: Namespace) -> None:
         submit_experiment(args)
 
 
-def limit_offset_paginator(
-    method: Callable,
-    agg_field: str,
-    sess: session.Session,
-    limit: int = 200,
-    offset: Optional[int] = None,
-    **kwargs: Any,
-) -> List[Any]:
-    all_objects: List[Any] = []
-    internal_offset = offset or 0
-    while True:
-        r = method(sess, limit=limit, offset=internal_offset, **kwargs)
-        page_objects = getattr(r, agg_field)
-        all_objects += page_objects
-        internal_offset += len(page_objects)
-        if offset is not None or len(page_objects) < limit:
-            break
-    return all_objects
-
-
 @authentication.required
 def delete_experiment(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
@@ -235,7 +217,7 @@ def delete_experiment(args: Namespace) -> None:
         "wish to proceed?"
     ):
         bindings.delete_DeleteExperiment(setup_session(args), experimentId=args.experiment_id)
-        print("Delete of experiment {} is in progress".format(args.experiment_id))
+        print("Deletion of experiment {} is in progress".format(args.experiment_id))
     else:
         print("Aborting experiment deletion.")
 
@@ -318,6 +300,21 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display step-related information.
+    all_workloads: Dict[int, Dict[int, List[bindings.v1WorkloadContainer]]] = {}
+    for exp in exps:
+        if exp.id not in all_workloads:
+            all_workloads[exp.id] = {}
+        for trial in trials_for_experiment[exp.id]:
+            # paginated read of all workloads in this trial
+            all_workloads[exp.id][trial.id] = limit_offset_paginator(
+                bindings.get_GetTrialWorkloads,
+                "workloads",
+                session,
+                limit=500,
+                offset=0,
+                trialId=trial.id,
+            )
+
     t_metrics_headers: List[str] = []
     t_metrics_names: List[str] = []
     v_metrics_headers: List[str] = []
@@ -326,7 +323,7 @@ def describe(args: Namespace) -> None:
         # Accumulate the scalar training and validation metric names from all provided experiments.
         for exp in exps:
             sample_trial = trials_for_experiment[exp.id][0]
-            sample_workloads = bindings.get_GetTrial(session, trialId=sample_trial.id).workloads
+            sample_workloads = all_workloads[exp.id][sample_trial.id]
             t_metrics_names += scalar_training_metrics_names(sample_workloads)
             v_metrics_names += scalar_validation_metrics_names(sample_workloads)
         t_metrics_names = sorted(set(t_metrics_names))
@@ -349,7 +346,7 @@ def describe(args: Namespace) -> None:
     wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
-            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads
+            workloads = all_workloads[exp.id][trial.id]
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
@@ -358,8 +355,12 @@ def describe(args: Namespace) -> None:
                 if workload.training:
                     wl_detail = workload.training
                     for name in t_metrics_names:
-                        if wl_detail.metrics and (name in wl_detail.metrics):
-                            t_metrics_fields.append(wl_detail.metrics[name])
+                        if (
+                            wl_detail.metrics
+                            and wl_detail.metrics.avgMetrics
+                            and (name in wl_detail.metrics.avgMetrics)
+                        ):
+                            t_metrics_fields.append(wl_detail.metrics.avgMetrics[name])
                         else:
                             t_metrics_fields.append(None)
                 else:
@@ -381,8 +382,12 @@ def describe(args: Namespace) -> None:
                     validation_state = wl_detail.state.value
                     validation_end_time = wl_detail.endTime
                     for name in v_metrics_names:
-                        if wl_detail.metrics and (name in wl_detail.metrics):
-                            v_metrics_fields.append(wl_detail.metrics[name])
+                        if (
+                            wl_detail.metrics
+                            and wl_detail.metrics.avgMetrics
+                            and (name in wl_detail.metrics.avgMetrics)
+                        ):
+                            v_metrics_fields.append(wl_detail.metrics.avgMetrics[name])
                         else:
                             v_metrics_fields.append(None)
                 else:
@@ -536,6 +541,7 @@ def list_experiments(args: Namespace) -> None:
     kwargs = {
         "limit": args.limit,
         "offset": args.offset,
+        "pages": args.pages,
     }
     if not args.all:
         kwargs["archived"] = False
@@ -602,7 +608,7 @@ def scalar_training_metrics_names(
             metrics = workload.training.metrics
             if not metrics:
                 continue
-            return set(metrics.keys())
+            return set(metrics.avgMetrics.keys())
 
     return set()
 
@@ -615,7 +621,7 @@ def scalar_validation_metrics_names(
             metrics = workload.validation.metrics
             if not metrics:
                 continue
-            return set(metrics.keys())
+            return set(metrics.avgMetrics.keys())
 
     return set()
 
@@ -629,6 +635,7 @@ def list_trials(args: Namespace) -> None:
         experimentId=args.experiment_id,
         limit=args.limit,
         offset=args.offset,
+        pages=args.pages,
     )
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
@@ -805,22 +812,6 @@ def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help)
 
 
-# do not use util.py's pagination_args because default behavior here is
-# to hide pagination and unify all experiment pages into one output
-pagination_args = [
-    Arg(
-        "--limit",
-        type=int,
-        default=200,
-        help="Maximum items per page of results",
-    ),
-    Arg(
-        "--offset",
-        type=int,
-        default=None,
-        help="Number of items to skip before starting page of results",
-    ),
-]
 main_cmd = Cmd(
     "e|xperiment",
     None,

@@ -3,7 +3,6 @@ WITH p AS (
   WHERE id = $1
   AND NOT immutable
   AND NOT archived
-  AND ($4 IS TRUE OR user_id = $3)
 ),
 origin_w AS (
   SELECT workspaces.id FROM workspaces, p

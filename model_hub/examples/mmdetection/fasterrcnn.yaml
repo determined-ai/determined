@@ -5,7 +5,7 @@ data:
       bucket_name: determined-ai-mmdet-data
       ##### Other backends #####
       #backend: s3
-      #bucket_name: fill_in
+      #bucket_name: determined-ai-coco-dataset
       #backend: disk # assumes data available at /run/determined/workdir/data in the container
       #backend: fake
 ##### You can enable profiling with below #####
@@ -40,7 +40,7 @@ searcher:
 max_restarts: 5
 environment:
   image:
-    gpu: determinedai/model-hub-mmdetection:0.19.1-dev0
+    gpu: determinedai/model-hub-mmdetection:0.19.2-dev0
   environment_variables:
     - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
 

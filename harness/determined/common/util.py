@@ -1,5 +1,6 @@
 import functools
 import io
+import json
 import os
 import pathlib
 import platform
@@ -7,9 +8,11 @@ import random
 import sys
 from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Union, overload
 
+import urllib3
+
 from determined.common import yaml
 
-yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
+_yaml = yaml.YAML(typ="safe", pure=True)
 
 T = TypeVar("T")
 
@@ -80,7 +83,7 @@ def preserve_random_state(fn: Callable) -> Callable:
     return wrapped
 
 
-def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
+def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any], str]) -> Any:
     """Attempts to use ruamel.yaml.safe_load on the specified file. If successful, returns
     the output. If not, formats a ruamel.yaml Exception so that the user does not see a traceback
     of our internal APIs.
@@ -111,14 +114,14 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
     ---------------------------------------------------------------------------------------------
     """
     try:
-        config = yaml.load(yaml_file)
+        config = _yaml.load(yaml_file)
     except (
         yaml.error.MarkedYAMLWarning,
         yaml.error.MarkedYAMLError,
         yaml.error.MarkedYAMLFutureWarning,
     ) as e:
         err_msg = (
-            f"Error: invalid experiment config file {yaml_file.name!r}.\n"
+            f"Error: invalid experiment config file.\n"
             f"{e.__class__.__name__}: {e.problem}\n{e.problem_mark}"
         )
         print(err_msg)
@@ -141,3 +144,31 @@ def get_config_path() -> pathlib.Path:
         config_path = pathlib.Path.home().joinpath(".config")
 
     return config_path.joinpath("determined")
+
+
+def get_max_retries_config() -> urllib3.util.retry.Retry:
+    # Allow overriding retry settings when necessary.
+    # `DET_RETRY_CONFIG` env variable can contain `urllib3` `Retry` parameters,
+    # encoded as JSON.
+    # For example:
+    #  - disable retries: {"total":0}
+    #  - shorten the wait times {"total":10,"backoff_factor":0.5,"method_whitelist":false}
+
+    config_data = os.environ.get("DET_RETRY_CONFIG")
+    if config_data is not None:
+        config = json.loads(config_data)
+        return urllib3.util.retry.Retry(**config)
+
+    # Defaults.
+    try:
+        return urllib3.util.retry.Retry(
+            total=20,
+            backoff_factor=0.5,
+            allowed_methods=False,
+        )
+    except TypeError:  # Support urllib3 prior to 1.26
+        return urllib3.util.retry.Retry(
+            total=20,
+            backoff_factor=0.5,
+            method_whitelist=False,  # type: ignore
+        )

@@ -163,11 +163,16 @@ const NavigationSideBar: React.FC = () => {
         <header>
           <Dropdown
             content={(
-              <Menu items={[
-                { key: 'theme-toggle', label: <ThemeToggle /> },
-                { key: 'settings', label: <Link path={paths.settings('account')}>Settings</Link> },
-                { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
-              ]}
+              <Menu
+                items={[
+                  { key: 'theme-toggle', label: <ThemeToggle /> },
+                  {
+                    key: 'settings',
+                    label: <Link path={paths.settings('account')}>Settings</Link>,
+                  },
+                  { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+                ]}
+                selectable={false}
               />
             )}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
@@ -184,7 +189,7 @@ const NavigationSideBar: React.FC = () => {
               </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon name="add-small" size="tiny" />
+                  <Icon name="jupyter-lab" />
                 </Button>
               ) : null}
             </div>

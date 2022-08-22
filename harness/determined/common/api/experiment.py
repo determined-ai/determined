@@ -10,7 +10,6 @@ from termcolor import colored
 from determined.common import api, constants, context, yaml
 from determined.common.api import bindings, logs
 from determined.common.api import request as req
-from determined.common.experimental import session
 
 
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
@@ -22,7 +21,7 @@ def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) ->
 def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
     print("Waiting for first trial to begin...")
-    sess = session.Session(master_url, None, None, None)
+    sess = api.Session(master_url, None, None, None)
     while True:
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
         if len(trials) > 0:
@@ -64,7 +63,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
             else:
                 print(", ", end="")
 
-    sess = session.Session(master_url, None, None, None)
+    sess = api.Session(master_url, None, None, None)
     while True:
         r = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
@@ -120,7 +119,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
 def create_experiment(
     master_url: str,
     config: Dict[str, Any],
-    model_context: context.Context,
+    model_context: context.LegacyContext,
     template: Optional[str] = None,
     validate_only: bool = False,
     archived: bool = False,
@@ -130,7 +129,7 @@ def create_experiment(
     body = {
         "activate": False,
         "experiment_config": yaml.safe_dump(config),
-        "model_definition": [e.dict() for e in model_context.entries],
+        "model_definition": model_context,
         "validate_only": validate_only,
     }
     if template:
@@ -151,7 +150,7 @@ def create_experiment(
     experiment_id = int(new_resource.split("/")[-1])
 
     if activate:
-        sess = session.Session(master_url, None, None, None)
+        sess = api.Session(master_url, None, None, None)
         bindings.post_ActivateExperiment(sess, id=experiment_id)
 
     return experiment_id
@@ -233,7 +232,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
 def create_experiment_and_follow_logs(
     master_url: str,
     config: Dict[str, Any],
-    model_context: context.Context,
+    model_context: context.LegacyContext,
     template: Optional[str] = None,
     additional_body_fields: Optional[Dict[str, Any]] = None,
     activate: bool = True,
@@ -256,7 +255,7 @@ def create_experiment_and_follow_logs(
 def create_test_experiment_and_follow_logs(
     master_url: str,
     config: Dict[str, Any],
-    model_context: context.Context,
+    model_context: context.LegacyContext,
     template: Optional[str] = None,
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:

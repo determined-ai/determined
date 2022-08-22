@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/segmentio/analytics-go.v3"
 
@@ -19,22 +18,14 @@ import (
 )
 
 // ReportMasterTick reports the master snapshot on a periodic tick.
-func ReportMasterTick(system *actor.System, db db.DB) {
+func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 	resourceManagerType := ""
+
 	req := &apiv1.GetResourcePoolsRequest{}
-	var resp *apiv1.GetResourcePoolsResponse
-	switch {
-	case sproto.UseAgentRM(system):
-		resourceManagerType = "agent"
-		resp = system.AskAt(sproto.AgentRMAddr, req).Get().(*apiv1.GetResourcePoolsResponse)
-
-	case sproto.UseK8sRM(system):
-		resourceManagerType = "kubernetes"
-		resp = system.AskAt(sproto.K8sRMAddr, req).Get().(*apiv1.GetResourcePoolsResponse)
-
-	default:
-		logrus.WithError(errors.New("cannot find appropriate resource manager")).
-			Error("failed to retrieve telemetry information")
+	resp, err := rm.GetResourcePools(system, req)
+	if err != nil {
+		// TODO(Brad): Make this routine more accepting of failures.
+		logrus.WithError(err).Error("failed to receive resource pool telemetry information")
 		return
 	}
 

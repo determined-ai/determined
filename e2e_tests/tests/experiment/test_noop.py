@@ -134,7 +134,7 @@ def test_noop_single_warm_start() -> None:
     first_checkpoint_uuid = checkpoints[0].uuid
     last_checkpoint_uuid = checkpoints[-1].uuid
     last_validation = exp.workloads_with_validation(first_workloads)[-1]
-    assert last_validation.metrics["validation_error"] == pytest.approx(0.9 ** 30)
+    assert last_validation.metrics.avgMetrics["validation_error"] == pytest.approx(0.9 ** 30)
 
     config_base = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
 
@@ -155,7 +155,7 @@ def test_noop_single_warm_start() -> None:
     assert second_trial.trial.warmStartCheckpointUuid == last_checkpoint_uuid
 
     val_workloads = exp.workloads_with_validation(second_trial.workloads)
-    assert val_workloads[-1].metrics["validation_error"] == pytest.approx(0.9 ** 60)
+    assert val_workloads[-1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9 ** 60)
 
     # Now test source_checkpoint_uuid.
     config_obj = copy.deepcopy(config_base)
@@ -176,7 +176,7 @@ def test_noop_single_warm_start() -> None:
 
     assert third_trial.trial.warmStartCheckpointUuid == first_checkpoint_uuid
     validations = exp.workloads_with_validation(third_trial.workloads)
-    assert validations[1].metrics["validation_error"] == pytest.approx(0.9 ** 3)
+    assert validations[1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9 ** 3)
 
 
 @pytest.mark.e2e_cpu
@@ -327,9 +327,9 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
     for wl in range(0, 2):
         for metric in metrics:
             first_trial_val = first_trial_validations[wl + 1]
-            first_metric = first_trial_val.metrics[metric]
+            first_metric = first_trial_val.metrics.avgMetrics[metric]
             second_trial_val = second_trial_validations[wl]
-            second_metric = second_trial_val.metrics[metric]
+            second_metric = second_trial_val.metrics.avgMetrics[metric]
             assert (
                 first_metric == second_metric
             ), f"failures on iteration: {wl} with metric: {metric}"

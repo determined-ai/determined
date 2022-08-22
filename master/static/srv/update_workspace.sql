@@ -12,7 +12,7 @@ p AS (
   FROM projects
   WHERE workspace_id = $1
 )
-SELECT w.id, w.name, w.archived, w.immutable,
+SELECT w.id, w.name, 'WORKSPACE_STATE_' || w.state AS state, w.error_message, w.archived, w.immutable,
   u.username, w.user_id, p.num_projects,
   (SELECT COUNT(*) FROM experiments WHERE project_id IN (SELECT id FROM p))
     AS num_experiments,

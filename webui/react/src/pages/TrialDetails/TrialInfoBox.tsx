@@ -8,9 +8,8 @@ import TimeAgo from 'components/TimeAgo';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
 import {
-  CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
+  CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';
-import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;
@@ -32,14 +31,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [ trial ]);
 
   const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = trial?.workloads
-      .filter((step) => step.checkpoint
-        && step.checkpoint.state === CheckpointState.Completed)
-      .map((step) => checkpointSize(step.checkpoint as CheckpointWorkload))
-      .reduce((acc, cur) => acc + cur, 0);
+    const totalBytes = trial?.totalCheckpointSize;
     if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
-  }, [ trial?.workloads ]);
+  }, [ trial?.totalCheckpointSize ]);
 
   return (
     <Section>

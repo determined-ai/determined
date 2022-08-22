@@ -27,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -93,7 +92,7 @@ func (a *apiServer) GetExperiment(
 	jobID := model.JobID(exp.JobId)
 
 	jobSummary := &jobv1.JobSummary{}
-	err = a.ask(job.JobsActorAddr, job.GetJobSummary{
+	err = a.ask(sproto.JobsActorAddr, sproto.GetJobSummary{
 		JobID:        jobID,
 		ResourcePool: exp.ResourcePool,
 	}, &jobSummary)
@@ -107,7 +106,7 @@ func (a *apiServer) GetExperiment(
 		// easy deducible how long that would block. So the best we can really do is return without
 		// an error if we're in this case and log. This is a debug log because of how often the
 		// happens when polling for an experiment to end.
-		if !strings.Contains(err.Error(), job.ErrJobNotFound(jobID).Error()) {
+		if !strings.Contains(err.Error(), sproto.ErrJobNotFound(jobID).Error()) {
 			return nil, err
 		}
 		logrus.WithError(err).Debugf("asking for job summary")
@@ -199,16 +198,18 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	jobSubmissionTime := exp.StartTime
 	taskID := model.NewTaskID()
-	ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID,
-		jobSubmissionTime, taskSpec, exp.ID, conf, checkpoints, true, agentUserGroup, user, nil)
+	ckptGCTask := newCheckpointGCTask(
+		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
+		conf, checkpoints, true, agentUserGroup, user, nil,
+	)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
 
-	var resp job.DeleteJobResponse
-	if err = a.ask(sproto.GetCurrentRM(a.m.system).Address(), job.DeleteJob{
+	resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
 		JobID: exp.JobID,
-	}, &resp); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
 	}
 	if err = <-resp.Err; err != nil {
@@ -1576,9 +1577,13 @@ func (a *apiServer) GetModelDef(
 }
 
 func (a *apiServer) MoveExperiment(
-	_ context.Context, req *apiv1.MoveExperimentRequest,
+	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	p, err := a.GetProjectByID(req.DestinationProjectId)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	p, err := a.GetProjectByID(req.DestinationProjectId, *curUser)
 	if err != nil {
 		return nil, err
 	}

@@ -118,6 +118,7 @@ const useModalJupyterLab = (): ModalHooks => {
       });
     }
     modalClose();
+    setVisible(false);
   }, [ config, fields, showFullConfig, modalClose ]);
 
   const handleConfigChange = useCallback((config: string) => {
@@ -169,12 +170,16 @@ const useModalJupyterLab = (): ModalHooks => {
 
   // Fetch full config when showing advanced mode.
   useEffect(() => {
-    if (showFullConfig) fetchConfig();
+    if (showFullConfig) {
+      fetchConfig();
+    }
   }, [ fetchConfig, showFullConfig ]);
 
   // Update modal when any form fields change.
   useEffect(() => {
-    if (visible && fields !== previousFields) openOrUpdate(modalProps);
+    if (visible && fields !== previousFields) {
+      openOrUpdate(modalProps);
+    }
   }, [ fields, previousFields, openOrUpdate, modalProps, visible ]);
 
   // Update the modal when user toggles the `Show Full Config` button.

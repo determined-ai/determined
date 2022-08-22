@@ -34,7 +34,7 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const { users } = useStore();
+  const { users, auth: { user } } = useStore();
 
   const { contextHolder, modalOpen } = useModalModelDelete();
 
@@ -93,11 +93,14 @@ const ModelHeader: React.FC<Props> = ({
 
     const menuItems: MenuProps['items'] = [
       { key: MenuKey.SWITCH_ARCHIVED, label: model.archived ? 'Unarchive' : 'Archive' },
-      { danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete' },
     ];
 
+    if (user?.id === model.userId || user?.isAdmin) {
+      menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete' });
+    }
+
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ handleDelete, model.archived, onSwitchArchive ]);
+  }, [ handleDelete, model.archived, model.userId, onSwitchArchive, user?.id, user?.isAdmin ]);
 
   return (
     <header className={css.base}>
