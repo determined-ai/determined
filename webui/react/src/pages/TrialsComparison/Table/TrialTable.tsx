@@ -51,7 +51,7 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
 
   const { settings, updateSettings } = tableSettingsHook;
-  console.log("settings", settings);
+  
   const idColumn = useMemo(() => ({
     dataIndex: 'id',
     defaultWidth: 60,
