@@ -49,6 +49,8 @@ docker run --init --name determined-agent {{.LogOptions}} \
     -e DET_SECURITY_TLS_MASTER_CERT_NAME="{{.MasterCertName}}" \
     -e DET_RESOURCE_POOL="{{.ResourcePool}}" \
     -e DET_FLUENT_IMAGE="{{.AgentFluentImage}}" \
+    -e DET_AGENT_RECONNECT_ATTEMPTS="{{.AgentReconnectAttempts}}" \
+    -e DET_AGENT_RECONNECT_BACKOFF="{{.AgentReconnectBackoff}}" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \

@@ -28,6 +28,8 @@ type Config struct {
 	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
 	AgentDockerImage       string            `json:"agent_docker_image"`
 	AgentFluentImage       string            `json:"agent_fluent_image"`
+	AgentReconnectAttempts int               `json:"agent_reconnect_attempts"`
+	AgentReconnectBackoff  int               `json:"agent_reconnect_backoff"`
 	AWS                    *AWSClusterConfig `union:"type,aws" json:"-"`
 	GCP                    *GCPClusterConfig `union:"type,gcp" json:"-"`
 	MaxIdleAgentPeriod     model.Duration    `json:"max_idle_agent_period"`
@@ -47,6 +49,8 @@ func DefaultConfig() *Config {
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MinInstances:           0,
 		MaxInstances:           5,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 }
 
