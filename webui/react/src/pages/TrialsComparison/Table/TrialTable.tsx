@@ -7,7 +7,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { getPaginationConfig } from 'components/Table';
+import { getFullPaginationConfig } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import { Highlights } from 'hooks/useHighlight';
@@ -51,7 +51,7 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
 
   const { settings, updateSettings } = tableSettingsHook;
-
+  console.log("settings", settings);
   const idColumn = useMemo(() => ({
     dataIndex: 'id',
     defaultWidth: 60,
@@ -300,12 +300,17 @@ const TrialTable: React.FC<Props> = ({
     // });
   }, [ columns.length ]);
 
+  const total = trials.data.length
   return (
     <InteractiveTable<V1AugmentedTrial>
       columns={columns}
       containerRef={containerRef}
       dataSource={trials.data}
-      pagination={getPaginationConfig(trials.data.length, 10)}
+      pagination={getFullPaginationConfig({
+        limit: settings.tableLimit,
+        offset: settings.tableOffset,
+        total
+      }, total)}
       rowClassName={highlights.rowClassName}
       rowKey="trialId"
       rowSelection={A.selectedTrials.length ? {
