@@ -408,7 +408,7 @@ def test_core_api_distributed_tutorial() -> None:
     )
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_2a
 @pytest.mark.parametrize(
     "name,searcher_cfg",
     [
@@ -438,9 +438,9 @@ def test_core_api_distributed_tutorial() -> None:
         ),
     ],
 )
-@pytest.mark.e2e_cpu
 def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-very-many-long-steps.yaml"))
+    config_obj["name"] = f"{name} searcher max concurrent trials test"
     config_obj["searcher"] = searcher_cfg
     config_obj["hyperparameters"]["x"] = {
         "type": "categorical",
@@ -462,7 +462,11 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
         for t in trials:
             exp.cancel_trial(t.trial.id)
 
-        exp.wait_for_experiment_active_workload(experiment_id)
+        # The experiment handling the cancel message and waiting for it to be cancelled slyly
+        # (hackishly) allows us to synchronize with the experiment state after after canceling
+        # the first two trials.
+        exp.cancel_single(experiment_id)
+
         trials = exp.experiment_trials(experiment_id)
         assert len(trials) == 4
 
