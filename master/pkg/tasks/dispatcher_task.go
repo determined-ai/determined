@@ -32,8 +32,10 @@ const (
 	determinedLocalFs = "/determined_local_fs"
 	// Location of container-local temporary directory.
 	containerTmpDeterminedDir = "/determined/"
-	singularityCarrier        = "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm"
-	podmanCarrier             = "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm"
+	singularityCarrierSlurm   = "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm"
+	podmanCarrierSlurm        = "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm"
+	singularityCarrierPbs     = "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs"
+	podmanCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs"
 )
 
 // The "launcher" is very sensitive when it comes to the payload name. There
@@ -112,11 +114,16 @@ func (t *TaskSpec) ToDispatcherManifest(
 	payload.SetId("com.cray.analytics.capsules.generic.container")
 	payload.SetVersion("latest")
 
-	payload.SetCarriers([]string{
-		singularityCarrier,
-	})
 	if containerRunType == podman {
-		payload.GetCarriers()[0] = podmanCarrier
+		payload.SetCarriers([]string{
+			podmanCarrierSlurm,
+			podmanCarrierPbs,
+		})
+	} else {
+		payload.SetCarriers([]string{
+			singularityCarrierSlurm,
+			singularityCarrierPbs,
+		})
 	}
 
 	// Create payload launch parameters
