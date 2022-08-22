@@ -5,6 +5,7 @@ import React, { useCallback } from 'react';
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
+import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -79,6 +80,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
             <DownOutlined className={css.dropdown} />
           </WorkspaceActionDropdown>
         )}
+        <WorkspaceQuickSearch />
       </Space>
       {(!workspace.immutable && !workspace.archived) && (
         <Button onClick={handleProjectCreateClick}>New Project</Button>
