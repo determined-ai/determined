@@ -212,6 +212,7 @@ func (close Close) GetRequestID() model.RequestID { return close.RequestID }
 
 // Shutdown marks the searcher as completed.
 type Shutdown struct {
+	Cancel  bool
 	Failure bool
 }
 

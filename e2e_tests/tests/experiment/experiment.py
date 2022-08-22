@@ -246,6 +246,10 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert trial.state == determinedexperimentv1State.STATE_CANCELED
 
 
+def cancel_trial(trial_id: int) -> None:
+    bindings.post_KillTrial(determined_test_session(), id=trial_id)
+
+
 def is_terminal_state(state: determinedexperimentv1State) -> bool:
     return state in (
         determinedexperimentv1State.STATE_CANCELED,

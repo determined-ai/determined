@@ -164,8 +164,6 @@ message TrialEarlyExit {
     EXITED_REASON_UNSPECIFIED = 0;
     // Indicates the trial exited due to an invalid hyperparameter.
     EXITED_REASON_INVALID_HP = 1;
-    // Indicates the trial exited due to a user requested stop.
-    EXITED_REASON_USER_REQUESTED_STOP = 2;
     // Indicates the trial exited due to an invalid hyperparameter
     // in the trial init.
     EXITED_REASON_INIT_INVALID_HP = 3;

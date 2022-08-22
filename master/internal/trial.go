@@ -356,7 +356,7 @@ func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEa
 		// After a short time, force us to clean up if we're still handling messages.
 		actors.NotifyAfter(ctx, InvalidHPKillDelay, model.StoppingKilledState)
 		return nil
-	case model.UserCanceled, model.Errored:
+	case model.UserRequestedStop, model.Errored:
 		return fmt.Errorf("should not report special exit reason %s to the master", msg.reason)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -519,7 +519,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	case exit.UserRequestedStop:
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 			requestID: t.searcher.Create.RequestID,
-			reason:    model.UserCanceled,
+			reason:    model.UserRequestedStop,
 		})
 		return t.transition(ctx, model.StateWithReason{
 			State:               model.CompletedState,
@@ -609,10 +609,16 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 			}
 		}
 	case model.TerminalStates[t.state]:
-		if t.state == model.ErrorState {
+		switch t.state {
+		case model.ErrorState:
 			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 				requestID: t.searcher.Create.RequestID,
 				reason:    model.Errored,
+			})
+		case model.CanceledState:
+			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
+				requestID: t.searcher.Create.RequestID,
+				reason:    model.UserCanceled,
 			})
 		}
 		ctx.Self().Stop()

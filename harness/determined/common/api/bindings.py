@@ -119,7 +119,6 @@ class GetTrialWorkloadsRequestFilterOption(enum.Enum):
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
-    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
     EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
 
 class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):

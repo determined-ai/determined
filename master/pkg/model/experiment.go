@@ -750,7 +750,9 @@ type ExitedReason string
 const (
 	// Errored signals the searcher that the workload errored out.
 	Errored ExitedReason = "ERRORED"
-	// UserCanceled signals the searcher that the user requested a cancelation.
+	// UserRequestedStop signals the searcher that the user requested a cancelation, from code.
+	UserRequestedStop ExitedReason = "USER_REQUESTED_STOP"
+	// UserCanceled signals the searcher that the user requested a cancelation, from the CLI or UI.
 	UserCanceled ExitedReason = "USER_CANCELED"
 	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
 	InvalidHP ExitedReason = "INVALID_HP"
@@ -766,8 +768,6 @@ func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 		return Errored
 	case trialv1.TrialEarlyExit_EXITED_REASON_INVALID_HP:
 		return InvalidHP
-	case trialv1.TrialEarlyExit_EXITED_REASON_USER_REQUESTED_STOP:
-		return UserCanceled
 	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
 		return InitInvalidHP
 	default:
