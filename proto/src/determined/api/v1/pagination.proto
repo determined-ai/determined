@@ -3,14 +3,6 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-// Request to paginate the resposne.
-message PaginationRequest {
-  // The number of records to skip before returning results.
-  int32 offset = 1;
-  // The amount of records limited in the results.
-  int32 limit = 2;
-}
-
 // Pagination provides information about the offset, limit, and total number of
 // records returned in the results.
 message Pagination {

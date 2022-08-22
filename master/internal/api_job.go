@@ -24,12 +24,12 @@ func (a *apiServer) GetJobs(
 		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 
-	if req.Pagination == nil {
-		req.Pagination = &apiv1.PaginationRequest{}
+	if req.Limit == 0 {
+		req.Limit = 100
 	}
 
 	resp = &apiv1.GetJobsResponse{Jobs: jobs}
-	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
+	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Offset, req.Limit)
 }
 
 // GetJobQueueStats retrieves job queue stats for a set of resource pools.
