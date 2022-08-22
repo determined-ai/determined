@@ -34,7 +34,7 @@ func NewJobs(rm rm.ResourceManager) *Jobs {
 func (j *Jobs) parseV1JobMsgs(
 	msgs map[*actor.Ref]actor.Message,
 ) (map[model.JobID]*jobv1.Job, error) {
-	jobs := make(map[model.JobID]*jobv1.Job)
+	jobs := make(map[model.JobID]*jobv1.Job, len(msgs))
 	for _, val := range msgs {
 		if val == nil {
 			continue
@@ -71,7 +71,7 @@ func (j *Jobs) getJobs(
 	}
 
 	// Get jobs from the job actors.
-	jobRefs := make([]*actor.Ref, 0)
+	jobRefs := make([]*actor.Ref, 0, len(jobQ))
 	for jID := range jobQ {
 		jobRef, ok := j.actorByID[jID]
 		if ok {
@@ -85,7 +85,7 @@ func (j *Jobs) getJobs(
 	}
 
 	// Merge the results.
-	jobsInRM := make([]*jobv1.Job, 0)
+	jobsInRM := make([]*jobv1.Job, 0, len(jobQ))
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {

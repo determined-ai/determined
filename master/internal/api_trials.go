@@ -458,9 +458,9 @@ func (a *apiServer) GetExperimentTrials(
 	}
 
 	// Of the form "($1, $2), ($3, $4), ... ($N, $N+1)". Used in a VALUES expression in Postgres.
-	valuesExpr := make([]string, 0)
-	trialIDsWithOrdering := make([]any, 0)
-	trialIDs := make([]int32, 0)
+	valuesExpr := make([]string, 0, len(resp.Trials))
+	trialIDsWithOrdering := make([]any, 0, len(resp.Trials))
+	trialIDs := make([]int32, 0, len(resp.Trials))
 	for i, trial := range resp.Trials {
 		valuesExpr = append(valuesExpr, fmt.Sprintf("($%d::int, $%d::int)", i*2+1, i*2+2))
 		trialIDsWithOrdering = append(trialIDsWithOrdering, trial.Id, i)
@@ -586,7 +586,7 @@ func (a *apiServer) SummarizeTrial(_ context.Context,
 func (a *apiServer) CompareTrials(_ context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
-	trials := make([]*apiv1.ComparableTrial, 0)
+	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
 		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
 		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {

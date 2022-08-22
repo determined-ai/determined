@@ -56,7 +56,7 @@ func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*ac
 func (f *fairShare) createJobQInfo(
 	taskList *taskList,
 ) sproto.AQueue {
-	reqs := make(AllocReqs, 0)
+	reqs := make(AllocReqs, 0, len(taskList.taskByID))
 	for _, req := range taskList.taskByID {
 		reqs = append(reqs, req)
 	}

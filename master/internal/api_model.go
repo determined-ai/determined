@@ -84,7 +84,7 @@ func (a *apiServer) GetModels(
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0)
+	userIds := make([]string, 0, len(req.UserIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}

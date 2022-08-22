@@ -398,7 +398,7 @@ func getOrderedPriorities(allocationsByPriority map[int][]*sproto.AllocateReques
 func splitAgentsByLabel(
 	agents map[*actor.Ref]*AgentState,
 ) map[string]map[*actor.Ref]*AgentState {
-	agentsSplitByLabel := make(map[string]map[*actor.Ref]*AgentState)
+	agentsSplitByLabel := make(map[string]map[*actor.Ref]*AgentState, len(agents))
 	for agentRef, agentState := range agents {
 		if _, ok := agentsSplitByLabel[agentState.Label]; !ok {
 			agentsSplitByLabel[agentState.Label] = make(map[*actor.Ref]*AgentState)
