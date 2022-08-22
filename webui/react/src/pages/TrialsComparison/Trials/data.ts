@@ -81,8 +81,16 @@ export const decodeTrialsWithMetadata = (
   if (!trials) return undefined;
   const t = trials.reduce(aggregrateTrialsMetadata, defaultTrialData());
 
+  console.log('keys', t.metricKeys);
+
+  const x = Object.keys(t.metricKeys)
+    .map(metricKeyToMetric) as Metric[];
+
   const metrics = Object.keys(t.metricKeys)
     .map(metricKeyToMetric) as Metric[];
+
+  console.log('same thing', x);
+  console.log('returned value', metrics);
 
   return { ...t, metrics };
 };
