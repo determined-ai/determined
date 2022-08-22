@@ -1977,6 +1977,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     originalConfig: string;
+    /**
+     * The id of the user who created the parent project.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    projectOwnerId: number;
 }
 
 /**

@@ -13,7 +13,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { Project, Workspace } from 'types';
+import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalExperimentMove.module.scss';
@@ -22,6 +22,7 @@ const { Option } = Select;
 
 interface Props {
   onClose?: () => void;
+  user?: DetailedUser;
 }
 
 export interface ShowModalProps {
@@ -72,7 +73,7 @@ const moveExperimentWithHandler = async (
   }
 };
 
-const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
+const useModalExperimentMove = ({ onClose, user }: Props): ModalHooks => {
   const {
     settings: destSettings,
     updateSettings: updateDestSettings,
@@ -107,6 +108,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       const response = await getWorkspaceProjects({
         id: destSettings.workspaceId,
         limit: 0,
+        users: (!user || !user.isAdmin) ? [] : [ user.username ],
       });
       setProjects((prev) => (isEqual(prev, response.projects) ? prev : response.projects));
     } catch (e) {
@@ -118,7 +120,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ destSettings.workspaceId ]);
+  }, [ destSettings.workspaceId, user ]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();

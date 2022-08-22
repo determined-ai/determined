@@ -554,7 +554,7 @@ const ProjectDetails: React.FC = () => {
   const {
     contextHolder: modalExperimentMoveContextHolder,
     modalOpen: openMoveModal,
-  } = useModalExperimentMove({ onClose: handleActionComplete });
+  } = useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> | void => {
     if (!settings.row) return;

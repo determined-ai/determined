@@ -1330,6 +1330,7 @@ class v1Experiment:
         numTrials: int,
         originalConfig: str,
         projectId: int,
+        projectOwnerId: int,
         searcherType: str,
         startTime: str,
         state: "determinedexperimentv1State",
@@ -1376,6 +1377,7 @@ class v1Experiment:
         self.parentArchived = parentArchived
         self.config = config
         self.originalConfig = originalConfig
+        self.projectOwnerId = projectOwnerId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1406,6 +1408,7 @@ class v1Experiment:
             parentArchived=obj.get("parentArchived", None),
             config=obj.get("config", None),
             originalConfig=obj["originalConfig"],
+            projectOwnerId=obj["projectOwnerId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1436,6 +1439,7 @@ class v1Experiment:
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
             "config": self.config if self.config is not None else None,
             "originalConfig": self.originalConfig,
+            "projectOwnerId": self.projectOwnerId,
         }
 
 class v1ExperimentSimulation:

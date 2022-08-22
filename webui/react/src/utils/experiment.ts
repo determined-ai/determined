@@ -152,7 +152,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Move]: (experiment, user) =>
     !!user &&
-    (user.isAdmin || user.id === experiment.userId) &&
+    (user.isAdmin || user.id === experiment.projectOwnerId || experiment.projectId === 1) &&
     !experiment?.parentArchived &&
     !experiment.archived,
 
@@ -215,6 +215,7 @@ export const getProjectExperimentForExperimentItem = (
     parentArchived: !!project?.archived,
     projectId: project?.id ?? 0,
     projectName: project?.name,
+    projectOwnerId: project?.userId ?? 0,
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);

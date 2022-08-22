@@ -44,6 +44,7 @@ const trialDetails: TrialDetails = {
 const experimentDetails: ExperimentBase = {
   parentArchived: false,
   projectName: 'Uncategorized',
+  projectOwnerId: 1,
   workspaceId: 1,
   workspaceName: 'Uncategorized',
   ...sampleExperiment,
