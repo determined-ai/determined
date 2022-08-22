@@ -238,56 +238,22 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	return nil
 }
 
-func protoStateDBCaseString(
-	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
-) string {
-	query := fmt.Sprintf("CASE %s::text ", colName)
-	for enum, v := range enumToValue {
-		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
-	}
-	return query + fmt.Sprintf("END AS %s", serializedName)
-}
-
 func (a *apiServer) GetExperiments(
 	ctx context.Context, req *apiv1.GetExperimentsRequest,
 ) (*apiv1.GetExperimentsResponse, error) {
-	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
-	query := db.Bun().NewSelect().
-		Model(&resp.Experiments).
+	var experiments []*model.ExperimentBun
+	query := db.Bun().NewSelect().Model(&experiments).
 		ModelTableExpr("experiments as e").
-		Column("e.id").
-		ColumnExpr("e.config->>'description' AS description").
-		ColumnExpr("e.config->>'labels' AS labels").
-		ColumnExpr("proto_time(e.start_time) AS start_time").
-		ColumnExpr("proto_time(e.end_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
-		Column("e.archived").
-		ColumnExpr(
-			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials").
-		// Intentionally not sending trial_ids due to performance.
-		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
-		ColumnExpr("e.owner_id as user_id").
-		Column("u.username").
-		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
-		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
-		ColumnExpr("e.config->>'name' as NAME").
-		ColumnExpr(
-			"CASE WHEN NULLIF(e.notes, '') IS NULL THEN NULL ELSE 'omitted' END AS notes").
-		Column("e.job_id").
-		ColumnExpr("e.parent_id AS forked_from").
-		ColumnExpr("CASE WHEN e.progress IS NULL THEN NULL ELSE " +
-			"json_build_object('value', e.progress) END AS progress").
-		ColumnExpr("p.name AS project_name").
-		Column("e.project_id").
-		ColumnExpr("w.id AS workspace_id").
-		ColumnExpr("w.name AS workspace_name").
-		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
-		Column("e.config").
+		Relation("User").
+		Relation("Trials").
+		Relation("Project").
+		Relation("Project.Workspace").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	// Construct the ordering expression.
+	trialCountExpr := `(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)`
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
 		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:   "id",
 		apiv1.GetExperimentsRequest_SORT_BY_ID:            "id",
@@ -296,7 +262,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "start_time",
 		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "end_time",
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
-		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
+		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    trialCountExpr,
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:          "display_name",
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
@@ -358,6 +324,7 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.project_id = ?", req.ProjectId)
 	}
 
+	resp := &apiv1.GetExperimentsResponse{}
 	var err error
 	resp.Pagination, err = experimentsPagination(query, int(req.Offset), int(req.Limit))
 	if err != nil {
@@ -370,6 +337,14 @@ func (a *apiServer) GetExperiments(
 			return nil, err
 		}
 	}
+
+	resp.Experiments = make([]*experimentv1.Experiment, len(experiments))
+	for i, e := range experiments {
+		if resp.Experiments[i], err = e.ToProto(); err != nil {
+			return nil, err
+		}
+	}
+
 	return resp, nil
 }
 

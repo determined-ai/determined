@@ -29,6 +29,30 @@ type SearcherConfigV0 struct {
 	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 }
 
+// Name returns the name of the searcher type configured.
+func (s *SearcherConfigV0) Name() string {
+	switch {
+	case s.RawSingleConfig != nil:
+		return "single"
+	case s.RawRandomConfig != nil:
+		return "random"
+	case s.RawGridConfig != nil:
+		return "grid"
+	case s.RawAsyncHalvingConfig != nil:
+		return "async_halving"
+	case s.RawAdaptiveASHAConfig != nil:
+		return "adaptive_asha"
+	case s.RawSyncHalvingConfig != nil:
+		return "sync_halving"
+	case s.RawAdaptiveConfig != nil:
+		return "adaptive"
+	case s.RawAdaptiveSimpleConfig != nil:
+		return "adaptive_simple"
+	default:
+		panic("unknown searcher type cannot get name")
+	}
+}
+
 // Merge implements schemas.Mergeable.
 func (s SearcherConfigV0) Merge(other interface{}) interface{} {
 	return schemas.UnionMerge(s, other)
