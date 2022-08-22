@@ -4,7 +4,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import { useDynamicTabBar } from 'components/DynamicTabs';
+import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
@@ -811,7 +811,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     switchShowArchived,
   ]);
 
-  useDynamicTabBar(tabBarContent);
+  useSetDynamicTabBar(tabBarContent);
   return (
     <Page
       bodyNoPadding

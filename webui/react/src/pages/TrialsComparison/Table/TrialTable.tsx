@@ -14,14 +14,14 @@ import {
   relativeTimeRenderer,
 } from 'components/Table/Table';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
-import TableFilterSearch from 'components/Table/TableFilterSearch';
+import TableFilterRank from 'components/Table/TableFilterRank';
 import UserAvatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import { Highlights } from 'hooks/useHighlight';
 import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
-import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
+import { Determinedtrialv1State, V1AugmentedTrial, V1OrderBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
@@ -31,7 +31,6 @@ import { metricKeyToName, metricToKey } from 'utils/metric';
 import { getDisplayName } from 'utils/user';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
-import { TrialSorter } from '../Collections/filters';
 import { TrialsCollectionInterface } from '../Collections/useTrialCollections';
 
 import rangeFilterForPrefix, { rangeFilterIsActive } from './rangeFilter';
@@ -49,6 +48,14 @@ interface Props {
 }
 
 const getWidthForField = (field: string) => field.length * 8 + 80;
+const nonRankableColumns = [
+  'experimentId',
+  'experimentName',
+  'userId',
+  'rank',
+  'searcherMetric',
+  'searcherType',
+];
 
 const TrialTable: React.FC<Props> = ({
   // colorScale,
@@ -67,8 +74,7 @@ const TrialTable: React.FC<Props> = ({
   const { filters, setFilters } = C;
 
   const idColumn = useMemo(() => ({
-    dataIndex: 'id',
-    defaultWidth: 80,
+    defaultWidth: 60,
     key: 'trialId',
     render: (_: string, record: V1AugmentedTrial) => {
       const color = glasbeyColor(record.trialId);
@@ -87,7 +93,6 @@ const TrialTable: React.FC<Props> = ({
 
   const experimentIdColumn = useMemo(
     () => ({
-      dataIndex: 'experimentId',
       defaultWidth: 130,
       filterDropdown: (filterProps: FilterDropdownProps) => (
         <TableFilterDropdown
@@ -116,24 +121,25 @@ const TrialTable: React.FC<Props> = ({
 
   const expRankColumn = useMemo(
     () => ({
-      dataIndex: 'rank',
-      defaultWidth: 140,
+      defaultWidth: 60,
       filterDropdown: (filterProps: FilterDropdownProps) => (
-        <TableFilterSearch
+        <TableFilterRank
           {...filterProps}
-          value={filters.ranker?.rank || ''}
+          columns={settings.columns.filter((col) => !nonRankableColumns.includes(col))}
+          rank={filters.ranker?.rank}
           onReset={() =>
             setFilters?.((filters) => ({
               ...filters,
-              // TODO handle invalid type assertion below
-              ranker: { rank: '', sorter: filters.ranker?.sorter as TrialSorter },
+              ranker: {
+                rank: '',
+                sorter: { orderBy: V1OrderBy.ASC, sortKey: 'searcherMetricValue' },
+              },
             }))
           }
-          onSearch={(r) =>
+          onSet={(column, orderBy, rank) =>
             setFilters?.((filters) => ({
               ...filters,
-              // TODO handle invalid type assertion below
-              ranker: { rank: r, sorter: filters.ranker?.sorter as TrialSorter },
+              ranker: { rank, sorter: { orderBy, sortKey: column } },
             }))
           }
         />
@@ -146,19 +152,20 @@ const TrialTable: React.FC<Props> = ({
       sorter: true,
       title: 'Rank in Exp',
     }),
-    [ filters.ranker?.rank, setFilters ],
+    [ filters.ranker?.rank, setFilters, settings.columns ],
   );
 
   const hpColumns = useMemo(() => Object
     .keys(trials.hparams || {})
     // .filter((hp) => trials.hparams[hp]?.size > 1)
     .map((hp) => {
+      const columnKey = `hparams.${hp}`;
       return {
         dataIndex: hp,
         defaultWidth: getWidthForField(hp),
         filterDropdown: rangeFilterForPrefix('hparams', filters, setFilters)(hp),
         isFiltered: () => rangeFilterIsActive(filters.hparams, hp),
-        key: `hparams.${hp}`,
+        key: columnKey,
         render: (_: string, record: V1AugmentedTrial) => {
           const value = record.hparams[hp];
           if (isNumber(value)) {
@@ -174,8 +181,7 @@ const TrialTable: React.FC<Props> = ({
     }), [ filters, trials.hparams, setFilters ]);
 
   const tagColumn = useMemo(() => ({
-    dataIndex: 'tags',
-    defaultWidth: 70,
+    defaultWidth: 60,
     filterDropdown: (filterProps: FilterDropdownProps) => (
       <TableFilterDropdown
         {...filterProps}
@@ -189,7 +195,7 @@ const TrialTable: React.FC<Props> = ({
       />
     ),
     isFiltered: () => !!filters.tags?.length,
-    key: 'labels',
+    key: 'tags',
     render: trialTagsRenderer,
     sorter: false,
     title: 'Tags',
@@ -197,7 +203,7 @@ const TrialTable: React.FC<Props> = ({
 
   const trainingMetricColumns = useMemo(() => trials.metrics
     .filter((metric) => metric.type = MetricType.Training).map((metric) => {
-      const key = metricToKey(metric);
+      const columnKey = `trainingMetrics.${metric.name}`;
       return {
         dataIndex: key,
         defaultWidth: getWidthForField(metric.name),
@@ -207,9 +213,9 @@ const TrialTable: React.FC<Props> = ({
           setFilters,
         )(metric.name),
         isFiltered: () => rangeFilterIsActive(filters.trainingMetrics, metric.name),
-        key: `trainingMetrics.${metric.name}`,
+        key: columnKey,
         render: (_: string, record: V1AugmentedTrial) => {
-          const value = record.trainingMetrics?.[metricKeyToName(key)];
+          const value = record.trainingMetrics?.[metric.name];
           return isNumber(value) ? <HumanReadableNumber num={value} /> : '-';
         },
         sorter: true,
@@ -220,7 +226,7 @@ const TrialTable: React.FC<Props> = ({
 
   const validationMetricColumns = useMemo(() => trials.metrics
     .filter((metric) => metric.type = MetricType.Validation).map((metric) => {
-      const key = metricToKey(metric);
+      const columnKey = `validationMetrics.${metric.name}`;
       return {
         dataIndex: key,
         defaultWidth: getWidthForField(metric.name),
@@ -230,9 +236,9 @@ const TrialTable: React.FC<Props> = ({
           setFilters,
         )(metric.name),
         isFiltered: () => rangeFilterIsActive(filters.validationMetrics, metric.name),
-        key: `validationMetrics.${metric.name}`,
+        key: columnKey,
         render: (_: string, record: V1AugmentedTrial) => {
-          const value = record.validationMetrics?.[metricKeyToName(key)];
+          const value = record.validationMetrics?.[metric.name];
           return isNumber(value) ? <HumanReadableNumber num={value} /> : '-';
         },
         sorter: true,
@@ -241,8 +247,7 @@ const TrialTable: React.FC<Props> = ({
     }), [ filters, trials.metrics, setFilters ]);
 
   const stateColumn = useMemo(() => ({
-    dataIndex: 'state',
-    defaultWidth: 110,
+    defaultWidth: 80,
     filterDropdown: (filterProps: FilterDropdownProps) => (
       <TableFilterDropdown
         {...filterProps}
@@ -274,8 +279,7 @@ const TrialTable: React.FC<Props> = ({
   }), [ setFilters, filters ]);
 
   const startTimeColumn = useMemo(() => ({
-    dataIndex: 'startTime',
-    defaultWidth: 110,
+    defaultWidth: 80,
     key: 'startTime',
     render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
@@ -284,18 +288,16 @@ const TrialTable: React.FC<Props> = ({
   }), []);
 
   const endTimeColumn = useMemo(() => ({
-    dataIndex: 'startTime',
-    defaultWidth: 110,
-    key: 'startTime',
+    defaultWidth: 80,
+    key: 'endTime',
     render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
     sorter: true,
-    title: 'Start Time',
+    title: 'End Time',
   }), []);
 
   const experimentNameColumn = useMemo(() => ({
-    dataIndex: 'experimentName',
-    defaultWidth: 160,
+    defaultWidth: 80,
     key: 'experimentName',
     render: (value: string | number | undefined, record: V1AugmentedTrial): React.ReactNode => (
       <Link path={paths.experimentDetails(record.experimentId)}>
@@ -306,15 +308,12 @@ const TrialTable: React.FC<Props> = ({
   }), []);
 
   const searcherTypeColumn = useMemo(() => ({
-    dataIndex: 'searcherType',
-    defaultWidth: 120,
+    defaultWidth: 80,
     key: 'searcherType',
     title: 'Searcher Type',
   }), []);
 
   const searcherMetricColumn = useMemo(() => ({
-    dataIndex: 'searcherMetric',
-    defaultWidth: 120,
     key: 'searcherMetric',
     sorter: true,
     title: (
@@ -327,7 +326,6 @@ const TrialTable: React.FC<Props> = ({
   }), []);
 
   const userColumn = useMemo(() => ({
-    dataIndex: 'user',
     defaultWidth: 80,
     filterDropdown: (filterProps: FilterDropdownProps) => (
       <TableFilterDropdown
@@ -348,16 +346,12 @@ const TrialTable: React.FC<Props> = ({
   }), [ filters.userIds, setFilters, users ]);
 
   const totalBatchesColumn = useMemo(() => ({
-    dataIndex: 'totalBatches',
-    defaultWidth: 120,
     key: 'totalBatches',
     sorter: true,
     title: 'Total Batches',
   }), []);
 
   const searcherMetricValueColumn = useMemo(() => ({
-    dataIndex: 'searcherMetricValue',
-    defaultWidth: 100,
     key: 'searcherMetricValue',
     render: (_: string, record: V1AugmentedTrial) => (
       <HumanReadableNumber num={record.searcherMetricValue} />
@@ -375,8 +369,7 @@ const TrialTable: React.FC<Props> = ({
   const actionColumn = useMemo(() => ({
     align: 'right',
     className: 'fullCell',
-    dataIndex: 'action',
-    defaultWidth: 80,
+    defaultWidth: 110,
     fixed: 'right',
     key: 'action',
     render: (_:string, record: V1AugmentedTrial) => (
@@ -410,7 +403,7 @@ const TrialTable: React.FC<Props> = ({
     ...trainingMetricColumns,
     ...validationMetricColumns,
     actionColumn,
-  ].map((col) => ({ defaultWidth: 80, ...col })), [
+  ].map((col) => ({ defaultWidth: 80, ...col, dataIndex: col.key })), [
     actionColumn,
     idColumn,
     experimentIdColumn,
@@ -430,13 +423,14 @@ const TrialTable: React.FC<Props> = ({
     endTimeColumn,
   ]);
 
-  useEffect(() => {
-    console.log('CCC', columns.map((c) => c.dataIndex));
-    updateSettings({
-      columns: columns.map((c) => c.dataIndex).slice(0, -1),
-      columnWidths: columns.map((c) => c.defaultWidth ?? 80),
-    });
-  }, [ columns.length ]);
+  // console.log(settings.columns);
+  // useEffect(() => {
+  //   console.log('CCC', columns.map((c) => c.key));
+  //   updateSettings({
+  //     columns: columns.map((c) => c.key).slice(0, -1),
+  //     columnWidths: columns.map((c) => c.defaultWidth),
+  //   });
+  // }, [ columns.length ]);
 
   const total = trials.data.length;
   return (

@@ -74,12 +74,11 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
 
 export default DynamicTabs;
 
-export const useDynamicTabBar = (content: JSX.Element): void => {
+export const useSetDynamicTabBar = (content: JSX.Element): void => {
   const updateTabBarContent = useContext(TabBarContext);
-  if (!updateTabBarContent) throw new Error('must useDynamicTabBar within TabBarContext');
+  if (!updateTabBarContent) console.error('must useSetDynamicTabBar within TabBarContext');
   useEffect(() => {
-
-    updateTabBarContent(content);
+    updateTabBarContent?.(content);
     // return () => updateTabBarContent(undefined);
   }, [ updateTabBarContent, content ]);
 };

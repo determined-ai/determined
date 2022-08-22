@@ -401,7 +401,13 @@ const InteractiveTable: InteractiveTable = ({
       return throttle(DEFAULT_RESIZE_THROTTLE_TIME, (e: Event, { x }: DraggableData) => {
         setWidthData(({ widths: prevWidths, ...rest }) => {
           const column = settings.columns[resizeIndex];
-          const minWidth = columnDefs[column].defaultWidth;
+          let minWidth: number;
+          try {
+            minWidth = columnDefs[column].defaultWidth;
+          } catch {
+            minWidth = 40;
+            console.log('no def for column', column, columnDefs);
+          }
           let targetWidths;
           if (x < minWidth) {
             targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
@@ -438,7 +444,13 @@ const InteractiveTable: InteractiveTable = ({
       setWidthData(({ widths, ...rest }) => {
         const column = settings.columns[index];
         const startWidth = widths[index];
-        const minWidth = columnDefs[column].defaultWidth;
+        let minWidth: number;
+        try {
+          minWidth = columnDefs[column].defaultWidth;
+        } catch {
+          minWidth = 40;
+          console.log('no def for column', column, columnDefs);
+        }
         const deltaX = startWidth - minWidth;
         const minX = x - deltaX;
         return { minX, widths, ...rest };

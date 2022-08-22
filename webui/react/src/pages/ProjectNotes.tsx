@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { useDynamicTabBar } from 'components/DynamicTabs';
+import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import { addProjectNote, setProjectNotes } from 'services/api';
@@ -55,7 +55,7 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     </div>
   ), [ handleNewNotesPage ]);
 
-  useDynamicTabBar(notesTabBarContent);
+  useSetDynamicTabBar(notesTabBarContent);
 
   return (
     <div>

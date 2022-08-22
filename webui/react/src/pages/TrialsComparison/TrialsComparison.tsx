@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-import { useDynamicTabBar } from 'components/DynamicTabs';
+import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
@@ -55,7 +55,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const chartSeries = useLearningCurveData(trials.ids, trials.metrics, trials.maxBatch);
 
-  useDynamicTabBar(C.controls);
+  useSetDynamicTabBar(C.controls);
 
   return (
     <Page className={css.base} containerRef={containerRef}>
