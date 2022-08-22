@@ -1,20 +1,20 @@
 .flexRow {
-  display: flex;
   align-items: center;
+  display: flex;
   gap: 8px;
 }
 .modalBody {
   height: 60vh;
-  overflow-y: scroll;
   overflow-x: hidden;
+  overflow-y: scroll;
   width: 100%;
 }
 .ellipsis {
- > a {
-  // 50vw is set as a modal width in component
-  width: calc(50vw - 148px);;
-  overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
- }
+  > a {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    // 50vw is set as a modal width in component
+    width: calc(50vw - 148px);
+  }
 }

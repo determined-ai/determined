@@ -124,6 +124,7 @@ const WorkspaceQuickSearch: React.FC = () => {
         title={(
           <Input
             placeholder="Search and Jump to the workspace or project"
+            prefix={<Icon name="search" />}
             width={'100%'}
             onChange={onChange}
           />
