@@ -147,6 +147,60 @@ func TestAuthZCanMoveProject(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
+func TestAuthZCanMoveProjectExperiments(t *testing.T) {
+	// Setup.
+	api, projectAuthZ, workspaceAuthZ, _, ctx := SetupProjectAuthZTest(t)
+
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	wResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := wResp.Workspace.Id
+
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: uuid.New().String(), WorkspaceId: workspaceID,
+	})
+	require.NoError(t, err)
+	srcProjectID := resp.Project.Id
+
+	expResp, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+		ProjectId: srcProjectID,
+	})
+	require.NoError(t, err)
+	experimentID := expResp.Experiment.Id
+
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
+	resp, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: uuid.New().String(), WorkspaceId: workspaceID,
+	})
+	require.NoError(t, err)
+	destProjectID := resp.Project.Id
+
+	req := &apiv1.MoveExperimentRequest{ExperimentId: experimentID, DestinationProjectId: destProjectID}
+
+	// Can't view project.
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(false, nil).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, projectNotFoundErr(int(srcProjectID)).Error(), err.Error())
+
+	// Can't view workspace.
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(true, nil).Once()
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(false, nil).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, workspaceNotFoundErr(int(workspaceID)).Error(), err.Error())
+
+	// Can't move experiment.
+	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectExperimentsDeny")
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(true, nil).Once()
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Twice()
+	projectAuthZ.On("CanMoveProjectExperiments", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(fmt.Errorf("canMoveProjectExperimentsDeny")).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
 func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 	api, projectAuthZ, workspaceAuthZ, _, ctx := SetupProjectAuthZTest(t)
 

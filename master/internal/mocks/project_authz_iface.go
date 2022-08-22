@@ -94,6 +94,20 @@ func (_m *ProjectAuthZ) CanMoveProject(curUser model.User, _a1 *projectv1.Projec
 	return r0
 }
 
+// CanMoveProjectExperiments provides a mock function with given fields: curUser, from, to
+func (_m *ProjectAuthZ) CanMoveProjectExperiments(curUser model.User, from *projectv1.Project, to *projectv1.Project) error {
+	ret := _m.Called(curUser, from, to)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project, *projectv1.Project) error); ok {
+		r0 = rf(curUser, from, to)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanSetProjectDescription provides a mock function with given fields: curUser, _a1
 func (_m *ProjectAuthZ) CanSetProjectDescription(curUser model.User, _a1 *projectv1.Project) error {
 	ret := _m.Called(curUser, _a1)
