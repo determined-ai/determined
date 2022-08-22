@@ -61,7 +61,7 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/experiments/.*",
 	"/api/v1/trials/.*",
 	"/api/v1/checkpoints",
-	"/agents\?id=.*",
+	"/agents\\?id=.*",
 }
 
 // adminAuthPointsList contains the paths that require admin authentication.
