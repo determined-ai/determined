@@ -22,8 +22,8 @@ class _ExperimentInactiveException(Exception):
 
 class SearchRunner:
     def __init__(
-        self,
-        search_method: SearchMethod,
+            self,
+            search_method: SearchMethod,
     ) -> None:
         self.search_method = search_method
 
@@ -198,9 +198,9 @@ class SearchRunner:
 
 class LocalSearchRunner(SearchRunner):
     def __init__(
-        self,
-        search_method: SearchMethod,
-        searcher_dir: Optional[Path] = None,
+            self,
+            search_method: SearchMethod,
+            searcher_dir: Optional[Path] = None,
     ):
         super().__init__(search_method)
         self.state_path = None
@@ -214,9 +214,9 @@ class LocalSearchRunner(SearchRunner):
             )
 
     def run(
-        self,
-        exp_config: Dict[str, Any],
-        context_dir: Optional[str] = None,
+            self,
+            exp_config: Dict[str, Any],
+            context_dir: Optional[str] = None,
     ) -> int:
         """
         Run custom search without an experiment id
@@ -242,6 +242,7 @@ class LocalSearchRunner(SearchRunner):
             logging.info(f"Starting HP searcher for experiment {exp.id}")
             self.search_method.searcher_state.experiment_id = exp.id
             self.search_method.searcher_state.last_event_id = None
+            self.save_state(exp.id)
             experiment_id = exp.id
 
         self.run_experiment(experiment_id, operations)
