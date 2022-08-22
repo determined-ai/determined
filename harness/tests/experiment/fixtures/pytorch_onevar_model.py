@@ -34,7 +34,7 @@ Finally, we can calculate the updated weight (w') in terms of w0:
 TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type
 
 import numpy as np
 import torch
@@ -97,6 +97,8 @@ def triangle_label_sum(updates: List) -> Any:
 
 
 class OneVarTrial(pytorch.PyTorchTrial):
+    _dataset_cls: Type[torch.utils.data.Dataset] = OnesDataset
+    _dataset_args = ()
     _searcher_metric = "val_loss"
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
@@ -186,13 +188,10 @@ class OneVarTrial(pytorch.PyTorchTrial):
         return {"val_loss": loss}
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
+        dataset = self._dataset_cls(*self._dataset_args)
         if self.hparams["dataloader_type"] == "determined":
-            return pytorch.DataLoader(
-                OnesDataset(), batch_size=self.context.get_per_slot_batch_size()
-            )
+            return pytorch.DataLoader(dataset, batch_size=self.context.get_per_slot_batch_size())
         elif self.hparams["dataloader_type"] == "torch":
-            dataset = OnesDataset()
-
             seed = self.context.get_trial_seed()
             num_workers = self.context.distributed.get_size()
             rank = self.context.distributed.get_rank()
@@ -211,13 +210,10 @@ class OneVarTrial(pytorch.PyTorchTrial):
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
     def build_validation_data_loader(self) -> torch.utils.data.DataLoader:
+        dataset = self._dataset_cls(*self._dataset_args)
         if self.hparams["dataloader_type"] == "determined":
-            return pytorch.DataLoader(
-                OnesDataset(), batch_size=self.context.get_per_slot_batch_size()
-            )
+            return pytorch.DataLoader(dataset, batch_size=self.context.get_per_slot_batch_size())
         elif self.hparams["dataloader_type"] == "torch":
-            dataset = OnesDataset()
-
             num_workers = self.context.distributed.get_size()
             rank = self.context.distributed.get_rank()
             batch_size = self.context.get_per_slot_batch_size()
@@ -231,8 +227,55 @@ class OneVarTrial(pytorch.PyTorchTrial):
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
 
+class AMPTestDataset(OnesDataset):
+    STAGES = {
+        "one": 1.0,
+        "zero": 0.0,
+        "small": 2e-14,
+        "large": 2e4,
+    }
+
+    def __init__(self, stages: Iterable[str]) -> None:
+        self.stages = stages
+
+    def __len__(self) -> int:
+        return len(self.stages)
+
+    def _get_stage(self, index: int) -> str:
+        stage = self.stages[index]
+        return stage
+
+    def __getitem__(self, index: int) -> Tuple:
+        stage = self._get_stage(index)
+        return self._get_stage_item(stage)
+
+    def _get_stage_item(self, stage) -> Tuple:
+        for _stage, x in self.STAGES.items():
+            if _stage.lower() == stage.lower():
+                break
+        else:
+            raise ValueError(f"Unrecognized {self.__class__.__name__} stage {stage}")
+        y = x
+        return torch.Tensor([float(x)]), torch.Tensor([float(y)])
+
+
 class OneVarApexAMPTrial(OneVarTrial):
+    _dataset_cls = AMPTestDataset
+    _dataset_args = (
+        (
+            5 * ["one"]
+            + 1 * ["large"]
+            + 4 * ["one"]
+            + 1 * ["small"]
+            + 4 * ["one"]
+            + 1 * ["zero"]
+            + 4 * ["one"]
+            + []
+        ),
+    )
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        context._per_slot_batch_size, context._global_batch_size = 1, 1
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
             models=self.model,
@@ -245,25 +288,57 @@ class OneVarApexAMPTrial(OneVarTrial):
     ) -> Dict[str, torch.Tensor]:
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
+        metrics["stage"] = self._dataset_args[0][batch_idx]
         return metrics
 
 
 class OneVarAutoAMPTrial(OneVarTrial):
+    _dataset_cls = AMPTestDataset
+    _dataset_args = (
+        (
+            5 * ["one"]
+            + 1 * ["large"]
+            + 4 * ["one"]
+            + 1 * ["small"]
+            + 4 * ["one"]
+            + 1 * ["zero"]
+            + 4 * ["one"]
+            + []
+        ),
+    )
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        context._per_slot_batch_size, context._global_batch_size = 1, 1
         context.experimental.use_amp()
         super().__init__(context)
-        self.scaler = context._scaler
+        self.scaler = self.context._scaler
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale"] = self.scaler.get_scale()
+        metrics["stage"] = self._dataset_args[0][batch_idx]
         return metrics
 
 
 class OneVarManualAMPTrial(OneVarTrial):
+    _dataset_cls = AMPTestDataset
+    _dataset_args = (
+        (
+            5 * ["one"]
+            + 1 * ["large"]
+            + 4 * ["one"]
+            + 1 * ["small"]
+            + 4 * ["one"]
+            + 1 * ["zero"]
+            + 4 * ["one"]
+            + []
+        ),
+    )
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        context._per_slot_batch_size, context._global_batch_size = 1, 1
         self.scaler = context.wrap_scaler(torch.cuda.amp.GradScaler())
         super().__init__(context)
 
@@ -293,6 +368,7 @@ class OneVarManualAMPTrial(OneVarTrial):
 
         # Return values that we can compare as part of the tests.
         return {
+            "stage": self._dataset_args[0][batch_idx],
             "scale": self.scaler.get_scale(),
             "scaled_loss": scaled_loss,
             "loss": loss,

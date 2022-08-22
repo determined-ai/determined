@@ -682,29 +682,53 @@ def make_amp_workloads(
     assert_output_float16=False,
 ) -> workload.Stream:
     trainer = utils.TrainAndValidate()
-    yield from trainer.send(steps=10, validation_freq=1, scheduling_unit=1)
+    yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
     training_metrics, _ = trainer.result()
 
-    scale_ever_decreased = False
-    scale_ever_increased = False
-    for idx, (older, newer) in enumerate(zip(training_metrics, training_metrics[1:])):
+    loss_prev = None
+    scale = 65536  # FIXME
+    GROWTH_INTERVAL = 2000  # FIXME
+    growth_countdown = GROWTH_INTERVAL
+    for idx, metrics in enumerate(training_metrics):
+        assert metrics["loss"].dtype is np.dtype("float32")
         if assert_output_float16:
-            assert newer["output"].dtype is np.dtype("float16")
+            assert metrics["output"].dtype is np.dtype("float16")
         else:
             # Automatic usages of Apex or native AMP cast the output back to float32
             # For the latter case, see the hook end_f16
             #   defined in PyTorchTrialContext.autocast_forward_pass
-            assert newer["output"].dtype is np.dtype("float32")
-        if newer["scale"] != older["scale"]:
-            scale_ever_decreased = scale_ever_decreased or newer["scale"] < older["scale"]
-            scale_ever_increased = scale_ever_increased or newer["scale"] > older["scale"]
-            # If the scale changed, it's because an inf or NaN was encountered, so the
-            #  model couldn't have changed this iteration.
-            continue
-        assert newer["loss"] <= older["loss"]
-        assert newer["loss"].dtype is np.dtype("float32")
-        # Check the accuracy of the gradient change.
-        trial_class.check_batch_metrics(newer, idx, atol=1e-5)
-        if idx == 0:
-            trial_class.check_batch_metrics(older, idx, atol=1e-5)
-    assert scale_ever_decreased or scale_ever_increased
+            assert metrics["output"].dtype is np.dtype("float32")
+        loss = metrics["loss"].item()
+        scaled_loss = loss * scale
+        if "scaled_loss" in metrics:
+            assert scaled_loss == metrics["scaled_loss"]
+        growth_countdown -= 1
+        if (new_scale := metrics["scale"]) != scale:
+            if new_scale < scale:
+                assert (
+                    scaled_loss > 32758
+                ), f"scale reduced from {scale} to {new_scale}, but not as expected ({scaled_loss=} <= 32758)"
+            else:
+                assert (
+                    growth_countdown == 0
+                ), f"scale grew from {scale} to {new_scale}, but not when expected ({growth_countdown=:d})"
+            scale = new_scale
+            growth_countdown = GROWTH_INTERVAL
+        else:
+            assert (
+                growth_countdown != 0
+            ), f"scaled was expected to grow ({growth_countdown=}) but did not"
+
+            # Check the accuracy of the gradient change.
+            metric_keyname_pairs = [("loss", "loss_exp"), ("w_after", "w_exp")]
+            if metrics["stage"] in ["small", "zero"]:
+                metric_keyname_pairs.append(("w_before", "w_after"))
+            trial_class.check_batch_metrics(
+                metrics,
+                idx,
+                metric_keyname_pairs=metric_keyname_pairs,
+                atol=1e-4,
+            )
+            if loss_prev is not None and metrics["stage"] == "one":
+                assert loss <= loss_prev, "loss was expected to decrease monotonically"
+                loss_prev = loss
