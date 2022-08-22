@@ -475,7 +475,6 @@ const ModelRegistry: React.FC = () => {
     <Page
       containerRef={pageRef}
       id="models"
-      loading={isLoading}
       options={(
         <Space>
           <Toggle
