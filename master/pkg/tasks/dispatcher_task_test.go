@@ -467,7 +467,8 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		slotType         device.Type
 		tresSupported    bool
 		Slurm            []string
-		wantCarrier      string
+		wantCarrier0     string
+		wantCarrier1     string
 		wantErr          bool
 		errorContains    string
 	}{
@@ -477,7 +478,8 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CUDA,
 			tresSupported:    true,
 			Slurm:            []string{},
-			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
 		},
 		{
 			name:             "Test podman",
@@ -485,7 +487,8 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CPU,
 			tresSupported:    false,
 			Slurm:            []string{},
-			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
+			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
+			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs",
 		},
 		{
 			name:             "Test error case",
@@ -545,8 +548,9 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				assert.Equal(t, *payload.Id, "com.cray.analytics.capsules.generic.container")
 				assert.Equal(t, *payload.Version, "latest")
 
-				assert.Equal(t, len(*payload.Carriers), 1)
-				assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier)
+				assert.Equal(t, len(*payload.Carriers), 2)
+				assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier0)
+				assert.Equal(t, (*payload.Carriers)[1], tt.wantCarrier1)
 
 				launchParameters := payload.LaunchParameters
 				assert.Assert(t, launchParameters != nil)
