@@ -735,10 +735,9 @@ def set_gc_policy(args: Namespace) -> None:
             args.master, "experiments/{}/preview_gc".format(args.experiment_id), params=policy
         )
         response = r.json()
-        checkpoints_db = response["checkpoints"]
         metric_name = response["metric_name"]
 
-        checkpoints = get_fmted_checkpoints(unfmted_checkpoints=checkpoints_db)
+        checkpoints = get_fmted_checkpoints(unfmted_checkpoints=response["checkpoints"])
 
         headers = [
             "Trial ID",
