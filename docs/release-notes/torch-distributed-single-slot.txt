@@ -1,0 +1,5 @@
+:orphan:
+
+**Breaking Changes**
+-  Distributed training: experiments launched with the torch distributed launch layer previously would override
+single-slot behavior to skip torch.distributed.run.
