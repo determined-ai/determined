@@ -21,28 +21,34 @@ interface Props {
 
 const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   const [ searchText, setSearchText ] = useState<string>('');
-  const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
-  const [ projects, setProjects ] = useState<Project[][]>([]);
+  const [ workspaceMap, setWorkspaceMap ] = useState<Map<Workspace, Project[]>>(new Map());
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isModalVisible, setIsModalVisible ] = useState(false);
   const canceler = useRef(new AbortController());
 
   const fetchData = useCallback(async () => {
     try {
-      const workspaceRes = await getWorkspaces(
+      const workspaceResponse = await getWorkspaces(
         { limit: 0, sortBy: 'SORT_BY_NAME' },
         { signal: canceler.current.signal },
       );
-      const filteredWorkspaces = workspaceRes.workspaces.filter((w) => !w.immutable);
-      const projectapi = filteredWorkspaces
+      const filteredWorkspaces = workspaceResponse.workspaces.filter((w) => !w.immutable);
+      const projectAPIList = filteredWorkspaces
         .map((workspace) =>
           getWorkspaceProjects(
             { id: workspace.id, sortBy: 'SORT_BY_NAME' },
             { signal: canceler.current.signal },
           ));
-      const projectRes = (await Promise.all(projectapi)).map((project) => project.projects);
-      setWorkspaces(filteredWorkspaces);
-      setProjects(projectRes);
+      const projectResponse = (await Promise.all(projectAPIList))
+        .map((project) => project.projects);
+
+      // Promise.all preserves the order
+      const tempWorkspaceMap: Map<Workspace, Project[]> = new Map();
+      for (const workspace of filteredWorkspaces.reverse()) {
+        const projects = projectResponse.pop();
+        tempWorkspaceMap.set(workspace, projects ?? []);
+      }
+      setWorkspaceMap(tempWorkspaceMap);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -77,53 +83,34 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
     onHideModal();
   }, []);
 
-  const treeData = useMemo(() => {
-    const map: Map<number, DefaultOptionType[]> = new Map();
-
-    for (const workspace of workspaces) {
-      if (workspace.name.includes(searchText)) {
-        map.set(workspace.id, []);
-      }
-    }
-    for (const project of projects) {
-      for (const p of project) {
-        if (p.name.includes(searchText)) {
-          const tempArr = [];
-          if (map.has(p.workspaceId)) {
-            tempArr.push(...(map.get(p.workspaceId) as DefaultOptionType[]));
-          }
-          tempArr.push({
+  const treeData: DefaultOptionType[] = useMemo(() => {
+    const data: DefaultOptionType[] = Array.from(workspaceMap)
+      .map(([ workspace, projects ]) => {
+        const treeChildren: DefaultOptionType[] = projects
+          .filter((project) => project.name.includes(searchText))
+          .map((project) => ({
             title: (
               <div className={`${css.flexRow} ${css.ellipsis}`}>
                 <Icon name="experiment" />
-                <Link onClick={() => onClickProject(p)}>
-                  {p.name}
-                </Link>
+                <Link onClick={() => onClickProject(project)}>{project.name}</Link>
               </div>
             ),
-            value: `project-${p.name}`,
-          });
-          map.set(p.workspaceId, tempArr);
-        }
-      }
-    }
-
-    const arr: DefaultOptionType[] = Array.from(map).map(([ k, v ]) => (
-      {
-        children: v,
-        title: (
-          <div className={`${css.flexRow} ${css.ellipsis}`}>
-            <Icon name="workspaces" />
-            <Link onClick={() => onClickWorkspace(k)}>
-              {workspaces.find((workspace) => workspace.id === k)?.name}
-            </Link>
-          </div>
-        ),
-        value: `workspace-${k}`,
-      }
-    ));
-    return arr;
-  }, [ onClickProject, onClickWorkspace, projects, searchText, workspaces ]);
+            value: `project-${project.id}`,
+          }));
+        return ({
+          children: treeChildren,
+          title: (
+            <div className={`${css.flexRow} ${css.ellipsis}`}>
+              <Icon name="workspaces" />
+              <Link onClick={() => onClickWorkspace(workspace.id)}>{workspace.name}</Link>
+            </div>
+          ),
+          value: `workspace-${workspace.id}`,
+        });
+      })
+      .filter((item) => searchText.length > 0 ? item.children.length > 0 : true);
+    return data;
+  }, [ onClickProject, onClickWorkspace, searchText, workspaceMap ]);
 
   return (
     <div>
