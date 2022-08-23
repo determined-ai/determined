@@ -72,7 +72,12 @@
   }
 }
 .pageError {
-  grid-row: 2/6;
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+
+  @media screen and (max-width: 1024px) {
+    grid-column: 1 / 2;
+  }
 }
 .editor {
   grid-column: 2 / 3;
