@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from determined.common.api import bindings
-from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason
+from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason, determinedexperimentv1State
 from determined.experimental import client
 from determined.searcher.search_method import ExitedReason, Operation, Progress, SearchMethod
 
@@ -143,6 +143,7 @@ class SearchRunner:
                     first_event = False
 
                     self.post_operations(session, experiment_id, event, operations)
+
         except KeyboardInterrupt:
             print("Runner interrupted")
 

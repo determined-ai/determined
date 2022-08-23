@@ -1,6 +1,7 @@
 import dataclasses
 import json
 import logging
+import pickle
 import random
 import sys
 import tempfile
@@ -128,17 +129,20 @@ def test_run_random_searcher_exp() -> None:
 @pytest.mark.parametrize(
     "exceptions",
     [
-        ["initial_operations_start"],
-        ["on_trial_created_3"],
-        ["on_validation_completed_start", "on_trial_created_3"],
-        ["on_trial_closed_shutdown"],
-        ["initial_operations_start", "on_trial_closed_end", "on_trial_created_3"],
-        ["progress_middle"],
-        ["save_method_state_created_3"],
-        ["on_trial_created_3", "load_method_state_start"],
+        ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
+        ["on_validation_completed", "on_trial_closed_end", "on_trial_created_3"],
+        [
+            "on_trial_created_3",
+            "save_method_state",
+            "load_method_state",
+            "save_method_state",
+            "save_method_state",
+            "on_validation_completed",
+            "save_method_state" "save_method_state",
+        ],
     ],
 )
-def test_resume_random_searcher_exp(exceptions) -> None:
+def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -146,10 +150,10 @@ def test_resume_random_searcher_exp(exceptions) -> None:
         "smaller_is_better": True,
         "unit": "batches",
     }
-    if exceptions is None:
-        config["description"] = "custom searcher"
-    else:
+    if len(exceptions) > 0:
         config["description"] = ";".join(exceptions)
+    else:
+        config["description"] = "custom searcher"
 
     max_trials = 5
     max_concurrent_trials = 2
@@ -164,7 +168,8 @@ def test_resume_random_searcher_exp(exceptions) -> None:
         while failures < failures_expected:
             try:
                 exception_step = exceptions.pop(0)
-                # re-create RandomSearchMethod and LocalSearchRunner after every fail to simulate python process crash
+                # re-create RandomSearchMethod and LocalSearchRunner after every fail
+                # to simulate python process crash
                 search_method = RandomSearchMethod(
                     max_trials, max_concurrent_trials, max_length, exception_step
                 )
@@ -180,6 +185,8 @@ def test_resume_random_searcher_exp(exceptions) -> None:
         search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
         experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
+    assert search_method.searcher_state.last_event_id == 41
+    assert search_method.searcher_state.experiment_completed is True
     assert client._determined is not None
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
@@ -215,12 +222,12 @@ class RandomSearchMethod(SearchMethod):
 
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
         if self.created_trials == 3:
-            self.throw_exception("on_trial_created_3")
+            self.raise_exception("on_trial_created_3")
         self._log_stats()
         return []
 
     def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
-        self.throw_exception("on_validation_completed_start")
+        self.raise_exception("on_validation_completed")
         return []
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
@@ -235,11 +242,11 @@ class RandomSearchMethod(SearchMethod):
             self.created_trials += 1
             self.pending_trials += 1
         elif self.pending_trials == 0:
-            self.throw_exception("on_trial_closed_shutdown")
+            self.raise_exception("on_trial_closed_shutdown")
             ops.append(Shutdown())
 
         self._log_stats()
-        self.throw_exception("on_trial_closed_end")
+        self.raise_exception("on_trial_closed_end")
         return ops
 
     def progress(self) -> float:
@@ -263,7 +270,7 @@ class RandomSearchMethod(SearchMethod):
         )
 
         if progress >= 0.5:
-            self.throw_exception("progress_middle")
+            self.raise_exception("progress_middle")
 
         return progress
 
@@ -286,7 +293,7 @@ class RandomSearchMethod(SearchMethod):
         return ops
 
     def initial_operations(self) -> List[Operation]:
-        self.throw_exception("initial_operations_start")
+        self.raise_exception("initial_operations_start")
         initial_trials = self.max_trials
         max_concurrent_trials = self.max_concurrent_trials
         if max_concurrent_trials > 0:
@@ -321,8 +328,7 @@ class RandomSearchMethod(SearchMethod):
         return hparams
 
     def save_method_state(self, path: Path) -> None:
-        if self.created_trials == 3:
-            self.throw_exception("save_method_state_created_3")
+        self.raise_exception("save_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("w") as f:
             state = {
@@ -336,7 +342,7 @@ class RandomSearchMethod(SearchMethod):
             json.dump(state, f)
 
     def load_method_state(self, path: Path) -> None:
-        self.throw_exception("load_method_state_start")
+        self.raise_exception("load_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("r") as f:
             state = json.load(f)
@@ -347,8 +353,9 @@ class RandomSearchMethod(SearchMethod):
             self.pending_trials = state["pending_trials"]
             self.closed_trials = state["closed_trials"]
 
-    def throw_exception(self, exception_id):
+    def raise_exception(self, exception_id: str) -> None:
         if exception_id == self.exception_point:
+            logging.info(f"Raising exception in {exception_id}")
             ex = MaxRetryError(
                 HTTPConnectionPool(host="dummyhost", port=8080),
                 "http://dummyurl",
@@ -384,7 +391,9 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     assert response.experiment.numTrials == 16
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
-    assert len(search_method.searcher_state.trials_closed) == len(search_method.asha_search_state.closed_trials)
+    assert len(search_method.searcher_state.trials_closed) == len(
+        search_method.asha_search_state.closed_trials
+    )
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
@@ -397,6 +406,99 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize(
+    "exceptions",
+    [
+        [
+            "on_trial_created_10_trials_in_rung_0",
+            "on_trial_created_10_trials_in_rung_0",
+            "_get_close_rungs_ops",
+        ],
+        [
+            "on_validation_completed",
+            "on_validation_completed",
+            "save_method_state",
+            "load_method_state",
+            "save_method_state",
+            "on_validation_completed",
+            "load_method_state",
+            "promote_async",
+            "save_method_state",
+            "on_validation_completed",
+            "load_method_state",
+            "shutdown",
+        ],
+    ],
+)
+def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
+    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
+    config["searcher"] = {
+        "name": "custom",
+        "metric": "validation_error",
+        "smaller_is_better": True,
+        "unit": "batches",
+    }
+    config["name"] = "asha"
+    if len(exceptions) > 0:
+        config["description"] = ";".join(exceptions)
+    else:
+        config["description"] = "custom searcher"
+
+    max_length = 3000
+    max_trials = 16
+    num_rungs = 3
+    divisor = 4
+    failures_expected = len(exceptions)
+
+    with tempfile.TemporaryDirectory() as searcher_dir:
+        logging.info(f"searcher_dir type = {type(searcher_dir)}")
+        failures = 0
+        while failures < failures_expected:
+            try:
+                exception_point = exceptions.pop(0)
+                search_method = ASHASearchMethod(
+                    max_length, max_trials, num_rungs, divisor, exception_point=exception_point
+                )
+                search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
+                search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+                pytest.fail("Expected an exception")
+            except MaxRetryError:
+                failures += 1
+
+        assert failures == failures_expected
+
+        search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
+        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
+        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+
+    assert search_method.searcher_state.experiment_completed is True
+    assert client._determined is not None
+    session = client._determined._session
+    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+
+    assert response.experiment.numTrials == 16
+    assert search_method.asha_search_state.pending_trials == 0
+    assert search_method.asha_search_state.completed_trials == 16
+    assert len(search_method.searcher_state.trials_closed) == len(
+        search_method.asha_search_state.closed_trials
+    )
+
+    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+
+    # 16 trials in rung 1 (#batches = 187)
+    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
+    # at least 4 trials in rung 2 (#batches = 750)
+    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
+    # at least 1 trial in rung 3 (#batches = 3000)
+    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
+
+    for trial in response_trials:
+        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+
+    assert search_method.progress() == pytest.approx(1.0)
 
 
 @dataclasses.dataclass
@@ -494,11 +596,13 @@ class ASHASearchMethod(SearchMethod):
         num_rungs: int,
         divisor: int,
         max_concurrent_trials: int = 0,
+        exception_point: Optional[str] = None,
     ) -> None:
         super().__init__()
         self.asha_search_state = ASHASearchMethodState(
             max_length, max_trials, num_rungs, divisor, max_concurrent_trials
         )
+        self.exception_point = exception_point
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
         self.asha_search_state.completed_trials += 1
@@ -508,16 +612,20 @@ class ASHASearchMethod(SearchMethod):
             self.asha_search_state.pending_trials == 0
             and self.asha_search_state.completed_trials == self.asha_search_state.max_trials
         ):
+            self.raise_exception("shutdown")
             return [Shutdown()]
 
         return []
 
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+        if len(self.asha_search_state.rungs[0].metrics) == 10:
+            self.raise_exception("on_trial_created_10_trials_in_rung_0")
         self.asha_search_state.rungs[0].outstanding_trials += 1
         self.asha_search_state.trial_rungs[request_id] = 0
         return []
 
     def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+        self.raise_exception("on_validation_completed")
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1
@@ -566,9 +674,10 @@ class ASHASearchMethod(SearchMethod):
 
         self.asha_search_state.early_exit_trials.add(request_id)
         self.asha_search_state.closed_trials.add(request_id)
-        return self.promote_async(request_id, 100.0)
+        return self.promote_async(request_id, sys.float_info.max)
 
     def initial_operations(self) -> List[Operation]:
+        self.raise_exception("initial_operations_start")
         ops: List[Operation] = []
 
         if self.asha_search_state.max_concurrent_trials > 0:
@@ -615,11 +724,13 @@ class ASHASearchMethod(SearchMethod):
             rung.metrics.append(TrialMetric(request_id=request_id, metric=metric))
 
             if request_id not in self.asha_search_state.early_exit_trials:
+                self.raise_exception("promote_async_close_trials")
                 ops.append(Close(request_id=request_id))
                 logging.info(f"Closing trial {request_id}")
                 self.asha_search_state.closed_trials.add(request_id)
         else:
             next_rung = self.asha_search_state.rungs[rung_idx + 1]
+            self.raise_exception("promote_async")
             logging.info(f"Promoting in rung {rung_idx}")
             for promoted_request_id in rung.promotions_async(
                 request_id, metric, self.asha_search_state.divisor
@@ -660,6 +771,7 @@ class ASHASearchMethod(SearchMethod):
         return ops
 
     def _get_close_rungs_ops(self) -> List[Operation]:
+        self.raise_exception("_get_close_rungs_ops")
         ops: List[Operation] = []
 
         for rung in self.asha_search_state.rungs:
@@ -699,3 +811,24 @@ class ASHASearchMethod(SearchMethod):
             progress = max(progress_no_overhead, progress)
 
         return progress
+
+    def save_method_state(self, path: Path) -> None:
+        self.raise_exception("save_method_state")
+        checkpoint_path = path.joinpath("method_state")
+        with checkpoint_path.open("wb") as f:
+            pickle.dump(self.asha_search_state, f)
+
+    def load_method_state(self, path: Path) -> None:
+        self.raise_exception("load_method_state")
+        checkpoint_path = path.joinpath("method_state")
+        with checkpoint_path.open("rb") as f:
+            self.asha_search_state = pickle.load(f)
+
+    def raise_exception(self, exception_id: str) -> None:
+        if exception_id == self.exception_point:
+            logging.info(f"Raising exception in {exception_id}")
+            ex = MaxRetryError(
+                HTTPConnectionPool(host="dummyhost", port=8080),
+                "http://dummyurl",
+            )
+            raise ex
