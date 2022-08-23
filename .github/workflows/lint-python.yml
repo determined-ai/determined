@@ -27,7 +27,7 @@ jobs:
           - model_hub
           - schemas
           - tools
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, cpu-runner]
     steps:
       - uses: actions/checkout@v3
       - name: set VERSION env var
