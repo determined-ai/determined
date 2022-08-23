@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { V1OrderBy } from 'services/api-ts-sdk';
 
-import css from './TableFilterSearch.module.scss';
+import css from './TableFilterRank.module.scss';
 
 interface Props extends FilterDropdownProps {
   column?: string;
