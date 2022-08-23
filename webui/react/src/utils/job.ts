@@ -99,7 +99,7 @@ export const moveJobToTop = async (
   curTopJob: Job,
   targetJob: Job,
 ): Promise<void> => {
-  if (curTopJob.jobId === targetJob.jobId || targetJob.summary.jobsAhead === 1) {
+  if (curTopJob.jobId === targetJob.jobId || targetJob.summary.jobsAhead === 0) {
     return; // no op
   }
   try {
