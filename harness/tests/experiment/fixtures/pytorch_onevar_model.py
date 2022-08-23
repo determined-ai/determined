@@ -282,6 +282,7 @@ class OneVarAMPBaseTrial(OneVarTrial):
 
 class OneVarApexAMPTrial(OneVarAMPBaseTrial):
     _growth_interval = 10000  # FIXME: Does Apex AMP ever grow the scaler?
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
@@ -306,7 +307,12 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
     _growth_interval = 4
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        context.experimental.use_amp(gradscaler_kwargs=dict(init_scale=self._init_scale, growth_interval=self._growth_interval))
+        context.experimental.use_amp(
+            gradscaler_kwargs={
+                "init_scale": self._init_scale,
+                "growth_interval": self._growth_interval,
+            }
+        )
         super().__init__(context)
         self.scaler = self.context._scaler
 
@@ -324,8 +330,13 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
 class OneVarManualAMPTrial(OneVarAMPBaseTrial):
     _init_scale = 65536
     _growth_interval = 4
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        self.scaler = context.wrap_scaler(torch.cuda.amp.GradScaler(init_scale=self._init_scale, growth_interval=self._growth_interval))
+        self.scaler = context.wrap_scaler(
+            torch.cuda.amp.GradScaler(
+                init_scale=self._init_scale, growth_interval=self._growth_interval
+            )
+        )
         super().__init__(context)
 
     def train_batch(

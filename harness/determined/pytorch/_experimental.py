@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
 # AMP is only available in PyTorch 1.6+
 try:
@@ -29,7 +29,7 @@ class PyTorchExperimentalContext:
 
         PyTorch 1.6 or greater is required for this feature.
         """
-        gradscaler_kwargs = gradscaler_kwargs or dict()
+        gradscaler_kwargs = gradscaler_kwargs or {}
         if HAVE_AMP:
             self._parent.wrap_scaler(amp.GradScaler(**gradscaler_kwargs))  # type: ignore
             self._auto_amp = True
