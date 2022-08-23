@@ -13,8 +13,8 @@ import (
 func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-    SELECT * FROM checkpoints_view c
-    WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
+	SELECT * FROM checkpoints_view c
+	WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
