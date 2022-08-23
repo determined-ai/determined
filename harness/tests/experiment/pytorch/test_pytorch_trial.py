@@ -693,7 +693,7 @@ def make_amp_workloads(
             metrics["scale"] = scale
         assert "scale" in metrics
     loss_prev = None
-    GROWTH_INTERVAL = 2000  # FIXME
+    GROWTH_INTERVAL = trial_class._growth_interval
     growth_countdown = GROWTH_INTERVAL
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.

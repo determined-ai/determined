@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Optional, Dict
 
 # AMP is only available in PyTorch 1.6+
 try:
@@ -19,7 +19,7 @@ class PyTorchExperimentalContext:
         self._data_repro_checks_disabled = False
         self._auto_to_device = True
 
-    def use_amp(self) -> None:
+    def use_amp(self, gradscaler_kwargs: Optional[Dict] = None) -> None:
         """
         Handles all operations for the most simple cases automatically with a default gradient
         scaler. Specifically, wraps forward pass in an autocast context, scales loss before
@@ -29,8 +29,9 @@ class PyTorchExperimentalContext:
 
         PyTorch 1.6 or greater is required for this feature.
         """
+        gradscaler_kwargs = gradscaler_kwargs or dict()
         if HAVE_AMP:
-            self._parent.wrap_scaler(amp.GradScaler())  # type: ignore
+            self._parent.wrap_scaler(amp.GradScaler(**gradscaler_kwargs))  # type: ignore
             self._auto_amp = True
 
     def disable_dataset_reproducibility_checks(self) -> None:

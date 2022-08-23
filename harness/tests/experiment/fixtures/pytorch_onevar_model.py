@@ -258,7 +258,7 @@ class AMPTestDataset(OnesDataset):
             raise ValueError(f"Unrecognized {self.__class__.__name__} stage {stage}")
 
 
-class OneVarApexAMPTrial(OneVarTrial):
+class OneVarAMPBaseTrial(OneVarTrial):
     _dataset_cls = AMPTestDataset
     _dataset_args = (
         (
@@ -272,9 +272,16 @@ class OneVarApexAMPTrial(OneVarTrial):
             + []
         ),
     )
+    _init_scale = None
+    _growth_interval = None
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         context._per_slot_batch_size, context._global_batch_size = 1, 1
+        super().__init__(context)
+
+
+class OneVarApexAMPTrial(OneVarAMPBaseTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
             models=self.model,
@@ -293,24 +300,12 @@ class OneVarApexAMPTrial(OneVarTrial):
         return metrics
 
 
-class OneVarAutoAMPTrial(OneVarTrial):
-    _dataset_cls = AMPTestDataset
-    _dataset_args = (
-        (
-            5 * ["one"]
-            + 1 * ["large"]
-            + 4 * ["one"]
-            + 1 * ["small"]
-            + 4 * ["one"]
-            + 1 * ["zero"]
-            + 4 * ["one"]
-            + []
-        ),
-    )
+class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
+    _init_scale = 65536
+    _growth_interval = 4
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        context._per_slot_batch_size, context._global_batch_size = 1, 1
-        context.experimental.use_amp()
+        context.experimental.use_amp(gradscaler_kwargs=dict(init_scale=self._init_scale, growth_interval=self._growth_interval))
         super().__init__(context)
         self.scaler = self.context._scaler
 
@@ -325,24 +320,11 @@ class OneVarAutoAMPTrial(OneVarTrial):
         return metrics
 
 
-class OneVarManualAMPTrial(OneVarTrial):
-    _dataset_cls = AMPTestDataset
-    _dataset_args = (
-        (
-            5 * ["one"]
-            + 1 * ["large"]
-            + 4 * ["one"]
-            + 1 * ["small"]
-            + 4 * ["one"]
-            + 1 * ["zero"]
-            + 4 * ["one"]
-            + []
-        ),
-    )
-
+class OneVarManualAMPTrial(OneVarAMPBaseTrial):
+    _init_scale = 65536
+    _growth_interval = 4
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        context._per_slot_batch_size, context._global_batch_size = 1, 1
-        self.scaler = context.wrap_scaler(torch.cuda.amp.GradScaler())
+        self.scaler = context.wrap_scaler(torch.cuda.amp.GradScaler(init_scale=self._init_scale, growth_interval=self._growth_interval))
         super().__init__(context)
 
     def train_batch(
