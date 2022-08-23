@@ -413,22 +413,23 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     "exceptions",
     [
         [
-            "on_trial_created_10_trials_in_rung_0",
+            "initial_operations_start",  # fail before sending initial operations
+            "save_method_state",  # fail on save - should not send initial operations again
+            "save_method_state",
+            "save_method_state",
+            "save_method_state",
             "on_trial_created_10_trials_in_rung_0",
             "_get_close_rungs_ops",
         ],
-        [
+        [  # searcher state and search method state are restored to last saved state
             "on_validation_completed",
             "on_validation_completed",
             "save_method_state",
-            "load_method_state",
+            "save_method_state",
             "save_method_state",
             "on_validation_completed",
             "load_method_state",
-            "promote_async",
             "save_method_state",
-            "on_validation_completed",
-            "load_method_state",
             "shutdown",
         ],
     ],
@@ -480,8 +481,13 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
 
     assert response.experiment.numTrials == 16
+    # asha search method state
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
+    # searcher state
+    assert len(search_method.searcher_state.trials_created) == 16
+    assert len(search_method.searcher_state.trials_closed) == 16
+
     assert len(search_method.searcher_state.trials_closed) == len(
         search_method.asha_search_state.closed_trials
     )
@@ -618,18 +624,19 @@ class ASHASearchMethod(SearchMethod):
         return []
 
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
-        if len(self.asha_search_state.rungs[0].metrics) == 10:
-            self.raise_exception("on_trial_created_10_trials_in_rung_0")
         self.asha_search_state.rungs[0].outstanding_trials += 1
         self.asha_search_state.trial_rungs[request_id] = 0
+        if len(self.asha_search_state.rungs[0].metrics) == 10:
+            self.raise_exception("on_trial_created_10_trials_in_rung_0")
         return []
 
     def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
-        self.raise_exception("on_validation_completed")
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1
-        return self.promote_async(request_id, metric)
+        ops = self.promote_async(request_id, metric)
+        self.raise_exception("on_validation_completed")
+        return ops
 
     def on_trial_exited_early(
         self, request_id: uuid.UUID, exited_reason: ExitedReason
@@ -827,8 +834,5 @@ class ASHASearchMethod(SearchMethod):
     def raise_exception(self, exception_id: str) -> None:
         if exception_id == self.exception_point:
             logging.info(f"Raising exception in {exception_id}")
-            ex = MaxRetryError(
-                HTTPConnectionPool(host="dummyhost", port=8080),
-                "http://dummyurl",
-            )
+            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
             raise ex
