@@ -2,4 +2,4 @@
 
 ** Bug Fixes ** 
 
-- Command: The set-gc-policy CLI command was failing because of a bug in the API that it calls. The bug was introduced in a previous PR where the format of the checkpoints returned ExperimentCheckpointsToGCRaw in master/internal/db/postgres_checkpoints changed. This method's output was directly returned from the API. I have added logic in the API to return an appropriate format for set-gc-policy. 
+- Command: Fixed a bug where ''det e set gc-policy'' would fail when deserializing an api response because it wasn't adjusted for the new format". 
