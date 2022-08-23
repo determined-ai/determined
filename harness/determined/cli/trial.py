@@ -9,7 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from determined.cli import render
 from determined.cli.session import setup_session
-from determined.cli.util import limit_offset_paginator, make_pagination_args_fetchall
+from determined.cli.util import limit_offset_paginator, make_pagination_args
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -117,6 +117,7 @@ def describe_trial(args: Namespace) -> None:
         session,
         limit=args.limit,
         offset=args.offset,
+        pages=args.pages,
         trialId=args.trial_id,
         includeBatchMetrics=args.metrics,
     )
@@ -365,7 +366,7 @@ args_description = [
                         Arg("--csv", action="store_true", help="print as CSV"),
                         Arg("--json", action="store_true", help="print JSON"),
                     ),
-                    *make_pagination_args_fetchall(limit=1000),
+                    *make_pagination_args(limit=1000),
                 ],
             ),
             Cmd(

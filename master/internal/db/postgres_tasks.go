@@ -94,13 +94,20 @@ WHERE task_id = $1
 	return nil
 }
 
-// AddAllocation persists the existence of an allocation.
+// AddAllocation upserts the existence of an allocation. Allocation IDs may conflict in the event
+// the master restarts and the trial run ID increment is not persisted, but it is the same
+// allocation so this is OK.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
 INSERT INTO allocations
-(task_id, allocation_id, slots, resource_pool, agent_label, start_time, state)
+	(task_id, allocation_id, slots, resource_pool, agent_label, start_time, state)
 VALUES
-(:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time, :state)
+	(:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time, :state)
+ON CONFLICT
+	(allocation_id)
+DO UPDATE SET
+	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
+	agent_label=EXCLUDED.agent_label, start_time=EXCLUDED.start_time, state=EXCLUDED.state
 `, a)
 }
 

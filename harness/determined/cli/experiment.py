@@ -20,8 +20,8 @@ from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.session import setup_session
+from determined.cli.util import default_pagination_args as pagination_args
 from determined.cli.util import limit_offset_paginator
-from determined.cli.util import pagination_args_fetchall as pagination_args
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -541,6 +541,7 @@ def list_experiments(args: Namespace) -> None:
     kwargs = {
         "limit": args.limit,
         "offset": args.offset,
+        "pages": args.pages,
     }
     if not args.all:
         kwargs["archived"] = False
@@ -634,6 +635,7 @@ def list_trials(args: Namespace) -> None:
         experimentId=args.experiment_id,
         limit=args.limit,
         offset=args.offset,
+        pages=args.pages,
     )
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]

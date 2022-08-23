@@ -24,6 +24,8 @@ type agentSetupScriptConfig struct {
 	AgentID                      string
 	ResourcePool                 string
 	LogOptions                   string
+	AgentReconnectAttempts       int
+	AgentReconnectBackoff        int
 }
 
 func mustMakeAgentSetupScript(config agentSetupScriptConfig) []byte {
