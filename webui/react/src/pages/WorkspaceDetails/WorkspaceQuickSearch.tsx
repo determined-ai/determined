@@ -6,6 +6,7 @@ import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import Message, { MessageType } from 'shared/components/Message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { Project, Workspace } from 'types';
@@ -62,6 +63,16 @@ const WorkspaceQuickSearch: React.FC = () => {
     fetchData();
   }, [ fetchData ]);
 
+  const onClickProject = useCallback((project: Project) => {
+    routeToReactUrl(paths.projectDetails(project.id));
+    onHideModal();
+  }, []);
+
+  const onClickWorkspace = useCallback((workspaceId: number) => {
+    routeToReactUrl(paths.workspaceDetails(workspaceId));
+    onHideModal();
+  }, []);
+
   const treeData = useMemo(() => {
     const map: Map<number, DefaultOptionType[]> = new Map();
 
@@ -81,7 +92,7 @@ const WorkspaceQuickSearch: React.FC = () => {
             title: (
               <div className={`${css.flexRow} ${css.ellipsis}`}>
                 <Icon name="experiment" />
-                <Link onClick={() => routeToReactUrl(paths.projectDetails(p.id))}>
+                <Link onClick={() => onClickProject(p)}>
                   {p.name}
                 </Link>
               </div>
@@ -99,9 +110,8 @@ const WorkspaceQuickSearch: React.FC = () => {
         title: (
           <div className={`${css.flexRow} ${css.ellipsis}`}>
             <Icon name="workspaces" />
-            <Link onClick={() => {
-              routeToReactUrl(paths.workspaceDetails(k));
-            }}>{workspaces.find((workspace) => workspace.id === k)?.name}
+            <Link onClick={() => onClickWorkspace(k)}>
+              {workspaces.find((workspace) => workspace.id === k)?.name}
             </Link>
           </div>
         ),
@@ -109,7 +119,7 @@ const WorkspaceQuickSearch: React.FC = () => {
       }
     ));
     return arr;
-  }, [ projects, searchText, workspaces ]);
+  }, [ onClickProject, onClickWorkspace, projects, searchText, workspaces ]);
 
   if (isLoading) {
     return <div>loading</div>;
@@ -123,17 +133,17 @@ const WorkspaceQuickSearch: React.FC = () => {
         footer={null}
         title={(
           <Input
-            placeholder="Search and Jump to the workspace or project"
+            placeholder="Search and Jump to workspace or project"
             prefix={<Icon name="search" />}
             width={'100%'}
             onChange={onChange}
           />
         )}
         visible={isModalVisible}
-        width={'50vw'}
+        width={'clamp(520px, 50vw, 1000px)'}
         onCancel={onHideModal}>
         <div className={css.modalBody}>
-          {treeData.length === 0 ? <div>Empty</div> : (
+          {treeData.length === 0 ? <Message title="No data found" type={MessageType.Empty} /> : (
             <Tree
               defaultExpandAll
               selectable={false}

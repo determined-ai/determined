@@ -14,7 +14,6 @@
     overflow-x: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    // 50vw is set as a modal width in component
-    width: calc(50vw - 148px);
+    width: calc(clamp(320px, 50vw, 1000px) - 16%);
   }
 }
