@@ -281,6 +281,7 @@ class OneVarAMPBaseTrial(OneVarTrial):
 
 
 class OneVarApexAMPTrial(OneVarAMPBaseTrial):
+    _growth_interval = 10000  # FIXME: Does Apex AMP ever grow the scaler?
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
