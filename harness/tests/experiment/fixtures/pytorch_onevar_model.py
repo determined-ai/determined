@@ -252,11 +252,10 @@ class AMPTestDataset(OnesDataset):
     def _get_stage_item(self, stage) -> Tuple:
         for _stage, x in self.STAGES.items():
             if _stage.lower() == stage.lower():
-                break
+                y = x
+                return torch.Tensor([float(x)]), torch.Tensor([float(y)])
         else:
             raise ValueError(f"Unrecognized {self.__class__.__name__} stage {stage}")
-        y = x
-        return torch.Tensor([float(x)]), torch.Tensor([float(y)])
 
 
 class OneVarApexAMPTrial(OneVarTrial):

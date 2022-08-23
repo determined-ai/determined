@@ -705,13 +705,15 @@ def make_amp_workloads(
         growth_countdown -= 1
         if (new_scale := metrics["scale"]) != scale:
             if new_scale < scale:
-                assert (
-                    scaled_loss > 32758
-                ), f"scale reduced from {scale} to {new_scale}, but not as expected ({scaled_loss=} <= 32758)"
+                assert scaled_loss > 32758, (
+                    f"scale reduced from {scale} to {new_scale}, "
+                    f"but not as expected ({scaled_loss=} <= 32758)"
+                )
             else:
-                assert (
-                    growth_countdown == 0
-                ), f"scale grew from {scale} to {new_scale}, but not when expected ({growth_countdown=:d})"
+                assert growth_countdown == 0, (
+                    f"scale grew from {scale} to {new_scale}, "
+                    f"but not when expected ({growth_countdown=:d})"
+                )
             scale = new_scale
             growth_countdown = GROWTH_INTERVAL
         else:
