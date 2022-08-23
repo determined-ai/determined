@@ -73,7 +73,7 @@ const moveExperimentWithHandler = async (
   }
 };
 
-const useModalExperimentMove = ({ onClose, user }: Props): ModalHooks => {
+const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const {
     settings: destSettings,
     updateSettings: updateDestSettings,
@@ -108,7 +108,7 @@ const useModalExperimentMove = ({ onClose, user }: Props): ModalHooks => {
       const response = await getWorkspaceProjects({
         id: destSettings.workspaceId,
         limit: 0,
-        users: (!user || user.isAdmin) ? [] : [ user.username ],
+        // users: (!user || user.isAdmin) ? [] : [ user.username ],
       });
       setProjects((prev) => (isEqual(prev, response.projects) ? prev : response.projects));
     } catch (e) {
@@ -120,7 +120,7 @@ const useModalExperimentMove = ({ onClose, user }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ destSettings.workspaceId, user ]);
+  }, [ destSettings.workspaceId ]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();
