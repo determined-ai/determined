@@ -685,11 +685,19 @@ def make_amp_workloads(
     yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
     training_metrics, _ = trainer.result()
 
+    for metrics, next_metrics in zip(training_metrics[:-1], training_metrics[1:]):
+        scale = next_metrics["scale_before"]
+        if "scale" in metrics:
+            assert metrics["scale"] == scale
+        else:
+            metrics["scale"] = scale
+        assert "scale" in metrics
     loss_prev = None
-    scale = 65536  # FIXME
     GROWTH_INTERVAL = 2000  # FIXME
     growth_countdown = GROWTH_INTERVAL
-    for idx, metrics in enumerate(training_metrics):
+    # Only attempt assertions up to and including the penultimate batch, because
+    #  we may not have the updated scale from the final batch.
+    for idx, metrics in enumerate(training_metrics[:-1]):
         assert metrics["loss"].dtype is np.dtype("float32")
         if assert_output_float16:
             assert metrics["output"].dtype is np.dtype("float16")
@@ -699,22 +707,22 @@ def make_amp_workloads(
             #   defined in PyTorchTrialContext.autocast_forward_pass
             assert metrics["output"].dtype is np.dtype("float32")
         loss = metrics["loss"].item()
-        scaled_loss = loss * scale
+        scale_before = metrics["scale_before"]
+        scaled_loss = loss * scale_before
         if "scaled_loss" in metrics:
             assert scaled_loss == metrics["scaled_loss"]
         growth_countdown -= 1
-        if (new_scale := metrics["scale"]) != scale:
-            if new_scale < scale:
+        if (scale := metrics["scale"]) != scale_before:
+            if scale < scale_before:
                 assert scaled_loss > 32758, (
-                    f"scale reduced from {scale} to {new_scale}, "
+                    f"scale reduced from {scale_before} to {scale}, "
                     f"but not as expected ({scaled_loss=} <= 32758)"
                 )
             else:
                 assert growth_countdown == 0, (
-                    f"scale grew from {scale} to {new_scale}, "
+                    f"scale grew from {scale_before} to {scale}, "
                     f"but not when expected ({growth_countdown=:d})"
                 )
-            scale = new_scale
             growth_countdown = GROWTH_INTERVAL
         else:
             assert (

@@ -285,7 +285,9 @@ class OneVarApexAMPTrial(OneVarTrial):
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
+        scale_before = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        metrics["scale_before"] = scale_before
         metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
         metrics["stage"] = self._dataset_args[0][batch_idx]
         return metrics
@@ -315,8 +317,10 @@ class OneVarAutoAMPTrial(OneVarTrial):
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
+        scale_before = self.scaler.get_scale()
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
-        metrics["scale"] = self.scaler.get_scale()
+        metrics["scale_before"] = scale_before
+        # self.scaler.update() gets called after this method returns
         metrics["stage"] = self._dataset_args[0][batch_idx]
         return metrics
 
@@ -346,6 +350,8 @@ class OneVarManualAMPTrial(OneVarTrial):
     ) -> Dict[str, torch.Tensor]:
         data, label = batch
 
+        scale_before = self.scaler.get_scale()
+
         # Measure the weight right now.
         w_before = self.model.weight.data.item()
 
@@ -368,6 +374,7 @@ class OneVarManualAMPTrial(OneVarTrial):
         # Return values that we can compare as part of the tests.
         return {
             "stage": self._dataset_args[0][batch_idx],
+            "scale_before": scale_before,
             "scale": self.scaler.get_scale(),
             "scaled_loss": scaled_loss,
             "loss": loss,
