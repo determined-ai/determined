@@ -214,7 +214,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				return err
 			}
 
-			if j.QPos.GreaterThanOrEqual(decimal.Zero) {
+			if j.QPos.GreaterThan(decimal.Zero) {
 				e.rm.RecoverJobPosition(ctx, sproto.RecoverJobPosition{
 					JobID:        e.JobID,
 					JobPosition:  j.QPos,

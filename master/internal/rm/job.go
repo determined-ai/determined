@@ -12,7 +12,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-var invalidJobQPos = decimal.NewFromInt(-1)
+var invalidJobQPos = decimal.NewFromInt(0)
 
 func reduceToJobQInfo(reqs AllocReqs) map[model.JobID]*sproto.RMJobInfo {
 	isAdded := make(map[model.JobID]*sproto.RMJobInfo)
