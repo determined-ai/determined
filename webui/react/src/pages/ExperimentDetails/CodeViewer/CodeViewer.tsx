@@ -50,6 +50,7 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
 
 enum PageError {
   decode = 'Could not decode file.',
+  empty = 'Empty file! Please choose a diferent file.',
   fetch = 'Unable to fetch file.',
   none = ''
 }
@@ -91,6 +92,8 @@ const CodeViewer: React.FC<Props> = ({
   const resize = useResize();
 
   const submittedConfig = useMemo(() => {
+    if (!_submittedConfig) return;
+
     const { hyperparameters, ...restConfig } = yaml.load(_submittedConfig) as RawJson;
 
     // don't ask me why this works.. it gets rid of the JSON though
@@ -156,8 +159,12 @@ const CodeViewer: React.FC<Props> = ({
   }, [ submittedConfig, runtimeConfig, switchTreeViewToEditor ]);
 
   useEffect(() => {
-    handleSelectConfig(Config.submitted);
-  }, [ handleSelectConfig ]);
+    if (submittedConfig) {
+      handleSelectConfig(Config.submitted);
+    } else {
+      handleSelectConfig(Config.runtime);
+    }
+  }, [ handleSelectConfig, submittedConfig ]);
 
   useEffect(() => {
     if (resize.width <= 1024) {
@@ -231,6 +238,8 @@ const CodeViewer: React.FC<Props> = ({
     let text = '';
     try {
       text = decodeURIComponent(escape(window.atob(file)));
+
+      if (!text) setPageError(PageError.empty); // Emmits a "Empty file" error message
     } catch {
       setPageError(PageError.decode);
     }
@@ -283,9 +292,9 @@ const CodeViewer: React.FC<Props> = ({
   ]);
 
   const getSyntaxHighlight = useCallback(() => {
-    if (String(activeFile?.key).includes('py')) return 'python';
+    if (String(activeFile?.key).includes('.py')) return 'python';
 
-    if (String(activeFile?.key).includes('md')) return 'markdown';
+    if (String(activeFile?.key).includes('.md')) return 'markdown';
 
     return 'yaml';
   }, [ activeFile ]);
@@ -331,20 +340,37 @@ const CodeViewer: React.FC<Props> = ({
                   * TODO: Add notebook integration
                   * <Button className={css.noBorderButton}>Open in Notebook</Button>
                   */
-                  !isConfig(activeFile.key) && (
-                    <Tooltip title="Download File">
-                      <DownloadOutlined
-                        className={css.noBorderButton}
-                        onClick={(e) => handlePath(e, {
-                          external: true,
-                          path: paths.experimentFileFromTree(
-                            experimentId,
-                            String(activeFile.key),
-                          ),
-                        })}
-                      />
-                    </Tooltip>
-                  )
+                  <Tooltip title="Download File">
+                    {
+                      !String(activeFile.key).includes('Configuration') && (
+                        // hiding the download for configs until next iteration
+                        <DownloadOutlined
+                          className={css.noBorderButton}
+                          onClick={(e) => {
+                            const filePath = String(activeFile.key);
+                            if (filePath.includes('Configuration')) {
+                              const url = filePath.includes('runtime')
+                                ? URL.createObjectURL(new Blob([ runtimeConfig ]))
+                                : URL.createObjectURL(new Blob([ submittedConfig as string ]));
+
+                              handlePath(e, {
+                                external: true,
+                                path: url,
+                              });
+                            } else {
+                              handlePath(e, {
+                                external: true,
+                                path: paths.experimentFileFromTree(
+                                  experimentId,
+                                  String(activeFile.key),
+                                ),
+                              });
+                            }
+                          }}
+                        />
+                      )
+                    }
+                  </Tooltip>
                 }
               </div>
             </div>
