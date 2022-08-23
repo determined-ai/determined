@@ -786,26 +786,6 @@ def set_gc_policy(args: Namespace) -> None:
         print("Aborting operations.")
 
 
-def get_fmted_checkpoints(unfmted_checkpoints: Any) -> Any:
-    checkpoints = []
-    for cDB in unfmted_checkpoints:
-        checkpoint = {}
-        checkpoint["uuid"] = cDB["UUID"]
-        checkpoint["trial_id"] = cDB["TrialID"]
-        checkpoint["resources"] = cDB["Resources"]
-        checkpoint["end_time"] = cDB["ReportTime"]
-        checkpoint["state"] = cDB["State"]
-        validationMetrics = {"validation_metrics": cDB["ValidationMetrics"]}
-        validation = {"metrics": validationMetrics}
-        cStep = {
-            "total_batches": cDB["StepsCompleted"],
-            "validation": validation,
-        }
-        checkpoint["step"] = cStep
-        checkpoints.append(checkpoint)
-    return checkpoints
-
-
 @authentication.required
 def unarchive(args: Namespace) -> None:
     bindings.post_UnarchiveExperiment(setup_session(args), id=args.experiment_id)
