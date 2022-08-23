@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -98,13 +99,16 @@ func (a *ProjectAuthZBasic) CanMoveProject(
 
 // CanMoveProjectExperiments returns an error if the user isn't a admin or owner of a project.
 func (a *ProjectAuthZBasic) CanMoveProjectExperiments(
-	curUser model.User, from, to *projectv1.Project,
+	curUser model.User, exp *experimentv1.Experiment, from, to *projectv1.Project,
 ) error {
-	if curUser.Admin || from.Immutable || ((model.UserID(from.UserId) == curUser.ID) &&
-		(model.UserID(to.UserId) == curUser.ID)) {
+	if !curUser.Admin || model.UserID(exp.UserId) != curUser.ID {
+		return fmt.Errorf("non admin users can't move others' experiments")
+	}
+	if curUser.Admin || ((from.Immutable || model.UserID(from.UserId) == curUser.ID) &&
+		model.UserID(to.UserId) == curUser.ID) {
 		return nil
 	}
-	return fmt.Errorf("non admin users can't move experiments from others' projects")
+	return fmt.Errorf("non admin users can't move experiments from or into others' projects")
 }
 
 // CanArchiveProject returns an error if a non admin isn't the owner of the project or workspace.

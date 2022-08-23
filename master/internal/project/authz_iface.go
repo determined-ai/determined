@@ -3,6 +3,7 @@ package project
 import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -34,7 +35,9 @@ type ProjectAuthZ interface {
 	) error
 
 	// POST /api/v1/experiments/:experiment_id/move
-	CanMoveProjectExperiments(curUser model.User, from, to *projectv1.Project) error
+	CanMoveProjectExperiments(
+		curUser model.User, exp *experimentv1.Experiment, from, to *projectv1.Project,
+	) error
 
 	// POST /api/v1/projects/:project_id/archive
 	CanArchiveProject(curUser model.User, project *projectv1.Project) error

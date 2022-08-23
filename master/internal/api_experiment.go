@@ -1614,7 +1614,7 @@ func (a *apiServer) MoveExperiment(
 			srcProject.Id)
 	}
 
-	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(*curUser, srcProject,
+	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(*curUser, exp, srcProject,
 		destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
