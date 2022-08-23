@@ -341,30 +341,35 @@ const CodeViewer: React.FC<Props> = ({
                   * <Button className={css.noBorderButton}>Open in Notebook</Button>
                   */
                   <Tooltip title="Download File">
-                    <DownloadOutlined
-                      className={css.noBorderButton}
-                      onClick={(e) => {
-                        const filePath = String(activeFile.key);
-                        if (filePath.includes('config')) {
-                          const url = filePath.includes('runtime')
-                            ? URL.createObjectURL(new Blob([ runtimeConfig ]))
-                            : URL.createObjectURL(new Blob([ submittedConfig as string ]));
+                    {
+                      !String(activeFile.key).includes('config') && (
+                        // hiding the download for configs until next iteration
+                        <DownloadOutlined
+                          className={css.noBorderButton}
+                          onClick={(e) => {
+                            const filePath = String(activeFile.key);
+                            if (filePath.includes('config')) {
+                              const url = filePath.includes('runtime')
+                                ? URL.createObjectURL(new Blob([ runtimeConfig ]))
+                                : URL.createObjectURL(new Blob([ submittedConfig as string ]));
 
-                          handlePath(e, {
-                            external: true,
-                            path: url,
-                          });
-                        } else {
-                          handlePath(e, {
-                            external: true,
-                            path: paths.experimentFileFromTree(
-                              experimentId,
-                              String(activeFile.key),
-                            ),
-                          });
-                        }
-                      }}
-                    />
+                              handlePath(e, {
+                                external: true,
+                                path: url,
+                              });
+                            } else {
+                              handlePath(e, {
+                                external: true,
+                                path: paths.experimentFileFromTree(
+                                  experimentId,
+                                  String(activeFile.key),
+                                ),
+                              });
+                            }
+                          }}
+                        />
+                      )
+                    }
                   </Tooltip>
                 }
               </div>
