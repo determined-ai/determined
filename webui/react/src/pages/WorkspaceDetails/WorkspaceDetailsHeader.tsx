@@ -48,7 +48,13 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
   return (
     <div className={css.base}>
       <Space align="center">
-        <DynamicIcon name={workspace.name} size={32} />
+        <Tooltip title="Click to navigate">
+          <div className={css.Icon}>
+            <WorkspaceQuickSearch>
+              <DynamicIcon name={workspace.name} size={32} />
+            </WorkspaceQuickSearch>
+          </div>
+        </Tooltip>
         <h1 className={css.name}>
           <InlineEditor
             disabled={workspace.immutable ||
@@ -80,7 +86,6 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
             <DownOutlined className={css.dropdown} />
           </WorkspaceActionDropdown>
         )}
-        <WorkspaceQuickSearch />
       </Space>
       {(!workspace.immutable && !workspace.archived) && (
         <Button onClick={handleProjectCreateClick}>New Project</Button>

@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
-import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { sentenceToCamelCase } from 'shared/utils/string';
@@ -95,7 +94,6 @@ const ProjectDetailsTabs: React.FC<Props> = (
                 <Icon name="arrow-down" size="tiny" />
               </div>
             </ProjectActionDropdown>
-            <WorkspaceQuickSearch />
           </Space>
         )}
         id={project.id}

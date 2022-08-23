@@ -1,12 +1,13 @@
-import { Button, Input, Modal, Tree } from 'antd';
+import { Input, Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { Project, Workspace } from 'types';
@@ -14,21 +15,17 @@ import handleError from 'utils/error';
 
 import css from './WorkspaceQuickSearch.module.scss';
 
-const WorkspaceQuickSearch: React.FC = () => {
+interface Props {
+  children: React.ReactChild;
+}
+
+const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   const [ searchText, setSearchText ] = useState<string>('');
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
   const [ projects, setProjects ] = useState<Project[][]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isModalVisible, setIsModalVisible ] = useState(false);
   const canceler = useRef(new AbortController());
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
-  };
-
-  const onShowModal = () => setIsModalVisible(true);
-
-  const onHideModal = () => setIsModalVisible(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -59,9 +56,16 @@ const WorkspaceQuickSearch: React.FC = () => {
     }
   }, [ ]);
 
-  useEffect(() => {
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+  };
+
+  const onShowModal = () => {
+    setIsModalVisible(true);
     fetchData();
-  }, [ fetchData ]);
+  };
+
+  const onHideModal = () => setIsModalVisible(false);
 
   const onClickProject = useCallback((project: Project) => {
     routeToReactUrl(paths.projectDetails(project.id));
@@ -121,13 +125,11 @@ const WorkspaceQuickSearch: React.FC = () => {
     return arr;
   }, [ onClickProject, onClickWorkspace, projects, searchText, workspaces ]);
 
-  if (isLoading) {
-    return <div>loading</div>;
-  }
-
   return (
     <div>
-      <Button ghost type="primary" onClick={onShowModal}><Icon name="search" /></Button>
+      <div onClick={onShowModal}>
+        {children}
+      </div>
       <Modal
         closable={false}
         footer={null}
@@ -143,13 +145,15 @@ const WorkspaceQuickSearch: React.FC = () => {
         width={'clamp(520px, 50vw, 1000px)'}
         onCancel={onHideModal}>
         <div className={css.modalBody}>
-          {treeData.length === 0 ? <Message title="No data found" type={MessageType.Empty} /> : (
-            <Tree
-              defaultExpandAll
-              selectable={false}
-              treeData={treeData}
-            />
-          )}
+          {isLoading ?
+            <Spinner center tip={'Loading...'} /> : (
+              <>
+                {treeData.length === 0 ?
+                  <Message title="No data found" type={MessageType.Empty} /> : (
+                    <Tree defaultExpandAll selectable={false} treeData={treeData} />
+                  )}
+              </>
+            )}
         </div>
       </Modal>
     </div>
