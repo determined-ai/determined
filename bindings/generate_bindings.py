@@ -246,7 +246,7 @@ class Parameter:
         typ: TypeAnno,
         required: bool,
         where: str,
-        serialized_name: str = None,
+        serialized_name: Optional[str] = None,
     ) -> None:
         self.name = name
         self.serialized_name = serialized_name
