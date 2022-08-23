@@ -430,6 +430,10 @@ export interface CoreApiGenericCheckpoint {
   validationMetrics?: Metrics;
 }
 
+export interface CheckpointPagination extends WithPagination {
+  checkpoints: CoreApiGenericCheckpoint[];
+}
+
 export interface TrialPagination extends WithPagination {
   trials: TrialItem[];
 }

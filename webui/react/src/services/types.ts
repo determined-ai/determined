@@ -81,6 +81,14 @@ export interface GetExperimentParams {
   id: number;
 }
 
+export interface getExperimentCheckpointsParams extends PaginationParams {
+  id: number;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER'
+  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC';
+  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED'
+  | 'STATE_ERROR' | 'STATE_DELETED'>;
+}
+
 export interface ExperimentLabelsParams {
   project_id?: number;
 }

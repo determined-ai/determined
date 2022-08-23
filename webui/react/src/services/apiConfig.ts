@@ -402,6 +402,24 @@ export const getExperimentDetails: DetApi<
   request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
 };
 
+export const getExperimentCheckpoints: DetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetExperimentCheckpointsResponse,
+  Type.CheckpointPagination
+> = {
+  name: 'getExperimentCheckpoints',
+  postProcess: (response) => decoder.decodeCheckpoints(response),
+  request: (params, options) => detApi.Experiments.getExperimentCheckpoints(
+    params.id,
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.states,
+    options,
+  ),
+};
+
 export const getExpValidationHistory: DetApi<
   SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,

@@ -516,6 +516,15 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
   };
 };
 
+export const decodeCheckpoints = (
+  data: Sdk.V1GetExperimentCheckpointsResponse,
+): types.CheckpointPagination => {
+  return {
+    checkpoints: data.checkpoints.map(decodeCheckpoint),
+    pagination: mapV1Pagination(data.pagination),
+  };
+};
+
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     autoRestarts: data.restarts,
