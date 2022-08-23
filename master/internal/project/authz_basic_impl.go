@@ -101,7 +101,7 @@ func (a *ProjectAuthZBasic) CanMoveProject(
 func (a *ProjectAuthZBasic) CanMoveProjectExperiments(
 	curUser model.User, exp *experimentv1.Experiment, from, to *projectv1.Project,
 ) error {
-	if !curUser.Admin || model.UserID(exp.UserId) != curUser.ID {
+	if !curUser.Admin && curUser.ID != model.UserID(exp.UserId) {
 		return fmt.Errorf("non admin users can't move others' experiments")
 	}
 	return nil
