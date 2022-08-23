@@ -344,7 +344,6 @@ const CodeViewer: React.FC<Props> = ({
                     <DownloadOutlined
                       className={css.noBorderButton}
                       onClick={(e) => {
-                        console.log(e);
                         const filePath = String(activeFile.key);
                         if (filePath.includes('config')) {
                           const url = filePath.includes('runtime')
