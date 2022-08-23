@@ -1,6 +1,6 @@
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { DetError, DetErrorOptions, ErrorType } from 'shared/utils/error';
+import { DetError, DetErrorOptions, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { CommandType, Job, JobType, ResourcePool } from 'types';
 import handleError from 'utils/error';
@@ -43,6 +43,9 @@ export const orderedSchedulers = new Set(
 
 /**
  * Create the update request based on a given position for a job.
+ * @param jobs The list of all jobs.
+ * @param job The job id of the job to update
+ * @param position The position of the job in the queue. Starting from 1.
  * @throws {DetError}
  */
 export const moveJobToPositionUpdate = (
@@ -92,16 +95,21 @@ export const moveJobToPositionUpdate = (
   }
 };
 
-export const moveJobToPosition = async (
-  jobs: Job[],
-  jobId: string,
-  position: number,
+export const moveJobToTop = async (
+  curTopJob: Job,
+  targetJob: Job,
 ): Promise<void> => {
+  if (curTopJob.jobId === targetJob.jobId || targetJob.summary.jobsAhead === 0) {
+    return; // no op
+  }
   try {
-    const update = moveJobToPositionUpdate(jobs, jobId, position);
-    if (update) await updateJobQueue({ updates: [ update ] });
+    const update = {
+      aheadOf: curTopJob.jobId,
+      jobId: targetJob.jobId,
+    };
+    await updateJobQueue({ updates: [ update ] });
   } catch (e) {
-    handleError(e);
+    handleError(e, { publicMessage: wrapPublicMessage(e, 'Failed to move job to top') });
   }
 };
 
