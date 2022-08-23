@@ -600,6 +600,7 @@ func (a *apiServer) PatchTrialsCollection(
 		ID:      req.Id,
 		Name:    req.Name,
 		Filters: req.Filters,
+		Sorter:  req.Sorter,
 	}
 
 	q := db.Bun().NewUpdate().
@@ -617,7 +618,7 @@ func (a *apiServer) PatchTrialsCollection(
 	}
 
 	if req.Sorter != nil {
-		q.Column("filters")
+		q.Column("sorter")
 	}
 
 	// we dont update project ID on patch

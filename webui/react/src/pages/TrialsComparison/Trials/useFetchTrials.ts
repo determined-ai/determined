@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import usePolling from 'hooks/usePolling';
 import { queryTrials } from 'services/api';
+import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { clone } from 'shared/utils/data';
 import handleError from 'utils/error';
 
 import { encodeFilters, encodeTrialSorter } from '../api';
@@ -21,13 +22,13 @@ export const useFetchTrials = ({
   offset,
   sorter,
 }: Params): TrialsWithMetadata => {
-  const [ trials, setTrials ] = useState<TrialsWithMetadata>(defaultTrialData());
+  const [ trials, setTrials ] = useState<TrialsWithMetadata>(clone(defaultTrialData));
   const fetchTrials = useCallback(async () => {
-    let response: any;
+    let trials: V1AugmentedTrial[] = [];
     const _filters = encodeFilters(filters);
     const _sorter = encodeTrialSorter(sorter);
     try {
-      response = await queryTrials({
+      trials = await queryTrials({
         filters: _filters,
         limit,
         offset,
@@ -36,15 +37,15 @@ export const useFetchTrials = ({
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch trials.' });
     }
-    if (response){
-      const newTrials = decodeTrialsWithMetadata(response.trials);
-      if (newTrials)
-        setTrials(newTrials);
-    }
+
+    const newTrials = decodeTrialsWithMetadata(trials);
+    setTrials(newTrials);
 
   }, [ filters, limit, offset, sorter ]);
 
-  usePolling(fetchTrials, { interval: 10000, rerunOnNewFn: true });
+  useEffect(() => { fetchTrials(); }, [ fetchTrials ]);
+
+  // usePolling(fetchTrials, { interval: 10000, rerunOnNewFn: true });
 
   return trials;
 };

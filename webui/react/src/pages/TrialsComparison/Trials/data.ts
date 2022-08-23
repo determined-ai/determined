@@ -1,6 +1,6 @@
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { Primitive, RawJson } from 'shared/types';
-import { flattenObject } from 'shared/utils/data';
+import { clone, flattenObject } from 'shared/utils/data';
 import { union } from 'shared/utils/set';
 import {
   Metric,
@@ -57,7 +57,7 @@ export const aggregrateTrialsMetadata =
   const vMetrics = decodeMetricKeys(trial.validationMetrics, MetricType.Validation);
 
   return {
-    data: [ ...agg.data, trial ],
+    data: [ ...agg.data, { ...trial, hparams: flattenObject(trial.hparams) } ],
     hparams: aggregateHpVals(agg.hparams, trial.hparams),
     ids: [ ...agg.ids, trial.trialId ],
     maxBatch: Math.max(agg.maxBatch, trial.totalBatches),
@@ -66,31 +66,39 @@ export const aggregrateTrialsMetadata =
   };
 };
 
-export const defaultTrialData = (): TrialsWithMetadata => ({
+export const defaultTrialData = {
   data: [],
   hparams: {},
   ids: [],
   maxBatch: 1,
   metricKeys: {},
   metrics: [],
-});
+};
 
 export const decodeTrialsWithMetadata = (
   trials?: V1AugmentedTrial[],
-): TrialsWithMetadata | undefined => {
-  if (!trials) return undefined;
-  const t = trials.reduce(aggregrateTrialsMetadata, defaultTrialData());
+): TrialsWithMetadata => {
+  if (!trials) return clone(defaultTrialData);
+  const t = trials.reduce(aggregrateTrialsMetadata, clone(defaultTrialData));
 
-  console.log('keys', t.metricKeys);
-
-  const x = Object.keys(t.metricKeys)
-    .map(metricKeyToMetric) as Metric[];
+  // const tmpFunc = (k) => {
+  //   const foo = metricKeyToMetric(k);
+  //   return {
+  //     ...foo,
+  //     log: [],
+  //     set type(type: string) {
+  //       this.log.push(type);
+  //     },
+  //   };
+  // };
 
   const metrics = Object.keys(t.metricKeys)
     .map(metricKeyToMetric) as Metric[];
 
-  console.log('same thing', x);
-  console.log('returned value', metrics);
+  // console.log({ metrics });
 
-  return { ...t, metrics };
+  // console.log('metrics json', JSON.stringify(metrics));
+  // console.log('metrics obj', metrics);
+
+  return { ...t, metrics: metrics };
 };

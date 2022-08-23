@@ -63,8 +63,8 @@ export const useTrialCollections = (
   );
 
   const [ sorter, setSorter ] = useState<TrialSorter>({
-    orderBy: V1OrderBy.ASC,
-    sortKey: 'trialId',
+    orderBy: tableSettings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC,
+    sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : 'trialId',
   });
 
   const [ filters, _setFilters ] = useState<TrialFilters>(initFilters);
@@ -86,16 +86,20 @@ export const useTrialCollections = (
   }, [ filterStorage ]);
 
   useEffect(() => {
+    // whenever the table sort direction changes update the internal state of sorter
     const orderBy = tableSettings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC;
     setSorter((sorter) => ({ ...sorter, orderBy }));
   }, [ tableSettings.sortDesc, setSorter ]);
 
   useEffect(() => {
+    // whenever the table sort key changes update the internal state of sorter
     const sortKey = tableSettings.sortKey ? String(tableSettings.sortKey) : 'trialId';
     setSorter((sorter) => ({ ...sorter, sortKey }));
   }, [ tableSettings.sortKey, setSorter ]);
 
   const [ collections, setCollections ] = useState<TrialsCollection[]>([]);
+
+  // console.log('in use ', collections);
 
   const settingsConfig = useMemo(() => configForProject(projectId), [ projectId ]);
   const { settings, updateSettings } = useSettings<{ collection: string }>(settingsConfig);
@@ -116,7 +120,7 @@ export const useTrialCollections = (
     (name: string) => {
       const _collection = collections.find((c) => c.name === name);
       if (_collection?.name != null) {
-        updateSettings({ collection: _collection.name });
+        updateSettings({ collection: _collection.name }, true);
       }
     },
     [ collections, updateSettings ],
@@ -128,6 +132,7 @@ export const useTrialCollections = (
       const response = await getTrialsCollections(id);
       const collections = response.collections?.map(decodeTrialsCollection) ?? [];
       setCollections(collections);
+
       return collections;
     }
   }, [ projectId ]);
@@ -147,6 +152,7 @@ export const useTrialCollections = (
     const _collection = collections.find((c) => c.name === settings?.collection);
     const previousCollection = getPreviousCollection();
     if (_collection && JSON.stringify(_collection) !== JSON.stringify(previousCollection)) {
+      console.log('filters for new collection', _collection.filters);
       _setFilters(_collection.filters);
       setPreviousCollection(_collection);
     }
@@ -159,7 +165,7 @@ export const useTrialCollections = (
         const newCollections = await fetchCollections();
         const _collection = newCollections?.find((c) => c.name === newCollection.name);
         if (_collection?.name != null) {
-          updateSettings({ collection: _collection.name });
+          updateSettings({ collection: _collection.name }, true);
         }
         if (newCollection) setCollection(newCollection.name);
       } catch {

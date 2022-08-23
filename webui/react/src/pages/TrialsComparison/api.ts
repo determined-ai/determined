@@ -18,7 +18,7 @@ import {
   isNumber,
   numberElseUndefined,
 } from 'shared/utils/data';
-import { camelCaseToSnake } from 'shared/utils/string';
+import { camelCaseToSnake, snakeCaseToCamelCase } from 'shared/utils/string';
 
 import { TrialsCollection } from './Collections/collections';
 
@@ -67,8 +67,9 @@ export const decodeTrialSorter = (s?: V1TrialSorter): TrialSorter => {
 
   return {
     orderBy: s.orderBy ?? V1OrderBy.DESC,
-    sortKey: prefix ? [ prefix, s.field ].join('.') : s.field,
+    sortKey: prefix ? [ prefix, s.field ].join('.') : snakeCaseToCamelCase(s.field),
   };
+
 };
 
 export const encodeIdList = (l?: string[]): number[] | undefined =>
@@ -105,6 +106,7 @@ export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
     states: f.states as unknown as Determinedtrialv1State[],
     tags: f.tags?.map((tag: string) => ({ key: tag, value: '1' })),
     trainingMetrics: encodeNumberRangeDict(f.trainingMetrics ?? {}),
+    trialIds: encodeIdList(f.trialIds),
     userIds: encodeIdList(f.userIds),
     validationMetrics: encodeNumberRangeDict(f.validationMetrics ?? {}),
     workspaceIds: encodeIdList(f.workspaceIds),
@@ -119,8 +121,10 @@ export const decodeFilters = (f: V1TrialFilters): TrialFilters => ({
     sorter: decodeTrialSorter(f.rankWithinExp?.sorter),
   },
   searcher: f.searcher,
+  states: f.states ? f.states as unknown as string[] : undefined,
   tags: f.tags?.map((tag: V1TrialTag) => tag.key),
   trainingMetrics: decodeNumberRangeDict(f.trainingMetrics ?? []),
+  trialIds: f.trialIds?.map(String),
   userIds: f.userIds?.map(String),
   validationMetrics: decodeNumberRangeDict(f.validationMetrics ?? []),
   workspaceIds: f.workspaceIds?.map(String),

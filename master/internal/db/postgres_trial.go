@@ -473,8 +473,9 @@ type TrialsAugmented struct {
 	TotalBatches          int32              `bun:"total_batches"`
 	SearcherMetric        string             `bun:"searcher_metric"`
 	SearcherMetricValue   float64            `bun:"searcher_metric_value"`
+	SearcherMetricLoss    float64            `bun:"searcher_metric_loss"`
 
-	RankWithinExp int32 `bun:"n,scanonly"`
+	RankWithinExp int32 `bun:"rank,scanonly"`
 }
 
 // Proto converts an Augmented Trial to its protobuf representation.
@@ -500,6 +501,7 @@ func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 		RankWithinExp:         t.RankWithinExp,
 		SearcherMetric:        t.SearcherMetric,
 		SearcherMetricValue:   t.SearcherMetricValue,
+		SearcherMetricLoss:    t.SearcherMetricLoss,
 	}
 }
 
@@ -640,7 +642,7 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 			return nil, fmt.Errorf("possible unsafe filters, %f", err)
 		}
 		rankExpr := fmt.Sprintf(
-			`ROW_NUMBER() OVER(PARTITION BY experiment_id ORDER BY %s  %s) as n`,
+			`ROW_NUMBER() OVER(PARTITION BY experiment_id ORDER BY %s  %s) as rank`,
 			columnExpr,
 			QueryTrialsOrderMap[r.Sorter.OrderBy])
 
@@ -649,14 +651,14 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 			ColumnExpr("trial_id as t_id").
 			ColumnExpr(rankExpr)
 
-		q.With("rank", rankQ).
-			Join("join rank on rank.t_id = trials_augmented_view.trial_id")
+		q.With("ranking", rankQ).
+			Join("join ranking on ranking.t_id = trials_augmented_view.trial_id")
 
 		if rankFilterApplied {
-			q.Where("rank.n <= ?", r.Rank)
+			q.Where("ranking.rank <= ?", r.Rank)
 		}
 		if selectAll {
-			q.ColumnExpr("trials_augmented_view.*, rank.n")
+			q.ColumnExpr("trials_augmented_view.*, ranking.rank")
 		}
 	}
 
@@ -668,6 +670,10 @@ func (db *PgDB) FilterTrials(q *bun.SelectQuery,
 		// bun please ignore the first question mark,
 		// it is an operator, not a placeholder
 		q.Where("tags ?| ?", bun.Safe("?"), pgdialect.Array(tagKeys))
+	}
+
+	if len(filters.TrialIds) > 0 {
+		q.Where("trial_id IN (?)", bun.In(filters.TrialIds))
 	}
 
 	if len(filters.ExperimentIds) > 0 {

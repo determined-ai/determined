@@ -5,6 +5,7 @@ import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
 import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
+import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
@@ -250,11 +251,11 @@ export const getResourceAllocationAggregated: DetApi<
 
 /* Trials */
 export const queryTrials: DetApi<
-  Api.V1QueryTrialsRequest, Api.V1QueryTrialsResponse, Api.V1QueryTrialsResponse
+  Api.V1QueryTrialsRequest, Api.V1QueryTrialsResponse, V1AugmentedTrial[]
 > = {
   name: 'queryTrials',
-  postProcess: (response: Api.V1QueryTrialsResponse) => {
-    return { trials: response.trials };
+  postProcess: (response: Api.V1QueryTrialsResponse): V1AugmentedTrial[] => {
+    return response.trials;
   },
   request: (params: Api.V1QueryTrialsRequest) => {
     return detApi.TrialsComparison.queryTrials(params);

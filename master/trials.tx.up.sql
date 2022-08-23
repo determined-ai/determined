@@ -35,7 +35,7 @@ CREATE AGGREGATE jsonb_collect(jsonb) (
 -- (trial_id, total_batches) on steps or validations. in which case,
 -- which trial_run_id is it appropriate to take the metrics from?
 -- there have been situations where they differ.
-CREATE OR REPLACE VIEW public.trials_augmented_view AS 
+CREATE OR REPLACE VIEW public.trials_augmented_view AS
   WITH b AS (
     select trial_id, max(total_batches) total_batches from steps group by trial_id
   )
@@ -60,7 +60,12 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
       -- temporary
       max(b.total_batches) as total_batches,
       max(e.config->'searcher'->>'metric') AS searcher_metric,
-      max(v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric')) AS searcher_metric_value
+      max(v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric_value,
+      max(CASE
+          WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true) 
+            THEN (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+            ELSE -1.0 * (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+      END) AS searcher_metric_loss
   FROM trials t
   LEFT JOIN experiments e ON t.experiment_id = e.id
   LEFT JOIN projects p ON e.project_id = p.id
@@ -74,3 +79,4 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
 -- is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
 -- does avg_metrics correspond to the actual state at that batch?
 -- or an average over previous batches?
+

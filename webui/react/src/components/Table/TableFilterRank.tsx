@@ -30,6 +30,17 @@ const TableFilterRange: React.FC<Props> = ({
   const [ orderBy, setOrderBy ] = useState(_orderBy);
   const [ rank, setRank ] = useState<number>(parseInt(_rank ?? '0'));
 
+  useEffect(() => {
+    const rankInt = parseInt(_rank ?? '0');
+    setRank(rankInt);
+  }, [ _rank ]);
+  useEffect(() => {
+    setColumn(_column);
+  }, [ _column ]);
+  useEffect(() => {
+    setOrderBy(_orderBy);
+  }, [ _orderBy ]);
+
   const handleReset = useCallback(() => {
     setColumn('searcherMetricValue');
     setOrderBy(V1OrderBy.ASC);

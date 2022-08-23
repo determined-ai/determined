@@ -754,6 +754,7 @@ class v1AugmentedTrial:
         workspaceId: int,
         rankWithinExp: "typing.Optional[int]" = None,
         searcherMetric: "typing.Optional[str]" = None,
+        searcherMetricLoss: "typing.Optional[float]" = None,
         searcherMetricValue: "typing.Optional[float]" = None,
     ):
         self.trialId = trialId
@@ -776,6 +777,7 @@ class v1AugmentedTrial:
         self.totalBatches = totalBatches
         self.searcherMetric = searcherMetric
         self.searcherMetricValue = searcherMetricValue
+        self.searcherMetricLoss = searcherMetricLoss
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AugmentedTrial":
@@ -800,6 +802,7 @@ class v1AugmentedTrial:
             totalBatches=obj["totalBatches"],
             searcherMetric=obj.get("searcherMetric", None),
             searcherMetricValue=float(obj["searcherMetricValue"]) if obj.get("searcherMetricValue", None) is not None else None,
+            searcherMetricLoss=float(obj["searcherMetricLoss"]) if obj.get("searcherMetricLoss", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -824,6 +827,7 @@ class v1AugmentedTrial:
             "totalBatches": self.totalBatches,
             "searcherMetric": self.searcherMetric if self.searcherMetric is not None else None,
             "searcherMetricValue": dump_float(self.searcherMetricValue) if self.searcherMetricValue is not None else None,
+            "searcherMetricLoss": dump_float(self.searcherMetricLoss) if self.searcherMetricLoss is not None else None,
         }
 
 class v1AwsCustomTag:
@@ -5026,19 +5030,19 @@ class v1QueryTrialsResponse:
     def __init__(
         self,
         *,
-        trials: "typing.Optional[typing.Sequence[v1AugmentedTrial]]" = None,
+        trials: "typing.Sequence[v1AugmentedTrial]",
     ):
         self.trials = trials
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryTrialsResponse":
         return cls(
-            trials=[v1AugmentedTrial.from_json(x) for x in obj["trials"]] if obj.get("trials", None) is not None else None,
+            trials=[v1AugmentedTrial.from_json(x) for x in obj["trials"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "trials": [x.to_json() for x in self.trials] if self.trials is not None else None,
+            "trials": [x.to_json() for x in self.trials],
         }
 
 class v1QueueControl:
@@ -6347,6 +6351,7 @@ class v1TrialFilters:
         states: "typing.Optional[typing.Sequence[determinedtrialv1State]]" = None,
         tags: "typing.Optional[typing.Sequence[v1TrialTag]]" = None,
         trainingMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
         userIds: "typing.Optional[typing.Sequence[int]]" = None,
         validationMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
         workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
@@ -6366,6 +6371,7 @@ class v1TrialFilters:
         self.states = states
         self.searcherMetric = searcherMetric
         self.searcherMetricValue = searcherMetricValue
+        self.trialIds = trialIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialFilters":
@@ -6385,6 +6391,7 @@ class v1TrialFilters:
             states=[determinedtrialv1State(x) for x in obj["states"]] if obj.get("states", None) is not None else None,
             searcherMetric=obj.get("searcherMetric", None),
             searcherMetricValue=v1NumberRangeFilter.from_json(obj["searcherMetricValue"]) if obj.get("searcherMetricValue", None) is not None else None,
+            trialIds=obj.get("trialIds", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -6404,6 +6411,7 @@ class v1TrialFilters:
             "states": [x.value for x in self.states] if self.states is not None else None,
             "searcherMetric": self.searcherMetric if self.searcherMetric is not None else None,
             "searcherMetricValue": self.searcherMetricValue.to_json() if self.searcherMetricValue is not None else None,
+            "trialIds": self.trialIds if self.trialIds is not None else None,
         }
 
 class v1TrialLogsFieldsResponse:

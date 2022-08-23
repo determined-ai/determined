@@ -115,7 +115,6 @@ const useModalTrialCollection = ({
 
   const modalOpen = useCallback(
     ({ initialModalProps, trials }: CollectionModalProps) => {
-
       setTrials(trials);
       const newProps = {
         ...initialModalProps,

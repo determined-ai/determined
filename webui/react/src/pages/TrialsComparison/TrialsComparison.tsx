@@ -10,6 +10,7 @@ import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial, V1OrderBy } from 'services/api-ts-sdk';
+import Message, { MessageType } from 'shared/components/Message';
 import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
 
@@ -59,33 +60,34 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   return (
     <Page className={css.base} containerRef={containerRef}>
-      <Section
-        bodyBorder
-        bodyScroll>
+      <Section bodyBorder bodyScroll>
         <div className={css.container}>
           <div className={css.chart}>
-            {/* <Grid
-              border={true}
-              // need to use screen size
-              minItemWidth={600}
-              mode={GridMode.AutoFill}>
-              <SyncProvider>
-                {chartSeries && trials.metrics.map((metric) => (
-                  <LearningCurveChart
-                    data={chartSeries.metrics?.[metricToKey(metric)] ?? initData}
-                    focusedTrialId={highlights.id}
-                    key={metricToKey(metric)}
-                    selectedMetric={metric}
-                    selectedScale={Scale.Linear}
-                    selectedTrialIds={A.selectedTrials}
-                    trialIds={trials.ids}
-                    xValues={chartSeries.batches}
-                    onTrialFocus={highlights.focus}
-                  />
-
-                )) }
-              </SyncProvider>
-            </Grid> */}
+            {trials.metrics.length === 0 ? (
+              <Message title="No Metrics for Selected Trials" type={MessageType.Empty} />
+            ) : (
+              <Grid
+                border={true}
+                // need to use screen size
+                minItemWidth={600}
+                mode={GridMode.AutoFill}>
+                <SyncProvider>
+                  {trials.metrics.map((metric) => (
+                    <LearningCurveChart
+                      data={chartSeries?.metrics?.[metricToKey(metric)] ?? initData}
+                      focusedTrialId={highlights.id}
+                      key={metricToKey(metric)}
+                      selectedMetric={metric}
+                      selectedScale={Scale.Linear}
+                      selectedTrialIds={A.selectedTrials}
+                      trialIds={trials.ids}
+                      xValues={chartSeries?.batches ?? []}
+                      onTrialFocus={highlights.focus}
+                    />
+                  ))}
+                </SyncProvider>
+              </Grid>
+            )}
           </div>
           {A.dispatcher}
           <TrialTable
@@ -101,7 +103,6 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
       {A.modalContextHolder}
       {C.modalContextHolder}
     </Page>
-
   );
 };
 

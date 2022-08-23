@@ -74,7 +74,21 @@ const TrialTable: React.FC<Props> = ({
   const { filters, setFilters } = C;
 
   const idColumn = useMemo(() => ({
-    defaultWidth: 80,
+    defaultWidth: 100,
+    filterDropdown: (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        searchable
+        validatorRegex={/\D/}
+        values={filters.trialIds}
+        onFilter={(trialIds: string[]) =>
+          setFilters?.((filters) => ({ ...filters, trialIds }))
+        }
+        onReset={() => setFilters?.((filters) => ({ ...filters, trialIds: [] }))}
+      />
+    ),
+    isFiltered: () => !!filters.trialIds?.length,
     key: 'trialId',
     render: (_: string, record: V1AugmentedTrial) => {
       const color = glasbeyColor(record.trialId);
@@ -89,7 +103,7 @@ const TrialTable: React.FC<Props> = ({
     },
     sorter: true,
     title: 'Trial ID',
-  }), []);
+  }), [ filters.trialIds, setFilters ]);
 
   const experimentIdColumn = useMemo(
     () => ({
@@ -104,7 +118,6 @@ const TrialTable: React.FC<Props> = ({
           onFilter={(experimentIds: string[]) =>
             setFilters?.((filters) => ({ ...filters, experimentIds }))
           }
-
           onReset={() => setFilters?.((filters) => ({ ...filters, experimentIds: [] }))}
         />
       ),
@@ -144,7 +157,7 @@ const TrialTable: React.FC<Props> = ({
           }
         />
       ),
-      isFiltered: () => !!filters.ranker?.rank,
+      isFiltered: () => filters.ranker?.rank ? parseInt(filters.ranker?.rank) !== 0 : false,
       key: 'rank',
       render: (_: string, record: V1AugmentedTrial) => (
         <div className={css.idLayout}>{record.rankWithinExp}</div>
@@ -336,7 +349,7 @@ const TrialTable: React.FC<Props> = ({
       />
     ),
     filters: users.map((user) => ({ text: getDisplayName(user), value: user.username })),
-    isFiltered: () => !!filters.userIds,
+    isFiltered: () => !!filters.userIds?.length,
     key: 'userId',
     render: (_: string, record: V1AugmentedTrial) => <UserAvatar userId={record.userId} />,
     sorter: true,
@@ -350,17 +363,17 @@ const TrialTable: React.FC<Props> = ({
     title: 'Total Batches',
   }), []);
 
-  const searcherMetricValueColumn = useMemo(() => ({
+  const searcherLossColumn = useMemo(() => ({
     defaultWidth: 110,
-    key: 'searcherMetricValue',
+    key: 'searcherMetricLoss',
     render: (_: string, record: V1AugmentedTrial) => (
-      <HumanReadableNumber num={record.searcherMetricValue} />
+      <HumanReadableNumber num={record.searcherMetricLoss} />
     ),
     sorter: true,
     title: (
       <BadgeTag
-        label="Value"
-        tooltip="Searcher Metric Value">
+        label="Loss"
+        tooltip="Searcher Metric Loss">
         S
       </BadgeTag>
     ),
@@ -392,7 +405,7 @@ const TrialTable: React.FC<Props> = ({
     tagColumn,
     userColumn,
     totalBatchesColumn,
-    searcherMetricValueColumn,
+    searcherLossColumn,
     searcherMetricColumn,
     searcherTypeColumn,
     experimentNameColumn,
@@ -400,21 +413,21 @@ const TrialTable: React.FC<Props> = ({
     startTimeColumn,
     endTimeColumn,
     ...hpColumns,
-    ...trainingMetricColumns,
+    // ...trainingMetricColumns,
     ...validationMetricColumns,
     actionColumn,
-  ].map((col) => ({ defaultWidth: 80, ...col, dataIndex: col.key })), [
+  ].map((col) => ({ ...col, dataIndex: col.key })), [
     actionColumn,
     idColumn,
     experimentIdColumn,
     expRankColumn,
     tagColumn,
     hpColumns,
-    trainingMetricColumns,
+    // trainingMetricColumns,
     validationMetricColumns,
     userColumn,
     totalBatchesColumn,
-    searcherMetricValueColumn,
+    searcherLossColumn,
     searcherMetricColumn,
     searcherTypeColumn,
     stateColumn,
@@ -423,9 +436,10 @@ const TrialTable: React.FC<Props> = ({
     endTimeColumn,
   ]);
 
-  // console.log(settings.columns);
+  // console.log(validationMetricColumns);
+
   useEffect(() => {
-    console.log('CCC', columns.map((c) => c.key));
+
     updateSettings({
       columns: columns.map((c) => c.key).slice(0, -1),
       columnWidths: columns.map((c) => c.defaultWidth),

@@ -27,6 +27,7 @@ export interface TrialFilters {
   states?: string[];
   tags?: string[];
   trainingMetrics?: NumberRangeDict;
+  trialIds?: string[];
   userIds?: string[];
   validationMetrics?:NumberRangeDict;
   workspaceIds?: string[];

@@ -22,7 +22,10 @@
 
   .alertSpinner { flex-grow: 1; }
 }
-
+  .chart {
+    height:400px;
+    overflow-y: scroll;
+  }
 // from compare
 
 // .base {
@@ -32,9 +35,7 @@
 //     min-height: 200px;
 //   }
 
-//   .chart {
-//     height: 400px;
-//   }
+
 // }
 
 // .waiting {

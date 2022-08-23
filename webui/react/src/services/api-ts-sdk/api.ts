@@ -1317,6 +1317,12 @@ export interface V1AugmentedTrial {
      * @memberof V1AugmentedTrial
      */
     searcherMetricValue?: number;
+    /**
+     * The loss for the trials searcher metric.
+     * @type {number}
+     * @memberof V1AugmentedTrial
+     */
+    searcherMetricLoss?: number;
 }
 
 /**
@@ -5584,7 +5590,7 @@ export interface V1QueryTrialsResponse {
      * @type {Array<V1AugmentedTrial>}
      * @memberof V1QueryTrialsResponse
      */
-    trials?: Array<V1AugmentedTrial>;
+    trials: Array<V1AugmentedTrial>;
 }
 
 /**
@@ -7159,6 +7165,12 @@ export interface V1TrialFilters {
      * @memberof V1TrialFilters
      */
     searcherMetricValue?: V1NumberRangeFilter;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1TrialFilters
+     */
+    trialIds?: Array<number>;
 }
 
 /**

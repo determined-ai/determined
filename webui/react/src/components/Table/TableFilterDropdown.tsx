@@ -106,7 +106,8 @@ const TableFilterDropdown: React.FC<Props> = ({
   }, [ confirm, onFilter, selectedMap ]);
 
   const handlePressEnter = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
+    e.stopPropagation();
+    // e.preventDefault();
     if (!inputRef.current?.input?.value) handleConfirm();
     if (validatorRegex) {
       const validatedInput = inputRef.current?.input?.value?.replace(validatorRegex, '');

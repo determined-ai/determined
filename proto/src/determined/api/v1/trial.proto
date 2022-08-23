@@ -144,6 +144,8 @@ message TrialFilters {
   string searcher_metric = 14;
   // Filter trials to those with a searcher metric within a given range
   NumberRangeFilter searcher_metric_value = 15;
+  // Filter trials to those with the provided ids
+  repeated int32 trial_ids = 16;
 }
 
 // Request to QueryTrials includes pagination parameters and TrialFilters
@@ -228,10 +230,15 @@ message AugmentedTrial {
   string searcher_metric = 19;
   // The value for the trials searcher metric.
   double searcher_metric_value = 20;
+  // The loss for the trials searcher metric.
+  double searcher_metric_loss = 21;
 }
 
 // Response for QueryTrials
 message QueryTrialsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trials" ] }
+  };
   // The trials matching the query, with extra data.
   repeated AugmentedTrial trials = 1;
 }
@@ -243,6 +250,8 @@ message TrialPatch {
   // Specifies that a tag will be removed
   repeated TrialTag remove_tag = 2;
 }
+
+
 
 // Request to patch trials. Can either specify a set of filters or
 // set of trial ids as the patch target.
