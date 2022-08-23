@@ -735,9 +735,8 @@ def set_gc_policy(args: Namespace) -> None:
             args.master, "experiments/{}/preview_gc".format(args.experiment_id), params=policy
         )
         response = r.json()
+        checkpoints = response["checkpoints"]
         metric_name = response["metric_name"]
-
-        checkpoints = get_fmted_checkpoints(unfmted_checkpoints=response["checkpoints"])
 
         headers = [
             "Trial ID",
@@ -749,14 +748,16 @@ def set_gc_policy(args: Namespace) -> None:
         ]
         values = [
             [
-                c["trial_id"],
-                c["step"]["total_batches"],
-                c["state"],
-                api.metric.get_validation_metric(metric_name, c["step"]["validation"]),
-                c["uuid"],
-                render.format_resources(c["resources"]),
+                c["TrialID"],
+                c["StepsCompleted"],
+                c["State"],
+                api.metric.get_validation_metric(
+                    metric_name, {"metrics": {"validation_metrics": c["ValidationMetrics"]}}
+                ),
+                c["UUID"],
+                render.format_resources(c["Resources"]),
             ]
-            for c in sorted(checkpoints, key=lambda c: (c["trial_id"], c["end_time"]))
+            for c in sorted(checkpoints, key=lambda c: (c["TrialID"], c["ReportTime"]))
             if "step" in c and c["step"].get("validation")
         ]
 
@@ -773,15 +774,11 @@ def set_gc_policy(args: Namespace) -> None:
             )
         )
 
-    if (
-        args.yes
-        or args.test
-        or render.yes_or_no(
-            "Changing the checkpoint garbage collection policy of an "
-            "experiment may result\n"
-            "in the unrecoverable deletion of checkpoints.  Do you wish to "
-            "proceed?"
-        )
+    if args.yes or render.yes_or_no(
+        "Changing the checkpoint garbage collection policy of an "
+        "experiment may result\n"
+        "in the unrecoverable deletion of checkpoints.  Do you wish to "
+        "proceed?"
     ):
         patch_experiment(args, "change gc policy of", {"checkpoint_storage": policy})
         print("Set GC policy of experiment {} to\n{}".format(args.experiment_id, pformat(policy)))
@@ -1159,12 +1156,6 @@ main_cmd = Cmd(
                             action="store_true",
                             default=False,
                             help="automatically answer yes to prompts",
-                        ),
-                        Arg(
-                            "--test",
-                            type=int,
-                            default=False,
-                            help="for an internal e2e test",
                         ),
                     ],
                 ),

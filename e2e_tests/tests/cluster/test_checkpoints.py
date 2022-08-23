@@ -17,6 +17,10 @@ from determined.common.api.bindings import determinedcheckpointv1State
 from tests import config as conf
 from tests import experiment as exp
 
+from .test_users import det_spawn
+
+EXPECT_TIMEOUT = 5
+
 
 def wait_for_gc_to_finish(experiment_id: int) -> None:
     certs.cli_cert = certs.default_load(conf.make_master_url())
@@ -69,12 +73,9 @@ def run_command_gc_policy(
     save_exp_best: str, save_trial_latest: str, save_trial_best: str, exp_id: str
 ) -> None:
     command = [
-        "det",
         "e",
         "set",
         "gc-policy",
-        "--test",
-        str(1),
         "--save-experiment-best",
         str(save_exp_best),
         "--save-trial-best",
@@ -83,12 +84,14 @@ def run_command_gc_policy(
         str(save_trial_latest),
         str(exp_id),
     ]
-    completed_process = subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
-        completed_process.stdout, completed_process.stderr
-    )
+
+    child = det_spawn(command)
+    child.expect("Do you wish to " "proceed?", timeout=EXPECT_TIMEOUT)
+    child.sendline("y")
+    child.read()
+    child.wait()
+    child.close()
+    assert child.exitstatus == 0
 
 
 @pytest.mark.e2e_gpu
