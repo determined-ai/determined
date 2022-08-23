@@ -342,13 +342,13 @@ const CodeViewer: React.FC<Props> = ({
                   */
                   <Tooltip title="Download File">
                     {
-                      !String(activeFile.key).includes('config') && (
+                      !String(activeFile.key).includes('Configuration') && (
                         // hiding the download for configs until next iteration
                         <DownloadOutlined
                           className={css.noBorderButton}
                           onClick={(e) => {
                             const filePath = String(activeFile.key);
-                            if (filePath.includes('config')) {
+                            if (filePath.includes('Configuration')) {
                               const url = filePath.includes('runtime')
                                 ? URL.createObjectURL(new Blob([ runtimeConfig ]))
                                 : URL.createObjectURL(new Blob([ submittedConfig as string ]));
