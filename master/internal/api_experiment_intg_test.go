@@ -101,17 +101,14 @@ func TestGetExperiments(t *testing.T) {
 		ProjectID: int(pid),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp0))
-	var trialIDs []int32
 	for i := 0; i < 3; i++ {
 		task := &model.Task{TaskType: model.TaskTypeTrial}
 		require.NoError(t, api.m.db.AddTask(task))
-		trial := &model.Trial{
+		require.NoError(t, api.m.db.AddTrial(&model.Trial{
 			State:        model.PausedState,
 			ExperimentID: exp0.ID,
 			TaskID:       task.TaskID,
-		}
-		require.NoError(t, api.m.db.AddTrial(trial))
-		trialIDs = append(trialIDs, int32(trial.ID))
+		}))
 	}
 	exp0Expected := &experimentv1.Experiment{
 		Id:             int32(exp0.ID),
@@ -122,7 +119,6 @@ func TestGetExperiments(t *testing.T) {
 		EndTime:        timestamppb.New(endTime),
 		Archived:       false,
 		NumTrials:      3,
-		TrialIds:       trialIDs,
 		DisplayName:    "admin",
 		UserId:         1,
 		Username:       "admin",
@@ -164,7 +160,6 @@ func TestGetExperiments(t *testing.T) {
 		State:          experimentv1.State_STATE_ERROR,
 		Archived:       true,
 		NumTrials:      0,
-		TrialIds:       []int32{},
 		DisplayName:    userResp.User.DisplayName,
 		UserId:         userResp.User.Id,
 		Username:       userResp.User.Username,

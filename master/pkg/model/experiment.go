@@ -1,13 +1,10 @@
 package model
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 
@@ -20,9 +17,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -81,11 +76,6 @@ const (
 func StateFromProto(state experimentv1.State) State {
 	str := state.String()
 	return State(strings.TrimPrefix(str, "STATE_"))
-}
-
-// ToProto maps State to experimentv1.State.
-func (s State) ToProto() experimentv1.State {
-	return (experimentv1.State)(experimentv1.State_value["STATE_"+string(s)])
 }
 
 // States and transitions
@@ -283,146 +273,6 @@ var CheckpointTransitions = map[State]map[State]bool{
 var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Database row types.
-
-// TrialBun is used to get trial information from querying experiments.
-type TrialBun struct {
-	bun.BaseModel `bun:"table:trials,alias:t"`
-	ID            int `bun:"id,pk"`
-	ExperimentID  int `bun:"experiment_id"`
-}
-
-// UserBun is used to get user information from querying experiments.
-type UserBun struct {
-	bun.BaseModel `bun:"table:users,alias:u"`
-	ID            UserID  `bun:"id,pk"`
-	Username      string  `bun:"username"`
-	DisplayName   *string `bun:"display_name"`
-}
-
-// ProjectBun is used to get project information from querying experiments.
-type ProjectBun struct {
-	bun.BaseModel `bun:"table:projects,alias:p"`
-	ID            int           `bun:"id,pk"`
-	Name          string        `bun:"name"`
-	Archived      bool          `bun:"archived"`
-	WorkspaceID   int           `bun:"workspace_id"`
-	Workspace     *WorkspaceBun `bun:"rel:belongs-to,join:workspace_id=id"`
-}
-
-// WorkspaceBun is used to get workspace information from querying experiments.
-type WorkspaceBun struct {
-	bun.BaseModel `bun:"table:workspaces,alias:w"`
-	ID            int    `bun:"id,pk"`
-	Name          string `bun:"name"`
-	Archived      bool   `bun:"archived"`
-}
-
-// ExperimentBun is used to get experiment information.
-type ExperimentBun struct {
-	bun.BaseModel `bun:"table:experiments,alias:e"`
-	ID            int                      `bun:"id,pk"`
-	StartTime     time.Time                `bun:"start_time"`
-	EndTime       *time.Time               `bun:"end_time"`
-	State         State                    `bun:"state"`
-	Archived      bool                     `bun:"archived"`
-	Trials        []*TrialBun              `bun:"rel:has-many,join:id=experiment_id"`
-	OwnerID       UserID                   `bun:"owner_id"`
-	User          *UserBun                 `bun:"rel:belongs-to,join:owner_id=id"`
-	Notes         *string                  `bun:"notes"`
-	JobID         JobID                    `bun:"job_id"`
-	ParentID      *int                     `bun:"parent_id"`
-	Progress      *float64                 `bun:"progress"`
-	ProjectID     int                      `bun:"project_id"`
-	Project       *ProjectBun              `bun:"rel:belongs-to,join:project_id=id"`
-	Config        expconf.ExperimentConfig `bun:"config"`
-}
-
-// ToProto maps an ExperimentBun to an experimentv1.Experiment.
-func (e *ExperimentBun) ToProto() (*experimentv1.Experiment, error) {
-	var endTime *timestamppb.Timestamp
-	if e.EndTime != nil {
-		endTime = timestamppb.New(*e.EndTime)
-	}
-
-	desc := ""
-	if e.Config.RawDescription != nil {
-		desc = *e.Config.RawDescription
-	}
-	var labels []string
-	for l := range e.Config.RawLabels {
-		labels = append(labels, l)
-	}
-
-	trialIDs := make([]int32, len(e.Trials))
-	for i, t := range e.Trials {
-		trialIDs[i] = int32(t.ID)
-	}
-
-	displayName := e.User.Username
-	if e.User.DisplayName != nil {
-		displayName = *e.User.DisplayName
-	}
-
-	resourcePool := ""
-	if e.Config.RawResources != nil && e.Config.RawResources.RawResourcePool != nil {
-		resourcePool = *e.Config.RawResources.RawResourcePool
-	}
-	searcher := ""
-	if e.Config.RawSearcher != nil {
-		searcher = e.Config.RawSearcher.Name()
-	}
-
-	notes := ""
-	if e.Notes != nil && *e.Notes != "" {
-		notes = "omitted"
-	}
-
-	var forkedFrom *wrapperspb.Int32Value
-	if e.ParentID != nil {
-		forkedFrom = wrapperspb.Int32(int32(*e.ParentID))
-	}
-	var progress *wrapperspb.DoubleValue
-	if e.Progress != nil {
-		progress = wrapperspb.Double(*e.Progress)
-	}
-
-	bytes, err := json.Marshal(e.Config)
-	if err != nil {
-		return nil, err
-	}
-	config := &structpb.Struct{}
-	if err = config.UnmarshalJSON(bytes); err != nil {
-		return nil, err
-	}
-
-	return &experimentv1.Experiment{
-		Id:             int32(e.ID),
-		Description:    desc,
-		Labels:         labels,
-		StartTime:      timestamppb.New(e.StartTime),
-		EndTime:        endTime,
-		State:          e.State.ToProto(),
-		Archived:       e.Archived,
-		NumTrials:      int32(len(trialIDs)),
-		TrialIds:       trialIDs,
-		DisplayName:    displayName,
-		UserId:         int32(e.OwnerID),
-		Username:       e.User.Username,
-		ResourcePool:   resourcePool,
-		SearcherType:   searcher,
-		Name:           e.Config.RawName.String(),
-		Notes:          notes,
-		JobId:          string(e.JobID),
-		ForkedFrom:     forkedFrom,
-		Progress:       progress,
-		ProjectName:    e.Project.Name,
-		ProjectId:      int32(e.ProjectID),
-		WorkspaceId:    int32(e.Project.Workspace.ID),
-		WorkspaceName:  e.Project.Workspace.Name,
-		ParentArchived: e.Project.Workspace.Archived || e.Project.Archived,
-		Config:         config,
-	}, nil
-}
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
