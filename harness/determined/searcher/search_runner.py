@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from determined.common.api import bindings
-from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason, determinedexperimentv1State
+from determined.common.api.bindings import (
+    determinedexperimentv1State,
+    v1SearcherEvent,
+    v1TrialExitedEarlyExitedReason,
+)
 from determined.experimental import client
 from determined.searcher.search_method import ExitedReason, Operation, Progress, SearchMethod
 
@@ -22,8 +26,8 @@ class _ExperimentInactiveException(Exception):
 
 class SearchRunner:
     def __init__(
-            self,
-            search_method: SearchMethod,
+        self,
+        search_method: SearchMethod,
     ) -> None:
         self.search_method = search_method
 
@@ -140,6 +144,7 @@ class SearchRunner:
                         assert event.id is not None  # TODO change proto to make id mandatory
                         self.search_method.searcher_state.last_event_id = event.id
                         self.save_state(experiment_id, operations)
+
                     first_event = False
 
                     self.post_operations(session, experiment_id, event, operations)
@@ -199,9 +204,9 @@ class SearchRunner:
 
 class LocalSearchRunner(SearchRunner):
     def __init__(
-            self,
-            search_method: SearchMethod,
-            searcher_dir: Optional[Path] = None,
+        self,
+        search_method: SearchMethod,
+        searcher_dir: Optional[Path] = None,
     ):
         super().__init__(search_method)
         self.state_path = None
@@ -215,9 +220,9 @@ class LocalSearchRunner(SearchRunner):
             )
 
     def run(
-            self,
-            exp_config: Dict[str, Any],
-            context_dir: Optional[str] = None,
+        self,
+        exp_config: Dict[str, Any],
+        context_dir: Optional[str] = None,
     ) -> int:
         """
         Run custom search without an experiment id
