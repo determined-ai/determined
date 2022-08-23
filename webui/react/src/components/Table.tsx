@@ -156,7 +156,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
-  <Space>
+  <Space className={css.wordBreak}>
     <div style={{ paddingInline: 4 }}>
       <Icon name="model" size="medium" />
     </div>
