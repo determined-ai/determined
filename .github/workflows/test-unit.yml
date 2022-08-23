@@ -1,0 +1,47 @@
+---
+name: "Run unit tests"
+
+on:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - 'docs/*'
+      - 'webui/*'
+  push:
+    branches:
+      - 'main'
+      - 'releases/**'
+
+jobs:
+  test-unit-harness-gpu:
+    runs-on: [self-hosted, multi-gpu-runner]
+    steps:
+      - uses: actions/checkout@v3
+      - name: set VERSION env var
+        shell: bash
+        run: echo "VERSION=$(< ./VERSION )" >> $GITHUB_ENV
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7.11
+      - name: Install dependencies
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip --version
+          # Windows needs special treatment of cryptography for unknown reasons.
+          # LMDB also has special requirements that only apply to windows (patch-ng).
+          pip install wheel cryptography patch-ng
+          cd harness; python setup.py bdist_wheel -d ../build
+      - name: Install test dependencies
+        run: |
+          pip install tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov
+          pip install -r harness/tests/requirements/requirements-harness.txt
+          pip freeze --all
+          # Allow this to fail, but it is useful for debugging.
+          pip check || true
+      - name: Run tests
+        run: |
+          COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
+          coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+          codecov -v -F harness
