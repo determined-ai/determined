@@ -1,4 +1,4 @@
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { V1AugmentedTrial, V1QueryTrialsResponse } from 'services/api-ts-sdk';
 import { Primitive, RawJson } from 'shared/types';
 import { clone, flattenObject } from 'shared/utils/data';
 import { union } from 'shared/utils/set';
@@ -49,6 +49,7 @@ export interface TrialsWithMetadata {
   maxBatch: number;
   metricKeys: Record<MetricKey, boolean>;
   metrics: Metric[];
+  total: number;
 }
 
 export const aggregrateTrialsMetadata =
@@ -63,6 +64,7 @@ export const aggregrateTrialsMetadata =
     maxBatch: Math.max(agg.maxBatch, trial.totalBatches),
     metricKeys: { ...agg.metricKeys, ...tMetrics, ...vMetrics },
     metrics: [],
+    total: 0, //overwritten outside
   };
 };
 
@@ -73,13 +75,14 @@ export const defaultTrialData = {
   maxBatch: 1,
   metricKeys: {},
   metrics: [],
+  total: 0,
 };
 
 export const decodeTrialsWithMetadata = (
-  trials?: V1AugmentedTrial[],
+  response?: V1QueryTrialsResponse,
 ): TrialsWithMetadata => {
-  if (!trials) return clone(defaultTrialData);
-  const t = trials.reduce(aggregrateTrialsMetadata, clone(defaultTrialData));
+  if (!response?.trials) return clone(defaultTrialData);
+  const t = response.trials?.reduce(aggregrateTrialsMetadata, clone(defaultTrialData));
 
   // const tmpFunc = (k) => {
   //   const foo = metricKeyToMetric(k);
@@ -95,10 +98,5 @@ export const decodeTrialsWithMetadata = (
   const metrics = Object.keys(t.metricKeys)
     .map(metricKeyToMetric) as Metric[];
 
-  // console.log({ metrics });
-
-  // console.log('metrics json', JSON.stringify(metrics));
-  // console.log('metrics obj', metrics);
-
-  return { ...t, metrics: metrics };
+  return { ...t, metrics, total: response?.total ?? 0 };
 };

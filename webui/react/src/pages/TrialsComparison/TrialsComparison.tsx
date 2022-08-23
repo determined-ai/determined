@@ -96,6 +96,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
             containerRef={containerRef}
             highlights={highlights}
             tableSettingsHook={tableSettingsHook}
+            total={trials.total}
             trialsWithMetadata={trials}
           />
         </div>

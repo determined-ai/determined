@@ -5000,30 +5000,26 @@ class v1QueryTrialsRequest:
         self,
         *,
         filters: "v1TrialFilters",
-        limit: "typing.Optional[int]" = None,
-        offset: "typing.Optional[int]" = None,
+        pagination: "typing.Optional[v1PaginationRequest]" = None,
         sorter: "typing.Optional[v1TrialSorter]" = None,
     ):
         self.filters = filters
         self.sorter = sorter
-        self.offset = offset
-        self.limit = limit
+        self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryTrialsRequest":
         return cls(
             filters=v1TrialFilters.from_json(obj["filters"]),
             sorter=v1TrialSorter.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
-            offset=obj.get("offset", None),
-            limit=obj.get("limit", None),
+            pagination=v1PaginationRequest.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "filters": self.filters.to_json(),
             "sorter": self.sorter.to_json() if self.sorter is not None else None,
-            "offset": self.offset if self.offset is not None else None,
-            "limit": self.limit if self.limit is not None else None,
+            "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
 class v1QueryTrialsResponse:
@@ -5033,6 +5029,8 @@ class v1QueryTrialsResponse:
         trials: "typing.Sequence[v1AugmentedTrial]",
     ):
         self.trials = trials
+        self.pagination = pagination
+        self.total = total
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryTrialsResponse":

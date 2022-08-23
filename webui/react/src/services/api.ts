@@ -112,7 +112,7 @@ export const updateJobQueue = generateDetApi<
 export const queryTrials = generateDetApi<
   Api.V1QueryTrialsRequest,
   Api.V1QueryTrialsResponse,
-  Api.V1AugmentedTrial[]
+  Api.V1QueryTrialsResponse
 >(Config.queryTrials);
 
 export const patchTrials = generateDetApi<

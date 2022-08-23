@@ -10,7 +10,7 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import {
   getFullPaginationConfig,
-  getPaginationConfig,
+
   relativeTimeRenderer,
 } from 'components/Table/Table';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
@@ -44,6 +44,7 @@ interface Props {
   containerRef : MutableRefObject<HTMLElement | null>,
   highlights: Highlights<V1AugmentedTrial>;
   tableSettingsHook: SettingsHook<InteractiveTableSettings>;
+  total: number;
   trialsWithMetadata: TrialsWithMetadata;
 }
 
@@ -65,6 +66,7 @@ const TrialTable: React.FC<Props> = ({
   containerRef,
   highlights,
   tableSettingsHook,
+  total,
 }: Props) => {
 
   const { settings, updateSettings } = tableSettingsHook;
@@ -439,24 +441,32 @@ const TrialTable: React.FC<Props> = ({
   // console.log(validationMetricColumns);
 
   useEffect(() => {
-
     updateSettings({
       columns: columns.map((c) => c.key).slice(0, -1),
       columnWidths: columns.map((c) => c.defaultWidth),
     });
   }, [ columns.length ]);
 
-  const total = trials.data.length;
+  const pagination = useMemo(() => {
+    const limit = settings.tableLimit;
+    const offset = settings.tableOffset;
+    // right now we are getting total from API. but this results in an extra
+    // (more expensive) query to get the total row count in order to display
+    // how many pages there are in the table. this is a hack to make it always
+    // display 2 additional pages beyond the current
+    const fakeTotal = offset + 2 * limit + 1;
+    return getFullPaginationConfig({
+      limit,
+      offset,
+    }, total);
+  }, [ settings.tableLimit, settings.tableOffset, total ]);
+
   return (
     <InteractiveTable<V1AugmentedTrial>
       columns={columns}
       containerRef={containerRef}
       dataSource={trials.data}
-      pagination={getFullPaginationConfig({
-        limit: settings.tableLimit,
-        offset: settings.tableOffset,
-        total,
-      }, total)}
+      pagination={pagination}
       rowClassName={highlights.rowClassName}
       rowKey="trialId"
       rowSelection={{

@@ -251,11 +251,11 @@ export const getResourceAllocationAggregated: DetApi<
 
 /* Trials */
 export const queryTrials: DetApi<
-  Api.V1QueryTrialsRequest, Api.V1QueryTrialsResponse, V1AugmentedTrial[]
+  Api.V1QueryTrialsRequest, Api.V1QueryTrialsResponse, Api.V1QueryTrialsResponse
 > = {
   name: 'queryTrials',
-  postProcess: (response: Api.V1QueryTrialsResponse): V1AugmentedTrial[] => {
-    return response.trials;
+  postProcess: (response: Api.V1QueryTrialsResponse): Api.V1QueryTrialsResponse => {
+    return response;
   },
   request: (params: Api.V1QueryTrialsRequest) => {
     return detApi.TrialsComparison.queryTrials(params);

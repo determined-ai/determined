@@ -441,7 +441,7 @@ func (a *apiServer) QueryTrials(ctx context.Context,
 		int(req.Limit),
 	)
 
-	err = q.Scan(context.TODO())
+	count, err := q.ScanAndCount(context.TODO())
 
 	if err != nil {
 		return nil, fmt.Errorf("error querying for trials %w", err)
@@ -452,6 +452,8 @@ func (a *apiServer) QueryTrials(ctx context.Context,
 	for _, trial := range trials {
 		resp.Trials = append(resp.Trials, trial.Proto())
 	}
+
+	resp.Total = int32(count)
 
 	return &resp, nil
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { queryTrials } from 'services/api';
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { V1AugmentedTrial, V1QueryTrialsResponse } from 'services/api-ts-sdk';
 import { clone } from 'shared/utils/data';
 import handleError from 'utils/error';
 
@@ -24,11 +24,11 @@ export const useFetchTrials = ({
 }: Params): TrialsWithMetadata => {
   const [ trials, setTrials ] = useState<TrialsWithMetadata>(clone(defaultTrialData));
   const fetchTrials = useCallback(async () => {
-    let trials: V1AugmentedTrial[] = [];
+    let response: V1QueryTrialsResponse | undefined = undefined;
     const _filters = encodeFilters(filters);
     const _sorter = encodeTrialSorter(sorter);
     try {
-      trials = await queryTrials({
+      response = await queryTrials({
         filters: _filters,
         limit,
         offset,
@@ -38,7 +38,7 @@ export const useFetchTrials = ({
       handleError(e, { publicSubject: 'Unable to fetch trials.' });
     }
 
-    const newTrials = decodeTrialsWithMetadata(trials);
+    const newTrials = decodeTrialsWithMetadata(response);
     setTrials(newTrials);
 
   }, [ filters, limit, offset, sorter ]);
