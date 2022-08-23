@@ -169,6 +169,10 @@ For an introduction to using the training API, please see the Training APIs sect
    -  -  DeepSpeed (PyTorch)
       -  MNIST / CIFAR-10
       -  :download:`deepspeed_dcgan.tgz </examples/deepspeed_dcgan.tgz>`
+   
+   -  -  DeepSpeed (PyTorch)
+      -  CIFAR-10
+      -  :download:`cifar10_cpu_offloading.tgz </examples/cifar10_cpu_offloading.tgz>`
 
 ************************
  HP Search Benchmarking
