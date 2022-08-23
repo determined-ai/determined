@@ -712,22 +712,23 @@ def make_amp_workloads(
         if "scaled_loss" in metrics:
             assert scaled_loss == metrics["scaled_loss"]
         growth_countdown -= 1
-        if (scale := metrics["scale"]) != scale_before:
+        scale = metrics["scale"]
+        if scale != scale_before:
             if scale < scale_before:
                 assert scaled_loss > 32758, (
                     f"scale reduced from {scale_before} to {scale}, "
-                    f"but not as expected ({scaled_loss=} <= 32758)"
+                    f"but not as expected (scaled_loss={scaled_loss} <= 32758)"
                 )
             else:
                 assert growth_countdown == 0, (
                     f"scale grew from {scale_before} to {scale}, "
-                    f"but not when expected ({growth_countdown=:d})"
+                    f"but not when expected (growth_countdown={growth_countdown:d})"
                 )
             growth_countdown = GROWTH_INTERVAL
         else:
             assert (
                 growth_countdown != 0
-            ), f"scaled was expected to grow ({growth_countdown=}) but did not"
+            ), f"scale was expected to grow (growth_countdown={growth_countdown}) but did not"
 
             # Check the accuracy of the gradient change.
             metric_keyname_pairs = [("loss", "loss_exp"), ("w_after", "w_exp")]
