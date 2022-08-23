@@ -192,6 +192,10 @@ def default_load(
             cert_pem = None
         return Cert(cert_pem=cert_pem, noverify=explicit_noverify, name=explicit_cert_name)
 
+    print("INSIDE DEFAULT LOAD")
+    print(os.environ)
+    print()
+
     # Let any environment variable for CERT_FILE override the default store.
     env_path = os.environ.get("DET_MASTER_CERT_FILE")
     noverify = False

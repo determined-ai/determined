@@ -61,6 +61,7 @@ func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
 	*model.User, *model.UserSession, error,
 ) {
 	if ext.JwtKey != "" {
+		fmt.Println("JWTKEY")
 		return db.UserByExternalToken(token, ext)
 	}
 
@@ -69,6 +70,7 @@ func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
 	var session model.UserSession
 	err := v2.Verify(token, db.tokenKeys.PublicKey, &session, nil)
 	if err != nil {
+		fmt.Println("ERR NOT FOUND USERBYTOKEN")
 		return nil, nil, ErrNotFound
 	}
 
@@ -76,10 +78,12 @@ func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
 	if err := db.query(query, &session, session.ID); errors.Cause(err) == ErrNotFound {
 		return nil, nil, ErrNotFound
 	} else if err != nil {
+		fmt.Println("DB QUERY REPORTED ERROR")
 		return nil, nil, err
 	}
 
 	if session.Expiry.Before(time.Now()) {
+		fmt.Println("SESSION EXPIRY")
 		return nil, nil, ErrNotFound
 	}
 
@@ -88,11 +92,14 @@ func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
 SELECT users.* FROM users
 JOIN user_sessions ON user_sessions.user_id = users.id
 WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound {
+		fmt.Println("DB ERROR NOT FOUND")
 		return nil, nil, ErrNotFound
 	} else if err != nil {
+		fmt.Println("OTHER DB ERROR")
 		return nil, nil, err
 	}
 
+	fmt.Println("MADE IT TO THE END?")
 	return &user, &session, nil
 }
 

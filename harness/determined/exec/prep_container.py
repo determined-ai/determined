@@ -18,13 +18,16 @@ from determined.util import force_create_symlink
 
 
 def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
+    print("INSIDE TRIAL PREP")
+    print("TOKEN IS:", os.environ["DET_SESSION_TOKEN"])
+    print()
     trial_info = det.TrialInfo._from_env()
     trial_info._to_file()
 
     path = f"api/v1/experiments/{trial_info.experiment_id}/model_def"
     resp = None
     try:
-        resp = request.get(info.master_url, path=path, cert=cert)
+        resp = request.get(info.master_url, headers={"Authorization": "Bearer " + os.environ["DET_USER_TOKEN"]}, path=path, cert=cert)
         resp.raise_for_status()
     except Exception:
         # Since this is the very first api call in the entrypoint script, and the call is made
@@ -56,6 +59,7 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
     with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as model_def:
         # Ensure all members of the tarball resolve to subdirectories.
         for path in model_def.getnames():
+            print(path)
             if os.path.relpath(path).startswith("../"):
                 raise ValueError(f"'{path}' in tarball would expand to a parent directory")
         model_def.extractall(path=constants.MANAGED_TRAINING_MODEL_COPY)
@@ -254,6 +258,7 @@ if __name__ == "__main__":
     logging.debug("running prep_container")
 
     cert = certs.default_load(info.master_url)
+    print("CERT:", cert)
     sess = api.Session(
         info.master_url,
         util.get_det_username_from_env(),
