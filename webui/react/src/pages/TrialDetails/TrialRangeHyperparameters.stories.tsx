@@ -250,7 +250,6 @@ const TrialRangeHyperparametersContainer = () => {
     state: RunState.Completed,
     totalBatchesProcessed: 58,
     totalCheckpointSize: 13700356,
-    workloadCount: 3,
   };
 
   const storeDispatch = useStoreDispatch();

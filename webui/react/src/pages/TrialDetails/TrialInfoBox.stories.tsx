@@ -38,7 +38,6 @@ const sampleTrialItem: TrialItem = {
 const trialDetails: TrialDetails = {
   ...sampleTrialItem,
   totalCheckpointSize: 0,
-  workloadCount: 0,
 };
 
 const experimentDetails: ExperimentBase = {

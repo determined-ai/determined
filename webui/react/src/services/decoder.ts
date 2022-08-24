@@ -581,7 +581,6 @@ export const decodeTrialResponseToTrialDetails = (
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
     totalCheckpointSize: Number(data.trial.totalCheckpointSize) || 0,
-    workloadCount: data.trial.workloadCount || 0,
   };
 };
 
