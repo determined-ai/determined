@@ -130,15 +130,16 @@ def test_run_random_searcher_exp() -> None:
     "exceptions",
     [
         ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
-        ["on_validation_completed", "on_trial_closed_end", "on_trial_created_3"],
+        ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
         [
-            "on_trial_created_3",
+            "on_trial_created",
             "save_method_state",
             "load_method_state",
             "save_method_state",
             "save_method_state",
             "on_validation_completed",
-            "save_method_state" "save_method_state",
+            "save_method_state",
+            "save_method_state",
         ],
     ],
 )
@@ -221,8 +222,9 @@ class RandomSearchMethod(SearchMethod):
         self.closed_trials = 0
 
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
-        if self.created_trials == 3:
-            self.raise_exception("on_trial_created_3")
+        self.raise_exception("on_trial_created")
+        if self.created_trials == 5:
+            self.raise_exception("on_trial_created_5")
         self._log_stats()
         return []
 
