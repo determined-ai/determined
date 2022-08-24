@@ -968,7 +968,10 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 		Impersonate(impersonatedUser).
 		Execute()
 	if err != nil {
-		ctx.Log().Errorf("Failed to launch Manifest.\n%v\n%v", response, err)
+		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
+			"{%v}, response: {%v}. Verify that the launcher service is up and reachable."+
+			" Try a restart the launcher service followed by a restart of the "+
+			"determined-master service. ", err, response)
 		return
 	}
 	ctx.Log().Debug(fmt.Sprintf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId()))
@@ -1187,7 +1190,9 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 			// So we can show the HTTP status code, if available.
 			httpStatus = fmt.Sprintf("(HTTP status %d)", response.StatusCode)
 		}
-		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s", httpStatus)
+		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s. "+
+			"Verify that the launcher service is up and reachable. Try a restart the "+
+			"launcher service followed by a restart of the determined-master service.", httpStatus)
 	}
 	return dispatchInfo.GetDispatchId(), nil
 }
