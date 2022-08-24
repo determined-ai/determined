@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -92,6 +93,16 @@ func (a *ProjectAuthZBasic) CanMoveProject(
 ) error {
 	if !curUser.Admin && curUser.ID != model.UserID(project.UserId) {
 		return fmt.Errorf("non admin users can't move projects that someone else owns")
+	}
+	return nil
+}
+
+// CanMoveProjectExperiments returns an error if the user isn't a admin or owner of a project.
+func (a *ProjectAuthZBasic) CanMoveProjectExperiments(
+	curUser model.User, exp *experimentv1.Experiment, from, to *projectv1.Project,
+) error {
+	if !curUser.Admin && curUser.ID != model.UserID(exp.UserId) {
+		return fmt.Errorf("non admin users can't move others' experiments")
 	}
 	return nil
 }

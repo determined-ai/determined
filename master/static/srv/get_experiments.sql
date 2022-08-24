@@ -25,7 +25,8 @@ WITH page_info AS (
     ), $9, $10) AS page_info
 ),
 pj AS (
-  SELECT projects.id, projects.name AS project_name, workspaces.name AS workspace_name
+  SELECT projects.id, projects.name AS project_name, projects.user_id AS project_owner_id,
+    workspaces.name AS workspace_name
   FROM projects
   JOIN workspaces ON workspaces.id = projects.workspace_id
 ),
@@ -55,6 +56,7 @@ exps AS (
         u.username AS username,
         COALESCE(u.display_name, u.username) as display_name,
         pj.project_name,
+        pj.project_owner_id,
         pj.workspace_name
     FROM experiments e
     JOIN users u ON e.owner_id = u.id
