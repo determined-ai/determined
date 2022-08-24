@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { AutoComplete, Input, Tag, Tooltip } from 'antd';
 import type { InputRef } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -26,7 +26,7 @@ const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
 const EditableTagList: React.FC<Props> = (
-  { compact, disabled = false, ghost, tagCandidates, tags, onChange }: Props,
+  { compact, disabled = false, ghost, tagCandidates = [], tags, onChange }: Props,
 ) => {
   const initialState = {
     editInputIndex: -1,
@@ -36,6 +36,7 @@ const EditableTagList: React.FC<Props> = (
   const [ state, setState ] = useState(initialState);
   const [ showMore, setShowMore ] = useState<boolean>(false);
   const [ isCandidateOpen, setIsCandidateOpen ] = useState<boolean>(false);
+  const [ candidateTags, setCandidateTags ] = useState<string[]>([ ...tagCandidates ]);
   const inputRef = useRef<InputRef>(null);
   const editInputRef = useRef<InputRef>(null);
 
@@ -71,6 +72,7 @@ const EditableTagList: React.FC<Props> = (
       if (!updatedTags.includes(newTag)) {
         updatedTags.push(newTag);
       }
+      setCandidateTags(updatedTags);
       onChange?.(updatedTags);
     }
     setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
@@ -88,10 +90,13 @@ const EditableTagList: React.FC<Props> = (
   }, [ handleInputConfirm, isCandidateOpen ]);
 
   const candidates = useMemo(() => {
-    return tagCandidates?.map((candidate) => ({ label: candidate, value: candidate }));
-  }, [ tagCandidates ]);
+    return candidateTags?.map((candidate) => ({ label: candidate, value: candidate }));
+  }, [ candidateTags ]);
 
-  const onCandidateChange = useCallback(() => setIsCandidateOpen(true), []);
+  const onCandidateChange = useCallback((value: string) => {
+    const data = candidates?.filter((candidate) => candidate.value.includes(value));
+    setIsCandidateOpen((data?.length ?? 0) > 0);
+  }, [ candidates ]);
 
   const onCandidateSelect = useCallback(() => setIsCandidateOpen(false), []);
 
@@ -99,6 +104,10 @@ const EditableTagList: React.FC<Props> = (
 
   const classes = [ css.base ];
   if (ghost) classes.push(css.ghost);
+
+  useLayoutEffect(() => {
+    setCandidateTags(tagCandidates);
+  }, [ tagCandidates ]);
 
   return (
     <div aria-label={ARIA_LABEL_CONTAINER} className={classes.join(' ')} onClick={stopPropagation}>

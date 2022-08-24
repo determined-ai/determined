@@ -287,6 +287,7 @@ const ModelRegistry: React.FC = () => {
       <TagList
         compact
         disabled={record.archived}
+        key={record.id}
         tagCandidates={tags}
         tags={record.labels ?? []}
         onChange={(tags) => setModelTags(record.name, tags)}
@@ -509,7 +510,6 @@ const ModelRegistry: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={ModelActionDropdown}
             dataSource={models}
-            loading={isLoading}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,

@@ -323,6 +323,7 @@ const ProjectDetails: React.FC = () => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
         disabled={record.archived || project?.archived}
+        key={record.id}
         tagCandidates={labels}
         tags={record.labels}
         onChange={experimentTags.handleTagListChange(record.id)}
