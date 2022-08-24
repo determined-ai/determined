@@ -131,6 +131,9 @@ step the optimizer.
 Call the dumb control loop: if there was an overflow, decrease the scale
 factor.  If there was an underflow, increase it.
 
+Note that the `GradScaler` is designed to be one-per-training loop.  If there
+are multiple optimizers involved, there should only be one `scaler.update()`
+call after all `scaler.step(opt)` calls are made for a given batch.
 
 ## Nvidia apex AMP
 
@@ -224,11 +227,11 @@ limitations (needing to know the optimizer when calling `scale_loss`).
   * PyTorch Distributed wraps models in a `DistributedDataParallel` wrapper,
   which must be done after initializing APEX AMP.
   * PyTorch DDP synchronizes losses during the backwards pass
-  * Since gradients are automatically synchronized during each backwards pass, 
-    each N-1 step must be wrapped in a `no_sync` context manager to avoid 
-    inefficiencies of syncing gradients at every step during gradient 
+  * Since gradients are automatically synchronized during each backwards pass,
+    each N-1 step must be wrapped in a `no_sync` context manager to avoid
+    inefficiencies of syncing gradients at every step during gradient
     aggregation
-  * DDP broadcasts parameters on model instantiation with 
-    `DistributedDataParallel()`, during which the `state_dict` from rank 0 is 
-    broadcast to all other ranks in the group. This is done automatically, 
+  * DDP broadcasts parameters on model instantiation with
+    `DistributedDataParallel()`, during which the `state_dict` from rank 0 is
+    broadcast to all other ranks in the group. This is done automatically,
     unlike horovod's explicit use of `broadcast_parameters`

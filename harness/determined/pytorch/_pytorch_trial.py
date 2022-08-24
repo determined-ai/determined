@@ -445,6 +445,12 @@ class PyTorchTrialController(det.TrialController):
                         batch_idx=batch_idx,
                     )
             if self._should_update_scaler():
+                # We update the scaler once after train_batch is done because the GradScaler is
+                # expected to be one-per-training-loop, with one .update() call after all .step(opt)
+                # calls for that batch are completed [1].
+                #
+                # [1] pytorch.org/docs/master/notes/amp_examples.html
+                #         #working-with-multiple-models-losses-and-optimizers
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
                 tr_metrics = {"loss": tr_metrics}
