@@ -3,6 +3,9 @@ import React from 'react';
 import history from '../routes/history';
 
 import { clone } from './data';
+import rootLogger from './Logger';
+
+const logger = rootLogger.extend('utils', 'routes');
 
 export const isFullPath = (url: string): boolean => {
   try {
@@ -63,8 +66,10 @@ const stripUrl = (aUrl: string): string => {
   return rest;
 };
 export const routeToExternalUrl = (path: string): void => {
+  logger.trace('routing to external url', path);
   window.location.assign(path);
 };
 export const routeToReactUrl = (path: string): void => {
+  logger.trace('routing to react url', path);
   history.push(stripUrl(path), { loginRedirect: filterOutLoginLocation(window.location) });
 };
