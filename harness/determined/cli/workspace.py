@@ -3,10 +3,9 @@ from argparse import Namespace
 from time import sleep
 from typing import Any, List, Sequence
 
-from determined.cli.session import setup_session
+from determined import cli
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
-from determined.common.api.bindings import v1Workspace
 from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
@@ -15,7 +14,7 @@ PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Exper
 WORKSPACE_HEADERS = ["ID", "Name", "# Projects"]
 
 
-def render_workspaces(workspaces: Sequence[v1Workspace]) -> None:
+def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
     values = [
         [
             w.id,
@@ -27,7 +26,7 @@ def render_workspaces(workspaces: Sequence[v1Workspace]) -> None:
     render.tabulate_or_csv(WORKSPACE_HEADERS, values, False)
 
 
-def workspace_by_name(sess: api.Session, name: str) -> v1Workspace:
+def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
     w = bindings.get_GetWorkspaces(sess, name=name).workspaces
     if len(w) == 0:
         raise errors.EmptyResultException(f'Did not find a workspace with name "{name}".')
@@ -36,7 +35,7 @@ def workspace_by_name(sess: api.Session, name: str) -> v1Workspace:
 
 @authentication.required
 def list_workspaces(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
     sortArg = bindings.v1GetWorkspacesRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
     internal_offset = args.offset or 0
@@ -62,7 +61,7 @@ def list_workspaces(args: Namespace) -> None:
 
 @authentication.required
 def list_workspace_projects(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
     orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
     sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
@@ -103,7 +102,7 @@ def list_workspace_projects(args: Namespace) -> None:
 @authentication.required
 def create_workspace(args: Namespace) -> None:
     content = bindings.v1PostWorkspaceRequest(name=args.name)
-    w = bindings.post_PostWorkspace(setup_session(args), body=content).workspace
+    w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
 
     if args.json:
         print(json.dumps(w.to_json(), indent=2))
@@ -113,7 +112,7 @@ def create_workspace(args: Namespace) -> None:
 
 @authentication.required
 def describe_workspace(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
     if args.json:
         print(json.dumps(w.to_json(), indent=2))
@@ -127,7 +126,7 @@ def describe_workspace(args: Namespace) -> None:
 
 @authentication.required
 def delete_workspace(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
@@ -157,7 +156,7 @@ def delete_workspace(args: Namespace) -> None:
 
 @authentication.required
 def archive_workspace(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
     bindings.post_ArchiveWorkspace(sess, id=current.id)
     print(f"Successfully archived workspace {args.workspace_name}.")
@@ -165,7 +164,7 @@ def archive_workspace(args: Namespace) -> None:
 
 @authentication.required
 def unarchive_workspace(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
     bindings.post_UnarchiveWorkspace(sess, id=current.id)
     print(f"Successfully un-archived workspace {args.workspace_name}.")
@@ -173,7 +172,7 @@ def unarchive_workspace(args: Namespace) -> None:
 
 @authentication.required
 def edit_workspace(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
     updated = bindings.v1PatchWorkspace(name=args.new_name)
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace

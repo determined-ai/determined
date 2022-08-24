@@ -3,8 +3,8 @@ from functools import partial
 from pathlib import Path
 from typing import Any, List
 
+from determined import cli
 from determined.cli import command, task
-from determined.cli.util import format_args
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -39,7 +39,7 @@ args_description = [
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all commands (including other users')"),
-            Group(format_args["json"], format_args["csv"]),
+            Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
         ], is_default=True),
         Cmd("config", partial(command.config),
             "display command config", [
