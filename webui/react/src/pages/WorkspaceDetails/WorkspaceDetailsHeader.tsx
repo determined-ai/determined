@@ -5,7 +5,6 @@ import React, { useCallback } from 'react';
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
-import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -48,13 +47,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
   return (
     <div className={css.base}>
       <Space align="center">
-        <Tooltip title="Click to navigate">
-          <div className={css.Icon}>
-            <WorkspaceQuickSearch>
-              <DynamicIcon name={workspace.name} size={32} />
-            </WorkspaceQuickSearch>
-          </div>
-        </Tooltip>
+        <DynamicIcon name={workspace.name} size={32} />
         <h1 className={css.name}>
           <InlineEditor
             disabled={workspace.immutable ||
