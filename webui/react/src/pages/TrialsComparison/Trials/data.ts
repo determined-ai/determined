@@ -98,5 +98,5 @@ export const decodeTrialsWithMetadata = (
   const metrics = Object.keys(t.metricKeys)
     .map(metricKeyToMetric) as Metric[];
 
-  return { ...t, metrics, total: response?.total ?? 0 };
+  return { ...t, metrics };
 };

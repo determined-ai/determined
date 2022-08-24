@@ -80,14 +80,19 @@ const LearningCurveChart: React.FC<Props> = ({
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'batches' },
-        ...trialIds.map((trialId) => ({
-          label: `trial ${trialId}`,
-          scale: 'y',
-          show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
-          spanGaps: true,
-          stroke: glasbeyColor(trialId),
-          width: SERIES_WIDTH / window.devicePixelRatio,
-        })),
+        ...trialIds.map((trialId) => {
+          if (trialId === 81)
+            console.log(trialId, !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId));
+          return {
+            label: `trial ${trialId}`,
+            scale: 'y',
+            // show: true,
+            show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
+            spanGaps: true,
+            stroke: glasbeyColor(trialId),
+            width: SERIES_WIDTH / window.devicePixelRatio,
+          };
+        }),
       ],
     };
   }, [ onTrialClick, onTrialFocus, selectedMetric, selectedScale, trialIds, selectedTrialsIdsSet ]);

@@ -68,7 +68,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
             ) : (
               <Grid
                 border={true}
-                // need to use screen size
+                //  TODO: use screen size
                 minItemWidth={600}
                 mode={GridMode.AutoFill}>
                 <SyncProvider>

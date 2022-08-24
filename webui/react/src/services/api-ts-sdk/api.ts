@@ -5590,13 +5590,7 @@ export interface V1QueryTrialsResponse {
      * @type {Array<V1AugmentedTrial>}
      * @memberof V1QueryTrialsResponse
      */
-    trials?: Array<V1AugmentedTrial>;
-    /**
-     * 
-     * @type {number}
-     * @memberof V1QueryTrialsResponse
-     */
-    total?: number;
+    trials: Array<V1AugmentedTrial>;
 }
 
 /**
