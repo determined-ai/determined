@@ -1,20 +1,25 @@
 import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { PropsWithChildren, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
+import { paths } from 'routes/utils';
+import { getWorkspaceProjects } from 'services/api';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Project } from 'types';
 import handleError from 'utils/error';
 
 interface Props {
+  children?: React.ReactChild;
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
+  isGotoVisible?: boolean;
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
@@ -25,13 +30,11 @@ interface Props {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const ProjectActionDropdown: React.FC<Props> = (
-  {
-    project, children, curUser, onVisibleChange, showChildrenIfEmpty = true,
-    className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
-  }
-  : PropsWithChildren<Props>,
-) => {
+const ProjectActionDropdown: React.FC<Props> = ({
+  project, children, curUser, isGotoVisible = false, onVisibleChange, showChildrenIfEmpty = true,
+  className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
+}: Props) => {
+  const [ projects, setProjects ] = useState<Project[]>([]);
   const {
     contextHolder: modalProjectMoveContextHolder,
     modalOpen: openProjectMove,
@@ -75,8 +78,21 @@ const ProjectActionDropdown: React.FC<Props> = (
     openProjectDelete();
   }, [ openProjectDelete ]);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const projectResponse = await getWorkspaceProjects(
+        { id: project.workspaceId, sortBy: 'SORT_BY_NAME' },
+      );
+      const filteredProjects = projectResponse.projects.filter((p) => p.id !== project.id);
+      setProjects(filteredProjects);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch workspaces.' });
+    }
+  }, [ project.id, project.workspaceId ]);
+
   const menuProps: {items: MenuProps['items'], onClick: MenuProps['onClick']} = useMemo(() => {
     enum MenuKey {
+      GOTO = 'go to',
       EDIT = 'edit',
       MOVE = 'move',
       SWITCH_ARCHIVED = 'switchArchive',
@@ -84,6 +100,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     }
 
     const funcs = {
+      [MenuKey.GOTO]: () => undefined,
       [MenuKey.EDIT]: () => { handleEditClick(); },
       [MenuKey.MOVE]: () => { handleMoveClick(); },
       [MenuKey.SWITCH_ARCHIVED]: () => { handleArchiveClick(); },
@@ -91,10 +108,18 @@ const ProjectActionDropdown: React.FC<Props> = (
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      if (Number(e.key)) {
+        routeToReactUrl(paths.projectDetails(e.key));
+      } else {
+        funcs[e.key as MenuKey]();
+      }
     };
 
-    const items: MenuProps['items'] = [];
+    const items: MenuProps['items'] = [ ];
+    if (isGotoVisible) {
+      const projectChildren = projects.map((p) => ({ key: p.id, label: p.name }));
+      items.push({ children: projectChildren, key: MenuKey.GOTO, label: 'Go to' });
+    }
     if (userHasPermissions && !project.archived) {
       items.push({ key: MenuKey.EDIT, label: 'Edit...' });
       items.push({ key: MenuKey.MOVE, label: 'Move...' });
@@ -112,8 +137,10 @@ const ProjectActionDropdown: React.FC<Props> = (
     handleDeleteClick,
     handleEditClick,
     handleMoveClick,
+    isGotoVisible,
     project.archived,
     project.numExperiments,
+    projects,
     userHasPermissions,
     workspaceArchived,
   ]);
@@ -129,6 +156,12 @@ const ProjectActionDropdown: React.FC<Props> = (
     modalProjectEditContextHolder,
     modalProjectMoveContextHolder,
   ]);
+
+  useEffect(() => {
+    if (isGotoVisible) {
+      fetchProjects();
+    }
+  }, [ fetchProjects, isGotoVisible ]);
 
   if (menuProps.items?.length === 0 && !showChildrenIfEmpty) {
     return null;

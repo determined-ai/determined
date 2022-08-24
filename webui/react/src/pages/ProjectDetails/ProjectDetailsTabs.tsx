@@ -85,6 +85,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
             )}
             <ProjectActionDropdown
               curUser={curUser}
+              isGotoVisible={true}
               project={project}
               showChildrenIfEmpty={false}
               trigger={[ 'click' ]}
