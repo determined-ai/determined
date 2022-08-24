@@ -301,7 +301,6 @@ class trialv1Trial:
         totalCheckpointSize: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointUuid: "typing.Optional[str]" = None,
-        workloadCount: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -320,7 +319,6 @@ class trialv1Trial:
         self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
         self.totalCheckpointSize = totalCheckpointSize
-        self.workloadCount = workloadCount
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -342,7 +340,6 @@ class trialv1Trial:
             warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
             taskId=obj.get("taskId", None),
             totalCheckpointSize=obj.get("totalCheckpointSize", None),
-            workloadCount=obj.get("workloadCount", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -364,7 +361,6 @@ class trialv1Trial:
             "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
             "taskId": self.taskId if self.taskId is not None else None,
             "totalCheckpointSize": self.totalCheckpointSize if self.totalCheckpointSize is not None else None,
-            "workloadCount": self.workloadCount if self.workloadCount is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:

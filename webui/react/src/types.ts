@@ -452,7 +452,6 @@ export interface TrialItem extends StartEndTimes {
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
   totalCheckpointSize: number;
-  workloadCount: number;
 }
 
 export interface TrialWorkloads extends WithPagination {
