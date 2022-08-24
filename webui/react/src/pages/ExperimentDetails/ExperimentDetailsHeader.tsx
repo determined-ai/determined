@@ -26,7 +26,7 @@ import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentH
 import { handlePath, paths } from 'routes/utils';
 import {
   activateExperiment,
-  archiveExperiment, openOrCreateTensorBoard, patchExperiment,
+  archiveExperiment, getExperimentLabels, openOrCreateTensorBoard, patchExperiment,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
@@ -34,6 +34,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { getDuration } from 'shared/utils/datetime';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
@@ -85,6 +86,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [ isRunningDelete, setIsRunningDelete ] = useState<boolean>(
     experiment.state === RunState.Deleting,
   );
+  const [ labels, setLabels ] = useState<string[]>([]);
   const classes = [ css.state ];
 
   const maxRestarts = experiment.config.maxRestarts;
@@ -198,6 +200,18 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
   }, [ openModalHyperparameterSearch ]);
+
+  const fetchLabels = useCallback(async () => {
+    try {
+      const labels = await getExperimentLabels({ project_id: experiment.projectId });
+      labels.sort((a, b) => alphaNumericSorter(a, b));
+      setLabels(labels);
+    } catch (e) { handleError(e); }
+  }, [ experiment.projectId ]);
+
+  useEffect(() => {
+    fetchLabels();
+  }, [ fetchLabels ]);
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -394,6 +408,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <TagList
               disabled={disabled}
               ghost={true}
+              tagCandidates={labels}
               tags={experiment.config.labels || []}
               onChange={experimentTags.handleTagListChange(experiment.id)}
             />
