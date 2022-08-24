@@ -4,6 +4,7 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
+import { wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 
 import { Eventually } from '../../types';
@@ -63,7 +64,7 @@ const ActionDropdown = <T extends string>(
   ): void => {
     onError(new DetError(e, {
       level: ErrorLevel.Error,
-      publicMessage: `Unable to ${actionKey} ${kind} ${id}.`,
+      publicMessage: wrapPublicMessage(e, `Unable to ${actionKey} ${kind} ${id}.`),
       publicSubject: `${capitalize(actionKey.toString())} failed.`,
       silent: false,
       type: ErrorType.Server,
