@@ -12,6 +12,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+var invalidJobQPos = decimal.NewFromInt(0)
+
 func reduceToJobQInfo(reqs AllocReqs) map[model.JobID]*sproto.RMJobInfo {
 	isAdded := make(map[model.JobID]*sproto.RMJobInfo)
 	jobsAhead := 0
@@ -142,22 +144,22 @@ func computeNewJobPos(
 	qPositions jobSortState,
 ) (decimal.Decimal, error) {
 	if anchor1 == jobID || anchor2 == jobID {
-		return decimal.NewFromInt(0), fmt.Errorf("cannot move job relative to itself")
+		return invalidJobQPos, fmt.Errorf("cannot move job relative to itself")
 	}
 
 	qPos1, ok := qPositions[anchor1]
 	if !ok {
-		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", anchor1)
+		return invalidJobQPos, fmt.Errorf("could not find anchor job %s", anchor1)
 	}
 
 	qPos2, ok := qPositions[anchor2]
 	if !ok {
-		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", anchor2)
+		return invalidJobQPos, fmt.Errorf("could not find anchor job %s", anchor2)
 	}
 
 	qPos3, ok := qPositions[jobID]
 	if !ok {
-		return decimal.NewFromInt(0), fmt.Errorf("could not find job %s", jobID)
+		return invalidJobQPos, fmt.Errorf("could not find job %s", jobID)
 	}
 
 	// check if qPos3 is between qPos1 and qPos2
@@ -170,7 +172,7 @@ func computeNewJobPos(
 	newPos := decimal.Avg(qPos1, qPos2)
 
 	if newPos.Equal(qPos1) || newPos.Equal(qPos2) {
-		return decimal.NewFromInt(0), fmt.Errorf("unable to compute a new job position for job %s",
+		return invalidJobQPos, fmt.Errorf("unable to compute a new job position for job %s",
 			jobID)
 	}
 
