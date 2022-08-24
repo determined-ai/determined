@@ -177,7 +177,21 @@ const CodeViewer: React.FC<Props> = ({
         const fileTree = await getExperimentFileTree({ experimentId });
         setIsFetchingTree(false);
 
-        const tree = fileTree.map<TreeNode>((node) => convertV1FileNodeToTreeNode(node));
+        const tree = fileTree
+          .map<TreeNode>((node) => convertV1FileNodeToTreeNode(node))
+          .sort((a, b) => {
+            // sorting first by having an extension or not, then by extension first
+            // and finally alphabetically.
+
+            const [ stringA, extensionA ] = String(a.title).split('.');
+            const [ stringB, extensionB ] = String(b.title).split('.');
+
+            if (!extensionA) return 1;
+
+            if (!extensionB) return 0;
+
+            return extensionA.localeCompare(extensionB) - stringA.localeCompare(stringB);
+          });
 
         if (runtimeConfig) tree.unshift({
           icon: configIcon,
