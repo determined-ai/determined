@@ -288,7 +288,7 @@ class OneVarApexAMPTrial(OneVarAMPBaseTrial):
         self.model, self.optimizer = self.context.configure_apex_amp(
             models=self.model,
             optimizers=self.opt,
-            opt_level="O2",
+            opt_level="O1",
         )
 
     def train_batch(
