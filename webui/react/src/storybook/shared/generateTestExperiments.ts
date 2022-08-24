@@ -253,7 +253,6 @@ export const generateTestExperimentData = ():
     state: RunState.Active,
     totalBatchesProcessed: 1,
     totalCheckpointSize: 0,
-    workloadCount: 0,
   };
 
   return { checkpoint, experiment, trial };
