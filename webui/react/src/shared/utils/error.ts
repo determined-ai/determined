@@ -52,6 +52,17 @@ export const isDetError = (error: unknown): error is DetError => {
 };
 
 /**
+ * used to preserve the public message potentially provided by lower levels where the error
+ * was generated or rethrowed.
+ * @param publicMessage a description of the error at this level.
+ * @returns wrapped publicMessage if there was any provided at lower levels.
+ */
+export const wrapPublicMessage = (e: DetError | unknown, publicMessage: string): string => {
+  if (!isDetError(e) || !e.publicMessage) return publicMessage;
+  return `${publicMessage}: ${e.publicMessage}`;
+};
+
+/**
  * An expected Error with supplemental information on how it should be handled.
  */
 export class DetError extends Error implements DetErrorOptions {

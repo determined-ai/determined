@@ -384,6 +384,7 @@ export const mapV1GetExperimentDetailsResponse = (
     originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
     projectName: exp.projectName ?? '',
+    projectOwnerId: exp.projectOwnerId ?? 0,
     workspaceId: exp.workspaceId ?? 0,
     workspaceName: exp.workspaceName ?? '',
   };

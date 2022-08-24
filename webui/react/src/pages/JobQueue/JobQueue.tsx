@@ -23,7 +23,7 @@ import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
-import { canManageJob, jobTypeToCommandType, moveJobToPosition,
+import { canManageJob, jobTypeToCommandType, moveJobToTop,
   orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 
 import css from './JobQueue.module.scss';
@@ -46,6 +46,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     } as RPStats)),
   );
   const [ jobs, setJobs ] = useState<Job[]>([]);
+  const [ topJob, setTopJob ] = useState<Job>();
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
@@ -76,7 +77,18 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         getJobQStats({}, { signal: canceler.signal }),
       ]);
 
+      const firstJobResp = await getJobQ(
+        {
+          limit: 1,
+          offset: 0,
+          resourcePool: selectedRp.name,
+        },
+        { signal: canceler.signal },
+      );
+      const firstJob = firstJobResp.jobs[0];
+
       // Process jobs response.
+      if (firstJob && !isEqual(firstJob, topJob)) setTopJob(firstJob);
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
@@ -92,14 +104,14 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     } finally {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
-  }, [ settings.sortDesc,
-    settings.tableLimit,
-    settings.tableOffset,
-    selectedRp.name,
-    jobState,
-    canceler.signal ]);
+  }, [ canceler.signal, selectedRp.name, settings, jobState, topJob ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
+
+  const rpTotalJobCount = useCallback((rpName: string) => {
+    const stats = rpStats.find((rp) => rp.resourcePool === rpName)?.stats;
+    return stats ? stats.queuedCount + stats.scheduledCount : 0;
+  }, [ rpStats ]);
 
   const dropDownOnTrigger = useCallback((job: Job) => {
     const triggers: Triggers<JobAction> = {};
@@ -114,10 +126,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     }
 
-    if (selectedRp && isJobOrderAvailable &&
+    if (selectedRp && isJobOrderAvailable && !!topJob &&
         job.summary.jobsAhead > 0 && canManageJob(job, selectedRp) &&
         !unsupportedQPosSchedulers.has(selectedRp.schedulerType)) {
-      triggers[JobAction.MoveToTop] = () => moveJobToPosition(jobs, job.jobId, 1);
+      triggers[JobAction.MoveToTop] = () => moveJobToTop(topJob, job);
     }
 
     // if job is an experiment type add action to kill it
@@ -144,7 +156,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     });
     return triggers;
-  }, [ selectedRp, isJobOrderAvailable, jobs, fetchAll ]);
+  }, [ selectedRp, isJobOrderAvailable, topJob, fetchAll ]);
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
@@ -319,7 +331,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         <ManageJob
           initialPool={selectedRp.name}
           job={managingJob}
-          jobs={jobs}
+          jobCount={rpTotalJobCount(selectedRp.name)}
           rpStats={rpStats}
           schedulerType={selectedRp.schedulerType}
           onFinish={onModalClose}

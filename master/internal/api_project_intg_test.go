@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,6 +20,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
@@ -27,6 +30,47 @@ var projectAuthZ *mocks.ProjectAuthZ
 
 func projectNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
+}
+
+var minExpConfig = expconf.ExperimentConfig{
+	RawResources: &expconf.ResourcesConfig{
+		RawResourcePool: ptrs.Ptr("kubernetes"),
+	},
+	RawEntrypoint: &expconf.EntrypointV0{"test"},
+	RawCheckpointStorage: &expconf.CheckpointStorageConfig{
+		RawSharedFSConfig: &expconf.SharedFSConfig{
+			RawHostPath: ptrs.Ptr("/"),
+		},
+	},
+	RawHyperparameters: expconf.Hyperparameters{},
+	RawName:            expconf.Name{ptrs.Ptr("name")},
+	RawReproducibility: &expconf.ReproducibilityConfig{ptrs.Ptr(uint32(42))},
+	RawSearcher: &expconf.SearcherConfig{
+		RawMetric: ptrs.Ptr("loss"),
+		RawSingleConfig: &expconf.SingleConfig{
+			&expconf.Length{Units: 10, Unit: "batches"},
+		},
+	},
+}
+
+func createTestExpWithProjectID(
+	t *testing.T, api *apiServer, curUser model.User, projectID int,
+) *model.Experiment {
+	exp := &model.Experiment{
+		JobID:                model.JobID(uuid.New().String()),
+		State:                model.PausedState,
+		OwnerID:              &curUser.ID,
+		ProjectID:            projectID,
+		StartTime:            time.Now(),
+		ModelDefinitionBytes: []byte{10, 11, 12},
+		Config:               minExpConfig,
+	}
+	require.NoError(t, api.m.db.AddExperiment(exp))
+
+	// Get experiment as our API mostly will to make it easier to mock.
+	exp, err := api.m.db.ExperimentWithoutConfigByID(exp.ID)
+	require.NoError(t, err)
+	return exp
 }
 
 func SetupProjectAuthZTest(
@@ -144,6 +188,59 @@ func TestAuthZCanMoveProject(t *testing.T) {
 	projectAuthZ.On("CanMoveProject", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canMoveProjectDeny")).Once()
 	_, err = api.MoveProject(ctx, req)
+	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
+func TestAuthZCanMoveProjectExperiments(t *testing.T) {
+	// Setup.
+	api, projectAuthZ, workspaceAuthZ, curUser, ctx := SetupProjectAuthZTest(t)
+
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	wResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := wResp.Workspace.Id
+
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: uuid.New().String(), WorkspaceId: workspaceID,
+	})
+	require.NoError(t, err)
+	srcProjectID := resp.Project.Id
+
+	exp := createTestExpWithProjectID(t, api, curUser, int(srcProjectID))
+	experimentID := exp.ID
+
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
+	resp, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: uuid.New().String(), WorkspaceId: workspaceID,
+	})
+	require.NoError(t, err)
+	destProjectID := resp.Project.Id
+
+	req := &apiv1.MoveExperimentRequest{
+		ExperimentId:         int32(experimentID),
+		DestinationProjectId: destProjectID,
+	}
+
+	// Can't view destination project.
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(false, nil).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, projectNotFoundErr(int(destProjectID)).Error(), err.Error())
+
+	// Can't view source project
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(true, nil).Once()
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(false, nil).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, projectNotFoundErr(int(srcProjectID)).Error(), err.Error())
+
+	// Can't move experiment.
+	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectExperimentsDeny")
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(true, nil).Twice()
+	projectAuthZ.On("CanMoveProjectExperiments", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(fmt.Errorf("canMoveProjectExperimentsDeny")).Once()
+	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 

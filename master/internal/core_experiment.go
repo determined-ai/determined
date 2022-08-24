@@ -83,8 +83,28 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	return m.db.ExperimentCheckpointsToGCRaw(
+
+	checkpointUUIDs, err := m.db.ExperimentCheckpointsToGCRaw(
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
+	if err != nil {
+		return nil, err
+	}
+	checkpointsDB, err := m.db.CheckpointByUUIDs(checkpointUUIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	expConfig, err := m.db.ExperimentConfig(args.ExperimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	metricName := expConfig.Searcher().Metric()
+	checkpointsWithMetric := map[string]interface{}{
+		"checkpoints": checkpointsDB, "metric_name": metricName,
+	}
+
+	return checkpointsWithMetric, nil
 }
 
 // @Summary Get individual file from modal definitions for download.

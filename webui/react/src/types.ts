@@ -507,6 +507,7 @@ export interface ExperimentItem {
 export interface ProjectExperiment extends ExperimentItem {
   parentArchived: boolean;
   projectName: string;
+  projectOwnerId: number;
   workspaceId: number;
   workspaceName: string;
 }

@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -22,13 +23,23 @@ func TestDeleteCheckpoints(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
-	task := RequireMockTask(t, db, &user.ID)
-	allocation := requireMockAllocation(t, db, task.TaskID)
+	exp := RequireMockExperiment(t, db, user)
+	tr := requireMockTrial(t, db, exp)
+	allocation := requireMockAllocation(t, db, tr.TaskID)
 
 	// Create checkpoints
-	checkpoint1 := requireMockCheckpoint(t, db, task, allocation, 1)
-	checkpoint2 := requireMockCheckpoint(t, db, task, allocation, 2)
-	checkpoint3 := requireMockCheckpoint(t, db, task, allocation, 3)
+	ckpt1 := uuid.New()
+	checkpoint1 := mockModelCheckpoint(ckpt1, tr, allocation)
+	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint1)
+	require.NoError(t, err)
+	ckpt2 := uuid.New()
+	checkpoint2 := mockModelCheckpoint(ckpt2, tr, allocation)
+	err = db.AddCheckpointMetadata(context.TODO(), &checkpoint2)
+	require.NoError(t, err)
+	ckpt3 := uuid.New()
+	checkpoint3 := mockModelCheckpoint(ckpt3, tr, allocation)
+	err = db.AddCheckpointMetadata(context.TODO(), &checkpoint3)
+	require.NoError(t, err)
 
 	// Insert a model.
 	now := time.Now()
@@ -42,7 +53,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 	}
 	mdlNotes := "some notes"
 	var pmdl modelv1.Model
-	err := db.QueryProto(
+	err = db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
 		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
 	)
@@ -79,6 +90,13 @@ func TestDeleteCheckpoints(t *testing.T) {
 		emptyMetadata, strings.Join(addmv.Labels, ","), addmv.Notes, user.ID,
 	)
 	require.NoError(t, err)
+
+	// Test CheckpointsByUUIDs
+	reqCheckpointUUIDs := []uuid.UUID{checkpoint1.UUID, checkpoint2.UUID, checkpoint3.UUID}
+	checkpointsByUUIDs, err := db.CheckpointByUUIDs(reqCheckpointUUIDs)
+	dbCheckpointsUUIDs := []uuid.UUID{*checkpointsByUUIDs[0].UUID, *checkpointsByUUIDs[1].UUID, *checkpointsByUUIDs[2].UUID}
+	require.NoError(t, err)
+	require.Equal(t, reqCheckpointUUIDs, dbCheckpointsUUIDs)
 
 	// Send a list of delete checkpoints uuids the user wants to delete and check if it's in model registry.
 	requestedDeleteCheckpoints := []uuid.UUID{checkpoint1.UUID, checkpoint3.UUID}

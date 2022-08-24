@@ -215,6 +215,7 @@ export const getProjectExperimentForExperimentItem = (
     parentArchived: !!project?.archived,
     projectId: project?.id ?? 0,
     projectName: project?.name,
+    projectOwnerId: project?.userId ?? 0,
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);

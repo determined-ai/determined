@@ -16,6 +16,10 @@ from determined.common.api.bindings import determinedcheckpointv1State
 from tests import config as conf
 from tests import experiment as exp
 
+from .test_users import det_spawn
+
+EXPECT_TIMEOUT = 5
+
 
 def wait_for_gc_to_finish(experiment_id: int) -> None:
     certs.cli_cert = certs.default_load(conf.make_master_url())
@@ -35,6 +39,58 @@ def wait_for_gc_to_finish(experiment_id: int) -> None:
 
     # It's possible that it ran really fast and we missed it, so just log this.
     print("Did not observe checkpoint gc start or finish!", file=sys.stderr)
+
+
+@pytest.mark.e2e_gpu
+def test_set_gc_policy() -> None:
+    exp_id = exp.run_basic_test(
+        config_file=conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
+        model_def_file=conf.fixtures_path("no_op"),
+        expected_trials=1,
+    )
+
+    config = conf.load_config(str(conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml")))
+    save_exp_best = config["checkpoint_storage"]["save_experiment_best"]
+    save_trial_latest = config["checkpoint_storage"]["save_trial_latest"]
+    save_trial_best = 1  # default because not set in this config
+
+    # Command that uses the same gc policy as initial policy used for the experiment.
+    run_command_gc_policy(
+        str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id)
+    )
+
+    # Command that uses a diff gc policy from the initial policy used for the experiment.
+    save_exp_best = 0
+    save_trial_latest = 1
+    save_trial_best = 1
+    run_command_gc_policy(
+        str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id)
+    )
+
+
+def run_command_gc_policy(
+    save_exp_best: str, save_trial_latest: str, save_trial_best: str, exp_id: str
+) -> None:
+    command = [
+        "e",
+        "set",
+        "gc-policy",
+        "--save-experiment-best",
+        str(save_exp_best),
+        "--save-trial-best",
+        str(save_trial_best),
+        "--save-trial-latest",
+        str(save_trial_latest),
+        str(exp_id),
+    ]
+
+    child = det_spawn(command)
+    child.expect("Do you wish to " "proceed?", timeout=EXPECT_TIMEOUT)
+    child.sendline("y")
+    child.read()
+    child.wait()
+    child.close()
+    assert child.exitstatus == 0
 
 
 @pytest.mark.e2e_gpu

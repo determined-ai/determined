@@ -1,0 +1,5 @@
+:orphan:
+
+** Bug Fixes ** 
+
+- Command: Fixed a bug where ``det e set gc-policy`` would fail when deserializing an api response because it wasn't adjusted for the new format. 
