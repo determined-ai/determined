@@ -10,13 +10,13 @@ import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
-import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import ModelVersionTagList from 'pages/ModelVersionDetails/ModelVersionTagList';
 import {
-  archiveModel, getModelDetails, getModelVersionLabels, isNotFound, patchModel,
+  archiveModel, getModelDetails, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -42,7 +42,6 @@ interface Params {
 
 const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
-  const [ modelVersionTags, setModelVersionTags ] = useState<string[]>();
   const modelId = decodeURIComponent(useParams<Params>().modelId);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
@@ -73,15 +72,6 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelId, pageError, settings ]);
 
-  const fetchModelVersionLabels = useCallback(async () => {
-    try {
-      const modelVersionLabels = await getModelVersionLabels({});
-      setModelVersionTags(modelVersionLabels);
-    } catch (e) {
-      handleError(e, { silent: true });
-    }
-  }, []);
-
   const {
     contextHolder: modalModelDownloadContextHolder,
     modalOpen: openModelDownload,
@@ -96,8 +86,8 @@ const ModelDetails: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    Promise.all([ fetchModelVersionLabels(), fetchModel() ]);
-  }, [ fetchModel, fetchModelVersionLabels ]);
+    fetchModel();
+  }, [ fetchModel ]);
 
   const downloadModel = useCallback((version: ModelVersion) => {
     openModelDownload(version);
@@ -146,13 +136,13 @@ const ModelDetails: React.FC = () => {
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
-      <TagList
+      <ModelVersionTagList
         compact
         disabled={record.model.archived}
-        tagCandidates={modelVersionTags}
         tags={record.labels ?? []}
         onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
       />
+
     );
 
     const actionRenderer = (_:string, record: ModelVersion) => (
@@ -219,13 +209,7 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [
-    deleteModelVersion,
-    downloadModel,
-    modelVersionTags,
-    saveModelVersionTags,
-    saveVersionDescription,
-  ]);
+  }, [ deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
