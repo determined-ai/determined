@@ -16,7 +16,7 @@ import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersio
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
-  archiveModel, getModelDetails, isNotFound, patchModel,
+  archiveModel, getModelDetails, getModelVersionLabels, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -42,6 +42,7 @@ interface Params {
 
 const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
+  const [ modelVersionTags, setModelVersionTags ] = useState<string[]>();
   const modelId = decodeURIComponent(useParams<Params>().modelId);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
@@ -72,6 +73,15 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelId, pageError, settings ]);
 
+  const fetchModelVersionLabels = useCallback(async () => {
+    try {
+      const modelVersionLabels = await getModelVersionLabels({});
+      setModelVersionTags(modelVersionLabels);
+    } catch (e) {
+      handleError(e, { silent: true });
+    }
+  }, []);
+
   const {
     contextHolder: modalModelDownloadContextHolder,
     modalOpen: openModelDownload,
@@ -86,8 +96,8 @@ const ModelDetails: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchModel();
-  }, [ fetchModel ]);
+    Promise.all([ fetchModelVersionLabels(), fetchModel() ]);
+  }, [ fetchModel, fetchModelVersionLabels ]);
 
   const downloadModel = useCallback((version: ModelVersion) => {
     openModelDownload(version);
@@ -139,6 +149,7 @@ const ModelDetails: React.FC = () => {
       <TagList
         compact
         disabled={record.model.archived}
+        tagCandidates={modelVersionTags}
         tags={record.labels ?? []}
         onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
       />
@@ -211,6 +222,7 @@ const ModelDetails: React.FC = () => {
   }, [
     deleteModelVersion,
     downloadModel,
+    modelVersionTags,
     saveModelVersionTags,
     saveVersionDescription,
   ]);

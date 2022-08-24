@@ -1,7 +1,7 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -13,11 +13,13 @@ import { useStore } from 'contexts/Store';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import { paths } from 'routes/utils';
+import { getModelVersionLabels } from 'services/api';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { ModelVersion } from 'types';
+import handleError from 'utils/error';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
@@ -44,6 +46,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onSaveName,
 }: Props) => {
   const { users } = useStore();
+  const [ modelVersionTags, setModelVersionTags ] = useState<string[]>();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
 
   const {
@@ -59,6 +62,15 @@ const ModelVersionHeader: React.FC<Props> = ({
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
   }, [ modelVersion, openModelDownload ]);
+
+  const fetchModelVersionLabels = useCallback(async () => {
+    try {
+      const modelVersionLabels = await getModelVersionLabels({});
+      setModelVersionTags(modelVersionLabels);
+    } catch (e) {
+      handleError(e, { silent: true });
+    }
+  }, []);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -93,13 +105,25 @@ const ModelVersionHeader: React.FC<Props> = ({
         <TagList
           disabled={modelVersion.model.archived}
           ghost={false}
+          tagCandidates={modelVersionTags}
           tags={modelVersion.labels ?? []}
           onChange={onUpdateTags}
         />
       ),
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ modelVersion, onSaveDescription, onUpdateTags, users ]);
+  }, [
+    modelVersion.comment,
+    modelVersion.creationTime,
+    modelVersion.labels,
+    modelVersion.lastUpdatedTime,
+    modelVersion.model.archived,
+    modelVersion.userId,
+    modelVersionTags,
+    onSaveDescription,
+    onUpdateTags,
+    users,
+  ]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
@@ -172,6 +196,10 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
 
     return <Menu className={css.overflow} items={menuItems} onClick={onItemClick} />;
   }, [ actions ]);
+
+  useEffect(() => {
+    fetchModelVersionLabels();
+  }, [ fetchModelVersionLabels ]);
 
   return (
     <header className={css.base}>
