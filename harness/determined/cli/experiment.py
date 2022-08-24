@@ -748,14 +748,16 @@ def set_gc_policy(args: Namespace) -> None:
         ]
         values = [
             [
-                c["trial_id"],
-                c["step"]["total_batches"],
-                c["state"],
-                api.metric.get_validation_metric(metric_name, c["step"]["validation"]),
-                c["uuid"],
-                render.format_resources(c["resources"]),
+                c["TrialID"],
+                c["StepsCompleted"],
+                c["State"],
+                api.metric.get_validation_metric(
+                    metric_name, {"metrics": {"validation_metrics": c["ValidationMetrics"]}}
+                ),
+                c["UUID"],
+                render.format_resources(c["Resources"]),
             ]
-            for c in sorted(checkpoints, key=lambda c: (c["trial_id"], c["end_time"]))
+            for c in sorted(checkpoints, key=lambda c: (c["TrialID"], c["ReportTime"]))
             if "step" in c and c["step"].get("validation")
         ]
 
