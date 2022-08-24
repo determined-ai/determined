@@ -5,7 +5,7 @@ import pickle
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Sequence
 
 from determined.common.api import bindings
 from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason
@@ -110,12 +110,12 @@ class SearchRunner:
         try:
             while experiment_is_active:
                 time.sleep(5)
-                events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
-                if events.searcherEvents is None:
+                events = self.get_events(session, experiment_id)
+                if events is None:
                     continue
                 logging.info(
                     json.dumps(
-                        [SearchRunner._searcher_event_as_dict(e) for e in events.searcherEvents]
+                        [SearchRunner._searcher_event_as_dict(e) for e in events]
                     )
                 )
                 # the first event is an event we have already processed and told master about it
@@ -123,7 +123,7 @@ class SearchRunner:
                 # after POSTing operations but before saving state
                 last_event_id = self.search_method.searcher_state.last_event_id
                 first_event = True
-                for event in events.searcherEvents:
+                for event in events:
                     assert event.id is not None
 
                     if (
@@ -167,6 +167,14 @@ class SearchRunner:
             body=body,
             experimentId=experiment_id,
         )
+
+    def get_events(
+        self,
+        session: client.Session,
+        experiment_id: int,
+    ) -> Optional[Sequence[bindings.v1SearcherEvent]]:
+        events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
+        return events.searcherEvents
 
     def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
         pass
