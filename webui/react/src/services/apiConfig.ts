@@ -712,6 +712,14 @@ export const getModelLabels: DetApi<
   request: (options) => detApi.Models.getModelLabels(options),
 };
 
+export const getModelVersionLabels: DetApi<
+  EmptyParams, Api.V1GetModelVersionLabelsResponse, string[]
+> = {
+  name: 'getModelVersionLabels',
+  postProcess: (response) => response.labels || [],
+  request: (options) => detApi.Models.getModelVersionLabels(options),
+};
+
 export const postModel: DetApi<
   Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
 > = {

@@ -256,6 +256,19 @@ message GetModelVersionsResponse {
   Pagination pagination = 3;
 }
 
+// Get a list of model version labels.
+message GetModelVersionLabelsRequest {}
+
+// Response to GetModelVersionLabelsRequest.
+message GetModelVersionLabelsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "labels" ] }
+  };
+
+  // List of labels used across all model versions.
+  repeated string labels = 1;
+}
+
 // Request for creating a model version.
 message PostModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

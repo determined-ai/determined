@@ -259,6 +259,10 @@ export const getModelLabels = generateDetApi<
   EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
 
+export const getModelVersionLabels = generateDetApi<
+EmptyParams, Api.V1GetModelVersionLabelsResponse, string[]
+>(Config.getModelVersionLabels);
+
 /* Workspaces */
 
 export const getWorkspace = generateDetApi<

@@ -2168,6 +2168,25 @@ class v1GetModelResponse:
             "model": self.model.to_json(),
         }
 
+class v1GetModelVersionLabelsResponse:
+    def __init__(
+        self,
+        *,
+        labels: "typing.Sequence[str]",
+    ):
+        self.labels = labels
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetModelVersionLabelsResponse":
+        return cls(
+            labels=obj["labels"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "labels": self.labels,
+        }
+
 class v1GetModelVersionResponse:
     def __init__(
         self,
@@ -7532,6 +7551,23 @@ def get_GetModelVersion(
     if _resp.status_code == 200:
         return v1GetModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelVersion", _resp)
+
+def get_GetModelVersionLabels(
+    session: "client.Session",
+) -> "v1GetModelVersionLabelsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/model/versions/labels",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetModelVersionLabelsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModelVersionLabels", _resp)
 
 def get_GetModelVersions(
     session: "client.Session",

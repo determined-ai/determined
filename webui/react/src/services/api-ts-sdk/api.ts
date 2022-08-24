@@ -2678,6 +2678,20 @@ export interface V1GetModelResponse {
 }
 
 /**
+ * Response to GetModelVersionLabelsRequest.
+ * @export
+ * @interface V1GetModelVersionLabelsResponse
+ */
+export interface V1GetModelVersionLabelsResponse {
+    /**
+     * List of labels used across all model versions.
+     * @type {Array<string>}
+     * @memberof V1GetModelVersionLabelsResponse
+     */
+    labels: Array<string>;
+}
+
+/**
  * Response for GetModelVersionRequest.
  * @export
  * @interface V1GetModelVersionResponse
@@ -15871,6 +15885,37 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelVersionLabels(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/model/versions/labels`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of versions for the requested model.
          * @param {string} modelName The name of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -16359,6 +16404,24 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelVersionLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersionLabels(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of versions for the requested model.
          * @param {string} modelName The name of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -16580,6 +16643,15 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelVersionLabels(options?: any) {
+            return ModelsApiFp(configuration).getModelVersionLabels(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of versions for the requested model.
          * @param {string} modelName The name of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -16747,6 +16819,17 @@ export class ModelsApi extends BaseAPI {
      */
     public getModelVersion(modelName: string, modelVersion: number, options?: any) {
         return ModelsApiFp(this.configuration).getModelVersion(modelName, modelVersion, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of unique model labels (sorted by popularity).
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public getModelVersionLabels(options?: any) {
+        return ModelsApiFp(this.configuration).getModelVersionLabels(options)(this.fetch, this.basePath);
     }
 
     /**

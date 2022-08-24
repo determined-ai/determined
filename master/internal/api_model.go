@@ -384,6 +384,15 @@ func (a *apiServer) GetModelVersions(
 	return resp, a.paginate(&resp.Pagination, &resp.ModelVersions, req.Offset, req.Limit)
 }
 
+func (a *apiServer) GetModelVersionLabels(_ context.Context, req *apiv1.GetModelVersionLabelsRequest) (*apiv1.GetModelVersionLabelsResponse, error) {
+	resp := &apiv1.GetModelVersionLabelsResponse{}
+	err := a.m.db.QueryProto("get_model_version_labels", resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, errors.Wrapf(err, "error getting model version labels")
+}
+
 func (a *apiServer) PostModelVersion(
 	ctx context.Context, req *apiv1.PostModelVersionRequest,
 ) (*apiv1.PostModelVersionResponse, error) {
