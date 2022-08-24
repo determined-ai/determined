@@ -124,7 +124,7 @@ func trialDetailAPITests(
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)
 			req := apiv1.GetTrialRequest{TrialId: int32(trial.ID)}
 
-			tlCl, err := cl.GetTrial(ctx, &req)
+			_, err = cl.GetTrial(ctx, &req)
 			assert.NilError(t, err, "failed to fetch api details")
 		})
 	}
