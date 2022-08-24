@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Tag, Tooltip } from 'antd';
+import { AutoComplete, Input, Tag, Tooltip } from 'antd';
 import type { InputRef } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -14,6 +14,7 @@ interface Props {
   disabled?: boolean;
   ghost?: boolean;
   onChange?: (tags: string[]) => void;
+  tagCandidates?: string[];
   tags: string[];
 }
 
@@ -25,7 +26,7 @@ const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
 const EditableTagList: React.FC<Props> = (
-  { compact, disabled = false, ghost, tags, onChange }: Props,
+  { compact, disabled = false, ghost, tagCandidates, tags, onChange }: Props,
 ) => {
   const initialState = {
     editInputIndex: -1,
@@ -33,7 +34,8 @@ const EditableTagList: React.FC<Props> = (
     inputWidth: 82,
   };
   const [ state, setState ] = useState(initialState);
-  const [ showMore, setShowMore ] = useState(false);
+  const [ showMore, setShowMore ] = useState<boolean>(false);
+  const [ isCandidateOpen, setIsCandidateOpen ] = useState<boolean>(false);
   const inputRef = useRef<InputRef>(null);
   const editInputRef = useRef<InputRef>(null);
 
@@ -43,6 +45,7 @@ const EditableTagList: React.FC<Props> = (
 
   const handleTagPlus = useCallback(() => {
     setState((state) => ({ ...state, inputVisible: true }));
+    setIsCandidateOpen(true);
   }, []);
 
   useEffect(() => {
@@ -73,6 +76,25 @@ const EditableTagList: React.FC<Props> = (
     setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
   }, [ onChange, tags ]);
 
+  const onPressEnter = useCallback((
+    e: React.KeyboardEvent<HTMLInputElement>,
+    previousValue?: string,
+  ) => {
+    if (isCandidateOpen) {
+      setIsCandidateOpen(false);
+      return;
+    }
+    handleInputConfirm(e, previousValue);
+  }, [ handleInputConfirm, isCandidateOpen ]);
+
+  const candidates = useMemo(() => {
+    return tagCandidates?.map((candidate) => ({ label: candidate, value: candidate }));
+  }, [ tagCandidates ]);
+
+  const onCandidateChange = useCallback(() => setIsCandidateOpen(true), []);
+
+  const onCandidateSelect = useCallback(() => setIsCandidateOpen(false), []);
+
   const { editInputIndex, inputVisible, inputWidth } = state;
 
   const classes = [ css.base ];
@@ -93,18 +115,26 @@ const EditableTagList: React.FC<Props> = (
           }
           if (editInputIndex === index) {
             return (
-              <Input
-                aria-label={ARIA_LABEL_INPUT}
-                className={css.tagInput}
+              <AutoComplete
                 defaultValue={tag}
+                filterOption={true}
                 key={tag}
-                ref={editInputRef}
-                size="small"
-                style={{ width: inputWidth }}
-                width={inputWidth}
-                onBlur={(e) => handleInputConfirm(e, tag)}
-                onPressEnter={(e) => handleInputConfirm(e, tag)}
-              />
+                open={isCandidateOpen}
+                options={candidates}
+                onChange={onCandidateChange}
+                onSelect={onCandidateSelect}>
+                <Input
+                  aria-label={ARIA_LABEL_INPUT}
+                  className={css.tagInput}
+                  defaultValue={tag}
+                  ref={editInputRef}
+                  size="small"
+                  style={{ width: inputWidth }}
+                  width={inputWidth}
+                  onBlur={(e) => handleInputConfirm(e, tag)}
+                  onPressEnter={(e) => onPressEnter(e, tag)}
+                />
+              </AutoComplete>
             );
           }
 
@@ -137,17 +167,24 @@ const EditableTagList: React.FC<Props> = (
           return isLongTag ? <Tooltip key={tag} title={tag}>{tagElement}</Tooltip> : tagElement;
         })}
       {inputVisible ? (
-        <Input
-          aria-label={ARIA_LABEL_INPUT}
-          className={css.tagInput}
-          defaultValue=""
-          ref={inputRef}
-          size="small"
-          style={{ width: inputWidth }}
-          type="text"
-          onBlur={handleInputConfirm}
-          onPressEnter={handleInputConfirm}
-        />
+        <AutoComplete
+          filterOption={true}
+          open={isCandidateOpen}
+          options={candidates}
+          onChange={onCandidateChange}
+          onSelect={onCandidateSelect}>
+          <Input
+            aria-label={ARIA_LABEL_INPUT}
+            className={css.tagInput}
+            defaultValue=""
+            ref={inputRef}
+            size="small"
+            style={{ width: inputWidth }}
+            type="text"
+            onBlur={handleInputConfirm}
+            onPressEnter={onPressEnter}
+          />
+        </AutoComplete>
       ) : (
         !disabled && (
           <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>

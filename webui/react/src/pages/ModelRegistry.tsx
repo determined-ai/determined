@@ -287,6 +287,7 @@ const ModelRegistry: React.FC = () => {
       <TagList
         compact
         disabled={record.archived}
+        tagCandidates={tags}
         tags={record.labels ?? []}
         onChange={(tags) => setModelTags(record.name, tags)}
       />
