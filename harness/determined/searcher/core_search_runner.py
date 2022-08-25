@@ -30,7 +30,7 @@ class CoreSearchRunner(SearchRunner):
         else:
             exp = client.create_experiment(exp_config, context_dir)
             experiment_id = exp.id
-            self.search_method.searcher_state.last_event_id = None
+            self.search_method.searcher_state.last_event_id = 0
 
         self.run_experiment(experiment_id, operations)
 

@@ -18,7 +18,7 @@ class SearcherState:
     trial_progress: Dict[uuid.UUID, float]
     trials_closed: Set[uuid.UUID]
     trials_created: Set[uuid.UUID]
-    last_event_id: Optional[int] = None
+    last_event_id: int = 0
     experiment_completed: bool = False
 
     def __init__(self) -> None:
@@ -43,7 +43,7 @@ class SearcherState:
         self.trial_progress = {uuid.UUID(k): v for k, v in d.get("trialProgress", {}).items()}
         self.trials_closed = {uuid.UUID(t) for t in d.get("trialsClosed", [])}
         self.trials_created = {uuid.UUID(t) for t in d.get("trialsCreated", [])}
-        self.last_event_id = d.get("lastEventId")
+        self.last_event_id = d.get("lastEventId", 0)
         self.experiment_id = d.get("experimentId")
         self.experiment_completed = d.get("experimentCompleted", False)
 

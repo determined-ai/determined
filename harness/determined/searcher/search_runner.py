@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from determined.common.api import bindings
-from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason
+from determined.common.api.bindings import (
+    determinedexperimentv1State,
+    v1SearcherEvent,
+    v1TrialExitedEarlyExitedReason,
+)
 from determined.experimental import client
 from determined.searcher.search_method import ExitedReason, Operation, Progress, SearchMethod
 
@@ -83,6 +87,11 @@ class SearchRunner:
                 f"experiment {self.search_method.searcher_state.experiment_id} is "
                 f"inactive; state={event.experimentInactive.experimentState}"
             )
+            if (
+                event.experimentInactive.experimentState
+                == determinedexperimentv1State.STATE_COMPLETED
+            ):
+                self.search_method.searcher_state.experiment_completed = True
             raise _ExperimentInactiveException()
         elif event.trialProgress:
             logging.debug(
@@ -122,10 +131,11 @@ class SearchRunner:
                 for event in events:
                     if (
                         first_event
-                        and last_event_id is not None
-                        and last_event_id > event.id >= 0
+                        and last_event_id != 0
+                        and last_event_id >= event.id >= 0
                         and prior_operations is not None
                     ):
+                        logging.info(f"Resubmitting operations for event.id={event.id}")
                         operations = prior_operations
                     else:
                         try:
@@ -137,9 +147,11 @@ class SearchRunner:
                         # save state
                         self.search_method.searcher_state.last_event_id = event.id
                         self.save_state(experiment_id, operations)
+
                     first_event = False
 
                     self.post_operations(session, experiment_id, event, operations)
+
         except KeyboardInterrupt:
             print("Runner interrupted")
 
@@ -238,7 +250,8 @@ class LocalSearchRunner(SearchRunner):
             state_path.mkdir(parents=True)
             logging.info(f"Starting HP searcher for experiment {exp.id}")
             self.search_method.searcher_state.experiment_id = exp.id
-            self.search_method.searcher_state.last_event_id = None
+            self.search_method.searcher_state.last_event_id = 0
+            self.save_state(exp.id, [])
             experiment_id = exp.id
 
         self.run_experiment(experiment_id, operations)
@@ -262,7 +275,10 @@ class LocalSearchRunner(SearchRunner):
         state_path = experiment_searcher_dir.joinpath(
             f"event_{self.search_method.searcher_state.last_event_id}"
         )
-        state_path.mkdir(parents=True)
+
+        if not state_path.exists():
+            state_path.mkdir(parents=True)
+
         self.search_method.save(
             state_path,
             experiment_id=experiment_id,
