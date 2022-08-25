@@ -97,7 +97,7 @@ message ExperimentInactive {
 // custom searcher informing it of relevant changes in the state
 // of an experiment
 message SearcherEvent {
-   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
   // incremental id of the event
