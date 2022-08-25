@@ -36,7 +36,7 @@ export const Null = (): React.ReactNode => (
 
 export const Custom = (): React.ReactNode => (
   <HumanReadableNumber
-    num={number('num', 5280)}
+    num={number('num', 5270)}
     precision={number('precision', 3)}
     tooltipPrefix={text('tooltipPrefix', '')}
   />
