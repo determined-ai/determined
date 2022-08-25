@@ -49,7 +49,6 @@ export interface TrialsWithMetadata {
   maxBatch: number;
   metricKeys: Record<MetricKey, boolean>;
   metrics: Metric[];
-  total: number;
 }
 
 export const aggregrateTrialsMetadata =
@@ -64,7 +63,6 @@ export const aggregrateTrialsMetadata =
     maxBatch: Math.max(agg.maxBatch, trial.totalBatches),
     metricKeys: { ...agg.metricKeys, ...tMetrics, ...vMetrics },
     metrics: [],
-    total: 0, //overwritten outside
   };
 };
 

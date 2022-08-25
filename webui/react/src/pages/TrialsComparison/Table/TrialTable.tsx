@@ -44,7 +44,6 @@ interface Props {
   containerRef : MutableRefObject<HTMLElement | null>,
   highlights: Highlights<V1AugmentedTrial>;
   tableSettingsHook: SettingsHook<InteractiveTableSettings>;
-  total: number;
   trialsWithMetadata: TrialsWithMetadata;
 }
 
@@ -66,7 +65,6 @@ const TrialTable: React.FC<Props> = ({
   containerRef,
   highlights,
   tableSettingsHook,
-  total,
 }: Props) => {
 
   const { settings, updateSettings } = tableSettingsHook;
@@ -466,8 +464,8 @@ const TrialTable: React.FC<Props> = ({
     return getFullPaginationConfig({
       limit,
       offset,
-    }, total);
-  }, [ settings.tableLimit, settings.tableOffset, total ]);
+    }, fakeTotal);
+  }, [ settings.tableLimit, settings.tableOffset ]);
 
   return (
     <InteractiveTable<V1AugmentedTrial>
