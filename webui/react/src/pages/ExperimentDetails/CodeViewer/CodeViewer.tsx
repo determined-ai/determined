@@ -41,6 +41,36 @@ interface TreeNode extends DataNode {
   text?: string;
 }
 
+const sortTree = (a:TreeNode, b: TreeNode) => {
+  if (a.children) a.children.sort(sortTree);
+
+  if (b.children) b.children.sort(sortTree);
+  // sorting first by having an extension or not, then by extension first
+  // and finally alphabetically.
+  const titleA = String(a.title);
+  const titleB = String(b.title);
+
+  if (!a.isLeaf && b.isLeaf) return -1;
+
+  if (a.isLeaf && !b.isLeaf) return 1;
+
+  if (!a.isLeaf && !b.isLeaf)
+    return titleA.localeCompare(titleB) - titleB.localeCompare(titleA);
+
+  // had to use RegEx due to some files being ".<filename>"
+  const [ stringA, extensionA ] = titleA.split(/(?<=[a-zA-Z])\./);
+  const [ stringB, extensionB ] = titleB.split(/(?<=[a-zA-Z])\./);
+
+  if (!extensionA && extensionB) return 1;
+
+  if (!extensionB && extensionA) return -1;
+
+  if (!extensionA && !extensionB)
+    return stringA.localeCompare(stringB) - stringB.localeCompare(stringA);
+
+  return extensionA.localeCompare(extensionB) - extensionB.localeCompare(extensionB);
+};
+
 const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
   children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
   isLeaf: !node.isDir,
@@ -179,19 +209,7 @@ const CodeViewer: React.FC<Props> = ({
 
         const tree = fileTree
           .map<TreeNode>((node) => convertV1FileNodeToTreeNode(node))
-          .sort((a, b) => {
-            // sorting first by having an extension or not, then by extension first
-            // and finally alphabetically.
-
-            const [ stringA, extensionA ] = String(a.title).split('.');
-            const [ stringB, extensionB ] = String(b.title).split('.');
-
-            if (!extensionA) return 1;
-
-            if (!extensionB) return 0;
-
-            return extensionA.localeCompare(extensionB) - stringA.localeCompare(stringB);
-          });
+          .sort(sortTree);
 
         if (runtimeConfig) tree.unshift({
           icon: configIcon,
