@@ -1,7 +1,7 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -12,22 +12,20 @@ import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import { paths } from 'routes/utils';
-import { getModelLabels } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { ModelItem } from 'types';
-import handleError from 'utils/error';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
 
 interface Props {
   model: ModelItem;
-  onSaveDescription: (editedDescription: string) => Promise<void>
+  onSaveDescription: (editedDescription: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<Error | void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
+  tags: string[];
 }
 
 const ModelHeader: React.FC<Props> = ({
@@ -36,19 +34,11 @@ const ModelHeader: React.FC<Props> = ({
   onSaveName,
   onSwitchArchive,
   onUpdateTags,
+  tags,
 }: Props) => {
   const { users, auth: { user } } = useStore();
-  const [ tags, setTags ] = useState<string[]>([]);
 
   const { contextHolder, modalOpen } = useModalModelDelete();
-
-  const fetchTags = useCallback(async () => {
-    try {
-      const labels = await getModelLabels({});
-      labels.sort((a, b) => alphaNumericSorter(a, b));
-      setTags(labels);
-    } catch (e) { handleError(e); }
-  }, [ ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -125,10 +115,6 @@ const ModelHeader: React.FC<Props> = ({
 
     return <Menu items={menuItems} onClick={onItemClick} />;
   }, [ handleDelete, model.archived, model.userId, onSwitchArchive, user?.id, user?.isAdmin ]);
-
-  useEffect(() => {
-    fetchTags();
-  }, [ fetchTags ]);
 
   return (
     <header className={css.base}>

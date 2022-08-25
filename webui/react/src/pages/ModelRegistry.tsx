@@ -147,7 +147,7 @@ const ModelRegistry: React.FC = () => {
     try {
       setIsLoading(true);
       await patchModel({ body: { labels: tags, name: modelName }, modelName });
-      await fetchModels();
+      await Promise.allSettled([ fetchModels(), fetchTags() ]);
     } catch (e) {
       handleError(e, {
         publicSubject: `Unable to update model ${modelName} tags.`,
@@ -156,7 +156,7 @@ const ModelRegistry: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ fetchModels ]);
+  }, [ fetchModels, fetchTags ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
     updateSettings({ users: users.length !== 0 ? users : undefined });

@@ -98,8 +98,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   if (isTerminated) classes.push(css.terminated);
 
-  const experimentTags = useExperimentTags(fetchExperimentDetails);
-
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
 
   const isMovable = canUserActionExperiment(curUser, Action.Move, experiment);
@@ -208,6 +206,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       setLabels(labels);
     } catch (e) { handleError(e, { silent: true }); }
   }, [ experiment.projectId ]);
+
+  const fetchAll = useCallback(async() => {
+    await Promise.allSettled([ fetchExperimentDetails(), fetchLabels() ]);
+  }, [ fetchExperimentDetails, fetchLabels ]);
+
+  const experimentTags = useExperimentTags(fetchAll);
 
   useEffect(() => {
     fetchLabels();

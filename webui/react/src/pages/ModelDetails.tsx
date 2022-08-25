@@ -16,7 +16,7 @@ import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import ModelVersionTagList from 'pages/ModelVersionDetails/ModelVersionTagList';
 import {
-  archiveModel, getModelDetails, isNotFound, patchModel,
+  archiveModel, getModelDetails, getModelLabels, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -25,6 +25,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, validateDetApiEnum } from 'shared/utils/service';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
@@ -43,6 +44,7 @@ interface Params {
 const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
   const modelId = decodeURIComponent(useParams<Params>().modelId);
+  const [ tags, setTags ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);
@@ -72,6 +74,14 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelId, pageError, settings ]);
 
+  const fetchTags = useCallback(async () => {
+    try {
+      const labels = await getModelLabels({});
+      labels.sort((a, b) => alphaNumericSorter(a, b));
+      setTags(labels);
+    } catch (e) { handleError(e); }
+  }, [ ]);
+
   const {
     contextHolder: modalModelDownloadContextHolder,
     modalOpen: openModelDownload,
@@ -86,8 +96,9 @@ const ModelDetails: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
+    fetchTags();
     fetchModel();
-  }, [ fetchModel ]);
+  }, [ fetchModel, fetchTags ]);
 
   const downloadModel = useCallback((version: ModelVersion) => {
     openModelDownload(version);
@@ -102,6 +113,7 @@ const ModelDetails: React.FC = () => {
       setIsLoading(true);
       await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
       await fetchModel();
+      await fetchTags();
     } catch (e) {
       handleError(e, {
         publicSubject: `Unable to update model version ${versionId} tags.`,
@@ -110,7 +122,7 @@ const ModelDetails: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ fetchModel ]);
+  }, [ fetchModel, fetchTags ]);
 
   const saveVersionDescription = useCallback(async (
     editedDescription: string,
@@ -314,6 +326,7 @@ const ModelDetails: React.FC = () => {
         });
         fetchModel();
       }
+      await fetchTags();
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to update model tags.',
@@ -322,7 +335,7 @@ const ModelDetails: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ fetchModel, model?.model.name ]);
+  }, [ fetchModel, fetchTags, model?.model.name ]);
 
   const switchArchive = useCallback(() => {
     const modelName = model?.model.name;
@@ -363,6 +376,7 @@ const ModelDetails: React.FC = () => {
       headerComponent={(
         <ModelHeader
           model={model.model}
+          tags={tags}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onSwitchArchive={switchArchive}

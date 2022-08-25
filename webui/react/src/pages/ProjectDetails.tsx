@@ -209,7 +209,7 @@ const ProjectDetails: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
-      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
+      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels(), fetchLabels() ]);
   }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
