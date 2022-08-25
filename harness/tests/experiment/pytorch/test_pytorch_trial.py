@@ -700,12 +700,16 @@ def make_amp_workloads(
     for idx, metrics in enumerate(training_metrics[:-1]):
         assert metrics["loss"].dtype is np.dtype("float32")
         if assert_output_float16:
-            assert metrics["output"].dtype is np.dtype("float16")
+            assert metrics["output"].dtype is np.dtype("float16"), (
+                f"output has dtype {metrics['output'].dtype} but should be float16"
+            )
         else:
             # Automatic usages of Apex or native AMP cast the output back to float32
             # For the latter case, see the hook end_f16
             #   defined in PyTorchTrialContext.autocast_forward_pass
-            assert metrics["output"].dtype is np.dtype("float32")
+            assert metrics["output"].dtype is np.dtype("float32"), (
+                f"output has dtype {metrics['output'].dtype} but should be float32"
+            )
         loss = metrics["loss"].item()
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
@@ -713,11 +717,13 @@ def make_amp_workloads(
             assert scaled_loss == metrics["scaled_loss"]
         growth_countdown -= 1
         scale = metrics["scale"]
+        MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
         if scale != scale_before:
             if scale < scale_before:
-                assert scaled_loss > 32758, (
+                assert scaled_loss >= MIN_SCALED_LOSS_TO_REDUCE_SCALE, (
                     f"scale reduced from {scale_before} to {scale}, "
-                    f"but not as expected (scaled_loss={scaled_loss} <= 32758)"
+                    f"but not as expected (scaled_loss={scaled_loss} < "
+                    f"{MIN_SCALED_LOSS_TO_REDUCE_SCALE})"
                 )
             else:
                 assert growth_countdown == 0, (
