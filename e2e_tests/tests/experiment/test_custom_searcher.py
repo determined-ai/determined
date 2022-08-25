@@ -152,10 +152,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         "smaller_is_better": True,
         "unit": "batches",
     }
-    if len(exceptions) > 0:
-        config["description"] = ";".join(exceptions)
-    else:
-        config["description"] = "custom searcher"
+    config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
 
     max_trials = 5
     max_concurrent_trials = 2
@@ -169,14 +166,14 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         failures = 0
         while failures < failures_expected:
             try:
-                exception_step = exceptions.pop(0)
+                exception_point = exceptions.pop(0)
                 # re-create RandomSearchMethod and LocalSearchRunner after every fail
                 # to simulate python process crash
                 search_method = RandomSearchMethod(
-                    max_trials, max_concurrent_trials, max_length, exception_step
+                    max_trials, max_concurrent_trials, max_length, exception_point
                 )
-                search_runner_mock = MockLocalSearchRunner(
-                    exception_step, search_method, Path(searcher_dir)
+                search_runner_mock = FallibleSearchRunner(
+                    exception_point, search_method, Path(searcher_dir)
                 )
                 search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
@@ -448,10 +445,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
         "unit": "batches",
     }
     config["name"] = "asha"
-    if len(exceptions) > 0:
-        config["description"] = ";".join(exceptions)
-    else:
-        config["description"] = "custom searcher"
+    config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
 
     max_length = 3000
     max_trials = 16
@@ -468,7 +462,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                 search_method = ASHASearchMethod(
                     max_length, max_trials, num_rungs, divisor, exception_point=exception_point
                 )
-                search_runner_mock = MockLocalSearchRunner(
+                search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, Path(searcher_dir)
                 )
                 search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
@@ -845,20 +839,20 @@ class ASHASearchMethod(SearchMethod):
             raise ex
 
 
-class MockLocalSearchRunner(LocalSearchRunner):
+class FallibleSearchRunner(LocalSearchRunner):
     def __init__(
         self,
         exception_point: str,
         search_method: SearchMethod,
         searcher_dir: Optional[Path] = None,
     ):
-        super(MockLocalSearchRunner, self).__init__(search_method, searcher_dir)
+        super(FallibleSearchRunner, self).__init__(search_method, searcher_dir)
         self.fail_on_save = False
         if exception_point == "after_save":
             self.fail_on_save = True
 
     def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
-        super(MockLocalSearchRunner, self).save_state(experiment_id, operations)
+        super(FallibleSearchRunner, self).save_state(experiment_id, operations)
         if self.fail_on_save:
             logging.info(
                 "Raising exception in after saving the state and before posting operations"
