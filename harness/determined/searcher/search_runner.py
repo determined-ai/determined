@@ -87,6 +87,8 @@ class SearchRunner:
                 f"experiment {self.search_method.searcher_state.experiment_id} is "
                 f"inactive; state={event.experimentInactive.experimentState}"
             )
+            if event.experimentInactive.experimentState == bindings.determinedexperimentv1State.STATE_COMPLETED:
+                self.search_method.searcher_state.experiment_completed = True
             raise _ExperimentInactiveException()
         elif event.trialProgress:
             logging.debug(
@@ -128,10 +130,11 @@ class SearchRunner:
 
                     if (
                         first_event
-                        and last_event_id is not None
+                        and last_event_id != -1
                         and last_event_id >= event.id >= 0
                         and prior_operations is not None
                     ):
+                        logging.info(f'Resubmit operations for event.id={event.id}')
                         operations = prior_operations
                     else:
                         try:
@@ -247,7 +250,7 @@ class LocalSearchRunner(SearchRunner):
             state_path.mkdir(parents=True)
             logging.info(f"Starting HP searcher for experiment {exp.id}")
             self.search_method.searcher_state.experiment_id = exp.id
-            self.search_method.searcher_state.last_event_id = None
+            self.search_method.searcher_state.last_event_id = -1
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
