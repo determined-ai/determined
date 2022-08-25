@@ -2429,11 +2429,15 @@ workflows:
   test-e2e-longrunning:
     jobs:
       # Build and publish artifacts used in tests
-      - build-helm
-      - build-proto
+      - build-helm:
+          filters: *any-upstream
+      - build-proto:
+          filters: *any-upstream
       - build-react:
           dev-mode: true
+          filters: *any-upstream
       - build-docs:
+          filters: *any-upstream
           requires:
             - build-helm
             - build-proto
