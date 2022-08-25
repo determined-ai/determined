@@ -8,19 +8,22 @@ export type CheckpointColumnName =
   | 'action'
   | 'uuid'
   | 'state'
-  | 'totalBatches';
+  | 'totalBatches'
+  | 'checkpoint';
 
 export const DEFAULT_COLUMNS: CheckpointColumnName[] = [
   'uuid',
   'state',
   'totalBatches',
+  'checkpoint',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<CheckpointColumnName, number> = {
   action: 46,
+  checkpoint: 100,
   state: 117,
   totalBatches: 74,
-  uuid: 85,
+  uuid: 200,
 };
 
 export interface Settings extends InteractiveTableSettings {

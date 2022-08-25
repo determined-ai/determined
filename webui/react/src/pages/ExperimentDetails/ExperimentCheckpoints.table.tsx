@@ -29,6 +29,12 @@ export const columns: ColumnDef<CoreApiGenericCheckpoint>[] = [
     title: 'State',
   },
   {
+    dataIndex: 'checkpoint',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
+    key: 'checkpoint',
+    title: 'Checkpoint',
+  },
+  {
     align: 'right',
     className: 'fullCell',
     dataIndex: 'action',
