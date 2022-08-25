@@ -131,6 +131,7 @@ def test_run_random_searcher_exp() -> None:
     [
         ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
         ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
+        ["on_trial_created", "save_method_state"],
         [
             "on_trial_created",
             "save_method_state",

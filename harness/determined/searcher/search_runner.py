@@ -275,7 +275,10 @@ class LocalSearchRunner(SearchRunner):
         state_path = experiment_searcher_dir.joinpath(
             f"event_{self.search_method.searcher_state.last_event_id}"
         )
-        state_path.mkdir(parents=True)
+
+        if not state_path.exists():
+            state_path.mkdir(parents=True)
+
         self.search_method.save(
             state_path,
             experiment_id=experiment_id,
