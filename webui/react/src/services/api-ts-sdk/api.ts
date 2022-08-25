@@ -6824,7 +6824,7 @@ export interface V1SearcherEvent {
      * @type {number}
      * @memberof V1SearcherEvent
      */
-    id?: number;
+    id: number;
     /**
      * 
      * @type {V1InitialOperations}
@@ -7555,15 +7555,14 @@ export interface V1TrialExitedEarly {
 }
 
 /**
- * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.
  * @export
  * @enum {string}
  */
 export enum V1TrialExitedEarlyExitedReason {
     UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
     INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
-    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
-    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP'
 }
 
 /**
