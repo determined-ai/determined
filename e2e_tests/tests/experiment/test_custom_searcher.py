@@ -282,7 +282,7 @@ class RandomSearchMethod(SearchMethod):
         self.pending_trials -= 1
 
         ops: List[Operation] = []
-        if exit_reason == ExitedReason.INVALID_HP or exit_reason == ExitedReason.INIT_INVALID_HP:
+        if exit_reason == ExitedReason.INVALID_HP:
             request_id = uuid.uuid4()
             ops.append(Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
             ops.append(ValidateAfter(request_id=request_id, length=self.max_length))
@@ -642,11 +642,8 @@ class ASHASearchMethod(SearchMethod):
     def on_trial_exited_early(
         self, request_id: uuid.UUID, exited_reason: ExitedReason
     ) -> List[Operation]:
-        self.asha_search_state.pending_trials -= 1
-        if (
-            exited_reason == ExitedReason.INVALID_HP
-            or exited_reason == ExitedReason.INIT_INVALID_HP
-        ):
+        self.pending_trials -= 1
+        if exited_reason == ExitedReason.INVALID_HP:
             ops: List[Operation] = []
 
             self.asha_search_state.early_exit_trials.add(request_id)
