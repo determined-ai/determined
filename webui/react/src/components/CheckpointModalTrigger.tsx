@@ -6,10 +6,10 @@ import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckp
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import Icon from 'shared/components/Icon/Icon';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { CheckpointWorkloadExtended, ExperimentBase } from 'types';
+import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
 
 interface Props {
-  checkpoint: CheckpointWorkloadExtended;
+  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   chidren?: JSX.Element
   experiment: ExperimentBase;
   title: string;

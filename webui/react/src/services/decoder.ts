@@ -348,6 +348,16 @@ export const decodeCheckpointState = (
   return checkpointStateMap[data];
 };
 
+export const encodeCheckpointState = (
+  state: types.CheckpointState,
+): Sdk.Determinedcheckpointv1State => {
+  const stateKey = Object
+    .keys(checkpointStateMap)
+    .find((key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state);
+  if (stateKey) return stateKey as unknown as Sdk.Determinedcheckpointv1State;
+  return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
+};
+
 export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): types.RunState => {
   return experimentStateMap[data];
 };
