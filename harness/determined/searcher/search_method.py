@@ -52,7 +52,6 @@ class ExitedReason(Enum):
     ERRORED = "ERRORED"
     USER_CANCELED = "USER_CANCELED"
     INVALID_HP = "INVALID_HP"
-    INIT_INVALID_HP = "INIT_INVALID_HP"
 
     @classmethod
     def _from_bindings(
@@ -68,11 +67,6 @@ class ExitedReason(Enum):
             == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_USER_REQUESTED_STOP
         ):
             return cls.USER_CANCELED
-        if (
-            bindings_exited_reason
-            == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_INIT_INVALID_HP
-        ):
-            return cls.INIT_INVALID_HP
         raise RuntimeError(f"Invalid exited reason: {bindings_exited_reason}")
 
 
