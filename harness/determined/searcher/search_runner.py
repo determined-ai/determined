@@ -129,7 +129,7 @@ class SearchRunner:
                     if (
                         first_event
                         and last_event_id is not None
-                        and last_event_id > event.id >= 0
+                        and last_event_id >= event.id >= 0
                         and prior_operations is not None
                     ):
                         operations = prior_operations
@@ -248,7 +248,7 @@ class LocalSearchRunner(SearchRunner):
             logging.info(f"Starting HP searcher for experiment {exp.id}")
             self.search_method.searcher_state.experiment_id = exp.id
             self.search_method.searcher_state.last_event_id = None
-            self.save_state(exp.id)
+            self.save_state(exp.id, [])
             experiment_id = exp.id
 
         self.run_experiment(experiment_id, operations)
