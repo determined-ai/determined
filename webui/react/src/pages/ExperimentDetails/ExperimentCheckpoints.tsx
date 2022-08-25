@@ -13,7 +13,7 @@ import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckp
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { getExperimentCheckpoints, openOrCreateTensorBoard } from 'services/api';
+import { getExperimentCheckpoints } from 'services/api';
 import { Determinedcheckpointv1State,
   V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
@@ -22,11 +22,9 @@ import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
-  ExperimentAction as Action, CheckpointState,
-  CommandTask, CoreApiGenericCheckpoint, ExperimentBase,
+  CheckpointState, CoreApiGenericCheckpoint, ExperimentBase,
 } from 'types';
 import handleError from 'utils/error';
-import { openCommand } from 'utils/wait';
 
 import settingsConfig, { Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
@@ -201,25 +199,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     settings.tableOffset,
   ]);
 
-  const sendBatchActions = useCallback(async (action: Action) => {
-    if (action === Action.OpenTensorBoard) {
-      return await openOrCreateTensorBoard({ trialIds: settings.row });
-    }
-  }, [ settings.row ]);
-
-  const submitBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: CheckpointAction) => {
     try {
-      const result = await sendBatchActions(action);
-      if (action === Action.OpenTensorBoard && result) {
-        openCommand(result as CommandTask);
-      }
+      // TODO: Actions
 
       // Refetch experiment list to get updates based on batch action.
       await fetchExperimentCheckpoints();
     } catch (e) {
-      const publicSubject = action === Action.OpenTensorBoard ?
-        'Unable to View TensorBoard for Selected Trials' :
-        `Unable to ${action} Selected Trials`;
+      const publicSubject = `Unable to ${action} Selected Checkpoints`;
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
@@ -228,7 +215,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         type: ErrorType.Server,
       });
     }
-  }, [ fetchExperimentCheckpoints, sendBatchActions ]);
+  }, [ fetchExperimentCheckpoints ]);
 
   const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
 
@@ -262,11 +249,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       <Section>
         <TableBatch
           actions={[
-            { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-            { label: Action.CompareTrials, value: Action.CompareTrials },
+            // { label: CheckpointAction.Register, value: CheckpointAction.Register },
           ]}
           selectedRowCount={(settings.row ?? []).length}
-          onAction={(action) => submitBatchAction(action as Action)}
+          onAction={(action) => submitBatchAction(action as CheckpointAction)}
           onClear={clearSelected}
         />
         <InteractiveTable

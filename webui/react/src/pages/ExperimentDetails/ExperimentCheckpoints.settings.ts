@@ -28,7 +28,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<CheckpointColumnName, number> = {
 
 export interface Settings extends InteractiveTableSettings {
   columns: CheckpointColumnName[];
-  row?: number[];
+  row?: string[];
   sortDesc: boolean;
   sortKey: V1GetExperimentCheckpointsRequestSortBy;
   state?: CheckpointState[];
@@ -60,7 +60,7 @@ const config: SettingsConfig = {
     },
     {
       key: 'row',
-      type: { baseType: BaseType.Integer, isArray: true },
+      type: { baseType: BaseType.String, isArray: true },
     },
     {
       defaultValue: true,
