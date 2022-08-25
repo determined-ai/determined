@@ -642,7 +642,7 @@ class ASHASearchMethod(SearchMethod):
     def on_trial_exited_early(
         self, request_id: uuid.UUID, exited_reason: ExitedReason
     ) -> List[Operation]:
-        self.pending_trials -= 1
+        self.asha_search_state.pending_trials -= 1
         if exited_reason == ExitedReason.INVALID_HP:
             ops: List[Operation] = []
 
