@@ -33,8 +33,9 @@ import (
 
 type dockerActor struct {
 	*client.Client
-	credentialStores map[string]*credentialStore
-	authConfigs      map[string]types.AuthConfig
+	credentialStores    map[string]*credentialStore
+	authConfigs         map[string]types.AuthConfig
+	reattachContainerID *cproto.ID
 }
 
 type (
@@ -50,9 +51,6 @@ type (
 	}
 	runContainer struct {
 		cproto.RunSpec
-	}
-	reattachContainer struct {
-		ID cproto.ID
 	}
 
 	imagePulled      struct{}
@@ -109,11 +107,12 @@ func (d *dockerActor) Receive(ctx *actor.Context) error {
 			ctx.Log().Info("can't find any auths in ~/.docker/config.json, continuing without them")
 		}
 		d.credentialStores, d.authConfigs = stores, auths
+
+		if d.reattachContainerID != nil {
+			d.reattachContainer(ctx, *d.reattachContainerID)
+		}
 	case pullImage:
 		go d.pullImage(ctx, msg)
-
-	case reattachContainer:
-		go d.reattachContainer(ctx, msg.ID)
 
 	case runContainer:
 		go d.runContainer(ctx, msg.RunSpec)
@@ -329,13 +328,17 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 }
 
 func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
+	// Since this method is called in PreStart,
+	// use actor parent instead of message sender to communicate.
+	senderRef := ctx.Self().Parent()
+
 	containers, err := d.ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("label", dockerContainerIDLabel+"="+id.String()),
 		),
 	})
 	if err != nil {
-		sendErr(ctx, errors.Wrap(err, "error while reattaching container"))
+		sendErrParent(ctx, errors.Wrap(err, "error while reattaching container"))
 		return
 	}
 
@@ -346,25 +349,27 @@ func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
 		// Restore containerInfo.
 		containerInfo, err := d.ContainerInspect(context.Background(), cont.ID)
 		if err != nil {
-			sendErr(ctx, errors.Wrap(err, "error inspecting reattached container"))
+			sendErrParent(ctx, errors.Wrap(err, "error inspecting reattached container"))
 			return
 		}
 
 		// Check if container has exited while we were trying to reattach it.
 		if !containerInfo.State.Running {
 			ctx.Tell(
-				ctx.Sender(),
+				senderRef,
 				containerTerminated{ExitCode: aproto.ExitCode(containerInfo.State.ExitCode)})
 		} else {
 			ctx.Tell(
-				ctx.Sender(),
+				senderRef,
 				containerReattached{dockerID: cont.ID, containerInfo: containerInfo},
 			)
 			select {
 			case err = <-eerr:
-				sendErr(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))
+				sendErrParent(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))
 			case exit := <-exit:
-				ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
+				ctx.Tell(
+					senderRef,
+					containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
 			}
 		}
 	}
@@ -380,6 +385,10 @@ func (d *dockerActor) signalContainer(ctx *actor.Context, msg signalContainer) {
 
 func sendErr(ctx *actor.Context, err error) {
 	ctx.Tell(ctx.Sender(), dockerErr{Error: err})
+}
+
+func sendErrParent(ctx *actor.Context, err error) {
+	ctx.Tell(ctx.Self().Parent(), dockerErr{Error: err})
 }
 
 func (d *dockerActor) sendAuxLog(ctx *actor.Context, level *string, msg string) {
