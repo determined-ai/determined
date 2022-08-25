@@ -18,7 +18,7 @@ class SearcherState:
     trial_progress: Dict[uuid.UUID, float]
     trials_closed: Set[uuid.UUID]
     trials_created: Set[uuid.UUID]
-    last_event_id: Optional[int] = None
+    last_event_id: int = 0
     experiment_completed: bool = False
 
     def __init__(self) -> None:

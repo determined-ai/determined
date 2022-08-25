@@ -131,15 +131,15 @@ def test_run_random_searcher_exp() -> None:
     [
         ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
         ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
-        ["on_trial_created", "save_method_state"],
+        ["on_trial_created", "save_method_state", "after_save"],
         [
             "on_trial_created",
             "save_method_state",
             "load_method_state",
-            "save_method_state",
-            "save_method_state",
+            "after_save",
+            "after_save",
             "on_validation_completed",
-            "save_method_state",
+            "after_save",
             "save_method_state",
         ],
     ],
@@ -175,8 +175,10 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                 search_method = RandomSearchMethod(
                     max_trials, max_concurrent_trials, max_length, exception_step
                 )
-                search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
-                search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+                search_runner_mock = MockLocalSearchRunner(
+                    exception_step, search_method, Path(searcher_dir)
+                )
+                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
             except MaxRetryError:
                 failures += 1
@@ -417,10 +419,10 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     [
         [
             "initial_operations_start",  # fail before sending initial operations
-            "save_method_state",  # fail on save - should not send initial operations again
+            "after_save",  # fail on save - should not send initial operations again
             "save_method_state",
             "save_method_state",
-            "save_method_state",
+            "after_save",
             "on_trial_created_10_trials_in_rung_0",
             "_get_close_rungs_ops",
         ],
@@ -429,10 +431,10 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
             "on_validation_completed",
             "save_method_state",
             "save_method_state",
-            "save_method_state",
-            "on_validation_completed",
+            "after_save",
+            "after_save",
             "load_method_state",
-            "save_method_state",
+            "on_validation_completed",
             "shutdown",
         ],
     ],
@@ -466,8 +468,10 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                 search_method = ASHASearchMethod(
                     max_length, max_trials, num_rungs, divisor, exception_point=exception_point
                 )
-                search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
-                search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+                search_runner_mock = MockLocalSearchRunner(
+                    exception_point, search_method, Path(searcher_dir)
+                )
+                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
             except MaxRetryError:
                 failures += 1
@@ -837,5 +841,27 @@ class ASHASearchMethod(SearchMethod):
     def raise_exception(self, exception_id: str) -> None:
         if exception_id == self.exception_point:
             logging.info(f"Raising exception in {exception_id}")
+            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            raise ex
+
+
+class MockLocalSearchRunner(LocalSearchRunner):
+    def __init__(
+        self,
+        exception_point: str,
+        search_method: SearchMethod,
+        searcher_dir: Optional[Path] = None,
+    ):
+        super(MockLocalSearchRunner, self).__init__(search_method, searcher_dir)
+        self.fail_on_save = False
+        if exception_point == "after_save":
+            self.fail_on_save = True
+
+    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
+        super(MockLocalSearchRunner, self).save_state(experiment_id, operations)
+        if self.fail_on_save:
+            logging.info(
+                "Raising exception in after saving the state and before posting operations"
+            )
             ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
             raise ex
