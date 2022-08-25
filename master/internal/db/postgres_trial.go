@@ -538,12 +538,15 @@ var QueryTrialsOrderMap = map[apiv1.OrderBy]SortDirection{
 var safeString = regexp.MustCompile(`^[a-zA-Z0-9_\.\-]+$`)
 
 func hParamAccessor(hp string) string {
-	nesting := strings.Split(hp, ".")
-	nestingWithQuotes := []string{}
-	for _, n := range nesting {
-		nestingWithQuotes = append(nestingWithQuotes, fmt.Sprintf("'%s'", n))
+	pathElementsRaw := strings.Split(hp, ".")
+	pathElements := []string{"hparams"}
+	for _, n := range pathElementsRaw {
+		pathElements = append(pathElements, fmt.Sprintf("'%s'", n))
 	}
-	return fmt.Sprintf("(hparams->>%s)::float8", strings.Join(nestingWithQuotes, "->>"))
+	path := strings.Join(pathElements[:len(pathElements)-1], "->")
+	key := pathElements[len(pathElements)-1]
+
+	return fmt.Sprintf("(%s->>%s)::float8", path, key)
 }
 
 // ApplyTrialPatch applies a patch operation to a set of Trials.

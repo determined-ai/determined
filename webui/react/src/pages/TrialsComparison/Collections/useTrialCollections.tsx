@@ -99,8 +99,6 @@ export const useTrialCollections = (
 
   const [ collections, setCollections ] = useState<TrialsCollection[]>([]);
 
-  // console.log('in use ', collections);
-
   const settingsConfig = useMemo(() => configForProject(projectId), [ projectId ]);
   const { settings, updateSettings } = useSettings<{ collection: string }>(settingsConfig);
 
@@ -152,7 +150,6 @@ export const useTrialCollections = (
     const _collection = collections.find((c) => c.name === settings?.collection);
     const previousCollection = getPreviousCollection();
     if (_collection && JSON.stringify(_collection) !== JSON.stringify(previousCollection)) {
-      console.log('filters for new collection', _collection.filters);
       _setFilters(_collection.filters);
       setPreviousCollection(_collection);
     }

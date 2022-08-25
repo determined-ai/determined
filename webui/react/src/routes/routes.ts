@@ -26,6 +26,19 @@ const routes: RouteConfig[] = [
     title: 'Project',
   },
   {
+    id: 'projectDetails',
+    needAuth: true,
+    path: '/projects/:projectId/:tab',
+    title: 'Project',
+  },
+  {
+    icon: 'experiment',
+    id: 'uncategorized',
+    needAuth: true,
+    path: '/projects/1/:tab',
+    title: 'Uncategorized',
+  },
+  {
     icon: 'experiment',
     id: 'uncategorized',
     needAuth: true,

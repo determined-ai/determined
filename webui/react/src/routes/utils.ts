@@ -122,6 +122,9 @@ export const paths = {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
   projectDetails: (projectId: number | string): string => {
+    return `/projects/${projectId}/experiments`;
+  },
+  projectDetailsBasePath: (projectId: number | string): string => {
     return `/projects/${projectId}`;
   },
   reload: (path: string): string => {
@@ -154,7 +157,7 @@ export const paths = {
     return `/experiments/${experimentId}/trials/${trialId}/logs`;
   },
   uncategorized: (): string => {
-    return '/projects/1';
+    return '/projects/1/experiments';
   },
   users: (): string => {
     return '/users';

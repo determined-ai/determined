@@ -24,7 +24,7 @@ import { paths } from 'routes/utils';
 import { Determinedtrialv1State, V1AugmentedTrial, V1OrderBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
-import { isNumber } from 'shared/utils/data';
+import { isNumber, numberElseUndefined } from 'shared/utils/data';
 import { StateOfUnion } from 'themes';
 import { MetricType, RunState, TrialState } from 'types';
 import { metricKeyToName, metricToKey } from 'utils/metric';
@@ -175,9 +175,13 @@ const TrialTable: React.FC<Props> = ({
     // .filter((hp) => trials.hparams[hp]?.size > 1)
     .map((hp) => {
       const columnKey = `hparams.${hp}`;
+      const actionable = [ ...trials.hparams[hp] ].every((val) =>
+        Number.isFinite(parseFloat(String(val))));
       return {
         defaultWidth: getWidthForField(hp),
-        filterDropdown: rangeFilterForPrefix('hparams', filters, setFilters)(hp),
+        filterDropdown: actionable
+          ? rangeFilterForPrefix('hparams', filters, setFilters)(hp)
+          : null,
         isFiltered: () => rangeFilterIsActive(filters.hparams, hp),
         key: columnKey,
         render: (_: string, record: V1AugmentedTrial) => {
@@ -189,8 +193,12 @@ const TrialTable: React.FC<Props> = ({
           }
           return value + '';
         },
-        sorter: true,
-        title: <BadgeTag label={hp} tooltip="Hyperparameter">H</BadgeTag>,
+        sorter: actionable,
+        title: (
+          <BadgeTag label={hp} tooltip="Hyperparameter">
+            H
+          </BadgeTag>
+        ),
       };
     }), [ filters, trials.hparams, setFilters ]);
 

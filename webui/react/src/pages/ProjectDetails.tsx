@@ -142,8 +142,7 @@ const ProjectDetails: React.FC = () => {
         type="project"
       />
       <DynamicTabs
-        basePath={paths.projectDetails(id)}
-        defaultActiveKey="trials"
+        basePath={paths.projectDetailsBasePath(id)}
         destroyInactiveTabPane
         tabBarStyle={{ height: 50, paddingLeft: 16 }}>
         <TabPane

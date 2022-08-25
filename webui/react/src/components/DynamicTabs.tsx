@@ -49,10 +49,10 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
   useEffect(() => {
 
     if (!activeKey && tabKeys.length) {
+      history.replace(`${basePath}/${tabKeys[0]}`);
 
-      handleTabSwitch(tabKeys[0]);
     }
-  }, [ activeKey, tabKeys, handleTabSwitch ]);
+  }, [ activeKey, tabKeys, handleTabSwitch, basePath, history ]);
 
   const updateTabBarContent: TabBarUpdater = useCallback((content?: JSX.Element) => {
     // console.log(content);
