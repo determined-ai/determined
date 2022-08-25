@@ -440,7 +440,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Warnf("Processing operations %+v", ops)
 
 		// remove from queue
-		if err := queue.RemoveUnder(int(msg.TriggeredByEvent.Id)); err != nil {
+		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
 			ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
 		} else {
 			e.searcher.Record(ops)
