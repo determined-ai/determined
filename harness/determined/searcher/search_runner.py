@@ -82,8 +82,9 @@ class SearchRunner:
                                 "trialExitedEarly event is invalid without exitedReason"
                             )
                         request_id = uuid.UUID(event.trialExitedEarly.requestId)
-                        if event.trialExitedEarly.exitedReason in (
-                            v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
+                        if (
+                            event.trialExitedEarly.exitedReason
+                            == v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
                         ):
                             self.search_method.searcher_state.trial_progress.pop(request_id, None)
                         elif (
