@@ -6153,7 +6153,7 @@ export interface V1SearcherEvent {
      * @type {number}
      * @memberof V1SearcherEvent
      */
-    id?: number;
+    id: number;
     /**
      * 
      * @type {V1InitialOperations}
