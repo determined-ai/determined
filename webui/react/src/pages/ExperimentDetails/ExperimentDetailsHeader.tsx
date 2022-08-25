@@ -206,7 +206,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       const labels = await getExperimentLabels({ project_id: experiment.projectId });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
-    } catch (e) { handleError(e); }
+    } catch (e) { handleError(e, { silent: true }); }
   }, [ experiment.projectId ]);
 
   useEffect(() => {

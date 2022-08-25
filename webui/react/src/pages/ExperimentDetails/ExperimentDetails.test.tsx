@@ -6,6 +6,7 @@ import { Router, useParams } from 'react-router-dom';
 import StoreProvider from 'contexts/Store';
 import {
   getExperimentDetails,
+  getExperimentLabels,
   getExpTrials,
   getExpValidationHistory,
   getProject,
@@ -33,6 +34,7 @@ jest.mock('react-router-dom', () => ({
 jest.mock('services/api', () => ({
   ...jest.requireActual('services/api'),
   getExperimentDetails: jest.fn(),
+  getExperimentLabels: jest.fn(),
   getExpTrials: jest.fn(),
   getExpValidationHistory: jest.fn(),
   getProject: jest.fn(),
@@ -98,6 +100,8 @@ describe('Experment Details Page', () => {
       (useParams as jest.Mock).mockReturnValue({ experimentId: 1241 });
       (getExperimentDetails as jest.Mock)
         .mockResolvedValue(RESPONSES.singleTrial.getExperimentsDetails);
+      (getExperimentLabels as jest.Mock)
+        .mockResolvedValue(RESPONSES.singleTrial.getExperimentLabels);
       (getExpValidationHistory as jest.Mock)
         .mockResolvedValue(RESPONSES.singleTrial.getExpValidationHistory);
       (getExpTrials as jest.Mock)

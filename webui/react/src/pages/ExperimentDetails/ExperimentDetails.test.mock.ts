@@ -1,5 +1,6 @@
 const RESPONSES = {
   multiTrial: {
+    getExperimentLabels: [ 'tag1', 'tag2', 'tag2' ],
     getExperimentsDetails: {
       archived: false,
       config: {
@@ -670,6 +671,7 @@ const RESPONSES = {
     },
   },
   singleTrial: {
+    getExperimentLabels: [ 'tag1', 'tag2', 'tag2' ],
     getExperimentsDetails: {
       archived: false,
       config: {
