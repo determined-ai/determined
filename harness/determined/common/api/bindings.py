@@ -31,6 +31,39 @@ def dump_float(val: typing.Any) -> typing.Any:
     return val
 
 
+T = typing.TypeVar("T")
+
+
+def to_list(val: typing.Sequence[T]) -> typing.List[T]:
+    if isinstance(val, list):
+        return val
+    return list(val)
+
+
+def to_optional_list(val: typing.Optional[typing.Sequence[T]]) -> typing.Optional[typing.List[T]]:
+    if val is None:
+        return val
+    if isinstance(val, list):
+        return val
+    return list(val)
+
+
+def to_dict(val: typing.Mapping[str, T]) -> typing.Dict[str, T]:
+    if isinstance(val, dict):
+        return val
+    return dict(val)
+
+
+def to_optional_dict(
+    val: typing.Optional[typing.Mapping[str, T]]
+) -> typing.Optional[typing.Dict[str, T]]:
+    if val is None:
+        return val
+    if isinstance(val, dict):
+        return val
+    return dict(val)
+
+
 class APIHttpError(Exception):
     # APIHttpError is used if an HTTP(s) API request fails.
     def __init__(self, operation_name: str, response: requests.Response) -> None:
@@ -50,13 +83,13 @@ class ExpCompareTrialsSampleResponseExpTrial:
         *,
         data: "typing.Sequence[v1DataPoint]",
         experimentId: int,
-        hparams: "typing.Dict[str, typing.Any]",
+        hparams: "typing.Mapping[str, typing.Any]",
         trialId: int,
     ):
-        self.trialId = trialId
-        self.hparams = hparams
-        self.data = data
+        self.data = to_list(data)
         self.experimentId = experimentId
+        self.hparams = to_dict(hparams)
+        self.trialId = trialId
 
     @classmethod
     def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
@@ -81,15 +114,15 @@ class GetHPImportanceResponseMetricHPImportance:
         *,
         error: "typing.Optional[str]" = None,
         experimentProgress: "typing.Optional[float]" = None,
-        hpImportance: "typing.Optional[typing.Dict[str, float]]" = None,
+        hpImportance: "typing.Optional[typing.Mapping[str, float]]" = None,
         inProgress: "typing.Optional[bool]" = None,
         pending: "typing.Optional[bool]" = None,
     ):
-        self.hpImportance = hpImportance
-        self.experimentProgress = experimentProgress
         self.error = error
-        self.pending = pending
+        self.experimentProgress = experimentProgress
+        self.hpImportance = to_optional_dict(hpImportance)
         self.inProgress = inProgress
+        self.pending = pending
 
     @classmethod
     def from_json(cls, obj: Json) -> "GetHPImportanceResponseMetricHPImportance":
@@ -223,10 +256,10 @@ class runtimeError:
         error: "typing.Optional[str]" = None,
         message: "typing.Optional[str]" = None,
     ):
-        self.error = error
         self.code = code
+        self.details = to_optional_list(details)
+        self.error = error
         self.message = message
-        self.details = details
 
     @classmethod
     def from_json(cls, obj: Json) -> "runtimeError":
@@ -255,11 +288,11 @@ class runtimeStreamError:
         httpStatus: "typing.Optional[str]" = None,
         message: "typing.Optional[str]" = None,
     ):
+        self.details = to_optional_list(details)
         self.grpcCode = grpcCode
         self.httpCode = httpCode
-        self.message = message
         self.httpStatus = httpStatus
-        self.details = details
+        self.message = message
 
     @classmethod
     def from_json(cls, obj: Json) -> "runtimeStreamError":
@@ -285,7 +318,7 @@ class trialv1Trial:
         self,
         *,
         experimentId: int,
-        hparams: "typing.Dict[str, typing.Any]",
+        hparams: "typing.Mapping[str, typing.Any]",
         id: int,
         restarts: int,
         startTime: str,
@@ -302,23 +335,23 @@ class trialv1Trial:
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointUuid: "typing.Optional[str]" = None,
     ):
-        self.id = id
         self.experimentId = experimentId
-        self.startTime = startTime
-        self.endTime = endTime
-        self.state = state
+        self.hparams = to_dict(hparams)
+        self.id = id
         self.restarts = restarts
-        self.hparams = hparams
+        self.startTime = startTime
+        self.state = state
         self.totalBatchesProcessed = totalBatchesProcessed
-        self.bestValidation = bestValidation
-        self.latestValidation = latestValidation
         self.bestCheckpoint = bestCheckpoint
+        self.bestValidation = bestValidation
+        self.endTime = endTime
         self.latestTraining = latestTraining
+        self.latestValidation = latestValidation
         self.runnerState = runnerState
-        self.wallClockTime = wallClockTime
-        self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
         self.totalCheckpointSize = totalCheckpointSize
+        self.wallClockTime = wallClockTime
+        self.warmStartCheckpointUuid = warmStartCheckpointUuid
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -388,7 +421,7 @@ class v1AddProjectNoteResponse:
         *,
         notes: "typing.Sequence[v1Note]",
     ):
-        self.notes = notes
+        self.notes = to_list(notes)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AddProjectNoteResponse":
@@ -407,25 +440,25 @@ class v1Agent:
         *,
         id: str,
         addresses: "typing.Optional[typing.Sequence[str]]" = None,
-        containers: "typing.Optional[typing.Dict[str, v1Container]]" = None,
+        containers: "typing.Optional[typing.Mapping[str, v1Container]]" = None,
         draining: "typing.Optional[bool]" = None,
         enabled: "typing.Optional[bool]" = None,
         label: "typing.Optional[str]" = None,
         registeredTime: "typing.Optional[str]" = None,
         resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
-        slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None,
+        slots: "typing.Optional[typing.Mapping[str, v1Slot]]" = None,
         version: "typing.Optional[str]" = None,
     ):
         self.id = id
-        self.registeredTime = registeredTime
-        self.slots = slots
-        self.containers = containers
-        self.label = label
-        self.addresses = addresses
-        self.enabled = enabled
+        self.addresses = to_optional_list(addresses)
+        self.containers = to_optional_dict(containers)
         self.draining = draining
+        self.enabled = enabled
+        self.label = label
+        self.registeredTime = registeredTime
+        self.resourcePools = to_optional_list(resourcePools)
+        self.slots = to_optional_dict(slots)
         self.version = version
-        self.resourcePools = resourcePools
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
@@ -463,8 +496,8 @@ class v1AgentUserGroup:
         agentGid: "typing.Optional[int]" = None,
         agentUid: "typing.Optional[int]" = None,
     ):
-        self.agentUid = agentUid
         self.agentGid = agentGid
+        self.agentUid = agentUid
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AgentUserGroup":
@@ -513,12 +546,12 @@ class v1Allocation:
         state: "typing.Optional[determinedtaskv1State]" = None,
         taskId: "typing.Optional[str]" = None,
     ):
-        self.taskId = taskId
-        self.state = state
+        self.allocationId = allocationId
+        self.endTime = endTime
         self.isReady = isReady
         self.startTime = startTime
-        self.endTime = endTime
-        self.allocationId = allocationId
+        self.state = state
+        self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Allocation":
@@ -546,14 +579,14 @@ class v1AllocationAllGatherRequest:
         self,
         *,
         allocationId: str,
-        data: "typing.Dict[str, typing.Any]",
+        data: "typing.Mapping[str, typing.Any]",
         numPeers: "typing.Optional[int]" = None,
         requestUuid: "typing.Optional[str]" = None,
     ):
         self.allocationId = allocationId
-        self.requestUuid = requestUuid
+        self.data = to_dict(data)
         self.numPeers = numPeers
-        self.data = data
+        self.requestUuid = requestUuid
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AllocationAllGatherRequest":
@@ -576,9 +609,9 @@ class v1AllocationAllGatherResponse:
     def __init__(
         self,
         *,
-        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+        data: "typing.Sequence[typing.Mapping[str, typing.Any]]",
     ):
-        self.data = data
+        self.data = to_list(data)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AllocationAllGatherResponse":
@@ -694,8 +727,8 @@ class v1Checkpoint:
     def __init__(
         self,
         *,
-        metadata: "typing.Dict[str, typing.Any]",
-        resources: "typing.Dict[str, str]",
+        metadata: "typing.Mapping[str, typing.Any]",
+        resources: "typing.Mapping[str, str]",
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
         allocationId: "typing.Optional[str]" = None,
@@ -703,14 +736,14 @@ class v1Checkpoint:
         state: "typing.Optional[determinedcheckpointv1State]" = None,
         taskId: "typing.Optional[str]" = None,
     ):
-        self.taskId = taskId
-        self.allocationId = allocationId
-        self.uuid = uuid
-        self.reportTime = reportTime
-        self.resources = resources
-        self.metadata = metadata
-        self.state = state
+        self.metadata = to_dict(metadata)
+        self.resources = to_dict(resources)
         self.training = training
+        self.uuid = uuid
+        self.allocationId = allocationId
+        self.reportTime = reportTime
+        self.state = state
+        self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Checkpoint":
@@ -741,21 +774,21 @@ class v1CheckpointTrainingMetadata:
     def __init__(
         self,
         *,
-        experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        experimentConfig: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         experimentId: "typing.Optional[int]" = None,
-        hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        hparams: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         searcherMetric: "typing.Optional[float]" = None,
         trainingMetrics: "typing.Optional[v1Metrics]" = None,
         trialId: "typing.Optional[int]" = None,
         validationMetrics: "typing.Optional[v1Metrics]" = None,
     ):
-        self.trialId = trialId
+        self.experimentConfig = to_optional_dict(experimentConfig)
         self.experimentId = experimentId
-        self.experimentConfig = experimentConfig
-        self.hparams = hparams
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
+        self.hparams = to_optional_dict(hparams)
         self.searcherMetric = searcherMetric
+        self.trainingMetrics = trainingMetrics
+        self.trialId = trialId
+        self.validationMetrics = validationMetrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CheckpointTrainingMetadata":
@@ -787,16 +820,16 @@ class v1CheckpointWorkload:
         state: "determinedcheckpointv1State",
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        resources: "typing.Optional[typing.Dict[str, str]]" = None,
+        metadata: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
+        resources: "typing.Optional[typing.Mapping[str, str]]" = None,
         uuid: "typing.Optional[str]" = None,
     ):
-        self.uuid = uuid
-        self.endTime = endTime
         self.state = state
-        self.resources = resources
         self.totalBatches = totalBatches
-        self.metadata = metadata
+        self.endTime = endTime
+        self.metadata = to_optional_dict(metadata)
+        self.resources = to_optional_dict(resources)
+        self.uuid = uuid
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CheckpointWorkload":
@@ -835,17 +868,17 @@ class v1Command:
         exitStatus: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
     ):
-        self.id = id
         self.description = description
-        self.state = state
+        self.id = id
+        self.jobId = jobId
+        self.resourcePool = resourcePool
         self.startTime = startTime
+        self.state = state
+        self.username = username
         self.container = container
         self.displayName = displayName
-        self.userId = userId
-        self.username = username
-        self.resourcePool = resourcePool
         self.exitStatus = exitStatus
-        self.jobId = jobId
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Command":
@@ -885,8 +918,8 @@ class v1ComparableTrial:
         metrics: "typing.Sequence[v1SummarizedMetric]",
         trial: "trialv1Trial",
     ):
+        self.metrics = to_list(metrics)
         self.trial = trial
-        self.metrics = metrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ComparableTrial":
@@ -907,7 +940,7 @@ class v1CompareTrialsResponse:
         *,
         trials: "typing.Sequence[v1ComparableTrial]",
     ):
-        self.trials = trials
+        self.trials = to_list(trials)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CompareTrialsResponse":
@@ -952,10 +985,10 @@ class v1Container:
         devices: "typing.Optional[typing.Sequence[v1Device]]" = None,
         parent: "typing.Optional[str]" = None,
     ):
-        self.parent = parent
         self.id = id
         self.state = state
-        self.devices = devices
+        self.devices = to_optional_list(devices)
+        self.parent = parent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Container":
@@ -985,12 +1018,12 @@ class v1CreateExperimentRequest:
         projectId: "typing.Optional[int]" = None,
         validateOnly: "typing.Optional[bool]" = None,
     ):
-        self.modelDefinition = modelDefinition
-        self.config = config
-        self.validateOnly = validateOnly
-        self.parentId = parentId
         self.activate = activate
+        self.config = config
+        self.modelDefinition = to_optional_list(modelDefinition)
+        self.parentId = parentId
         self.projectId = projectId
+        self.validateOnly = validateOnly
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateExperimentRequest":
@@ -1017,11 +1050,11 @@ class v1CreateExperimentResponse:
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
         experiment: "v1Experiment",
     ):
+        self.config = to_dict(config)
         self.experiment = experiment
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateExperimentResponse":
@@ -1084,7 +1117,7 @@ class v1DeleteCheckpointsRequest:
         *,
         checkpointUuids: "typing.Sequence[str]",
     ):
-        self.checkpointUuids = checkpointUuids
+        self.checkpointUuids = to_list(checkpointUuids)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DeleteCheckpointsRequest":
@@ -1144,10 +1177,10 @@ class v1Device:
         type: "typing.Optional[determineddevicev1Type]" = None,
         uuid: "typing.Optional[str]" = None,
     ):
-        self.id = id
         self.brand = brand
-        self.uuid = uuid
+        self.id = id
         self.type = type
+        self.uuid = uuid
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Device":
@@ -1272,8 +1305,8 @@ class v1ExpCompareMetricNamesResponse:
         trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
         validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
     ):
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
+        self.trainingMetrics = to_optional_list(trainingMetrics)
+        self.validationMetrics = to_optional_list(validationMetrics)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
@@ -1296,9 +1329,9 @@ class v1ExpCompareTrialsSampleResponse:
         promotedTrials: "typing.Sequence[int]",
         trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
     ):
-        self.trials = trials
-        self.promotedTrials = promotedTrials
-        self.demotedTrials = demotedTrials
+        self.demotedTrials = to_list(demotedTrials)
+        self.promotedTrials = to_list(promotedTrials)
+        self.trials = to_list(trials)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
@@ -1331,7 +1364,7 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         description: "typing.Optional[str]" = None,
         displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
@@ -1347,33 +1380,33 @@ class v1Experiment:
         workspaceId: "typing.Optional[int]" = None,
         workspaceName: "typing.Optional[str]" = None,
     ):
-        self.id = id
-        self.description = description
-        self.labels = labels
-        self.startTime = startTime
-        self.endTime = endTime
-        self.state = state
         self.archived = archived
-        self.numTrials = numTrials
-        self.trialIds = trialIds
-        self.displayName = displayName
-        self.userId = userId
-        self.username = username
-        self.resourcePool = resourcePool
-        self.searcherType = searcherType
-        self.name = name
-        self.notes = notes
+        self.id = id
         self.jobId = jobId
-        self.forkedFrom = forkedFrom
-        self.progress = progress
+        self.name = name
+        self.numTrials = numTrials
+        self.originalConfig = originalConfig
         self.projectId = projectId
+        self.projectOwnerId = projectOwnerId
+        self.searcherType = searcherType
+        self.startTime = startTime
+        self.state = state
+        self.username = username
+        self.config = to_optional_dict(config)
+        self.description = description
+        self.displayName = displayName
+        self.endTime = endTime
+        self.forkedFrom = forkedFrom
+        self.labels = to_optional_list(labels)
+        self.notes = notes
+        self.parentArchived = parentArchived
+        self.progress = progress
         self.projectName = projectName
+        self.resourcePool = resourcePool
+        self.trialIds = to_optional_list(trialIds)
+        self.userId = userId
         self.workspaceId = workspaceId
         self.workspaceName = workspaceName
-        self.parentArchived = parentArchived
-        self.config = config
-        self.originalConfig = originalConfig
-        self.projectOwnerId = projectOwnerId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1442,13 +1475,13 @@ class v1ExperimentSimulation:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         seed: "typing.Optional[int]" = None,
         trials: "typing.Optional[typing.Sequence[v1TrialSimulation]]" = None,
     ):
-        self.config = config
+        self.config = to_optional_dict(config)
         self.seed = seed
-        self.trials = trials
+        self.trials = to_optional_list(trials)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExperimentSimulation":
@@ -1477,13 +1510,13 @@ class v1File:
         type: int,
         uid: int,
     ):
+        self.content = content
+        self.gid = gid
+        self.mode = mode
+        self.mtime = mtime
         self.path = path
         self.type = type
-        self.content = content
-        self.mtime = mtime
-        self.mode = mode
         self.uid = uid
-        self.gid = gid
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1File":
@@ -1520,13 +1553,13 @@ class v1FileNode:
         name: "typing.Optional[str]" = None,
         path: "typing.Optional[str]" = None,
     ):
-        self.path = path
-        self.name = name
-        self.modifiedTime = modifiedTime
         self.contentLength = contentLength
-        self.isDir = isDir
         self.contentType = contentType
-        self.files = files
+        self.files = to_optional_list(files)
+        self.isDir = isDir
+        self.modifiedTime = modifiedTime
+        self.name = name
+        self.path = path
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FileNode":
@@ -1620,7 +1653,7 @@ class v1GetAgentsResponse:
         agents: "typing.Optional[typing.Sequence[v1Agent]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
-        self.agents = agents
+        self.agents = to_optional_list(agents)
         self.pagination = pagination
 
     @classmethod
@@ -1679,10 +1712,10 @@ class v1GetCommandResponse:
         self,
         *,
         command: "typing.Optional[v1Command]" = None,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
     ):
         self.command = command
-        self.config = config
+        self.config = to_optional_dict(config)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCommandResponse":
@@ -1710,7 +1743,7 @@ class v1GetCommandsResponse:
         commands: "typing.Optional[typing.Sequence[v1Command]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
-        self.commands = commands
+        self.commands = to_optional_list(commands)
         self.pagination = pagination
 
     @classmethod
@@ -1733,8 +1766,8 @@ class v1GetCurrentTrialSearcherOperationResponse:
         completed: "typing.Optional[bool]" = None,
         op: "typing.Optional[v1SearcherOperation]" = None,
     ):
-        self.op = op
         self.completed = completed
+        self.op = op
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCurrentTrialSearcherOperationResponse":
@@ -1765,7 +1798,7 @@ class v1GetExperimentCheckpointsResponse:
         checkpoints: "typing.Sequence[v1Checkpoint]",
         pagination: "v1Pagination",
     ):
-        self.checkpoints = checkpoints
+        self.checkpoints = to_list(checkpoints)
         self.pagination = pagination
 
     @classmethod
@@ -1787,7 +1820,7 @@ class v1GetExperimentLabelsResponse:
         *,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
     ):
-        self.labels = labels
+        self.labels = to_optional_list(labels)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentLabelsResponse":
@@ -1842,8 +1875,8 @@ class v1GetExperimentTrialsResponse:
         pagination: "v1Pagination",
         trials: "typing.Sequence[trialv1Trial]",
     ):
-        self.trials = trials
         self.pagination = pagination
+        self.trials = to_list(trials)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentTrialsResponse":
@@ -1864,7 +1897,7 @@ class v1GetExperimentValidationHistoryResponse:
         *,
         validationHistory: "typing.Optional[typing.Sequence[v1ValidationHistoryEntry]]" = None,
     ):
-        self.validationHistory = validationHistory
+        self.validationHistory = to_optional_list(validationHistory)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentValidationHistoryResponse":
@@ -1899,7 +1932,7 @@ class v1GetExperimentsResponse:
         experiments: "typing.Sequence[v1Experiment]",
         pagination: "v1Pagination",
     ):
-        self.experiments = experiments
+        self.experiments = to_list(experiments)
         self.pagination = pagination
 
     @classmethod
@@ -1919,11 +1952,11 @@ class v1GetHPImportanceResponse:
     def __init__(
         self,
         *,
-        trainingMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
-        validationMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
+        trainingMetrics: "typing.Mapping[str, GetHPImportanceResponseMetricHPImportance]",
+        validationMetrics: "typing.Mapping[str, GetHPImportanceResponseMetricHPImportance]",
     ):
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
+        self.trainingMetrics = to_dict(trainingMetrics)
+        self.validationMetrics = to_dict(validationMetrics)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetHPImportanceResponse":
@@ -1944,7 +1977,7 @@ class v1GetJobQueueStatsResponse:
         *,
         results: "typing.Sequence[v1RPQueueStat]",
     ):
-        self.results = results
+        self.results = to_list(results)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetJobQueueStatsResponse":
@@ -1964,8 +1997,8 @@ class v1GetJobsResponse:
         jobs: "typing.Sequence[v1Job]",
         pagination: "v1Pagination",
     ):
+        self.jobs = to_list(jobs)
         self.pagination = pagination
-        self.jobs = jobs
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetJobsResponse":
@@ -1984,9 +2017,9 @@ class v1GetMasterConfigResponse:
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
     ):
-        self.config = config
+        self.config = to_dict(config)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterConfigResponse":
@@ -2013,15 +2046,15 @@ class v1GetMasterResponse:
         ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None,
         telemetryEnabled: "typing.Optional[bool]" = None,
     ):
-        self.version = version
-        self.masterId = masterId
         self.clusterId = clusterId
         self.clusterName = clusterName
-        self.telemetryEnabled = telemetryEnabled
-        self.ssoProviders = ssoProviders
+        self.masterId = masterId
+        self.version = version
+        self.branding = branding
         self.externalLoginUri = externalLoginUri
         self.externalLogoutUri = externalLogoutUri
-        self.branding = branding
+        self.ssoProviders = to_optional_list(ssoProviders)
+        self.telemetryEnabled = telemetryEnabled
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -2117,7 +2150,7 @@ class v1GetModelDefTreeResponse:
         *,
         files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
     ):
-        self.files = files
+        self.files = to_optional_list(files)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelDefTreeResponse":
@@ -2136,7 +2169,7 @@ class v1GetModelLabelsResponse:
         *,
         labels: "typing.Sequence[str]",
     ):
-        self.labels = labels
+        self.labels = to_list(labels)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelLabelsResponse":
@@ -2201,7 +2234,7 @@ class v1GetModelVersionsResponse:
         pagination: "v1Pagination",
     ):
         self.model = model
-        self.modelVersions = modelVersions
+        self.modelVersions = to_list(modelVersions)
         self.pagination = pagination
 
     @classmethod
@@ -2234,7 +2267,7 @@ class v1GetModelsResponse:
         models: "typing.Sequence[v1Model]",
         pagination: "v1Pagination",
     ):
-        self.models = models
+        self.models = to_list(models)
         self.pagination = pagination
 
     @classmethod
@@ -2254,11 +2287,11 @@ class v1GetNotebookResponse:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         notebook: "typing.Optional[v1Notebook]" = None,
     ):
+        self.config = to_optional_dict(config)
         self.notebook = notebook
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebookResponse":
@@ -2286,7 +2319,7 @@ class v1GetNotebooksResponse:
         notebooks: "typing.Optional[typing.Sequence[v1Notebook]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
-        self.notebooks = notebooks
+        self.notebooks = to_optional_list(notebooks)
         self.pagination = pagination
 
     @classmethod
@@ -2328,8 +2361,8 @@ class v1GetResourcePoolsResponse:
         pagination: "typing.Optional[v1Pagination]" = None,
         resourcePools: "typing.Optional[typing.Sequence[v1ResourcePool]]" = None,
     ):
-        self.resourcePools = resourcePools
         self.pagination = pagination
+        self.resourcePools = to_optional_list(resourcePools)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetResourcePoolsResponse":
@@ -2348,11 +2381,11 @@ class v1GetShellResponse:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         shell: "typing.Optional[v1Shell]" = None,
     ):
+        self.config = to_optional_dict(config)
         self.shell = shell
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetShellResponse":
@@ -2380,8 +2413,8 @@ class v1GetShellsResponse:
         pagination: "typing.Optional[v1Pagination]" = None,
         shells: "typing.Optional[typing.Sequence[v1Shell]]" = None,
     ):
-        self.shells = shells
         self.pagination = pagination
+        self.shells = to_optional_list(shells)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetShellsResponse":
@@ -2421,7 +2454,7 @@ class v1GetSlotsResponse:
         *,
         slots: "typing.Optional[typing.Sequence[v1Slot]]" = None,
     ):
-        self.slots = slots
+        self.slots = to_optional_list(slots)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSlotsResponse":
@@ -2506,8 +2539,8 @@ class v1GetTemplatesResponse:
         pagination: "typing.Optional[v1Pagination]" = None,
         templates: "typing.Optional[typing.Sequence[v1Template]]" = None,
     ):
-        self.templates = templates
         self.pagination = pagination
+        self.templates = to_optional_list(templates)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTemplatesResponse":
@@ -2526,11 +2559,11 @@ class v1GetTensorboardResponse:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
+        self.config = to_optional_dict(config)
         self.tensorboard = tensorboard
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTensorboardResponse":
@@ -2558,8 +2591,8 @@ class v1GetTensorboardsResponse:
         pagination: "typing.Optional[v1Pagination]" = None,
         tensorboards: "typing.Optional[typing.Sequence[v1Tensorboard]]" = None,
     ):
-        self.tensorboards = tensorboards
         self.pagination = pagination
+        self.tensorboards = to_optional_list(tensorboards)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTensorboardsResponse":
@@ -2588,7 +2621,7 @@ class v1GetTrialCheckpointsResponse:
         checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
-        self.checkpoints = checkpoints
+        self.checkpoints = to_optional_list(checkpoints)
         self.pagination = pagination
 
     @classmethod
@@ -2610,7 +2643,7 @@ class v1GetTrialProfilerAvailableSeriesResponse:
         *,
         labels: "typing.Sequence[v1TrialProfilerMetricLabels]",
     ):
-        self.labels = labels
+        self.labels = to_list(labels)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialProfilerAvailableSeriesResponse":
@@ -2668,8 +2701,8 @@ class v1GetTrialWorkloadsResponse:
         pagination: "v1Pagination",
         workloads: "typing.Sequence[v1WorkloadContainer]",
     ):
-        self.workloads = workloads
         self.pagination = pagination
+        self.workloads = to_list(workloads)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialWorkloadsResponse":
@@ -2709,7 +2742,7 @@ class v1GetUserSettingResponse:
         *,
         settings: "typing.Sequence[v1UserWebSetting]",
     ):
-        self.settings = settings
+        self.settings = to_list(settings)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUserSettingResponse":
@@ -2737,8 +2770,8 @@ class v1GetUsersResponse:
         pagination: "typing.Optional[v1Pagination]" = None,
         users: "typing.Optional[typing.Sequence[v1User]]" = None,
     ):
-        self.users = users
         self.pagination = pagination
+        self.users = to_optional_list(users)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUsersResponse":
@@ -2768,8 +2801,8 @@ class v1GetWorkspaceProjectsResponse:
         pagination: "v1Pagination",
         projects: "typing.Sequence[v1Project]",
     ):
-        self.projects = projects
         self.pagination = pagination
+        self.projects = to_list(projects)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetWorkspaceProjectsResponse":
@@ -2815,8 +2848,8 @@ class v1GetWorkspacesResponse:
         pagination: "v1Pagination",
         workspaces: "typing.Sequence[v1Workspace]",
     ):
-        self.workspaces = workspaces
         self.pagination = pagination
+        self.workspaces = to_list(workspaces)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetWorkspacesResponse":
@@ -2838,8 +2871,8 @@ class v1IdleNotebookRequest:
         idle: "typing.Optional[bool]" = None,
         notebookId: "typing.Optional[str]" = None,
     ):
-        self.notebookId = notebookId
         self.idle = idle
+        self.notebookId = notebookId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1IdleNotebookRequest":
@@ -2874,21 +2907,21 @@ class v1Job:
         userId: "typing.Optional[int]" = None,
         weight: "typing.Optional[float]" = None,
     ):
-        self.summary = summary
-        self.type = type
-        self.submissionTime = submissionTime
-        self.username = username
-        self.userId = userId
-        self.resourcePool = resourcePool
-        self.isPreemptible = isPreemptible
-        self.priority = priority
-        self.weight = weight
-        self.entityId = entityId
-        self.jobId = jobId
-        self.requestedSlots = requestedSlots
         self.allocatedSlots = allocatedSlots
+        self.entityId = entityId
+        self.isPreemptible = isPreemptible
+        self.jobId = jobId
         self.name = name
+        self.requestedSlots = requestedSlots
+        self.resourcePool = resourcePool
+        self.submissionTime = submissionTime
+        self.type = type
+        self.username = username
+        self.priority = priority
         self.progress = progress
+        self.summary = summary
+        self.userId = userId
+        self.weight = weight
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Job":
@@ -2936,8 +2969,8 @@ class v1JobSummary:
         jobsAhead: int,
         state: "determinedjobv1State",
     ):
-        self.state = state
         self.jobsAhead = jobsAhead
+        self.state = state
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1JobSummary":
@@ -3055,15 +3088,15 @@ class v1LaunchCommandRequest:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         data: "typing.Optional[str]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
         templateName: "typing.Optional[str]" = None,
     ):
-        self.config = config
-        self.templateName = templateName
-        self.files = files
+        self.config = to_optional_dict(config)
         self.data = data
+        self.files = to_optional_list(files)
+        self.templateName = templateName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchCommandRequest":
@@ -3087,10 +3120,10 @@ class v1LaunchCommandResponse:
         self,
         *,
         command: "v1Command",
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
     ):
         self.command = command
-        self.config = config
+        self.config = to_dict(config)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchCommandResponse":
@@ -3109,15 +3142,15 @@ class v1LaunchNotebookRequest:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
         preview: "typing.Optional[bool]" = None,
         templateName: "typing.Optional[str]" = None,
     ):
-        self.config = config
-        self.templateName = templateName
-        self.files = files
+        self.config = to_optional_dict(config)
+        self.files = to_optional_list(files)
         self.preview = preview
+        self.templateName = templateName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookRequest":
@@ -3140,11 +3173,11 @@ class v1LaunchNotebookResponse:
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
         notebook: "v1Notebook",
     ):
+        self.config = to_dict(config)
         self.notebook = notebook
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookResponse":
@@ -3163,15 +3196,15 @@ class v1LaunchShellRequest:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         data: "typing.Optional[str]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
         templateName: "typing.Optional[str]" = None,
     ):
-        self.config = config
-        self.templateName = templateName
-        self.files = files
+        self.config = to_optional_dict(config)
         self.data = data
+        self.files = to_optional_list(files)
+        self.templateName = templateName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchShellRequest":
@@ -3194,11 +3227,11 @@ class v1LaunchShellResponse:
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
         shell: "v1Shell",
     ):
+        self.config = to_dict(config)
         self.shell = shell
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchShellResponse":
@@ -3217,17 +3250,17 @@ class v1LaunchTensorboardRequest:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         files: "typing.Optional[typing.Sequence[v1File]]" = None,
         templateName: "typing.Optional[str]" = None,
         trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
-        self.experimentIds = experimentIds
-        self.trialIds = trialIds
-        self.config = config
+        self.config = to_optional_dict(config)
+        self.experimentIds = to_optional_list(experimentIds)
+        self.files = to_optional_list(files)
         self.templateName = templateName
-        self.files = files
+        self.trialIds = to_optional_list(trialIds)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardRequest":
@@ -3252,11 +3285,11 @@ class v1LaunchTensorboardResponse:
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
         tensorboard: "v1Tensorboard",
     ):
+        self.config = to_dict(config)
         self.tensorboard = tensorboard
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardResponse":
@@ -3281,9 +3314,9 @@ class v1LogEntry:
         timestamp: "typing.Optional[str]" = None,
     ):
         self.id = id
+        self.level = level
         self.message = message
         self.timestamp = timestamp
-        self.level = level
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LogEntry":
@@ -3319,8 +3352,8 @@ class v1LoginRequest:
         username: str,
         isHashed: "typing.Optional[bool]" = None,
     ):
-        self.username = username
         self.password = password
+        self.username = username
         self.isHashed = isHashed
 
     @classmethod
@@ -3409,7 +3442,7 @@ class v1MetricBatchesResponse:
         *,
         batches: "typing.Optional[typing.Sequence[int]]" = None,
     ):
-        self.batches = batches
+        self.batches = to_optional_list(batches)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MetricBatchesResponse":
@@ -3431,8 +3464,8 @@ class v1MetricNamesResponse:
         validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.searcherMetric = searcherMetric
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
+        self.trainingMetrics = to_optional_list(trainingMetrics)
+        self.validationMetrics = to_optional_list(validationMetrics)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MetricNamesResponse":
@@ -3458,11 +3491,11 @@ class v1Metrics:
     def __init__(
         self,
         *,
-        avgMetrics: "typing.Dict[str, typing.Any]",
-        batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+        avgMetrics: "typing.Mapping[str, typing.Any]",
+        batchMetrics: "typing.Optional[typing.Sequence[typing.Mapping[str, typing.Any]]]" = None,
     ):
-        self.avgMetrics = avgMetrics
-        self.batchMetrics = batchMetrics
+        self.avgMetrics = to_dict(avgMetrics)
+        self.batchMetrics = to_optional_list(batchMetrics)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Metrics":
@@ -3487,11 +3520,11 @@ class v1MetricsWorkload:
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
     ):
-        self.endTime = endTime
-        self.state = state
         self.metrics = metrics
         self.numInputs = numInputs
+        self.state = state
         self.totalBatches = totalBatches
+        self.endTime = endTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MetricsWorkload":
@@ -3519,7 +3552,7 @@ class v1Model:
         creationTime: str,
         id: int,
         lastUpdatedTime: str,
-        metadata: "typing.Dict[str, typing.Any]",
+        metadata: "typing.Mapping[str, typing.Any]",
         name: str,
         numVersions: int,
         username: str,
@@ -3529,18 +3562,18 @@ class v1Model:
         notes: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
     ):
-        self.name = name
-        self.description = description
-        self.metadata = metadata
         self.creationTime = creationTime
-        self.lastUpdatedTime = lastUpdatedTime
         self.id = id
+        self.lastUpdatedTime = lastUpdatedTime
+        self.metadata = to_dict(metadata)
+        self.name = name
         self.numVersions = numVersions
-        self.labels = labels
         self.username = username
-        self.userId = userId
         self.archived = archived
+        self.description = description
+        self.labels = to_optional_list(labels)
         self.notes = notes
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Model":
@@ -3588,24 +3621,24 @@ class v1ModelVersion:
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         lastUpdatedTime: "typing.Optional[str]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metadata: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
     ):
-        self.model = model
         self.checkpoint = checkpoint
-        self.version = version
         self.creationTime = creationTime
         self.id = id
-        self.name = name
-        self.metadata = metadata
-        self.lastUpdatedTime = lastUpdatedTime
-        self.comment = comment
+        self.model = model
         self.username = username
-        self.userId = userId
-        self.labels = labels
+        self.version = version
+        self.comment = comment
+        self.labels = to_optional_list(labels)
+        self.lastUpdatedTime = lastUpdatedTime
+        self.metadata = to_optional_dict(metadata)
+        self.name = name
         self.notes = notes
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ModelVersion":
@@ -3649,8 +3682,8 @@ class v1MoveExperimentRequest:
         destinationProjectId: int,
         experimentId: int,
     ):
-        self.experimentId = experimentId
         self.destinationProjectId = destinationProjectId
+        self.experimentId = experimentId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MoveExperimentRequest":
@@ -3672,8 +3705,8 @@ class v1MoveProjectRequest:
         destinationWorkspaceId: int,
         projectId: int,
     ):
-        self.projectId = projectId
         self.destinationWorkspaceId = destinationWorkspaceId
+        self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MoveProjectRequest":
@@ -3695,8 +3728,8 @@ class v1Note:
         contents: str,
         name: str,
     ):
-        self.name = name
         self.contents = contents
+        self.name = name
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Note":
@@ -3728,18 +3761,18 @@ class v1Notebook:
         serviceAddress: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
     ):
-        self.id = id
         self.description = description
-        self.state = state
+        self.id = id
+        self.jobId = jobId
+        self.resourcePool = resourcePool
         self.startTime = startTime
+        self.state = state
+        self.username = username
         self.container = container
         self.displayName = displayName
-        self.userId = userId
-        self.username = username
-        self.serviceAddress = serviceAddress
-        self.resourcePool = resourcePool
         self.exitStatus = exitStatus
-        self.jobId = jobId
+        self.serviceAddress = serviceAddress
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Notebook":
@@ -3789,10 +3822,10 @@ class v1Pagination:
         startIndex: "typing.Optional[int]" = None,
         total: "typing.Optional[int]" = None,
     ):
-        self.offset = offset
-        self.limit = limit
-        self.startIndex = startIndex
         self.endIndex = endIndex
+        self.limit = limit
+        self.offset = offset
+        self.startIndex = startIndex
         self.total = total
 
     @classmethod
@@ -3826,7 +3859,7 @@ class v1PatchExperiment:
     ):
         self.id = id
         self.description = description
-        self.labels = labels
+        self.labels = to_optional_list(labels)
         self.name = name
         self.notes = notes
 
@@ -3874,14 +3907,14 @@ class v1PatchModel:
         *,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metadata: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
     ):
-        self.name = name
         self.description = description
-        self.metadata = metadata
-        self.labels = labels
+        self.labels = to_optional_list(labels)
+        self.metadata = to_optional_dict(metadata)
+        self.name = name
         self.notes = notes
 
     @classmethod
@@ -3929,15 +3962,15 @@ class v1PatchModelVersion:
         checkpoint: "typing.Optional[v1Checkpoint]" = None,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metadata: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
     ):
         self.checkpoint = checkpoint
-        self.name = name
-        self.metadata = metadata
         self.comment = comment
-        self.labels = labels
+        self.labels = to_optional_list(labels)
+        self.metadata = to_optional_dict(metadata)
+        self.name = name
         self.notes = notes
 
     @classmethod
@@ -3987,8 +4020,8 @@ class v1PatchProject:
         description: "typing.Optional[str]" = None,
         name: "typing.Optional[str]" = None,
     ):
-        self.name = name
         self.description = description
+        self.name = name
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchProject":
@@ -4166,13 +4199,13 @@ class v1PostModelRequest:
         name: str,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metadata: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         notes: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
-        self.metadata = metadata
-        self.labels = labels
+        self.labels = to_optional_list(labels)
+        self.metadata = to_optional_dict(metadata)
         self.notes = notes
 
     @classmethod
@@ -4221,16 +4254,16 @@ class v1PostModelVersionRequest:
         modelName: str,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metadata: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
     ):
-        self.modelName = modelName
         self.checkpointUuid = checkpointUuid
-        self.name = name
+        self.modelName = modelName
         self.comment = comment
-        self.metadata = metadata
-        self.labels = labels
+        self.labels = to_optional_list(labels)
+        self.metadata = to_optional_dict(metadata)
+        self.name = name
         self.notes = notes
 
     @classmethod
@@ -4284,8 +4317,8 @@ class v1PostProjectRequest:
         description: "typing.Optional[str]" = None,
     ):
         self.name = name
-        self.description = description
         self.workspaceId = workspaceId
+        self.description = description
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostProjectRequest":
@@ -4327,7 +4360,7 @@ class v1PostTrialProfilerMetricsBatchRequest:
         *,
         batches: "typing.Optional[typing.Sequence[v1TrialProfilerMetricsBatch]]" = None,
     ):
-        self.batches = batches
+        self.batches = to_optional_list(batches)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostTrialProfilerMetricsBatchRequest":
@@ -4347,8 +4380,8 @@ class v1PostUserRequest:
         password: "typing.Optional[str]" = None,
         user: "typing.Optional[v1User]" = None,
     ):
-        self.user = user
         self.password = password
+        self.user = user
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostUserRequest":
@@ -4389,8 +4422,8 @@ class v1PostUserSettingRequest:
         setting: "v1UserWebSetting",
         storagePath: str,
     ):
-        self.storagePath = storagePath
         self.setting = setting
+        self.storagePath = storagePath
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
@@ -4447,10 +4480,10 @@ class v1PreviewHPSearchRequest:
     def __init__(
         self,
         *,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        config: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         seed: "typing.Optional[int]" = None,
     ):
-        self.config = config
+        self.config = to_optional_dict(config)
         self.seed = seed
 
     @classmethod
@@ -4505,21 +4538,21 @@ class v1Project:
         lastExperimentStartedAt: "typing.Optional[str]" = None,
         workspaceName: "typing.Optional[str]" = None,
     ):
+        self.archived = archived
+        self.errorMessage = errorMessage
         self.id = id
+        self.immutable = immutable
         self.name = name
+        self.notes = to_list(notes)
+        self.numActiveExperiments = numActiveExperiments
+        self.numExperiments = numExperiments
+        self.state = state
+        self.userId = userId
+        self.username = username
         self.workspaceId = workspaceId
         self.description = description
         self.lastExperimentStartedAt = lastExperimentStartedAt
-        self.notes = notes
-        self.numExperiments = numExperiments
-        self.numActiveExperiments = numActiveExperiments
-        self.archived = archived
-        self.username = username
-        self.immutable = immutable
-        self.userId = userId
         self.workspaceName = workspaceName
-        self.state = state
-        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4567,7 +4600,7 @@ class v1PutProjectNotesRequest:
         notes: "typing.Sequence[v1Note]",
         projectId: int,
     ):
-        self.notes = notes
+        self.notes = to_list(notes)
         self.projectId = projectId
 
     @classmethod
@@ -4589,7 +4622,7 @@ class v1PutProjectNotesResponse:
         *,
         notes: "typing.Sequence[v1Note]",
     ):
-        self.notes = notes
+        self.notes = to_list(notes)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PutProjectNotesResponse":
@@ -4635,8 +4668,8 @@ class v1QueueControl:
         self.jobId = jobId
         self.aheadOf = aheadOf
         self.behindOf = behindOf
-        self.resourcePool = resourcePool
         self.priority = priority
+        self.resourcePool = resourcePool
         self.weight = weight
 
     @classmethod
@@ -4691,9 +4724,9 @@ class v1RPQueueStat:
         stats: "v1QueueStats",
         aggregates: "typing.Optional[typing.Sequence[v1AggregateQueueStats]]" = None,
     ):
-        self.stats = stats
         self.resourcePool = resourcePool
-        self.aggregates = aggregates
+        self.stats = stats
+        self.aggregates = to_optional_list(aggregates)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RPQueueStat":
@@ -4717,7 +4750,7 @@ class v1RendezvousInfo:
         addresses: "typing.Sequence[str]",
         rank: int,
     ):
-        self.addresses = addresses
+        self.addresses = to_list(addresses)
         self.rank = rank
 
     @classmethod
@@ -4737,21 +4770,21 @@ class v1ResourceAllocationAggregatedEntry:
     def __init__(
         self,
         *,
-        byAgentLabel: "typing.Dict[str, float]",
-        byExperimentLabel: "typing.Dict[str, float]",
-        byResourcePool: "typing.Dict[str, float]",
-        byUsername: "typing.Dict[str, float]",
+        byAgentLabel: "typing.Mapping[str, float]",
+        byExperimentLabel: "typing.Mapping[str, float]",
+        byResourcePool: "typing.Mapping[str, float]",
+        byUsername: "typing.Mapping[str, float]",
         period: "v1ResourceAllocationAggregationPeriod",
         periodStart: str,
         seconds: float,
     ):
-        self.periodStart = periodStart
+        self.byAgentLabel = to_dict(byAgentLabel)
+        self.byExperimentLabel = to_dict(byExperimentLabel)
+        self.byResourcePool = to_dict(byResourcePool)
+        self.byUsername = to_dict(byUsername)
         self.period = period
+        self.periodStart = periodStart
         self.seconds = seconds
-        self.byUsername = byUsername
-        self.byExperimentLabel = byExperimentLabel
-        self.byResourcePool = byResourcePool
-        self.byAgentLabel = byAgentLabel
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationAggregatedEntry":
@@ -4782,7 +4815,7 @@ class v1ResourceAllocationAggregatedResponse:
         *,
         resourceEntries: "typing.Sequence[v1ResourceAllocationAggregatedEntry]",
     ):
-        self.resourceEntries = resourceEntries
+        self.resourceEntries = to_list(resourceEntries)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationAggregatedResponse":
@@ -4814,15 +4847,15 @@ class v1ResourceAllocationRawEntry:
         userId: "typing.Optional[int]" = None,
         username: "typing.Optional[str]" = None,
     ):
-        self.kind = kind
-        self.startTime = startTime
         self.endTime = endTime
         self.experimentId = experimentId
-        self.username = username
-        self.userId = userId
-        self.labels = labels
+        self.kind = kind
+        self.labels = to_optional_list(labels)
         self.seconds = seconds
         self.slots = slots
+        self.startTime = startTime
+        self.userId = userId
+        self.username = username
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationRawEntry":
@@ -4857,7 +4890,7 @@ class v1ResourceAllocationRawResponse:
         *,
         resourceEntries: "typing.Optional[typing.Sequence[v1ResourceAllocationRawEntry]]" = None,
     ):
-        self.resourceEntries = resourceEntries
+        self.resourceEntries = to_optional_list(resourceEntries)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationRawResponse":
@@ -4909,39 +4942,39 @@ class v1ResourcePool:
         slotsPerAgent: "typing.Optional[int]" = None,
         stats: "typing.Optional[v1QueueStats]" = None,
     ):
-        self.name = name
-        self.description = description
-        self.type = type
-        self.numAgents = numAgents
-        self.slotsAvailable = slotsAvailable
-        self.slotsUsed = slotsUsed
-        self.slotType = slotType
-        self.auxContainerCapacity = auxContainerCapacity
-        self.auxContainersRunning = auxContainersRunning
-        self.defaultComputePool = defaultComputePool
-        self.defaultAuxPool = defaultAuxPool
-        self.preemptible = preemptible
-        self.minAgents = minAgents
-        self.maxAgents = maxAgents
-        self.slotsPerAgent = slotsPerAgent
-        self.auxContainerCapacityPerAgent = auxContainerCapacityPerAgent
-        self.schedulerType = schedulerType
-        self.schedulerFittingPolicy = schedulerFittingPolicy
-        self.location = location
-        self.imageId = imageId
-        self.instanceType = instanceType
-        self.masterUrl = masterUrl
-        self.masterCertName = masterCertName
-        self.startupScript = startupScript
-        self.containerStartupScript = containerStartupScript
+        self.agentDockerImage = agentDockerImage
         self.agentDockerNetwork = agentDockerNetwork
         self.agentDockerRuntime = agentDockerRuntime
-        self.agentDockerImage = agentDockerImage
         self.agentFluentImage = agentFluentImage
-        self.maxIdleAgentPeriod = maxIdleAgentPeriod
-        self.maxAgentStartingPeriod = maxAgentStartingPeriod
+        self.auxContainerCapacity = auxContainerCapacity
+        self.auxContainerCapacityPerAgent = auxContainerCapacityPerAgent
+        self.auxContainersRunning = auxContainersRunning
+        self.containerStartupScript = containerStartupScript
+        self.defaultAuxPool = defaultAuxPool
+        self.defaultComputePool = defaultComputePool
+        self.description = description
         self.details = details
+        self.imageId = imageId
+        self.instanceType = instanceType
+        self.location = location
+        self.masterCertName = masterCertName
+        self.masterUrl = masterUrl
+        self.maxAgentStartingPeriod = maxAgentStartingPeriod
+        self.maxAgents = maxAgents
+        self.maxIdleAgentPeriod = maxIdleAgentPeriod
+        self.minAgents = minAgents
+        self.name = name
+        self.numAgents = numAgents
+        self.preemptible = preemptible
+        self.schedulerFittingPolicy = schedulerFittingPolicy
+        self.schedulerType = schedulerType
+        self.slotType = slotType
+        self.slotsAvailable = slotsAvailable
+        self.slotsUsed = slotsUsed
+        self.startupScript = startupScript
+        self.type = type
         self.accelerator = accelerator
+        self.slotsPerAgent = slotsPerAgent
         self.stats = stats
 
     @classmethod
@@ -5043,23 +5076,23 @@ class v1ResourcePoolAwsDetail:
         spotMaxPrice: "typing.Optional[str]" = None,
         subnetId: "typing.Optional[str]" = None,
     ):
+        self.iamInstanceProfileArn = iamInstanceProfileArn
+        self.imageId = imageId
+        self.instanceName = instanceName
+        self.publicIp = publicIp
         self.region = region
         self.rootVolumeSize = rootVolumeSize
-        self.imageId = imageId
+        self.securityGroupId = securityGroupId
+        self.spotEnabled = spotEnabled
+        self.sshKeyName = sshKeyName
         self.tagKey = tagKey
         self.tagValue = tagValue
-        self.instanceName = instanceName
-        self.sshKeyName = sshKeyName
-        self.publicIp = publicIp
-        self.subnetId = subnetId
-        self.securityGroupId = securityGroupId
-        self.iamInstanceProfileArn = iamInstanceProfileArn
+        self.customTags = to_optional_list(customTags)
         self.instanceType = instanceType
         self.logGroup = logGroup
         self.logStream = logStream
-        self.spotEnabled = spotEnabled
         self.spotMaxPrice = spotMaxPrice
-        self.customTags = customTags
+        self.subnetId = subnetId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourcePoolAwsDetail":
@@ -5154,24 +5187,24 @@ class v1ResourcePoolGcpDetail:
         networkTags: "typing.Optional[typing.Sequence[str]]" = None,
         subnetwork: "typing.Optional[str]" = None,
     ):
-        self.project = project
-        self.zone = zone
         self.bootDiskSize = bootDiskSize
         self.bootDiskSourceImage = bootDiskSourceImage
+        self.externalIp = externalIp
+        self.gpuNum = gpuNum
+        self.gpuType = gpuType
         self.labelKey = labelKey
         self.labelValue = labelValue
+        self.machineType = machineType
         self.namePrefix = namePrefix
         self.network = network
-        self.subnetwork = subnetwork
-        self.externalIp = externalIp
-        self.networkTags = networkTags
-        self.serviceAccountEmail = serviceAccountEmail
-        self.serviceAccountScopes = serviceAccountScopes
-        self.machineType = machineType
-        self.gpuType = gpuType
-        self.gpuNum = gpuNum
-        self.preemptible = preemptible
         self.operationTimeoutPeriod = operationTimeoutPeriod
+        self.preemptible = preemptible
+        self.project = project
+        self.serviceAccountEmail = serviceAccountEmail
+        self.serviceAccountScopes = to_list(serviceAccountScopes)
+        self.zone = zone
+        self.networkTags = to_optional_list(networkTags)
+        self.subnetwork = subnetwork
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourcePoolGcpDetail":
@@ -5226,9 +5259,9 @@ class v1ResourcePoolPrioritySchedulerDetail:
         preemption: bool,
         k8Priorities: "typing.Optional[typing.Sequence[v1K8PriorityClass]]" = None,
     ):
-        self.preemption = preemption
         self.defaultPriority = defaultPriority
-        self.k8Priorities = k8Priorities
+        self.preemption = preemption
+        self.k8Priorities = to_optional_list(k8Priorities)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourcePoolPrioritySchedulerDetail":
@@ -5259,8 +5292,8 @@ class v1RunnableOperation:
         length: "typing.Optional[str]" = None,
         type: "typing.Optional[v1RunnableType]" = None,
     ):
-        self.type = type
         self.length = length
+        self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RunnableOperation":
@@ -5426,8 +5459,8 @@ class v1SetShellPriorityRequest:
         priority: "typing.Optional[int]" = None,
         shellId: "typing.Optional[str]" = None,
     ):
-        self.shellId = shellId
         self.priority = priority
+        self.shellId = shellId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SetShellPriorityRequest":
@@ -5468,8 +5501,8 @@ class v1SetTensorboardPriorityRequest:
         priority: "typing.Optional[int]" = None,
         tensorboardId: "typing.Optional[str]" = None,
     ):
-        self.tensorboardId = tensorboardId
         self.priority = priority
+        self.tensorboardId = tensorboardId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SetTensorboardPriorityRequest":
@@ -5533,8 +5566,8 @@ class v1Shell:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
-        addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
-        agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        addresses: "typing.Optional[typing.Sequence[typing.Mapping[str, typing.Any]]]" = None,
+        agentUserGroup: "typing.Optional[typing.Mapping[str, typing.Any]]" = None,
         container: "typing.Optional[v1Container]" = None,
         displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
@@ -5542,21 +5575,21 @@ class v1Shell:
         publicKey: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
     ):
-        self.id = id
         self.description = description
-        self.state = state
+        self.id = id
+        self.jobId = jobId
+        self.resourcePool = resourcePool
         self.startTime = startTime
+        self.state = state
+        self.username = username
+        self.addresses = to_optional_list(addresses)
+        self.agentUserGroup = to_optional_dict(agentUserGroup)
         self.container = container
+        self.displayName = displayName
+        self.exitStatus = exitStatus
         self.privateKey = privateKey
         self.publicKey = publicKey
-        self.displayName = displayName
         self.userId = userId
-        self.username = username
-        self.resourcePool = resourcePool
-        self.exitStatus = exitStatus
-        self.addresses = addresses
-        self.agentUserGroup = agentUserGroup
-        self.jobId = jobId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Shell":
@@ -5607,11 +5640,11 @@ class v1Slot:
         enabled: "typing.Optional[bool]" = None,
         id: "typing.Optional[str]" = None,
     ):
-        self.id = id
-        self.device = device
-        self.enabled = enabled
         self.container = container
+        self.device = device
         self.draining = draining
+        self.enabled = enabled
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Slot":
@@ -5639,8 +5672,8 @@ class v1SummarizeTrialResponse:
         metrics: "typing.Sequence[v1SummarizedMetric]",
         trial: "trialv1Trial",
     ):
+        self.metrics = to_list(metrics)
         self.trial = trial
-        self.metrics = metrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
@@ -5663,8 +5696,8 @@ class v1SummarizedMetric:
         name: str,
         type: "v1MetricType",
     ):
+        self.data = to_list(data)
         self.name = name
-        self.data = data
         self.type = type
 
     @classmethod
@@ -5689,8 +5722,8 @@ class v1Task:
         allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None,
         taskId: "typing.Optional[str]" = None,
     ):
+        self.allocations = to_optional_list(allocations)
         self.taskId = taskId
-        self.allocations = allocations
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
@@ -5716,12 +5749,12 @@ class v1TaskLogsFieldsResponse:
         sources: "typing.Optional[typing.Sequence[str]]" = None,
         stdtypes: "typing.Optional[typing.Sequence[str]]" = None,
     ):
-        self.allocationIds = allocationIds
-        self.agentIds = agentIds
-        self.containerIds = containerIds
-        self.rankIds = rankIds
-        self.stdtypes = stdtypes
-        self.sources = sources
+        self.agentIds = to_optional_list(agentIds)
+        self.allocationIds = to_optional_list(allocationIds)
+        self.containerIds = to_optional_list(containerIds)
+        self.rankIds = to_optional_list(rankIds)
+        self.sources = to_optional_list(sources)
+        self.stdtypes = to_optional_list(stdtypes)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TaskLogsFieldsResponse":
@@ -5754,9 +5787,9 @@ class v1TaskLogsResponse:
         timestamp: str,
     ):
         self.id = id
-        self.timestamp = timestamp
-        self.message = message
         self.level = level
+        self.message = message
+        self.timestamp = timestamp
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TaskLogsResponse":
@@ -5779,11 +5812,11 @@ class v1Template:
     def __init__(
         self,
         *,
-        config: "typing.Dict[str, typing.Any]",
+        config: "typing.Mapping[str, typing.Any]",
         name: str,
     ):
+        self.config = to_dict(config)
         self.name = name
-        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Template":
@@ -5817,20 +5850,20 @@ class v1Tensorboard:
         trialIds: "typing.Optional[typing.Sequence[int]]" = None,
         userId: "typing.Optional[int]" = None,
     ):
-        self.id = id
         self.description = description
-        self.state = state
-        self.startTime = startTime
-        self.container = container
-        self.experimentIds = experimentIds
-        self.trialIds = trialIds
-        self.displayName = displayName
-        self.userId = userId
-        self.username = username
-        self.serviceAddress = serviceAddress
-        self.resourcePool = resourcePool
-        self.exitStatus = exitStatus
+        self.id = id
         self.jobId = jobId
+        self.resourcePool = resourcePool
+        self.startTime = startTime
+        self.state = state
+        self.username = username
+        self.container = container
+        self.displayName = displayName
+        self.exitStatus = exitStatus
+        self.experimentIds = to_optional_list(experimentIds)
+        self.serviceAddress = serviceAddress
+        self.trialIds = to_optional_list(trialIds)
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Tensorboard":
@@ -5898,11 +5931,11 @@ class v1TrialLogsFieldsResponse:
         sources: "typing.Optional[typing.Sequence[str]]" = None,
         stdtypes: "typing.Optional[typing.Sequence[str]]" = None,
     ):
-        self.agentIds = agentIds
-        self.containerIds = containerIds
-        self.rankIds = rankIds
-        self.stdtypes = stdtypes
-        self.sources = sources
+        self.agentIds = to_optional_list(agentIds)
+        self.containerIds = to_optional_list(containerIds)
+        self.rankIds = to_optional_list(rankIds)
+        self.sources = to_optional_list(sources)
+        self.stdtypes = to_optional_list(stdtypes)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialLogsFieldsResponse":
@@ -5933,9 +5966,9 @@ class v1TrialLogsResponse:
         timestamp: str,
     ):
         self.id = id
-        self.timestamp = timestamp
-        self.message = message
         self.level = level
+        self.message = message
+        self.timestamp = timestamp
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialLogsResponse":
@@ -5963,10 +5996,10 @@ class v1TrialMetrics:
         trialId: int,
         trialRunId: int,
     ):
+        self.metrics = metrics
+        self.stepsCompleted = stepsCompleted
         self.trialId = trialId
         self.trialRunId = trialRunId
-        self.stepsCompleted = stepsCompleted
-        self.metrics = metrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialMetrics":
@@ -5995,8 +6028,8 @@ class v1TrialProfilerMetricLabels:
         gpuUuid: "typing.Optional[str]" = None,
         metricType: "typing.Optional[TrialProfilerMetricLabelsProfilerMetricType]" = None,
     ):
-        self.trialId = trialId
         self.name = name
+        self.trialId = trialId
         self.agentId = agentId
         self.gpuUuid = gpuUuid
         self.metricType = metricType
@@ -6029,10 +6062,10 @@ class v1TrialProfilerMetricsBatch:
         timestamps: "typing.Sequence[str]",
         values: "typing.Sequence[float]",
     ):
-        self.values = values
-        self.batches = batches
-        self.timestamps = timestamps
+        self.batches = to_list(batches)
         self.labels = labels
+        self.timestamps = to_list(timestamps)
+        self.values = to_list(values)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialProfilerMetricsBatch":
@@ -6077,8 +6110,8 @@ class v1TrialSimulation:
         occurrences: "typing.Optional[int]" = None,
         operations: "typing.Optional[typing.Sequence[v1RunnableOperation]]" = None,
     ):
-        self.operations = operations
         self.occurrences = occurrences
+        self.operations = to_optional_list(operations)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialSimulation":
@@ -6101,9 +6134,9 @@ class v1TrialsSampleResponse:
         promotedTrials: "typing.Sequence[int]",
         trials: "typing.Sequence[v1TrialsSampleResponseTrial]",
     ):
-        self.trials = trials
-        self.promotedTrials = promotedTrials
-        self.demotedTrials = demotedTrials
+        self.demotedTrials = to_list(demotedTrials)
+        self.promotedTrials = to_list(promotedTrials)
+        self.trials = to_list(trials)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSampleResponse":
@@ -6125,12 +6158,12 @@ class v1TrialsSampleResponseTrial:
         self,
         *,
         data: "typing.Sequence[v1DataPoint]",
-        hparams: "typing.Dict[str, typing.Any]",
+        hparams: "typing.Mapping[str, typing.Any]",
         trialId: int,
     ):
+        self.data = to_list(data)
+        self.hparams = to_dict(hparams)
         self.trialId = trialId
-        self.hparams = hparams
-        self.data = data
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSampleResponseTrial":
@@ -6153,7 +6186,7 @@ class v1TrialsSnapshotResponse:
         *,
         trials: "typing.Sequence[v1TrialsSnapshotResponseTrial]",
     ):
-        self.trials = trials
+        self.trials = to_list(trials)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSnapshotResponse":
@@ -6171,14 +6204,14 @@ class v1TrialsSnapshotResponseTrial:
         self,
         *,
         batchesProcessed: int,
-        hparams: "typing.Dict[str, typing.Any]",
+        hparams: "typing.Mapping[str, typing.Any]",
         metric: float,
         trialId: int,
     ):
-        self.trialId = trialId
-        self.hparams = hparams
-        self.metric = metric
         self.batchesProcessed = batchesProcessed
+        self.hparams = to_dict(hparams)
+        self.metric = metric
+        self.trialId = trialId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSnapshotResponseTrial":
@@ -6203,7 +6236,7 @@ class v1UpdateJobQueueRequest:
         *,
         updates: "typing.Sequence[v1QueueControl]",
     ):
-        self.updates = updates
+        self.updates = to_list(updates)
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UpdateJobQueueRequest":
@@ -6228,12 +6261,12 @@ class v1User:
         id: "typing.Optional[int]" = None,
         modifiedAt: "typing.Optional[str]" = None,
     ):
-        self.id = id
-        self.username = username
-        self.admin = admin
         self.active = active
+        self.admin = admin
+        self.username = username
         self.agentUserGroup = agentUserGroup
         self.displayName = displayName
+        self.id = id
         self.modifiedAt = modifiedAt
 
     @classmethod
@@ -6313,9 +6346,9 @@ class v1ValidationHistoryEntry:
         searcherMetric: float,
         trialId: int,
     ):
-        self.trialId = trialId
         self.endTime = endTime
         self.searcherMetric = searcherMetric
+        self.trialId = trialId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationHistoryEntry":
@@ -6340,9 +6373,9 @@ class v1WorkloadContainer:
         training: "typing.Optional[v1MetricsWorkload]" = None,
         validation: "typing.Optional[v1MetricsWorkload]" = None,
     ):
+        self.checkpoint = checkpoint
         self.training = training
         self.validation = validation
-        self.checkpoint = checkpoint
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1WorkloadContainer":
@@ -6375,17 +6408,17 @@ class v1Workspace:
         userId: int,
         username: str,
     ):
-        self.id = id
-        self.name = name
         self.archived = archived
-        self.username = username
+        self.errorMessage = errorMessage
+        self.id = id
         self.immutable = immutable
+        self.name = name
+        self.numExperiments = numExperiments
         self.numProjects = numProjects
         self.pinned = pinned
-        self.userId = userId
-        self.numExperiments = numExperiments
         self.state = state
-        self.errorMessage = errorMessage
+        self.userId = userId
+        self.username = username
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
