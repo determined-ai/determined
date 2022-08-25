@@ -1,4 +1,5 @@
 import abc
+import enum
 import json
 import os
 import sys
@@ -12,7 +13,16 @@ TypeDefs = typing.Dict[str, typing.Optional["TypeDef"]]
 
 
 class TypeAnno:
-    def annotation(self, prequoted=False) -> Code:
+    def input_annotation(self, prequoted=False) -> Code:
+        """input_annotation is for parameters; things accepted from a user."""
+        raise NotImplementedError(type(self))
+
+    def output_annotation(self, prequoted=False) -> Code:
+        """output_annotation is for return types and attributes; things provided to a user."""
+        raise NotImplementedError(type(self))
+
+    def input_to_output(self, val: Code, optional: bool) -> Code:
+        """Convert an input_annotation-type value to an output_annotation-type value."""
         raise NotImplementedError(type(self))
 
     def need_parse(self) -> bool:
@@ -63,7 +73,23 @@ class NoParse:
         return val
 
 
-class Any(NoParse, TypeAnno):
+class SameAsInputOrOutput:
+    """A compositional class for things where input and output annotation are the same."""
+    def annotation(self, prequoted=False) -> Code:
+        raise NotImplementedError(type(self))
+
+    def input_annotation(self, prequoted=False):
+        return self.annotation(prequoted)
+
+    def output_annotation(self, prequoted=False):
+        return self.annotation(prequoted)
+
+    def input_to_output(self, val: Code, optional: bool) -> Code:
+        # No conversion required.
+        return val
+
+
+class Any(NoParse, SameAsInputOrOutput, TypeAnno):
     def __repr__(self):
         return "Any"
 
@@ -71,7 +97,7 @@ class Any(NoParse, TypeAnno):
         return "typing.Any"
 
 
-class String(NoParse, TypeAnno):
+class String(NoParse, SameAsInputOrOutput, TypeAnno):
     def __init__(self):
         pass
 
@@ -82,7 +108,7 @@ class String(NoParse, TypeAnno):
         return "str"
 
 
-class Float(TypeAnno):
+class Float(SameAsInputOrOutput, TypeAnno):
     def __init__(self):
         pass
 
@@ -102,7 +128,7 @@ class Float(TypeAnno):
         return f"dump_float({val})"
 
 
-class Int(NoParse, TypeAnno):
+class Int(NoParse, SameAsInputOrOutput, TypeAnno):
     def __init__(self):
         pass
 
@@ -113,7 +139,7 @@ class Int(NoParse, TypeAnno):
         return "int"
 
 
-class Bool(NoParse, TypeAnno):
+class Bool(NoParse, SameAsInputOrOutput, TypeAnno):
     def __init__(self):
         pass
 
@@ -135,7 +161,7 @@ class Bool(NoParse, TypeAnno):
         return f"str({val}).lower()"
 
 
-class Ref(TypeAnno):
+class Ref(SameAsInputOrOutput, TypeAnno):
     # Collect refs as we instantiate them, for the linking step.
     all_refs = []
 
@@ -192,11 +218,23 @@ class Dict(TypeAnno):
     def __repr__(self):
         return f"Dict[str, {self.values}]"
 
-    def annotation(self, prequoted=False) -> Code:
-        out = f"typing.Dict[str, {self.values.annotation(True)}]"
+    def input_annotation(self, prequoted=False) -> Code:
+        out = f"typing.Mapping[str, {self.values.input_annotation(True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
+
+    def output_annotation(self, prequoted=False) -> Code:
+        out = f"typing.Dict[str, {self.values.output_annotation(True)}]"
+        if not prequoted:
+            return f'"{out}"'
+        return out
+
+    def input_to_output(self, val: Code, optional: bool) -> Code:
+        if optional:
+            return f"to_optional_dict({val})"
+        else:
+            return f"to_dict({val})"
 
     def need_parse(self) -> bool:
         return self.values.need_parse()
@@ -212,18 +250,30 @@ class Dict(TypeAnno):
         return f"{{k: {self.values.dump('v')} for k, v in {val}.items()}}"
 
 
-class Sequence(TypeAnno):
+class List(TypeAnno):
     def __init__(self, items):
         self.items = items
 
     def __repr__(self):
-        return f"Sequence[{self.items}]"
+        return f"List[{self.items}]"
 
-    def annotation(self, prequoted=False) -> Code:
-        out = f"typing.Sequence[{self.items.annotation(True)}]"
+    def input_annotation(self, prequoted=False) -> Code:
+        out = f"typing.Sequence[{self.items.input_annotation(True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
+
+    def output_annotation(self, prequoted=False) -> Code:
+        out = f"typing.List[{self.items.output_annotation(True)}]"
+        if not prequoted:
+            return f'"{out}"'
+        return out
+
+    def input_to_output(self, val: Code, optional: bool) -> Code:
+        if optional:
+            return f"to_optional_list({val})"
+        else:
+            return f"to_list({val})"
 
     def need_parse(self) -> bool:
         return self.items.need_parse()
@@ -260,17 +310,17 @@ class Parameter:
             if not isinstance(typ, (String, Int, Bool)):
                 raise AssertionError(f"bad type in path parameter {name}: {typ}")
         if where == "query":
-            underlying_typ = typ.items if isinstance(typ, Sequence) else typ
+            underlying_typ = typ.items if isinstance(typ, List) else typ
             if not isinstance(underlying_typ, (String, Int, Bool)):
                 if not (isinstance(underlying_typ, Ref) and underlying_typ.url_encodable):
                     raise AssertionError(f"bad type in query parameter {name}: {typ}")
 
     def gen_function_param(self) -> Code:
         if self.required:
-            typestr = self.type.annotation()
+            typestr = self.type.input_annotation()
             default = ""
         else:
-            typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
+            typestr = f'"typing.Optional[{self.type.input_annotation(prequoted=True)}]"'
             default = " = None"
         default = "" if self.required else " = None"
         return f"    {self.name}: {typestr}{default},"
@@ -301,7 +351,10 @@ class Class(TypeDef):
         for name in required + optional:
             out += ["    " + self.params[name].gen_function_param()]
         out += ["    ):"]
-        out += [f"        self.{k} = {k}" for k in self.params]
+        out += [
+            f"        self.{k} = {v.type.input_to_output(k, not v.required)}"
+            for k, v in self.params.items()
+        ]
         out += [""]
         out += ["    @classmethod"]
         out += [f'    def from_json(cls, obj: Json) -> "{self.name}":']
@@ -402,9 +455,9 @@ class Function:
 
         if len(responses) == 1:
             returntype = next(iter(responses.values()))
-            returntypestr = returntype.annotation()
+            returntypestr = returntype.output_annotation()
         else:
-            returntypes = set(r.annotation(prequoted=True) for r in responses.values())
+            returntypes = set(r.output_annotation(prequoted=True) for r in responses.values())
             returntypestr = '"Union[' + ", ".join(sorted(returntypes)) + ']"'
         assert len(responses) == 1, (self.name, responses)
 
@@ -498,7 +551,7 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
         items = schema.get("items")
         if items is None:
             raise ValueError(path, schema)
-        return Sequence(classify_type(enums, path + ".items", items))
+        return List(classify_type(enums, path + ".items", items))
 
     raise ValueError(f"unhandled schema: {schema} @ {path}")
 
@@ -663,6 +716,39 @@ def dump_float(val: typing.Any) -> typing.Any:
     if math.isinf(val):
         return "Infinity" if val > 0 else "-Infinity"
     return val
+
+
+T = typing.TypeVar("T")
+
+
+def to_list(val: typing.Sequence[T]) -> typing.List[T]:
+    if isinstance(val, list):
+        return val
+    return list(val)
+
+
+def to_optional_list(val: typing.Optional[typing.Sequence[T]]) -> typing.Optional[typing.List[T]]:
+    if val is None:
+        return val
+    if isinstance(val, list):
+        return val
+    return list(val)
+
+
+def to_dict(val: typing.Mapping[str, T]) -> typing.Dict[str, T]:
+    if isinstance(val, dict):
+        return val
+    return dict(val)
+
+
+def to_optional_dict(
+    val: typing.Optional[typing.Mapping[str, T]]
+) -> typing.Optional[typing.Dict[str, T]]:
+    if val is None:
+        return val
+    if isinstance(val, dict):
+        return val
+    return dict(val)
 
 
 class APIHttpError(Exception):
