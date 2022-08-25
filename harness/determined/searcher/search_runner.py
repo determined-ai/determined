@@ -120,7 +120,6 @@ class SearchRunner:
                 last_event_id = self.search_method.searcher_state.last_event_id
                 first_event = True
                 for event in events:
-                    assert event.id is not None
                     if (
                         first_event
                         and last_event_id is not None
@@ -136,7 +135,6 @@ class SearchRunner:
                             break
 
                         # save state
-                        assert event.id is not None  # TODO change proto to make id mandatory
                         self.search_method.searcher_state.last_event_id = event.id
                         self.save_state(experiment_id, operations)
                     first_event = False
