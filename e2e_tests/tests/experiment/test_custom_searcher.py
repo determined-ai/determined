@@ -306,7 +306,7 @@ class RandomSearchMethod(SearchMethod):
 
 
 @pytest.mark.e2e_cpu
-def test_run_asha_batches_exp() -> None:
+def test_run_asha_batches_exp(tmp_path: Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -323,7 +323,7 @@ def test_run_asha_batches_exp() -> None:
     divisor = 4
 
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
-    search_runner = LocalSearchRunner(search_method)
+    search_runner = LocalSearchRunner(search_method, tmp_path)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None

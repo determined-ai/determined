@@ -207,11 +207,12 @@ class SearchMethod:
         from the ``SearchMethod``
         """
         searcher_state_file = path.joinpath(STATE_FILE)
-        self.save_method_state(path)
         d = self.searcher_state.to_dict()
         d["experimentId"] = experiment_id
         with searcher_state_file.open("w") as f:
             json.dump(d, f)
+
+        self.save_method_state(path)
 
     def save_method_state(self, path: pathlib.Path) -> None:
         """
