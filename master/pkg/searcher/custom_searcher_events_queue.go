@@ -42,11 +42,11 @@ func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 	return q.events
 }
 
-// RemoveUnder the given event Id.
-func (q *SearcherEventQueue) RemoveUnder(eventID int) error {
+// RemoveUpTo the given event Id.
+func (q *SearcherEventQueue) RemoveUpTo(eventID int) error {
 	for i, v := range q.events {
 		if v.Id == int32(eventID) {
-			q.events = q.events[i:]
+			q.events = q.events[i+1:]
 			return nil
 		}
 	}
