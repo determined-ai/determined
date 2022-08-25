@@ -43,7 +43,7 @@ class SearcherState:
         self.trial_progress = {uuid.UUID(k): v for k, v in d.get("trialProgress", {}).items()}
         self.trials_closed = {uuid.UUID(t) for t in d.get("trialsClosed", [])}
         self.trials_created = {uuid.UUID(t) for t in d.get("trialsCreated", [])}
-        self.last_event_id = d.get("lastEventId")
+        self.last_event_id = d.get("lastEventId", 0)
         self.experiment_id = d.get("experimentId")
         self.experiment_completed = d.get("experimentCompleted", False)
 
