@@ -688,7 +688,7 @@ def add_label(args: Namespace) -> None:
     if exp_patch.labels is None:
         exp_patch.labels = []
     if args.label not in exp_patch.labels:
-        exp_patch.labels = list(exp_patch.labels) + [args.label]
+        exp_patch.labels = exp_patch.labels + [args.label]
         bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
 
