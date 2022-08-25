@@ -9278,3 +9278,26 @@ def post_UpdateJobQueue(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UpdateJobQueue", _resp)
+
+# Paginated is a union type of objects whose .pagination
+# attribute is a v1Pagination-type object.
+Paginated = typing.Union[
+    v1GetAgentsResponse,
+    v1GetCommandsResponse,
+    v1GetExperimentCheckpointsResponse,
+    v1GetExperimentTrialsResponse,
+    v1GetExperimentsResponse,
+    v1GetJobsResponse,
+    v1GetModelVersionsResponse,
+    v1GetModelsResponse,
+    v1GetNotebooksResponse,
+    v1GetResourcePoolsResponse,
+    v1GetShellsResponse,
+    v1GetTemplatesResponse,
+    v1GetTensorboardsResponse,
+    v1GetTrialCheckpointsResponse,
+    v1GetTrialWorkloadsResponse,
+    v1GetUsersResponse,
+    v1GetWorkspaceProjectsResponse,
+    v1GetWorkspacesResponse,
+]
