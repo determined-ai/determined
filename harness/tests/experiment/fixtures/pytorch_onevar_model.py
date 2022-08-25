@@ -241,21 +241,9 @@ class AMPTestDataset(OnesDataset):
     def __len__(self) -> int:
         return len(self.stages)
 
-    def _get_stage(self, index: int) -> str:
-        stage = self.stages[index]
-        return stage
-
     def __getitem__(self, index: int) -> Tuple:
-        stage = self._get_stage(index)
-        return self._get_stage_item(stage)
-
-    def _get_stage_item(self, stage) -> Tuple:
-        for _stage, x in self.STAGES.items():
-            if _stage.lower() == stage.lower():
-                y = x
-                return torch.Tensor([float(x)]), torch.Tensor([float(y)])
-        else:
-            raise ValueError(f"Unrecognized {self.__class__.__name__} stage {stage}")
+        x = self.STAGES[self.stages[index]]
+        return torch.Tensor([float(x)]), torch.Tensor([float(x)])
 
 
 class OneVarAMPBaseTrial(OneVarTrial):
