@@ -32,8 +32,8 @@ const triggers = {
 export const Default = (): React.ReactNode => (
   <ActionDropdown
     actionOrder={actions}
-    id="1"
-    kind="entity"
+    id="id"
+    kind="kind"
     onError={() => { return; }}
     onTrigger={triggers}
   />
@@ -43,8 +43,8 @@ export const DisabledAction = (): React.ReactNode => (
   <ActionDropdown
     actionOrder={actions}
     disabled={disabled}
-    id="1"
-    kind="entity"
+    id="id"
+    kind="kind"
     onError={() => { return; }}
     onTrigger={triggers}
   />
