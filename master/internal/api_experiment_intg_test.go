@@ -133,6 +133,7 @@ func TestGetExperiments(t *testing.T) {
 		ParentArchived: true,
 		ResourcePool:   "kubernetes",
 		ProjectId:      pid,
+		ProjectOwnerId: projResp.Project.UserId,
 	}
 
 	secondStartTime := time.Now()
@@ -173,6 +174,7 @@ func TestGetExperiments(t *testing.T) {
 		WorkspaceName:  workResp.Workspace.Name,
 		ParentArchived: true,
 		ResourcePool:   "kubernetes",
+		ProjectOwnerId: projResp.Project.UserId,
 	}
 
 	// Filtering tests.
