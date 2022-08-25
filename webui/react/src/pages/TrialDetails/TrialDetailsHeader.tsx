@@ -9,16 +9,12 @@ import useCreateExperimentModal, {
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
-import { openOrCreateTensorBoard } from 'services/api';
+import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
-import { ExperimentAction as Action, ExperimentAction, ExperimentBase, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentAction, ExperimentBase,
+  TrialDetails, TrialWorkloadFilter } from 'types';
 import { canUserActionExperiment } from 'utils/experiment';
 import { openCommand } from 'utils/wait';
-
-export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
-  const isTerminal = terminalRunStates.has(trial.state);
-  return isTerminal && trial.workloadCount === 0;
-};
 
 interface Props {
   experiment: ExperimentBase;
@@ -32,6 +28,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
   trial,
 }: Props) => {
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
+  const [ trialNeverData, setTrialNeverData ] = useState<boolean>(false);
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
 
@@ -53,10 +50,23 @@ const TrialDetailsHeader: React.FC<Props> = ({
     openModalHyperparameterSearch();
   }, [ openModalHyperparameterSearch ]);
 
+  useMemo(async () => {
+    if (!terminalRunStates.has(trial.state)) {
+      setTrialNeverData(false);
+    } else {
+      const wl = await getTrialWorkloads({
+        filter: TrialWorkloadFilter.All,
+        id: trial.id,
+        limit: 1,
+      });
+      setTrialNeverData(wl.workloads.length === 0);
+    }
+  }, [ trial ]);
+
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
 
-    if (!trialWillNeverHaveData(trial)) {
+    if (!trialNeverData) {
       options.push({
         icon: <Icon name="tensor-board" size="small" />,
         isLoading: isRunningTensorBoard,
@@ -109,7 +119,8 @@ const TrialDetailsHeader: React.FC<Props> = ({
     handleContinueTrial,
     handleHyperparameterSearch,
     isRunningTensorBoard,
-    trial ]);
+    trial,
+    trialNeverData ]);
 
   return (
     <>
