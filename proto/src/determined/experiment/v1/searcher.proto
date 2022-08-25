@@ -78,9 +78,6 @@ message TrialExitedEarly {
     EXITED_REASON_INVALID_HP = 1;
     // Indicates the trial exited due to a user requested stop.
     EXITED_REASON_USER_REQUESTED_STOP = 2;
-    // Indicates the trial exited due to an invalid hyperparameter
-    // in the trial init.
-    EXITED_REASON_INIT_INVALID_HP = 3;
   }
   // The reason for the exit.
   ExitedReason exited_reason = 2;
@@ -100,6 +97,9 @@ message ExperimentInactive {
 // custom searcher informing it of relevant changes in the state
 // of an experiment
 message SearcherEvent {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
   // incremental id of the event
   int32 id = 1;
   // The concrete event

@@ -832,9 +832,6 @@ func ExitedReasonToProto(r ExitedReason) experimentv1.TrialExitedEarly_ExitedRea
 
 	case UserCanceled:
 		return *experimentv1.TrialExitedEarly_EXITED_REASON_USER_REQUESTED_STOP.Enum()
-
-	case InitInvalidHP:
-		return *experimentv1.TrialExitedEarly_EXITED_REASON_INIT_INVALID_HP.Enum()
 	default:
 		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}
