@@ -351,10 +351,9 @@ class Class(TypeDef):
         for name in required + optional:
             out += ["    " + self.params[name].gen_function_param()]
         out += ["    ):"]
-        out += [
-            f"        self.{k} = {v.type.input_to_output(k, not v.required)}"
-            for k, v in self.params.items()
-        ]
+        for name in required + optional:
+            p = self.params[name]
+            out += [f"        self.{name} = {p.type.input_to_output(name, not p.required)}"]
         out += [""]
         out += ["    @classmethod"]
         out += [f'    def from_json(cls, obj: Json) -> "{self.name}":']
