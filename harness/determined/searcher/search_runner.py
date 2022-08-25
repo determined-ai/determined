@@ -5,7 +5,7 @@ import pickle
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from determined.common.api import bindings
 from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason
@@ -113,11 +113,7 @@ class SearchRunner:
                 events = self.get_events(session, experiment_id)
                 if events is None:
                     continue
-                logging.info(
-                    json.dumps(
-                        [SearchRunner._searcher_event_as_dict(e) for e in events]
-                    )
-                )
+                logging.info(json.dumps([SearchRunner._searcher_event_as_dict(e) for e in events]))
                 # the first event is an event we have already processed and told master about it
                 # however, we may not have saved the state after that event if we crashed
                 # after POSTing operations but before saving state
