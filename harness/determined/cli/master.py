@@ -5,8 +5,7 @@ from typing import Any, List
 
 from requests import Response
 
-from determined.cli.session import setup_session
-from determined.cli.util import format_args
+from determined import cli
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings
 from determined.common.check import check_gt
@@ -23,7 +22,7 @@ def config(args: Namespace) -> None:
 
 
 def get_master(args: Namespace) -> None:
-    resp = bindings.get_GetMaster(setup_session(args))
+    resp = bindings.get_GetMaster(cli.setup_session(args))
     if args.json:
         print(json.dumps(resp.to_json(), indent=4))
     else:
@@ -70,10 +69,10 @@ def logs(args: Namespace) -> None:
 args_description = [
     Cmd("master", None, "manage master", [
         Cmd("config", config, "fetch master config", [
-            Group(format_args["json"], format_args["yaml"])
+            Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
         ]),
         Cmd("info", get_master, "fetch master info", [
-            Group(format_args["json"], format_args["yaml"])
+            Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
         ]),
         Cmd("logs", logs, "fetch master logs", [
             Arg("-f", "--follow", action="store_true",

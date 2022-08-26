@@ -630,6 +630,31 @@ def link_all_refs(defs: TypeDefs) -> None:
         ref.defn = defs[ref.name]
 
 
+def gen_paginated(defs: TypeDefs) -> typing.List[str]:
+    paginated = []
+    for k, defn in defs.items():
+        defn = defs[k]
+        if defn is None or not isinstance(defn, Class):
+            continue
+        # Note that our goal is to mimic duck typing, so we only care if the "pagination" attribute
+        # exists with a v1Pagination type.
+        if any(
+            n == "pagination" and p.type.name == "v1Pagination" for n, p in defn.params.items()
+        ):
+            paginated.append(defn.name)
+
+    if not paginated:
+        return []
+
+    out = []
+    out += ["# Paginated is a union type of objects whose .pagination"]
+    out += ["# attribute is a v1Pagination-type object."]
+    out += ["Paginated = typing.Union["]
+    out += [f"    {name}," for name in sorted(paginated)]
+    out += ["]"]
+    return out
+
+
 def pybindings(swagger: dict) -> str:
     prefix = """
 # The contents of this file are programatically generated.
@@ -696,6 +721,9 @@ class APIHttpError(Exception):
     for k in sorted(ops):
         out += [ops[k].gen_def()]
         out += [""]
+
+    # Also generate a list of Paginated response types.
+    out += gen_paginated(defs)
 
     return "\n".join(out).strip()
 
