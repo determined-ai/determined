@@ -15,7 +15,9 @@ import css from './ActionDropdown.module.scss';
 // TODO parameterize Action using Enums? https://github.com/microsoft/TypeScript/issues/30611
 export type Triggers<T extends string> = Partial<{ [key in T]: () => Eventually<void> }>
 export type Confirmations<T extends string> =
-  Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'>}>
+  Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'> }>
+type DisabledActions<T extends string> =
+  Partial<{ [key in T]: boolean }>
 
 interface Props<T extends string> {
   /**
@@ -27,6 +29,10 @@ interface Props<T extends string> {
    * with options to customize the generated modal.
    */
   confirmations?: Confirmations<T>
+  /**
+   * whether to disable the action or not.
+   */
+  disabled?: DisabledActions<T>;
   /**
    * How to identify the entity that the action is being performed on.
    * This is used to generate the modal content and for logging purposes.
@@ -53,14 +59,14 @@ interface Props<T extends string> {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ActionDropdown = <T extends string>(
-  { id, kind, onComplete, onTrigger, confirmations, actionOrder, onError }: Props<T>,
+  { id, kind, onComplete, onTrigger, confirmations, disabled, actionOrder, onError }: Props<T>,
 ): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
 
   const menuClickErrorHandler = useCallback((
     e: unknown,
     actionKey: string,
     kind: string,
-    id : string,
+    id: string,
   ): void => {
     onError(new DetError(e, {
       level: ErrorLevel.Error,
@@ -104,7 +110,7 @@ const ActionDropdown = <T extends string>(
 
   const menuItems: MenuProps['items'] = actionOrder
     .filter((act) => !!onTrigger[act])
-    .map((action) => ({ key: action, label: action }));
+    .map((action) => ({ disabled: disabled?.[action], key: action, label: action }));
 
   if (menuItems.length === 0) {
     return (
