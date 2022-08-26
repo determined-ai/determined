@@ -34,8 +34,8 @@ Version 0.19.2
 
 **Bug Fixes**
 
--  Kubernetes: Fixed an issue where restoring a job in into a Kubernetes set up could crash the
-   resource manager.
+-  Kubernetes: Fixed an issue where restoring a job in a Kubernetes set up could crash the resource
+   manager.
 
 -  CLI: Fixed a bug where ``det e set gc-policy`` would fail when deserializing an api response
    because it wasn't adjusted for the new format.
