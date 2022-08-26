@@ -72,7 +72,7 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
 fi
 
 CLUSTER=$1
-CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1', 'raptor', 'casablanca-login2')
+CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023')
 
 function lookup() {
     echo "${!1}"
@@ -258,6 +258,27 @@ OPT_MASTERPORT_raptor=$USERPORT
 OPT_TRESSUPPORTED_raptor=false
 OPT_PROTOCOL_raptor=http
 
+# Configuration for Genoble system o184i023 aka champollion (see http://o184i124.gre.smktg.hpecorp.net/~bench/)
+# Need to request account to access these systems.   Managed GPUs include:
+#
+#  20 XL675d Gen10+ servers with 2x AMD EPYC 7763 processors (64c/2.45GHz/280W), 1TB/2TB RAM DDR4-3200 2R, 1x 3.2TB NVMe disk, 4x IB HDR ports, 8x NVIDIA A100/80GB SXM4 GPUs (*) -- aka 'Champollion'
+#  4 XL270d Gen10 servers with Intel Cascade Lake Gold 6242 processors (16c/2.8GHz/150W), 384-768GB RAM DDR4-2400 2R, 1x basic 6G SFF SATA disk, 4x IB EDR ports, 8x NVIDIA V100/32GB SXM2 32GB GPUs (*)
+#  1 XL675d Gen10+ server with 2x AMD EPYC 7543 processors (32c/2.8GHz/225W), 2TB RAM DDR4-3200 2R, 1x 1TB SFF SSD disk, 4x IB HDR ports, 10x NVIDIA A100/40GB PCIe GPUs (*)
+#  1 XL675d Gen10+ server with 2x AMD EPYC 7763 processors (64c/2.45GHz/280W), 512GB RAM DDR4-3200 2R, 1x 1TB SFF SSD disk, 4x IB HDR ports, 8x AMD Mi210 PCIe/XGMI GPUs (*)
+#  1 XL645d Gen10+ server with 2x AMD EPYC 7702 processors (64c/2.0GHz/200W), 512GB RAM DDR4-2666 2R, 1x 1.6TB NVMe disk, 1x IB EDR port, 4x NVIDIA A100/40GB PCIe GPUs (*)
+#
+OPT_name_o184i023=16.16.184.23
+OPT_LAUNCHERHOST_o184i023=localhost
+OPT_LAUNCHERPORT_o184i023=8181
+OPT_LAUNCHERPROTOCOL_o184i023=http
+OPT_CHECKPOINTPATH_o184i023=/cstor/harrow/determined-cp
+OPT_DEBUGLEVEL_o184i023=debug
+OPT_MASTERHOST_o184i023=o184i023
+OPT_MASTERPORT_o184i023=$USERPORT
+OPT_TRESSUPPORTED_o184i023=false
+OPT_PROTOCOL_o184i023=http
+OPT_SLOTTYPE_o184i023=rocm
+
 export OPT_LAUNCHERHOST=$(lookup "OPT_LAUNCHERHOST_$CLUSTER")
 export OPT_LAUNCHERPORT=$(lookup "OPT_LAUNCHERPORT_$CLUSTER")
 export OPT_LAUNCHERPROTOCOL=$(lookup "OPT_LAUNCHERPROTOCOL_$CLUSTER")
@@ -268,6 +289,8 @@ export OPT_MASTERPORT=$(lookup "OPT_MASTERPORT_$CLUSTER")
 export OPT_TRESSUPPORTED=$(lookup "OPT_TRESSUPPORTED_$CLUSTER")
 export OPT_RENDEVOUSIFACE=$(lookup "OPT_RENDEVOUSIFACE_$CLUSTER")
 export OPT_REMOTEUSER=$(lookup "OPT_REMOTEUSER_$CLUSTER")
+export OPT_SLOTTYPE=$(lookup "OPT_SLOTTYPE_$CLUSTER")
+
 
 if [[ -n $DEVLAUNCHER ]]; then
     if [ -z $DEV_LAUNCHER_PORT ]; then
@@ -275,6 +298,8 @@ if [[ -n $DEVLAUNCHER ]]; then
         exit 1
     fi
     OPT_LAUNCHERPORT=$DEV_LAUNCHER_PORT
+    # Currently devlauncher support config above only has http ports
+    OPT_LAUNCHERPROTOCOL=http
 fi
 
 
