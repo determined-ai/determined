@@ -677,24 +677,28 @@ def make_amp_workloads(trial_class) -> workload.Stream:
     yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
     training_metrics, _ = trainer.result()
 
-    for metrics, next_metrics in zip(training_metrics[:-1], training_metrics[1:]):
-        scale = next_metrics["scale_before"]
-        if "scale" in metrics:
-            assert metrics["scale"] == scale
-        else:
-            metrics["scale"] = scale
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
+    MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
     growth_countdown = GROWTH_INTERVAL
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
-    for idx, metrics in enumerate(training_metrics[:-1]):
+    for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
+        # Because the scaler is updated during the optimizer step, which occurs after training from
+        #  a batch, the metrics dictionary may not have the updated scale, but we can get it
+        #  from the next step.
+        scale = next_metrics["scale_before"]
+        if "scale" in metrics:
+            # In cases where we do know the scale immediately after it's updated, we might as well
+            #  do this check. If this fails, something is very wrong.
+            assert metrics["scale"] == scale
+        else:
+            metrics["scale"] = scale
         loss = metrics["loss"].item()
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
         growth_countdown -= 1
         scale = metrics["scale"]
-        MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
         if scale != scale_before:
             if scale < scale_before:
                 assert scaled_loss >= MIN_SCALED_LOSS_TO_REDUCE_SCALE, (
