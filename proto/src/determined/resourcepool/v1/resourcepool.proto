@@ -37,6 +37,9 @@ enum SchedulerType {
   // A slurm placeholder. When running on slurm, all scheduling behavior is
   // delegated.
   SCHEDULER_TYPE_SLURM = 5;
+  // A PBS placeholder. When running on PBS, all scheduling behavior is
+  // delegated.
+  SCHEDULER_TYPE_PBS = 6;
 }
 
 // The fitting policy of the scheduler.
@@ -55,6 +58,8 @@ enum FittingPolicy {
   FITTING_POLICY_KUBERNETES = 3;
   // A slurm placeholder. When running on slurm, task placement is delegated.
   FITTING_POLICY_SLURM = 4;
+  // A PBS placeholder. When running on PBS, task placement is delegated.
+  FITTING_POLICY_PBS = 5;
 }
 
 // A Resource Pool is a pool of resources where containers are run.
