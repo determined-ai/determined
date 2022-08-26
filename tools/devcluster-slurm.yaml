@@ -79,6 +79,7 @@ stages:
           # this to false and add contraints to ensure select node have GPUs if desired.
           tres_supported: $OPT_TRESSUPPORTED
           rendezvous_network_interface: $OPT_RENDEVOUSIFACE
+          slot_type: $OPT_SLOTTYPE
           # Specify per-partition overrides for submitted tasks.
           # partition_overrides:
           #   defq:
