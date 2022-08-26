@@ -10,7 +10,7 @@ import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
-import { V1AugmentedTrial, V1OrderBy } from 'services/api-ts-sdk';
+import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import { Scale } from 'types';
 import { metricToKey } from 'utils/metric';
@@ -33,19 +33,26 @@ interface Props {
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
-  const C = useTrialCollections(projectId, tableSettingsHook);
+
+  const refetcher = useRef<() => void>();
+
+  const C = useTrialCollections(projectId, tableSettingsHook, refetcher);
+
   const { settings: tableSettings } = tableSettingsHook;
 
-  const trials = useFetchTrials({
+  const { trials, refetch } = useFetchTrials({
     filters: C.filters,
     limit: tableSettings.tableLimit,
     offset: tableSettings.tableOffset,
     sorter: C.sorter,
   });
 
+  useEffect(() => refetcher.current = refetch, [ refetch ]);
+
   const A = useTrialActions({
     filters: C.filters,
     openCreateModal: C.openCreateModal,
+    refetch,
     sorter: C.sorter,
   });
 
