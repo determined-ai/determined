@@ -87,6 +87,9 @@
     grid-column: 1 / 2;
   }
 }
+.noEditor {
+  grid-template-columns: max-content auto;
+}
 .hideElement {
   display: none;
 }
