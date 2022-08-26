@@ -114,6 +114,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 					Client:              c.client,
 					reattachContainerID: &c.Container.ID,
 				})
+			ctx.Ask(c.docker, actor.Ping{}).Get()
 		}
 	case getContainerSummary:
 		ctx.Respond(c.Container)
