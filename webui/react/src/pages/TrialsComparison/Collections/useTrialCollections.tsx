@@ -1,21 +1,20 @@
-import { Button, Select } from 'antd';
+import { Button, Dropdown, Menu, Select } from 'antd';
 import React from 'react';
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import useSettings, { BaseType, SettingsConfig, SettingsHook } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
-import { getTrialsCollections, patchTrialsCollection } from 'services/api';
-import {
-  V1OrderBy,
-} from 'services/api-ts-sdk';
-import { isNumber } from 'shared/utils/data';
+import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
+import Icon from 'shared/components/Icon';
+import { isNumber, numberElseUndefined } from 'shared/utils/data';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
 import { TrialsCollection } from './collections';
 import { FilterSetter, SetFilters, TrialFilters, TrialSorter } from './filters';
 import useModalTrialCollection, { CollectionModalProps } from './useModalCreateCollection';
+import css from './useTrialCollections.module.scss';
 
 export interface TrialsCollectionInterface {
   collection: string;
@@ -30,7 +29,6 @@ export interface TrialsCollectionInterface {
   setCollection: (name: string) => void;
   setFilters: SetFilters;
   setNewCollection: (c: TrialsCollection) => Promise<void>;
-  setSorter: Dispatch<SetStateAction<TrialSorter>>
   sorter: TrialSorter;
 }
 
@@ -52,22 +50,29 @@ const getDefaultFilters = (projectId: string) => (
   { projectIds: [ String(projectId) ] }
 );
 
+const defaultSorter: TrialSorter = {
+  sortDesc: true,
+  sortKey: 'trialId',
+};
+
 export const useTrialCollections = (
   projectId: string,
-  tableSettings: InteractiveTableSettings,
+  tableSettingsHook: SettingsHook<InteractiveTableSettings>,
 ): TrialsCollectionInterface => {
+  const { settings: tableSettings, updateSettings: updateTableSettings } = tableSettingsHook;
   const filterStorage = useStorage(`trial-filters}/${projectId ?? 1}`);
   const initFilters = filterStorage.getWithDefault<TrialFilters>(
     'filters',
     getDefaultFilters(projectId),
   );
 
-  const [ sorter, setSorter ] = useState<TrialSorter>({
-    orderBy: tableSettings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC,
-    sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : 'trialId',
-  });
-
   const [ filters, _setFilters ] = useState<TrialFilters>(initFilters);
+
+  const sorter: TrialSorter = useMemo(() => ({
+    ...defaultSorter,
+    sortDesc: tableSettings.sortDesc,
+    sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
+  }), [ tableSettings.sortDesc, tableSettings.sortKey ]);
 
   const setFilters = useCallback(
     (fs: FilterSetter) => {
@@ -84,18 +89,6 @@ export const useTrialCollections = (
   const resetFilters = useCallback(() => {
     filterStorage.remove('filters');
   }, [ filterStorage ]);
-
-  useEffect(() => {
-    // whenever the table sort direction changes update the internal state of sorter
-    const orderBy = tableSettings.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC;
-    setSorter((sorter) => ({ ...sorter, orderBy }));
-  }, [ tableSettings.sortDesc, setSorter ]);
-
-  useEffect(() => {
-    // whenever the table sort key changes update the internal state of sorter
-    const sortKey = tableSettings.sortKey ? String(tableSettings.sortKey) : 'trialId';
-    setSorter((sorter) => ({ ...sorter, sortKey }));
-  }, [ tableSettings.sortKey, setSorter ]);
 
   const [ collections, setCollections ] = useState<TrialsCollection[]>([]);
 
@@ -130,7 +123,6 @@ export const useTrialCollections = (
       const response = await getTrialsCollections(id);
       const collections = response.collections?.map(decodeTrialsCollection) ?? [];
       setCollections(collections);
-
       return collections;
     }
   }, [ projectId ]);
@@ -145,6 +137,16 @@ export const useTrialCollections = (
     await patchTrialsCollection(encodeTrialsCollection(newCollection));
     fetchCollections();
   }, [ collections, filters, settings?.collection, sorter, fetchCollections ]);
+
+  const deleteCollection = useCallback(async () => {
+    const _collection = collections.find((c) => c.name === settings?.collection);
+    const id = numberElseUndefined(_collection?.id);
+    if (isNumber(id)){
+      await deleteTrialsCollection(id);
+    }
+    fetchCollections();
+    setCollection(collections[0]?.name);
+  }, [ collections, fetchCollections, settings?.collection, setCollection ]);
 
   useEffect(() => {
     const _collection = collections.find((c) => c.name === settings?.collection);
@@ -181,22 +183,72 @@ export const useTrialCollections = (
     modalOpen({ trials: { filters, sorter } });
   }, [ filters, modalOpen, sorter ]);
 
+  const resetFiltersToCollection = useCallback(() => {
+    const filters = collections.find((c) => c.name === settings?.collection)?.filters;
+    if (filters)
+      _setFilters(filters);
+
+    const sorter = collections.find((c) => c.name === settings?.collection)?.sorter;
+    if (sorter)
+      updateTableSettings({ ...defaultSorter });
+
+  }, [ settings?.collection, collections, updateTableSettings ]);
+
+  const clearFilters = useCallback(() => {
+    const filters = collections.find((c) => c.name === settings?.collection)?.filters;
+    if (filters)
+      _setFilters({ projectIds: [ projectId ] });
+
+  }, [ projectId, collections, settings?.collection ]);
+
   const controls = (
-    <div>
-      <Button onClick={createCollectionFromFilters}>New Collection</Button>
-      <Button onClick={saveCollection}>Save Collection</Button>
-      <Select
-        placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
-        value={settings.collection || undefined}
-        onChange={(value) => setCollection(value)}>
-        {[
-          ...(collections?.map((collection) => (
-            <Select.Option key={collection.name} value={collection.name}>
-              {collection.name}
-            </Select.Option>
-          )) ?? []),
-        ]}
-      </Select>
+    <div className={css.base}>
+      <div className={css.options}>
+        <Button onClick={createCollectionFromFilters}>New Collection</Button>
+        <Button onClick={saveCollection}>Save Collection</Button>
+        <Select
+          placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
+          value={settings.collection || undefined}
+          onChange={(value) => setCollection(value)}>
+          {[
+            ...(collections?.map((collection) => (
+              <Select.Option key={collection.name} value={collection.name}>
+                {collection.name}
+              </Select.Option>
+            )) ?? []),
+          ]}
+        </Select>
+        <Dropdown
+
+          overlay={(
+            <Menu
+              items={[
+                {
+                  key: 'del',
+                  label: 'Delete Collection',
+                  onClick: deleteCollection,
+                },
+                {
+                  key: 'res',
+                  label: 'Restore Collection',
+                  onClick: resetFiltersToCollection,
+                },
+                {
+                  key: 'clr',
+                  label: 'Clear Filters',
+                  onClick: clearFilters,
+                },
+              ]}
+            />
+          )}
+          trigger={[ 'click' ]}>
+          <Button
+            className={[ css.optionsDropdown, css.optionsDropdownThreeChild ].join(' ')}
+            ghost
+            icon={<Icon name="overflow-vertical" />}
+          />
+        </Dropdown>
+      </div>
     </div>
   );
 
@@ -213,7 +265,7 @@ export const useTrialCollections = (
     setCollection,
     setFilters,
     setNewCollection,
-    setSorter,
+
     sorter,
   };
 };

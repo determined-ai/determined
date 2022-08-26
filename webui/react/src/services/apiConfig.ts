@@ -319,6 +319,18 @@ TrialsCollection | undefined
   },
 };
 
+export const deleteTrialsCollection: DetApi<
+number,
+Api.V1DeleteTrialsCollectionResponse,
+Api.V1DeleteTrialsCollectionResponse
+> = {
+  name: 'deleteTrialsCollection',
+  postProcess: (response: Api.V1DeleteTrialsCollectionResponse) => response,
+  request: (id: number) => {
+    return detApi.TrialsComparison.deleteTrialsCollection(id);
+  },
+};
+
 /* Experiment */
 
 export const getExperiments: DetApi<

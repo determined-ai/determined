@@ -81,8 +81,6 @@ const LearningCurveChart: React.FC<Props> = ({
       series: [
         { label: 'batches' },
         ...trialIds.map((trialId) => {
-          if (trialId === 81)
-            console.log(trialId, !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId));
           return {
             label: `trial ${trialId}`,
             scale: 'y',

@@ -46,7 +46,7 @@ export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
   return {
     field,
     namespace: namespace,
-    orderBy: s.orderBy,
+    orderBy: s.sortDesc ? V1OrderBy.DESC : V1OrderBy.ASC,
   };
 };
 
@@ -59,14 +59,14 @@ const prefixForNamespace: Record<TrialSorterNamespace, string> = {
 
 export const decodeTrialSorter = (s?: V1TrialSorter): TrialSorter => {
   if (!s) return {
-    orderBy: V1OrderBy.DESC,
+    sortDesc: true,
     sortKey: 'trialId',
   };
 
   const prefix = prefixForNamespace[s.namespace];
 
   return {
-    orderBy: s.orderBy ?? V1OrderBy.DESC,
+    sortDesc: s.orderBy === V1OrderBy.DESC,
     sortKey: prefix ? [ prefix, s.field ].join('.') : snakeCaseToCamelCase(s.field),
   };
 
@@ -104,7 +104,7 @@ export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
       : undefined,
     searcher: f.searcher,
     states: f.states as unknown as Determinedtrialv1State[],
-    tags: f.tags?.map((tag: string) => ({ key: tag, value: '1' })),
+    tags: f.tags?.map((tag: string) => ({ key: tag })),
     trainingMetrics: encodeNumberRangeDict(f.trainingMetrics ?? {}),
     trialIds: encodeIdList(f.trialIds),
     userIds: encodeIdList(f.userIds),

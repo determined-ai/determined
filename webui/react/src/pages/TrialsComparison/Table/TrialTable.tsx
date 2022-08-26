@@ -138,21 +138,23 @@ const TrialTable: React.FC<Props> = ({
       filterDropdown: (filterProps: FilterDropdownProps) => (
         <TableFilterRank
           {...filterProps}
+          column={filters.ranker?.sorter.sortKey}
           columns={settings.columns.filter((col) => !nonRankableColumns.includes(col))}
           rank={filters.ranker?.rank}
+          sortDesc={filters.ranker?.sorter.sortDesc ?? false}
           onReset={() =>
             setFilters?.((filters) => ({
               ...filters,
               ranker: {
                 rank: '',
-                sorter: { orderBy: V1OrderBy.ASC, sortKey: 'searcherMetricValue' },
+                sorter: { sortDesc: false, sortKey: 'searcherMetricValue' },
               },
             }))
           }
-          onSet={(column, orderBy, rank) =>
+          onSet={(column, sortDesc, rank) =>
             setFilters?.((filters) => ({
               ...filters,
-              ranker: { rank, sorter: { orderBy, sortKey: column } },
+              ranker: { rank, sorter: { sortDesc, sortKey: column } },
             }))
           }
         />
@@ -456,10 +458,8 @@ const TrialTable: React.FC<Props> = ({
   const pagination = useMemo(() => {
     const limit = settings.tableLimit;
     const offset = settings.tableOffset;
-    // right now we are getting total from API. but this results in an extra
-    // (more expensive) query to get the total row count in order to display
-    // how many pages there are in the table. this is a hack to make it always
     // display 2 additional pages beyond the current
+    // counting total is expensive
     const fakeTotal = offset + 2 * limit + 1;
     return getFullPaginationConfig({
       limit,

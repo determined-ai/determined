@@ -109,35 +109,17 @@ export const updateJobQueue = generateDetApi<
 >(Config.updateJobQueue);
 
 /* Trials */
-export const queryTrials = generateDetApi<
-  Api.V1QueryTrialsRequest,
-  Api.V1QueryTrialsResponse,
-  Api.V1QueryTrialsResponse
->(Config.queryTrials);
+export const queryTrials = generateDetApi(Config.queryTrials);
 
-export const patchTrials = generateDetApi<
-  Api.V1PatchTrialsRequest,
-  Api.V1PatchTrialsResponse,
-  Api.V1PatchTrialsResponse
->(Config.patchTrials);
+export const patchTrials = generateDetApi(Config.patchTrials);
 
-export const createTrialsCollection = generateDetApi<
-  Api.V1CreateTrialsCollectionRequest,
-  Api.V1CreateTrialsCollectionResponse,
-  TrialsCollection | undefined
->(Config.createTrialCollection);
+export const createTrialsCollection = generateDetApi(Config.createTrialCollection);
 
-export const getTrialsCollections = generateDetApi<
-  number,
-  Api.V1GetTrialsCollectionsResponse,
-  Api.V1GetTrialsCollectionsResponse
->(Config.getTrialsCollections);
+export const getTrialsCollections = generateDetApi(Config.getTrialsCollections);
 
-export const patchTrialsCollection = generateDetApi<
-Api.V1PatchTrialsCollectionRequest,
-Api.V1PatchTrialsCollectionResponse,
-TrialsCollection | undefined
->(Config.patchTrialCollection);
+export const patchTrialsCollection = generateDetApi(Config.patchTrialCollection);
+
+export const deleteTrialsCollection = generateDetApi(Config.deleteTrialsCollection);
 
 /* Experiments */
 
