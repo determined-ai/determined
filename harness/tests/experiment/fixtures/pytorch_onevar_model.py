@@ -34,7 +34,7 @@ Finally, we can calculate the updated weight (w') in terms of w0:
 TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -97,8 +97,6 @@ def triangle_label_sum(updates: List) -> Any:
 
 
 class OneVarTrial(pytorch.PyTorchTrial):
-    _dataset_cls: Type[torch.utils.data.Dataset] = OnesDataset
-    _dataset_args = ()
     _searcher_metric = "val_loss"
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
@@ -188,10 +186,12 @@ class OneVarTrial(pytorch.PyTorchTrial):
         return {"val_loss": loss}
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
-        dataset = self._dataset_cls(*self._dataset_args)
         if self.hparams["dataloader_type"] == "determined":
-            return pytorch.DataLoader(dataset, batch_size=self.context.get_per_slot_batch_size())
+            return pytorch.DataLoader(
+                OnesDataset(), batch_size=self.context.get_per_slot_batch_size()
+            )
         elif self.hparams["dataloader_type"] == "torch":
+            dataset = OnesDataset()
             seed = self.context.get_trial_seed()
             num_workers = self.context.distributed.get_size()
             rank = self.context.distributed.get_rank()
@@ -210,10 +210,12 @@ class OneVarTrial(pytorch.PyTorchTrial):
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
     def build_validation_data_loader(self) -> torch.utils.data.DataLoader:
-        dataset = self._dataset_cls(*self._dataset_args)
         if self.hparams["dataloader_type"] == "determined":
-            return pytorch.DataLoader(dataset, batch_size=self.context.get_per_slot_batch_size())
+            return pytorch.DataLoader(
+                OnesDataset(), batch_size=self.context.get_per_slot_batch_size()
+            )
         elif self.hparams["dataloader_type"] == "torch":
+            dataset = OnesDataset()
             num_workers = self.context.distributed.get_size()
             rank = self.context.distributed.get_rank()
             batch_size = self.context.get_per_slot_batch_size()
@@ -228,7 +230,7 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
 
 class AMPTestDataset(OnesDataset):
-    STAGES = {
+    STAGE_DATUM = {
         "one": 1.0,
         "zero": 0.0,
         "small": 2e-14,
@@ -242,30 +244,32 @@ class AMPTestDataset(OnesDataset):
         return len(self.stages)
 
     def __getitem__(self, index: int) -> Tuple:
-        x = self.STAGES[self.stages[index]]
+        x = self.STAGE_DATUM[self.stages[index]]
         return torch.Tensor([float(x)]), torch.Tensor([float(x)])
 
 
 class OneVarAMPBaseTrial(OneVarTrial):
-    _dataset_cls = AMPTestDataset
-    _dataset_args = (
-        (
-            5 * ["one"]
-            + 1 * ["large"]
-            + 4 * ["one"]
-            + 1 * ["small"]
-            + 4 * ["one"]
-            + 1 * ["zero"]
-            + 4 * ["one"]
-            + []
-        ),
-    )
     _init_scale = None
     _growth_interval = None
+    _stages = (
+        5 * ["one"]
+        + 1 * ["large"]
+        + 4 * ["one"]
+        + 1 * ["small"]
+        + 4 * ["one"]
+        + 1 * ["zero"]
+        + 4 * ["one"]
+        + []
+    )
+
+    def build_training_data_loader(self) -> torch.utils.data.DataLoader:
+        return pytorch.DataLoader(
+            AMPTestDataset(self._stages), batch_size=self.context.get_per_slot_batch_size()
+        )
 
 
 class OneVarApexAMPTrial(OneVarAMPBaseTrial):
-    _growth_interval = 10000  # FIXME: Does Apex AMP ever grow the scaler?
+    _growth_interval = 2000
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
@@ -282,7 +286,7 @@ class OneVarApexAMPTrial(OneVarAMPBaseTrial):
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale_before"] = scale_before
         metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
-        metrics["stage"] = self._dataset_args[0][batch_idx]
+        metrics["stage"] = self._stages[batch_idx]
         return metrics
 
 
@@ -307,7 +311,7 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale_before"] = scale_before
         # self.scaler.update() gets called after this method returns
-        metrics["stage"] = self._dataset_args[0][batch_idx]
+        metrics["stage"] = self._stages[batch_idx]
         return metrics
 
 
@@ -351,7 +355,7 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
 
         # Return values that we can compare as part of the tests.
         return {
-            "stage": self._dataset_args[0][batch_idx],
+            "stage": self._stages[batch_idx],
             "scale_before": scale_before,
             "scale": self.scaler.get_scale(),
             "loss": loss,
