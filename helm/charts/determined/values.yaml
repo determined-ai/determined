@@ -25,14 +25,14 @@ useNodePortForMaster: false
   # host:
   # termination:
 
-# security:
-  # tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
-  # termination is performed in the Determined master). This includes communication between the
-  # Determined master and the task containers it launches, but does not include communication between
-  # the task containers (distributed training). The specified Secret of type tls must already exist in
-  # the same namespace in which Determined is being installed.
-  # tlsSecret:
+# tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
+# termination is performed in the Determined master). This includes communication between the
+# Determined master and the task containers it launches, but does not include communication between
+# the task containers (distributed training). The specified Secret of type tls must already exist in
+# the same namespace in which Determined is being installed.
+# tlsSecret:
 
+# security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
   # environments contain an unprivileged user named det-nobody, which does have a writable HOME
   # directory. The det-nobody user is a suitable default user when using the default Determined

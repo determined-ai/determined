@@ -53,13 +53,13 @@ data:
       ssl_root_cert: {{ include "determined.secretPath" . }}{{ $rootCert }}
       {{- end }}
 
-    {{- if .Values.security }}
     security:
-      {{- if .Values.security.tlsSecret }}
+      {{- if .Values.tlsSecret }}
       tls:
         cert: {{ include "determined.secretPath" . }}tls.crt
         key: {{ include "determined.secretPath" . }}tls.key
       {{- end }}
+      {{- if .Values.security }}
       {{- if .Values.security.defaultTask }}
       default_task:
         user: {{ .Values.security.defaultTask.user }}
@@ -67,7 +67,7 @@ data:
         group: {{ .Values.security.defaultTask.group }}
         gid: {{ .Values.security.defaultTask.gid }}
       {{- end }}
-    {{- end }}
+      {{- end }}
     port: {{ include "determined.masterPort" . }}
 
     resource_manager:

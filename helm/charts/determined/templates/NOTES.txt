@@ -19,11 +19,11 @@ kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release
 {{ end -}}
 
 {{ $httpOrHttps := "http" }}
-{{- if .Values.security.tlsSecret -}}
+{{- if .Values.tlsSecret -}}
   {{ $httpOrHttps = "https" }}
-  {{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Values.security.tlsSecret | toString) ) }}
+  {{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Values.tlsSecret | toString) ) }}
   {{- if eq (len $secret) 0 }}
-ERROR: Secret {{ .Values.security.tlsSecret }} does not exist in namespace: {{ .Release.Namespace }}. Please update ".Values.security.tlsSecret".
+ERROR: Secret {{ .Values.tlsSecret }} does not exist in namespace: {{ .Release.Namespace }}. Please update ".Values.tlsSecret".
   {{ end }}
 {{ end -}}
 

@@ -40,7 +40,7 @@ spec:
           - name: master-config
             mountPath: /etc/determined/
             readOnly: true
-          {{- if .Values.security.tlsSecret }}
+          {{- if .Values.tlsSecret }}
           - name: tls-secret
             mountPath: {{ include "determined.secretPath" . }}
             readOnly: true
@@ -66,10 +66,10 @@ spec:
         - name: master-config
           configMap:
             name: determined-master-config-{{ .Release.Name }}
-        {{- if .Values.security.tlsSecret }}
+        {{- if .Values.tlsSecret }}
         - name: tls-secret
           secret:
-            secretName: {{ .Values.security.tlsSecret }}
+            secretName: {{ .Values.tlsSecret }}
         {{ end }}
         {{- if .Values.db.sslMode }}
         - name: database-cert
