@@ -1,4 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { Determinedtrialv1State } from 'services/api-ts-sdk';
 import {
   DarkLight,
   getCssVar,
@@ -8,7 +9,7 @@ import {
   themeLightHpe,
 } from 'shared/themes';
 import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState, TrialState, WorkspaceState } from 'types';
+  SlotState, WorkspaceState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -53,19 +54,19 @@ const stateColorMapping = {
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
-  [TrialState.ACTIVEUNSPECIFIED]: 'active',
-  [TrialState.PAUSED]: 'warning',
-  [TrialState.STOPPINGCANCELED]: 'inactive',
-  [TrialState.STOPPINGKILLED]: 'inactive',
-  [TrialState.STOPPINGCOMPLETED]: 'success',
-  [TrialState.STOPPINGERROR]: 'critical',
-  [TrialState.CANCELED]: 'inactive',
-  [TrialState.COMPLETED]: 'success',
-  [TrialState.ERROR]: 'critical',
+  [Determinedtrialv1State.ACTIVE]: 'active',
+  [Determinedtrialv1State.PAUSED]: 'warning',
+  [Determinedtrialv1State.STOPPINGCANCELED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGKILLED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'success',
+  [Determinedtrialv1State.STOPPINGERROR]: 'critical',
+  [Determinedtrialv1State.CANCELED]: 'inactive',
+  [Determinedtrialv1State.COMPLETED]: 'success',
+  [Determinedtrialv1State.ERROR]: 'critical',
 };
 
 export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
-SlotState | JobState | WorkspaceState | TrialState;
+SlotState | JobState | WorkspaceState | Determinedtrialv1State;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,

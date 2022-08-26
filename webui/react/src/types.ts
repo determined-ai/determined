@@ -775,15 +775,3 @@ export interface Project {
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
 }
-
-export enum TrialState {
-  ACTIVEUNSPECIFIED = 'ACTIVE',
-  PAUSED = 'PAUSED',
-  STOPPINGCANCELED = 'CANCELED',
-  STOPPINGKILLED = 'KILLED',
-  STOPPINGCOMPLETED = 'COMPLETED',
-  STOPPINGERROR = 'ERROR',
-  CANCELED = 'CANCELED',
-  COMPLETED ='COMPLETED',
-  ERROR = 'ERROR'
-}

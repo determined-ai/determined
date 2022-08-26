@@ -153,9 +153,19 @@ export const useTrialCollections = (
     const previousCollection = getPreviousCollection();
     if (_collection && JSON.stringify(_collection) !== JSON.stringify(previousCollection)) {
       _setFilters(_collection.filters);
+      updateTableSettings({
+        sortDesc: _collection.sorter.sortDesc,
+        sortKey: _collection.sorter.sortKey,
+      });
       setPreviousCollection(_collection);
     }
-  }, [ settings?.collection, collections, getPreviousCollection, setPreviousCollection ]);
+  }, [
+    settings?.collection,
+    collections,
+    getPreviousCollection,
+    setPreviousCollection,
+    updateTableSettings,
+  ]);
 
   const setNewCollection = useCallback(
     async (newCollection?: TrialsCollection) => {
@@ -265,7 +275,6 @@ export const useTrialCollections = (
     setCollection,
     setFilters,
     setNewCollection,
-
     sorter,
   };
 };

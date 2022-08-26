@@ -33,7 +33,7 @@ message CheckpointWorkload {
 // The current state of the trial. see \dT+ trial_state in db
 enum State {
   // The trial is in an active state.
-  ACTIVE_UNSPECIFIED = 0;
+  ACTIVE = 0;
   // The trial is in a paused state
   PAUSED = 1;
   // The trial is canceled and is shutting down.

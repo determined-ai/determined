@@ -26,8 +26,7 @@ import Icon from 'shared/components/Icon';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isNumber, numberElseUndefined } from 'shared/utils/data';
 import { StateOfUnion } from 'themes';
-import { MetricType, RunState, TrialState } from 'types';
-import { metricKeyToName, metricToKey } from 'utils/metric';
+import { MetricType } from 'types';
 import { getDisplayName } from 'utils/user';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
@@ -151,11 +150,12 @@ const TrialTable: React.FC<Props> = ({
               },
             }))
           }
-          onSet={(column, sortDesc, rank) =>
+          onSet={(column, sortDesc, rank) => {
             setFilters?.((filters) => ({
               ...filters,
               ranker: { rank, sorter: { sortDesc, sortKey: column } },
-            }))
+            }));
+          }
           }
         />
       ),
@@ -167,7 +167,13 @@ const TrialTable: React.FC<Props> = ({
       sorter: true,
       title: 'Rank in Exp',
     }),
-    [ filters.ranker?.rank, setFilters, settings.columns ],
+    [
+      filters.ranker?.rank,
+      setFilters,
+      settings.columns,
+      filters.ranker?.sorter.sortDesc,
+      filters.ranker?.sorter.sortKey,
+    ],
   );
 
   const hpColumns = useMemo(() => Object
@@ -278,11 +284,11 @@ const TrialTable: React.FC<Props> = ({
       />
     ),
     filters: [
-      RunState.Active,
-      RunState.Paused,
-      RunState.Canceled,
-      RunState.Completed,
-      RunState.Errored,
+      Determinedtrialv1State.ACTIVE,
+      Determinedtrialv1State.PAUSED,
+      Determinedtrialv1State.CANCELED,
+      Determinedtrialv1State.COMPLETED,
+      Determinedtrialv1State.ERROR,
     ].map((value) => ({
       text: <Badge state={value} type={BadgeType.State} />,
       value,
