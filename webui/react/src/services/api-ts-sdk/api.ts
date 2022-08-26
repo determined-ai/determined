@@ -182,12 +182,12 @@ export enum Determinedtaskv1State {
 }
 
 /**
- * - ACTIVE_UNSPECIFIED: The trial is in an active state.  - PAUSED: The trial is in a paused state  - STOPPING_CANCELED: The trial is canceled and is shutting down.  - STOPPING_KILLED: The trial is killed and is shutting down.  - STOPPING_COMPLETED: The trial is completed and is shutting down.  - STOPPING_ERROR: The trial is errored and is shutting down.  - CANCELED: The trial is canceled and is shut down.  - COMPLETED: The trial is completed and is shut down.  - ERROR: The trial is errored and is shut down.
+ * - ACTIVE: The trial is in an active state.  - PAUSED: The trial is in a paused state  - STOPPING_CANCELED: The trial is canceled and is shutting down.  - STOPPING_KILLED: The trial is killed and is shutting down.  - STOPPING_COMPLETED: The trial is completed and is shutting down.  - STOPPING_ERROR: The trial is errored and is shutting down.  - CANCELED: The trial is canceled and is shut down.  - COMPLETED: The trial is completed and is shut down.  - ERROR: The trial is errored and is shut down.
  * @export
  * @enum {string}
  */
 export enum Determinedtrialv1State {
-    ACTIVEUNSPECIFIED = <any> 'ACTIVE_UNSPECIFIED',
+    ACTIVE = <any> 'ACTIVE',
     PAUSED = <any> 'PAUSED',
     STOPPINGCANCELED = <any> 'STOPPING_CANCELED',
     STOPPINGKILLED = <any> 'STOPPING_KILLED',

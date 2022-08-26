@@ -1,5 +1,3 @@
-import { V1OrderBy } from 'services/api-ts-sdk';
-
 export interface NumberRange {
   max?: string;
   min?: string;

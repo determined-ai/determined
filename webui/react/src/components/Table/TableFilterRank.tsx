@@ -40,7 +40,7 @@ const TableFilterRange: React.FC<Props> = ({
   }, [ _sortDesc ]);
 
   const handleReset = useCallback(() => {
-    setColumn('searcherMetricValue');
+    setColumn('searcherMetricLoss');
     setSortDesc(false);
     setRank(0);
     if (onReset) onReset();
@@ -48,7 +48,7 @@ const TableFilterRange: React.FC<Props> = ({
   }, [ clearFilters, onReset ]);
 
   const handleApply = useCallback(() => {
-    if (column && sortDesc && rank)
+    if (column && sortDesc != null && rank)
       onSet?.(column, sortDesc, String(rank));
     confirm();
   }, [ confirm, onSet, column, sortDesc, rank ]);
