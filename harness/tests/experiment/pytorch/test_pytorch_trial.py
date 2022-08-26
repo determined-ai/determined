@@ -644,9 +644,13 @@ class TestPyTorchTrial:
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
 
+        # The assertions logic in make_amp_workloads require a batch size of one
+        hparams = dict(self.hparams)
+        hparams["global_batch_size"] = 1
+
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
-            hparams=self.hparams,
+            hparams=hparams,
             workloads=make_amp_workloads(trial_class),
             trial_seed=self.trial_seed,
             expose_gpus=True,
@@ -691,7 +695,7 @@ def make_amp_workloads(trial_class) -> workload.Stream:
         if "scale" in metrics:
             # In cases where we do know the scale immediately after it's updated, we might as well
             #  do this check. If this fails, something is very wrong.
-            assert metrics["scale"] == scale
+            assert metrics["scale"] == scale, "scale is inconsistent between batches"
         else:
             metrics["scale"] = scale
         loss = metrics["loss"].item()

@@ -263,10 +263,6 @@ class OneVarAMPBaseTrial(OneVarTrial):
     _init_scale = None
     _growth_interval = None
 
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        context._per_slot_batch_size, context._global_batch_size = 1, 1
-        super().__init__(context)
-
 
 class OneVarApexAMPTrial(OneVarAMPBaseTrial):
     _growth_interval = 10000  # FIXME: Does Apex AMP ever grow the scaler?
