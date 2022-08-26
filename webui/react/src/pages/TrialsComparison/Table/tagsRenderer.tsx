@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 
 import TagList, { TagAction } from 'components/TagList';
 import { patchTrials } from 'services/api';
@@ -24,6 +24,9 @@ interface Props {
 
 const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
   const [ tags, setTags ] = useState(_tags);
+
+  useEffect(() => setTags(_tags), [ _tags ]);
+
   const handleTagAction = async (action: TagAction, tag: string) => {
     try {
       if (action === TagAction.Add) {

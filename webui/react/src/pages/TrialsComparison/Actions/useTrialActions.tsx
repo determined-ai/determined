@@ -27,11 +27,16 @@ export interface TrialActionsInterface {
 interface Props {
   filters: TrialFilters
   openCreateModal: (p: CollectionModalProps) => void;
+  refetch: () => void;
   sorter: TrialSorter;
 }
 
-const useTrialActions = ({ filters, sorter, openCreateModal }: Props): TrialActionsInterface => {
-
+const useTrialActions = ({
+  filters,
+  sorter,
+  openCreateModal,
+  refetch,
+}: Props): TrialActionsInterface => {
   const [ selectedTrials, setSelectedTrials ] = useState<number[]>([]);
 
   const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
@@ -49,7 +54,7 @@ const useTrialActions = ({ filters, sorter, openCreateModal }: Props): TrialActi
   const {
     contextHolder,
     modalOpen,
-  } = useModalTrialTag({});
+  } = useModalTrialTag({ onConfirm: refetch });
 
   const handleBatchAction = useCallback(async (action: string) => {
     const trials = selectAllMatching

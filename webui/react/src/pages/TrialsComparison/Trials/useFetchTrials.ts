@@ -21,7 +21,7 @@ export const useFetchTrials = ({
   limit,
   offset,
   sorter,
-}: Params): TrialsWithMetadata => {
+}: Params): { refetch: () => void, trials: TrialsWithMetadata} => {
   const [ trials, setTrials ] = useState<TrialsWithMetadata>(clone(defaultTrialData));
   const fetchTrials = useCallback(async () => {
     let response: V1QueryTrialsResponse | undefined = undefined;
@@ -47,5 +47,5 @@ export const useFetchTrials = ({
 
   // usePolling(fetchTrials, { interval: 10000, rerunOnNewFn: true });
 
-  return trials;
+  return { refetch: fetchTrials, trials } ;
 };

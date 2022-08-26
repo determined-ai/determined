@@ -16,6 +16,7 @@ import css from './useModalTagTrials.module.scss';
 
 interface Props {
   onClose?: () => void;
+  onConfirm?: () => void;
 }
 
 export interface ShowModalProps {
@@ -26,7 +27,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalTrialTag = ({ onClose }: Props): ModalHooks => {
+const useModalTrialTag = ({ onClose, onConfirm }: Props): ModalHooks => {
   const [ trials, setTrials ] = useState<TrialsSelectionOrCollection>({ trialIds: [] });
   const [ tags, setTags ] = useState<string[]> ([]);
   const handleClose = useCallback(() => onClose?.(), [ onClose ]);
@@ -59,7 +60,8 @@ const useModalTrialTag = ({ onClose }: Props): ModalHooks => {
     } catch (error) {
       // duly noted
     }
-  }, [ tags ]);
+    onConfirm?.();
+  }, [ tags, onConfirm ]);
 
   const getModalProps = useCallback((trials: TrialsSelectionOrCollection) : ModalFuncProps => {
 
@@ -83,6 +85,7 @@ const useModalTrialTag = ({ onClose }: Props): ModalHooks => {
         ...getModalProps(trials),
       });
       setTrials(trials);
+      setTags([]);
     },
     [
       getModalProps,

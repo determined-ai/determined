@@ -1,5 +1,5 @@
 import { Button, Dropdown, Menu, Select } from 'antd';
-import React from 'react';
+import React, { MutableRefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
@@ -55,9 +55,12 @@ const defaultSorter: TrialSorter = {
   sortKey: 'trialId',
 };
 
+type fx = () => void
+
 export const useTrialCollections = (
   projectId: string,
   tableSettingsHook: SettingsHook<InteractiveTableSettings>,
+  refetcher: MutableRefObject<fx | undefined>,
 ): TrialsCollectionInterface => {
   const { settings: tableSettings, updateSettings: updateTableSettings } = tableSettingsHook;
   const filterStorage = useStorage(`trial-filters}/${projectId ?? 1}`);
@@ -66,13 +69,11 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const [ filters, _setFilters ] = useState<TrialFilters>(initFilters);
-
-  const sorter: TrialSorter = useMemo(() => ({
-    ...defaultSorter,
-    sortDesc: tableSettings.sortDesc,
-    sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
-  }), [ tableSettings.sortDesc, tableSettings.sortKey ]);
+  const [
+    // eslint-disable-next-line array-element-newline
+    filters,  // external filters
+    _setFilters, // only use thru below wrapper
+  ] = useState<TrialFilters>(initFilters);
 
   const setFilters = useCallback(
     (fs: FilterSetter) => {
@@ -85,6 +86,12 @@ export const useTrialCollections = (
     },
     [ filterStorage ],
   );
+
+  const sorter: TrialSorter = useMemo(() => ({
+    ...defaultSorter,
+    sortDesc: tableSettings.sortDesc,
+    sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
+  }), [ tableSettings.sortDesc, tableSettings.sortKey ]);
 
   const resetFilters = useCallback(() => {
     filterStorage.remove('filters');
@@ -152,7 +159,7 @@ export const useTrialCollections = (
     const _collection = collections.find((c) => c.name === settings?.collection);
     const previousCollection = getPreviousCollection();
     if (_collection && JSON.stringify(_collection) !== JSON.stringify(previousCollection)) {
-      _setFilters(_collection.filters);
+      setFilters(() => _collection.filters);
       updateTableSettings({
         sortDesc: _collection.sorter.sortDesc,
         sortKey: _collection.sorter.sortKey,
@@ -165,6 +172,7 @@ export const useTrialCollections = (
     getPreviousCollection,
     setPreviousCollection,
     updateTableSettings,
+    setFilters,
   ]);
 
   const setNewCollection = useCallback(
@@ -180,8 +188,9 @@ export const useTrialCollections = (
       } catch {
         // duly noted
       }
+      refetcher.current?.();
     },
-    [ fetchCollections, setCollection, updateSettings ],
+    [ fetchCollections, setCollection, updateSettings, refetcher ],
   );
 
   const { modalOpen, contextHolder } = useModalTrialCollection({
@@ -196,20 +205,20 @@ export const useTrialCollections = (
   const resetFiltersToCollection = useCallback(() => {
     const filters = collections.find((c) => c.name === settings?.collection)?.filters;
     if (filters)
-      _setFilters(filters);
+      setFilters(() => filters);
 
     const sorter = collections.find((c) => c.name === settings?.collection)?.sorter;
     if (sorter)
       updateTableSettings({ ...defaultSorter });
 
-  }, [ settings?.collection, collections, updateTableSettings ]);
+  }, [ settings?.collection, collections, updateTableSettings, setFilters ]);
 
   const clearFilters = useCallback(() => {
     const filters = collections.find((c) => c.name === settings?.collection)?.filters;
     if (filters)
-      _setFilters({ projectIds: [ projectId ] });
+      setFilters(() => ({ projectIds: [ projectId ] }));
 
-  }, [ projectId, collections, settings?.collection ]);
+  }, [ projectId, collections, settings?.collection, setFilters ]);
 
   const controls = (
     <div className={css.base}>
