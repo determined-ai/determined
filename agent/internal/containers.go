@@ -438,7 +438,7 @@ func (c *containerManager) reattachContainer(
 	}
 
 	cid := containerPrevState.ID
-	_, ok := ctx.ActorOf(cid, reattachContainerActor(*containerCurrState, c.docker))
+	containerRef, ok := ctx.ActorOf(cid, reattachContainerActor(*containerCurrState, c.docker))
 	if !ok {
 		errorMsg := fmt.Sprintf("failed to reattach container %s: actor already exists", cid)
 		ctx.Log().Warnf(errorMsg)
@@ -449,6 +449,7 @@ func (c *containerManager) reattachContainer(
 		}
 		return nil, errors.New(errorMsg)
 	}
+	ctx.Ask(containerRef, actor.Ping{}).Get()
 	ctx.Log().Debugf("reattached container actor %s", cid)
 
 	return containerCurrState, nil
