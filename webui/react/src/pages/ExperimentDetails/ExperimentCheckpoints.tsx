@@ -1,14 +1,14 @@
-import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Section from 'components/Section';
-import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import { defaultRowClassName, getFullPaginationConfig,
+  HumanReadableNumberRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
-import { terminalRunStates } from 'constants/states';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import usePolling from 'hooks/usePolling';
@@ -35,10 +35,12 @@ interface Props {
   pageRef: React.RefObject<HTMLElement>;
 }
 
-enum CheckpointAction {
-  Register = 'Register',
-  Delete = 'Delete',
-}
+const checkpointAction = {
+  Delete: 'Delete',
+  Register: 'Register',
+} as const;
+
+type CheckpointAction = typeof checkpointAction[keyof typeof checkpointAction];
 
 const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ total, setTotal ] = useState(0);
@@ -95,14 +97,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [ openModalCheckpointRegister ]);
 
   const dropDownOnTrigger = useCallback((checkpoint: CoreApiGenericCheckpoint) => {
-    return { [CheckpointAction.Register]: () => handleRegisterCheckpoint(checkpoint) };
+    return { [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpoint) };
   }, [ handleRegisterCheckpoint ]);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
         actionOrder={[
-          CheckpointAction.Register,
+          'Register',
         ]}
         id={record.uuid}
         kind="checkpoint"
@@ -128,11 +130,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.isFiltered = (settings) => !!(settings as Settings).state;
-        column.filters = ([ 'ACTIVE', 'COMPLETED', 'DELETED', 'ERROR' ] as CheckpointState[])
+        column.filters = (Object.values(CheckpointState))
+          .filter((value) => value !== CheckpointState.Unspecified)
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
+      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC) {
+        column.render = HumanReadableNumberRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }
@@ -145,27 +150,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     return newColumns;
   }, [ dropDownOnTrigger, experiment, settings.sortDesc, settings.sortKey, stateFilterDropdown ]);
 
-  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
-    if (Array.isArray(tableSorter)) return;
-
-    const { columnKey, order } = tableSorter as SorterResult<CoreApiGenericCheckpoint>;
-    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
-
-    const newSettings = {
-      sortDesc: order === 'descend',
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortKey: columnKey as any,
-      tableLimit: tablePagination.pageSize,
-      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
-    };
-    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-    updateSettings(newSettings, shouldPush);
-  }, [ columns, settings.tableOffset, updateSettings ]);
-
   const fetchExperimentCheckpoints = useCallback(async () => {
     try {
       const states = (settings.state ?? []).map((state) => (
-        encodeCheckpointState(state as CheckpointState)
+        encodeCheckpointState(state)
       ));
       const response = await getExperimentCheckpoints(
         {
@@ -217,7 +205,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     }
   }, [ fetchExperimentCheckpoints ]);
 
-  const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
+  usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
 
   // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {
@@ -233,26 +221,23 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   ]);
 
   useEffect(() => {
-    if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
-  }, [ experiment.state, stopPolling ]);
-
-  useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const handleTableRowSelect = useCallback((rowKeys) => {
-    updateSettings({ row: rowKeys });
-  }, [ updateSettings ]);
+  // const handleTableRowSelect = useCallback((rowKeys) => {
+  //   updateSettings({ row: rowKeys });
+  // }, [ updateSettings ]);
 
   return (
     <div className={css.base}>
       <Section>
         <TableBatch
           actions={[
-            // { label: CheckpointAction.Register, value: CheckpointAction.Register },
+            { label: checkpointAction.Register, value: checkpointAction.Register },
+            { label: checkpointAction.Delete, value: checkpointAction.Delete },
           ]}
           selectedRowCount={(settings.row ?? []).length}
-          onAction={(action) => submitBatchAction(action as CheckpointAction)}
+          onAction={(action) => submitBatchAction(action)}
           onClear={clearSelected}
         />
         <InteractiveTable
@@ -266,16 +251,15 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           }, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="uuid"
-          rowSelection={{
-            onChange: handleTableRowSelect,
-            preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
-          }}
-          settings={settings as InteractiveTableSettings}
+          // rowSelection={{
+          //   onChange: handleTableRowSelect,
+          //   preserveSelectedRowKeys: true,
+          //   selectedRowKeys: settings.row ?? [],
+          // }}
+          settings={settings}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          onChange={handleTableChange}
         />
       </Section>
       {modalModelCreateContextHolder}

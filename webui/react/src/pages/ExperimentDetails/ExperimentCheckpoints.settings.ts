@@ -8,6 +8,7 @@ export type CheckpointColumnName =
   | 'action'
   | 'uuid'
   | 'state'
+  | 'searcherMetric'
   | 'totalBatches'
   | 'checkpoint';
 
@@ -15,12 +16,14 @@ export const DEFAULT_COLUMNS: CheckpointColumnName[] = [
   'uuid',
   'state',
   'totalBatches',
+  'searcherMetric',
   'checkpoint',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<CheckpointColumnName, number> = {
   action: 46,
   checkpoint: 100,
+  searcherMetric: 100,
   state: 117,
   totalBatches: 74,
   uuid: 200,
