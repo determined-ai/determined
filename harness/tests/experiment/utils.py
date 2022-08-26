@@ -355,7 +355,7 @@ def checkpointing_and_restoring_test(
     without state changes.
 
     This test runs two trials.
-    1) Trial A runs for one steps of 100 batches, checkpoints itself, and restores from
+    1) Trial A runs for one step of 100 batches, checkpoints itself, and restores from
        that checkpoint.
     2) Trial B runs for two steps of 100 batches.
 

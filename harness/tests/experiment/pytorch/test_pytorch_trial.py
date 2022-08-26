@@ -13,7 +13,7 @@ from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
 
 # Apex is included only for GPU trials.
 try:
-    import apex
+    import apex  # noqa
 
     HAVE_APEX = True
 except ImportError:  # pragma: no cover
@@ -64,6 +64,8 @@ class TestPyTorchTrial:
         utils.ensure_requires_global_batch_size(pytorch_onevar_model.OneVarTrial, self.hparams)
 
     def test_onevar_single(self) -> None:
+        """Assert that the training loss and validation error decrease monotonically."""
+
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -72,10 +74,12 @@ class TestPyTorchTrial:
 
             # Check the gradient update at every step.
             for idx, batch_metrics in enumerate(training_metrics):
-                pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
 
-            # We expect the validation error and training loss to be
-            # monotonically decreasing.
             for older, newer in zip(training_metrics, training_metrics[1:]):
                 assert newer["loss"] <= older["loss"]
 
@@ -148,7 +152,7 @@ class TestPyTorchTrial:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
-            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_checkpoint: typing.Optional[str] = None,
             steps_completed: int = 0,
         ) -> det.TrialController:
             updated_hparams = {
@@ -173,7 +177,7 @@ class TestPyTorchTrial:
         latest_checkpoint = None
         steps_completed = 0
 
-        def make_workloads_1() -> workload.Stream:
+        def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
             interceptor = workload.WorkloadResponseInterceptor()
@@ -182,33 +186,34 @@ class TestPyTorchTrial:
             latest_checkpoint = interceptor.metrics_result()["uuid"]
             steps_completed = trainer.get_steps_completed()
 
-        controller1 = utils.make_trial_controller_from_trial_implementation(
+        controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialMulti,
             hparams=self.hparams,
-            workloads=make_workloads_1(),
+            workloads=make_workloads(),
             trial_seed=self.trial_seed,
             checkpoint_dir=checkpoint_dir,
         )
-        controller1.run()
+        controller.run()
 
         # Verify that an invalid architecture fails to load from the checkpoint.
-        def make_workloads_2() -> workload.Stream:
+        def make_invalid_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
 
-        hparams2 = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        invalid_hparams = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        assert invalid_hparams != self.hparams
 
         with pytest.raises(RuntimeError):
-            controller2 = utils.make_trial_controller_from_trial_implementation(
+            invalid_controller = utils.make_trial_controller_from_trial_implementation(
                 trial_class=pytorch_xor_model.XORTrialMulti,
-                hparams=hparams2,
-                workloads=make_workloads_2(),
+                hparams=invalid_hparams,
+                workloads=make_invalid_workloads(),
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
                 steps_completed=steps_completed,
             )
-            controller2.run()
+            invalid_controller.run()
 
     def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
@@ -219,7 +224,7 @@ class TestPyTorchTrial:
                 trial_seed=self.trial_seed,
             )
 
-        utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
+        _ = utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
 
     def test_custom_eval(self) -> None:
         training_metrics = {}
@@ -591,7 +596,11 @@ class TestPyTorchTrial:
 
             # Check the gradient update at every step.
             for idx, batch_metrics in enumerate(training_metrics):
-                pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
 
             # We expect the validation error and training loss to be
             # monotonically decreasing.
@@ -610,19 +619,39 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    @pytest.mark.skipif(not HAVE_APEX or not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
-    def test_apex_amp(self) -> None:
-        apex.amp.register_float_function(torch, "sigmoid")
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            (pytorch_onevar_model.OneVarApexAMPTrial),
+            (pytorch_onevar_model.OneVarAutoAMPTrial),
+            (pytorch_onevar_model.OneVarManualAMPTrial),
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_amp(self, trial_class) -> None:
+        """Train a linear model using Determined with Automated Mixed Precision in three ways:
+        Using Apex and using PyTorch AMP both "automatically" and "manually". In the "manual" case,
+        we use the context manager ``autoscale`` in the model's training and
+        evaluating methods; a scaler object is wrapped in a Determined context. The same
+        is done under the hood in the first two cases.
+        """
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
 
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+        # The assertions logic in make_amp_workloads require a batch size of one
+        hparams = dict(self.hparams)
+        hparams["global_batch_size"] = 1
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_onevar_model.OneVarTrialWithApexAmp,
-            hparams=self.hparams,
-            workloads=make_workloads(),
+            trial_class=trial_class,
+            hparams=hparams,
+            workloads=make_amp_workloads(trial_class),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
@@ -645,3 +674,62 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
     else:
         assert isinstance(trial, torch.nn.Module), type(trial)
+
+
+def make_amp_workloads(trial_class) -> workload.Stream:
+    trainer = utils.TrainAndValidate()
+    yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
+    training_metrics, _ = trainer.result()
+
+    loss_prev = None
+    GROWTH_INTERVAL = trial_class._growth_interval
+    MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
+    growth_countdown = GROWTH_INTERVAL
+    # Only attempt assertions up to and including the penultimate batch, because
+    #  we may not have the updated scale from the final batch.
+    for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
+        # Because the scaler is updated during the optimizer step, which occurs after training from
+        #  a batch, the metrics dictionary may not have the updated scale, but we can get it
+        #  from the next step.
+        scale = next_metrics["scale_before"]
+        if "scale" in metrics:
+            # In cases where we do know the scale immediately after it's updated, we might as well
+            #  do this check. If this fails, something is very wrong.
+            assert metrics["scale"] == scale, "scale is inconsistent between batches"
+        else:
+            metrics["scale"] = scale
+        loss = metrics["loss"].item()
+        scale_before = metrics["scale_before"]
+        scaled_loss = loss * scale_before
+        scale = metrics["scale"]
+        growth_countdown -= 1
+        if scaled_loss >= MIN_SCALED_LOSS_TO_REDUCE_SCALE:
+            assert scale < scale_before, (
+                f"scale was expected to reduce from {scale_before} but did not "
+                f"(scaled_loss={scaled_loss} >= {MIN_SCALED_LOSS_TO_REDUCE_SCALE})) "
+            )
+            growth_countdown = GROWTH_INTERVAL
+        elif growth_countdown == 0:
+            assert scale > scale_before, (
+                f"scale was expected to grow but did not " f"(growth_countdown={growth_countdown}) "
+            )
+            growth_countdown = GROWTH_INTERVAL
+        else:
+            assert scale == scale_before, (
+                f"scale changed from {scale_before} to {scale} but not when expected "
+                f"(growth_countdown={growth_countdown}) "
+                f"(scaled_loss={scaled_loss} < {MIN_SCALED_LOSS_TO_REDUCE_SCALE})) "
+            )
+            # Check the accuracy of the gradient change.
+            metric_keyname_pairs = [("loss", "loss_exp"), ("w_after", "w_exp")]
+            if metrics["stage"] in ["small", "zero"]:
+                metric_keyname_pairs.append(("w_before", "w_after"))
+            trial_class.check_batch_metrics(
+                metrics,
+                idx,
+                metric_keyname_pairs=metric_keyname_pairs,
+                atol=1e-4,
+            )
+            if loss_prev is not None and metrics["stage"] == "one":
+                assert loss <= loss_prev, "loss was expected to decrease monotonically"
+                loss_prev = loss
