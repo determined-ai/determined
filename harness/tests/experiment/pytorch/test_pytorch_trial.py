@@ -697,26 +697,25 @@ def make_amp_workloads(trial_class) -> workload.Stream:
         loss = metrics["loss"].item()
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
-        growth_countdown -= 1
         scale = metrics["scale"]
-        if scale != scale_before:
-            if scale < scale_before:
-                assert scaled_loss >= MIN_SCALED_LOSS_TO_REDUCE_SCALE, (
-                    f"scale reduced from {scale_before} to {scale}, "
-                    f"but not as expected (scaled_loss={scaled_loss} < "
-                    f"{MIN_SCALED_LOSS_TO_REDUCE_SCALE})"
-                )
-            else:
-                assert growth_countdown == 0, (
-                    f"scale grew from {scale_before} to {scale}, "
-                    f"but not when expected (growth_countdown={growth_countdown:d})"
-                )
+        growth_countdown -= 1
+        if scaled_loss >= MIN_SCALED_LOSS_TO_REDUCE_SCALE:
+            assert scale < scale_before, (
+                f"scale was expected to reduce from {scale_before} but did not "
+                f"(scaled_loss={scaled_loss} >= {MIN_SCALED_LOSS_TO_REDUCE_SCALE})) "
+            )
+            growth_countdown = GROWTH_INTERVAL
+        elif growth_countdown == 0:
+            assert scale > scale_before, (
+                f"scale was expected to grow but did not " f"(growth_countdown={growth_countdown}) "
+            )
             growth_countdown = GROWTH_INTERVAL
         else:
-            assert (
-                growth_countdown != 0
-            ), f"scale was expected to grow (growth_countdown={growth_countdown}) but did not"
-
+            assert scale == scale_before, (
+                f"scale changed from {scale_before} to {scale} but not when expected "
+                f"(growth_countdown={growth_countdown}) "
+                f"(scaled_loss={scaled_loss} < {MIN_SCALED_LOSS_TO_REDUCE_SCALE})) "
+            )
             # Check the accuracy of the gradient change.
             metric_keyname_pairs = [("loss", "loss_exp"), ("w_after", "w_exp")]
             if metrics["stage"] in ["small", "zero"]:
