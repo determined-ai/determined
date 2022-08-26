@@ -337,5 +337,4 @@ redirects = {
     "tutorials/notebook-tutorial": "../interfaces/notebooks.html",
     "tutorials/porting-tutorial": "../tutorials/pytorch-porting-tutorial.html",
     "tutorials/quick-start": "../quickstart-mdldev.html",
-    "tutorials/tf-mnist-tutorial": "../tutorials/pytorch-mnist-tutorial.html",
 }
