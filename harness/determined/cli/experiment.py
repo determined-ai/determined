@@ -270,11 +270,19 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display trial-related information.
-    trials_for_experiment: Dict[str, Sequence[bindings.trialv1Trial]] = {}
-    for exp in exps:
-        trials_for_experiment[exp.id] = bindings.get_GetExperimentTrials(
-            session, experimentId=exp.id
-        ).trials
+
+    def get_all_trials(exp_id: int) -> List[bindings.trialv1Trial]:
+        def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:
+            return bindings.get_GetExperimentTrials(
+                session,
+                offset=offset,
+                experimentId=exp_id,
+            )
+
+        resps = api.read_paginated(get_with_offset)
+        return [t for r in resps for t in r.trials]
+
+    trials_for_experiment = {exp.id: get_all_trials(exp.id) for exp in exps}
 
     headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
     values = [
@@ -296,10 +304,8 @@ def describe(args: Namespace) -> None:
         outfile = args.outdir.joinpath("trials.csv")
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
-    # Display step-related information.
-    all_workloads: Dict[int, Dict[int, List[bindings.v1WorkloadContainer]]] = {}
+    # Display workload-related information.
 
-    # Avoid binding to loop variables, which have tricky behaviors.
     def get_all_workloads(trial_id: int) -> List[bindings.v1WorkloadContainer]:
         def get_with_offset(offset: int) -> bindings.v1GetTrialWorkloadsResponse:
             return bindings.get_GetTrialWorkloads(
@@ -312,11 +318,10 @@ def describe(args: Namespace) -> None:
         resps = api.read_paginated(get_with_offset)
         return [w for r in resps for w in r.workloads]
 
-    for exp in exps:
-        if exp.id not in all_workloads:
-            all_workloads[exp.id] = {}
-        for trial in trials_for_experiment[exp.id]:
-            all_workloads[exp.id][trial.id] = get_all_workloads(trial.id)
+    all_workloads = {
+        exp.id: {t.id: get_all_workloads(t.id) for t in trials_for_experiment[exp.id]}
+        for exp in exps
+    }
 
     t_metrics_headers: List[str] = []
     t_metrics_names: List[str] = []
@@ -346,10 +351,11 @@ def describe(args: Namespace) -> None:
         + v_metrics_headers
     )
 
-    wl_output: Dict[int, List[Any]] = {}
+    values = []
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
             workloads = all_workloads[exp.id][trial.id]
+            wl_output: Dict[int, List[Any]] = {}
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
@@ -441,12 +447,14 @@ def describe(args: Namespace) -> None:
                         )
                         wl_output[wl_detail.totalBatches] = row
 
+            # Done procesing one trial's workloads, add to output values.
+            values += sorted(wl_output.values(), key=lambda a: int(a[1]))
+
     if not args.outdir:
         outfile = None
         print("\nWorkloads:")
     else:
         outfile = args.outdir.joinpath("workloads.csv")
-    values = sorted(wl_output.values(), key=lambda a: int(a[1]))
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
