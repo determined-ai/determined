@@ -295,11 +295,12 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
     _growth_interval = 4
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        context.experimental.use_amp(
-            gradscaler_kwargs={
-                "init_scale": self._init_scale,
-                "growth_interval": self._growth_interval,
-            }
+        context.experimental.use_amp()
+        # HACK: overwrite the scaler with a manually configured one, which
+        #  is not something we don't actually allow with the use_amp() API.
+        context._scaler = torch.cuda.amp.GradScaler(
+            init_scale=self._init_scale,
+            growth_interval=self._growth_interval,
         )
         super().__init__(context)
         self.scaler = self.context._scaler
