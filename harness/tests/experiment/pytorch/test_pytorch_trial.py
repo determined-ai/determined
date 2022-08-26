@@ -3,7 +3,6 @@ import os
 import pathlib
 import typing
 
-import numpy as np
 import pytest
 import torch
 
@@ -540,7 +539,7 @@ class TestPyTorchTrial:
             return 1.0
 
         # Inject an unnamed metric which returns a non-dict (which is not allowed).
-        controller.context.wrap_reducer(reducer_fn, name=None)
+        controller.context.wrap_reducer(reducer_fn)
 
         with pytest.raises(AssertionError, match="name=None but it did not return a dict"):
             controller.run()
@@ -623,11 +622,11 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
-        "trial_class,assert_output_float16",
+        "trial_class",
         [
-            (pytorch_onevar_model.OneVarApexAMPTrial, False),
-            (pytorch_onevar_model.OneVarAutoAMPTrial, False),
-            (pytorch_onevar_model.OneVarManualAMPTrial, True),
+            (pytorch_onevar_model.OneVarApexAMPTrial),
+            (pytorch_onevar_model.OneVarAutoAMPTrial),
+            (pytorch_onevar_model.OneVarManualAMPTrial),
         ],
         ids=[
             "apex",
@@ -635,11 +634,7 @@ class TestPyTorchTrial:
             "manual",
         ],
     )
-    def test_amp(
-        self,
-        trial_class,
-        assert_output_float16,
-    ) -> None:
+    def test_amp(self, trial_class) -> None:
         """Train a linear model using Determined with Automated Mixed Precision in three ways:
         Using Apex and using PyTorch AMP both "automatically" and "manually". In the "manual" case,
         we use the context manager ``autoscale`` in the model's training and
@@ -652,7 +647,7 @@ class TestPyTorchTrial:
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=self.hparams,
-            workloads=make_amp_workloads(trial_class, assert_output_float16),
+            workloads=make_amp_workloads(trial_class),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
@@ -677,10 +672,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, torch.nn.Module), type(trial)
 
 
-def make_amp_workloads(
-    trial_class,
-    assert_output_float16=False,
-) -> workload.Stream:
+def make_amp_workloads(trial_class) -> workload.Stream:
     trainer = utils.TrainAndValidate()
     yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
     training_metrics, _ = trainer.result()
@@ -691,30 +683,15 @@ def make_amp_workloads(
             assert metrics["scale"] == scale
         else:
             metrics["scale"] = scale
-        assert "scale" in metrics
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     growth_countdown = GROWTH_INTERVAL
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
     for idx, metrics in enumerate(training_metrics[:-1]):
-        assert metrics["loss"].dtype is np.dtype("float32")
-        if assert_output_float16:
-            assert metrics["output"].dtype is np.dtype("float16"), (
-                f"output has dtype {metrics['output'].dtype} but should be float16"
-            )
-        else:
-            # Automatic usages of Apex or native AMP cast the output back to float32
-            # For the latter case, see the hook end_f16
-            #   defined in PyTorchTrialContext.autocast_forward_pass
-            assert metrics["output"].dtype is np.dtype("float32"), (
-                f"output has dtype {metrics['output'].dtype} but should be float32"
-            )
         loss = metrics["loss"].item()
         scale_before = metrics["scale_before"]
         scaled_loss = loss * scale_before
-        if "scaled_loss" in metrics:
-            assert scaled_loss == metrics["scaled_loss"]
         growth_countdown -= 1
         scale = metrics["scale"]
         MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760

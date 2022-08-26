@@ -358,7 +358,6 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
             "stage": self._dataset_args[0][batch_idx],
             "scale_before": scale_before,
             "scale": self.scaler.get_scale(),
-            "scaled_loss": scaled_loss,
             "loss": loss,
             "loss_exp": loss_exp,
             "w_before": w_before,
