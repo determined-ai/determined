@@ -8,7 +8,7 @@ export interface NumberRange {
 export type NumberRangeDict = Record<string, NumberRange>
 
 export interface TrialSorter {
-  orderBy: V1OrderBy;
+  sortDesc: boolean;
   // `${namespace}.${field}`
   sortKey: string;
 }

@@ -9,7 +9,8 @@ export const isBoolean = (data: unknown): data is boolean => typeof data === 'bo
 export const isDate = (data: unknown): data is Date => data instanceof Date;
 export const isMap = (data: unknown): boolean => data instanceof Map;
 export const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
-export const isNumber = (data: unknown): data is number => typeof data === 'number';
+export const isNumber = (data: unknown): data is number =>
+  typeof data === 'number' && !Number.isNaN(data);
 export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };

@@ -39,7 +39,6 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
   const [ activeKey, setActiveKey ] = useState(tab);
 
   const handleTabSwitch = useCallback((key: string) => {
-
     history.push(`${basePath}/${key}`);
     setActiveKey(key);
   }, [ history, basePath ]);
@@ -47,15 +46,12 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
   useEffect(() => { setActiveKey(tab); }, [ tab ]);
 
   useEffect(() => {
-
     if (!activeKey && tabKeys.length) {
       history.replace(`${basePath}/${tabKeys[0]}`);
-
     }
   }, [ activeKey, tabKeys, handleTabSwitch, basePath, history ]);
 
   const updateTabBarContent: TabBarUpdater = useCallback((content?: JSX.Element) => {
-    // console.log(content);
     setTabBarExtraContent(content);
   }, []);
 
@@ -76,9 +72,7 @@ export default DynamicTabs;
 
 export const useSetDynamicTabBar = (content: JSX.Element): void => {
   const updateTabBarContent = useContext(TabBarContext);
-  if (!updateTabBarContent) console.error('must useSetDynamicTabBar within TabBarContext');
   useEffect(() => {
     updateTabBarContent?.(content);
-    // return () => updateTabBarContent(undefined);
   }, [ updateTabBarContent, content ]);
 };

@@ -1,3 +1,4 @@
+import yaml from 'js-yaml';
 import React, { useEffect, useRef } from 'react';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
@@ -24,7 +25,6 @@ import useLearningCurveData from './Metrics/useLearningCurveData';
 import { trialsTableSettingsConfig } from './Table/settings';
 import { useFetchTrials } from './Trials/useFetchTrials';
 import css from './TrialsComparison.module.scss';
-
 const initData = [ [] ];
 interface Props {
   projectId: string;
@@ -33,9 +33,8 @@ interface Props {
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
+  const C = useTrialCollections(projectId, tableSettingsHook);
   const { settings: tableSettings } = tableSettingsHook;
-
-  const C = useTrialCollections(projectId, tableSettings);
 
   const trials = useFetchTrials({
     filters: C.filters,
@@ -49,6 +48,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     openCreateModal: C.openCreateModal,
     sorter: C.sorter,
   });
+
+  // console.log(yaml.dump(C.filters));
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);
 

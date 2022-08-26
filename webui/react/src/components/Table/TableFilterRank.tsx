@@ -1,8 +1,6 @@
-import { Button, Input, InputNumber, InputRef, Select } from 'antd';
+import { Button, InputNumber, Select } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-
-import { V1OrderBy } from 'services/api-ts-sdk';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import css from './TableFilterRank.module.scss';
 
@@ -10,9 +8,9 @@ interface Props extends FilterDropdownProps {
   column?: string;
   columns: string[]
   onReset?: () => void;
-  onSet?: (column: string, order: V1OrderBy, rank?: string) => void;
-  orderBy?: V1OrderBy;
+  onSet?: (column: string, sortDesc: boolean, rank?: string) => void;
   rank?: string;
+  sortDesc?: boolean;
 }
 
 const TableFilterRange: React.FC<Props> = ({
@@ -22,12 +20,12 @@ const TableFilterRange: React.FC<Props> = ({
   confirm,
   onReset,
   onSet,
-  orderBy: _orderBy = V1OrderBy.ASC,
+  sortDesc: _sortDesc = false,
   rank: _rank,
   visible,
 }: Props) => {
   const [ column, setColumn ] = useState(_column);
-  const [ orderBy, setOrderBy ] = useState(_orderBy);
+  const [ sortDesc, setSortDesc ] = useState(_sortDesc);
   const [ rank, setRank ] = useState<number>(parseInt(_rank ?? '0'));
 
   useEffect(() => {
@@ -38,22 +36,22 @@ const TableFilterRange: React.FC<Props> = ({
     setColumn(_column);
   }, [ _column ]);
   useEffect(() => {
-    setOrderBy(_orderBy);
-  }, [ _orderBy ]);
+    setSortDesc(_sortDesc);
+  }, [ _sortDesc ]);
 
   const handleReset = useCallback(() => {
     setColumn('searcherMetricValue');
-    setOrderBy(V1OrderBy.ASC);
+    setSortDesc(false);
     setRank(0);
     if (onReset) onReset();
     if (clearFilters) clearFilters();
   }, [ clearFilters, onReset ]);
 
   const handleApply = useCallback(() => {
-    if (column && orderBy && rank)
-      onSet?.(column, orderBy, String(rank));
+    if (column && sortDesc && rank)
+      onSet?.(column, sortDesc, String(rank));
     confirm();
-  }, [ confirm, onSet, column, orderBy, rank ]);
+  }, [ confirm, onSet, column, sortDesc, rank ]);
 
   // useEffect(() => {
   //   if (!visible) return;
@@ -78,12 +76,12 @@ const TableFilterRange: React.FC<Props> = ({
         </Select>
         <Select
           placeholder="Select Rank Order"
-          value={orderBy}
-          onChange={(newOrderBy) => setOrderBy(newOrderBy)}>
-          <Select.Option key={V1OrderBy.ASC} value={V1OrderBy.ASC}>
+          value={sortDesc}
+          onChange={(newOrderBy) => setSortDesc(newOrderBy)}>
+          <Select.Option key="false" value={false}>
             Ascending
           </Select.Option>
-          <Select.Option key={V1OrderBy.DESC} value={V1OrderBy.DESC}>
+          <Select.Option key="true" value={true}>
             Descending
           </Select.Option>
         </Select>
