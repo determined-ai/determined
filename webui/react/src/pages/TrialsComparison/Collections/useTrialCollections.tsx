@@ -12,6 +12,7 @@ import { isNumber, numberElseUndefined } from 'shared/utils/data';
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
 import { TrialsCollection } from './collections';
+import EditButton from './EditButton';
 import { FilterSetter, SetFilters, TrialFilters, TrialSorter } from './filters';
 import useModalTrialCollection, { CollectionModalProps } from './useModalCreateCollection';
 import css from './useTrialCollections.module.scss';
@@ -224,7 +225,11 @@ export const useTrialCollections = (
     <div className={css.base}>
       <div className={css.options}>
         <Button onClick={createCollectionFromFilters}>New Collection</Button>
-        <Button onClick={saveCollection}>Save Collection</Button>
+        <EditButton
+          collectionName={settings?.collection}
+          filters={filters}
+          saveCollection={saveCollection}
+        />
         <Select
           placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
           value={settings.collection || undefined}
