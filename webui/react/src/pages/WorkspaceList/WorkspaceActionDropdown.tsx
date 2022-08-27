@@ -1,25 +1,20 @@
 import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
-import { paths } from 'routes/utils';
-import { archiveWorkspace, getWorkspaces, pinWorkspace, unarchiveWorkspace,
-  unpinWorkspace } from 'services/api';
+import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Workspace } from 'types';
 import handleError from 'utils/error';
 
 interface Props {
-  children?: React.ReactChild;
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
-  isGotoVisible?: boolean;
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   trigger?: ('click' | 'hover' | 'contextMenu')[];
@@ -33,12 +28,10 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   curUser,
   className,
   direction = 'vertical',
-  isGotoVisible = false,
   workspace,
   onComplete, trigger,
   onVisibleChange,
-}: Props) => {
-  const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
+}: PropsWithChildren<Props>) => {
   const [ canceler ] = useState(new AbortController());
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const {
@@ -53,20 +46,6 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.id === workspace.userId;
   }, [ curUser?.id, curUser?.isAdmin, workspace.userId ]);
-
-  const fetchWorkspaces = useCallback(async () => {
-    try {
-      const workspaceResponse = await getWorkspaces(
-        { limit: 0, sortBy: 'SORT_BY_NAME' },
-        { signal: canceler.signal },
-      );
-      const filteredWorkspaces = workspaceResponse.workspaces
-        .filter((w) => !w.immutable && w.id !== workspace.id);
-      setWorkspaces(filteredWorkspaces);
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch workspaces.' });
-    }
-  }, [ canceler.signal, workspace.id ]);
 
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {
@@ -116,7 +95,6 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
 
   const WorkspaceActionMenu = useMemo(() => {
     enum MenuKey {
-      GOTO = 'goto',
       SWITCH_PIN = 'switchPin',
       EDIT = 'edit',
       SWITCH_ARCHIVED = 'switchArchive',
@@ -124,7 +102,6 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     }
 
     const funcs = {
-      [MenuKey.GOTO]: () => undefined,
       [MenuKey.SWITCH_PIN]: () => { handlePinClick(); },
       [MenuKey.EDIT]: () => { handleEditClick(); },
       [MenuKey.SWITCH_ARCHIVED]: () => { handleArchiveClick(); },
@@ -132,24 +109,13 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      if (Number(e.key)) {
-        routeToReactUrl(paths.workspaceDetails(e.key));
-      } else {
-        funcs[e.key as MenuKey]();
-      }
+      funcs[e.key as MenuKey]();
     };
 
-    const menuItems: MenuProps['items'] = [ ];
-
-    if (isGotoVisible) {
-      const workspaceChildren = workspaces
-        .map((workspace) => ({ key: workspace.id, label: workspace.name }));
-      menuItems.push({ children: workspaceChildren, key: MenuKey.GOTO, label: 'Go to' });
-    }
-    menuItems.push({
+    const menuItems: MenuProps['items'] = [ {
       key: MenuKey.SWITCH_PIN,
       label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
-    });
+    } ];
 
     if (userHasPermissions && !workspace.archived) {
       menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
@@ -162,25 +128,19 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     }
     if (userHasPermissions && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });
-      menuItems.push({ danger: true, key: MenuKey.DELETE, label: 'Delete...' });
+      menuItems.push({ key: MenuKey.DELETE, label: 'Delete...' });
     }
     return <Menu items={menuItems} onClick={onItemClick} />;
   }, [
-    isGotoVisible,
+    handlePinClick,
     workspace.pinned,
     workspace.archived,
     workspace.numExperiments,
     userHasPermissions,
-    handlePinClick,
     handleEditClick,
     handleArchiveClick,
     handleDeleteClick,
-    workspaces,
   ]);
-
-  useEffect(() => {
-    if (isGotoVisible) fetchWorkspaces();
-  }, [ fetchWorkspaces, isGotoVisible ]);
 
   return children ? (
     <>

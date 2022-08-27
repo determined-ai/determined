@@ -73,7 +73,6 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
         {!workspace.immutable && (
           <WorkspaceActionDropdown
             curUser={curUser}
-            isGotoVisible={true}
             trigger={[ 'click' ]}
             workspace={workspace}
             onComplete={fetchWorkspace}>
