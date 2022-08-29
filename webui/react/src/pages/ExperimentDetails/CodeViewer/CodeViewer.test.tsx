@@ -109,6 +109,6 @@ describe('CodeViewer', () => {
 
     await waitFor(() => user.click(button));
 
-    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'single-one-short-step.yaml');
+    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'single-in-records.yaml');
   });
 });
