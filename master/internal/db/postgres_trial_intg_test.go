@@ -6,6 +6,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -144,4 +145,35 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.Len(t, checkpoints, 1)
 	require.Equal(t, 10.0, checkpoints[0].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
 	require.Equal(t, 50.0, checkpoints[0].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+
+	// Dummy metrics still happen if no other results at given total_batches.
+	checkpoint2UUID := uuid.New()
+	valMetrics2, err := structpb.NewStruct(map[string]any{"loss": 1.5})
+	require.NoError(t, err)
+	require.NoError(t, db.AddValidationMetrics(ctx, &trialv1.TrialMetrics{
+		TrialId:        int32(tr.ID),
+		TrialRunId:     1,
+		StepsCompleted: 400,
+		Metrics:        &commonv1.Metrics{AvgMetrics: valMetrics2},
+	}))
+	db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
+		UUID:         checkpoint2UUID,
+		TaskID:       task.TaskID,
+		AllocationID: a.AllocationID,
+		ReportTime:   time.Now(),
+		State:        model.ActiveState,
+		Metadata:     map[string]any{"steps_completed": 400},
+	})
+	checkpoints = []*checkpointv1.Checkpoint{}
+	require.NoError(t, db.QueryProto("get_checkpoints_for_experiment", &checkpoints, exp.ID))
+	require.Len(t, checkpoints, 2)
+	sort.Slice(checkpoints, func(i, j int) bool {
+		return checkpoints[i].Uuid != checkpoint2UUID.String() // Have second checkpoint later.
+	})
+
+	require.Equal(t, 10.0, checkpoints[0].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
+	require.Equal(t, 50.0, checkpoints[0].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+
+	require.Equal(t, nil, checkpoints[1].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
+	require.Equal(t, 1.5, checkpoints[1].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
 }
