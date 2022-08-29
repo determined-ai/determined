@@ -9,6 +9,8 @@ import {
 } from 'pages/TrialsComparison/Collections/collections';
 import { patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import { encodeFilters, encodeIdList } from '../api';
 
@@ -57,8 +59,13 @@ const useModalTrialTag = ({ onClose, onConfirm }: Props): ModalHooks => {
       : { trial: { ids: encodeIdList(trials.trialIds) } };
     try {
       await patchTrials({ patch, ...target });
-    } catch (error) {
-      // duly noted
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to add tags.',
+        silent: false,
+        type: ErrorType.Api,
+      });
     }
     onConfirm?.();
   }, [ tags, onConfirm ]);
