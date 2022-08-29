@@ -71,7 +71,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 	// get active or pending tasks
 	tasks := []*experimentAllocation{}
 	err := a.m.db.Query(
-		"get_active_allocations",
+		"get_active_allocations_by_job",
 		&tasks,
 		strings.Join(jobFilter, ","),
 	)
