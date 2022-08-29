@@ -639,7 +639,7 @@ func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationStat
 }
 
 func toProto(as []cproto.Address) []*structpb.Struct {
-	res := make([]*structpb.Struct, 0)
+	res := make([]*structpb.Struct, 0, len(as))
 	for _, a := range as {
 		res = append(res, protoutils.ToStruct(a))
 	}

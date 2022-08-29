@@ -92,7 +92,7 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	)
 
 	numPods := 15
-	podActors := make([]*actor.Ref, 0)
+	podActors := make([]*actor.Ref, 0, numPods)
 	for i := 0; i < numPods; i++ {
 		newMockPodActor, _ := system.ActorOf(
 			actor.Addr(fmt.Sprintf("mock-pod-%d", i)),

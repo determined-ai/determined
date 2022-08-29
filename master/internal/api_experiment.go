@@ -246,7 +246,7 @@ func (a *apiServer) GetExperiments(
 	}
 	stateFilterExpr := strings.Join(allStates, ",")
 	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0)
+	userIds := make([]string, 0, len(req.UserIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
@@ -401,7 +401,7 @@ func (a *apiServer) PreviewHPSearch(
 		return nil, err
 	}
 	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
-	indexes := make(map[string]int)
+	indexes := make(map[string]int, len(sim.Results))
 	toProto := func(op searcher.ValidateAfter) ([]*experimentv1.RunnableOperation, error) {
 		return []*experimentv1.RunnableOperation{
 			{

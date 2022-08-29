@@ -603,7 +603,7 @@ func getDeterminedContainersStatus(
 	statuses []k8sV1.ContainerStatus,
 	containerNames map[string]bool,
 ) ([]*k8sV1.ContainerStatus, error) {
-	containerStatuses := make([]*k8sV1.ContainerStatus, 0)
+	containerStatuses := make([]*k8sV1.ContainerStatus, 0, len(statuses))
 	for idx, containerStatus := range statuses {
 		if _, match := containerNames[containerStatus.Name]; !match {
 			continue
