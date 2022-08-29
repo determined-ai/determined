@@ -261,6 +261,13 @@ VALUES
 func (db *PgDB) ensureStep(
 	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
 ) error {
+	/*
+		// ON CONFLICT trial_id, total_batches skip...
+		if _, err := tx.NamedExecContext(ctx, `SELECT EXISTS`); err != nil {
+			return errors.Wrap(err, "checking for a step existing")
+		}
+	*/
+
 	if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, trial_run_id, state,
