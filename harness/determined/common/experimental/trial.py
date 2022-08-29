@@ -1,7 +1,8 @@
 import enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Optional
 
 from determined.common import api
+from determined.common.api import bindings
 from determined.common.experimental import checkpoint
 
 
@@ -19,7 +20,7 @@ class TrialReference:
         self._session = session
 
     def kill(self) -> None:
-        self._session.post(f"/api/v1/trials/{self.id}/kill")
+        bindings.post_KillTrial(self._session, id=self.id)
 
     def top_checkpoint(
         self,
@@ -94,31 +95,48 @@ class TrialReference:
             )
 
         if uuid:
-            resp = self._session.get("/api/v1/checkpoints/{}".format(uuid))
-            return checkpoint.Checkpoint._from_json(resp.json()["checkpoint"], self._session)
+            resp = bindings.get_GetCheckpoint(self._session, checkpointUuid=uuid)
+            return checkpoint.Checkpoint._from_bindings(resp.checkpoint, self._session)
 
-        r = self._session.get(
-            "/api/v1/trials/{}/checkpoints".format(self.id),
-            # The default sort order from the API is by batch number. The order
-            # by parameter indicates descending order.
-            params={"order_by": 2},
-        ).json()
-        checkpoints = r["checkpoints"]
+        def get_one(offset: int) -> bindings.v1GetTrialCheckpointsResponse:
+            return bindings.get_GetTrialCheckpoints(
+                self._session,
+                id=self.id,
+                orderBy=bindings.v1OrderBy.ORDER_BY_DESC,
+                sortBy=bindings.v1GetTrialCheckpointsRequestSortBy.SORT_BY_BATCH_NUMBER,
+                offset=offset,
+            )
+
+        resps = api.read_paginated(get_one)
+
+        checkpoints = [
+            checkpoint.Checkpoint._from_bindings(c, self._session)
+            for r in resps
+            for c in r.checkpoints
+        ]
 
         if not checkpoints:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if latest:
-            return checkpoint.Checkpoint._from_json(checkpoints[0], self._session)
+            return checkpoints[0]
 
         if not sort_by:
-            sort_by = checkpoints[0]["training"]["experimentConfig"]["searcher"]["metric"]
-            smaller_is_better = checkpoints[0]["training"]["experimentConfig"]["searcher"][
-                "smaller_is_better"
-            ]
+            training = checkpoints[0].training
+            assert training
+            config = training.experiment_config
+            sb = config.get("searcher", {}).get("metric")
+            if not isinstance(sb, str):
+                raise ValueError(
+                    "no searcher.metric found in experiment config; please provide a sort_by metric"
+                )
+            sort_by = sb
+            smaller_is_better = config.get("searcher", {}).get("smaller_is_better", True)
 
-        def has_metric(c: Dict[str, Any]) -> bool:
-            return sort_by in c["training"].get("validationMetrics", {}).get("avgMetrics", {})
+        def has_metric(c: checkpoint.Checkpoint) -> bool:
+            if c.training is None:
+                return False
+            return sort_by in c.training.validation_metrics.get("avgMetrics", {})
 
         checkpoints_with_metric = [c for c in checkpoints if has_metric(c)]
 
@@ -126,61 +144,52 @@ class TrialReference:
             raise AssertionError(f"No checkpoint for trial {self.id} has metric {sort_by}")
 
         best_checkpoint_func = min if smaller_is_better else max
-        key: Callable[[Dict], Any] = lambda x: x["training"]["validationMetrics"]["avgMetrics"][
-            sort_by
-        ]
-        return checkpoint.Checkpoint._from_json(
-            best_checkpoint_func(
-                checkpoints_with_metric,
-                key=key,
-            ),
-            self._session,
-        )
+
+        def key(ckpt: checkpoint.Checkpoint) -> Any:
+            training = ckpt.training
+            assert training
+            return training.validation_metrics["avgMetrics"][sort_by]
+
+        return best_checkpoint_func(checkpoints_with_metric, key=key)
 
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
 
+# This is to shorten line lengths of the TrialSortBy definition.
+_tsb = bindings.v1GetExperimentTrialsRequestSortBy
+
+
 class TrialSortBy(enum.Enum):
     """
     Specifies the field to sort a list of trials on.
-
-    Attributes:
-        UNSPECIFIED
-        ID
-        START_TIME
-        END_TIME
-        STATE
-        BEST_VALIDATION_METRIC
-        LATEST_VALIDATION_METRIC
-        BATCHES_PROCESSED
-        DURATION
     """
 
-    UNSPECIFIED = 0
-    ID = 1
-    START_TIME = 4
-    END_TIME = 5
-    STATE = 6
-    BEST_VALIDATION_METRIC = 7
-    LATEST_VALIDATION_METRIC = 8
-    BATCHES_PROCESSED = 9
-    DURATION = 10
+    UNSPECIFIED = _tsb.SORT_BY_UNSPECIFIED.value
+    ID = _tsb.SORT_BY_ID.value
+    START_TIME = _tsb.SORT_BY_START_TIME.value
+    END_TIME = _tsb.SORT_BY_END_TIME.value
+    STATE = _tsb.SORT_BY_STATE.value
+    BEST_VALIDATION_METRIC = _tsb.SORT_BY_BEST_VALIDATION_METRIC.value
+    LATEST_VALIDATION_METRIC = _tsb.SORT_BY_LATEST_VALIDATION_METRIC.value
+    BATCHES_PROCESSED = _tsb.SORT_BY_BATCHES_PROCESSED.value
+    DURATION = _tsb.SORT_BY_DURATION.value
+    RESTARTS = _tsb.SORT_BY_RESTARTS.value
+
+    def _to_bindings(self) -> bindings.v1GetExperimentTrialsRequestSortBy:
+        return _tsb(self.value)
 
 
 class TrialOrderBy(enum.Enum):
     """
     Specifies whether a sorted list of trials should be in ascending or
     descending order.
-
-    Attributes:
-        ASCENDING
-        ASC
-        DESCENDING
-        DESC
     """
 
-    ASCENDING = 1
-    ASC = 1
-    DESCENDING = 2
-    DESC = 2
+    ASCENDING = bindings.v1OrderBy.ORDER_BY_ASC.value
+    ASC = bindings.v1OrderBy.ORDER_BY_ASC.value
+    DESCENDING = bindings.v1OrderBy.ORDER_BY_DESC.value
+    DESC = bindings.v1OrderBy.ORDER_BY_DESC.value
+
+    def _to_bindings(self) -> bindings.v1OrderBy:
+        return bindings.v1OrderBy(self.value)
