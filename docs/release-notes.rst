@@ -57,11 +57,13 @@ Version 0.19.2
 
 **New Features**
 
--  Cluster: The enterprise edition of Determined ([HPE Machine Learning Development Environment](https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html)), can now be deployed on a Slurm cluster. When using Slurm,
-   Determined delegates all job scheduling and prioritization to the Slurm workload manager. This
-   integration enables existing Slurm workloads and Determined workloads to coexist and ```
-   access all of the advanced capabilities of the Slurm workload manager. The
-   Determined Slurm integration can use either Singularity or Podman for the container runtime.
+-  Cluster: The enterprise edition of Determined
+   ([HPE Machine Learning Development Environment](https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html)),
+   can now be deployed on a Slurm cluster. When using Slurm, Determined delegates all job scheduling
+   and prioritization to the Slurm workload manager. This integration enables existing Slurm
+   workloads and Determined workloads to coexist and access all of the advanced capabilities of the
+   Slurm workload manager. The Determined Slurm integration can use either Singularity or Podman for
+   the container runtime.
 
 Version 0.19.1
 ==============
