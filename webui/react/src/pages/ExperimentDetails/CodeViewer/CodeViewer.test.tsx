@@ -97,16 +97,6 @@ describe('CodeViewer', () => {
     expect([ 1, 2, 3, 4 ]).toHaveLength(4);
   });
 
-  // it('should handle clicking a tree node', async () => {
-  //   setup();
-  //   const { editor, treeNodes } = await getElements();
-
-  //   await waitFor(() => user.click(treeNodes[1]));
-
-  //   expect(editor).toBeInTheDocument();
-  //   // TODO: figure out how to do assertions with the MonacoEditor...
-  // });
-
   it('should handle clicking in the download icon when opening a file from the tree', async () => {
     const pathBuilderSpy = jest.spyOn(paths, 'experimentFileFromTree').mockReturnValueOnce('');
     setup();
