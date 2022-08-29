@@ -10,6 +10,61 @@
  Version 0.19
 **************
 
+Version 0.19.2
+==============
+
+**Release Date:** August 26, 2022
+
+**Breaking Changes**
+
+-  API: Response format for metrics has been standardized to return aggregated and per-batch metrics
+   in a uniform way. ``GetTrialWorkloads``, ``GetTrials`` API response format has changed.
+   ``ReportTrialTrainingMetrics``, ``ReportTrialValidationMetrics`` API request format has changed
+   as well.
+
+-  API: ``GetJobs`` request format for pagination object has changed. Instead of being contained in
+   a nested ``pagination`` object, these are now top level options, in line with the other
+   paginatable API requests.
+
+-  CLI: ``det trial describe --json`` output format has changed. Fixed a bug where ``det trial
+   describe --json --metrics`` would fail for trials with a very large number of steps.
+
+-  CLI: ``det job list`` will now return all jobs by default instead of a single API results page.
+   Use ``--pages=1`` option for the old behavior.
+
+**Bug Fixes**
+
+-  Kubernetes: Fixed an issue where restoring a job in a Kubernetes set up could crash the resource
+   manager.
+
+-  CLI: Fixed a bug where ``det e set gc-policy`` would fail when deserializing an api response
+   because it wasn't adjusted for the new format.
+
+-  Distributed training: Previously, experiments launched with determined.launch.torch_distributed
+   were wrongly skipping torch.distributed.run for single-slot trials and invoking training scripts
+   directly. As a result, functions such as torch.distributed.init_process_group() would fail, but
+   only inside single-slot trials. Now, determined.launch.torch_distributed will conform to the
+   intended behavior as a wrapper around torch.distributed.run and will invoke torch.distributed.run
+   on all training scripts.
+
+-  Experiments with a single trial are now considered canceled when their trial is canceled or
+   killed.
+
+**Improvements**
+
+-  API: `GetTrialWorkloads` can now optionally include per-batch metrics when
+   ``includeBatchMetrics`` query parameter is set.
+
+**New Features**
+
+-  Cluster: The enterprise edition of Determined ([HPE Machine Learning Development
+   Environment](https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html)),
+   can now be deployed on a Slurm cluster. When using Slurm, Determined delegates all job scheduling
+   and prioritization to the Slurm workload manager. This integration enables existing Slurm
+   workloads and Determined workloads to coexist and access all of the advanced capabilities of the
+   Slurm workload manager. The Determined Slurm integration can use either Singularity or Podman for
+   the container runtime.
+
 Version 0.19.1
 ==============
 

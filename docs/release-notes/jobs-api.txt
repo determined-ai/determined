@@ -1,6 +1,0 @@
-:orphan:
-
-**Breaking Changes**
-
--  CLI: ``det job list`` will now return all jobs by default instead of a single API results page. Use ``--pages=1`` option for the old behavior.
--  API: ``GetJobs`` request format for pagination object has changed. Instead of being contained in a nested ``pagination`` object, these are now top level options, in line with the other paginatable API requests.
