@@ -61,7 +61,7 @@ Version 0.19.2
    Determined delegates all job scheduling and prioritization to the Slurm workload manager. This
    integration enables existing Slurm workloads and Determined workloads to coexist and ```
    access all of the advanced capabilities of the Slurm workload manager. The
-   Determined Slurm integration can use either Singularity or PodMan for the container runtime.
+   Determined Slurm integration can use either Singularity or Podman for the container runtime.
 
 Version 0.19.1
 ==============
