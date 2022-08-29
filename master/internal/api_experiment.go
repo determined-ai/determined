@@ -642,15 +642,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
 	}
 
-	// Override the order by for searcher metric.
-	if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC {
-		if req.OrderBy != apiv1.OrderBy_ORDER_BY_UNSPECIFIED {
-			return nil, status.Error(
-				codes.InvalidArgument,
-				"cannot specify order by which is implied with sort by searcher metric",
-			)
-		}
-
+	// If SORT_BY_SEARCHER_METRIC is specified without an OrderBy
+	// default to ordering by "better" checkpoints.
+	if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC &&
+		req.OrderBy == apiv1.OrderBy_ORDER_BY_UNSPECIFIED {
 		exp, err := a.m.db.ExperimentByID(int(req.Id))
 		if err != nil {
 			return nil, fmt.Errorf("scanning for experiment: %w", err)
