@@ -14,6 +14,7 @@ import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,
+  CoreApiGenericCheckpoint,
   ExperimentConfig,
   RunState,
 } from 'types';
@@ -22,7 +23,7 @@ import { checkpointSize } from 'utils/workload';
 import css from './useModalCheckpoint.module.scss';
 
 export interface Props {
-  checkpoint: CheckpointWorkloadExtended;
+  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   config: ExperimentConfig;
   onClose?: (reason?: ModalCloseReason) => void;
   searcherValidation?: number;
@@ -31,7 +32,7 @@ export interface Props {
 
 const getStorageLocation = (
   config: ExperimentConfig,
-  checkpoint: CheckpointWorkloadExtended,
+  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint,
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
@@ -131,10 +132,14 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
               <Link path={paths.experimentDetails(checkpoint.experimentId)}>
                 Experiment {checkpoint.experimentId}
               </Link>
-              <span className={css.sourceDivider} />
-              <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
-                Trial {checkpoint.trialId}
-              </Link>
+              {checkpoint.trialId && (
+                <>
+                  <span className={css.sourceDivider} />
+                  <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
+                    Trial {checkpoint.trialId}
+                  </Link>
+                </>
+              )}
               <span className={css.sourceDivider} />
               <span>Batch {checkpoint.totalBatches}</span>
             </div>
@@ -150,7 +155,8 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
             {`(${config.searcher.metric})`}
           </>,
         )}
-        {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
+        {('endTime' in checkpoint && checkpoint?.endTime) &&
+          renderRow('End Time', formatDatetime(checkpoint.endTime))}
         {renderRow(
           'Total Size',
           <div className={css.size}><span>{totalSize}</span>{

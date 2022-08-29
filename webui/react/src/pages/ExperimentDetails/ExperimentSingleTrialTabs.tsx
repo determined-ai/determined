@@ -21,12 +21,15 @@ import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
+import ExperimentCheckpoints from './ExperimentCheckpoints';
+
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
 const { TabPane } = Tabs;
 
 enum TabType {
-  Configuration = 'configuration',
+  Code = 'code',
+  Checkpoints = 'checkpoints',
   Hyperparameters = 'hyperparameters',
   Logs = 'logs',
   Overview = 'overview',
@@ -199,6 +202,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             pageRef={pageRef}
             trial={trialDetails as TrialDetails}
           />
+        </TabPane>
+        <TabPane key="checkpoints" tab="Checkpoints">
+          <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
         </TabPane>
         <TabPane key="code" tab="Code">
           <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>

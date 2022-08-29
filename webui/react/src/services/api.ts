@@ -121,6 +121,12 @@ export const getExperimentDetails = generateDetApi<
   Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 >(Config.getExperimentDetails);
 
+export const getExperimentCheckpoints = generateDetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetExperimentCheckpointsResponse,
+  Type.CheckpointPagination
+>(Config.getExperimentCheckpoints);
+
 export const getExpTrials = generateDetApi<
   Service.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
 >(Config.getExpTrials);
