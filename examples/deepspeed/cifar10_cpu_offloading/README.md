@@ -15,11 +15,8 @@ Read more about memory requirements at https://deepspeed.readthedocs.io/en/lates
 
 
 ## Files
-* **model_def_OOM_no_offload.py**: The core code for the model implemented as DeepSpeedTrial. Running this model without 
-ZeRO Infinity CPU offload results in CUDA Out of Memory (OOM) error.
-* **model_def_OOM_offload.py**: The same model architecture as in `model_def_OOM_no_offload.py`, however this time the 
-model is running with ZeRO Stage 3 CPU offloading. 
-The key difference is initializing DeepSpeed ZeRO in line 50:
+* **model_def.py**: The core code for the model implemented as DeepSpeedTrial. 
+The key portion of the code is initializing DeepSpeed ZeRO in line 52:
 ```
 with deepspeed.zero.Init():
     model = Net(self.args)
@@ -37,17 +34,11 @@ Note that even if you provide ZeRO Stage 3 configuration, but the model is not i
 model has to fit into CPU memory in order to be initialized correctly.
 
 
-
 ### Configuration Files
 * **zero_stages_3_no_offload.yaml**: Determined config to train the model with `ds_config_no_offload.json`.
 * **ds_config_no_offload.json**: The DeepSpeed config file with ZeRO turn off.
 * **zero_stages_3_offload.yaml**: Determined config to train the model `ds_config_offload.json`.
 * **ds_config_offload.json.yaml**: The DeepSpeed config file with ZeRO Stage 3 and CPU offloading.
-
-
-### Other files
-* **requirement.txt**: Contain necessary python packages.
-* **startup-hook.sh**: Install python packages and `pdsh` (required by DeepSpeed).
 
 
 ## Devices
@@ -75,7 +66,7 @@ det experiment create zero_stages_3_offload.yaml .
 
 
 ## Final notes
-* If you are faced with the following error, make sure that you are using the current version of deepspeed 
+* If you are facing the following error, make sure that you are using the current version of deepspeed 
 and our Deep Speed config `ds_config_offload.json.yaml`.
 ```
 RuntimeError: weight should have at least three dimensions

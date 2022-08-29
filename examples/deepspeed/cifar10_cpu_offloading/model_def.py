@@ -6,7 +6,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import deepspeed
-from deepspeed.runtime.zero.stage3 import estimate_zero3_model_states_mem_needs_all_live
+
 from torch.nn import MaxPool2d, Conv2d, Linear, Module, CrossEntropyLoss
 import torch.nn.functional as F
 
@@ -42,13 +42,17 @@ class Net(Module):
         x = self.fc4(x)
         return x
 
+
 class CIFARTrial(DeepSpeedTrial):
     def __init__(self, context: DeepSpeedTrialContext) -> None:
         self.context = context
         self.args = AttrDict(self.context.get_hparams())
 
-        model = Net(self.args)
-        estimate_zero3_model_states_mem_needs_all_live(model, num_gpus_per_node=1, num_nodes=2)
+        if self.args.get("deepspeed_offload") is True:
+            with deepspeed.zero.Init():
+                model = Net(self.args)
+        else:
+            model = Net(self.args)
 
         parameters = filter(lambda p: p.requires_grad, model.parameters())
 
