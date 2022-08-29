@@ -3,6 +3,8 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import TagList, { TagAction } from 'components/TagList';
 import { patchTrials } from 'services/api';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 export const addTagFunc = (trialId: number) =>
   async (tag: string): Promise<unknown> => await patchTrials({
@@ -36,8 +38,13 @@ const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
         await onRemove(tag);
         setTags((tags) => tags.filter((t) => t !== tag));
       }
-    } catch (error) {
-      // duly noted
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to add tag.',
+        silent: false,
+        type: ErrorType.Api,
+      });
     }
   };
 

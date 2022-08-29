@@ -8,6 +8,8 @@ import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
 import Icon from 'shared/components/Icon';
 import { isNumber, numberElseUndefined } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
@@ -186,8 +188,13 @@ export const useTrialCollections = (
           updateSettings({ collection: _collection.name }, true);
         }
         if (newCollection) setCollection(newCollection.name);
-      } catch {
-        // duly noted
+      } catch (e) {
+        handleError(e, {
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to fetch new collection.',
+          silent: false,
+          type: ErrorType.Api,
+        });
       }
       refetcher.current?.();
     },

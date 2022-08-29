@@ -21,6 +21,8 @@ import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, UnknownRecord } from 'shared/types';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import css from './InteractiveTable.module.scss';
 import SkeletonTable from './SkeletonTable';
@@ -404,9 +406,9 @@ const InteractiveTable: InteractiveTable = ({
           let minWidth: number;
           try {
             minWidth = columnDefs[column].defaultWidth;
-          } catch {
+          } catch (e) {
             minWidth = 40;
-            console.log('no def for column', column, columnDefs);
+            handleError(e, { silent: true, type: ErrorType.Ui });
           }
           let targetWidths;
           if (x < minWidth) {
@@ -449,7 +451,7 @@ const InteractiveTable: InteractiveTable = ({
           minWidth = columnDefs[column].defaultWidth;
         } catch {
           minWidth = 40;
-          console.log('no def for column', column, columnDefs);
+          handleError(e, { silent: true, type: ErrorType.Ui });
         }
         const deltaX = startWidth - minWidth;
         const minX = x - deltaX;
