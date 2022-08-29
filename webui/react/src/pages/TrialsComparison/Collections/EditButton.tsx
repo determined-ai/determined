@@ -1,11 +1,9 @@
 import { Button, Modal, notification } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useState } from 'react';
-import MonacoEditor from 'react-monaco-editor';
 
-import { useStore } from 'contexts/Store';
+import MonacoEditor from 'components/MonacoEditor';
 import Spinner from 'shared/components/Spinner';
-import { DarkLight } from 'shared/themes';
 
 import { TrialFilters } from './filters';
 
@@ -16,8 +14,6 @@ interface Props {
 }
 
 const EditButton: React.FC<Props> = ({ saveCollection, filters, collectionName }) => {
-  // theme doesnt apply to MonacoEditor somehow, so its the workaround
-  const { ui } = useStore();
   const [ isModalVisible, setIsModalVisible ] = useState<boolean>(false);
 
   const onShowModal = useCallback(() => setIsModalVisible(true), []);
@@ -48,7 +44,6 @@ const EditButton: React.FC<Props> = ({ saveCollection, filters, collectionName }
               occurrencesHighlight: false,
               readOnly: true,
             }}
-            theme={ui.darkLight === DarkLight.Dark ? 'vs-dark' : 'vs-light'}
             value={yaml.dump(filters)}
           />
         </React.Suspense>
