@@ -9,7 +9,7 @@ const config = require('./src/shared/configs/craco.config');
 const webpackEnvPlugin = new DefinePlugin({
   'process.env.IS_DEV': JSON.stringify(config.isDev),
   'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-  'process.env.VERSION': '"0.19.2-dev0"',
+  'process.env.VERSION': '"0.19.3-dev0"',
 });
 
 /**
