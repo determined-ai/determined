@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import css from './Label.module.scss';
 
@@ -7,6 +7,7 @@ export enum LabelTypes {
 }
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
   type?: LabelTypes;
 }
 
@@ -15,7 +16,7 @@ const Label: React.FC<Props> = ({
   children,
   type,
   ...props
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const classes = [ css.base ];
 
   if (type) classes.push(css[type]);

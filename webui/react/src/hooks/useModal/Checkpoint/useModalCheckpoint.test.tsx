@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
@@ -21,7 +21,7 @@ jest.mock('services/api', () => ({
 
 const { experiment, checkpoint } = generateTestExperimentData();
 
-const Container: React.FC = (props: PropsWithChildren<Partial<Props>> = {}) => {
+const Container: React.FC = (props: Partial<Props> = {}) => {
   const { contextHolder, modalOpen } = useModalCheckpoint({
     checkpoint: checkpoint,
     config: experiment.config,
@@ -39,7 +39,7 @@ const Container: React.FC = (props: PropsWithChildren<Partial<Props>> = {}) => {
   );
 };
 
-const setup = async (props: PropsWithChildren<Partial<Props>> = {}) => {
+const setup = async (props: Partial<Props> = {}) => {
   const user = userEvent.setup();
 
   render(<Container {...props} />);

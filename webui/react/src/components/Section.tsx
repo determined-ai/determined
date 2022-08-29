@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isString } from 'shared/utils/data';
@@ -11,6 +11,7 @@ interface Props {
   bodyDynamic?: boolean;
   bodyNoPadding?: boolean;
   bodyScroll?: boolean;
+  children: React.ReactNode;
   className?: string;
   divider?: boolean;
   filters?: React.ReactNode;
@@ -24,7 +25,7 @@ interface Props {
 
 const defaultProps = { divider: false };
 
-const Section: React.FC<Props> = ({ className = '', ...props }: PropsWithChildren<Props>) => {
+const Section: React.FC<Props> = ({ className = '', ...props }: Props) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
   const id = props.id || defaultId;
   const classes = [ css.base, className ];

@@ -1,6 +1,6 @@
 import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { PropsWithChildren, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
@@ -12,6 +12,7 @@ import { DetailedUser, Project } from 'types';
 import handleError from 'utils/error';
 
 interface Props {
+  children?: React.ReactNode;
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
@@ -30,7 +31,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     project, children, curUser, onVisibleChange, showChildrenIfEmpty = true,
     className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
   }
-  : PropsWithChildren<Props>,
+  : Props,
 ) => {
   const {
     contextHolder: modalProjectMoveContextHolder,

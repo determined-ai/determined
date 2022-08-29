@@ -1,5 +1,5 @@
 import { Button, Select } from 'antd';
-import React, { PropsWithChildren, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
@@ -27,7 +27,7 @@ function TableBatch<T extends string>({
   selectedRowCount,
   onAction,
   onClear,
-}: PropsWithChildren<Props<T>>):React.ReactElement {
+}: Props<T>):React.ReactElement {
   const [ action, setAction ] = useState<T | ''>();
   const classes = [ css.base ];
   const selectCount = selectedRowCount || 0;
