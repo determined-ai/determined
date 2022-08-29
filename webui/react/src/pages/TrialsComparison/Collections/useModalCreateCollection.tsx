@@ -1,19 +1,25 @@
-import { Input } from 'antd';
+import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
+import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import MonacoEditor from 'components/MonacoEditor';
 import {
   getDescriptionText,
 } from 'pages/TrialsComparison/Collections/collections';
 import { createTrialsCollection, patchTrials } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+import { DetError, ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import { encodeFilters, encodeTrialSorter } from '../api';
 
 import { isTrialsSelection, TrialsCollection, TrialsSelectionOrCollection } from './collections';
+import { TrialFilters } from './filters';
 import css from './useModalCreateCollection.module.scss';
 
 interface Props {
+  filters: TrialFilters;
   onClose?: () => void;
   onConfirm?: (newCollection: TrialsCollection) => void;
   projectId: string;
@@ -29,30 +35,30 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: CollectionModalProps) => void;
 }
 
+interface FormInputs {
+  collectionName: string;
+}
+
 const useModalTrialCollection = ({
+  filters,
   projectId,
   onConfirm,
 }: Props): ModalHooks => {
-
+  const [ form ] = Form.useForm<FormInputs>();
   const [ trials, setTrials ] = useState<TrialsSelectionOrCollection>();
-  const [ name, setName ] = useState('');
-  const handleNameChange = useCallback((e) => setName(e.target.value), []);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
 
   const handleOk = useCallback(
     async (target: TrialsSelectionOrCollection) => {
-      // const name = inputRef.current?.input?.value;
-      if (!name) return;
+      const values = await form.validateFields();
+      const name = values.collectionName;
+
       let newCollection: TrialsCollection | undefined;
       try {
         if (isTrialsSelection(target)) {
-
           await patchTrials(
-            {
-              patch: { addTag: [ { key: name } ] },
-              trial: { ids: target.trialIds },
-            },
+            { patch: { addTag: [ { key: name } ] }, trial: { ids: target.trialIds } },
           );
           newCollection = await createTrialsCollection({
             filters: encodeFilters({ tags: [ name ] }),
@@ -70,40 +76,66 @@ const useModalTrialCollection = ({
           });
         }
 
-      } catch (error) {
-        // duly noted
+      } catch (e) {
+        if (e instanceof DetError) {
+          handleError(e, {
+            level: e.level,
+            publicMessage: e.publicMessage,
+            publicSubject: 'Unable to create model.',
+            silent: false,
+            type: e.type,
+          });
+        } else {
+          handleError(e, {
+            publicMessage: 'Please try again later.',
+            publicSubject: 'Unable to create model.',
+            silent: false,
+            type: ErrorType.Api,
+          });
+        }
       }
-      setName('');
+      form.resetFields();
       if (newCollection) onConfirm?.(newCollection);
       modalRef.current?.destroy();
       modalRef.current = undefined;
     },
-    [ projectId, onConfirm, name, modalRef ],
+    [ form, onConfirm, modalRef, projectId ],
   );
 
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
-        <Input
-          allowClear
-          bordered={true}
-          placeholder="enter collection name"
-          value={name}
-          onChange={handleNameChange}
-          onPressEnter={() => trials && handleOk(trials)}
+      <Form autoComplete="off" className={css.base} form={form} layout="vertical">
+        <Form.Item
+          name="collectionName"
+          rules={[ { message: 'Collection name is required ', required: true } ]}>
+          <Input
+            allowClear
+            bordered={true}
+            placeholder="enter collection name"
+            onPressEnter={() => trials && handleOk(trials)}
+          />
+        </Form.Item>
+        <MonacoEditor
+          height="40vh"
+          language="yaml"
+          options={{
+            minimap: { enabled: false },
+            occurrencesHighlight: false,
+            readOnly: true,
+          }}
+          value={yaml.dump(filters)}
         />
-      </div>
+      </Form>
     );
-  }, [ name, handleNameChange, handleOk, trials ]);
+  }, [ form, filters, trials, handleOk ]);
 
   const getModalProps = useCallback(
-    (trials, name: string): ModalFuncProps => {
+    (trials): ModalFuncProps => {
       const actionText = isTrialsSelection(trials) ? 'Tag and Collect' : 'Create Collection for';
       const props = {
         closable: true,
         content: modalContent,
         icon: null,
-        okButtonProps: { disabled: !name },
         okText: 'Create Collection',
         onOk: () => handleOk(trials),
         title: trials && `${actionText} ${getDescriptionText(trials)}`,
@@ -118,18 +150,18 @@ const useModalTrialCollection = ({
       setTrials(trials);
       const newProps = {
         ...initialModalProps,
-        ...getModalProps(trials, name),
+        ...getModalProps(trials),
       };
       openOrUpdate(newProps);
     },
-    [ getModalProps, openOrUpdate, name ],
+    [ getModalProps, openOrUpdate ],
   );
 
   useEffect(() => {
     if (modalRef.current){
-      openOrUpdate(getModalProps(trials, name));
+      openOrUpdate(getModalProps(trials));
     }
-  }, [ getModalProps, modalRef, openOrUpdate, trials, name ]);
+  }, [ getModalProps, modalRef, openOrUpdate, trials ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

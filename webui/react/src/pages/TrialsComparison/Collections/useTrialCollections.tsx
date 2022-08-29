@@ -195,6 +195,7 @@ export const useTrialCollections = (
   );
 
   const { modalOpen, contextHolder } = useModalTrialCollection({
+    filters: filters,
     onConfirm: setNewCollection,
     projectId,
   });
