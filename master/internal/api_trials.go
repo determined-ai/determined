@@ -28,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -614,7 +615,7 @@ func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWork
 	resp := &apiv1.GetTrialWorkloadsResponse{}
 	limit := &req.Limit
 	if *limit == 0 {
-		limit = nil
+		limit = ptrs.Ptr[int32](-1)
 	}
 
 	sortCode := "total_batches"
