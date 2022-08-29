@@ -34,19 +34,22 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
         { signal: canceler.current.signal },
       );
       const filteredWorkspaces = workspaceResponse.workspaces.filter((w) => !w.immutable);
-      const projectAPIList = filteredWorkspaces
-        .map((workspace) =>
-          getWorkspaceProjects(
-            { id: workspace.id, sortBy: 'SORT_BY_NAME' },
-            { signal: canceler.current.signal },
-          ));
-      const projectResponse = (await Promise.all(projectAPIList))
-        .map((project) => project.projects);
+      const projectResponse = await getWorkspaceProjects(
+        { id: 0, sortBy: 'SORT_BY_NAME' },
+        { signal: canceler.current.signal },
+      );
 
-      // Promise.all preserves the order
+      const projectMap = new Map<number, Project[]>();
+      for (const project of projectResponse.projects) {
+        projectMap.set(
+          project.workspaceId,
+          [ ...projectMap.get(project.workspaceId) ?? [], project ],
+        );
+      }
+
       const tempWorkspaceMap: Map<Workspace, Project[]> = new Map();
       for (const workspace of filteredWorkspaces) {
-        const projects = projectResponse.shift();
+        const projects = projectMap.get(workspace.id);
         tempWorkspaceMap.set(workspace, projects ?? []);
       }
       setWorkspaceMap(tempWorkspaceMap);
