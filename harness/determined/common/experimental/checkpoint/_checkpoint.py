@@ -417,7 +417,7 @@ class Checkpoint:
             report_time=ckpt.reportTime,
             resources=ckpt.resources,
             metadata=ckpt.metadata,
-            state=CheckpointState(ckpt.state.value),  # wrong None, is NOT NULL in db
+            state=CheckpointState(ckpt.state.value),
             training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
         )
 

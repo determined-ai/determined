@@ -26,7 +26,7 @@ class ModelVersion:
         notes: str,
         model_id: int,
         model_name: str,
-        model_version: int,  # sequential  ## NOT NULL
+        model_version: int,  # sequential
     ):
         self._session = session
         self.checkpoint = checkpoint
@@ -105,10 +105,10 @@ class ModelVersion:
             session,
             model_version_id=m.id,
             checkpoint=checkpoint.Checkpoint._from_bindings(m.checkpoint, session),
-            metadata=m.metadata or {},  # meaningless None
-            name=m.name or "",  # really old rows might be NULL, proto None for new ones
-            comment=m.comment or "",  # really old rows might be NULL, proto None for new ones
-            notes=m.notes or "",  # really old rows might be NULL, proto None for new ones
+            metadata=m.metadata or {},
+            name=m.name or "",
+            comment=m.comment or "",
+            notes=m.notes or "",
             model_id=m.model.id,
             model_name=m.model.name,
             model_version=m.version,
@@ -386,28 +386,15 @@ class Model:
 
     @classmethod
     def _from_bindings(cls, m: bindings.v1Model, session: api.Session) -> "Model":
-        # Fields marked as "proto None" are marked as not required in the swagger, but are probably
-        # impossible to emit as actual Nones due to how protobuf mangles zero values and non-present
-        # values.
-        #
-        # Fields marked as "meaningless None" can be corrected to default values by the client,
-        # regardless of what the API returns, because a None is meaningless to the end user.
-        #
-        # Fields marked as "wrong None" appear to have always been non-empty, just the proto was
-        # wrong.
-        #
-        # Fields marked as "must not None" don't make sense as None, even though the proto says they
-        # might be.
         return cls(
             session,
             model_id=m.id,
             name=m.name,
-            description=m.description or "",  # proto None
+            description=m.description or "",
             creation_time=util.parse_protobuf_timestamp(m.creationTime),
-            last_updated_time=util.parse_protobuf_timestamp(m.lastUpdatedTime),  # wrong None
-            metadata=m.metadata,  # proto None, meaningless None
-            labels=list(m.labels or []),  # proto None, meaningless None
-            username=m.username or "",  # wrong None (NOT NULL in db), must not None
-            archived=m.archived
-            or False,  # wrong None (NOT NULL and defaulted in db), must not None
+            last_updated_time=util.parse_protobuf_timestamp(m.lastUpdatedTime),
+            metadata=m.metadata,
+            labels=list(m.labels or []),
+            username=m.username or "",
+            archived=m.archived or False,
         )
