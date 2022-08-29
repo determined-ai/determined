@@ -166,7 +166,15 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 
 func Test_summarizeResourcePool(t *testing.T) {
 	type args struct {
-		ctx *actor.Context
+		ctx     *actor.Context
+		wlmType string
+	}
+
+	type want struct {
+		pools         []resourcepoolv1.ResourcePool
+		location      string
+		schedulerType resourcepoolv1.SchedulerType
+		fittingPolicy resourcepoolv1.FittingPolicy
 	}
 
 	p1 := hpcPartitionDetails{
@@ -203,76 +211,93 @@ func Test_summarizeResourcePool(t *testing.T) {
 		name       string
 		partitions []hpcPartitionDetails
 		args       args
-		want       []resourcepoolv1.ResourcePool
+		want       want
 	}{
 		{
 			name:       "One resource pool test",
 			partitions: []hpcPartitionDetails{p1},
 			args: args{
-				ctx: &actor.Context{},
+				ctx:     &actor.Context{},
+				wlmType: slurmSchedulerType,
 			},
-			want: []resourcepoolv1.ResourcePool{
-				{
-					Name:           "partition 1",
-					SlotType:       devicev1.Type_TYPE_CUDA,
-					SlotsAvailable: 5,
-					SlotsUsed:      3,
-					NumAgents:      10,
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 1",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 5,
+						SlotsUsed:      3,
+						NumAgents:      10,
+					},
 				},
+				location:      "Slurm",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
 			},
 		},
 		{
 			name:       "Two resource pool test",
 			partitions: []hpcPartitionDetails{p1, p2},
 			args: args{
-				ctx: &actor.Context{},
+				ctx:     &actor.Context{},
+				wlmType: pbsSchedulerType,
 			},
-			want: []resourcepoolv1.ResourcePool{
-				{
-					Name:           "partition 1",
-					SlotType:       devicev1.Type_TYPE_CUDA,
-					SlotsAvailable: 5,
-					SlotsUsed:      3,
-					NumAgents:      10,
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 1",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 5,
+						SlotsUsed:      3,
+						NumAgents:      10,
+					},
+					{
+						Name:           "partition 2",
+						SlotType:       devicev1.Type_TYPE_CPU,
+						SlotsAvailable: 20,
+						SlotsUsed:      12,
+						NumAgents:      12,
+					},
 				},
-
-				{
-					Name:           "partition 2",
-					SlotType:       devicev1.Type_TYPE_CPU,
-					SlotsAvailable: 20,
-					SlotsUsed:      12,
-					NumAgents:      12,
-				},
+				location:      "PBS",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
 			},
 		},
 		{
 			name:       "Three resource pool test",
 			partitions: []hpcPartitionDetails{p1, p2, p3},
 			args: args{
-				ctx: &actor.Context{},
+				ctx:     &actor.Context{},
+				wlmType: "mystery",
 			},
-			want: []resourcepoolv1.ResourcePool{
-				{
-					Name:           "partition 1",
-					SlotType:       devicev1.Type_TYPE_CUDA,
-					SlotsAvailable: 5,
-					SlotsUsed:      3,
-					NumAgents:      10,
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 1",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 5,
+						SlotsUsed:      3,
+						NumAgents:      10,
+					},
+					{
+						Name:           "partition 2",
+						SlotType:       devicev1.Type_TYPE_CPU,
+						SlotsAvailable: 20,
+						SlotsUsed:      12,
+						NumAgents:      12,
+					},
+					{
+						Name:           "partition 3",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 7,
+						SlotsUsed:      7,
+						NumAgents:      15,
+					},
 				},
-				{
-					Name:           "partition 2",
-					SlotType:       devicev1.Type_TYPE_CPU,
-					SlotsAvailable: 20,
-					SlotsUsed:      12,
-					NumAgents:      12,
-				},
-				{
-					Name:           "partition 3",
-					SlotType:       devicev1.Type_TYPE_CUDA,
-					SlotsAvailable: 7,
-					SlotsUsed:      7,
-					NumAgents:      15,
-				},
+				location:      "Unknown",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED,
 			},
 		},
 	}
@@ -293,26 +318,27 @@ func Test_summarizeResourcePool(t *testing.T) {
 					lastSample: *hpcResource,
 					sampleTime: time.Now(),
 				},
+				wlmType: tt.args.wlmType,
 			}
 
 			res, _ := m.summarizeResourcePool(tt.args.ctx)
 
-			assert.Equal(t, len(tt.want), len(res))
+			assert.Equal(t, len(tt.want.pools), len(res))
 			for i, pool := range res {
-				assert.Equal(t, pool.Name, tt.want[i].Name)
-				assert.Equal(t, pool.SlotType, tt.want[i].SlotType)
-				assert.Equal(t, pool.SlotsAvailable, tt.want[i].SlotsAvailable)
-				assert.Equal(t, pool.SlotsUsed, tt.want[i].SlotsUsed)
-				assert.Equal(t, pool.NumAgents, tt.want[i].NumAgents)
+				assert.Equal(t, pool.Name, tt.want.pools[i].Name)
+				assert.Equal(t, pool.SlotType, tt.want.pools[i].SlotType)
+				assert.Equal(t, pool.SlotsAvailable, tt.want.pools[i].SlotsAvailable)
+				assert.Equal(t, pool.SlotsUsed, tt.want.pools[i].SlotsUsed)
+				assert.Equal(t, pool.NumAgents, tt.want.pools[i].NumAgents)
 
-				assert.Equal(t, pool.Description, "Slurm-managed pool of resources")
+				assert.Equal(t, pool.Description, tt.want.location+"-managed pool of resources")
 				assert.Equal(t, pool.Type, resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC)
 				assert.Equal(t, pool.SlotsPerAgent, int32(0))
 				assert.Equal(t, pool.AuxContainerCapacityPerAgent, int32(0))
-				assert.Equal(t, pool.SchedulerType, resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM)
-				assert.Equal(t, pool.SchedulerFittingPolicy, resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM)
-				assert.Equal(t, pool.Location, "Slurm")
-				assert.Equal(t, pool.InstanceType, "Slurm")
+				assert.Equal(t, pool.SchedulerType, tt.want.schedulerType)
+				assert.Equal(t, pool.SchedulerFittingPolicy, tt.want.fittingPolicy)
+				assert.Equal(t, pool.Location, tt.want.location)
+				assert.Equal(t, pool.InstanceType, tt.want.location)
 				assert.Equal(t, pool.ImageId, "")
 			}
 		})

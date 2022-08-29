@@ -854,6 +854,7 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 	if err != nil {
 		return nil, err
 	}
+	wlmName, schedulerType, fittingPolicy := m.getWlmResources()
 	var result []*resourcepoolv1.ResourcePool
 	for _, v := range hpcResourceDetails.Partitions {
 		slotType, err := m.resolveSlotType(ctx, v.PartitionName)
@@ -870,7 +871,7 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 
 		pool := resourcepoolv1.ResourcePool{
 			Name:                         v.PartitionName,
-			Description:                  "Slurm-managed pool of resources",
+			Description:                  wlmName + "-managed pool of resources",
 			Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
 			NumAgents:                    int32(v.TotalNodes),
 			SlotType:                     slotType.Proto(),
@@ -885,16 +886,33 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			MaxAgents:                    int32(v.TotalNodes),
 			SlotsPerAgent:                0, // Must be unspecified
 			AuxContainerCapacityPerAgent: 0,
-			SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
-			SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
-			Location:                     "Slurm",
+			SchedulerType:                schedulerType,
+			SchedulerFittingPolicy:       fittingPolicy,
+			Location:                     wlmName,
 			ImageId:                      "",
-			InstanceType:                 "Slurm",
+			InstanceType:                 wlmName,
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		}
 		result = append(result, &pool)
 	}
 	return result, nil
+}
+
+// getWlmResources returns various WLM-dependent resources used in constructing a resource pool.
+func (m *dispatcherResourceManager) getWlmResources() (
+	string, resourcepoolv1.SchedulerType, resourcepoolv1.FittingPolicy,
+) {
+	switch m.wlmType {
+	case slurmSchedulerType:
+		return "Slurm", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
+			resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM
+	case pbsSchedulerType:
+		return "PBS", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
+			resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM
+	default:
+		return "Unknown", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
+			resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED
+	}
 }
 
 // fetchHpcResourceDetailsCached fetches cached Slurm resource details from the launcher node.
