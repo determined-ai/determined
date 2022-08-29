@@ -138,6 +138,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           }));
       } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC) {
         column.render = HumanReadableNumberRenderer;
+        column.title = `Searcher Metric (${experiment.config.searcher.metric})`;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }

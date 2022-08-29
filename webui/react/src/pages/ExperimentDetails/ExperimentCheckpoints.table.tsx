@@ -24,6 +24,7 @@ export const columns: ColumnDef<CoreApiGenericCheckpoint>[] = [
     dataIndex: 'searcherMetric',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetric'],
     key: V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC,
+    sorter: true,
     title: 'Searcher Metric',
   },
   {
