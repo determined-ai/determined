@@ -23,6 +23,9 @@ class ExperimentState(enum.Enum):
     DELETING = bindings.determinedexperimentv1State.STATE_DELETING.value
     DELETE_FAILED = bindings.determinedexperimentv1State.STATE_DELETE_FAILED.value
     STOPPING_KILLED = bindings.determinedexperimentv1State.STATE_STOPPING_KILLED.value
+    QUEUED = bindings.determinedexperimentv1State.STATE_QUEUED.value
+    PENDING = bindings.determinedexperimentv1State.STATE_PENDING.value
+    RUNNING = bindings.determinedexperimentv1State.STATE_RUNNING.value
 
     def _to_bindings(self) -> bindings.determinedexperimentv1State:
         return bindings.determinedexperimentv1State(self.value)

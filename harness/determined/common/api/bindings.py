@@ -176,6 +176,8 @@ class determinedexperimentv1State(enum.Enum):
     STATE_DELETING = "STATE_DELETING"
     STATE_DELETE_FAILED = "STATE_DELETE_FAILED"
     STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STATE_PENDING = "STATE_PENDING"
+    STATE_QUEUED = "STATE_QUEUED"
 
 class determinedjobv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -201,6 +203,7 @@ class determinedtaskv1State(enum.Enum):
     STATE_RUNNING = "STATE_RUNNING"
     STATE_TERMINATED = "STATE_TERMINATED"
     STATE_TERMINATING = "STATE_TERMINATING"
+    STATE_QUEUED = "STATE_QUEUED"
 
 class protobufAny:
     def __init__(

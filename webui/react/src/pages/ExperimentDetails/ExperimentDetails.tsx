@@ -11,7 +11,6 @@ import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleT
 import {
   getExperimentDetails, getExpValidationHistory,
 } from 'services/api';
-import { Determinedjobv1State } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
@@ -46,12 +45,6 @@ const ExperimentDetails: React.FC = () => {
         getExperimentDetails({ id }, { signal: canceler.current?.signal }),
         getExpValidationHistory({ id }, { signal: canceler.current?.signal }),
       ]);
-      let maxAgents = 0;
-      agentList.forEach(agent => maxAgents = Math.max(maxAgents, agent.resources.length));
-      console.log([maxAgents, newExperiment.slotsPerTrial]);
-      if (maxAgents && newExperiment.slotsPerTrial && newExperiment.slotsPerTrial > maxAgents) {
-        newExperiment.state = Determinedjobv1State.QUEUED;
-      }
       setExperiment((prevExperiment) =>
         isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment);
       setValHistory((prevValHistory) =>

@@ -9,6 +9,7 @@ export const activeCommandStates = [
   CommandState.Assigned,
   CommandState.Pending,
   CommandState.Pulling,
+  CommandState.Queued,
   CommandState.Running,
   CommandState.Starting,
   CommandState.Terminating,
@@ -45,6 +46,7 @@ export const killableCommandStates = [
   CommandState.Assigned,
   CommandState.Pending,
   CommandState.Pulling,
+  CommandState.Queued,
   CommandState.Running,
   CommandState.Starting,
 ];
@@ -67,7 +69,8 @@ export const terminalRunStates: Set<CompoundRunState> = new Set([
 ]);
 
 export const runStateToLabel: { [key in RunState]: string } = {
-  [RunState.Active]: 'Active',
+  [RunState.Active]: 'Running',
+  [RunState.SharedActive]: 'Active',
   [RunState.Canceled]: 'Canceled',
   [RunState.Completed]: 'Completed',
   [RunState.Deleted]: 'Deleted',
@@ -79,6 +82,8 @@ export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
   [RunState.Unspecified]: 'Unspecified',
+  [RunState.Pending]: 'Pending',
+  [RunState.Queued]: 'Queued',
 };
 
 export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } = {
@@ -103,6 +108,7 @@ export const commandStateToLabel: { [key in CommandState]: string } = {
   [CommandState.Pending]: 'Pending',
   [CommandState.Assigned]: 'Assigned',
   [CommandState.Pulling]: 'Pulling',
+  [CommandState.Queued]: 'Queued',
   [CommandState.Starting]: 'Starting',
   [CommandState.Running]: 'Running',
   [CommandState.Terminating]: 'Terminating',

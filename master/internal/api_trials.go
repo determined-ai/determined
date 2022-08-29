@@ -93,6 +93,48 @@ type TrialLogBackend interface {
 	DeleteTrialLogs(trialIDs []int) error
 }
 
+func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial, error) {
+	// filter allocations by TaskIDs on this page of trials
+	taskFilter := []string{}
+	for _, trial := range trials {
+		taskFilter = append(taskFilter, trial.TaskId)
+	}
+
+	// get active or pending tasks
+	tasks := []*experimentAllocation{}
+	err := a.m.db.Query(
+		"get_active_allocations_by_task",
+		&tasks,
+		strings.Join(taskFilter, ","),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect state information by TaskID
+	applyIDs := make(map[string]experimentv1.State)
+	for _, task := range tasks {
+		if task.NumRunning > 0 {
+			applyIDs[*task.TaskID] = experimentv1.State_STATE_ACTIVE
+		} else if task.NumStarting > 0 {
+			applyIDs[*task.TaskID] = experimentv1.State_STATE_PENDING
+		}
+	}
+
+	// Active trials should be converted to Queued, Pending, or kept Active (Running)
+	for _, trial := range trials {
+		if trial.State == experimentv1.State_STATE_ACTIVE {
+			if setState, ok := applyIDs[trial.TaskId]; ok {
+				trial.State = setState
+			} else {
+				trial.State = experimentv1.State_STATE_QUEUED
+			}
+		}
+	}
+
+	return trials, nil
+}
+
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
 ) error {
@@ -525,7 +567,7 @@ func (a *apiServer) GetExperimentTrials(
 		trialIDs = append(trialIDs, trial.Id)
 	}
 
-	switch err := a.m.db.QueryProtof(
+	switch err = a.m.db.QueryProtof(
 		"proto_get_trials_plus",
 		[]any{strings.Join(valuesExpr, ", ")},
 		&resp.Trials,
@@ -535,6 +577,11 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+	}
+
+	resp.Trials, err = a.enrichTrialState(resp.Trials)
+	if err != nil {
+		return nil, err
 	}
 
 	return resp, nil
@@ -558,6 +605,15 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	); err != nil {
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
+
+	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+		trials, err := a.enrichTrialState([]*trialv1.Trial{resp.Trial})
+		if err != nil {
+			return nil, err
+		}
+		resp.Trial = trials[0]
+	}
+
 	return resp, nil
 }
 

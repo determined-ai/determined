@@ -34,6 +34,7 @@ const getTitleState = (commandState?: CommandState, taskName?: string): string =
     [CommandState.Pending]: 'Pending',
     [CommandState.Assigned]: 'Assigned',
     [CommandState.Pulling]: 'Pulling',
+    [CommandState.Queued]: 'Queued',
     [CommandState.Running]: taskName || DEFAULT_PAGE_TITLE,
     [CommandState.Terminating]: 'Terminating',
     [CommandState.Terminated]: 'Terminated',

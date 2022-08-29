@@ -29,8 +29,7 @@ SELECT
     p.user_id AS project_owner_id,
     w.id AS workspace_id,
     w.name AS workspace_name,
-    (w.archived OR p.archived) AS parent_archived,
-    (e.config->'resources'->>'slots_per_trial') AS slots_per_trial
+    (w.archived OR p.archived) AS parent_archived
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id

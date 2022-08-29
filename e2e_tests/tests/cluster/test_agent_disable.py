@@ -179,7 +179,7 @@ def test_drain_agent() -> None:
         None,
     )
     time.sleep(5)
-    exp.wait_for_experiment_state(experiment_id_no_start, determinedexperimentv1State.STATE_ACTIVE)
+    exp.wait_for_experiment_state(experiment_id_no_start, determinedexperimentv1State.STATE_QUEUED)
 
     with _disable_agent(agent_id, drain=True):
         # Check for 15 seconds it doesn't get scheduled into the same slot.

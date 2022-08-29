@@ -147,6 +147,7 @@ export enum CommandState {
   Running = 'RUNNING',
   Terminating = 'TERMINATING',
   Terminated = 'TERMINATED',
+  Queued = 'QUEUED',
 }
 
 export type State = CommandState | RunState;
@@ -329,6 +330,9 @@ export enum RunState {
   Deleting = 'DELETING',
   DeleteFailed = 'DELETE_FAILED',
   Unspecified = 'UNSPECIFIED',
+  Pending = 'PENDING',
+  Queued = 'QUEUED',
+  SharedActive = 'SHARED_ACTIVE',
 }
 
 export interface ValidationHistory {
@@ -509,7 +513,6 @@ export interface ExperimentItem {
   projectId: number;
   resourcePool: string;
   searcherType: string;
-  slotsPerTrial?: number;
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
@@ -612,7 +615,7 @@ export interface Task {
 }
 
 // CompoundRunState adds more information about a job's state to RunState.
-export type CompoundRunState = RunState | JobState | SlotState
+export type CompoundRunState = RunState | JobState
 
 export interface ExperimentTask extends Task {
   archived: boolean;

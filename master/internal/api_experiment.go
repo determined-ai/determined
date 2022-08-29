@@ -51,6 +51,60 @@ import (
 
 var experimentsAddr = actor.Addr("experiments")
 
+// Catches information on active running trials.
+type experimentAllocation struct {
+	JobID       *string
+	NumRunning  int32
+	NumStarting int32
+	TaskID      *string
+}
+
+func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment) (
+	[]*experimentv1.Experiment, error,
+) {
+	// filter allocations by JobIDs on this page of experiments
+	jobFilter := []string{}
+	for _, exp := range experiments {
+		jobFilter = append(jobFilter, exp.JobId)
+	}
+
+	// get active or pending tasks
+	tasks := []*experimentAllocation{}
+	err := a.m.db.Query(
+		"get_active_allocations",
+		&tasks,
+		strings.Join(jobFilter, ","),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect state information by JobID
+	applyIDs := make(map[string]experimentv1.State)
+	for _, task := range tasks {
+		if task.NumRunning > 0 {
+			applyIDs[*task.JobID] = experimentv1.State_STATE_ACTIVE
+		} else if task.NumStarting > 0 {
+			_, expStoredState := applyIDs[*task.JobID]
+			if !expStoredState {
+				applyIDs[*task.JobID] = experimentv1.State_STATE_PENDING
+			}
+		}
+	}
+
+	// Active experiments should be converted to Queued, Pending, or kept Active (Running)
+	for _, exp := range experiments {
+		if exp.State == experimentv1.State_STATE_ACTIVE {
+			if setState, ok := applyIDs[exp.JobId]; ok {
+				exp.State = setState
+			} else {
+				exp.State = experimentv1.State_STATE_QUEUED
+			}
+		}
+	}
+	return experiments, nil
+}
+
 func (a *apiServer) getExperiment(
 	curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, error) {
@@ -76,7 +130,13 @@ func (a *apiServer) getExperiment(
 	sort.Slice(exp.TrialIds, func(i, j int) bool {
 		return exp.TrialIds[i] < exp.TrialIds[j]
 	})
-	return exp, nil
+
+	expListForm, err := a.enrichExperimentState([]*experimentv1.Experiment{exp})
+	if err != nil {
+		return nil, err
+	}
+
+	return expListForm[0], nil
 }
 
 func (a *apiServer) getExperimentAndCheckCanDoActions(
@@ -419,6 +479,8 @@ func (a *apiServer) GetExperiments(
 	if err != nil {
 		return nil, err
 	}
+
+	resp.Experiments = a.enrichExperimentState(resp.Experiments)
 
 	return resp, nil
 }

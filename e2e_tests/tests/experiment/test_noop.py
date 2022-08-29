@@ -104,11 +104,11 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_PAUSED)
 
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_ACTIVE)
+    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_QUEUED)
 
     for _ in range(5):
         assert (
-            exp.experiment_state(experiment_id) == bindings.determinedexperimentv1State.STATE_ACTIVE
+            exp.experiment_state(experiment_id) == bindings.determinedexperimentv1State.STATE_QUEUED
         )
         time.sleep(1)
 
