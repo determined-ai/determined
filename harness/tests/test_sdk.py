@@ -1,8 +1,10 @@
+from typing import Any, Optional
+
 from determined.common.api import bindings
 from determined.experimental import client
 
 
-def do_enum_test(sdk_enum, bindings_enum, *, ignore=None) -> None:
+def do_enum_test(sdk_enum: Any, bindings_enum: Any, *, ignore: Optional[list] = None) -> None:
     # Every sdk enum member exists in bindings.
     extra_sdk_names = []
     for k, v in sdk_enum.__members__.items():

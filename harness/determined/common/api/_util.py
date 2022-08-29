@@ -22,9 +22,11 @@ def read_paginated(
     while True:
         resp = get_with_offset(offset)
         pagination = resp.pagination
-        assert pagination
+        assert pagination is not None
+        assert pagination.endIndex is not None
+        assert pagination.total is not None
         yield resp
-        if pagination.endIndex == pagination.total or pages == PageOpts.single:
+        if pagination.endIndex >= pagination.total or pages == PageOpts.single:
             break
         assert pagination.endIndex is not None
         offset = pagination.endIndex
