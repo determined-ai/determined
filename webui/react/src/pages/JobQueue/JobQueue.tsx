@@ -266,16 +266,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   useEffect(() => {
     setPageState((cur) => ({ ...cur, isLoading: true }));
-    fetchAll();
-    return () => canceler.abort();
-  }, [
-    fetchAll,
-    canceler,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
+  }, [ settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset ]);
 
   useEffect(() => {
     if (!managingJob) return;
