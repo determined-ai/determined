@@ -16,6 +16,7 @@ import "determined/api/v1/job.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
+import "determined/api/v1/permission.proto";
 import "determined/api/v1/project.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
@@ -1615,7 +1616,6 @@ service Determined {
       tags: "Experiments"
     };
   }
-
   // Get a group by id
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {
@@ -1666,6 +1666,6 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
-    };
+    }
   }
 }

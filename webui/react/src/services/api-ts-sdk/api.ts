@@ -2267,6 +2267,20 @@ export interface V1GetCheckpointResponse {
 }
 
 /**
+ * Response to GetClusterPermissionsRequest.
+ * @export
+ * @interface V1GetClusterPermissionsResponse
+ */
+export interface V1GetClusterPermissionsResponse {
+    /**
+     * A list of permissions.
+     * @type {Array<string>}
+     * @memberof V1GetClusterPermissionsResponse
+     */
+    permissions: Array<string>;
+}
+
+/**
  * Response to GetCommandRequest.
  * @export
  * @interface V1GetCommandResponse
@@ -3322,6 +3336,20 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     pagination?: V1Pagination;
+}
+
+/**
+ * Response to GetWorkspacePermissionsRequest.
+ * @export
+ * @interface V1GetWorkspacePermissionsResponse
+ */
+export interface V1GetWorkspacePermissionsResponse {
+    /**
+     * A list of permissions.
+     * @type {Array<string>}
+     * @memberof V1GetWorkspacePermissionsResponse
+     */
+    permissions: Array<string>;
 }
 
 /**
@@ -17977,6 +18005,189 @@ export class NotebooksApi extends BaseAPI {
      */
     public setNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
         return NotebooksApiFp(this.configuration).setNotebookPriority(notebookId, body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * PermissionsApi - fetch parameter creator
+ * @export
+ */
+export const PermissionsApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary List cluster-wide permissions for the current user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterPermissions(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/permissions`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List workspace-specific permissions for the current user.
+         * @param {number} workspaceId The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspacePermissions(workspaceId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling getWorkspacePermissions.');
+            }
+            const localVarPath = `/api/v1/permissions/{workspaceId}`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * PermissionsApi - functional programming interface
+ * @export
+ */
+export const PermissionsApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary List cluster-wide permissions for the current user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterPermissions(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetClusterPermissionsResponse> {
+            const localVarFetchArgs = PermissionsApiFetchParamCreator(configuration).getClusterPermissions(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary List workspace-specific permissions for the current user.
+         * @param {number} workspaceId The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspacePermissions(workspaceId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacePermissionsResponse> {
+            const localVarFetchArgs = PermissionsApiFetchParamCreator(configuration).getWorkspacePermissions(workspaceId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * PermissionsApi - factory interface
+ * @export
+ */
+export const PermissionsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary List cluster-wide permissions for the current user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterPermissions(options?: any) {
+            return PermissionsApiFp(configuration).getClusterPermissions(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary List workspace-specific permissions for the current user.
+         * @param {number} workspaceId The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspacePermissions(workspaceId: number, options?: any) {
+            return PermissionsApiFp(configuration).getWorkspacePermissions(workspaceId, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * PermissionsApi - object-oriented interface
+ * @export
+ * @class PermissionsApi
+ * @extends {BaseAPI}
+ */
+export class PermissionsApi extends BaseAPI {
+    /**
+     * 
+     * @summary List cluster-wide permissions for the current user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PermissionsApi
+     */
+    public getClusterPermissions(options?: any) {
+        return PermissionsApiFp(this.configuration).getClusterPermissions(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary List workspace-specific permissions for the current user.
+     * @param {number} workspaceId The id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PermissionsApi
+     */
+    public getWorkspacePermissions(workspaceId: number, options?: any) {
+        return PermissionsApiFp(this.configuration).getWorkspacePermissions(workspaceId, options)(this.fetch, this.basePath);
     }
 
 }

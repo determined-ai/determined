@@ -1717,6 +1717,25 @@ class v1GetCheckpointResponse:
             "checkpoint": self.checkpoint.to_json(),
         }
 
+class v1GetClusterPermissionsResponse:
+    def __init__(
+        self,
+        *,
+        permissions: "typing.Sequence[str]",
+    ):
+        self.permissions = permissions
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetClusterPermissionsResponse":
+        return cls(
+            permissions=obj["permissions"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "permissions": self.permissions,
+        }
+
 class v1GetCommandResponse:
     def __init__(
         self,
@@ -2867,6 +2886,25 @@ class v1GetUsersResponse:
         return {
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
+        }
+
+class v1GetWorkspacePermissionsResponse:
+    def __init__(
+        self,
+        *,
+        permissions: "typing.Sequence[str]",
+    ):
+        self.permissions = permissions
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspacePermissionsResponse":
+        return cls(
+            permissions=obj["permissions"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "permissions": self.permissions,
         }
 
 class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
@@ -7430,6 +7468,23 @@ def get_GetCheckpoint(
         return v1GetCheckpointResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCheckpoint", _resp)
 
+def get_GetClusterPermissions(
+    session: "client.Session",
+) -> "v1GetClusterPermissionsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/permissions",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetClusterPermissionsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetClusterPermissions", _resp)
+
 def get_GetCommand(
     session: "api.Session",
     *,
@@ -8487,6 +8542,25 @@ def get_GetWorkspace(
     if _resp.status_code == 200:
         return v1GetWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspace", _resp)
+
+def get_GetWorkspacePermissions(
+    session: "client.Session",
+    *,
+    workspaceId: int,
+) -> "v1GetWorkspacePermissionsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/permissions/{workspaceId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspacePermissionsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspacePermissions", _resp)
 
 def get_GetWorkspaceProjects(
     session: "api.Session",

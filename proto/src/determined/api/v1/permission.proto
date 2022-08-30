@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "protoc-gen-swagger/options/annotations.proto";
+
+// List cluster-wide permissions for the current user.
+message GetClusterPermissionsRequest {}
+
+// Response to GetClusterPermissionsRequest.
+message GetClusterPermissionsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "permissions" ] }
+  };
+
+  // A list of permissions.
+  repeated string permissions = 1;
+}
+
+// List workspace-specific permissions for the current user.
+message GetWorkspacePermissionsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id" ] }
+  };
+
+  // The id of the workspace.
+  int32 workspace_id = 1;
+}
+
+// Response to GetWorkspacePermissionsRequest.
+message GetWorkspacePermissionsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "permissions" ] }
+  };
+
+  // A list of permissions.
+  repeated string permissions = 1;
+}
