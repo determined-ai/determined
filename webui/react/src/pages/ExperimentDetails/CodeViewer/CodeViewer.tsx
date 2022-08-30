@@ -342,33 +342,46 @@ const CodeViewer: React.FC<Props> = ({
                   */
                   <Tooltip title="Download File">
                     {
-                      !String(activeFile.key).includes('Configuration') && (
-                        // hiding the download for configs until next iteration
-                        <DownloadOutlined
-                          className={css.noBorderButton}
-                          onClick={(e) => {
-                            const filePath = String(activeFile.key);
-                            if (filePath.includes('Configuration')) {
-                              const url = filePath.includes('runtime')
-                                ? URL.createObjectURL(new Blob([ runtimeConfig ]))
-                                : URL.createObjectURL(new Blob([ submittedConfig as string ]));
+                      <DownloadOutlined
+                        className={css.noBorderButton}
+                        onClick={(e) => {
+                          const filePath = String(activeFile.key);
+                          if (filePath.includes('Configuration')) {
+                            const isRuntimeConf = filePath.includes('runtime');
+                            const url = isRuntimeConf
+                              ? URL.createObjectURL(new Blob([ runtimeConfig ]))
+                              : URL.createObjectURL(new Blob([ submittedConfig as string ]));
 
-                              handlePath(e, {
-                                external: true,
-                                path: url,
-                              });
-                            } else {
-                              handlePath(e, {
-                                external: true,
-                                path: paths.experimentFileFromTree(
-                                  experimentId,
-                                  String(activeFile.key),
-                                ),
-                              });
-                            }
-                          }}
-                        />
-                      )
+                            let timeout: NodeJS.Timeout;
+                            const anchor = document.createElement('a');
+                            const clickHandler = () => {
+                              timeout = setTimeout(() => {
+                                URL.revokeObjectURL(url);
+                              }, 300);
+                            };
+
+                            anchor.addEventListener('click', clickHandler, false);
+                            anchor.href = url;
+                            anchor.download = isRuntimeConf
+                              ? 'runtimeConfiguration.yaml' : 'generatedConfiguration.yaml';
+
+                            anchor.click();
+
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            clearTimeout(timeout!);
+
+                            anchor.remove();
+                          } else {
+                            handlePath(e, {
+                              external: true,
+                              path: paths.experimentFileFromTree(
+                                experimentId,
+                                String(activeFile.key),
+                              ),
+                            });
+                          }
+                        }}
+                      />
                     }
                   </Tooltip>
                 }
