@@ -32,6 +32,7 @@ const EditButton: React.FC<Props> = ({ saveCollection, filters, collectionName }
       <Modal
         title={`Edit Collection: ${collectionName}`}
         visible={isModalVisible}
+        width={'clamp(280px, 416px, calc(100vw - 16px))'}
         onCancel={onHideModal}
         onOk={onSubmit}>
         <React.Suspense
