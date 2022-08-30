@@ -1,0 +1,22 @@
+---
+name: "Link artifacts"
+
+on:
+  status
+
+jobs:
+  link-artifacts:
+    runs-on: ubuntu-latest
+    if: status.state == 'success'
+    steps:
+      # TODO(danh): remove this once we understand the incoming event webhook
+      # payload and can limit the conditional
+      - name: Debug
+        run:
+          echo ${{ toJSON(status) }}
+      - uses: larsoner/circleci-artifacts-redirector-action@master
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-path: 0/webui/react/build-storybook/index.html
+          circleci-jobs: build-storybook
+          job-title: Check the rendered storybook here!
