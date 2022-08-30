@@ -1,7 +1,7 @@
 import { ProjectOutlined } from '@ant-design/icons';
 import { Input, Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
@@ -25,28 +25,24 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   const [ workspaceMap, setWorkspaceMap ] = useState<Map<Workspace, Project[]>>(new Map());
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isModalVisible, setIsModalVisible ] = useState(false);
-  const canceler = useRef(new AbortController());
 
   const fetchData = useCallback(async () => {
     try {
-      const workspaceResponse = await getWorkspaces(
-        { limit: 0, sortBy: 'SORT_BY_NAME' },
-        { signal: canceler.current.signal },
-      );
+      const workspaceResponse = await getWorkspaces({ limit: 0, sortBy: 'SORT_BY_NAME' });
       const filteredWorkspaces = workspaceResponse.workspaces.filter((w) => !w.immutable);
-      const projectAPIList = filteredWorkspaces
-        .map((workspace) =>
-          getWorkspaceProjects(
-            { id: workspace.id, sortBy: 'SORT_BY_NAME' },
-            { signal: canceler.current.signal },
-          ));
-      const projectResponse = (await Promise.all(projectAPIList))
-        .map((project) => project.projects);
+      const projectResponse = await getWorkspaceProjects({ id: 0, sortBy: 'SORT_BY_NAME' });
 
-      // Promise.all preserves the order
+      const projectMap = new Map<number, Project[]>();
+      for (const project of projectResponse.projects) {
+        projectMap.set(
+          project.workspaceId,
+          [ ...projectMap.get(project.workspaceId) ?? [], project ],
+        );
+      }
+
       const tempWorkspaceMap: Map<Workspace, Project[]> = new Map();
       for (const workspace of filteredWorkspaces) {
-        const projects = projectResponse.shift();
+        const projects = projectMap.get(workspace.id);
         tempWorkspaceMap.set(workspace, projects ?? []);
       }
       setWorkspaceMap(tempWorkspaceMap);
@@ -106,8 +102,12 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
     const text = searchText.toLocaleLowerCase();
     const data: DefaultOptionType[] = Array.from(workspaceMap)
       .map(([ workspace, projects ]) => {
+        const isWorkspaceNameIncluded = workspace.name.toLocaleLowerCase().includes(text);
+        const children = getNodesForProject(projects, text);
         return ({
-          children: getNodesForProject(projects, text),
+          children: children,
+          isWorkspaceIncluded: searchText.length > 0 ?
+            (isWorkspaceNameIncluded || children.length > 0) : true,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
               <Icon name="workspaces" />
@@ -115,13 +115,9 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
             </div>
           ),
           value: `workspace-${workspace.id}`,
-          workspaceName: workspace.name,
         });
       })
-      .filter((item) => {
-        const isIncluded = item.workspaceName.toLocaleLowerCase().includes(text);
-        return searchText.length > 0 ? (isIncluded || item.children.length > 0) : true;
-      });
+      .filter((item) => item.isWorkspaceIncluded);
     return data;
   }, [ getNodesForProject, onClickWorkspace, searchText, workspaceMap ]);
 
@@ -130,7 +126,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       <div onClick={onShowModal}>{children}</div>
       <Modal
         closable={false}
-        destroyOnClose
         footer={null}
         title={(
           <Input
