@@ -7,7 +7,7 @@ on:
 jobs:
   link-artifacts:
     runs-on: ubuntu-latest
-    if: status.state == 'success'
+    if: github.event.state == 'success'
     steps:
       # TODO(danh): remove this once we understand the incoming event webhook
       # payload and can limit the conditional
