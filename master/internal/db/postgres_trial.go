@@ -263,9 +263,8 @@ func (db *PgDB) ensureStep(
 ) error {
 	var exists bool
 	if err := tx.QueryRowxContext(ctx, `
-SELECT EXISTS(
-	SELECT 1 FROM raw_steps WHERE trial_id = $1 AND total_batches = $2 AND archived IS NOT TRUE
-);`, trialID, stepsCompleted).Scan(&exists); err != nil {
+SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
+		trialID, stepsCompleted).Scan(&exists); err != nil {
 		return err
 	}
 	if exists {

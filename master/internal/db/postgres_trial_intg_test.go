@@ -76,7 +76,7 @@ func TestProtoGetTrial(t *testing.T) {
 // That assumption being that for each trial_id and total_batches that there
 // is at most one unarchived result.
 func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
