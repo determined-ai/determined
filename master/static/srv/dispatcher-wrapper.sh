@@ -32,72 +32,6 @@ DEBUG=0
 # options are not supported on Ubuntu which breaks the which use in the entrypoints.
 unset -f $(declare -Ffx | cut -f 3 -d ' ')
 
-# When the task container is invoked via SLURM, we have
-# to set the slot IDs from the Slurm-provided variable.
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
-    # One case for each device.Type in the Determined master source supported by slurm.
-    case $DET_SLOT_TYPE in
-        "cuda")
-            export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
-            export DET_UNIQUE_PORT_OFFSET=$(echo $CUDA_VISIBLE_DEVICES | cut -d',' -f1)
-            export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
-
-            if [ ! -z "$CUDA_VISIBLE_DEVICES" ]; then
-                # Test if "nvidia-smi" exists in the PATH before trying to invoking it.
-                if type nvidia-smi > /dev/null 2>&1 ; then
-                    # For Nvidia GPUS, the slot IDs are the device index. Replace the
-                    # newline characters with commas and enclose in square brackets.
-                    # But only include GPUS that are in the CUDA_VISIBLE_DEVICES=0,1,...
-                    VISIBLE_SLOTS="$(nvidia-smi --query-gpu=index --format=csv,noheader | sed -z 's/\n/,/g;s/,$/\n/')"
-                    for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do 
-                        if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
-                            echo "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
-                        fi 
-                    done
-        
-                else
-                    echo "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
-                fi
-            else
-                # If CUDA_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
-                # Determined agents deployment would, which should indicate to Determined to just use the
-                # CPU.
-                export DET_SLOT_IDS="[0]"
-            fi
-            ;;
-
-        "rocm")
-            export DET_SLOT_IDS="[${ROCR_VISIBLE_DEVICES}]"
-            export DET_UNIQUE_PORT_OFFSET=$(echo $ROCR_VISIBLE_DEVICES | cut -d',' -f1)
-            export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
-
-            if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
-                # Test if "rocm-smi" exists in the PATH before trying to invoking it.
-                if [ ! type rocm-smi > /dev/null 2>&1 ]; then
-                    echo "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
-                fi
-            else
-                # If ROCR_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
-                # Determined agents deployment would, which should indicate to Determined to just use the
-                # CPU.
-                export DET_SLOT_IDS="[0]"
-            fi
-            ;;
-
-        "cpu")
-            # For CPU only training, the "slot" we get is just the CPU, but it needs to be set.
-            export DET_SLOT_IDS="[0]"
-            export DET_UNIQUE_PORT_OFFSET=0
-            ;;
-
-        *)
-            echo "ERROR: unsupported slot type: ${DET_SLOT_TYPE}"
-            exit 1
-            ;;
-    esac
-fi
-
-
 # Debug log method
 # Args: {Level} {Message}...
 log() {
@@ -210,6 +144,87 @@ if  [ "$DET_CONTAINER_LOCAL_TMP" == "1" ]; then
     rm -rf /tmp
     ln -fs $PROCDIR/tmp /
     log "DEBUG: Replaced tmp $(ls -l /tmp)"
+fi
+
+# When the task container is invoked via SLURM, we have
+# to set the DET slot IDs from the Slurm-provided variable.
+if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
+    # One case for each device.Type in the Determined master source supported by slurm.
+    case $DET_SLOT_TYPE in
+        "cuda")
+            export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
+            export DET_UNIQUE_PORT_OFFSET=$(echo $CUDA_VISIBLE_DEVICES | cut -d',' -f1)
+            export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
+
+            if [ ! -z "$CUDA_VISIBLE_DEVICES" ]; then
+                # Test if "nvidia-smi" exists in the PATH before trying to invoking it.
+                if type nvidia-smi > /dev/null 2>&1 ; then
+                    # For Nvidia GPUS, the slot IDs are the device index. Replace the
+                    # newline characters with commas and enclose in square brackets.
+                    # But only include GPUS that are in the CUDA_VISIBLE_DEVICES=0,1,...
+                    VISIBLE_SLOTS="$(nvidia-smi --query-gpu=index --format=csv,noheader | sed -z 's/\n/,/g;s/,$/\n/')"
+                    for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do 
+                        if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
+                            echo "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
+                        fi 
+                    done
+        
+                else
+                    echo "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
+                fi
+            else
+                # If CUDA_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
+                # Determined agents deployment would, which should indicate to Determined to just use the
+                # CPU.
+                export DET_SLOT_IDS="[0]"
+            fi
+            ;;
+
+        "rocm")
+            export DET_SLOT_IDS="[${ROCR_VISIBLE_DEVICES}]"
+            export DET_UNIQUE_PORT_OFFSET=$(echo $ROCR_VISIBLE_DEVICES | cut -d',' -f1)
+            export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
+
+            # ROCm command rocm-smi is implemented as a python script.  With singularity --rocm
+            # the script from the host is mapped into the container.   If the host is a Redhat variant
+            # the python interpreter is referenced as /usr/libexec/platform-python  which is not available
+            # inside the Determined Unbuntu-based enviornment container, and therefore the command fails. This code
+            # detects this situation, creates a wrapper script for rocm-smi on the path that supplies the python3
+            # interpereter from within the container.   The script is created in /run/determined/pythonuserbase/bin
+            # which is added as the first element in the path in all the entrypoints scripts.
+            if [[ -x /usr/bin/rocm-smi ]]; then
+                if grep -s /usr/libexec/platform-python /usr/bin/rocm-smi; then
+                    mkdir -p /run/determined/pythonuserbase/bin/
+                    echo -e '#!/bin/bash\npython3 /usr/bin/rocm-smi $*' > /run/determined/pythonuserbase/bin/rocm-smi
+                    chmod +x /run/determined/pythonuserbase/bin/rocm-smi
+                    echo "INFO: Adding rocm-smi wrapper script /run/determined/pythonuserbase/bin/rocm-smi." 1>&2
+                fi
+            fi
+
+            if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
+                # Test if "rocm-smi" exists in the PATH before trying to invoking it.
+                if [ ! type rocm-smi > /dev/null 2>&1 ]; then
+                    echo "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
+                fi
+            else
+                # If ROCR_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
+                # Determined agents deployment would, which should indicate to Determined to just use the
+                # CPU.
+                export DET_SLOT_IDS="[0]"
+            fi
+            ;;
+
+        "cpu")
+            # For CPU only training, the "slot" we get is just the CPU, but it needs to be set.
+            export DET_SLOT_IDS="[0]"
+            export DET_UNIQUE_PORT_OFFSET=0
+            ;;
+
+        *)
+            echo "ERROR: unsupported slot type: ${DET_SLOT_TYPE}"
+            exit 1
+            ;;
+    esac
 fi
 
 
