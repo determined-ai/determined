@@ -95,8 +95,8 @@ func getBaseTaskLog(spec *cproto.Spec) model.TaskLog {
 func (c *containerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
 		if !c.reattached {
+			c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
 			taskLog := getBaseTaskLog(c.spec)
 			c.transition(ctx, cproto.Pulling)
 			pull := pullImage{
@@ -108,7 +108,13 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 			ctx.Tell(c.docker, pull)
 			c.baseTaskLog = taskLog
 		} else {
-			ctx.Tell(c.docker, reattachContainer{ID: c.Container.ID})
+			c.docker, _ = ctx.ActorOf(
+				"docker",
+				&dockerActor{
+					Client:              c.client,
+					reattachContainerID: &c.Container.ID,
+				})
+			ctx.Ask(c.docker, actor.Ping{}).Get()
 		}
 	case getContainerSummary:
 		ctx.Respond(c.Container)
