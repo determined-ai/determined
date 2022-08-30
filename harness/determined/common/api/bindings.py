@@ -1786,19 +1786,19 @@ class v1GetClusterPermissionsResponse:
     def __init__(
         self,
         *,
-        roles: "typing.Optional[v1ClusterRoles]" = None,
+        roles: "v1ClusterRoles",
     ):
         self.roles = roles
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetClusterPermissionsResponse":
         return cls(
-            roles=v1ClusterRoles.from_json(obj["roles"]) if obj.get("roles", None) is not None else None,
+            roles=v1ClusterRoles.from_json(obj["roles"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": self.roles.to_json() if self.roles is not None else None,
+            "roles": self.roles.to_json(),
         }
 
 class v1GetCommandResponse:
@@ -2506,8 +2506,8 @@ class v1GetPermissionsSummaryResponse:
     def __init__(
         self,
         *,
-        assignments: "typing.Optional[v1ClusterAssignments]" = None,
-        roles: "typing.Optional[v1ClusterRoles]" = None,
+        assignments: "v1ClusterAssignments",
+        roles: "v1ClusterRoles",
     ):
         self.roles = roles
         self.assignments = assignments
@@ -2515,14 +2515,14 @@ class v1GetPermissionsSummaryResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetPermissionsSummaryResponse":
         return cls(
-            roles=v1ClusterRoles.from_json(obj["roles"]) if obj.get("roles", None) is not None else None,
-            assignments=v1ClusterAssignments.from_json(obj["assignments"]) if obj.get("assignments", None) is not None else None,
+            roles=v1ClusterRoles.from_json(obj["roles"]),
+            assignments=v1ClusterAssignments.from_json(obj["assignments"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": self.roles.to_json() if self.roles is not None else None,
-            "assignments": self.assignments.to_json() if self.assignments is not None else None,
+            "roles": self.roles.to_json(),
+            "assignments": self.assignments.to_json(),
         }
 
 class v1GetProjectResponse:
@@ -2980,19 +2980,19 @@ class v1GetWorkspacePermissionsResponse:
     def __init__(
         self,
         *,
-        roles: "typing.Optional[v1ClusterRoles]" = None,
+        roles: "v1ClusterRoles",
     ):
         self.roles = roles
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetWorkspacePermissionsResponse":
         return cls(
-            roles=v1ClusterRoles.from_json(obj["roles"]) if obj.get("roles", None) is not None else None,
+            roles=v1ClusterRoles.from_json(obj["roles"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": self.roles.to_json() if self.roles is not None else None,
+            "roles": self.roles.to_json(),
         }
 
 class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):

@@ -42,7 +42,7 @@ message GetClusterPermissionsRequest {}
 // Response to GetClusterPermissionsRequest.
 message GetClusterPermissionsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "permissions" ] }
+    json_schema: { required: [ "roles" ] }
   };
 
   // A group of editor and viewer roles.
@@ -55,7 +55,7 @@ message GetPermissionsSummaryRequest {}
 // Response to GetPermissionsSummaryRequest.
 message GetPermissionsSummaryResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "permissions" ] }
+    json_schema: { required: [ "assignments", "roles" ] }
   };
 
   // Cluster-scoped editor and viewer roles.
@@ -77,7 +77,7 @@ message GetWorkspacePermissionsRequest {
 // Response to GetWorkspacePermissionsRequest.
 message GetWorkspacePermissionsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "permissions" ] }
+    json_schema: { required: [ "roles" ] }
   };
 
   // A group of editor and viewer roles.

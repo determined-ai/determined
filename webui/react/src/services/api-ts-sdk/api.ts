@@ -2331,7 +2331,7 @@ export interface V1GetClusterPermissionsResponse {
      * @type {V1ClusterRoles}
      * @memberof V1GetClusterPermissionsResponse
      */
-    roles?: V1ClusterRoles;
+    roles: V1ClusterRoles;
 }
 
 /**
@@ -3002,13 +3002,13 @@ export interface V1GetPermissionsSummaryResponse {
      * @type {V1ClusterRoles}
      * @memberof V1GetPermissionsSummaryResponse
      */
-    roles?: V1ClusterRoles;
+    roles: V1ClusterRoles;
     /**
      * More specific assignments of editor and viewer roles.
      * @type {V1ClusterAssignments}
      * @memberof V1GetPermissionsSummaryResponse
      */
-    assignments?: V1ClusterAssignments;
+    assignments: V1ClusterAssignments;
 }
 
 /**
@@ -3423,7 +3423,7 @@ export interface V1GetWorkspacePermissionsResponse {
      * @type {V1ClusterRoles}
      * @memberof V1GetWorkspacePermissionsResponse
      */
-    roles?: V1ClusterRoles;
+    roles: V1ClusterRoles;
 }
 
 /**
