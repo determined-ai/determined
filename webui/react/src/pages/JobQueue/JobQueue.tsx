@@ -201,6 +201,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
               col.title = 'Partition';
               col.dataIndex = 'resourcePool';
               break;
+            case Api.V1SchedulerType.PBS:
+              col.title = 'Queue';
+              col.dataIndex = 'resourcePool';
+              break;
             case Api.V1SchedulerType.PRIORITY:
             case Api.V1SchedulerType.KUBERNETES:
               col.title = 'Priority';
