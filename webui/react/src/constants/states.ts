@@ -94,6 +94,8 @@ export const V1SchedulerTypeToLabel : { [key in V1SchedulerType]: string } = {
   [V1SchedulerType.KUBERNETES]: 'Kubernetes',
   [V1SchedulerType.PRIORITY]: 'Priority',
   [V1SchedulerType.ROUNDROBIN]: 'RoundRobin',
+  [V1SchedulerType.SLURM]: 'Slurm',
+  [V1SchedulerType.PBS]: 'PBS',
   [V1SchedulerType.UNSPECIFIED]: 'Unspecified',
 };
 
