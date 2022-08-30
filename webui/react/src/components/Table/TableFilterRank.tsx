@@ -48,7 +48,7 @@ const TableFilterRange: React.FC<Props> = ({
   }, [ clearFilters, onReset ]);
 
   const handleApply = useCallback(() => {
-    if (column && sortDesc != null && rank)
+    if (column && sortDesc != null && rank != null)
       onSet?.(column, sortDesc, String(rank));
     confirm();
   }, [ confirm, onSet, column, sortDesc, rank ]);

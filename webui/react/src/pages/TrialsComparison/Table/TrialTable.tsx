@@ -492,7 +492,6 @@ const TrialTable: React.FC<Props> = ({
       settings={settings}
       showSorterTooltip={false}
       size="small"
-      sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       onRow={highlights.onRow}
     />
