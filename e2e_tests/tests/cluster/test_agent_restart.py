@@ -324,7 +324,7 @@ def test_queued_experiment_restarts_with_correct_allocation_id(
         conf.fixtures_path("no_op"),
         ["--config", "resources.slots_per_trial=9999"],
     )
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_ACTIVE)
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_QUEUED)
 
     managed_cluster_restarts.kill_master()
     log_marker = str(uuid.uuid4())
