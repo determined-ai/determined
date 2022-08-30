@@ -25,42 +25,35 @@ import useLearningCurveData from './Metrics/useLearningCurveData';
 import { trialsTableSettingsConfig } from './Table/settings';
 import { useFetchTrials } from './Trials/useFetchTrials';
 import css from './TrialsComparison.module.scss';
-const initData = [ [] ];
+
 interface Props {
   projectId: string;
 }
 
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
-
   const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
 
   const refetcher = useRef<() => void>();
 
-  const C = useTrialCollections(projectId, tableSettingsHook, refetcher);
+  const collections = useTrialCollections(projectId, tableSettingsHook, refetcher);
 
   const { settings: tableSettings } = tableSettingsHook;
 
   const { trials, refetch } = useFetchTrials({
-    filters: C.filters,
+    filters: collections.filters,
     limit: tableSettings.tableLimit,
     offset: tableSettings.tableOffset,
-    sorter: C.sorter,
+    sorter: collections.sorter,
   });
 
   useEffect(() => refetcher.current = refetch, [ refetch ]);
 
-  const A = useTrialActions({
-    filters: C.filters,
-    openCreateModal: C.openCreateModal,
+  const actions = useTrialActions({
+    filters: collections.filters,
+    openCreateModal: collections.openCreateModal,
     refetch,
-    sorter: C.sorter,
+    sorter: collections.sorter,
   });
-
-  // const reset = useRef(A.resetSelection);
-
-  // useEffect(() => { reset.current?.(); }, [ C.filters ]);
-
-  // console.log(yaml.dump(C.filters));
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);
 
@@ -68,7 +61,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const chartSeries = useLearningCurveData(trials.ids, trials.metrics, trials.maxBatch);
 
-  useSetDynamicTabBar(C.controls);
+  useSetDynamicTabBar(collections.controls);
 
   return (
     <Page className={css.base} containerRef={containerRef}>
@@ -86,12 +79,12 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
                 <SyncProvider>
                   {trials.metrics.map((metric) => (
                     <LearningCurveChart
-                      data={chartSeries?.metrics?.[metricToKey(metric)] ?? initData}
+                      data={chartSeries?.metrics?.[metricToKey(metric)] ?? [ [] ]}
                       focusedTrialId={highlights.id}
                       key={metricToKey(metric)}
                       selectedMetric={metric}
                       selectedScale={Scale.Linear}
-                      selectedTrialIds={A.selectedTrials}
+                      selectedTrialIds={actions.selectedTrials}
                       trialIds={trials.ids}
                       xValues={chartSeries?.batches ?? []}
                       onTrialFocus={highlights.focus}
@@ -101,10 +94,10 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
               </Grid>
             )}
           </div>
-          {A.dispatcher}
+          {actions.dispatcher}
           <TrialTable
-            actionsInterface={A}
-            collectionsInterface={C}
+            actionsInterface={actions}
+            collectionsInterface={collections}
             containerRef={containerRef}
             highlights={highlights}
             tableSettingsHook={tableSettingsHook}
@@ -112,8 +105,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
           />
         </div>
       </Section>
-      {A.modalContextHolder}
-      {C.modalContextHolder}
+      {actions.modalContextHolder}
+      {collections.modalContextHolder}
     </Page>
   );
 };

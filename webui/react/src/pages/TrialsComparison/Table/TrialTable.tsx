@@ -177,7 +177,7 @@ const TrialTable: React.FC<Props> = ({
   );
 
   const hpColumns = useMemo(() => Object
-    .keys(trials.hparams || {})
+    .keys(trials.hparams ?? {})
     // .filter((hp) => trials.hparams[hp]?.size > 1)
     .map((hp) => {
       const columnKey = `hparams.${hp}`;
@@ -230,7 +230,8 @@ const TrialTable: React.FC<Props> = ({
   }), [ filters.tags, setFilters ]);
 
   const trainingMetricColumns = useMemo(() => trials.metrics
-    .filter((metric) => metric.type = MetricType.Training).map((metric) => {
+    .filter((metric) => metric.type === MetricType.Training)
+    .map((metric) => {
       const columnKey = `trainingMetrics.${metric.name}`;
       return {
         defaultWidth: getWidthForField(metric.name),
@@ -252,7 +253,8 @@ const TrialTable: React.FC<Props> = ({
     }), [ filters, trials.metrics, setFilters ]);
 
   const validationMetricColumns = useMemo(() => trials.metrics
-    .filter((metric) => metric.type = MetricType.Validation).map((metric) => {
+    .filter((metric) => metric.type === MetricType.Validation)
+    .map((metric) => {
       const columnKey = `validationMetrics.${metric.name}`;
       return {
         defaultWidth: getWidthForField(metric.name),
@@ -430,7 +432,7 @@ const TrialTable: React.FC<Props> = ({
     startTimeColumn,
     endTimeColumn,
     ...hpColumns,
-    // ...trainingMetricColumns,
+    ...trainingMetricColumns,
     actionColumn,
   ].map((col) => ({ ...col, dataIndex: col.key })), [
     actionColumn,
@@ -439,7 +441,7 @@ const TrialTable: React.FC<Props> = ({
     expRankColumn,
     tagColumn,
     hpColumns,
-    // trainingMetricColumns,
+    trainingMetricColumns,
     validationMetricColumns,
     userColumn,
     totalBatchesColumn,
@@ -451,8 +453,6 @@ const TrialTable: React.FC<Props> = ({
     startTimeColumn,
     endTimeColumn,
   ]);
-
-  // console.log(validationMetricColumns);
 
   useEffect(() => {
     updateSettings({
