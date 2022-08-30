@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -30,27 +31,6 @@ var projectAuthZ *mocks.ProjectAuthZ
 
 func projectNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
-}
-
-var minExpConfig = expconf.ExperimentConfig{
-	RawResources: &expconf.ResourcesConfig{
-		RawResourcePool: ptrs.Ptr("kubernetes"),
-	},
-	RawEntrypoint: &expconf.EntrypointV0{"test"},
-	RawCheckpointStorage: &expconf.CheckpointStorageConfig{
-		RawSharedFSConfig: &expconf.SharedFSConfig{
-			RawHostPath: ptrs.Ptr("/"),
-		},
-	},
-	RawHyperparameters: expconf.Hyperparameters{},
-	RawName:            expconf.Name{ptrs.Ptr("name")},
-	RawReproducibility: &expconf.ReproducibilityConfig{ptrs.Ptr(uint32(42))},
-	RawSearcher: &expconf.SearcherConfig{
-		RawMetric: ptrs.Ptr("loss"),
-		RawSingleConfig: &expconf.SingleConfig{
-			&expconf.Length{Units: 10, Unit: "batches"},
-		},
-	},
 }
 
 func createTestExpWithProjectID(
@@ -63,7 +43,10 @@ func createTestExpWithProjectID(
 		ProjectID:            projectID,
 		StartTime:            time.Now(),
 		ModelDefinitionBytes: []byte{10, 11, 12},
-		Config:               minExpConfig,
+		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
+			RawDescription: ptrs.Ptr("12345"),
+			RawName:        expconf.Name{ptrs.Ptr("name")},
+		}).(expconf.ExperimentConfig),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp))
 
