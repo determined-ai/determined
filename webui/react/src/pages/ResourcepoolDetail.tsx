@@ -76,7 +76,6 @@ const ResourcepoolDetail: React.FC = () => {
       const [ stats ] = await Promise.all(promises);
       const pool = stats.results.find((p) => p.resourcePool === poolname);
       setPoolStats(pool);
-
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -88,11 +87,6 @@ const ResourcepoolDetail: React.FC = () => {
   }, [ canceler.signal, poolname ]);
 
   usePolling(fetchStats, { rerunOnNewFn: true });
-
-  useEffect(() => {
-    fetchStats();
-    return () => canceler.abort();
-  }, [ canceler, fetchStats ]);
 
   useEffect(() => {
     if (tab || !pool) return;
