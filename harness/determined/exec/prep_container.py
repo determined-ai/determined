@@ -13,7 +13,7 @@ import psutil
 import determined as det
 from determined import constants, gpu
 from determined.common import api, util
-from determined.common.api import bindings, certs, request
+from determined.common.api import authentication, bindings, certs, request
 from determined.util import force_create_symlink
 
 
@@ -21,10 +21,17 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
     trial_info = det.TrialInfo._from_env()
     trial_info._to_file()
 
+    auth = authentication.Authentication(
+        info.master_url,
+        util.get_det_username_from_env(),
+        None,
+        True,
+        cert,
+    )
     path = f"api/v1/experiments/{trial_info.experiment_id}/model_def"
     resp = None
     try:
-        resp = request.get(info.master_url, path=path, cert=cert)
+        resp = request.get(info.master_url, path=path, cert=cert, auth=auth)
         resp.raise_for_status()
     except Exception:
         # Since this is the very first api call in the entrypoint script, and the call is made

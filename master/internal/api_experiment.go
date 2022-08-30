@@ -907,7 +907,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 	sort.Slice(resp.Checkpoints, func(i, j int) bool {
 		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
-		if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC {
+		if useSearcherSortBy {
 			if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
 				return order
 			}
@@ -1863,8 +1863,10 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 func (a *apiServer) GetModelDef(
 	ctx context.Context, req *apiv1.GetModelDefRequest,
 ) (*apiv1.GetModelDefResponse, error) {
+	fmt.Println("REQUEST", ctx)
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanGetModelDef); err != nil {
+		fmt.Println("RETURNING AN ERROR HERE?")
 		return nil, err
 	}
 

@@ -717,54 +717,6 @@ func TestAuthZExpCompareTrialsSample(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
-/*
-func TestAuthZMoveExperiment(t *testing.T) {
-	// Setup.
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
-
-	_, projectID := createProjectAndWorkspace(ctx, t, api)
-	_, destProjectID := createProjectAndWorkspace(ctx, t, api)
-
-	exp := createTestExpWithProjectID(t, api, curUser, projectID)
-	req := &apiv1.MoveExperimentRequest{
-		ExperimentId:         int32(exp.ID),
-		DestinationProjectId: int32(destProjectID),
-	}
-
-	// Can't view experiment returns exp not found
-	authZExp.On("CanGetExperiment", curUser, exp).Return(false, nil).Once()
-	_, err := api.MoveExperiment(ctx, req)
-	require.Equal(t, expNotFoundErr(exp.ID), err)
-
-	// Can't view source project returns project not found.
-	authZExp.On("CanGetExperiment", curUser, exp).Return(true, nil).Once()
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
-	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(projectID), err)
-
-	// Can't view destination project returns project not found.
-	// Get project to be used for mock check.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
-	resp, err := api.GetProject(ctx, &apiv1.GetProjectRequest{Id: int32(int32(destProjectID))})
-	require.NoError(t, err)
-
-	authZExp.On("CanGetExperiment", curUser, exp).Return(true, nil).Once()
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
-	projectAuthZ.On("CanGetProject", curUser, resp.Project).Return(false, nil).Once()
-	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(destProjectID), err)
-
-	// Can't move project error returns PermissionDenied.
-	expectedErr := status.Errorf(codes.PermissionDenied, "canMoveExperimentError")
-	authZExp.On("CanGetExperiment", curUser, exp).Return(true, nil).Once()
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Twice()
-	authZExp.On("CanMoveExperiment", curUser, mock.Anything, mock.Anything, exp).
-		Return(fmt.Errorf("canMoveExperimentError")).Once()
-	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, expectedErr.Error(), err.Error())
-}
-*/
-
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
 	exp := createTestExp(t, api, curUser)
