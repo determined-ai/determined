@@ -1,5 +1,5 @@
 import { Skeleton, SkeletonProps } from 'antd';
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import Message, { Props as MessageProps, MessageType } from 'shared/components/Message';
 import { isObject, validateEnum } from 'shared/utils/data';
@@ -27,6 +27,7 @@ interface StyleProps {
 }
 
 interface Props extends StyleProps {
+  children: React.ReactNode;
   empty?: LoadingMessageProps;
   error?: LoadingMessageProps;
   loaded?: () => React.ReactNode;
@@ -58,7 +59,7 @@ const renderSkeleton = (props: LoadingSkeletonProps, styleProps: StyleProps) => 
   return <div className={classes.join(' ')}>{content}</div>;
 };
 
-const LoadingWrapper: React.FC<Props> = (props: PropsWithChildren<Props>) => {
+const LoadingWrapper: React.FC<Props> = (props: Props) => {
   const styleProps = useMemo(() => ({
     maxHeight: props.maxHeight,
     noPadding: props.noPadding,

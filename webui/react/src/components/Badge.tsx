@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import React, { CSSProperties, PropsWithChildren, useMemo } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
@@ -18,6 +18,7 @@ export enum BadgeType {
 }
 
 export interface BadgeProps {
+  children?: React.ReactNode;
   state?: StateOfUnion;
   tooltip?: string;
   type?: BadgeType;
@@ -28,7 +29,7 @@ const Badge: React.FC<BadgeProps> = ({
   tooltip,
   type = BadgeType.Default,
   ...props
-}: PropsWithChildren<BadgeProps>) => {
+}: BadgeProps) => {
   const { ui } = useStore();
 
   const { classes, style } = useMemo(() => {

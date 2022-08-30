@@ -1,11 +1,12 @@
 import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { PropsWithChildren, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
 
 interface Props {
+  children?: React.ReactNode;
   className?: string;
   direction?: 'vertical' | 'horizontal';
   onDelete?: () => void;
@@ -24,7 +25,7 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
   onDownload,
   onVisibleChange,
   trigger,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const handleDownloadClick = useCallback(() => onDownload?.(), [ onDownload ]);
 
   const handleDeleteClick = useCallback(() => onDelete?.(), [ onDelete ]);

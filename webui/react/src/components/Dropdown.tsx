@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import css from './Dropdown.module.scss';
 
@@ -18,6 +18,7 @@ export enum Placement {
 }
 
 interface Props {
+  children: React.ReactNode;
   content: React.ReactNode;
   disableAutoDismiss?: boolean;
   initVisible?: boolean;
@@ -35,7 +36,7 @@ const Dropdown: React.FC<Props> = ({
   placement = Placement.BottomLeft,
   showArrow = true,
   ...props
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const [ isVisible, setIsVisible ] = useState(initVisible);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);

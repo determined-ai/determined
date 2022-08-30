@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch
@@ -24,6 +24,7 @@ import {
 import { openCommand } from 'utils/wait';
 
 interface Props {
+  children?: React.ReactNode;
   curUser?: DetailedUser;
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
@@ -52,7 +53,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   curUser,
   onVisibleChange,
   children,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const id = experiment.id;
   const {
     contextHolder: modalExperimentMoveContextHolder,

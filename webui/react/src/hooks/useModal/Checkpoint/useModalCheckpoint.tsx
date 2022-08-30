@@ -24,6 +24,7 @@ import css from './useModalCheckpoint.module.scss';
 
 export interface Props {
   checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
+  children?: React.ReactNode;
   config: ExperimentConfig;
   onClose?: (reason?: ModalCloseReason) => void;
   searcherValidation?: number;
