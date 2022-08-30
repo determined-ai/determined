@@ -382,7 +382,7 @@ class Function:
         out = [f"def {self.method}_{self.name}("]
 
         # Function parameters.
-        out += ['    session: "client.Session",']
+        out += ['    session: "api.Session",']
         if self.params:
             out += ["    *,"]
 
@@ -665,7 +665,7 @@ import typing
 import requests
 
 if typing.TYPE_CHECKING:
-    from determined.experimental import client
+    from determined.common import api
 
 # flake8: noqa
 Json = typing.Any
