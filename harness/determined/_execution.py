@@ -1,13 +1,15 @@
 import contextlib
 import logging
+import math
 import os
 import pathlib
+import random
 import sys
+import uuid
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 import determined as det
 from determined import constants, core, gpu, load
-from determined.common import api
 
 
 class InvalidHP(Exception):
@@ -41,6 +43,75 @@ def _catch_sys_exit() -> Any:
             "This might be raised by directly calling or using a library calling sys.exit(). "
             "Please remove any calls to sys.exit() from your model code."
         ) from e
+
+
+def _generate_random_hparam_values(hparam_def: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_random_value(hparam: Any) -> Any:
+        if isinstance(hparam, Dict):
+            if "type" not in hparam:
+                # In this case we have a dictionary of nested hyperparameters.
+                return _generate_random_hparam_values(hparam)
+            elif hparam["type"] == "const":
+                return hparam["val"]
+            elif hparam["type"] == "int":
+                return random.randint(hparam["minval"], hparam["maxval"])
+            elif hparam["type"] == "double":
+                return random.uniform(hparam["minval"], hparam["maxval"])
+            elif hparam["type"] == "categorical":
+                return random.choice(hparam["vals"])
+            elif hparam["type"] == "log":
+                return math.pow(hparam["base"], random.uniform(hparam["minval"], hparam["maxval"]))
+            else:
+                raise Exception("Wrong type of hyperparameter: {}".format(hparam["type"]))
+        elif isinstance(hparam, (int, float, str, list, type(None))):
+            return hparam
+        else:
+            raise Exception("Wrong type of hyperparameter: {}".format(type(hparam)))
+
+    hparams = {name: generate_random_value(hparam_def[name]) for name in hparam_def}
+    return hparams
+
+
+def _make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Create a test experiment that based on a modified version of the
+    experiment config of the request and monitors its progress for success.
+    The test experiment is created as archived to be not user-visible by
+    default.
+
+    The experiment configuration is modified such that:
+    1. Only train one batch.
+    2. The experiment does not attempt restarts on failure.
+    3. All checkpoints are GC'd after experiment finishes.
+    """
+    config_test = config.copy()
+    config_test.update(
+        {
+            "description": "[test-mode] {}".format(
+                config_test.get("description", str(uuid.uuid4()))
+            ),
+            "scheduling_unit": 1,
+            "min_validation_period": {"batches": 1},
+            "checkpoint_storage": {
+                **config_test.get("checkpoint_storage", {}),
+                "save_experiment_best": 0,
+                "save_trial_best": 0,
+                "save_trial_latest": 0,
+            },
+            "searcher": {
+                "name": "single",
+                "metric": config_test["searcher"]["metric"],
+                "max_length": {"batches": 1},
+            },
+            "hyperparameters": _generate_random_hparam_values(
+                config_test.get("hyperparameters", {})
+            ),
+            "resources": config_test.get("resources", {"slots_per_trial": 1}),
+            "max_restarts": 0,
+        }
+    )
+
+    return config_test
 
 
 def _make_local_execution_exp_config(
@@ -100,7 +171,7 @@ def _make_local_execution_env(
             config, checkpoint_dir, managed_training=managed_training, test_mode=test_mode
         )
     )
-    hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
+    hparams = hparams or _generate_random_hparam_values(config.get("hyperparameters", {}))
     use_gpu, container_gpus, slot_ids = _get_gpus(limit_gpus)
 
     env = det.EnvContext(

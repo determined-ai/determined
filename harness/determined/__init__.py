@@ -11,6 +11,7 @@ from determined._trial_controller import (
 )
 from determined._execution import (
     _catch_sys_exit,
+    _make_test_experiment_config,
     _make_local_execution_env,
     _local_execution_manager,
     _load_trial_for_checkpoint_export,
