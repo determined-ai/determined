@@ -10,6 +10,10 @@ hyperparameters:
   dropout2: 0.5
 resources:
   slots_per_trial: 8
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-checkpoint
 searcher:
   name: single
   metric: validation_loss

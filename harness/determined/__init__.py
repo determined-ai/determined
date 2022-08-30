@@ -17,6 +17,7 @@ from determined._execution import (
     InvalidHP,
 )
 from determined import errors
+from determined import pytorch
 from determined import util
 
 # LOG_FORMAT is the standard format for use with the logging module, which is required for the

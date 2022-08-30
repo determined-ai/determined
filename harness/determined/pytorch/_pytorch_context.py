@@ -51,9 +51,18 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         det.TrialContext.__init__(self, *args, **kwargs)
         pytorch._PyTorchReducerContext.__init__(self, self.distributed.allgather)
+
+        self.cluster_info = det.get_cluster_info()
+        if self.cluster_info:
+            self.managed_training = True
+        else:
+            self.managed_training = False
+
+        self.experiment_config = self.cluster_info.trial._config
+
         self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
             self.get_hparams(),
-            self.env.experiment_config.slots_per_trial(),
+            self.experiment_config.get("slots_per_trial", 1),
             "PyTorchTrial",
         )
 
@@ -93,7 +102,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
-        optimizations_config = self.env.experiment_config.get_optimizations_config()
+        optimizations_config = self.experiment_config.get("optimizations")
         self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
         self._fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
         self._average_aggregated_gradients = cast(
@@ -170,7 +179,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
-        if self.env.managed_training:
+        if self.managed_training:
             check.false(self._use_apex, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
@@ -224,7 +233,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 return {"loss1": loss1, "loss2": loss2}
 
         """
-        if self.env.managed_training:
+        if self.managed_training:
             check.false(self._use_apex, "Must call wrap_optimizer() before configure_apex_amp.")
             check.gt_eq(
                 backward_passes_per_step,
@@ -325,7 +334,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         return [(name, p) for name, p in self._main_model.named_parameters() if p in opt_params]
 
     def _init_device(self) -> torch.device:
-        self.n_gpus = len(self.env.container_gpus)
+        self.n_gpus = self.cluster_info and len(self.cluster_info.gpu_uuids) or 0
         if self.distributed.size > 1:
             if self.n_gpus > 0:
                 # We launch a horovod process per GPU. Each process
@@ -456,7 +465,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             If  ``optimizers`` args were lists, the corresponding return value will
             also be a list.
         """
-        if not self.env.managed_training:
+        if not self.managed_training:
             return models, optimizers
 
         check.is_none(self._scaler, "Do not mix APEX with PyTorch AMP")
@@ -534,7 +543,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             yield
 
     def _should_communicate_and_update(self) -> bool:
-        if not self.env.managed_training:
+        if not self.managed_training:
             return True
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")

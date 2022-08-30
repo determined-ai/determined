@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import determined as det
 from determined import core
@@ -14,10 +14,12 @@ class TrialContext:
     def __init__(
         self,
         core_context: core.Context,
-        env: det.EnvContext,
+        env: Optional[det.EnvContext] = None,
+        hparams: Optional[Dict] = None,
     ) -> None:
         self._core = core_context
         self.env = env
+        self.hparams = hparams
 
         self.distributed = self._core.distributed
         self._stop_requested = False
@@ -96,13 +98,13 @@ class TrialContext:
         """
         Return a dictionary of hyperparameter names to values.
         """
-        return self.env.hparams
+        return self.env and self.env.hparams or self.hparams
 
     def get_hparam(self, name: str) -> Any:
         """
         Return the current value of the hyperparameter with the given name.
         """
-        if name not in self.env.hparams:
+        if name not in self.get_hparams():
             raise ValueError(
                 "Could not find name '{}' in experiment "
                 "hyperparameters. Please check your experiment "
@@ -114,7 +116,7 @@ class TrialContext:
                 "`context.get_global_batch_size()` instead of accessing "
                 "`global_batch_size` directly."
             )
-        return self.env.hparams[name]
+        return self.get_hparams()[name]
 
     def get_stop_requested(self) -> bool:
         """
