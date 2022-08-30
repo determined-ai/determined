@@ -6,8 +6,7 @@ WITH pe AS (
 w AS (
   SELECT archived
   FROM workspaces
-  WHERE CASE WHEN
-    $1 = 0 THEN id <> 0 ELSE id = $1 END
+  WHERE $1 = 0 OR id = $1
 )
 SELECT p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes,
   'WORKSPACE_STATE_' || p.state AS state, p.error_message,
@@ -18,8 +17,7 @@ SELECT p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes,
   u.username, p.user_id
 FROM pe, w, projects as p
   LEFT JOIN users as u ON u.id = p.user_id
-  WHERE CASE WHEN
-    $1 = 0 THEN p.workspace_id <> 0 ELSE p.workspace_id = $1 END
+  WHERE $1 = 0 OR p.workspace_id = $1
   AND ($2 = '' OR (u.username IN (SELECT unnest(string_to_array($2, ',')))))
   AND ($3 = '' OR p.name ILIKE $3)
   AND ($4 = '' OR p.archived = $4::BOOL)

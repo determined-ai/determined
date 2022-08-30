@@ -126,7 +126,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       <div onClick={onShowModal}>{children}</div>
       <Modal
         closable={false}
-        destroyOnClose
         footer={null}
         title={(
           <Input
