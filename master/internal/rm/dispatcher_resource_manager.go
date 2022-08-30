@@ -475,10 +475,18 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			partition = m.selectDefaultPartition(slotType)
 		}
 
+		tresSupported := m.config.TresSupported
+		gresSupported := m.config.GresSupported
+		if m.config.TresSupported && !m.config.GresSupported {
+			ctx.Log().Warnf("tres_supported: true cannot be used when " +
+				"gres_supported: false is specified. Use tres_supported: false instead.")
+			tresSupported = false
+		}
+
 		// Create the manifest that will be ultimately sent to the launcher.
 		manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
 			m.config.MasterHost, m.config.MasterPort, m.masterTLSConfig.CertificateName,
-			req.SlotsNeeded, slotType, partition, m.config.TresSupported,
+			req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
 			m.config.LauncherContainerRunType)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,

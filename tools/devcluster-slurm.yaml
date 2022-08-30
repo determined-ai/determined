@@ -78,6 +78,7 @@ stages:
           # allows us to use it is schedule GPUs more easily. For systems without this plugin, set
           # this to false and add contraints to ensure select node have GPUs if desired.
           tres_supported: $OPT_TRESSUPPORTED
+          gres_supported: $OPT_GRESSUPPORTED
           rendezvous_network_interface: $OPT_RENDEVOUSIFACE
           slot_type: $OPT_SLOTTYPE
           # Specify per-partition overrides for submitted tasks.

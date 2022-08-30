@@ -66,6 +66,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	slotType device.Type,
 	slurmPartition string,
 	tresSupported bool,
+	gresSupported bool,
 	containerRunType string,
 ) (*launcher.Manifest, string, string, error) {
 	/*
@@ -222,11 +223,13 @@ func (t *TaskSpec) ToDispatcherManifest(
 			"total": int32(numSlots),
 		})
 	}
-	// Set the required number of GPUs if the device type is CUDA (Nvidia) or ROCM (AMD).
-	if slotType == device.CUDA || slotType == device.ROCM {
-		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
-	} else {
+
+	if slotType == device.CPU {
 		resources.SetCores(map[string]float32{"total": float32(numSlots)})
+	} else if gresSupported {
+		// Set the required number of GPUs if the device type is CUDA (Nvidia) or ROCM (AMD),
+		// except when gresSupported==false then we can't use --gres:gpus neither.
+		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
 	}
 
 	payload.SetResourceRequirements(*resources)
