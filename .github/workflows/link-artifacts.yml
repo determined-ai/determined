@@ -13,7 +13,7 @@ jobs:
       # payload and can limit the conditional
       - name: Debug
         run:
-          echo ${{ toJSON(status) }}
+          echo ${{ toJSON(github.event) }}
       - uses: larsoner/circleci-artifacts-redirector-action@master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
