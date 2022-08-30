@@ -41,7 +41,7 @@ build/proto.stamp: $(source_files)
 	rm -rf build/proto pkg
 	mkdir -p build/proto
 	# Protobuf generation.
-	for source in $(source_files) ; do protoc -I src "$$source" --go_out=plugins=grpc:build/proto ; done
+	for source in $(source_files) ; do protoc -I src "$$source" --go_out=plugins=grpc:build/proto || exit 1; done
 	# GRPC generation.
 	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto --grpc-gateway_opt allow_delete_body=true
 	mv $(build_path) pkg
