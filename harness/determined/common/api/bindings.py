@@ -667,6 +667,25 @@ class v1AllocationRendezvousInfoResponse:
             "rendezvousInfo": self.rendezvousInfo.to_json(),
         }
 
+class v1AssignmentCollection:
+    def __init__(
+        self,
+        *,
+        workspaces: "typing.Sequence[int]",
+    ):
+        self.workspaces = workspaces
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AssignmentCollection":
+        return cls(
+            workspaces=obj["workspaces"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspaces": self.workspaces,
+        }
+
 class v1AwsCustomTag:
     def __init__(
         self,
@@ -817,6 +836,52 @@ class v1CheckpointWorkload:
             "resources": self.resources if self.resources is not None else None,
             "totalBatches": self.totalBatches,
             "metadata": self.metadata if self.metadata is not None else None,
+        }
+
+class v1ClusterAssignments:
+    def __init__(
+        self,
+        *,
+        editor: "v1AssignmentCollection",
+        viewer: "v1AssignmentCollection",
+    ):
+        self.editor = editor
+        self.viewer = viewer
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ClusterAssignments":
+        return cls(
+            editor=v1AssignmentCollection.from_json(obj["editor"]),
+            viewer=v1AssignmentCollection.from_json(obj["viewer"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "editor": self.editor.to_json(),
+            "viewer": self.viewer.to_json(),
+        }
+
+class v1ClusterRoles:
+    def __init__(
+        self,
+        *,
+        editor: "typing.Sequence[str]",
+        viewer: "typing.Sequence[str]",
+    ):
+        self.editor = editor
+        self.viewer = viewer
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ClusterRoles":
+        return cls(
+            editor=obj["editor"],
+            viewer=obj["viewer"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "editor": self.editor,
+            "viewer": self.viewer,
         }
 
 class v1Command:
@@ -1721,19 +1786,19 @@ class v1GetClusterPermissionsResponse:
     def __init__(
         self,
         *,
-        permissions: "typing.Sequence[str]",
+        roles: "typing.Optional[v1ClusterRoles]" = None,
     ):
-        self.permissions = permissions
+        self.roles = roles
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetClusterPermissionsResponse":
         return cls(
-            permissions=obj["permissions"],
+            roles=v1ClusterRoles.from_json(obj["roles"]) if obj.get("roles", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "permissions": self.permissions,
+            "roles": self.roles.to_json() if self.roles is not None else None,
         }
 
 class v1GetCommandResponse:
@@ -2437,6 +2502,29 @@ class v1GetNotebooksResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetPermissionsSummaryResponse:
+    def __init__(
+        self,
+        *,
+        assignments: "typing.Optional[v1ClusterAssignments]" = None,
+        roles: "typing.Optional[v1ClusterRoles]" = None,
+    ):
+        self.roles = roles
+        self.assignments = assignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetPermissionsSummaryResponse":
+        return cls(
+            roles=v1ClusterRoles.from_json(obj["roles"]) if obj.get("roles", None) is not None else None,
+            assignments=v1ClusterAssignments.from_json(obj["assignments"]) if obj.get("assignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roles": self.roles.to_json() if self.roles is not None else None,
+            "assignments": self.assignments.to_json() if self.assignments is not None else None,
+        }
+
 class v1GetProjectResponse:
     def __init__(
         self,
@@ -2892,19 +2980,19 @@ class v1GetWorkspacePermissionsResponse:
     def __init__(
         self,
         *,
-        permissions: "typing.Sequence[str]",
+        roles: "typing.Optional[v1ClusterRoles]" = None,
     ):
-        self.permissions = permissions
+        self.roles = roles
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetWorkspacePermissionsResponse":
         return cls(
-            permissions=obj["permissions"],
+            roles=v1ClusterRoles.from_json(obj["roles"]) if obj.get("roles", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "permissions": self.permissions,
+            "roles": self.roles.to_json() if self.roles is not None else None,
         }
 
 class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
@@ -8095,6 +8183,23 @@ def get_GetNotebooks(
     if _resp.status_code == 200:
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
+
+def get_GetPermissionsSummary(
+    session: "client.Session",
+) -> "v1GetPermissionsSummaryResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/permissions/summary",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetPermissionsSummaryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetPermissionsSummary", _resp)
 
 def get_GetProject(
     session: "api.Session",

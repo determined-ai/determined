@@ -1616,6 +1616,16 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // List all permissions for the current user in all parts of the cluster.
+  rpc GetPermissionsSummary(GetPermissionsSummaryRequest)
+      returns (GetPermissionsSummaryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/permissions/summary"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Permissions"
+    };
+  }
   // Get a group by id
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {
@@ -1625,7 +1635,6 @@ service Determined {
       tags: "Internal"
     };
   }
-
   // Search for groups with optional filters
   rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
     option (google.api.http) = {

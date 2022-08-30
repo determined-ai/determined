@@ -1122,6 +1122,20 @@ export interface V1ArchiveWorkspaceResponse {
 }
 
 /**
+ * Collection of assigned objects by ID.
+ * @export
+ * @interface V1AssignmentCollection
+ */
+export interface V1AssignmentCollection {
+    /**
+     * List of workspace IDs in the assignment.
+     * @type {Array<number>}
+     * @memberof V1AssignmentCollection
+     */
+    workspaces: Array<number>;
+}
+
+/**
  * 
  * @export
  * @interface V1AwsCustomTag
@@ -1297,6 +1311,46 @@ export interface V1CheckpointWorkload {
      * @memberof V1CheckpointWorkload
      */
     metadata?: any;
+}
+
+/**
+ * Workspace editor and viewer assignments.
+ * @export
+ * @interface V1ClusterAssignments
+ */
+export interface V1ClusterAssignments {
+    /**
+     * List of cluster-scope editing permissions.
+     * @type {V1AssignmentCollection}
+     * @memberof V1ClusterAssignments
+     */
+    editor: V1AssignmentCollection;
+    /**
+     * List of cluster-scope viewing permissions.
+     * @type {V1AssignmentCollection}
+     * @memberof V1ClusterAssignments
+     */
+    viewer: V1AssignmentCollection;
+}
+
+/**
+ * Cluster-scope editor and viewer permissions.
+ * @export
+ * @interface V1ClusterRoles
+ */
+export interface V1ClusterRoles {
+    /**
+     * List of cluster-scope editing permissions.
+     * @type {Array<string>}
+     * @memberof V1ClusterRoles
+     */
+    editor: Array<string>;
+    /**
+     * List of cluster-scope viewing permissions.
+     * @type {Array<string>}
+     * @memberof V1ClusterRoles
+     */
+    viewer: Array<string>;
 }
 
 /**
@@ -2273,11 +2327,11 @@ export interface V1GetCheckpointResponse {
  */
 export interface V1GetClusterPermissionsResponse {
     /**
-     * A list of permissions.
-     * @type {Array<string>}
+     * A group of editor and viewer roles.
+     * @type {V1ClusterRoles}
      * @memberof V1GetClusterPermissionsResponse
      */
-    permissions: Array<string>;
+    roles?: V1ClusterRoles;
 }
 
 /**
@@ -2938,6 +2992,26 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
+ * Response to GetPermissionsSummaryRequest.
+ * @export
+ * @interface V1GetPermissionsSummaryResponse
+ */
+export interface V1GetPermissionsSummaryResponse {
+    /**
+     * Cluster-scoped editor and viewer roles.
+     * @type {V1ClusterRoles}
+     * @memberof V1GetPermissionsSummaryResponse
+     */
+    roles?: V1ClusterRoles;
+    /**
+     * More specific assignments of editor and viewer roles.
+     * @type {V1ClusterAssignments}
+     * @memberof V1GetPermissionsSummaryResponse
+     */
+    assignments?: V1ClusterAssignments;
+}
+
+/**
  * Response to GetProjectRequest.
  * @export
  * @interface V1GetProjectResponse
@@ -3345,11 +3419,11 @@ export interface V1GetUsersResponse {
  */
 export interface V1GetWorkspacePermissionsResponse {
     /**
-     * A list of permissions.
-     * @type {Array<string>}
+     * A group of editor and viewer roles.
+     * @type {V1ClusterRoles}
      * @memberof V1GetWorkspacePermissionsResponse
      */
-    permissions: Array<string>;
+    roles?: V1ClusterRoles;
 }
 
 /**
@@ -18048,6 +18122,37 @@ export const PermissionsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary List all permissions for the current user in all parts of the cluster.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/permissions/summary`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List workspace-specific permissions for the current user.
          * @param {number} workspaceId The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -18112,6 +18217,24 @@ export const PermissionsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary List all permissions for the current user in all parts of the cluster.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
+            const localVarFetchArgs = PermissionsApiFetchParamCreator(configuration).getPermissionsSummary(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List workspace-specific permissions for the current user.
          * @param {number} workspaceId The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -18149,6 +18272,15 @@ export const PermissionsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary List all permissions for the current user in all parts of the cluster.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options?: any) {
+            return PermissionsApiFp(configuration).getPermissionsSummary(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List workspace-specific permissions for the current user.
          * @param {number} workspaceId The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -18176,6 +18308,17 @@ export class PermissionsApi extends BaseAPI {
      */
     public getClusterPermissions(options?: any) {
         return PermissionsApiFp(this.configuration).getClusterPermissions(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary List all permissions for the current user in all parts of the cluster.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PermissionsApi
+     */
+    public getPermissionsSummary(options?: any) {
+        return PermissionsApiFp(this.configuration).getPermissionsSummary(options)(this.fetch, this.basePath);
     }
 
     /**

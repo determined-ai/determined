@@ -5,6 +5,37 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Cluster-scope editor and viewer permissions.
+message ClusterRoles {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "editor", "viewer" ] }
+  };
+  // List of cluster-scope editing permissions.
+  repeated string editor = 1;
+  // List of cluster-scope viewing permissions.
+  repeated string viewer = 2;
+}
+
+// Collection of assigned objects by ID.
+message AssignmentCollection {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspaces" ] }
+  };
+  // List of workspace IDs in the assignment.
+  repeated int32 workspaces = 1;
+}
+
+// Workspace editor and viewer assignments.
+message ClusterAssignments {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "editor", "viewer" ] }
+  };
+  // List of cluster-scope editing permissions.
+  AssignmentCollection editor = 1;
+  // List of cluster-scope viewing permissions.
+  AssignmentCollection viewer = 2;
+}
+
 // List cluster-wide permissions for the current user.
 message GetClusterPermissionsRequest {}
 
@@ -14,8 +45,23 @@ message GetClusterPermissionsResponse {
     json_schema: { required: [ "permissions" ] }
   };
 
-  // A list of permissions.
-  repeated string permissions = 1;
+  // A group of editor and viewer roles.
+  ClusterRoles roles = 1;
+}
+
+// List all permissions for the current user in all parts of the cluster.
+message GetPermissionsSummaryRequest {}
+
+// Response to GetPermissionsSummaryRequest.
+message GetPermissionsSummaryResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "permissions" ] }
+  };
+
+  // Cluster-scoped editor and viewer roles.
+  ClusterRoles roles = 1;
+  // More specific assignments of editor and viewer roles.
+  ClusterAssignments assignments = 2;
 }
 
 // List workspace-specific permissions for the current user.
@@ -34,6 +80,6 @@ message GetWorkspacePermissionsResponse {
     json_schema: { required: [ "permissions" ] }
   };
 
-  // A list of permissions.
-  repeated string permissions = 1;
+  // A group of editor and viewer roles.
+  ClusterRoles roles = 1;
 }
