@@ -31,6 +31,7 @@ class Session:
         data: Optional[str],
         headers: Optional[Dict[str, Any]],
         timeout: Optional[int],
+        stream: bool,
     ) -> requests.Response:
         return request.do_request(
             method,
@@ -43,6 +44,7 @@ class Session:
             cert=self._cert,
             headers=headers,
             timeout=timeout,
+            stream=stream,
             max_retries=self._max_retries,
         )
 
@@ -52,8 +54,9 @@ class Session:
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
+        stream: bool = False,
     ) -> requests.Response:
-        return self._do_request("GET", path, params, None, None, headers, timeout)
+        return self._do_request("GET", path, params, None, None, headers, timeout, stream)
 
     def delete(
         self,
@@ -62,7 +65,7 @@ class Session:
         headers: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("DELETE", path, params, None, None, headers, timeout)
+        return self._do_request("DELETE", path, params, None, None, headers, timeout, False)
 
     def post(
         self,
@@ -73,7 +76,7 @@ class Session:
         headers: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("POST", path, params, json, data, headers, timeout)
+        return self._do_request("POST", path, params, json, data, headers, timeout, False)
 
     def patch(
         self,
@@ -84,7 +87,7 @@ class Session:
         headers: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("PATCH", path, params, json, data, headers, timeout)
+        return self._do_request("PATCH", path, params, json, data, headers, timeout, False)
 
     def put(
         self,
@@ -95,4 +98,4 @@ class Session:
         headers: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("PUT", path, params, json, data, headers, timeout)
+        return self._do_request("PUT", path, params, json, data, headers, timeout, False)
