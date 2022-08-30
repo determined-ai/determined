@@ -117,7 +117,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 // @Success 200 {} string ""
 //nolint:godot
 // @Router /experiments/{experiment_id}/file/download [get]
-func (m *Master) getExperimentModelFile(c echo.Context) error {
+func (m *Master) getCheckpointTGZ(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`
 		Path         string `query:"path"`

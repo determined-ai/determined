@@ -26,7 +26,7 @@ func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
 	var checkpoints []model.Checkpoint
 	if err := db.queryRows(`
-	SELECT * FROM checkpoints_view c WHERE c.uuid 
+	SELECT * FROM checkpoints_view c WHERE c.uuid
 	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
@@ -111,3 +111,15 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 
 	return groupeIDcUUIDS, nil
 }
+
+// ExperimentIDForCheckpoint looks up id of the experiment a checkpoint is from.
+func (db *PgDB) ExperimentIDForCheckpoint(id uuid.UUID) (int, error) {
+	var expID int
+	if err := db.queryRows(`
+	SELECT t.experiment_id FROM checkpoints_view c WHERE c.uuid = $1
+	JOIN trials t on t.task_id = c.task_id`, &expID, id); err != nil {
+		return expID, errors.Wrapf(
+			err, "getting experiment id for a checkpoint uuid (%v)", id.String()
+		)
+	}
+	return expID, nil

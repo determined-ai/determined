@@ -1015,6 +1015,11 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
+	checkpointsGroup := m.echo.Group("/checkpoints", authFuncs...)
+	// XXX: what does api.Route do?  Do I need it?
+	checkpointsGroup.GET("/:checkpoint_uuid/tgz", m.getCheckpointTgz)
+	checkpointsGroup.GET("/:checkpoint_uuid/zip", m.getCheckpointZip)
+
 	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
 
