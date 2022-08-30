@@ -462,15 +462,18 @@ func Test_encodeArchiveParameters(t *testing.T) {
 
 func Test_ToDispatcherManifest(t *testing.T) {
 	tests := []struct {
-		name             string
-		containerRunType string
-		slotType         device.Type
-		tresSupported    bool
-		Slurm            []string
-		wantCarrier0     string
-		wantCarrier1     string
-		wantErr          bool
-		errorContains    string
+		name                   string
+		containerRunType       string
+		slotType               device.Type
+		tresSupported          bool
+		gresSupported          bool
+		Slurm                  []string
+		wantCarrier0           string
+		wantCarrier1           string
+		wantResourcesInstances *map[string]int32
+		wantResourcesGpus      *map[string]int32
+		wantErr                bool
+		errorContains          string
 	}{
 		{
 			name:             "Test singularity",
@@ -489,6 +492,53 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			Slurm:            []string{},
 			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
 			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs",
+		},
+		{
+			name:             "Test TresSupported true",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			tresSupported:    true,
+			gresSupported:    true,
+			Slurm:            []string{},
+			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+			wantResourcesInstances: &map[string]int32{
+				"per-node": 1,
+			},
+			wantResourcesGpus: &map[string]int32{
+				"total": 16,
+			},
+		},
+		{
+			name:             "Test TresSupported false",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			tresSupported:    false,
+			gresSupported:    true,
+			Slurm:            []string{},
+			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+			wantResourcesInstances: &map[string]int32{
+				"nodes": 16,
+				"total": 16,
+			},
+			wantResourcesGpus: &map[string]int32{
+				"total": 16,
+			},
+		},
+		{
+			name:             "Test GresSupported false",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			tresSupported:    false,
+			gresSupported:    false,
+			Slurm:            []string{},
+			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+			wantResourcesInstances: &map[string]int32{
+				"nodes": 16,
+				"total": 16,
+			},
 		},
 		{
 			name:             "Test error case",
@@ -532,7 +582,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
 				"masterHost", 8888, "certName", 16, tt.slotType,
-				"slurm_partition1", tt.tresSupported, tt.containerRunType)
+				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType)
 
 			if tt.wantErr {
 				assert.ErrorContains(t, err, tt.errorContains)
@@ -564,6 +614,30 @@ func Test_ToDispatcherManifest(t *testing.T) {
 					assert.Assert(t, customs["ports"] != nil)
 				} else {
 					assert.Assert(t, customs["ports"] == nil)
+				}
+
+				resourceRequirements := payload.ResourceRequirements
+				instances := resourceRequirements.Instances
+				gpus := resourceRequirements.Gpus
+
+				if tt.wantResourcesInstances != nil {
+					assert.Assert(t, instances != nil)
+					assert.Assert(t, len(*instances) == len(*tt.wantResourcesInstances))
+					for k, v := range *instances {
+						assert.Assert(t, v == (*tt.wantResourcesInstances)[k])
+					}
+				}
+
+				if tt.wantResourcesGpus != nil {
+					assert.Assert(t, gpus != nil)
+					assert.Assert(t, len(*gpus) == len(*tt.wantResourcesGpus))
+					for k, v := range *gpus {
+						assert.Assert(t, v == (*tt.wantResourcesGpus)[k])
+					}
+				}
+
+				if tt.gresSupported == false {
+					assert.Assert(t, gpus == nil)
 				}
 			}
 		})
