@@ -11,7 +11,7 @@ import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
-export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created,
+export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created, 
 advise user to reset password as soon as possible.`;
 export const API_SUCCESS_MESSAGE_EDIT = 'User has been updated';
 export const DISPLAY_NAME_NAME = 'displayName';
@@ -118,7 +118,12 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
     openOrUpdate({
       closable: true,
       // passing a default brandind due to changes on the initial state
-      content: <ModalForm branding={info.branding || BrandingType.Determined} form={form} user={user} />,
+      content:
+  <ModalForm
+    branding={info.branding || BrandingType.Determined}
+    form={form}
+    user={user}
+  />,
       icon: null,
       okText: user ? 'Update' : 'Create User',
       onCancel: handleCancel,
