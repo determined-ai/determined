@@ -407,7 +407,6 @@ func (a *apiServer) GetExperiments(
 		return nil, err
 	}
 
-	var err error
 	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
@@ -859,10 +858,10 @@ func (a *apiServer) PatchExperiment(
 func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
-	// TODO!
-
+	experimentID := int(req.Id)
 	useSearcherSortBy := req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
-	exp, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), useSearcherSortBy)
+	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, useSearcherSortBy,
+		expauth.AuthZProvider.Get().CanGetExperimentsCheckpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -870,11 +869,6 @@ func (a *apiServer) GetExperimentCheckpoints(
 	// If SORT_BY_SEARCHER_METRIC is specified without an OrderBy
 	// default to ordering by "better" checkpoints.
 	if useSearcherSortBy && req.OrderBy == apiv1.OrderBy_ORDER_BY_UNSPECIFIED {
-		exp, err := a.m.db.ExperimentByID(int(req.Id))
-		if err != nil {
-			return nil, fmt.Errorf("scanning for experiment: %w", err)
-		}
-
 		if exp.Config.Searcher().SmallerIsBetter() {
 			req.OrderBy = apiv1.OrderBy_ORDER_BY_ASC
 		} else {
@@ -942,11 +936,6 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
-
-	if resp.Checkpoints, err = expauth.AuthZProvider.Get().
-		FilterCheckpoints(curUser, exp, resp.Checkpoints); err != nil {
-		return nil, err
-	}
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
@@ -1893,17 +1882,17 @@ func (a *apiServer) GetModelDef(
 func (a *apiServer) MoveExperiment(
 	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	e, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false)
+	// get experiment info
+	exp, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false)
 	if err != nil {
 		return nil, err
 	}
-	from, err := a.GetProjectByID(int32(e.ProjectID), curUser)
-	if err != nil {
-		return nil, err
+	if exp.Archived {
+		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
 	}
 
 	// check that user can view destination project
-	destProject, err := a.GetProjectByID(req.DestinationProjectId, *curUser)
+	destProject, err := a.GetProjectByID(req.DestinationProjectId, curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -1912,17 +1901,8 @@ func (a *apiServer) MoveExperiment(
 			req.DestinationProjectId)
 	}
 
-	// get experiment info
-	exp, err := a.getExperiment(int(req.ExperimentId))
-	if err != nil {
-		return nil, err
-	}
-	if exp.Archived {
-		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.Id)
-	}
-
 	// check that user can view source project
-	srcProject, err := a.GetProjectByID(exp.ProjectId, *curUser)
+	srcProject, err := a.GetProjectByID(int32(exp.ProjectID), curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -1931,7 +1911,7 @@ func (a *apiServer) MoveExperiment(
 			srcProject.Id)
 	}
 
-	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(*curUser, exp, srcProject,
+	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(curUser, exp, srcProject,
 		destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}

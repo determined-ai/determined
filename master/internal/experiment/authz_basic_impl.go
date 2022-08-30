@@ -6,7 +6,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
@@ -118,11 +117,11 @@ func (a *ExperimentAuthZBasic) CanSetExperimentsLabels(
 	return nil
 }
 
-// FilterCheckpoints returns the input list and a nil error.
-func (a *ExperimentAuthZBasic) FilterCheckpoints(
-	curUser model.User, e *model.Experiment, checkpoints []*checkpointv1.Checkpoint,
-) ([]*checkpointv1.Checkpoint, error) {
-	return checkpoints, nil
+// CanGetExperimentsCheckpoints always returns a nil error.
+func (a *ExperimentAuthZBasic) CanGetExperimentsCheckpoints(
+	curUser model.User, e *model.Experiment,
+) error {
+	return nil
 }
 
 // CanCreateExperiment always returns a nil error.

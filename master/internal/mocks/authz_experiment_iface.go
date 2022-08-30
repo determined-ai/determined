@@ -5,8 +5,6 @@ package mocks
 import (
 	bun "github.com/uptrace/bun"
 
-	checkpointv1 "github.com/determined-ai/determined/proto/pkg/checkpointv1"
-
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/determined-ai/determined/master/pkg/model"
@@ -154,6 +152,20 @@ func (_m *ExperimentAuthZ) CanGetExperiment(curUser model.User, e *model.Experim
 
 // CanGetExperimentValidationHistory provides a mock function with given fields: curUser, e
 func (_m *ExperimentAuthZ) CanGetExperimentValidationHistory(curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(curUser, e)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
+		r0 = rf(curUser, e)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanGetExperimentsCheckpoints provides a mock function with given fields: curUser, e
+func (_m *ExperimentAuthZ) CanGetExperimentsCheckpoints(curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(curUser, e)
 
 	var r0 error
@@ -472,29 +484,6 @@ func (_m *ExperimentAuthZ) CanUnarchiveExperiment(curUser model.User, e *model.E
 	}
 
 	return r0
-}
-
-// FilterCheckpoints provides a mock function with given fields: curUser, e, checkpoints
-func (_m *ExperimentAuthZ) FilterCheckpoints(curUser model.User, e *model.Experiment, checkpoints []*checkpointv1.Checkpoint) ([]*checkpointv1.Checkpoint, error) {
-	ret := _m.Called(curUser, e, checkpoints)
-
-	var r0 []*checkpointv1.Checkpoint
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, []*checkpointv1.Checkpoint) []*checkpointv1.Checkpoint); ok {
-		r0 = rf(curUser, e, checkpoints)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*checkpointv1.Checkpoint)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(model.User, *model.Experiment, []*checkpointv1.Checkpoint) error); ok {
-		r1 = rf(curUser, e, checkpoints)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // FilterExperimentLabelsQuery provides a mock function with given fields: curUser, proj, query

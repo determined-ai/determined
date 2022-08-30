@@ -36,7 +36,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
@@ -690,35 +689,6 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 }
 
-func TestAuthZGetExperimentCheckpoints(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
-
-	// Experiment can't view results in not found.
-	exp := createTestExp(t, api, curUser)
-	req := &apiv1.GetExperimentCheckpointsRequest{Id: int32(exp.ID)}
-
-	authZExp.On("CanGetExperiment", curUser, exp).Return(false, nil).Once()
-	_, err := api.GetExperimentCheckpoints(ctx, req)
-	require.Equal(t, expNotFoundErr(exp.ID), err)
-
-	// Get whatever checkpoints FilterCheckpoints returns.
-	checkpoints := []*checkpointv1.Checkpoint{{Uuid: "a"}, {Uuid: "b"}}
-	authZExp.On("CanGetExperiment", curUser, exp).Return(true, nil).Once()
-	authZExp.On("FilterCheckpoints", curUser, exp, mock.Anything).Return(checkpoints, nil).Once()
-	resp, err := api.GetExperimentCheckpoints(ctx, req)
-	require.NoError(t, err)
-	require.Equal(t, checkpoints, resp.Checkpoints)
-
-	// FilterCheckpoints error passes through.
-	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
-	expectedErr := fmt.Errorf("filterCheckpointError")
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("FilterCheckpoints", curUser, mock.Anything, mock.Anything).
-		Return(nil, expectedErr).Once()
-	_, err = api.GetExperimentCheckpoints(ctx, req)
-	require.Equal(t, expectedErr, err)
-}
-
 func TestAuthZExpCompareTrialsSample(t *testing.T) {
 	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
 
@@ -747,6 +717,7 @@ func TestAuthZExpCompareTrialsSample(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
+/*
 func TestAuthZMoveExperiment(t *testing.T) {
 	// Setup.
 	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
@@ -792,6 +763,7 @@ func TestAuthZMoveExperiment(t *testing.T) {
 	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
+*/
 
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
@@ -883,6 +855,12 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 					Id:     int32(id),
 					Labels: l,
 				},
+			})
+			return err
+		}},
+		{"CanGetExperimentsCheckpoints", func(id int) error {
+			_, err := api.GetExperimentCheckpoints(ctx, &apiv1.GetExperimentCheckpointsRequest{
+				Id: int32(id),
 			})
 			return err
 		}},

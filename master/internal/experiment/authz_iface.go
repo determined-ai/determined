@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
@@ -58,9 +57,7 @@ type ExperimentAuthZ interface {
 	CanSetExperimentsLabels(curUser model.User, e *model.Experiment) error
 
 	// GET /api/v1/experiments/:exp_id/checkpoints
-	FilterCheckpoints(
-		curUser model.User, e *model.Experiment, checkpoints []*checkpointv1.Checkpoint,
-	) ([]*checkpointv1.Checkpoint, error)
+	CanGetExperimentsCheckpoints(curUser model.User, e *model.Experiment) error
 
 	// POST /api/v1/experiments
 	CanCreateExperiment(curUser model.User, proj *projectv1.Project, e *model.Experiment) error
