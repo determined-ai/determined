@@ -360,23 +360,19 @@ func (a *apiServer) GetExperiments(
 	}
 
 	var err error
-	resp.Pagination, err = experimentsPagination(query, int(req.Offset), int(req.Limit))
+	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
 
-	// Bun bug? Still getting results when Limit == 0.
-	if resp.Pagination.EndIndex-resp.Pagination.StartIndex != 0 {
-		if err = query.Scan(ctx); err != nil {
-			return nil, err
-		}
-	}
 	return resp, nil
 }
 
-func experimentsPagination(query *bun.SelectQuery, offset, limit int) (*apiv1.Pagination, error) {
+func runPagedBunExperimentsQuery(
+	ctx context.Context, query *bun.SelectQuery, offset, limit int,
+) (*apiv1.Pagination, error) {
 	// Count number of items without any limits or offsets.
-	total, err := query.Count(context.TODO())
+	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -407,6 +403,14 @@ func experimentsPagination(query *bun.SelectQuery, offset, limit int) (*apiv1.Pa
 	// Add start and end index to query.
 	query.Offset(startIndex)
 	query.Limit(endIndex - startIndex)
+
+	// Bun bug treating limit=0 as no limit when it
+	// should be the exact opposite of no records returned.
+	if endIndex-startIndex != 0 {
+		if err = query.Scan(ctx); err != nil {
+			return nil, err
+		}
+	}
 
 	return &apiv1.Pagination{
 		Offset:     int32(offset),
