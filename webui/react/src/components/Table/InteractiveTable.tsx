@@ -26,7 +26,6 @@ import handleError from 'utils/error';
 
 import css from './InteractiveTable.module.scss';
 import SkeletonTable from './SkeletonTable';
-import { getFullPaginationConfig } from './Table';
 
 /*
  * This indicates that the cell contents are rightClickable
@@ -524,15 +523,6 @@ const InteractiveTable: InteractiveTable = ({
     [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
   );
 
-  const pagination = useMemo(
-    () =>
-      getFullPaginationConfig({
-        limit: settings.tableLimit,
-        offset: settings.tableOffset,
-      }, Number.MAX_SAFE_INTEGER),
-    [ settings.tableLimit, settings.tableOffset ],
-  );
-
   const components = {
     body: {
       cell: Cell,
@@ -554,7 +544,6 @@ const InteractiveTable: InteractiveTable = ({
                 columns={renderColumns as ColumnsType<any>}
                 components={components}
                 dataSource={dataSource}
-                pagination={pagination}
                 tableLayout="fixed"
                 onChange={handleChange}
                 onRow={(record, index) => ({

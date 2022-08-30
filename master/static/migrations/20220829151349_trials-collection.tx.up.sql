@@ -72,7 +72,7 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
   LEFT JOIN validations v ON t.id = v.trial_id AND v.id = t.best_validation_id
   LEFT JOIN steps s on t.id = s.trial_id AND v.total_batches = s.total_batches
   LEFT JOIN b on t.id = b.trial_id 
-  group by t.id
+  group by t.id;
   -- find other subquery way to do this??
 
 

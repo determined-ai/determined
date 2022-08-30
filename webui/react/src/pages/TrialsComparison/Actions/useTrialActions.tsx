@@ -1,6 +1,7 @@
-import React, { ReactNode, useCallback, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import TableBatch from 'components/Table/TableBatch';
+import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 import { encodeIdList } from '../api';
 import { TrialsCollectionSpec, TrialsSelection } from '../Collections/collections';
@@ -19,6 +20,7 @@ import {
 export interface TrialActionsInterface {
   dispatcher: ReactNode;
   modalContextHolder: React.ReactElement;
+  resetSelection: () => void;
   selectAllMatching: boolean;
   selectTrial: (ids: unknown) => void;
   selectedTrials: number[];
@@ -31,14 +33,37 @@ interface Props {
   sorter: TrialSorter;
 }
 
+// export const settingsConfig: SettingsConfig = {
+//   applicableRoutespace: '/trials',
+//   settings: [
+//     {
+//       defaultValue: [],
+//       key: 'ids',
+//       // skipUrlEncoding: true,
+//       storageKey: 'selectedTrialIds',
+//       type: { baseType: BaseType.Integer, isArray: true },
+//     },
+//   ],
+//   storagePath: 'trials-selection',
+// };
+
 const useTrialActions = ({
   filters,
   sorter,
   openCreateModal,
   refetch,
 }: Props): TrialActionsInterface => {
-  const [ selectedTrials, setSelectedTrials ] = useState<number[]>([]);
+  // const { settings, updateSettings } =
+  //   useSettings<{ ids: number[] }>(settingsConfig);
 
+  // const selectedTrials = useMemo(() => settings.ids ?? [], [ settings.ids ]);
+
+  // const setSelectedTrials = useCallback(
+  //   (ids: number[]) => updateSettings({ ids }),
+  //   [ updateSettings ],
+  // );
+
+  const [ selectedTrials, setSelectedTrials ] = useState<number[]>([]);
   const [ selectAllMatching, setSelectAllMatching ] = useState<boolean>(false);
   const handleChangeSelectionMode = useCallback(() => setSelectAllMatching((prev) => !prev), []);
 
@@ -96,6 +121,7 @@ const useTrialActions = ({
   return {
     dispatcher,
     modalContextHolder: contextHolder,
+    resetSelection: clearSelected,
     selectAllMatching,
     selectedTrials,
     selectTrial,

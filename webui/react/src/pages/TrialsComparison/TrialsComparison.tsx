@@ -56,6 +56,10 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     sorter: C.sorter,
   });
 
+  // const reset = useRef(A.resetSelection);
+
+  // useEffect(() => { reset.current?.(); }, [ C.filters ]);
+
   // console.log(yaml.dump(C.filters));
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);

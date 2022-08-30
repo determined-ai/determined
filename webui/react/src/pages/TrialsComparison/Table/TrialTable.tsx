@@ -418,19 +418,19 @@ const TrialTable: React.FC<Props> = ({
     idColumn,
     experimentIdColumn,
     expRankColumn,
+    searcherMetricColumn,
+    searcherLossColumn,
+    ...validationMetricColumns,
     tagColumn,
+    searcherTypeColumn,
     userColumn,
     totalBatchesColumn,
-    searcherLossColumn,
-    searcherMetricColumn,
-    searcherTypeColumn,
     experimentNameColumn,
     stateColumn,
     startTimeColumn,
     endTimeColumn,
     ...hpColumns,
     // ...trainingMetricColumns,
-    ...validationMetricColumns,
     actionColumn,
   ].map((col) => ({ ...col, dataIndex: col.key })), [
     actionColumn,
@@ -464,20 +464,21 @@ const TrialTable: React.FC<Props> = ({
   const pagination = useMemo(() => {
     const limit = settings.tableLimit;
     const offset = settings.tableOffset;
-    // display 2 additional pages beyond the current
-    // counting total is expensive
-    const fakeTotal = offset + 2 * limit + 1;
+    // we fetched 3 * params.limit to be able to see ahead like this
+    // also has bonus side effect of giving us a better hit rate
+    // for the relevant dynamic columns
+    const fakeTotal = offset + trials.data.length;
     return getFullPaginationConfig({
       limit,
       offset,
     }, fakeTotal);
-  }, [ settings.tableLimit, settings.tableOffset ]);
+  }, [ settings.tableLimit, settings.tableOffset, trials.data.length ]);
 
   return (
     <InteractiveTable<V1AugmentedTrial>
       columns={columns}
       containerRef={containerRef}
-      dataSource={trials.data}
+      dataSource={trials.data.slice(0, settings.tableLimit)}
       pagination={pagination}
       rowClassName={highlights.rowClassName}
       rowKey="trialId"
