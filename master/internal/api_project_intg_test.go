@@ -68,6 +68,27 @@ func SetupProjectAuthZTest(
 	return api, projectAuthZ, workspaceAuthZ, curUser, ctx
 }
 
+func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {
+	if workspaceAuthZ != nil {
+		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	}
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	if workspaceAuthZ != nil {
+		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	}
+	if projectAuthZ != nil {
+		projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
+	}
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: uuid.New().String(), WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	return int(wresp.Workspace.Id), int(resp.Project.Id)
+}
+
 func TestAuthZCanCreateProject(t *testing.T) {
 	api, projectAuthZ, workspaceAuthZ, _, ctx := SetupProjectAuthZTest(t)
 
@@ -228,7 +249,7 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 }
 
 func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
-	api, projectAuthZ, workspaceAuthZ, _, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, _, _, ctx := SetupProjectAuthZTest(t)
 
 	cases := []struct {
 		DenyFuncName string
@@ -283,21 +304,10 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 	}
 
 	for _, curCase := range cases {
-		// Create a project and workspace.
-		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
-		wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
-		require.NoError(t, werr)
-
-		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
-		projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
-		resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
-			Name: uuid.New().String(), WorkspaceId: wresp.Workspace.Id,
-		})
-		require.NoError(t, err)
-		projectID := int(resp.Project.Id)
+		_, projectID := createProjectAndWorkspace(ctx, t, api)
 
 		// Project not found.
-		err = curCase.IDToReqCall(-9999)
+		err := curCase.IDToReqCall(-9999)
 		require.Equal(t, projectNotFoundErr(-9999).Error(), err.Error())
 
 		// Project can't be viewed.
