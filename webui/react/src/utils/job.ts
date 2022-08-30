@@ -7,7 +7,8 @@ import handleError from 'utils/error';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.
-export const unsupportedQPosSchedulers = new Set([Api.V1SchedulerType.FAIRSHARE, Api.V1SchedulerType.PBS, Api.V1SchedulerType.SLURM]);
+export const unsupportedQPosSchedulers = new Set([
+  Api.V1SchedulerType.FAIRSHARE, Api.V1SchedulerType.PBS, Api.V1SchedulerType.SLURM]);
 
 export const jobTypeIconName = (jobType: JobType): string => {
   const type = jobTypeToCommandType(jobType);
