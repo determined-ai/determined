@@ -28,7 +28,7 @@ export interface TrialsCollectionInterface {
   modalContextHolder: React.ReactElement;
   openCreateModal: (p: CollectionModalProps) => void;
   resetFilters: () => void;
-  saveCollection: () => Promise<void>;
+  saveCollection: (name: string) => Promise<void>;
   setCollection: (name: string) => void;
   setFilters: SetFilters;
   setNewCollection: (c: TrialsCollection) => Promise<void>;
@@ -141,12 +141,31 @@ export const useTrialCollections = (
     fetchCollections();
   }, [ fetchCollections ]);
 
-  const saveCollection = useCallback(async () => {
-    const _collection = collections.find((c) => c.name === settings?.collection);
-    const newCollection = { ..._collection, filters, sorter } as TrialsCollection;
-    await patchTrialsCollection(encodeTrialsCollection(newCollection));
-    fetchCollections();
-  }, [ collections, filters, settings?.collection, sorter, fetchCollections ]);
+  const saveCollection = useCallback(async (name: string) => {
+    try {
+      const _collection = collections.find((c) => c.name === settings?.collection);
+      const newCollection = { ..._collection, filters, name, sorter } as TrialsCollection;
+      await patchTrialsCollection(encodeTrialsCollection(newCollection));
+      fetchCollections();
+      updateSettings({ collection: name }, true);
+      setCollection(name);
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to save collection.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [
+    collections,
+    filters,
+    sorter,
+    fetchCollections,
+    updateSettings,
+    setCollection,
+    settings?.collection,
+  ]);
 
   const deleteCollection = useCallback(async () => {
     const _collection = collections.find((c) => c.name === settings?.collection);
