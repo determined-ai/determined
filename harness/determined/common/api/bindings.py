@@ -6,7 +6,7 @@ import typing
 import requests
 
 if typing.TYPE_CHECKING:
-    from determined.experimental import client
+    from determined.common import api
 
 # flake8: noqa
 Json = typing.Any
@@ -6425,7 +6425,7 @@ class v1WorkspaceState(enum.Enum):
     WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
 def post_AckAllocationPreemptionSignal(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AckAllocationPreemptionSignalRequest",
@@ -6445,7 +6445,7 @@ def post_AckAllocationPreemptionSignal(
     raise APIHttpError("post_AckAllocationPreemptionSignal", _resp)
 
 def post_ActivateExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6464,7 +6464,7 @@ def post_ActivateExperiment(
     raise APIHttpError("post_ActivateExperiment", _resp)
 
 def post_AddProjectNote(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1Note",
     projectId: int,
@@ -6484,7 +6484,7 @@ def post_AddProjectNote(
     raise APIHttpError("post_AddProjectNote", _resp)
 
 def post_AllocationAllGather(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AllocationAllGatherRequest",
@@ -6504,7 +6504,7 @@ def post_AllocationAllGather(
     raise APIHttpError("post_AllocationAllGather", _resp)
 
 def post_AllocationPendingPreemptionSignal(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AllocationPendingPreemptionSignalRequest",
@@ -6524,7 +6524,7 @@ def post_AllocationPendingPreemptionSignal(
     raise APIHttpError("post_AllocationPendingPreemptionSignal", _resp)
 
 def get_AllocationPreemptionSignal(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     timeoutSeconds: "typing.Optional[int]" = None,
@@ -6546,7 +6546,7 @@ def get_AllocationPreemptionSignal(
     raise APIHttpError("get_AllocationPreemptionSignal", _resp)
 
 def post_AllocationReady(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AllocationReadyRequest",
@@ -6566,7 +6566,7 @@ def post_AllocationReady(
     raise APIHttpError("post_AllocationReady", _resp)
 
 def get_AllocationRendezvousInfo(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     resourcesId: str,
@@ -6586,7 +6586,7 @@ def get_AllocationRendezvousInfo(
     raise APIHttpError("get_AllocationRendezvousInfo", _resp)
 
 def post_ArchiveExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6605,7 +6605,7 @@ def post_ArchiveExperiment(
     raise APIHttpError("post_ArchiveExperiment", _resp)
 
 def post_ArchiveModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> None:
@@ -6624,7 +6624,7 @@ def post_ArchiveModel(
     raise APIHttpError("post_ArchiveModel", _resp)
 
 def post_ArchiveProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6643,7 +6643,7 @@ def post_ArchiveProject(
     raise APIHttpError("post_ArchiveProject", _resp)
 
 def post_ArchiveWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6662,7 +6662,7 @@ def post_ArchiveWorkspace(
     raise APIHttpError("post_ArchiveWorkspace", _resp)
 
 def post_CancelExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6681,7 +6681,7 @@ def post_CancelExperiment(
     raise APIHttpError("post_CancelExperiment", _resp)
 
 def get_CompareTrials(
-    session: "client.Session",
+    session: "api.Session",
     *,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
@@ -6714,7 +6714,7 @@ def get_CompareTrials(
     raise APIHttpError("get_CompareTrials", _resp)
 
 def post_CompleteTrialSearcherValidation(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1CompleteValidateAfterOperation",
     trialId: int,
@@ -6734,7 +6734,7 @@ def post_CompleteTrialSearcherValidation(
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
 
 def post_ComputeHPImportance(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> None:
@@ -6753,7 +6753,7 @@ def post_ComputeHPImportance(
     raise APIHttpError("post_ComputeHPImportance", _resp)
 
 def post_CreateExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1CreateExperimentRequest",
 ) -> "v1CreateExperimentResponse":
@@ -6772,7 +6772,7 @@ def post_CreateExperiment(
     raise APIHttpError("post_CreateExperiment", _resp)
 
 def get_CurrentUser(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1CurrentUserResponse":
     _params = None
     _resp = session._do_request(
@@ -6789,7 +6789,7 @@ def get_CurrentUser(
     raise APIHttpError("get_CurrentUser", _resp)
 
 def delete_DeleteCheckpoints(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1DeleteCheckpointsRequest",
 ) -> None:
@@ -6808,7 +6808,7 @@ def delete_DeleteCheckpoints(
     raise APIHttpError("delete_DeleteCheckpoints", _resp)
 
 def delete_DeleteExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> None:
@@ -6827,7 +6827,7 @@ def delete_DeleteExperiment(
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
 def delete_DeleteModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> None:
@@ -6846,7 +6846,7 @@ def delete_DeleteModel(
     raise APIHttpError("delete_DeleteModel", _resp)
 
 def delete_DeleteModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
     modelVersionId: int,
@@ -6866,7 +6866,7 @@ def delete_DeleteModelVersion(
     raise APIHttpError("delete_DeleteModelVersion", _resp)
 
 def delete_DeleteProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1DeleteProjectResponse":
@@ -6885,7 +6885,7 @@ def delete_DeleteProject(
     raise APIHttpError("delete_DeleteProject", _resp)
 
 def delete_DeleteTemplate(
-    session: "client.Session",
+    session: "api.Session",
     *,
     templateName: str,
 ) -> None:
@@ -6904,7 +6904,7 @@ def delete_DeleteTemplate(
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
 def delete_DeleteWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1DeleteWorkspaceResponse":
@@ -6923,7 +6923,7 @@ def delete_DeleteWorkspace(
     raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     body: "v1DisableAgentRequest",
@@ -6943,7 +6943,7 @@ def post_DisableAgent(
     raise APIHttpError("post_DisableAgent", _resp)
 
 def post_DisableSlot(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     slotId: str,
@@ -6963,7 +6963,7 @@ def post_DisableSlot(
     raise APIHttpError("post_DisableSlot", _resp)
 
 def post_EnableAgent(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
 ) -> "v1EnableAgentResponse":
@@ -6982,7 +6982,7 @@ def post_EnableAgent(
     raise APIHttpError("post_EnableAgent", _resp)
 
 def post_EnableSlot(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     slotId: str,
@@ -7002,7 +7002,7 @@ def post_EnableSlot(
     raise APIHttpError("post_EnableSlot", _resp)
 
 def get_GetActiveTasksCount(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetActiveTasksCountResponse":
     _params = None
     _resp = session._do_request(
@@ -7019,7 +7019,7 @@ def get_GetActiveTasksCount(
     raise APIHttpError("get_GetActiveTasksCount", _resp)
 
 def get_GetAgent(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
 ) -> "v1GetAgentResponse":
@@ -7038,7 +7038,7 @@ def get_GetAgent(
     raise APIHttpError("get_GetAgent", _resp)
 
 def get_GetAgents(
-    session: "client.Session",
+    session: "api.Session",
     *,
     label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
@@ -7067,7 +7067,7 @@ def get_GetAgents(
     raise APIHttpError("get_GetAgents", _resp)
 
 def get_GetBestSearcherValidationMetric(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetBestSearcherValidationMetricResponse":
@@ -7086,7 +7086,7 @@ def get_GetBestSearcherValidationMetric(
     raise APIHttpError("get_GetBestSearcherValidationMetric", _resp)
 
 def get_GetCheckpoint(
-    session: "client.Session",
+    session: "api.Session",
     *,
     checkpointUuid: str,
 ) -> "v1GetCheckpointResponse":
@@ -7105,7 +7105,7 @@ def get_GetCheckpoint(
     raise APIHttpError("get_GetCheckpoint", _resp)
 
 def get_GetCommand(
-    session: "client.Session",
+    session: "api.Session",
     *,
     commandId: str,
 ) -> "v1GetCommandResponse":
@@ -7124,7 +7124,7 @@ def get_GetCommand(
     raise APIHttpError("get_GetCommand", _resp)
 
 def get_GetCommands(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7155,7 +7155,7 @@ def get_GetCommands(
     raise APIHttpError("get_GetCommands", _resp)
 
 def get_GetCurrentTrialSearcherOperation(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
 ) -> "v1GetCurrentTrialSearcherOperationResponse":
@@ -7174,7 +7174,7 @@ def get_GetCurrentTrialSearcherOperation(
     raise APIHttpError("get_GetCurrentTrialSearcherOperation", _resp)
 
 def get_GetExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetExperimentResponse":
@@ -7193,7 +7193,7 @@ def get_GetExperiment(
     raise APIHttpError("get_GetExperiment", _resp)
 
 def get_GetExperimentCheckpoints(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
     limit: "typing.Optional[int]" = None,
@@ -7223,7 +7223,7 @@ def get_GetExperimentCheckpoints(
     raise APIHttpError("get_GetExperimentCheckpoints", _resp)
 
 def get_GetExperimentLabels(
-    session: "client.Session",
+    session: "api.Session",
     *,
     projectId: "typing.Optional[int]" = None,
 ) -> "v1GetExperimentLabelsResponse":
@@ -7244,7 +7244,7 @@ def get_GetExperimentLabels(
     raise APIHttpError("get_GetExperimentLabels", _resp)
 
 def get_GetExperimentTrials(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
     limit: "typing.Optional[int]" = None,
@@ -7274,7 +7274,7 @@ def get_GetExperimentTrials(
     raise APIHttpError("get_GetExperimentTrials", _resp)
 
 def get_GetExperimentValidationHistory(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetExperimentValidationHistoryResponse":
@@ -7293,7 +7293,7 @@ def get_GetExperimentValidationHistory(
     raise APIHttpError("get_GetExperimentValidationHistory", _resp)
 
 def get_GetExperiments(
-    session: "client.Session",
+    session: "api.Session",
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
@@ -7336,7 +7336,7 @@ def get_GetExperiments(
     raise APIHttpError("get_GetExperiments", _resp)
 
 def get_GetJobQueueStats(
-    session: "client.Session",
+    session: "api.Session",
     *,
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetJobQueueStatsResponse":
@@ -7357,7 +7357,7 @@ def get_GetJobQueueStats(
     raise APIHttpError("get_GetJobQueueStats", _resp)
 
 def get_GetJobs(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7386,7 +7386,7 @@ def get_GetJobs(
     raise APIHttpError("get_GetJobs", _resp)
 
 def get_GetMaster(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetMasterResponse":
     _params = None
     _resp = session._do_request(
@@ -7403,7 +7403,7 @@ def get_GetMaster(
     raise APIHttpError("get_GetMaster", _resp)
 
 def get_GetMasterConfig(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetMasterConfigResponse":
     _params = None
     _resp = session._do_request(
@@ -7420,7 +7420,7 @@ def get_GetMasterConfig(
     raise APIHttpError("get_GetMasterConfig", _resp)
 
 def get_GetModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> "v1GetModelResponse":
@@ -7439,7 +7439,7 @@ def get_GetModel(
     raise APIHttpError("get_GetModel", _resp)
 
 def get_GetModelDef(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetModelDefResponse":
@@ -7458,7 +7458,7 @@ def get_GetModelDef(
     raise APIHttpError("get_GetModelDef", _resp)
 
 def post_GetModelDefFile(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1GetModelDefFileRequest",
     experimentId: int,
@@ -7478,7 +7478,7 @@ def post_GetModelDefFile(
     raise APIHttpError("post_GetModelDefFile", _resp)
 
 def get_GetModelDefTree(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetModelDefTreeResponse":
@@ -7497,7 +7497,7 @@ def get_GetModelDefTree(
     raise APIHttpError("get_GetModelDefTree", _resp)
 
 def get_GetModelLabels(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetModelLabelsResponse":
     _params = None
     _resp = session._do_request(
@@ -7514,7 +7514,7 @@ def get_GetModelLabels(
     raise APIHttpError("get_GetModelLabels", _resp)
 
 def get_GetModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
     modelVersion: int,
@@ -7534,7 +7534,7 @@ def get_GetModelVersion(
     raise APIHttpError("get_GetModelVersion", _resp)
 
 def get_GetModelVersions(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
     limit: "typing.Optional[int]" = None,
@@ -7562,7 +7562,7 @@ def get_GetModelVersions(
     raise APIHttpError("get_GetModelVersions", _resp)
 
 def get_GetModels(
-    session: "client.Session",
+    session: "api.Session",
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
@@ -7603,7 +7603,7 @@ def get_GetModels(
     raise APIHttpError("get_GetModels", _resp)
 
 def get_GetNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     notebookId: str,
 ) -> "v1GetNotebookResponse":
@@ -7622,7 +7622,7 @@ def get_GetNotebook(
     raise APIHttpError("get_GetNotebook", _resp)
 
 def get_GetNotebooks(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7653,7 +7653,7 @@ def get_GetNotebooks(
     raise APIHttpError("get_GetNotebooks", _resp)
 
 def get_GetProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1GetProjectResponse":
@@ -7672,7 +7672,7 @@ def get_GetProject(
     raise APIHttpError("get_GetProject", _resp)
 
 def get_GetResourcePools(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7695,7 +7695,7 @@ def get_GetResourcePools(
     raise APIHttpError("get_GetResourcePools", _resp)
 
 def get_GetShell(
-    session: "client.Session",
+    session: "api.Session",
     *,
     shellId: str,
 ) -> "v1GetShellResponse":
@@ -7714,7 +7714,7 @@ def get_GetShell(
     raise APIHttpError("get_GetShell", _resp)
 
 def get_GetShells(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7745,7 +7745,7 @@ def get_GetShells(
     raise APIHttpError("get_GetShells", _resp)
 
 def get_GetSlot(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     slotId: str,
@@ -7765,7 +7765,7 @@ def get_GetSlot(
     raise APIHttpError("get_GetSlot", _resp)
 
 def get_GetSlots(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
 ) -> "v1GetSlotsResponse":
@@ -7784,7 +7784,7 @@ def get_GetSlots(
     raise APIHttpError("get_GetSlots", _resp)
 
 def get_GetTask(
-    session: "client.Session",
+    session: "api.Session",
     *,
     taskId: str,
 ) -> "v1GetTaskResponse":
@@ -7803,7 +7803,7 @@ def get_GetTask(
     raise APIHttpError("get_GetTask", _resp)
 
 def get_GetTelemetry(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetTelemetryResponse":
     _params = None
     _resp = session._do_request(
@@ -7820,7 +7820,7 @@ def get_GetTelemetry(
     raise APIHttpError("get_GetTelemetry", _resp)
 
 def get_GetTemplate(
-    session: "client.Session",
+    session: "api.Session",
     *,
     templateName: str,
 ) -> "v1GetTemplateResponse":
@@ -7839,7 +7839,7 @@ def get_GetTemplate(
     raise APIHttpError("get_GetTemplate", _resp)
 
 def get_GetTemplates(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
@@ -7868,7 +7868,7 @@ def get_GetTemplates(
     raise APIHttpError("get_GetTemplates", _resp)
 
 def get_GetTensorboard(
-    session: "client.Session",
+    session: "api.Session",
     *,
     tensorboardId: str,
 ) -> "v1GetTensorboardResponse":
@@ -7887,7 +7887,7 @@ def get_GetTensorboard(
     raise APIHttpError("get_GetTensorboard", _resp)
 
 def get_GetTensorboards(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7918,7 +7918,7 @@ def get_GetTensorboards(
     raise APIHttpError("get_GetTensorboards", _resp)
 
 def get_GetTrial(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
 ) -> "v1GetTrialResponse":
@@ -7937,7 +7937,7 @@ def get_GetTrial(
     raise APIHttpError("get_GetTrial", _resp)
 
 def get_GetTrialCheckpoints(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
     limit: "typing.Optional[int]" = None,
@@ -7967,7 +7967,7 @@ def get_GetTrialCheckpoints(
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
 def get_GetTrialWorkloads(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
@@ -7999,7 +7999,7 @@ def get_GetTrialWorkloads(
     raise APIHttpError("get_GetTrialWorkloads", _resp)
 
 def get_GetUser(
-    session: "client.Session",
+    session: "api.Session",
     *,
     userId: int,
 ) -> "v1GetUserResponse":
@@ -8018,7 +8018,7 @@ def get_GetUser(
     raise APIHttpError("get_GetUser", _resp)
 
 def get_GetUserSetting(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetUserSettingResponse":
     _params = None
     _resp = session._do_request(
@@ -8035,7 +8035,7 @@ def get_GetUserSetting(
     raise APIHttpError("get_GetUserSetting", _resp)
 
 def get_GetUsers(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -8062,7 +8062,7 @@ def get_GetUsers(
     raise APIHttpError("get_GetUsers", _resp)
 
 def get_GetWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1GetWorkspaceResponse":
@@ -8081,7 +8081,7 @@ def get_GetWorkspace(
     raise APIHttpError("get_GetWorkspace", _resp)
 
 def get_GetWorkspaceProjects(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
     archived: "typing.Optional[bool]" = None,
@@ -8115,7 +8115,7 @@ def get_GetWorkspaceProjects(
     raise APIHttpError("get_GetWorkspaceProjects", _resp)
 
 def get_GetWorkspaces(
-    session: "client.Session",
+    session: "api.Session",
     *,
     archived: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
@@ -8150,7 +8150,7 @@ def get_GetWorkspaces(
     raise APIHttpError("get_GetWorkspaces", _resp)
 
 def put_IdleNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1IdleNotebookRequest",
     notebookId: str,
@@ -8170,7 +8170,7 @@ def put_IdleNotebook(
     raise APIHttpError("put_IdleNotebook", _resp)
 
 def post_KillCommand(
-    session: "client.Session",
+    session: "api.Session",
     *,
     commandId: str,
 ) -> "v1KillCommandResponse":
@@ -8189,7 +8189,7 @@ def post_KillCommand(
     raise APIHttpError("post_KillCommand", _resp)
 
 def post_KillExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8208,7 +8208,7 @@ def post_KillExperiment(
     raise APIHttpError("post_KillExperiment", _resp)
 
 def post_KillNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     notebookId: str,
 ) -> "v1KillNotebookResponse":
@@ -8227,7 +8227,7 @@ def post_KillNotebook(
     raise APIHttpError("post_KillNotebook", _resp)
 
 def post_KillShell(
-    session: "client.Session",
+    session: "api.Session",
     *,
     shellId: str,
 ) -> "v1KillShellResponse":
@@ -8246,7 +8246,7 @@ def post_KillShell(
     raise APIHttpError("post_KillShell", _resp)
 
 def post_KillTensorboard(
-    session: "client.Session",
+    session: "api.Session",
     *,
     tensorboardId: str,
 ) -> "v1KillTensorboardResponse":
@@ -8265,7 +8265,7 @@ def post_KillTensorboard(
     raise APIHttpError("post_KillTensorboard", _resp)
 
 def post_KillTrial(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8284,7 +8284,7 @@ def post_KillTrial(
     raise APIHttpError("post_KillTrial", _resp)
 
 def post_LaunchCommand(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchCommandRequest",
 ) -> "v1LaunchCommandResponse":
@@ -8303,7 +8303,7 @@ def post_LaunchCommand(
     raise APIHttpError("post_LaunchCommand", _resp)
 
 def post_LaunchNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchNotebookRequest",
 ) -> "v1LaunchNotebookResponse":
@@ -8322,7 +8322,7 @@ def post_LaunchNotebook(
     raise APIHttpError("post_LaunchNotebook", _resp)
 
 def post_LaunchShell(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchShellRequest",
 ) -> "v1LaunchShellResponse":
@@ -8341,7 +8341,7 @@ def post_LaunchShell(
     raise APIHttpError("post_LaunchShell", _resp)
 
 def post_LaunchTensorboard(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchTensorboardRequest",
 ) -> "v1LaunchTensorboardResponse":
@@ -8360,7 +8360,7 @@ def post_LaunchTensorboard(
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
 def post_Login(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LoginRequest",
 ) -> "v1LoginResponse":
@@ -8379,7 +8379,7 @@ def post_Login(
     raise APIHttpError("post_Login", _resp)
 
 def post_Logout(
-    session: "client.Session",
+    session: "api.Session",
 ) -> None:
     _params = None
     _resp = session._do_request(
@@ -8396,7 +8396,7 @@ def post_Logout(
     raise APIHttpError("post_Logout", _resp)
 
 def post_MarkAllocationResourcesDaemon(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1MarkAllocationResourcesDaemonRequest",
@@ -8417,7 +8417,7 @@ def post_MarkAllocationResourcesDaemon(
     raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
 def post_MoveExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1MoveExperimentRequest",
     experimentId: int,
@@ -8437,7 +8437,7 @@ def post_MoveExperiment(
     raise APIHttpError("post_MoveExperiment", _resp)
 
 def post_MoveProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1MoveProjectRequest",
     projectId: int,
@@ -8457,7 +8457,7 @@ def post_MoveProject(
     raise APIHttpError("post_MoveProject", _resp)
 
 def patch_PatchExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchExperiment",
     experiment_id: int,
@@ -8477,7 +8477,7 @@ def patch_PatchExperiment(
     raise APIHttpError("patch_PatchExperiment", _resp)
 
 def patch_PatchModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchModel",
     modelName: str,
@@ -8497,7 +8497,7 @@ def patch_PatchModel(
     raise APIHttpError("patch_PatchModel", _resp)
 
 def patch_PatchModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchModelVersion",
     modelName: str,
@@ -8518,7 +8518,7 @@ def patch_PatchModelVersion(
     raise APIHttpError("patch_PatchModelVersion", _resp)
 
 def patch_PatchProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchProject",
     id: int,
@@ -8538,7 +8538,7 @@ def patch_PatchProject(
     raise APIHttpError("patch_PatchProject", _resp)
 
 def patch_PatchUser(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchUser",
     userId: int,
@@ -8558,7 +8558,7 @@ def patch_PatchUser(
     raise APIHttpError("patch_PatchUser", _resp)
 
 def patch_PatchWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchWorkspace",
     id: int,
@@ -8578,7 +8578,7 @@ def patch_PatchWorkspace(
     raise APIHttpError("patch_PatchWorkspace", _resp)
 
 def post_PauseExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8597,7 +8597,7 @@ def post_PauseExperiment(
     raise APIHttpError("post_PauseExperiment", _resp)
 
 def post_PinWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8616,7 +8616,7 @@ def post_PinWorkspace(
     raise APIHttpError("post_PinWorkspace", _resp)
 
 def post_PostAllocationProxyAddress(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1PostAllocationProxyAddressRequest",
@@ -8636,7 +8636,7 @@ def post_PostAllocationProxyAddress(
     raise APIHttpError("post_PostAllocationProxyAddress", _resp)
 
 def post_PostCheckpointMetadata(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostCheckpointMetadataRequest",
     checkpoint_uuid: str,
@@ -8656,7 +8656,7 @@ def post_PostCheckpointMetadata(
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
 def post_PostModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostModelRequest",
 ) -> "v1PostModelResponse":
@@ -8675,7 +8675,7 @@ def post_PostModel(
     raise APIHttpError("post_PostModel", _resp)
 
 def post_PostModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostModelVersionRequest",
     modelName: str,
@@ -8695,7 +8695,7 @@ def post_PostModelVersion(
     raise APIHttpError("post_PostModelVersion", _resp)
 
 def post_PostProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostProjectRequest",
     workspaceId: int,
@@ -8715,7 +8715,7 @@ def post_PostProject(
     raise APIHttpError("post_PostProject", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostTrialProfilerMetricsBatchRequest",
 ) -> None:
@@ -8734,7 +8734,7 @@ def post_PostTrialProfilerMetricsBatch(
     raise APIHttpError("post_PostTrialProfilerMetricsBatch", _resp)
 
 def post_PostTrialRunnerMetadata(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialRunnerMetadata",
     trialId: int,
@@ -8754,7 +8754,7 @@ def post_PostTrialRunnerMetadata(
     raise APIHttpError("post_PostTrialRunnerMetadata", _resp)
 
 def post_PostUser(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostUserRequest",
 ) -> "v1PostUserResponse":
@@ -8773,7 +8773,7 @@ def post_PostUser(
     raise APIHttpError("post_PostUser", _resp)
 
 def post_PostUserSetting(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostUserSettingRequest",
 ) -> None:
@@ -8792,7 +8792,7 @@ def post_PostUserSetting(
     raise APIHttpError("post_PostUserSetting", _resp)
 
 def post_PostWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostWorkspaceRequest",
 ) -> "v1PostWorkspaceResponse":
@@ -8811,7 +8811,7 @@ def post_PostWorkspace(
     raise APIHttpError("post_PostWorkspace", _resp)
 
 def post_PreviewHPSearch(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PreviewHPSearchRequest",
 ) -> "v1PreviewHPSearchResponse":
@@ -8830,7 +8830,7 @@ def post_PreviewHPSearch(
     raise APIHttpError("post_PreviewHPSearch", _resp)
 
 def put_PutProjectNotes(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PutProjectNotesRequest",
     projectId: int,
@@ -8850,7 +8850,7 @@ def put_PutProjectNotes(
     raise APIHttpError("put_PutProjectNotes", _resp)
 
 def put_PutTemplate(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1Template",
     template_name: str,
@@ -8870,7 +8870,7 @@ def put_PutTemplate(
     raise APIHttpError("put_PutTemplate", _resp)
 
 def post_ReportCheckpoint(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1Checkpoint",
 ) -> None:
@@ -8889,7 +8889,7 @@ def post_ReportCheckpoint(
     raise APIHttpError("post_ReportCheckpoint", _resp)
 
 def post_ReportTrialProgress(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: float,
     trialId: int,
@@ -8909,7 +8909,7 @@ def post_ReportTrialProgress(
     raise APIHttpError("post_ReportTrialProgress", _resp)
 
 def post_ReportTrialSearcherEarlyExit(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialEarlyExit",
     trialId: int,
@@ -8929,7 +8929,7 @@ def post_ReportTrialSearcherEarlyExit(
     raise APIHttpError("post_ReportTrialSearcherEarlyExit", _resp)
 
 def post_ReportTrialTrainingMetrics(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialMetrics",
     trainingMetrics_trialId: int,
@@ -8949,7 +8949,7 @@ def post_ReportTrialTrainingMetrics(
     raise APIHttpError("post_ReportTrialTrainingMetrics", _resp)
 
 def post_ReportTrialValidationMetrics(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialMetrics",
     validationMetrics_trialId: int,
@@ -8969,7 +8969,7 @@ def post_ReportTrialValidationMetrics(
     raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
 
 def post_ResetUserSetting(
-    session: "client.Session",
+    session: "api.Session",
 ) -> None:
     _params = None
     _resp = session._do_request(
@@ -8986,7 +8986,7 @@ def post_ResetUserSetting(
     raise APIHttpError("post_ResetUserSetting", _resp)
 
 def get_ResourceAllocationAggregated(
-    session: "client.Session",
+    session: "api.Session",
     *,
     endDate: "typing.Optional[str]" = None,
     period: "typing.Optional[v1ResourceAllocationAggregationPeriod]" = None,
@@ -9011,7 +9011,7 @@ def get_ResourceAllocationAggregated(
     raise APIHttpError("get_ResourceAllocationAggregated", _resp)
 
 def get_ResourceAllocationRaw(
-    session: "client.Session",
+    session: "api.Session",
     *,
     timestampAfter: "typing.Optional[str]" = None,
     timestampBefore: "typing.Optional[str]" = None,
@@ -9034,7 +9034,7 @@ def get_ResourceAllocationRaw(
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
 
 def post_SetCommandPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetCommandPriorityRequest",
     commandId: str,
@@ -9054,7 +9054,7 @@ def post_SetCommandPriority(
     raise APIHttpError("post_SetCommandPriority", _resp)
 
 def post_SetNotebookPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetNotebookPriorityRequest",
     notebookId: str,
@@ -9074,7 +9074,7 @@ def post_SetNotebookPriority(
     raise APIHttpError("post_SetNotebookPriority", _resp)
 
 def post_SetShellPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetShellPriorityRequest",
     shellId: str,
@@ -9094,7 +9094,7 @@ def post_SetShellPriority(
     raise APIHttpError("post_SetShellPriority", _resp)
 
 def post_SetTensorboardPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetTensorboardPriorityRequest",
     tensorboardId: str,
@@ -9114,7 +9114,7 @@ def post_SetTensorboardPriority(
     raise APIHttpError("post_SetTensorboardPriority", _resp)
 
 def post_SetUserPassword(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: str,
     userId: int,
@@ -9134,7 +9134,7 @@ def post_SetUserPassword(
     raise APIHttpError("post_SetUserPassword", _resp)
 
 def get_SummarizeTrial(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
     endBatches: "typing.Optional[int]" = None,
@@ -9166,7 +9166,7 @@ def get_SummarizeTrial(
     raise APIHttpError("get_SummarizeTrial", _resp)
 
 def post_UnarchiveExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9185,7 +9185,7 @@ def post_UnarchiveExperiment(
     raise APIHttpError("post_UnarchiveExperiment", _resp)
 
 def post_UnarchiveModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> None:
@@ -9204,7 +9204,7 @@ def post_UnarchiveModel(
     raise APIHttpError("post_UnarchiveModel", _resp)
 
 def post_UnarchiveProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9223,7 +9223,7 @@ def post_UnarchiveProject(
     raise APIHttpError("post_UnarchiveProject", _resp)
 
 def post_UnarchiveWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9242,7 +9242,7 @@ def post_UnarchiveWorkspace(
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
 
 def post_UnpinWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9261,7 +9261,7 @@ def post_UnpinWorkspace(
     raise APIHttpError("post_UnpinWorkspace", _resp)
 
 def post_UpdateJobQueue(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1UpdateJobQueueRequest",
 ) -> None:
