@@ -37,7 +37,6 @@ export const useFetchTrials = ({
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch trials.' });
     }
-
     const newTrials = decodeTrialsWithMetadata(response);
     setTrials(newTrials);
 

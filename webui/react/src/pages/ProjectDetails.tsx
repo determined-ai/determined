@@ -1,11 +1,12 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { PageHeader, Space, Tabs, Tooltip } from 'antd';
+import { Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
 import Page from 'components/Page';
+import PageHeader from 'components/PageHeader';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -120,8 +121,7 @@ const ProjectDetails: React.FC = () => {
           <Space>
             {project.description && (
               <Tooltip title={project.description}>
-                <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
-
+                <InfoCircleOutlined style={{ color: 'var(--theme-float-on)' }} />
               </Tooltip>
             )}
             <ProjectActionDropdown

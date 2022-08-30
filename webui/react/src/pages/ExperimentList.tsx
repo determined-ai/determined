@@ -767,7 +767,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const tabBarContent = useMemo(() => {
     return (
       <div className={css.tabOptions}>
-
         <Space className={css.actionList}>
           <Toggle
             checked={settings.archived}

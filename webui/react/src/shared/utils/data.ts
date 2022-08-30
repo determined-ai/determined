@@ -71,7 +71,14 @@ export const clone = (data: any, deep = true): any => {
   if (isPrimitive(data)) return data;
   if (isMap(data)) return new Map(data);
   if (isSet(data)) return new Set(data);
-  return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
+  return deep ? JSON.parse(
+    JSON.stringify(
+      data,
+      (_key, value) => (isSet(value) ? [ ...value ] : value),
+    ),
+    (key, value) => (isSet(data[key]) ? new Set(value) : value),
+  // The above is necessary for objects containing Sets because JSON.stringify(new Set()) === "{}"
+  ) : { ...data };
 };
 
 export const hasObjectKeys = (data: unknown): boolean => {
