@@ -1,19 +1,19 @@
+import argparse
 import dataclasses
 import json
 import logging
 import pickle
 import random
 import sys
-import tempfile
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
-import pytest
 from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
-from determined.common.api import bindings
-from determined.experimental import client
+import determined as det
+from determined.common import util
+from determined.searcher.core_search_runner import CoreSearchRunner
 from determined.searcher.search_method import (
     Close,
     Create,
@@ -23,242 +23,6 @@ from determined.searcher.search_method import (
     Shutdown,
     ValidateAfter,
 )
-from determined.searcher.search_runner import LocalSearchRunner
-from tests import config as conf
-from tests import experiment as exp
-
-
-@pytest.mark.e2e_cpu
-def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
-    # example searcher script
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "single"
-    config["description"] = "custom searcher"
-    search_method = SingleSearchMethod(config, 500)
-    search_runner = LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-    assert response.experiment.numTrials == 1
-
-
-class SingleSearchMethod(SearchMethod):
-    def __init__(self, experiment_config: dict, max_length: int) -> None:
-        super().__init__()
-        # since this is a single trial the hyperparameter space comprises a single point
-        self.hyperparameters = experiment_config["hyperparameters"]
-        self.max_length = max_length
-        self.trial_closed = False
-
-    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
-        return []
-
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
-        return []
-
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
-        self.trial_closed = True
-        return [Shutdown()]
-
-    def progress(self) -> float:
-        if self.trial_closed:
-            return 1.0
-        (the_trial,) = self.searcher_state.trials_created
-        return self.searcher_state.trial_progress[the_trial] / self.max_length
-
-    def on_trial_exited_early(
-        self, request_id: uuid.UUID, exit_reason: ExitedReason
-    ) -> List[Operation]:
-        logging.warning(f"Trial {request_id} exited early: {exit_reason}")
-        return [Shutdown()]
-
-    def initial_operations(self) -> List[Operation]:
-        logging.info("initial_operations")
-
-        create = Create(
-            request_id=uuid.uuid4(),
-            hparams=self.hyperparameters,
-            checkpoint=None,
-        )
-        validate_after = ValidateAfter(request_id=create.request_id, length=self.max_length)
-        close = Close(request_id=create.request_id)
-        logging.debug(f"Create({create.request_id}, {create.hparams})")
-        return [create, validate_after, close]
-
-
-@pytest.mark.e2e_cpu_2a
-def test_run_random_searcher_exp() -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "random"
-    config["description"] = "custom searcher"
-
-    max_trials = 5
-    max_concurrent_trials = 2
-    max_length = 500
-
-    with tempfile.TemporaryDirectory() as searcher_dir:
-        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
-        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-    assert response.experiment.numTrials == 5
-    assert search_method.created_trials == 5
-    assert search_method.pending_trials == 0
-    assert search_method.closed_trials == 5
-    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
-    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
-
-
-@pytest.mark.e2e_cpu_2a
-@pytest.mark.parametrize(
-    "exp_name,exception_points",
-    [
-        ("custom-searcher-random-test", []),
-        (
-            "custom-searcher-random-test-fail1",
-            ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
-        ),
-        (
-            "custom-searcher-random-test-fail2",
-            ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
-        ),
-        (
-            "custom-searcher-random-test-fail3",
-            ["on_trial_created", "after_save"],
-        ),
-        (
-            "custom-searcher-random-test-fail5",
-            [
-                "on_trial_created",
-                "load_method_state",
-                "after_save",
-                "after_save",
-                "on_validation_completed",
-                "after_save",
-            ],
-        ),
-    ],
-)
-def test_run_random_searcher_exp_core_api(exp_name: str, exception_points: List[str]) -> None:
-    config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_random.yaml"))
-    config["entrypoint"] += " --exp-name " + exp_name
-    if len(exception_points) > 0:
-        config["entrypoint"] += " --exception-points " + " ".join(exception_points)
-    config["max_restarts"] = len(exception_points)
-
-    experiment_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("core_api"), 1)
-
-    session = exp.determined_test_session()
-
-    # searcher experiment
-    searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
-    assert searcher_exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-
-    # actual experiment
-    response = bindings.get_GetExperiments(session, name=exp_name)
-    experiments = response.experiments
-    assert len(experiments) == 1
-
-    experiment = experiments[0]
-    assert experiment.numTrials == 5
-
-    trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
-    for trial in trials:
-        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-        assert trial.totalBatchesProcessed == 500
-
-
-@pytest.mark.e2e_cpu_2a
-@pytest.mark.parametrize(
-    "exceptions",
-    [
-        ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
-        ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
-        ["on_trial_created", "save_method_state", "after_save"],
-        [
-            "on_trial_created",
-            "save_method_state",
-            "load_method_state",
-            "after_save",
-            "after_save",
-            "on_validation_completed",
-            "after_save",
-            "save_method_state",
-        ],
-    ],
-)
-def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
-
-    max_trials = 5
-    max_concurrent_trials = 2
-    max_length = 500
-    failures_expected = len(exceptions)
-    logging.info(f"expected_failures={failures_expected}")
-
-    # do not use pytest tmp_path to experience LocalSearchRunner in the wild
-    with tempfile.TemporaryDirectory() as searcher_dir:
-        logging.info(f"searcher_dir type = {type(searcher_dir)}")
-        failures = 0
-        while failures < failures_expected:
-            try:
-                exception_point = exceptions.pop(0)
-                # re-create RandomSearchMethod and LocalSearchRunner after every fail
-                # to simulate python process crash
-                search_method = RandomSearchMethod(
-                    max_trials, max_concurrent_trials, max_length, exception_point
-                )
-                search_runner_mock = FallibleSearchRunner(
-                    exception_point, search_method, Path(searcher_dir)
-                )
-                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
-                pytest.fail("Expected an exception")
-            except MaxRetryError:
-                failures += 1
-
-        assert failures == failures_expected
-
-        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
-        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-
-    assert search_method.searcher_state.last_event_id == 41
-    assert search_method.searcher_state.experiment_completed is True
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-    assert response.experiment.numTrials == 5
-    assert search_method.created_trials == 5
-    assert search_method.pending_trials == 0
-    assert search_method.closed_trials == 5
-    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
-    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
-
-    assert search_method.progress() == pytest.approx(1.0)
 
 
 class RandomSearchMethod(SearchMethod):
@@ -267,14 +31,14 @@ class RandomSearchMethod(SearchMethod):
         max_trials: int,
         max_concurrent_trials: int,
         max_length: int,
-        exception_point: Optional[str] = None,
+        exception_points: Optional[List[str]] = None,
     ) -> None:
         super().__init__()
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
 
-        self.exception_point = exception_point
+        self.exception_points = exception_points
 
         # TODO remove created_trials and closed_trials before merging the feature branch
         self.created_trials = 0
@@ -385,7 +149,7 @@ class RandomSearchMethod(SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self) -> Dict[str, int]:
-        hparams = {"global_batch_size": random.randint(10, 100)}
+        hparams = {"increment_by": random.randint(10, 100)}
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -400,6 +164,7 @@ class RandomSearchMethod(SearchMethod):
                 "created_trials": self.created_trials,
                 "pending_trials": self.pending_trials,
                 "closed_trials": self.closed_trials,
+                "exception_points": self.exception_points,
             }
             json.dump(state, f)
 
@@ -414,223 +179,16 @@ class RandomSearchMethod(SearchMethod):
             self.created_trials = state["created_trials"]
             self.pending_trials = state["pending_trials"]
             self.closed_trials = state["closed_trials"]
+            self.exception_points = state["exception_points"]
 
     def raise_exception(self, exception_id: str) -> None:
-        if exception_id == self.exception_point:
+        if len(self.exception_points) > 0 and exception_id == self.exception_points[0]:
             logging.info(f"Raising exception in {exception_id}")
             ex = MaxRetryError(
                 HTTPConnectionPool(host="dummyhost", port=8080),
                 "http://dummyurl",
             )
             raise ex
-
-
-@pytest.mark.e2e_cpu
-def test_run_asha_batches_exp(tmp_path: Path) -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "asha"
-    config["description"] = "custom searcher"
-
-    max_length = 3000
-    max_trials = 16
-    num_rungs = 3
-    divisor = 4
-
-    search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
-    search_runner = LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-
-    assert response.experiment.numTrials == 16
-    assert search_method.asha_search_state.pending_trials == 0
-    assert search_method.asha_search_state.completed_trials == 16
-    assert len(search_method.searcher_state.trials_closed) == len(
-        search_method.asha_search_state.closed_trials
-    )
-
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
-
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
-
-    for trial in response_trials:
-        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.parametrize(
-    "exp_name,exception_points",
-    [
-        ("custom-searcher-asha-test", []),
-        (
-            "custom-searcher-asha-test-fail1",
-            [
-                "initial_operations_start",  # fail before sending initial operations
-                "after_save",  # fail on save - should not send initial operations again
-                "on_validation_completed",
-                "after_save",
-                "_get_close_rungs_ops",
-            ],
-        ),
-        (
-            "custom-searcher-asha-test-fail2",
-            [
-                "on_validation_completed",
-                "after_save",
-                "after_save",
-                "load_method_state",
-                "after_save",
-                "on_validation_completed",
-                "shutdown",
-            ],
-        ),
-    ],
-)
-def test_run_asha_searcher_exp_core_api(exp_name: str, exception_points: List[str]) -> None:
-    config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_asha.yaml"))
-    config["entrypoint"] += " --exp-name " + exp_name
-    if len(exception_points) > 0:
-        config["entrypoint"] += " --exception-points " + " ".join(exception_points)
-    config["max_restarts"] = len(exception_points)
-
-    experiment_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("core_api"), 1)
-    session = exp.determined_test_session()
-
-    # searcher experiment
-    searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
-    assert searcher_exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-
-    # actual experiment
-
-    response = bindings.get_GetExperiments(session, name=exp_name)
-    experiments = response.experiments
-    assert len(experiments) == 1
-
-    experiment = experiments[0]
-    assert experiment.numTrials == 16
-
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
-
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
-
-    for trial in response_trials:
-        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.parametrize(
-    "exceptions",
-    [
-        [
-            "initial_operations_start",  # fail before sending initial operations
-            "after_save",  # fail on save - should not send initial operations again
-            "save_method_state",
-            "save_method_state",
-            "after_save",
-            "on_trial_created",
-            "_get_close_rungs_ops",
-        ],
-        [  # searcher state and search method state are restored to last saved state
-            "on_validation_completed",
-            "on_validation_completed",
-            "save_method_state",
-            "save_method_state",
-            "after_save",
-            "after_save",
-            "load_method_state",
-            "on_validation_completed",
-            "shutdown",
-        ],
-    ],
-)
-def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "asha"
-    config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
-
-    max_length = 3000
-    max_trials = 16
-    num_rungs = 3
-    divisor = 4
-    failures_expected = len(exceptions)
-
-    with tempfile.TemporaryDirectory() as searcher_dir:
-        logging.info(f"searcher_dir type = {type(searcher_dir)}")
-        failures = 0
-        while failures < failures_expected:
-            try:
-                exception_point = exceptions.pop(0)
-                search_method = ASHASearchMethod(
-                    max_length, max_trials, num_rungs, divisor, exception_point=exception_point
-                )
-                search_runner_mock = FallibleSearchRunner(
-                    exception_point, search_method, Path(searcher_dir)
-                )
-                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
-                pytest.fail("Expected an exception")
-            except MaxRetryError:
-                failures += 1
-
-        assert failures == failures_expected
-
-        search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
-        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-
-    assert search_method.searcher_state.experiment_completed is True
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-
-    assert response.experiment.numTrials == 16
-    # asha search method state
-    assert search_method.asha_search_state.pending_trials == 0
-    assert search_method.asha_search_state.completed_trials == 16
-    # searcher state
-    assert len(search_method.searcher_state.trials_created) == 16
-    assert len(search_method.searcher_state.trials_closed) == 16
-
-    assert len(search_method.searcher_state.trials_closed) == len(
-        search_method.asha_search_state.closed_trials
-    )
-
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
-
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
-
-    for trial in response_trials:
-        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-
-    assert search_method.progress() == pytest.approx(1.0)
 
 
 @dataclasses.dataclass
@@ -728,13 +286,13 @@ class ASHASearchMethod(SearchMethod):
         num_rungs: int,
         divisor: int,
         max_concurrent_trials: int = 0,
-        exception_point: Optional[str] = None,
+        exception_points: Optional[List[str]] = None,
     ) -> None:
         super().__init__()
         self.asha_search_state = ASHASearchMethodState(
             max_length, max_trials, num_rungs, divisor, max_concurrent_trials
         )
-        self.exception_point = exception_point
+        self.exception_points = exception_points
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
         self.asha_search_state.completed_trials += 1
@@ -918,11 +476,7 @@ class ASHASearchMethod(SearchMethod):
         return ops
 
     def sample_params(self) -> Dict[str, object]:
-        hparams = {
-            "global_batch_size": 10,
-            "metrics_base": 0.05 * (len(self.asha_search_state.trial_rungs) + 1),
-            "metrics_progression": "constant",
-        }
+        hparams = {"increment_by": len(self.asha_search_state.trial_rungs) + 1}
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -947,30 +501,84 @@ class ASHASearchMethod(SearchMethod):
         with checkpoint_path.open("wb") as f:
             pickle.dump(self.asha_search_state, f)
 
+        exception_path = path.joinpath("exceptions")
+        with exception_path.open("wb") as f:
+            pickle.dump(self.exception_points, f)
+
     def load_method_state(self, path: Path) -> None:
         self.raise_exception("load_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("rb") as f:
             self.asha_search_state = pickle.load(f)
 
+        exception_path = path.joinpath("exceptions")
+        with exception_path.open("rb") as f:
+            self.exception_points = pickle.load(f)
+
     def raise_exception(self, exception_id: str) -> None:
-        if exception_id == self.exception_point:
+        if len(self.exception_points) > 0 and exception_id == self.exception_points[0]:
             logging.info(f"Raising exception in {exception_id}")
             ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
             raise ex
 
 
-class FallibleSearchRunner(LocalSearchRunner):
-    def __init__(
-        self,
-        exception_point: str,
-        search_method: SearchMethod,
-        searcher_dir: Optional[Path] = None,
-    ):
-        super(FallibleSearchRunner, self).__init__(search_method, searcher_dir)
+def load_config(config_path: str):
+    with open(config_path) as f:
+        config = util.safe_load_yaml_with_exceptions(f)
+    return config
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--searcher", choices=["asha", "random"], required=True)
+    parser.add_argument("--exp-name", type=str, required=True)
+    parser.add_argument("--max-length", type=int, required=True)
+    parser.add_argument("--max-trials", type=int, required=True)
+    parser.add_argument("--max-concurrent-trials", type=int, default=0)
+    parser.add_argument("--divisor", type=int, default=3)
+    parser.add_argument("--num-rungs", type=int, default=16)
+    parser.add_argument("--exception-points", type=str, nargs="+", default=[])
+
+    return parser.parse_args()
+
+
+def create_search_method(args, exception_points: Optional[List[str]] = None):
+    if args.searcher == "asha":
+        return ASHASearchMethod(
+            max_trials=args.max_trials,
+            max_length=args.max_length,
+            divisor=args.divisor,
+            num_rungs=args.num_rungs,
+            exception_points=exception_points,
+        )
+    elif args.searcher == "random":
+        return RandomSearchMethod(
+            max_trials=args.max_trials,
+            max_length=args.max_length,
+            max_concurrent_trials=args.max_concurrent_trials,
+            exception_points=exception_points,
+        )
+    else:
+        raise ValueError("Unknown searcher type")
+
+
+class FallibleSearchRunner(CoreSearchRunner):
+    def __init__(self, search_method: SearchMethod, core_context: det.core.Context) -> None:
+        super(FallibleSearchRunner, self).__init__(search_method, core_context)
         self.fail_on_save = False
-        if exception_point == "after_save":
-            self.fail_on_save = True
+
+    def load_state(self, storage_id: str) -> Tuple[int, List[Operation]]:
+        result = super(FallibleSearchRunner, self).load_state(storage_id)
+
+        # on every load remove first exception from the list since that exception was raised in the previous run;
+        # this testing approach works as long as the there is at least one save between consecutive exceptions
+        self.search_method.exception_points.pop(0)
+
+        if len(self.search_method.exception_points) > 0:
+            if self.search_method.exception_points[0] == "after_save":
+                self.fail_on_save = True
+
+        return result
 
     def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
         super(FallibleSearchRunner, self).save_state(experiment_id, operations)
@@ -980,3 +588,19 @@ class FallibleSearchRunner(LocalSearchRunner):
             )
             ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
             raise ex
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+
+    info = det.get_cluster_info()
+    assert info is not None, "this example only runs on-cluster"
+    args = parse_args()
+
+    config = load_config("core_api_model.yaml")
+    config["name"] = args.exp_name
+
+    with det.core.init() as core_context:
+        search_method = create_search_method(args, args.exception_points)
+        search_runner = FallibleSearchRunner(search_method, core_context)
+        search_runner.run(config)
