@@ -60,7 +60,7 @@ func (a *ExperimentAuthZBasic) CanEditExperiment(curUser model.User, e *model.Ex
 	return nil
 }
 
-// CanEditExperiment always returns a nil error.
+// CanEditExperimentsMetadata always returns a nil error.
 func (a *ExperimentAuthZBasic) CanEditExperimentsMetadata(
 	curUser model.User, e *model.Experiment,
 ) error {
