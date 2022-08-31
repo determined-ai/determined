@@ -915,8 +915,8 @@ func (m *dispatcherResourceManager) getWlmResources() (
 		return "Slurm", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
 			resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM
 	case pbsSchedulerType:
-		return "PBS", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
-			resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM
+		return "PBS", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PBS,
+			resourcepoolv1.FittingPolicy_FITTING_POLICY_PBS
 	default:
 		return "Unknown", resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
 			resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED

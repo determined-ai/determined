@@ -236,7 +236,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 			},
 		},
 		{
-			name:       "Two resource pool test",
+			name:       "Two resource pool test; WLM is PBS",
 			partitions: []hpcPartitionDetails{p1, p2},
 			args: args{
 				ctx:     &actor.Context{},
@@ -260,8 +260,8 @@ func Test_summarizeResourcePool(t *testing.T) {
 					},
 				},
 				location:      "PBS",
-				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
-				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PBS,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_PBS,
 			},
 		},
 		{
