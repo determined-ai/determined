@@ -274,7 +274,8 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr(
 			"CASE WHEN NULLIF(e.notes, '') IS NULL THEN NULL ELSE 'omitted' END AS notes").
 		Column("e.job_id").
-		ColumnExpr("e.parent_id AS forked_from").
+		ColumnExpr("CASE WHEN e.parent_id IS NULL THEN NULL ELSE " +
+			"json_build_object('value', e.parent_id) END AS forked_from").
 		ColumnExpr("CASE WHEN e.progress IS NULL THEN NULL ELSE " +
 			"json_build_object('value', e.progress) END AS progress").
 		ColumnExpr("p.name AS project_name").
@@ -294,13 +295,13 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_ID:            "id",
 		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:   "description",
 		apiv1.GetExperimentsRequest_SORT_BY_NAME:          "name",
-		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "start_time",
-		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "end_time",
-		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
+		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "e.start_time",
+		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "e.end_time",
+		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "e.state",
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:          "display_name",
-		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
+		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "e.parent_id",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:    "project_id",
 	}
