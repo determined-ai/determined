@@ -105,9 +105,10 @@ Some constraints are due to differences in behavior between Docker and Singulari
          <exp-bind-mounts>` in the ``task_container_defaults`` section of your master configuration
          as shown below. Unlike Singularity, PodMan V4.0+ no longer maps ``/etc/hosts`` from the
          host into the running container by default. On the initial startup, the Determined Slurm
-         launcher automatically adds this section when adding the ``resource_manager`` section. If,
-         however, you have since changed the file you may need to manually add the :ref:`bind mount
-         <exp-bind-mounts>` to ensure that jobs can resolve all host addresses in the cluster:
+         launcher automatically adds the ``task_container_defaults`` fragment below when adding the
+         ``resource_manager`` section. If, however, you have since changed the file you may need to
+         manually add the :ref:`bind mount <exp-bind-mounts>` to ensure that jobs can resolve all
+         host addresses in the cluster:
 
          .. code:: yaml
 
