@@ -128,12 +128,21 @@ export const useTrialCollections = (
   );
 
   const fetchCollections = useCallback(async () => {
-    const id = parseInt(projectId);
-    if (isNumber(id)) {
-      const response = await getTrialsCollections(id);
-      const collections = response.collections?.map(decodeTrialsCollection) ?? [];
-      setCollections(collections);
-      return collections;
+    try {
+      const id = parseInt(projectId);
+      if (isNaN(id)) {
+        const response = await getTrialsCollections(id);
+        const collections = response.collections?.map(decodeTrialsCollection) ?? [];
+        setCollections(collections);
+        return collections;
+      }
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to fetch collections.',
+        silent: false,
+        type: ErrorType.Api,
+      });
     }
   }, [ projectId ]);
 
@@ -168,13 +177,22 @@ export const useTrialCollections = (
   ]);
 
   const deleteCollection = useCallback(async () => {
-    const _collection = collections.find((c) => c.name === settings?.collection);
-    const id = numberElseUndefined(_collection?.id);
-    if (isNumber(id)){
-      await deleteTrialsCollection(id);
+    try {
+      const _collection = collections.find((c) => c.name === settings?.collection);
+      const id = numberElseUndefined(_collection?.id);
+      if (isNumber(id)){
+        await deleteTrialsCollection(id);
+      }
+      fetchCollections();
+      setCollection(collections[0]?.name);
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to delete collection.',
+        silent: false,
+        type: ErrorType.Api,
+      });
     }
-    fetchCollections();
-    setCollection(collections[0]?.name);
   }, [ collections, fetchCollections, settings?.collection, setCollection ]);
 
   useEffect(() => {
