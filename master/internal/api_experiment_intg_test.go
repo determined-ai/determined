@@ -144,6 +144,7 @@ func TestGetExperiments(t *testing.T) {
 		JobID:                model.JobID(job1ID),
 		Archived:             true,
 		State:                model.ErrorState,
+		ParentID:             ptrs.Ptr(exp0.ID),
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("234"),
 			RawName:        expconf.Name{ptrs.Ptr("longername")},
@@ -169,6 +170,7 @@ func TestGetExperiments(t *testing.T) {
 		JobId:          job1ID,
 		ProjectId:      pid,
 		Progress:       &wrappers.DoubleValue{Value: 0},
+		ForkedFrom:     &wrappers.Int32Value{Value: int32(exp0.ID)},
 		ProjectName:    projResp.Project.Name,
 		WorkspaceId:    workResp.Workspace.Id,
 		WorkspaceName:  workResp.Workspace.Name,

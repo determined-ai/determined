@@ -274,7 +274,8 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr(
 			"CASE WHEN NULLIF(e.notes, '') IS NULL THEN NULL ELSE 'omitted' END AS notes").
 		Column("e.job_id").
-		ColumnExpr("e.parent_id AS forked_from").
+		ColumnExpr("CASE WHEN e.parent_id IS NULL THEN NULL ELSE " +
+			"json_build_object('value', e.parent_id) END AS forked_from").
 		ColumnExpr("CASE WHEN e.progress IS NULL THEN NULL ELSE " +
 			"json_build_object('value', e.progress) END AS progress").
 		ColumnExpr("p.name AS project_name").
