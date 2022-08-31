@@ -30,7 +30,7 @@ Some constraints are due to differences in behavior between Docker and Singulari
 
    You can restore the default Singularity behavior of sharing ``/tmp`` on the compute node by
    including the following :ref:`bind mount <exp-bind-mounts>` in your experiment configuration or
-   globally by using ``task_container_defaults`` in ``/etc/determined/master.yaml```:
+   globally by using the ``task_container_defaults`` section in your master configuration:
 
    .. code:: yaml
 
