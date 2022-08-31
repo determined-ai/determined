@@ -705,6 +705,12 @@ class TestPyTorchTrial:
             assert (
                 this_checkpoint_first_loss < prev_checkpoint_last_loss
             ), f"loss did not decrease after checkpoint {c-1}"
+            prev_checkpoint_saved_scale = training_metrics[c - 1][-1]["scale"]
+            this_checkpoint_loaded_scale = training_metrics[c][0]["scale_before"]
+            assert this_checkpoint_loaded_scale == prev_checkpoint_saved_scale, (
+                f"loss scale value saved to checkpoint {c-1} is different from value loaded "
+                f"({prev_checkpoint_saved_scale} != {this_checkpoint_loaded_scale})"
+            )
 
 
 @pytest.mark.parametrize(

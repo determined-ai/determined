@@ -238,6 +238,15 @@ class OneVarApexTrial(OneVarTrial):
             opt_level="O2",
         )
 
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        scale_before = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
+        metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        metrics["scale_before"] = scale_before
+        metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
+        return metrics
+
 
 class AMPTestDataset(OnesDataset):
     STAGE_DATUM = {
