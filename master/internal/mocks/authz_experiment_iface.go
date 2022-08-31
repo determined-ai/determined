@@ -122,20 +122,6 @@ func (_m *ExperimentAuthZ) CanGetExperimentArtifacts(curUser model.User, e *mode
 	return r0
 }
 
-// CanGetHPImportance provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetHPImportance(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CanPreviewHPSearch provides a mock function with given fields: curUser
 func (_m *ExperimentAuthZ) CanPreviewHPSearch(curUser model.User) error {
 	ret := _m.Called(curUser)

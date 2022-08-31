@@ -9,7 +9,7 @@ import appdirs
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, constants, storage, util
-from determined.common.api import authentication, certs
+from determined.common.api import certs
 
 logger = logging.getLogger("determined.core")
 
@@ -155,15 +155,8 @@ def init(
 
     # We are on the cluster.
     cert = certs.default_load(info.master_url)
-    auth = authentication.Authentication(
-        info.master_url,
-        util.get_det_username_from_env(),
-        None,
-        True,
-        cert,
-    )
     session = api.Session(
-        info.master_url, None, auth, cert, max_retries=util.get_max_retries_config()
+        info.master_url, None, None, cert, max_retries=util.get_max_retries_config()
     )
 
     if distributed is None:

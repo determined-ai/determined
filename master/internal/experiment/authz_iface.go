@@ -13,46 +13,21 @@ type ExperimentAuthZ interface {
 	// GET /api/v1/experiments/:exp_id
 	CanGetExperiment(curUser model.User, e *model.Experiment) (canGetExp bool, serverError error)
 
+	// GET /api/v1/experiments/:exp_id/file_tree
+	// POST /api/v1/experiments/{experimentId}/file
+	// GET /experiments/:exp_id/file/download
+	// GET /api/v1/experiments/:exp_id/model_def
+	// GET /experiments/:exp_id/model_def
+	// GET /api/v1/experiments/:exp_id/checkpoints
+	// GET /experiments/:exp_id/preview_gc
+	// GET /api/v1/experiments/:exp_id/validation_history
+	// GET /api/v1/experiments/:exp_id/searcher/best_searcher_validation_metric
+	// GET /api/v1/experiments/:exp_id/metrics-stream/metric-names
+	// GET /api/v1/experiments/:exp_id/metrics-stream/batches
+	// GET /api/v1/experiments/:exp_id/metrics-stream/trials-snapshot
+	// GET /api/v1/experiments/:exp_id/metrics-stream/trials-sample
+	// GET /api/v1/experiments/{experimentId}/hyperparameter-importance
 	CanGetExperimentArtifacts(curUser model.User, e *model.Experiment) error
-	/*
-		// GET /api/v1/experiments/:exp_id/file_tree
-		CanGetModelDefTree(curUser model.User, e *model.Experiment) error
-
-		// POST /api/v1/experiments/{experimentId}/file
-		// GET /experiments/:exp_id/file/download
-		CanGetModelDefFile(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/model_def
-		// GET /experiments/:exp_id/model_def
-		CanGetModelDef(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/checkpoints
-		CanGetExperimentsCheckpoints(curUser model.User, e *model.Experiment) error
-
-		// GET /experiments/:exp_id/preview_gc
-		CanGetExperimentsCheckpointsToGC(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/validation_history
-		CanGetExperimentValidationHistory(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/searcher/best_searcher_validation_metric
-		CanGetBestSearcherValidationMetric(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/metrics-stream/metric-names
-		CanGetMetricNames(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/metrics-stream/batches
-		CanGetMetricBatches(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/metrics-stream/trials-snapshot
-		CanGetTrialsSnapshot(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/:exp_id/metrics-stream/trials-sample
-		CanGetTrialsSample(curUser model.User, e *model.Experiment) error
-
-		// GET /api/v1/experiments/{experimentId}/hyperparameter-importance
-		CanGetHPImportance(curUser model.User, e *model.Experiment) error
-	*/
 
 	// DELETE /api/v1/experiments/:exp_id
 	CanDeleteExperiment(curUser model.User, e *model.Experiment) error
@@ -72,36 +47,18 @@ type ExperimentAuthZ interface {
 	// POST /api/v1/preview-hp-search
 	CanPreviewHPSearch(curUser model.User) error
 
+	// POST /api/v1/experiments/:exp_id/activate
+	// POST /api/v1/experiments
+	// POST /api/v1/experiments/:exp_id/pause
+	// POST /api/v1/experiments/:exp_id/kill
+	// POST /api/v1/experiments/:exp_id/hyperparameter-importance
+	// POST /api/v1/experiments/:exp_id/cancel
 	CanEditExperiment(curUser model.User, e *model.Experiment) error
-	/*
-		// POST /api/v1/experiments/:exp_id/activate
-		// POST /api/v1/experiments
-		CanActivateExperiment(curUser model.User, e *model.Experiment) error
 
-		// POST /api/v1/experiments/:exp_id/pause
-		CanPauseExperiment(curUser model.User, e *model.Experiment) error
-		// POST /api/v1/experiments/:exp_id/cancel
-		CanCancelExperiment(curUser model.User, e *model.Experiment) error
-		// POST /api/v1/experiments/:exp_id/kill
-		CanKillExperiment(curUser model.User, e *model.Experiment) error
-
-		// POST /api/v1/experiments/:exp_id/hyperparameter-importance
-		CanComputeHPImportance(curUser model.User, e *model.Experiment) error
-	*/
-
+	// POST /api/v1/experiments/:exp_id/archive
+	// POST /api/v1/experiments/:exp_id/unarchive
+	// PATCH /api/v1/experiments/:exp_id/
 	CanEditExperimentsMetadata(curUser model.User, e *model.Experiment) error
-	/*
-		// POST /api/v1/experiments/:exp_id/archive
-		CanArchiveExperiment(curUser model.User, e *model.Experiment) error
-		// POST /api/v1/experiments/:exp_id/unarchive
-		CanUnarchiveExperiment(curUser model.User, e *model.Experiment) error
-
-		// PATCH /api/v1/experiments/:exp_id/
-		CanSetExperimentsName(curUser model.User, e *model.Experiment) error
-		CanSetExperimentsNotes(curUser model.User, e *model.Experiment) error
-		CanSetExperimentsDescription(curUser model.User, e *model.Experiment) error
-		CanSetExperimentsLabels(curUser model.User, e *model.Experiment) error
-	*/
 
 	// POST /api/v1/experiments
 	CanCreateExperiment(curUser model.User, proj *projectv1.Project, e *model.Experiment) error

@@ -13,7 +13,7 @@ import psutil
 import determined as det
 from determined import constants, gpu
 from determined.common import api, util
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings, certs
 from determined.util import force_create_symlink
 
 
@@ -253,17 +253,10 @@ if __name__ == "__main__":
     logging.debug("running prep_container")
 
     cert = certs.default_load(info.master_url)
-    auth = authentication.Authentication(
-        info.master_url,
-        util.get_det_username_from_env(),
-        None,
-        True,
-        cert,
-    )
     sess = api.Session(
         info.master_url,
         util.get_det_username_from_env(),
-        auth,
+        None,
         cert,
         max_retries=util.get_max_retries_config(),
     )
