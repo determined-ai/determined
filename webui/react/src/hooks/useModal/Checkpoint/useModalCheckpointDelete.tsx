@@ -1,40 +1,50 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { ModalFuncProps } from 'antd';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
-import {
-  CheckpointWorkloadExtended,
-  CoreApiGenericCheckpoint,
-} from 'types';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { pluralizer } from 'shared/utils/string';
 
-import css from './useModalCheckpoint.module.scss';
+interface OpenProps {
+  checkpoints: string | string[];
+  initialModalProps?: ModalFuncProps;
+}
 
 export interface Props {
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   onClose?: (reason?: ModalCloseReason) => void;
 }
 
-const useModalCheckpointDelete = ({
-  checkpoint,
-  onClose,
-}: Props): ModalHooks => {
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (openProps?: OpenProps) => void;
+}
+
+const useModalCheckpointDelete = ({ onClose }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+  const [ checkpoints, setCheckpoints ] = useState<string | string[]>([]);
+
+  const numCheckpoints = useMemo(() => {
+    if (Array.isArray(checkpoints)) return checkpoints.length;
+    return 1;
+  }, [ checkpoints ]);
 
   const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [ onClose ]);
 
   const handleDelete = useCallback(() => {
-    if (!checkpoint.uuid) return;
-    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
+    readStream(detApi.Checkpoint.deleteCheckpoints({
+      checkpointUuids: Array.isArray(checkpoints) ?
+        checkpoints :
+        [ checkpoints ],
+    }));
     onClose?.(ModalCloseReason.Ok);
-  }, [ checkpoint ]);
+  }, [ checkpoints, onClose ]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
     const content =
-      `Are you sure you want to request checkpoint deletion for batches
-${checkpoint.totalBatches}. This action may complete or fail without further notification.`;
+      `Are you sure you want to request checkpoint deletion for all batches in
+${numCheckpoints > 1 ? numCheckpoints : ''} ${pluralizer(numCheckpoints, 'checkpoint')}. 
+This action may complete or fail without further notification.`;
 
     return {
       content,
@@ -46,9 +56,13 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
       title: 'Confirm Checkpoint Deletion',
       width: 450,
     };
-  }, [ checkpoint, handleCancel, handleDelete ]);
+  }, [ handleCancel, handleDelete, numCheckpoints ]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+  const modalOpen = useCallback(({
+    checkpoints,
+    initialModalProps,
+  }: OpenProps = { checkpoints: [] }) => {
+    setCheckpoints(checkpoints);
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
