@@ -1,5 +1,5 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Collapse, Dropdown, Menu, Modal, Popconfirm, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import ExperimentCard from 'components/ExperimentCard';
 import FilterCounter from 'components/FilterCounter';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
@@ -862,6 +863,43 @@ const ProjectDetails: React.FC = () => {
     settings.archived,
     switchShowArchived ]);
 
+  const PinnedExperiments = useMemo(() => {
+    const getExtra = () => {
+      return (
+        <Popconfirm
+          cancelText="No"
+          okText="Yes"
+          title="Are you sure to unpin all across entire projects?"
+          onCancel={(e) => e?.stopPropagation()}
+          onConfirm={(e) => {
+            e?.stopPropagation();
+            updateSettings({ pinned: [] });
+          }}>
+          <DeleteOutlined onClick={(e) => e.stopPropagation()} />
+        </Popconfirm>
+      );
+    };
+
+    return (
+      <Collapse>
+        <Collapse.Panel extra={getExtra()} header="Pinned Experiments" key="1">
+          <div className={css.pinnedContainer}>
+            {experiments
+              .filter((experiment) => settings.pinned.includes(experiment.id))
+              .map((experiment) => (
+                <ExperimentCard
+                  experiment={experiment}
+                  key={experiment.id}
+                  project={project}
+                />
+              ))
+            }
+          </div>
+        </Collapse.Panel>
+      </Collapse>
+    );
+  }, [ experiments, project, settings.pinned ]);
+
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {
       body: (
@@ -876,6 +914,7 @@ const ProjectDetails: React.FC = () => {
             onAction={handleBatchAction}
             onClear={clearSelected}
           />
+          {settings.pinned.length > 0 && <>{ PinnedExperiments }</>}
           <InteractiveTable
             areRowsSelected={!!settings.row}
             columns={columns}
@@ -919,23 +958,26 @@ const ProjectDetails: React.FC = () => {
         </div>),
       title: 'Notes',
     } ]);
-  }, [ ContextMenu,
-    ExperimentTabOptions,
-    clearSelected,
-    columns,
-    experiments,
+  }, [
+    settings,
     handleBatchAction,
+    clearSelected,
+    PinnedExperiments,
+    columns,
+    ContextMenu,
+    experiments,
+    isLoading,
+    total,
+    handleTableRowSelect,
+    updateSettings,
+    ExperimentTabOptions,
+    project?.archived,
+    project?.notes,
     handleDeleteNote,
     handleNewNotesPage,
     handleSaveNotes,
-    handleTableRowSelect,
     availableBatchActions,
-    isLoading,
-    project?.notes,
-    project?.archived,
-    settings,
-    total,
-    updateSettings ]);
+  ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;

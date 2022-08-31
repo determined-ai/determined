@@ -172,6 +172,10 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.CompareExperiments]: alwaysTrueExperimentChecker,
+
+  // cannot access to settings.pinned here, so manage visibility in each place
+  [ExperimentAction.Pin]: alwaysTrueExperimentChecker,
+  [ExperimentAction.Unpin]: alwaysTrueExperimentChecker,
 };
 
 export const canUserActionExperiment = (

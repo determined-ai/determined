@@ -306,8 +306,10 @@ export enum ExperimentAction {
   Kill = 'Kill',
   Move = 'Move',
   Pause = 'Pause',
+  Pin = 'Pin',
   OpenTensorBoard = 'View in TensorBoard',
   Unarchive = 'Unarchive',
+  Unpin = 'Unpin',
   ViewLogs = 'View Logs',
 }
 

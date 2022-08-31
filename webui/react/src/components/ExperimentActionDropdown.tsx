@@ -6,6 +6,8 @@ import React, { useCallback } from 'react';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useSettings from 'hooks/useSettings';
+import settingsConfig, { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
@@ -33,6 +35,8 @@ interface Props {
 }
 
 const dropdownActions = [
+  Action.Pin,
+  Action.Unpin,
   Action.Activate,
   Action.Pause,
   Action.Archive,
@@ -54,6 +58,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
+  const { settings, updateSettings } = useSettings<ProjectDetailsSettings>(settingsConfig);
+
   const id = experiment.id;
   const {
     contextHolder: modalExperimentMoveContextHolder,
@@ -96,6 +102,16 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         case Action.OpenTensorBoard: {
           const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
+          break;
+        }
+        case Action.Pin: {
+          updateSettings({ pinned: Array.from(new Set([ ...settings.pinned, id ])) });
+          break;
+        }
+        case Action.Unpin: {
+          const pinList = new Set(settings.pinned);
+          pinList.delete(id);
+          updateSettings({ pinned: Array.from(pinList) });
           break;
         }
         case Action.Kill:
@@ -157,9 +173,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser).map((action) => (
-    { danger: action === Action.Delete, key: action, label: action }
-  ));
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser)
+    .filter((action) => {
+      const isPinned = settings.pinned.includes(experiment.id);
+      if ((isPinned && action === Action.Pin) || (!isPinned && action === Action.Unpin)) {
+        return false;
+      } else {
+        return true;
+      }
+    }).map((action) => ({ danger: action === Action.Delete, key: action, label: action }));
 
   if (menuItems.length === 0) {
     return (children as JSX.Element) ?? (

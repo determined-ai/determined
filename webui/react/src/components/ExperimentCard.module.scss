@@ -1,0 +1,58 @@
+.base {
+  border: var(--theme-stroke-width) solid var(--theme-surface-on);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: clamp(148px, 16vh, 180px);
+  max-width: clamp(250px, 24vw, 300px);
+  min-height: clamp(148px, 16vh, 180px);
+  min-width: clamp(250px, 24vw, 300px);
+  padding: 12px;
+
+  & > div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+  .headerContainer {
+    display: flex;
+    justify-content: space-between;
+  }
+  .contentContainer {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-around;
+    white-space: nowrap;
+  }
+  .name {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: text-bottom;
+    white-space: nowrap;
+    width: 90%;
+  }
+  .metaInfo {
+    align-content: center;
+    display: flex;
+    font-size: 12px;
+    justify-content: space-between;
+  }
+  .description {
+    color: var(--theme-status-inactive);
+  }
+  .footerContainer {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+  .numTrials {
+    font-size: 12px;
+  }
+  .horizotalFlex {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+}
