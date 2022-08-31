@@ -96,21 +96,18 @@ Some constraints are due to differences in behavior between Docker and Singulari
  PodMan Known Issues
 *********************
 
-   -  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` to resolve the addresses of the
-      login node and other compute nodes in the cluster. Unlike Singularity, PodMan V4.0+ no longer
-      maps ``/etc/hosts`` from the host into the running container by default. If jobs are unable to
-      connect to the Determined master, or other compute nodes in the job, check the following:
+   -  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` (instead of DNS) to resolve the
+      addresses of the login node and other compute nodes in the cluster. If jobs are unable to
+      resolve the address of the Determined master or other compute nodes in the job and you are
+      relying on ``/etc/hosts``, check the following:
 
-      #. If you are relying on ``/etc/hosts`` (instead of DNS) for address resolution, ensure that
-         the names and addresses of the login node, admin node, and all compute nodes are
-         consistently available in ``/etc/hosts`` on all nodes.
-
-      #. Provide an automatic mapping of ``/etc/hosts`` into the container by adding a :ref:`bind
-         mount <exp-bind-mounts>` to the ``task_container_defaults`` section of the
-         ``/etc/determined/master.yaml`` file as shown below. On the initial startup, the Determined
-         Slurm launcher automatically adds this section when adding the ``resource_manager``
-         section. If you have since changed the file, you may need to manually add the :ref:`bind
-         mount <exp-bind-mounts>` to ensure jobs can resolve all host addresses in the cluster:
+      #. Ensure that the ``/etc/hosts`` file is being mounted in the container by a :ref:`bind mount
+         <exp-bind-mounts>` in the ``task_container_defaults`` section of your master configuration
+         as shown below. Unlike Singularity, PodMan V4.0+ no longer maps ``/etc/hosts`` from the
+         host into the running container by default. On the initial startup, the Determined Slurm
+         launcher automatically adds this section when adding the ``resource_manager`` section. If,
+         however, you have since changed the file you may need to manually add the :ref:`bind mount
+         <exp-bind-mounts>` to ensure that jobs can resolve all host addresses in the cluster:
 
          .. code:: yaml
 
@@ -118,6 +115,9 @@ Some constraints are due to differences in behavior between Docker and Singulari
                bind_mounts:
                   -  host_path: /etc/hosts
                      container_path: /etc/hosts
+
+      #. Ensure that the names and addresses of the login node, admin node, and all compute nodes
+         are consistently available in ``/etc/hosts`` on all nodes.
 
 ***********************
  AMD/ROCm Known Issues
@@ -138,8 +138,8 @@ Some constraints are due to differences in behavior between Docker and Singulari
    error ``terminate called after throwing an instance of 'boost::filesystem::filesystem_error'
    what(): boost::filesystem::remove: Directory not empty: "/tmp/miopen-...``. A potential
    workaround is to disable the per-container ``/tmp`` by adding the following :ref:`bind mount
-   <exp-bind-mounts>` in your experiment configuration or globally by using
-   ``task_container_defaults`` in ``/etc/determined/master.yaml```:
+   <exp-bind-mounts>` in your experiment configuration or globally by using the
+   ``task_container_defaults`` section in your master configuration:
 
    .. code:: yaml
 
