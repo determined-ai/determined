@@ -396,8 +396,6 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	p.containerNames[model.DeterminedK8FluentContainerName] = true
 	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
-	asNonRoot := p.taskSpec.AgentUserGroup != nil &&
-		p.taskSpec.AgentUserGroup.User != rootUserName
 
 	loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
 
@@ -455,11 +453,17 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		},
 		p.loggingConfig,
 		p.loggingTLSConfig,
-		asNonRoot,
 	)
 
 	var fluentSecCtx *k8sV1.SecurityContext
-	if asNonRoot {
+	nonRootTask := p.taskSpec.AgentUserGroup != nil &&
+		p.taskSpec.AgentUserGroup.User != rootUserName
+	if p.fluentConfig.UID != 0 || p.fluentConfig.GID != 0 {
+		fluentSecCtx = configureSecurityContext(&model.AgentUserGroup{
+			UID: p.fluentConfig.UID,
+			GID: p.fluentConfig.GID,
+		})
+	} else if nonRootTask {
 		fluentSecCtx = configureSecurityContext(&fluent.NonRootAgentUserGroup)
 	}
 
