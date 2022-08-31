@@ -13,30 +13,22 @@ import psutil
 import determined as det
 from determined import constants, gpu
 from determined.common import api, util
-from determined.common.api import authentication, bindings, certs, request
+from determined.common.api import authentication, bindings, certs
 from determined.util import force_create_symlink
 
 
-def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
+def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
     trial_info = det.TrialInfo._from_env()
     trial_info._to_file()
 
-    auth = authentication.Authentication(
-        info.master_url,
-        util.get_det_username_from_env(),
-        None,
-        True,
-        cert,
-    )
-    path = f"api/v1/experiments/{trial_info.experiment_id}/model_def"
-    resp = None
+    model_def_resp = None
     try:
-        resp = request.get(info.master_url, path=path, cert=cert, auth=auth)
-        resp.raise_for_status()
-    except Exception:
+        model_def_resp = bindings.get_GetModelDef(sess, experimentId=trial_info.experiment_id)
+    except bindings.APIHttpError as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
         # sysadmins debug their cluster.
+        resp = e.response
         resp_content = str(resp and resp.content)
         noverify = info.master_cert_file == "noverify"
         cert_content = None if noverify else info.master_cert_file
@@ -49,7 +41,7 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
             "networking error.\n"
             "Debug information:\n"
             f"    master_url: {info.master_url}\n"
-            f"    endpoint: {path}\n"
+            f"    endpoint: api/v1/experiments/{trial_info.experiment_id}/model_def\n"
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
@@ -58,7 +50,7 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
         )
         raise
 
-    tgz = base64.b64decode(resp.json()["b64Tgz"])
+    tgz = base64.b64decode(model_def_resp.to_json()["b64Tgz"])
 
     with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as model_def:
         # Ensure all members of the tarball resolve to subdirectories.
@@ -261,16 +253,23 @@ if __name__ == "__main__":
     logging.debug("running prep_container")
 
     cert = certs.default_load(info.master_url)
-    sess = api.Session(
+    auth = authentication.Authentication(
         info.master_url,
         util.get_det_username_from_env(),
         None,
+        True,
+        cert,
+    )
+    sess = api.Session(
+        info.master_url,
+        util.get_det_username_from_env(),
+        auth,
         cert,
         max_retries=util.get_max_retries_config(),
     )
 
     if args.trial:
-        trial_prep(info, cert)
+        trial_prep(sess, info)
 
     if args.resources:
         det.ResourcesInfo._by_inspection()._to_file()
