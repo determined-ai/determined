@@ -389,6 +389,7 @@ const CodeViewer: React.FC<Props> = ({
                         }
                       }}
                     />
+                    {/* this is an invisible button to programatically download the config files */}
                     <a
                       aria-disabled
                       className={css.hideElement}
