@@ -447,6 +447,7 @@ class Function:
         out += ["        data=None,"]
         out += ["        headers=None,"]
         out += ["        timeout=None,"]
+        out += ["        stream=False,"]
         out += ["    )"]
         for expect, returntype in responses.items():
             out += [f"    if _resp.status_code == {expect}:"]
