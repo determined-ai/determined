@@ -7054,6 +7054,7 @@ def post_CreateGroup(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1CreateGroupResponse.from_json(_resp.json())
@@ -7131,6 +7132,7 @@ def delete_DeleteGroup(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
@@ -7682,6 +7684,7 @@ def get_GetGroup(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetGroupResponse.from_json(_resp.json())
@@ -7701,6 +7704,7 @@ def post_GetGroups(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetGroupsResponse.from_json(_resp.json())
@@ -9737,6 +9741,7 @@ def put_UpdateGroup(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1UpdateGroupResponse.from_json(_resp.json())
