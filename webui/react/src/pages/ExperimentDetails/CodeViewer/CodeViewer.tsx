@@ -2,7 +2,7 @@ import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons'
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -124,6 +124,12 @@ const CodeViewer: React.FC<Props> = ({
   const [ activeFile, setActiveFile ] = useState<TreeNode>();
   const [ isFetchingFile, setIsFetchingFile ] = useState(false);
   const [ isFetchingTree, setIsFetchingTree ] = useState(false);
+  const [ downloadInfo, setDownloadInfo ] = useState({
+    fileName: '',
+    url: '',
+  });
+  const configDownloadButton = useRef<HTMLAnchorElement>(null);
+  const timeout = useRef<NodeJS.Timeout>();
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | 'split'>(
     () => resize.width <= 1024 ? 'tree' : 'split',
   );
@@ -158,21 +164,11 @@ const CodeViewer: React.FC<Props> = ({
     switchTreeViewToEditor();
   }, [ submittedConfig, runtimeConfig, switchTreeViewToEditor ]);
 
-  useEffect(() => {
-    if (submittedConfig) {
-      handleSelectConfig(Config.submitted);
-    } else {
-      handleSelectConfig(Config.runtime);
-    }
-  }, [ handleSelectConfig, submittedConfig ]);
-
-  useEffect(() => {
-    if (resize.width <= 1024) {
-      switchSplitViewToTree();
-    } else {
-      setViewMode('split');
-    }
-  }, [ resize.width, switchSplitViewToTree ]);
+  const clickHandler = useCallback(() => {
+    timeout.current = setTimeout(() => {
+      URL.revokeObjectURL(downloadInfo.url);
+    }, 300);
+  }, [ downloadInfo.url ]);
 
   const fetchFileTree = useCallback(
     async () => {
@@ -212,11 +208,6 @@ const CodeViewer: React.FC<Props> = ({
     [ experimentId, runtimeConfig, submittedConfig ],
   );
 
-  // map the file tree
-  useEffect(() => {
-    fetchFileTree();
-  }, [ fetchFileTree ]);
-
   const fetchFile = useCallback(async (path, title) => {
     setPageError(PageError.none);
 
@@ -252,7 +243,7 @@ const CodeViewer: React.FC<Props> = ({
 
   const handleSelectFile = useCallback(async (
     _,
-    info: {node: DataNode},
+    info: { node: DataNode },
   ) => {
     const selectedKey = String(info.node.key);
     const selectedTitle = info.node.title;
@@ -299,6 +290,34 @@ const CodeViewer: React.FC<Props> = ({
     return 'yaml';
   }, [ activeFile ]);
 
+  useEffect(() => {
+    if (submittedConfig) {
+      handleSelectConfig(Config.submitted);
+    } else {
+      handleSelectConfig(Config.runtime);
+    }
+  }, [ handleSelectConfig, submittedConfig ]);
+
+  useEffect(() => {
+    if (resize.width <= 1024) {
+      switchSplitViewToTree();
+    } else {
+      setViewMode('split');
+    }
+  }, [ resize.width, switchSplitViewToTree ]);
+
+  // map the file tree
+  useEffect(() => {
+    fetchFileTree();
+  }, [ fetchFileTree ]);
+
+  // clear the timeout ref from memory
+  useEffect(() => {
+    return () => {
+      if (timeout.current) clearTimeout(timeout.current);
+    };
+  }, []);
+
   return (
     <section className={css.base}>
       <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="fileTree">
@@ -341,48 +360,47 @@ const CodeViewer: React.FC<Props> = ({
                   * <Button className={css.noBorderButton}>Open in Notebook</Button>
                   */
                   <Tooltip title="Download File">
-                    {
-                      <DownloadOutlined
-                        className={css.noBorderButton}
-                        onClick={(e) => {
-                          const filePath = String(activeFile.key);
-                          if (filePath.includes('Configuration')) {
-                            const isRuntimeConf = filePath.includes('runtime');
-                            const url = isRuntimeConf
-                              ? URL.createObjectURL(new Blob([ runtimeConfig ]))
-                              : URL.createObjectURL(new Blob([ submittedConfig as string ]));
+                    <DownloadOutlined
+                      className={css.noBorderButton}
+                      onClick={(e) => {
+                        const filePath = String(activeFile.key);
+                        if (filePath.includes('Configuration')) {
+                          const isRuntimeConf = filePath.includes('runtime');
+                          const url = isRuntimeConf
+                            ? URL.createObjectURL(new Blob([ runtimeConfig ]))
+                            : URL.createObjectURL(new Blob([ submittedConfig as string ]));
 
-                            let timeout: NodeJS.Timeout;
-                            const anchor = document.createElement('a');
-                            const clickHandler = () => {
-                              timeout = setTimeout(() => {
-                                URL.revokeObjectURL(url);
-                              }, 300);
-                            };
+                          setDownloadInfo({
+                            fileName: isRuntimeConf
+                              ? 'runtimeConfiguration.yaml'
+                              : 'generatedConfiguration.yaml',
+                            url,
+                          });
 
-                            anchor.addEventListener('click', clickHandler, false);
-                            anchor.href = url;
-                            anchor.download = isRuntimeConf
-                              ? 'runtimeConfiguration.yaml' : 'generatedConfiguration.yaml';
+                          if (configDownloadButton.current) configDownloadButton.current.click();
+                        } else {
+                          handlePath(e, {
+                            external: true,
+                            path: paths.experimentFileFromTree(
+                              experimentId,
+                              String(activeFile.key),
+                            ),
+                          });
+                        }
+                      }}
+                    />
+                    <a
+                      aria-disabled
+                      className={css.hideElement}
+                      download={downloadInfo.fileName}
+                      href={downloadInfo.url}
+                      ref={configDownloadButton}
+                      onClick={() => {
+                        clickHandler();
 
-                            anchor.click();
-
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            clearTimeout(timeout!);
-
-                            anchor.remove();
-                          } else {
-                            handlePath(e, {
-                              external: true,
-                              path: paths.experimentFileFromTree(
-                                experimentId,
-                                String(activeFile.key),
-                              ),
-                            });
-                          }
-                        }}
-                      />
-                    }
+                        if (timeout.current) clearTimeout(timeout.current);
+                      }}
+                    />
                   </Tooltip>
                 }
               </div>
