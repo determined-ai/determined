@@ -40,7 +40,7 @@ type Websocket[TIn, TOut any] struct {
 	cancel  context.CancelFunc
 	errLock sync.Mutex
 	err     *multierror.Error
-	// Done signals the websocket is finished when it is clsoed. Even if it has exited, call Close.
+	// Done signals the websocket is finished when it is closed. Even if it has exited, call Close.
 	Done <-chan struct{}
 	// Inbox is a channel for incoming messages.
 	Inbox <-chan TIn
