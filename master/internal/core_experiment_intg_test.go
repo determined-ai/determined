@@ -92,7 +92,7 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canActivateExperimentError")
 	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
 	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).Return(nil).Once()
-	authZExp.On("CanActivateExperiment", curUser, mock.Anything, mock.Anything).
+	authZExp.On("CanEditExperiment", curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canActivateExperimentError")).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		Activate:    true,
@@ -110,21 +110,21 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 		IDToReqCall  func(id int) error
 		Params       []any
 	}{
-		{"CanGetModelDef", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, _, _, _, ctx := SetupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/", nil))
 			return api.m.getExperimentModelDefinition(ctx)
 		}, []any{mock.Anything, mock.Anything}},
-		{"CanGetModelDefFile", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, _, _, _, ctx := SetupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/?path=rootPath", nil))
 			return api.m.getExperimentModelFile(ctx)
 		}, []any{mock.Anything, mock.Anything}},
-		{"CanGetExperimentsCheckpointsToGC", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, _, _, _, ctx := SetupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))

@@ -680,7 +680,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
 	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
 	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).Return(nil).Once()
-	authZExp.On("CanActivateExperiment", curUser, mock.Anything, mock.Anything).Return(
+	authZExp.On("CanEditExperiment", curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Activate: true,
@@ -703,16 +703,16 @@ func TestAuthZExpCompareTrialsSample(t *testing.T) {
 	// Can't view first experiment gets error.
 	expectedErr := status.Errorf(codes.PermissionDenied, "firstError")
 	authZExp.On("CanGetExperiment", curUser, exp0).Return(true, nil).Once()
-	authZExp.On("CanGetTrialsSample", curUser, exp0).Return(fmt.Errorf("firstError")).Once()
+	authZExp.On("CanGetExperimentArtifacts", curUser, exp0).Return(fmt.Errorf("firstError")).Once()
 	err := api.ExpCompareTrialsSample(req, mockStream[*apiv1.ExpCompareTrialsSampleResponse]{ctx})
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// Can't view second experiment gets error.
 	expectedErr = status.Errorf(codes.PermissionDenied, "secondError")
 	authZExp.On("CanGetExperiment", curUser, exp0).Return(true, nil).Once()
-	authZExp.On("CanGetTrialsSample", curUser, exp0).Return(nil).Once()
+	authZExp.On("CanGetExperimentArtifacts", curUser, exp0).Return(nil).Once()
 	authZExp.On("CanGetExperiment", curUser, exp1).Return(true, nil).Once()
-	authZExp.On("CanGetTrialsSample", curUser, exp1).Return(fmt.Errorf("secondError")).Once()
+	authZExp.On("CanGetExperimentArtifacts", curUser, exp1).Return(fmt.Errorf("secondError")).Once()
 	err = api.ExpCompareTrialsSample(req, mockStream[*apiv1.ExpCompareTrialsSampleResponse]{ctx})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
@@ -731,48 +731,48 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
-		{"CanGetExperimentValidationHistory", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetExperimentValidationHistory(ctx,
 				&apiv1.GetExperimentValidationHistoryRequest{ExperimentId: int32(id)})
 			return err
 		}},
-		{"CanActivateExperiment", func(id int) error {
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanPauseExperiment", func(id int) error {
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.PauseExperiment(ctx, &apiv1.PauseExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanCancelExperiment", func(id int) error {
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.CancelExperiment(ctx, &apiv1.CancelExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanKillExperiment", func(id int) error {
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.KillExperiment(ctx, &apiv1.KillExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanArchiveExperiment", func(id int) error {
+		{"CanEditExperimentsMetadata", func(id int) error {
 			_, err := api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanUnarchiveExperiment", func(id int) error {
+		{"CanEditExperimentsMetadata", func(id int) error {
 			_, err := api.UnarchiveExperiment(ctx, &apiv1.UnarchiveExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanSetExperimentsName", func(id int) error {
+		{"CanEditExperimentsMetadata", func(id int) error {
 			_, err := api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
 				Experiment: &experimentv1.PatchExperiment{
 					Id:   int32(id),
@@ -781,7 +781,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
-		{"CanSetExperimentsNotes", func(id int) error {
+		{"CanEditExperimentsMetadata", func(id int) error {
 			_, err := api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
 				Experiment: &experimentv1.PatchExperiment{
 					Id:    int32(id),
@@ -790,7 +790,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
-		{"CanSetExperimentsDescription", func(id int) error {
+		{"CanEditExperimentsMetadata", func(id int) error {
 			_, err := api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
 				Experiment: &experimentv1.PatchExperiment{
 					Id:          int32(id),
@@ -799,7 +799,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
-		{"CanSetExperimentsLabels", func(id int) error {
+		{"CanEditExperimentsMetadata", func(id int) error {
 			l, err := structpb.NewList([]any{"l1", "l2"})
 			require.NoError(t, err)
 			_, err = api.PatchExperiment(ctx, &apiv1.PatchExperimentRequest{
@@ -810,67 +810,67 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
-		{"CanGetExperimentsCheckpoints", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetExperimentCheckpoints(ctx, &apiv1.GetExperimentCheckpointsRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
-		{"CanGetMetricNames", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.MetricNames(&apiv1.MetricNamesRequest{
 				ExperimentId: int32(id),
 			}, mockStream[*apiv1.MetricNamesResponse]{ctx})
 		}},
-		{"CanGetMetricBatches", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.MetricBatches(&apiv1.MetricBatchesRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, mockStream[*apiv1.MetricBatchesResponse]{ctx})
 		}},
-		{"CanGetTrialsSnapshot", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.TrialsSnapshot(&apiv1.TrialsSnapshotRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, mockStream[*apiv1.TrialsSnapshotResponse]{ctx})
 		}},
-		{"CanGetTrialsSample", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.TrialsSample(&apiv1.TrialsSampleRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, mockStream[*apiv1.TrialsSampleResponse]{ctx})
 		}},
-		{"CanComputeHPImportance", func(id int) error {
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.ComputeHPImportance(ctx, &apiv1.ComputeHPImportanceRequest{
 				ExperimentId: int32(id),
 			})
 			return err
 		}},
-		{"CanGetHPImportance", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.GetHPImportance(&apiv1.GetHPImportanceRequest{
 				ExperimentId: int32(id),
 			}, mockStream[*apiv1.GetHPImportanceResponse]{ctx})
 		}},
-		{"CanGetBestSearcherValidationMetric", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetBestSearcherValidationMetric(ctx,
 				&apiv1.GetBestSearcherValidationMetricRequest{ExperimentId: int32(id)})
 			return err
 		}},
-		{"CanGetModelDef", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetModelDef(ctx, &apiv1.GetModelDefRequest{
 				ExperimentId: int32(id),
 			})
 			return err
 		}},
-		{"CanGetModelDefTree", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetModelDefTree(ctx, &apiv1.GetModelDefTreeRequest{
 				ExperimentId: int32(id),
 			})
 			return err
 		}},
-		{"CanGetModelDefFile", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetModelDefFile(ctx, &apiv1.GetModelDefFileRequest{
 				ExperimentId: int32(id),
 			})

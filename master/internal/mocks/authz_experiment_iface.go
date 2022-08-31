@@ -17,62 +17,6 @@ type ExperimentAuthZ struct {
 	mock.Mock
 }
 
-// CanActivateExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanActivateExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanArchiveExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanArchiveExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanCancelExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanCancelExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanComputeHPImportance provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanComputeHPImportance(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CanCreateExperiment provides a mock function with given fields: curUser, proj, e
 func (_m *ExperimentAuthZ) CanCreateExperiment(curUser model.User, proj *projectv1.Project, e *model.Experiment) error {
 	ret := _m.Called(curUser, proj, e)
@@ -101,8 +45,8 @@ func (_m *ExperimentAuthZ) CanDeleteExperiment(curUser model.User, e *model.Expe
 	return r0
 }
 
-// CanForkFromExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanForkFromExperiment(curUser model.User, e *model.Experiment) error {
+// CanEditExperiment provides a mock function with given fields: curUser, e
+func (_m *ExperimentAuthZ) CanEditExperiment(curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(curUser, e)
 
 	var r0 error
@@ -115,8 +59,22 @@ func (_m *ExperimentAuthZ) CanForkFromExperiment(curUser model.User, e *model.Ex
 	return r0
 }
 
-// CanGetBestSearcherValidationMetric provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetBestSearcherValidationMetric(curUser model.User, e *model.Experiment) error {
+// CanEditExperimentsMetadata provides a mock function with given fields: curUser, e
+func (_m *ExperimentAuthZ) CanEditExperimentsMetadata(curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(curUser, e)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
+		r0 = rf(curUser, e)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanForkFromExperiment provides a mock function with given fields: curUser, e
+func (_m *ExperimentAuthZ) CanForkFromExperiment(curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(curUser, e)
 
 	var r0 error
@@ -150,36 +108,8 @@ func (_m *ExperimentAuthZ) CanGetExperiment(curUser model.User, e *model.Experim
 	return r0, r1
 }
 
-// CanGetExperimentValidationHistory provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetExperimentValidationHistory(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetExperimentsCheckpoints provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetExperimentsCheckpoints(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetExperimentsCheckpointsToGC provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetExperimentsCheckpointsToGC(curUser model.User, e *model.Experiment) error {
+// CanGetExperimentArtifacts provides a mock function with given fields: curUser, e
+func (_m *ExperimentAuthZ) CanGetExperimentArtifacts(curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(curUser, e)
 
 	var r0 error
@@ -194,146 +124,6 @@ func (_m *ExperimentAuthZ) CanGetExperimentsCheckpointsToGC(curUser model.User, 
 
 // CanGetHPImportance provides a mock function with given fields: curUser, e
 func (_m *ExperimentAuthZ) CanGetHPImportance(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetMetricBatches provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetMetricBatches(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetMetricNames provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetMetricNames(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetModelDef provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetModelDef(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetModelDefFile provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetModelDefFile(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetModelDefTree provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetModelDefTree(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetTrialsSample provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetTrialsSample(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanGetTrialsSnapshot provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetTrialsSnapshot(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanKillExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanKillExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanMoveExperiment provides a mock function with given fields: curUser, from, to, e
-func (_m *ExperimentAuthZ) CanMoveExperiment(curUser model.User, from *projectv1.Project, to *projectv1.Project, e *model.Experiment) error {
-	ret := _m.Called(curUser, from, to, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project, *projectv1.Project, *model.Experiment) error); ok {
-		r0 = rf(curUser, from, to, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanPauseExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanPauseExperiment(curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(curUser, e)
 
 	var r0 error
@@ -374,34 +164,6 @@ func (_m *ExperimentAuthZ) CanSetExperimentsCheckpointGCPolicy(curUser model.Use
 	return r0
 }
 
-// CanSetExperimentsDescription provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanSetExperimentsDescription(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanSetExperimentsLabels provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanSetExperimentsLabels(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CanSetExperimentsMaxSlots provides a mock function with given fields: curUser, e, slots
 func (_m *ExperimentAuthZ) CanSetExperimentsMaxSlots(curUser model.User, e *model.Experiment, slots int) error {
 	ret := _m.Called(curUser, e, slots)
@@ -409,34 +171,6 @@ func (_m *ExperimentAuthZ) CanSetExperimentsMaxSlots(curUser model.User, e *mode
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, int) error); ok {
 		r0 = rf(curUser, e, slots)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanSetExperimentsName provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanSetExperimentsName(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanSetExperimentsNotes provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanSetExperimentsNotes(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -465,20 +199,6 @@ func (_m *ExperimentAuthZ) CanSetExperimentsWeight(curUser model.User, e *model.
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, float64) error); ok {
 		r0 = rf(curUser, e, weight)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanUnarchiveExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanUnarchiveExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}

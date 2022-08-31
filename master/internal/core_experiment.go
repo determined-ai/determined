@@ -120,7 +120,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentsCheckpointsToGC); err != nil {
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -166,7 +166,7 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetModelDefFile); err != nil {
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
 	}
 
@@ -192,7 +192,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetModelDef); err != nil {
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
 	}
 
@@ -550,7 +550,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
 	if params.Activate {
-		if err = expauth.AuthZProvider.Get().CanActivateExperiment(user, dbExp); err != nil {
+		if err = expauth.AuthZProvider.Get().CanEditExperiment(user, dbExp); err != nil {
 			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 	}
