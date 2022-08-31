@@ -29,7 +29,8 @@ Some constraints are due to differences in behavior between Docker and Singulari
       folder in the Singularity container.
 
    You can restore the default Singularity behavior of sharing ``/tmp`` on the compute node by
-   including the following :ref:`bind mount <exp-bind-mounts>` in your experiment configuration:
+   including the following :ref:`bind mount <exp-bind-mounts>` in your experiment configuration or
+   globally by using the ``task_container_defaults`` section in your master configuration:
 
    .. code:: yaml
 
@@ -91,6 +92,62 @@ Some constraints are due to differences in behavior between Docker and Singulari
    | ``environment.registry_auth.email``  | No equivalent setting in Singularity.                |
    +--------------------------------------+------------------------------------------------------+
 
+*********************
+ PodMan Known Issues
+*********************
+
+   -  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` (instead of DNS) to resolve the
+      addresses of the login node and other compute nodes in the cluster. If jobs are unable to
+      resolve the address of the Determined master or other compute nodes in the job and you are
+      relying on ``/etc/hosts``, check the following:
+
+      #. Ensure that the ``/etc/hosts`` file is being mounted in the container by a :ref:`bind mount
+         <exp-bind-mounts>` in the ``task_container_defaults`` section of your master configuration
+         as shown below. Unlike Singularity, PodMan V4.0+ no longer maps ``/etc/hosts`` from the
+         host into the running container by default. On the initial startup, the Determined Slurm
+         launcher automatically adds the ``task_container_defaults`` fragment below when adding the
+         ``resource_manager`` section. If, however, you have since changed the file you may need to
+         manually add the :ref:`bind mount <exp-bind-mounts>` to ensure that jobs can resolve all
+         host addresses in the cluster:
+
+         .. code:: yaml
+
+            task_container_defaults:
+               bind_mounts:
+                  -  host_path: /etc/hosts
+                     container_path: /etc/hosts
+
+      #. Ensure that the names and addresses of the login node, admin node, and all compute nodes
+         are consistently available in ``/etc/hosts`` on all nodes.
+
+***********************
+ AMD/ROCm Known Issues
+***********************
+
+-  AMD/ROCm support is available only with Singularity containers. While Determined does add the
+   proper PodMan arguments to enable ROCm GPU support, the capabilities have not yet been verified.
+
+-  Launching experiments with ``slot_type: rocm``, may fail with the error ``RuntimeError: No HIP
+   GPUs are available``. Ensure that the compute nodes are providing ROCm drivers and libraries
+   compatible with the environment image that you are using and that they are available in the
+   default locations, or are added to the ``path`` and/or ``ld_library_path`` variables in the
+   :ref:`slurm configuration <cluster-configuration-slurm>`. Depending upon your system
+   configuration, you may need to select a different ROCm image. See
+   :doc:`/training/setup-guide/set-environment-images` for the images available.
+
+-  Launching experiments with ``slot_type: rocm``, may fail in the AMD/ROCm libraries with with the
+   error ``terminate called after throwing an instance of 'boost::filesystem::filesystem_error'
+   what(): boost::filesystem::remove: Directory not empty: "/tmp/miopen-...``. A potential
+   workaround is to disable the per-container ``/tmp`` by adding the following :ref:`bind mount
+   <exp-bind-mounts>` in your experiment configuration or globally by using the
+   ``task_container_defaults`` section in your master configuration:
+
+   .. code:: yaml
+
+      bind_mounts:
+         - host_path: /tmp
+           container_path: /tmp
+
 ***************************************
  Determined AI Experiment Requirements
 ***************************************
@@ -107,6 +164,37 @@ the GPUs used for the experiment to be evenly distributed among the compute node
 *************************
  Additional Known issues
 *************************
+
+-  The Determined master may fail to show Slurm cluster information and report ``Failed to
+   communicate with launcher due to error:`` in the ``Master Logs`` tab of the Determined UI. If so,
+   verify the following:
+
+   #. Ensure that the launcher service is up and running.
+
+      .. code:: bash
+
+         sudo systemctl status launcher
+
+   #. If the full error is ``Failed to communicate with launcher due to error: {401 Unauthorized}``,
+      the Determined master does not have an up-to-date authorization token to access the launcher.
+      Restart the launcher, to ensure all configuration changes have been applied.
+
+         .. code:: bash
+
+            sudo systemctl restart launcher
+            sudo systemctl status launcher
+
+      Once it has successfully started, you should see the message ``INFO: launcher server ready
+      ...``, then restart the Determined master so it will likewise load the latest configuration:
+
+         .. code:: bash
+
+            sudo systemctl restart determined-master
+            sudo systemctl status determined-master
+
+      Additional diagnostic messages may be present in the system log diagnostics, such as
+      ``/var/log/messages`` or ``journalctl --since=yesterday -u launcher``, and ``journalctl
+      --since=yesterday -u determined-master``
 
 -  The SSH server process within Determined Environment images can fail with a ``free(): double free
    detected in tcache 2`` message, a ``Fatal error: glibc detected an invalid stdio handle``

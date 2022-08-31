@@ -116,8 +116,6 @@ The master supports the following configuration settings:
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
-.. _cluster-configuration-slurm:
-
 -  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
    -  ``type: agent``: The agent resource manager includes static and dynamic agents.
@@ -209,6 +207,8 @@ The master supports the following configuration settings:
       -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
 
          -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
+
+.. _cluster-configuration-slurm:
 
    -  ``type: slurm``: The ``slurm`` resource manager launches tasks on a Slurm cluster. For more
       information, see :ref:`using_slurm`.
