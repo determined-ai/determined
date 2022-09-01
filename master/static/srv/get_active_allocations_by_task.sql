@@ -1,9 +1,8 @@
-SELECT tasks.task_id AS TaskID,
-  tasks.job_id AS JobID,
-  SUM(case when allocations.state = 'RUNNING' then 1 else 0 end) AS NumRunning,
-  COUNT(allocations) AS NumStarting
-FROM tasks
-JOIN allocations ON allocations.task_id = tasks.task_id
-WHERE tasks.task_id IN (SELECT unnest(string_to_array($1, ','))) -- Trial match
-  AND allocations.state IN ('PULLING', 'RUNNING', 'STARTING')
-GROUP BY tasks.task_id, tasks.job_id;
+SELECT
+  t.task_id,
+  BOOL_OR(CASE WHEN a.state IN ('PULLING', 'STARTING') THEN true ELSE false END) AS is_starting,
+  BOOL_OR(CASE WHEN a.state = 'RUNNING' THEN true ELSE false END) AS is_running
+FROM tasks t
+JOIN allocations a ON a.task_id = t.task_id
+WHERE t.task_id IN (SELECT unnest(string_to_array($1, ',')))
+GROUP BY t.task_id;

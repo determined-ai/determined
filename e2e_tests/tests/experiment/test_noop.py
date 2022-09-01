@@ -24,7 +24,7 @@ def test_noop_pause() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_ACTIVE)
+    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_RUNNING)
 
     # Wait for the only trial to get scheduled.
     exp.wait_for_experiment_active_workload(experiment_id)

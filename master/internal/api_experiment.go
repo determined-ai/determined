@@ -65,7 +65,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 	[]*experimentv1.Experiment, error,
 ) {
 	// filter allocations by JobIDs on this page of experiments
-	jobFilter := []string{}
+	jobFilter := make([]string, 0, len(experiments))
 	for _, exp := range experiments {
 		jobFilter = append(jobFilter, exp.JobId)
 	}
@@ -82,14 +82,14 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 	}
 
 	// Collect state information by JobID
-	applyIDs := make(map[string]experimentv1.State)
+	byJobID := make(map[model.JobID]experimentv1.State, len(tasks))
 	for _, task := range tasks {
 		if task.NumRunning > 0 {
-			applyIDs[*task.JobID] = experimentv1.State_STATE_ACTIVE
+			byJobID[*task.JobID] = experimentv1.State_STATE_ACTIVE
 		} else if task.NumStarting > 0 {
-			_, expStoredState := applyIDs[*task.JobID]
+			_, expStoredState := byJobID[*task.JobID]
 			if !expStoredState {
-				applyIDs[*task.JobID] = experimentv1.State_STATE_PENDING
+				byJobID[*task.JobID] = experimentv1.State_STATE_PENDING
 			}
 		}
 	}
@@ -97,7 +97,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 	// Active experiments should be converted to Queued, Pending, or kept Active (Running)
 	for _, exp := range experiments {
 		if exp.State == experimentv1.State_STATE_ACTIVE {
-			if setState, ok := applyIDs[exp.JobId]; ok {
+			if setState, ok := byJobID[exp.JobId]; ok {
 				exp.State = setState
 			} else {
 				exp.State = experimentv1.State_STATE_QUEUED

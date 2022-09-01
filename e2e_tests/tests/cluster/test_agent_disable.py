@@ -163,7 +163,7 @@ def test_drain_agent() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_ACTIVE)
+    exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_RUNNING)
     exp.wait_for_experiment_active_workload(experiment_id)
     exp.wait_for_experiment_workload_progress(experiment_id)
 
@@ -238,7 +238,7 @@ def test_drain_agent_sched() -> None:
             conf.fixtures_path("no_op"),
             None,
         )
-        exp.wait_for_experiment_state(exp_id2, determinedexperimentv1State.STATE_ACTIVE)
+        exp.wait_for_experiment_state(exp_id2, determinedexperimentv1State.STATE_RUNNING)
 
         # Wait for a state when *BOTH* experiments are scheduled.
         for _ in range(20):
