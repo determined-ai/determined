@@ -368,9 +368,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
+    return [tl.message for tl in api.trial_logs(determined_test_session(), trial_id, follow=follow)]
 
 
 def workloads_with_training(
