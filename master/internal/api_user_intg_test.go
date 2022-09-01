@@ -19,9 +19,13 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
@@ -29,6 +33,8 @@ import (
 var (
 	pgDB      *db.PgDB
 	authzUser *mocks.UserAuthZ
+	system    *actor.System
+	mockRM    *rm.ActorResourceManager
 )
 
 func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
@@ -36,14 +42,30 @@ func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 		pgDB = db.MustResolveTestPostgres(t)
 		db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
 		require.NoError(t, etc.SetRootPath("../static/srv"))
+
+		system = actor.NewSystem("mock")
+		ref, _ := system.ActorOf(sproto.K8sRMAddr, actor.ActorFunc(
+			func(context *actor.Context) error {
+				return nil
+			}))
+		mockRM = rm.WrapRMActor(ref)
 	}
 
-	api := &apiServer{m: &Master{
-		db: pgDB,
-		config: &config.Config{
-			InternalConfig: config.InternalConfig{},
+	api := &apiServer{
+		m: &Master{
+			system: system,
+			db:     pgDB,
+			rm:     mockRM,
+			config: &config.Config{
+				InternalConfig:        config.InternalConfig{},
+				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
+				ResourceConfig: &config.ResourceConfig{
+					ResourceManager: &config.ResourceManagerConfig{},
+				},
+			},
+			taskSpec: &tasks.TaskSpec{},
 		},
-	}}
+	}
 
 	user, err := pgDB.UserByUsername("admin")
 	require.NoError(t, err, "Couldn't get admin user")
@@ -61,6 +83,7 @@ func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User,
 	if authzUser == nil {
 		authzUser = &mocks.UserAuthZ{}
 		user.AuthZProvider.Register("mock", authzUser)
+		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 

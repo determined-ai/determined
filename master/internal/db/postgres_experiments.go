@@ -860,7 +860,7 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 	if err := db.query(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username
+		 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = $1`, &experiment, id); err != nil {
@@ -898,7 +898,7 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 	if err := db.query(`
 SELECT e.id, state, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-			 job_id, u.username as username
+			 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
 WHERE e.id = $1`, &experiment, id); err != nil {
