@@ -73,8 +73,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
 
   // TODO generate stack trace if error is missing? http://www.stacktracejs.com/
 
-  // Log the error if needed.
-  if (!e.silent) log(e);
+  log(e);
 
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
 
