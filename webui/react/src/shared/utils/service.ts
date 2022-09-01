@@ -21,6 +21,10 @@ export const getResponseStatus = (e: unknown): number | undefined =>
  * @returns
  */
 export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean => {
+  if (u instanceof DetError) {
+    if (u.type === ErrorType.Auth) return true;
+    if (u.sourceErr !== undefined) return isAuthFailure(u.sourceErr, supportExternalAuth);
+  }
   if (!isApiResponse(u)) return false;
   const status = u.status;
   const authFailureStatuses = [
@@ -65,7 +69,7 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
   if (isApiResponse(e)) {
     try {
       const response = await e.json();
-      options.publicMessage = response.error?.error || response.message;
+      options.publicMessage = response.error?.error || response.error || response.message;
     } catch (err) {
       options.payload = err;
     }

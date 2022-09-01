@@ -76,6 +76,7 @@ export class DetError extends Error implements DetErrorOptions {
   silent: boolean;
   type: ErrorType;
   isHandled: boolean;
+  sourceErr: unknown;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
     const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
@@ -96,6 +97,7 @@ export class DetError extends Error implements DetErrorOptions {
 
     this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
     this.isHandled = false;
+    this.sourceErr = e;
   }
 
   loadOptions(options: DetErrorOptions): void {
