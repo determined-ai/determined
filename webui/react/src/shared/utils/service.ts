@@ -24,14 +24,14 @@ export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean 
   if (u instanceof DetError) {
     if (u.type === ErrorType.Auth) return true;
     if (u.sourceErr !== undefined) return isAuthFailure(u.sourceErr, supportExternalAuth);
+    return false;
   }
   if (!isApiResponse(u)) return false;
-  const status = u.status;
   const authFailureStatuses = [
     401, // Unauthorized
   ];
   if (supportExternalAuth) authFailureStatuses.push(500);
-  return authFailureStatuses.includes(status);
+  return authFailureStatuses.includes(u.status);
 };
 
 export const isNotFound = (u: Response | Error | DetError): boolean => {
