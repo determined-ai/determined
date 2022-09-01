@@ -123,9 +123,9 @@ func (a *apiServer) getExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if ok, err := expauth.AuthZProvider.Get().
+	if ok, authErr := expauth.AuthZProvider.Get().
 		CanGetExperiment(curUser, modelExp); err != nil {
-		return nil, err
+		return nil, authErr
 	} else if !ok {
 		return nil, expNotFound
 	}

@@ -465,7 +465,7 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
-// Represent order of active states (Queued -> Pending -> Running)
+// Represent order of active states (Queued -> Pending -> Running).
 var allocationStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED: -2,
 	experimentv1.State_STATE_ACTIVE:      -1,
@@ -475,7 +475,7 @@ var allocationStateIndex = map[experimentv1.State]int{
 }
 
 // MostProgressedExperimentState returns the more advanced active state
-// based on allocationStateIndex (Queued -> Pending -> Running)
+// based on allocationStateIndex (Queued -> Pending -> Running).
 func MostProgressedExperimentState(
 	state1 experimentv1.State, state2 experimentv1.State,
 ) experimentv1.State {
@@ -483,9 +483,8 @@ func MostProgressedExperimentState(
 	stateValue2 := allocationStateIndex[state2]
 	if stateValue1 > stateValue2 {
 		return state1
-	} else {
-		return state2
 	}
+	return state2
 }
 
 // CheckpointVersion describes the format in which some checkpoint metadata is saved.
