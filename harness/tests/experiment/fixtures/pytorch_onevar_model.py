@@ -229,25 +229,6 @@ class OneVarTrial(pytorch.PyTorchTrial):
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
 
-class OneVarApexTrial(OneVarTrial):
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        super().__init__(context)
-        self.model, self.optimizer = self.context.configure_apex_amp(
-            models=self.model,
-            optimizers=self.opt,
-            opt_level="O2",
-        )
-
-    def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        scale_before = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
-        metrics = super().train_batch(batch, epoch_idx, batch_idx)
-        metrics["scale_before"] = scale_before
-        metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
-        return metrics
-
-
 class AMPTestDataset(OnesDataset):
     STAGE_DATUM = {
         "one": 1.0,
