@@ -14,6 +14,7 @@ import InteractiveTable, { ColumnDef,
   onRightClickableCell } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
 import { checkmarkRenderer, defaultRowClassName, experimentDurationRenderer,
   experimentNameRenderer, experimentProgressRenderer, ExperimentRenderer,
@@ -148,6 +149,7 @@ const ProjectDetails: React.FC = () => {
         if (isEqual(prev, response)) return prev;
         return response;
       });
+      setPageError(undefined);
     } catch (e) {
       if (!pageError) setPageError(e as Error);
     } finally {
@@ -937,9 +939,8 @@ const ProjectDetails: React.FC = () => {
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find Project ${projectId}` :
-      `Unable to fetch Project ${projectId}`;
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!project) {
     return (

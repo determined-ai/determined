@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -146,9 +147,8 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   if (trialDetails.error !== undefined) {
-    const message = isNotFound(trialDetails.error) ?
-      `Unable to find Trial ${trialId}` :
-      `Unable to fetch Trial ${trialId}`;
+    if (isNotFound(trialDetails.error)) return <PageNotFound />;
+    const message = `Unable to fetch Trial ${trialId}`;
     return (
       <Message
         message={trialDetails.error.message}
