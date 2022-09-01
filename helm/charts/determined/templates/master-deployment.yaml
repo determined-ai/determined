@@ -27,7 +27,7 @@ spec:
       - name: determined-master-{{ .Release.Name }}
         {{ $image := "determined-master" }}
         {{- if .Values.enterpriseEdition -}}
-          {{ $image = "hpecaide-master" }}
+          {{ $image = "hpe-mlde-master" }}
         {{- end -}}
         {{ $tag := (required "A valid Chart.AppVersion entry required!" .Chart.AppVersion) }}
         {{- /* detVersion is used for CI to override the appVersion. */ -}}
@@ -36,6 +36,17 @@ spec:
         {{- end -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
+        {{- if .Values.enterpriseEdition }}
+        {{- if .Values.oidc }}
+        env:
+          - name: DETERMINED_OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ required "A valid client secret name is required!" .Values.oidc.clientSecretName }}
+                key: {{ required "A valid client secret filename is required!" .Values.oidc.clientSecretKey }}
+                optional: false
+        {{- end }}
+        {{- end }}
         volumeMounts:
           - name: master-config
             mountPath: /etc/determined/
