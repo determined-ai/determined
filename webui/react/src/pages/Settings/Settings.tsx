@@ -47,7 +47,11 @@ const SettingsContent: React.FC = () => {
   }, [ history, rbacEnabled ]);
 
   return showTabs ? (
-    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange} destroyInactiveTabPane>
+    <Tabs
+      className="no-padding"
+      defaultActiveKey={tabKey}
+      destroyInactiveTabPane
+      onChange={handleTabChange}>
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>

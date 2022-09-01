@@ -29,6 +29,7 @@ jest.mock('services/api', () => ({
     const users: Array<DetailedUser> = [ currentUser ];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
+  getGroups: () => Promise.resolve({groups:[]}),
 }));
 
 const setup = () => render(
