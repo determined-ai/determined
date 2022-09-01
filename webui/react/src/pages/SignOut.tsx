@@ -3,9 +3,10 @@ import { useHistory, useLocation } from 'react-router-dom';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
-import { isAuthFailure, logout } from 'services/api';
+import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { isAuthFailure } from 'shared/utils/service';
 import handleError from 'utils/error';
 
 const SignOut: React.FC = () => {
