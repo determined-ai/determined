@@ -81,6 +81,14 @@ export interface GetExperimentParams {
   id: number;
 }
 
+export interface getExperimentCheckpointsParams extends PaginationParams {
+  id: number;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER'
+  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC';
+  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED'
+  | 'STATE_ERROR' | 'STATE_DELETED'>;
+}
+
 export interface ExperimentLabelsParams {
   project_id?: number;
 }
@@ -251,7 +259,9 @@ export interface GetUsersParams extends PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_USER_NAME'
   | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' |'SORT_BY_MODIFIED_TIME';
 }
-
+export interface GetUserParams {
+  userId: number;
+}
 export interface PostUserParams {
   admin: boolean,
   displayName?: string,
@@ -266,14 +276,37 @@ export interface SetUserPasswordParams {
 export interface PatchUserParams {
   userId: number;
   userParams: {
-    displayName: string;
+    active?: boolean;
+    admin?: boolean;
+    displayName?: string;
   };
 }
 
+export interface CreateGroupsParams {
+  addUsers?: Array<number>;
+  name: string;
+}
 export interface UpdateUserSettingParams {
   setting: Api.V1UserWebSetting;
   storagePath: string;
 }
+
+export interface UpdateGroupParams {
+  addUsers?: Array<number>;
+  groupId: number;
+  name?: string;
+  removeUsers?: Array<number>;
+}
+
+export interface DeleteGroupParams {
+  groupId: number;
+}
+
+export interface GetGroupParams {
+  groupId: number;
+}
+
+export type GetGroupsParams = PaginationParams
 
 export interface GetProjectParams {
   id: number;

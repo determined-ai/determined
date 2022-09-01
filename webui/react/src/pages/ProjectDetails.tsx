@@ -485,7 +485,7 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.username })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ProjectDetailsSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
@@ -554,7 +554,7 @@ const ProjectDetails: React.FC = () => {
   const {
     contextHolder: modalExperimentMoveContextHolder,
     modalOpen: openMoveModal,
-  } = useModalExperimentMove({ onClose: handleActionComplete });
+  } = useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> | void => {
     if (!settings.row) return;

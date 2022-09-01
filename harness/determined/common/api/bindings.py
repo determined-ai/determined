@@ -6,7 +6,7 @@ import typing
 import requests
 
 if typing.TYPE_CHECKING:
-    from determined.experimental import client
+    from determined.common import api
 
 # flake8: noqa
 Json = typing.Any
@@ -301,7 +301,6 @@ class trialv1Trial:
         totalCheckpointSize: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointUuid: "typing.Optional[str]" = None,
-        workloadCount: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -320,7 +319,6 @@ class trialv1Trial:
         self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
         self.totalCheckpointSize = totalCheckpointSize
-        self.workloadCount = workloadCount
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -342,7 +340,6 @@ class trialv1Trial:
             warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
             taskId=obj.get("taskId", None),
             totalCheckpointSize=obj.get("totalCheckpointSize", None),
-            workloadCount=obj.get("workloadCount", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -364,7 +361,6 @@ class trialv1Trial:
             "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
             "taskId": self.taskId if self.taskId is not None else None,
             "totalCheckpointSize": self.totalCheckpointSize if self.totalCheckpointSize is not None else None,
-            "workloadCount": self.workloadCount if self.workloadCount is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
@@ -700,11 +696,11 @@ class v1Checkpoint:
         *,
         metadata: "typing.Dict[str, typing.Any]",
         resources: "typing.Dict[str, str]",
+        state: "determinedcheckpointv1State",
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
         allocationId: "typing.Optional[str]" = None,
         reportTime: "typing.Optional[str]" = None,
-        state: "typing.Optional[determinedcheckpointv1State]" = None,
         taskId: "typing.Optional[str]" = None,
     ):
         self.taskId = taskId
@@ -725,7 +721,7 @@ class v1Checkpoint:
             reportTime=obj.get("reportTime", None),
             resources=obj["resources"],
             metadata=obj["metadata"],
-            state=determinedcheckpointv1State(obj["state"]) if obj.get("state", None) is not None else None,
+            state=determinedcheckpointv1State(obj["state"]),
             training=v1CheckpointTrainingMetadata.from_json(obj["training"]),
         )
 
@@ -737,7 +733,7 @@ class v1Checkpoint:
             "reportTime": self.reportTime if self.reportTime is not None else None,
             "resources": self.resources,
             "metadata": self.metadata,
-            "state": self.state.value if self.state is not None else None,
+            "state": self.state.value,
             "training": self.training.to_json(),
         }
 
@@ -1040,6 +1036,48 @@ class v1CreateExperimentResponse:
             "config": self.config,
         }
 
+class v1CreateGroupRequest:
+    def __init__(
+        self,
+        *,
+        name: str,
+        addUsers: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.name = name
+        self.addUsers = addUsers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGroupRequest":
+        return cls(
+            name=obj["name"],
+            addUsers=obj.get("addUsers", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "addUsers": self.addUsers if self.addUsers is not None else None,
+        }
+
+class v1CreateGroupResponse:
+    def __init__(
+        self,
+        *,
+        group: "v1GroupDetails",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGroupResponse":
+        return cls(
+            group=v1GroupDetails.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
 class v1CurrentUserResponse:
     def __init__(
         self,
@@ -1324,17 +1362,18 @@ class v1Experiment:
         self,
         *,
         archived: bool,
+        config: "typing.Dict[str, typing.Any]",
         id: int,
         jobId: str,
         name: str,
         numTrials: int,
         originalConfig: str,
         projectId: int,
+        projectOwnerId: int,
         searcherType: str,
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         description: "typing.Optional[str]" = None,
         displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
@@ -1376,6 +1415,7 @@ class v1Experiment:
         self.parentArchived = parentArchived
         self.config = config
         self.originalConfig = originalConfig
+        self.projectOwnerId = projectOwnerId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1404,8 +1444,9 @@ class v1Experiment:
             workspaceId=obj.get("workspaceId", None),
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
-            config=obj.get("config", None),
+            config=obj["config"],
             originalConfig=obj["originalConfig"],
+            projectOwnerId=obj["projectOwnerId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1434,8 +1475,9 @@ class v1Experiment:
             "workspaceId": self.workspaceId if self.workspaceId is not None else None,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
-            "config": self.config if self.config is not None else None,
+            "config": self.config,
             "originalConfig": self.originalConfig,
+            "projectOwnerId": self.projectOwnerId,
         }
 
 class v1ExperimentSimulation:
@@ -1557,6 +1599,7 @@ class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_WORST = "FITTING_POLICY_WORST"
     FITTING_POLICY_KUBERNETES = "FITTING_POLICY_KUBERNETES"
     FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
+    FITTING_POLICY_PBS = "FITTING_POLICY_PBS"
 
 class v1GetActiveTasksCountResponse:
     def __init__(
@@ -1659,19 +1702,19 @@ class v1GetCheckpointResponse:
     def __init__(
         self,
         *,
-        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        checkpoint: "v1Checkpoint",
     ):
         self.checkpoint = checkpoint
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCheckpointResponse":
         return cls(
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
+            "checkpoint": self.checkpoint.to_json(),
         }
 
 class v1GetCommandResponse:
@@ -1913,6 +1956,79 @@ class v1GetExperimentsResponse:
         return {
             "experiments": [x.to_json() for x in self.experiments],
             "pagination": self.pagination.to_json(),
+        }
+
+class v1GetGroupResponse:
+    def __init__(
+        self,
+        *,
+        group: "v1GroupDetails",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupResponse":
+        return cls(
+            group=v1GroupDetails.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
+class v1GetGroupsRequest:
+    def __init__(
+        self,
+        *,
+        limit: int,
+        name: "typing.Optional[str]" = None,
+        offset: "typing.Optional[int]" = None,
+        userId: "typing.Optional[int]" = None,
+    ):
+        self.userId = userId
+        self.name = name
+        self.offset = offset
+        self.limit = limit
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupsRequest":
+        return cls(
+            userId=obj.get("userId", None),
+            name=obj.get("name", None),
+            offset=obj.get("offset", None),
+            limit=obj["limit"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "userId": self.userId if self.userId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "offset": self.offset if self.offset is not None else None,
+            "limit": self.limit,
+        }
+
+class v1GetGroupsResponse:
+    def __init__(
+        self,
+        *,
+        groups: "typing.Optional[typing.Sequence[v1GroupSearchResult]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
+    ):
+        self.groups = groups
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupsResponse":
+        return cls(
+            groups=[v1GroupSearchResult.from_json(x) for x in obj["groups"]] if obj.get("groups", None) is not None else None,
+            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groups": [x.to_json() for x in self.groups] if self.groups is not None else None,
+            "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
 class v1GetHPImportanceResponse:
@@ -2585,8 +2701,8 @@ class v1GetTrialCheckpointsResponse:
     def __init__(
         self,
         *,
-        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
-        pagination: "typing.Optional[v1Pagination]" = None,
+        checkpoints: "typing.Sequence[v1Checkpoint]",
+        pagination: "v1Pagination",
     ):
         self.checkpoints = checkpoints
         self.pagination = pagination
@@ -2594,14 +2710,14 @@ class v1GetTrialCheckpointsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialCheckpointsResponse":
         return cls(
-            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
-            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpoints": [x.to_json() for x in self.checkpoints] if self.checkpoints is not None else None,
-            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "checkpoints": [x.to_json() for x in self.checkpoints],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetTrialProfilerAvailableSeriesResponse:
@@ -2688,19 +2804,19 @@ class v1GetUserResponse:
     def __init__(
         self,
         *,
-        user: "typing.Optional[v1User]" = None,
+        user: "v1User",
     ):
         self.user = user
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUserResponse":
         return cls(
-            user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
+            user=v1User.from_json(obj["user"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "user": self.user.to_json() if self.user is not None else None,
+            "user": self.user.to_json(),
         }
 
 class v1GetUserSettingResponse:
@@ -2829,6 +2945,79 @@ class v1GetWorkspacesResponse:
         return {
             "workspaces": [x.to_json() for x in self.workspaces],
             "pagination": self.pagination.to_json(),
+        }
+
+class v1Group:
+    def __init__(
+        self,
+        *,
+        groupId: "typing.Optional[int]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.groupId = groupId
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Group":
+        return cls(
+            groupId=obj.get("groupId", None),
+            name=obj.get("name", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId if self.groupId is not None else None,
+            "name": self.name if self.name is not None else None,
+        }
+
+class v1GroupDetails:
+    def __init__(
+        self,
+        *,
+        groupId: "typing.Optional[int]" = None,
+        name: "typing.Optional[str]" = None,
+        users: "typing.Optional[typing.Sequence[v1User]]" = None,
+    ):
+        self.groupId = groupId
+        self.name = name
+        self.users = users
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GroupDetails":
+        return cls(
+            groupId=obj.get("groupId", None),
+            name=obj.get("name", None),
+            users=[v1User.from_json(x) for x in obj["users"]] if obj.get("users", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId if self.groupId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "users": [x.to_json() for x in self.users] if self.users is not None else None,
+        }
+
+class v1GroupSearchResult:
+    def __init__(
+        self,
+        *,
+        group: "v1Group",
+        numMembers: int,
+    ):
+        self.group = group
+        self.numMembers = numMembers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GroupSearchResult":
+        return cls(
+            group=v1Group.from_json(obj["group"]),
+            numMembers=obj["numMembers"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+            "numMembers": self.numMembers,
         }
 
 class v1IdleNotebookRequest:
@@ -3516,18 +3705,18 @@ class v1Model:
     def __init__(
         self,
         *,
+        archived: bool,
         creationTime: str,
         id: int,
         lastUpdatedTime: str,
         metadata: "typing.Dict[str, typing.Any]",
         name: str,
         numVersions: int,
+        userId: int,
         username: str,
-        archived: "typing.Optional[bool]" = None,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
-        userId: "typing.Optional[int]" = None,
     ):
         self.name = name
         self.description = description
@@ -3554,8 +3743,8 @@ class v1Model:
             numVersions=obj["numVersions"],
             labels=obj.get("labels", None),
             username=obj["username"],
-            userId=obj.get("userId", None),
-            archived=obj.get("archived", None),
+            userId=obj["userId"],
+            archived=obj["archived"],
             notes=obj.get("notes", None),
         )
 
@@ -3570,8 +3759,8 @@ class v1Model:
             "numVersions": self.numVersions,
             "labels": self.labels if self.labels is not None else None,
             "username": self.username,
-            "userId": self.userId if self.userId is not None else None,
-            "archived": self.archived if self.archived is not None else None,
+            "userId": self.userId,
+            "archived": self.archived,
             "notes": self.notes if self.notes is not None else None,
         }
 
@@ -3582,16 +3771,16 @@ class v1ModelVersion:
         checkpoint: "v1Checkpoint",
         creationTime: str,
         id: int,
+        lastUpdatedTime: str,
         model: "v1Model",
-        username: str,
         version: int,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
-        lastUpdatedTime: "typing.Optional[str]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
+        username: "typing.Optional[str]" = None,
     ):
         self.model = model
         self.checkpoint = checkpoint
@@ -3617,9 +3806,9 @@ class v1ModelVersion:
             id=obj["id"],
             name=obj.get("name", None),
             metadata=obj.get("metadata", None),
-            lastUpdatedTime=obj.get("lastUpdatedTime", None),
+            lastUpdatedTime=obj["lastUpdatedTime"],
             comment=obj.get("comment", None),
-            username=obj["username"],
+            username=obj.get("username", None),
             userId=obj.get("userId", None),
             labels=obj.get("labels", None),
             notes=obj.get("notes", None),
@@ -3634,9 +3823,9 @@ class v1ModelVersion:
             "id": self.id,
             "name": self.name if self.name is not None else None,
             "metadata": self.metadata if self.metadata is not None else None,
-            "lastUpdatedTime": self.lastUpdatedTime if self.lastUpdatedTime is not None else None,
+            "lastUpdatedTime": self.lastUpdatedTime,
             "comment": self.comment if self.comment is not None else None,
-            "username": self.username,
+            "username": self.username if self.username is not None else None,
             "userId": self.userId if self.userId is not None else None,
             "labels": self.labels if self.labels is not None else None,
             "notes": self.notes if self.notes is not None else None,
@@ -4026,19 +4215,31 @@ class v1PatchUser:
     def __init__(
         self,
         *,
+        active: "typing.Optional[bool]" = None,
+        admin: "typing.Optional[bool]" = None,
+        agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
         displayName: "typing.Optional[str]" = None,
     ):
+        self.admin = admin
+        self.active = active
         self.displayName = displayName
+        self.agentUserGroup = agentUserGroup
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchUser":
         return cls(
+            admin=obj.get("admin", None),
+            active=obj.get("active", None),
             displayName=obj.get("displayName", None),
+            agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
+            "admin": self.admin if self.admin is not None else None,
+            "active": self.active if self.active is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
         }
 
 class v1PatchUserResponse:
@@ -5315,6 +5516,7 @@ class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_ROUND_ROBIN = "SCHEDULER_TYPE_ROUND_ROBIN"
     SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
     SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
+    SCHEDULER_TYPE_PBS = "SCHEDULER_TYPE_PBS"
 
 class v1SearcherOperation:
     def __init__(
@@ -6197,6 +6399,56 @@ class v1TrialsSnapshotResponseTrial:
             "batchesProcessed": self.batchesProcessed,
         }
 
+class v1UpdateGroupRequest:
+    def __init__(
+        self,
+        *,
+        groupId: int,
+        addUsers: "typing.Optional[typing.Sequence[int]]" = None,
+        name: "typing.Optional[str]" = None,
+        removeUsers: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.groupId = groupId
+        self.name = name
+        self.addUsers = addUsers
+        self.removeUsers = removeUsers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UpdateGroupRequest":
+        return cls(
+            groupId=obj["groupId"],
+            name=obj.get("name", None),
+            addUsers=obj.get("addUsers", None),
+            removeUsers=obj.get("removeUsers", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId,
+            "name": self.name if self.name is not None else None,
+            "addUsers": self.addUsers if self.addUsers is not None else None,
+            "removeUsers": self.removeUsers if self.removeUsers is not None else None,
+        }
+
+class v1UpdateGroupResponse:
+    def __init__(
+        self,
+        *,
+        group: "v1GroupDetails",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UpdateGroupResponse":
+        return cls(
+            group=v1GroupDetails.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
 class v1UpdateJobQueueRequest:
     def __init__(
         self,
@@ -6425,7 +6677,7 @@ class v1WorkspaceState(enum.Enum):
     WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
 def post_AckAllocationPreemptionSignal(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AckAllocationPreemptionSignalRequest",
@@ -6439,13 +6691,14 @@ def post_AckAllocationPreemptionSignal(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_AckAllocationPreemptionSignal", _resp)
 
 def post_ActivateExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6458,13 +6711,14 @@ def post_ActivateExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
 
 def post_AddProjectNote(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1Note",
     projectId: int,
@@ -6478,13 +6732,14 @@ def post_AddProjectNote(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1AddProjectNoteResponse.from_json(_resp.json())
     raise APIHttpError("post_AddProjectNote", _resp)
 
 def post_AllocationAllGather(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AllocationAllGatherRequest",
@@ -6498,13 +6753,14 @@ def post_AllocationAllGather(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1AllocationAllGatherResponse.from_json(_resp.json())
     raise APIHttpError("post_AllocationAllGather", _resp)
 
 def post_AllocationPendingPreemptionSignal(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AllocationPendingPreemptionSignalRequest",
@@ -6518,13 +6774,14 @@ def post_AllocationPendingPreemptionSignal(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_AllocationPendingPreemptionSignal", _resp)
 
 def get_AllocationPreemptionSignal(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     timeoutSeconds: "typing.Optional[int]" = None,
@@ -6540,13 +6797,14 @@ def get_AllocationPreemptionSignal(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1AllocationPreemptionSignalResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationPreemptionSignal", _resp)
 
 def post_AllocationReady(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1AllocationReadyRequest",
@@ -6560,13 +6818,14 @@ def post_AllocationReady(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_AllocationReady", _resp)
 
 def get_AllocationRendezvousInfo(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     resourcesId: str,
@@ -6580,13 +6839,14 @@ def get_AllocationRendezvousInfo(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1AllocationRendezvousInfoResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationRendezvousInfo", _resp)
 
 def post_ArchiveExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6599,13 +6859,14 @@ def post_ArchiveExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveExperiment", _resp)
 
 def post_ArchiveModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> None:
@@ -6618,13 +6879,14 @@ def post_ArchiveModel(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveModel", _resp)
 
 def post_ArchiveProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6637,13 +6899,14 @@ def post_ArchiveProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveProject", _resp)
 
 def post_ArchiveWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6656,13 +6919,14 @@ def post_ArchiveWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveWorkspace", _resp)
 
 def post_CancelExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -6675,13 +6939,14 @@ def post_CancelExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CancelExperiment", _resp)
 
 def get_CompareTrials(
-    session: "client.Session",
+    session: "api.Session",
     *,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
@@ -6708,13 +6973,14 @@ def get_CompareTrials(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1CompareTrialsResponse.from_json(_resp.json())
     raise APIHttpError("get_CompareTrials", _resp)
 
 def post_CompleteTrialSearcherValidation(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1CompleteValidateAfterOperation",
     trialId: int,
@@ -6728,13 +6994,14 @@ def post_CompleteTrialSearcherValidation(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
 
 def post_ComputeHPImportance(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> None:
@@ -6747,13 +7014,14 @@ def post_ComputeHPImportance(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ComputeHPImportance", _resp)
 
 def post_CreateExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1CreateExperimentRequest",
 ) -> "v1CreateExperimentResponse":
@@ -6766,13 +7034,34 @@ def post_CreateExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1CreateExperimentResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateExperiment", _resp)
 
+def post_CreateGroup(
+    session: "api.Session",
+    *,
+    body: "v1CreateGroupRequest",
+) -> "v1CreateGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/groups",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CreateGroupResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateGroup", _resp)
+
 def get_CurrentUser(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1CurrentUserResponse":
     _params = None
     _resp = session._do_request(
@@ -6783,13 +7072,14 @@ def get_CurrentUser(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1CurrentUserResponse.from_json(_resp.json())
     raise APIHttpError("get_CurrentUser", _resp)
 
 def delete_DeleteCheckpoints(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1DeleteCheckpointsRequest",
 ) -> None:
@@ -6802,13 +7092,14 @@ def delete_DeleteCheckpoints(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteCheckpoints", _resp)
 
 def delete_DeleteExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> None:
@@ -6821,13 +7112,34 @@ def delete_DeleteExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
+def delete_DeleteGroup(
+    session: "api.Session",
+    *,
+    groupId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/groups/{groupId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteGroup", _resp)
+
 def delete_DeleteModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> None:
@@ -6840,13 +7152,14 @@ def delete_DeleteModel(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteModel", _resp)
 
 def delete_DeleteModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
     modelVersionId: int,
@@ -6860,13 +7173,14 @@ def delete_DeleteModelVersion(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteModelVersion", _resp)
 
 def delete_DeleteProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1DeleteProjectResponse":
@@ -6879,13 +7193,14 @@ def delete_DeleteProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1DeleteProjectResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteProject", _resp)
 
 def delete_DeleteTemplate(
-    session: "client.Session",
+    session: "api.Session",
     *,
     templateName: str,
 ) -> None:
@@ -6898,13 +7213,14 @@ def delete_DeleteTemplate(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
 def delete_DeleteWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1DeleteWorkspaceResponse":
@@ -6917,13 +7233,14 @@ def delete_DeleteWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1DeleteWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     body: "v1DisableAgentRequest",
@@ -6937,13 +7254,14 @@ def post_DisableAgent(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1DisableAgentResponse.from_json(_resp.json())
     raise APIHttpError("post_DisableAgent", _resp)
 
 def post_DisableSlot(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     slotId: str,
@@ -6957,13 +7275,14 @@ def post_DisableSlot(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1DisableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_DisableSlot", _resp)
 
 def post_EnableAgent(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
 ) -> "v1EnableAgentResponse":
@@ -6976,13 +7295,14 @@ def post_EnableAgent(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1EnableAgentResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableAgent", _resp)
 
 def post_EnableSlot(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     slotId: str,
@@ -6996,13 +7316,14 @@ def post_EnableSlot(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
 
 def get_GetActiveTasksCount(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetActiveTasksCountResponse":
     _params = None
     _resp = session._do_request(
@@ -7013,13 +7334,14 @@ def get_GetActiveTasksCount(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetActiveTasksCountResponse.from_json(_resp.json())
     raise APIHttpError("get_GetActiveTasksCount", _resp)
 
 def get_GetAgent(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
 ) -> "v1GetAgentResponse":
@@ -7032,13 +7354,14 @@ def get_GetAgent(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetAgentResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgent", _resp)
 
 def get_GetAgents(
-    session: "client.Session",
+    session: "api.Session",
     *,
     label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
@@ -7061,13 +7384,14 @@ def get_GetAgents(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
 
 def get_GetBestSearcherValidationMetric(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetBestSearcherValidationMetricResponse":
@@ -7080,13 +7404,14 @@ def get_GetBestSearcherValidationMetric(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetBestSearcherValidationMetricResponse.from_json(_resp.json())
     raise APIHttpError("get_GetBestSearcherValidationMetric", _resp)
 
 def get_GetCheckpoint(
-    session: "client.Session",
+    session: "api.Session",
     *,
     checkpointUuid: str,
 ) -> "v1GetCheckpointResponse":
@@ -7099,13 +7424,14 @@ def get_GetCheckpoint(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetCheckpointResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCheckpoint", _resp)
 
 def get_GetCommand(
-    session: "client.Session",
+    session: "api.Session",
     *,
     commandId: str,
 ) -> "v1GetCommandResponse":
@@ -7118,13 +7444,14 @@ def get_GetCommand(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetCommandResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommand", _resp)
 
 def get_GetCommands(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7149,13 +7476,14 @@ def get_GetCommands(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetCommandsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommands", _resp)
 
 def get_GetCurrentTrialSearcherOperation(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
 ) -> "v1GetCurrentTrialSearcherOperationResponse":
@@ -7168,13 +7496,14 @@ def get_GetCurrentTrialSearcherOperation(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetCurrentTrialSearcherOperationResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCurrentTrialSearcherOperation", _resp)
 
 def get_GetExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetExperimentResponse":
@@ -7187,13 +7516,14 @@ def get_GetExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetExperimentResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiment", _resp)
 
 def get_GetExperimentCheckpoints(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
     limit: "typing.Optional[int]" = None,
@@ -7217,13 +7547,14 @@ def get_GetExperimentCheckpoints(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetExperimentCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentCheckpoints", _resp)
 
 def get_GetExperimentLabels(
-    session: "client.Session",
+    session: "api.Session",
     *,
     projectId: "typing.Optional[int]" = None,
 ) -> "v1GetExperimentLabelsResponse":
@@ -7238,13 +7569,14 @@ def get_GetExperimentLabels(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetExperimentLabelsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentLabels", _resp)
 
 def get_GetExperimentTrials(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
     limit: "typing.Optional[int]" = None,
@@ -7268,13 +7600,14 @@ def get_GetExperimentTrials(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetExperimentTrialsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentTrials", _resp)
 
 def get_GetExperimentValidationHistory(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetExperimentValidationHistoryResponse":
@@ -7287,13 +7620,14 @@ def get_GetExperimentValidationHistory(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetExperimentValidationHistoryResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentValidationHistory", _resp)
 
 def get_GetExperiments(
-    session: "client.Session",
+    session: "api.Session",
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
@@ -7330,13 +7664,54 @@ def get_GetExperiments(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiments", _resp)
 
+def get_GetGroup(
+    session: "api.Session",
+    *,
+    groupId: int,
+) -> "v1GetGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/groups/{groupId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGroupResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGroup", _resp)
+
+def post_GetGroups(
+    session: "api.Session",
+    *,
+    body: "v1GetGroupsRequest",
+) -> "v1GetGroupsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/groups/search",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGroupsResponse.from_json(_resp.json())
+    raise APIHttpError("post_GetGroups", _resp)
+
 def get_GetJobQueueStats(
-    session: "client.Session",
+    session: "api.Session",
     *,
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetJobQueueStatsResponse":
@@ -7351,13 +7726,14 @@ def get_GetJobQueueStats(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetJobQueueStatsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetJobQueueStats", _resp)
 
 def get_GetJobs(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7380,13 +7756,14 @@ def get_GetJobs(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetJobsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetJobs", _resp)
 
 def get_GetMaster(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetMasterResponse":
     _params = None
     _resp = session._do_request(
@@ -7397,13 +7774,14 @@ def get_GetMaster(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetMasterResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMaster", _resp)
 
 def get_GetMasterConfig(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetMasterConfigResponse":
     _params = None
     _resp = session._do_request(
@@ -7414,13 +7792,14 @@ def get_GetMasterConfig(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetMasterConfigResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMasterConfig", _resp)
 
 def get_GetModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> "v1GetModelResponse":
@@ -7433,13 +7812,14 @@ def get_GetModel(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModel", _resp)
 
 def get_GetModelDef(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetModelDefResponse":
@@ -7452,13 +7832,14 @@ def get_GetModelDef(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelDefResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelDef", _resp)
 
 def post_GetModelDefFile(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1GetModelDefFileRequest",
     experimentId: int,
@@ -7472,13 +7853,14 @@ def post_GetModelDefFile(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelDefFileResponse.from_json(_resp.json())
     raise APIHttpError("post_GetModelDefFile", _resp)
 
 def get_GetModelDefTree(
-    session: "client.Session",
+    session: "api.Session",
     *,
     experimentId: int,
 ) -> "v1GetModelDefTreeResponse":
@@ -7491,13 +7873,14 @@ def get_GetModelDefTree(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelDefTreeResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelDefTree", _resp)
 
 def get_GetModelLabels(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetModelLabelsResponse":
     _params = None
     _resp = session._do_request(
@@ -7508,13 +7891,14 @@ def get_GetModelLabels(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelLabelsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelLabels", _resp)
 
 def get_GetModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
     modelVersion: int,
@@ -7528,13 +7912,14 @@ def get_GetModelVersion(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelVersion", _resp)
 
 def get_GetModelVersions(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
     limit: "typing.Optional[int]" = None,
@@ -7556,13 +7941,14 @@ def get_GetModelVersions(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelVersionsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelVersions", _resp)
 
 def get_GetModels(
-    session: "client.Session",
+    session: "api.Session",
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
@@ -7597,13 +7983,14 @@ def get_GetModels(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetModelsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModels", _resp)
 
 def get_GetNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     notebookId: str,
 ) -> "v1GetNotebookResponse":
@@ -7616,13 +8003,14 @@ def get_GetNotebook(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetNotebookResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebook", _resp)
 
 def get_GetNotebooks(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7647,13 +8035,14 @@ def get_GetNotebooks(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
 
 def get_GetProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1GetProjectResponse":
@@ -7666,13 +8055,14 @@ def get_GetProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
 
 def get_GetResourcePools(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7689,13 +8079,14 @@ def get_GetResourcePools(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetResourcePoolsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetResourcePools", _resp)
 
 def get_GetShell(
-    session: "client.Session",
+    session: "api.Session",
     *,
     shellId: str,
 ) -> "v1GetShellResponse":
@@ -7708,13 +8099,14 @@ def get_GetShell(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetShellResponse.from_json(_resp.json())
     raise APIHttpError("get_GetShell", _resp)
 
 def get_GetShells(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7739,13 +8131,14 @@ def get_GetShells(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetShellsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetShells", _resp)
 
 def get_GetSlot(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
     slotId: str,
@@ -7759,13 +8152,14 @@ def get_GetSlot(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetSlotResponse.from_json(_resp.json())
     raise APIHttpError("get_GetSlot", _resp)
 
 def get_GetSlots(
-    session: "client.Session",
+    session: "api.Session",
     *,
     agentId: str,
 ) -> "v1GetSlotsResponse":
@@ -7778,13 +8172,14 @@ def get_GetSlots(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetSlotsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetSlots", _resp)
 
 def get_GetTask(
-    session: "client.Session",
+    session: "api.Session",
     *,
     taskId: str,
 ) -> "v1GetTaskResponse":
@@ -7797,13 +8192,14 @@ def get_GetTask(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
 
 def get_GetTelemetry(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetTelemetryResponse":
     _params = None
     _resp = session._do_request(
@@ -7814,13 +8210,14 @@ def get_GetTelemetry(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTelemetryResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTelemetry", _resp)
 
 def get_GetTemplate(
-    session: "client.Session",
+    session: "api.Session",
     *,
     templateName: str,
 ) -> "v1GetTemplateResponse":
@@ -7833,13 +8230,14 @@ def get_GetTemplate(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTemplateResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTemplate", _resp)
 
 def get_GetTemplates(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
@@ -7862,13 +8260,14 @@ def get_GetTemplates(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTemplatesResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTemplates", _resp)
 
 def get_GetTensorboard(
-    session: "client.Session",
+    session: "api.Session",
     *,
     tensorboardId: str,
 ) -> "v1GetTensorboardResponse":
@@ -7881,13 +8280,14 @@ def get_GetTensorboard(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTensorboard", _resp)
 
 def get_GetTensorboards(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -7912,13 +8312,14 @@ def get_GetTensorboards(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTensorboardsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTensorboards", _resp)
 
 def get_GetTrial(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
 ) -> "v1GetTrialResponse":
@@ -7931,13 +8332,14 @@ def get_GetTrial(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrial", _resp)
 
 def get_GetTrialCheckpoints(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
     limit: "typing.Optional[int]" = None,
@@ -7961,13 +8363,14 @@ def get_GetTrialCheckpoints(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
 def get_GetTrialWorkloads(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
     filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
@@ -7993,13 +8396,14 @@ def get_GetTrialWorkloads(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetTrialWorkloadsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialWorkloads", _resp)
 
 def get_GetUser(
-    session: "client.Session",
+    session: "api.Session",
     *,
     userId: int,
 ) -> "v1GetUserResponse":
@@ -8012,13 +8416,14 @@ def get_GetUser(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
 
 def get_GetUserSetting(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetUserSettingResponse":
     _params = None
     _resp = session._do_request(
@@ -8029,13 +8434,14 @@ def get_GetUserSetting(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetUserSettingResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUserSetting", _resp)
 
 def get_GetUsers(
-    session: "client.Session",
+    session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -8056,13 +8462,14 @@ def get_GetUsers(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
 
 def get_GetWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> "v1GetWorkspaceResponse":
@@ -8075,13 +8482,14 @@ def get_GetWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspace", _resp)
 
 def get_GetWorkspaceProjects(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
     archived: "typing.Optional[bool]" = None,
@@ -8109,13 +8517,14 @@ def get_GetWorkspaceProjects(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetWorkspaceProjectsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspaceProjects", _resp)
 
 def get_GetWorkspaces(
-    session: "client.Session",
+    session: "api.Session",
     *,
     archived: "typing.Optional[bool]" = None,
     limit: "typing.Optional[int]" = None,
@@ -8144,13 +8553,14 @@ def get_GetWorkspaces(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetWorkspacesResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspaces", _resp)
 
 def put_IdleNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1IdleNotebookRequest",
     notebookId: str,
@@ -8164,13 +8574,14 @@ def put_IdleNotebook(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("put_IdleNotebook", _resp)
 
 def post_KillCommand(
-    session: "client.Session",
+    session: "api.Session",
     *,
     commandId: str,
 ) -> "v1KillCommandResponse":
@@ -8183,13 +8594,14 @@ def post_KillCommand(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1KillCommandResponse.from_json(_resp.json())
     raise APIHttpError("post_KillCommand", _resp)
 
 def post_KillExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8202,13 +8614,14 @@ def post_KillExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_KillExperiment", _resp)
 
 def post_KillNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     notebookId: str,
 ) -> "v1KillNotebookResponse":
@@ -8221,13 +8634,14 @@ def post_KillNotebook(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1KillNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_KillNotebook", _resp)
 
 def post_KillShell(
-    session: "client.Session",
+    session: "api.Session",
     *,
     shellId: str,
 ) -> "v1KillShellResponse":
@@ -8240,13 +8654,14 @@ def post_KillShell(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1KillShellResponse.from_json(_resp.json())
     raise APIHttpError("post_KillShell", _resp)
 
 def post_KillTensorboard(
-    session: "client.Session",
+    session: "api.Session",
     *,
     tensorboardId: str,
 ) -> "v1KillTensorboardResponse":
@@ -8259,13 +8674,14 @@ def post_KillTensorboard(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1KillTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_KillTensorboard", _resp)
 
 def post_KillTrial(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8278,13 +8694,14 @@ def post_KillTrial(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_KillTrial", _resp)
 
 def post_LaunchCommand(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchCommandRequest",
 ) -> "v1LaunchCommandResponse":
@@ -8297,13 +8714,14 @@ def post_LaunchCommand(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1LaunchCommandResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchCommand", _resp)
 
 def post_LaunchNotebook(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchNotebookRequest",
 ) -> "v1LaunchNotebookResponse":
@@ -8316,13 +8734,14 @@ def post_LaunchNotebook(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1LaunchNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchNotebook", _resp)
 
 def post_LaunchShell(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchShellRequest",
 ) -> "v1LaunchShellResponse":
@@ -8335,13 +8754,14 @@ def post_LaunchShell(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1LaunchShellResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchShell", _resp)
 
 def post_LaunchTensorboard(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LaunchTensorboardRequest",
 ) -> "v1LaunchTensorboardResponse":
@@ -8354,13 +8774,14 @@ def post_LaunchTensorboard(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
 def post_Login(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1LoginRequest",
 ) -> "v1LoginResponse":
@@ -8373,13 +8794,14 @@ def post_Login(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1LoginResponse.from_json(_resp.json())
     raise APIHttpError("post_Login", _resp)
 
 def post_Logout(
-    session: "client.Session",
+    session: "api.Session",
 ) -> None:
     _params = None
     _resp = session._do_request(
@@ -8390,13 +8812,14 @@ def post_Logout(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_Logout", _resp)
 
 def post_MarkAllocationResourcesDaemon(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1MarkAllocationResourcesDaemonRequest",
@@ -8411,13 +8834,14 @@ def post_MarkAllocationResourcesDaemon(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
 def post_MoveExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1MoveExperimentRequest",
     experimentId: int,
@@ -8431,13 +8855,14 @@ def post_MoveExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveExperiment", _resp)
 
 def post_MoveProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1MoveProjectRequest",
     projectId: int,
@@ -8451,13 +8876,14 @@ def post_MoveProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveProject", _resp)
 
 def patch_PatchExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchExperiment",
     experiment_id: int,
@@ -8471,13 +8897,14 @@ def patch_PatchExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PatchExperimentResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchExperiment", _resp)
 
 def patch_PatchModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchModel",
     modelName: str,
@@ -8491,13 +8918,14 @@ def patch_PatchModel(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PatchModelResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModel", _resp)
 
 def patch_PatchModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchModelVersion",
     modelName: str,
@@ -8512,13 +8940,14 @@ def patch_PatchModelVersion(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PatchModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModelVersion", _resp)
 
 def patch_PatchProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchProject",
     id: int,
@@ -8532,13 +8961,14 @@ def patch_PatchProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PatchProjectResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchProject", _resp)
 
 def patch_PatchUser(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchUser",
     userId: int,
@@ -8552,13 +8982,14 @@ def patch_PatchUser(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PatchUserResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUser", _resp)
 
 def patch_PatchWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PatchWorkspace",
     id: int,
@@ -8572,13 +9003,14 @@ def patch_PatchWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PatchWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchWorkspace", _resp)
 
 def post_PauseExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8591,13 +9023,14 @@ def post_PauseExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
 
 def post_PinWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -8610,13 +9043,14 @@ def post_PinWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PinWorkspace", _resp)
 
 def post_PostAllocationProxyAddress(
-    session: "client.Session",
+    session: "api.Session",
     *,
     allocationId: str,
     body: "v1PostAllocationProxyAddressRequest",
@@ -8630,13 +9064,14 @@ def post_PostAllocationProxyAddress(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostAllocationProxyAddress", _resp)
 
 def post_PostCheckpointMetadata(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostCheckpointMetadataRequest",
     checkpoint_uuid: str,
@@ -8650,13 +9085,14 @@ def post_PostCheckpointMetadata(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
 def post_PostModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostModelRequest",
 ) -> "v1PostModelResponse":
@@ -8669,13 +9105,14 @@ def post_PostModel(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PostModelResponse.from_json(_resp.json())
     raise APIHttpError("post_PostModel", _resp)
 
 def post_PostModelVersion(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostModelVersionRequest",
     modelName: str,
@@ -8689,13 +9126,14 @@ def post_PostModelVersion(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PostModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("post_PostModelVersion", _resp)
 
 def post_PostProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostProjectRequest",
     workspaceId: int,
@@ -8709,13 +9147,14 @@ def post_PostProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PostProjectResponse.from_json(_resp.json())
     raise APIHttpError("post_PostProject", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostTrialProfilerMetricsBatchRequest",
 ) -> None:
@@ -8728,13 +9167,14 @@ def post_PostTrialProfilerMetricsBatch(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostTrialProfilerMetricsBatch", _resp)
 
 def post_PostTrialRunnerMetadata(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialRunnerMetadata",
     trialId: int,
@@ -8748,13 +9188,14 @@ def post_PostTrialRunnerMetadata(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostTrialRunnerMetadata", _resp)
 
 def post_PostUser(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostUserRequest",
 ) -> "v1PostUserResponse":
@@ -8767,13 +9208,14 @@ def post_PostUser(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
 
 def post_PostUserSetting(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostUserSettingRequest",
 ) -> None:
@@ -8786,13 +9228,14 @@ def post_PostUserSetting(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostUserSetting", _resp)
 
 def post_PostWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PostWorkspaceRequest",
 ) -> "v1PostWorkspaceResponse":
@@ -8805,13 +9248,14 @@ def post_PostWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PostWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("post_PostWorkspace", _resp)
 
 def post_PreviewHPSearch(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PreviewHPSearchRequest",
 ) -> "v1PreviewHPSearchResponse":
@@ -8824,13 +9268,14 @@ def post_PreviewHPSearch(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PreviewHPSearchResponse.from_json(_resp.json())
     raise APIHttpError("post_PreviewHPSearch", _resp)
 
 def put_PutProjectNotes(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1PutProjectNotesRequest",
     projectId: int,
@@ -8844,13 +9289,14 @@ def put_PutProjectNotes(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PutProjectNotesResponse.from_json(_resp.json())
     raise APIHttpError("put_PutProjectNotes", _resp)
 
 def put_PutTemplate(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1Template",
     template_name: str,
@@ -8864,13 +9310,14 @@ def put_PutTemplate(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
 
 def post_ReportCheckpoint(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1Checkpoint",
 ) -> None:
@@ -8883,13 +9330,14 @@ def post_ReportCheckpoint(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportCheckpoint", _resp)
 
 def post_ReportTrialProgress(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: float,
     trialId: int,
@@ -8903,13 +9351,14 @@ def post_ReportTrialProgress(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialProgress", _resp)
 
 def post_ReportTrialSearcherEarlyExit(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialEarlyExit",
     trialId: int,
@@ -8923,13 +9372,14 @@ def post_ReportTrialSearcherEarlyExit(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialSearcherEarlyExit", _resp)
 
 def post_ReportTrialTrainingMetrics(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialMetrics",
     trainingMetrics_trialId: int,
@@ -8943,13 +9393,14 @@ def post_ReportTrialTrainingMetrics(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialTrainingMetrics", _resp)
 
 def post_ReportTrialValidationMetrics(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1TrialMetrics",
     validationMetrics_trialId: int,
@@ -8963,13 +9414,14 @@ def post_ReportTrialValidationMetrics(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
 
 def post_ResetUserSetting(
-    session: "client.Session",
+    session: "api.Session",
 ) -> None:
     _params = None
     _resp = session._do_request(
@@ -8980,13 +9432,14 @@ def post_ResetUserSetting(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ResetUserSetting", _resp)
 
 def get_ResourceAllocationAggregated(
-    session: "client.Session",
+    session: "api.Session",
     *,
     endDate: "typing.Optional[str]" = None,
     period: "typing.Optional[v1ResourceAllocationAggregationPeriod]" = None,
@@ -9005,13 +9458,14 @@ def get_ResourceAllocationAggregated(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1ResourceAllocationAggregatedResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationAggregated", _resp)
 
 def get_ResourceAllocationRaw(
-    session: "client.Session",
+    session: "api.Session",
     *,
     timestampAfter: "typing.Optional[str]" = None,
     timestampBefore: "typing.Optional[str]" = None,
@@ -9028,13 +9482,14 @@ def get_ResourceAllocationRaw(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
 
 def post_SetCommandPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetCommandPriorityRequest",
     commandId: str,
@@ -9048,13 +9503,14 @@ def post_SetCommandPriority(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1SetCommandPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetCommandPriority", _resp)
 
 def post_SetNotebookPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetNotebookPriorityRequest",
     notebookId: str,
@@ -9068,13 +9524,14 @@ def post_SetNotebookPriority(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1SetNotebookPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetNotebookPriority", _resp)
 
 def post_SetShellPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetShellPriorityRequest",
     shellId: str,
@@ -9088,13 +9545,14 @@ def post_SetShellPriority(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1SetShellPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetShellPriority", _resp)
 
 def post_SetTensorboardPriority(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1SetTensorboardPriorityRequest",
     tensorboardId: str,
@@ -9108,13 +9566,14 @@ def post_SetTensorboardPriority(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1SetTensorboardPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetTensorboardPriority", _resp)
 
 def post_SetUserPassword(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: str,
     userId: int,
@@ -9128,13 +9587,14 @@ def post_SetUserPassword(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
 
 def get_SummarizeTrial(
-    session: "client.Session",
+    session: "api.Session",
     *,
     trialId: int,
     endBatches: "typing.Optional[int]" = None,
@@ -9160,13 +9620,14 @@ def get_SummarizeTrial(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1SummarizeTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_SummarizeTrial", _resp)
 
 def post_UnarchiveExperiment(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9179,13 +9640,14 @@ def post_UnarchiveExperiment(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveExperiment", _resp)
 
 def post_UnarchiveModel(
-    session: "client.Session",
+    session: "api.Session",
     *,
     modelName: str,
 ) -> None:
@@ -9198,13 +9660,14 @@ def post_UnarchiveModel(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveModel", _resp)
 
 def post_UnarchiveProject(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9217,13 +9680,14 @@ def post_UnarchiveProject(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveProject", _resp)
 
 def post_UnarchiveWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9236,13 +9700,14 @@ def post_UnarchiveWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
 
 def post_UnpinWorkspace(
-    session: "client.Session",
+    session: "api.Session",
     *,
     id: int,
 ) -> None:
@@ -9255,13 +9720,35 @@ def post_UnpinWorkspace(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnpinWorkspace", _resp)
 
+def put_UpdateGroup(
+    session: "api.Session",
+    *,
+    body: "v1UpdateGroupRequest",
+    groupId: int,
+) -> "v1UpdateGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/groups/{groupId}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1UpdateGroupResponse.from_json(_resp.json())
+    raise APIHttpError("put_UpdateGroup", _resp)
+
 def post_UpdateJobQueue(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1UpdateJobQueueRequest",
 ) -> None:
@@ -9274,7 +9761,32 @@ def post_UpdateJobQueue(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UpdateJobQueue", _resp)
+
+# Paginated is a union type of objects whose .pagination
+# attribute is a v1Pagination-type object.
+Paginated = typing.Union[
+    v1GetAgentsResponse,
+    v1GetCommandsResponse,
+    v1GetExperimentCheckpointsResponse,
+    v1GetExperimentTrialsResponse,
+    v1GetExperimentsResponse,
+    v1GetGroupsResponse,
+    v1GetJobsResponse,
+    v1GetModelVersionsResponse,
+    v1GetModelsResponse,
+    v1GetNotebooksResponse,
+    v1GetResourcePoolsResponse,
+    v1GetShellsResponse,
+    v1GetTemplatesResponse,
+    v1GetTensorboardsResponse,
+    v1GetTrialCheckpointsResponse,
+    v1GetTrialWorkloadsResponse,
+    v1GetUsersResponse,
+    v1GetWorkspaceProjectsResponse,
+    v1GetWorkspacesResponse,
+]

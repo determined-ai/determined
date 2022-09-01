@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
@@ -350,20 +349,6 @@ WHERE c.trial_id = $1 AND c.steps_completed = $2`, &checkpoint, trialID, totalBa
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v, %v)",
 			trialID, totalBatches)
-	}
-	return &checkpoint, nil
-}
-
-// CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
-func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
-	var checkpoint model.Checkpoint
-	if err := db.query(`
-SELECT *
-FROM checkpoints_view c
-WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
-		return nil, nil
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
 	}
 	return &checkpoint, nil
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -458,9 +459,9 @@ func (a *apiServer) GetExperimentTrials(
 	}
 
 	// Of the form "($1, $2), ($3, $4), ... ($N, $N+1)". Used in a VALUES expression in Postgres.
-	valuesExpr := make([]string, 0)
-	trialIDsWithOrdering := make([]any, 0)
-	trialIDs := make([]int32, 0)
+	valuesExpr := make([]string, 0, len(resp.Trials))
+	trialIDsWithOrdering := make([]any, 0, len(resp.Trials))
+	trialIDs := make([]int32, 0, len(resp.Trials))
 	for i, trial := range resp.Trials {
 		valuesExpr = append(valuesExpr, fmt.Sprintf("($%d::int, $%d::int)", i*2+1, i*2+2))
 		trialIDsWithOrdering = append(trialIDsWithOrdering, trial.Id, i)
@@ -586,7 +587,7 @@ func (a *apiServer) SummarizeTrial(_ context.Context,
 func (a *apiServer) CompareTrials(_ context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
-	trials := make([]*apiv1.ComparableTrial, 0)
+	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
 		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
 		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {
@@ -614,7 +615,7 @@ func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWork
 	resp := &apiv1.GetTrialWorkloadsResponse{}
 	limit := &req.Limit
 	if *limit == 0 {
-		limit = nil
+		limit = ptrs.Ptr[int32](-1)
 	}
 
 	sortCode := "total_batches"

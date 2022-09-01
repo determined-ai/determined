@@ -1,16 +1,16 @@
 import { Button, Tooltip } from 'antd';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import Icon from 'shared/components/Icon/Icon';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { CheckpointWorkloadExtended, ExperimentBase } from 'types';
+import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
 
 interface Props {
-  checkpoint: CheckpointWorkloadExtended;
-  chidren?: JSX.Element
+  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
+  children?: React.ReactNode;
   experiment: ExperimentBase;
   title: string;
 }
@@ -20,7 +20,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   experiment,
   title,
   children,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const {
     contextHolder: modalModelCreateContextHolder,
     modalOpen: openModalCreateModel,

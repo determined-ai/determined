@@ -14,6 +14,9 @@ message GetCheckpointRequest {
 
 // Response to GetCheckpointRequest.
 message GetCheckpointResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoint" ] }
+  };
   // The requested checkpoint.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }

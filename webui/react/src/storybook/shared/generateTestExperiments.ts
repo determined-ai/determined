@@ -225,6 +225,7 @@ export const generateTestExperimentData = ():
     parentArchived: false,
     projectId: 1,
     projectName: 'project',
+    projectOwnerId: 1,
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
     state: RunState.Completed,
@@ -252,7 +253,6 @@ export const generateTestExperimentData = ():
     state: RunState.Active,
     totalBatchesProcessed: 1,
     totalCheckpointSize: 0,
-    workloadCount: 0,
   };
 
   return { checkpoint, experiment, trial };

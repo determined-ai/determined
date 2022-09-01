@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
@@ -7,7 +7,8 @@ import { BrandingType } from 'types';
 
 import css from './PageMessage.module.scss';
 
-interface Props extends PropsWithChildren<unknown> {
+interface Props {
+  children: React.ReactNode;
   title: string;
 }
 

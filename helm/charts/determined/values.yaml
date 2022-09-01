@@ -22,6 +22,7 @@ useNodePortForMaster: false
 # Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
 # openshiftRoute:
   # enabled:
+  # host:
   # termination:
 
 # tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
@@ -30,6 +31,41 @@ useNodePortForMaster: false
 # the task containers (distributed training). The specified Secret of type tls must already exist in
 # the same namespace in which Determined is being installed.
 # tlsSecret:
+
+# security:
+  # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
+  # environments contain an unprivileged user named det-nobody, which does have a writable HOME
+  # directory. The det-nobody user is a suitable default user when using the default Determined
+  # environment images and when running containers as root is not desired.
+  # defaultTask:
+  #   user: det-nobody
+  #   uid: 65533
+  #   group: det-nobody
+  #   gid: 65533
+
+# oidc (EE-only) enables OpenID Connect Integration, which is only available if enterpriseEdition
+# is true. It allows users to use single sign-on with their organization’s identity provider.
+# clientSecretKey is the key of the secret contained in the secret.
+# oidc:
+#   enabled:
+#   provider:
+#   idpRecipientUrl:
+#   idpSsoUrl:
+#   clientId:
+#   clientSecretKey:
+#   clientSecretName:
+#   authenticationClaim:
+#   scimAuthenticationAttribute:
+
+# scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
+# only available if enterpriseEdition is true. It allows administrators to easily and securely
+# provision users and groups through their standard identity provider (IdP).
+# scim:
+#   enabled: true
+#   auth:
+#     type: basic
+#     username: determined
+#     password: password
 
 # db sets the configurations for the database.
 db:

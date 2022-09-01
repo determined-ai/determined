@@ -33,6 +33,11 @@ type ProjectAuthZ interface {
 		curUser model.User, project *projectv1.Project, from, to *workspacev1.Workspace,
 	) error
 
+	// POST /api/v1/experiments/:experiment_id/move
+	CanMoveProjectExperiments(
+		curUser model.User, exp *model.Experiment, from, to *projectv1.Project,
+	) error
+
 	// POST /api/v1/projects/:project_id/archive
 	CanArchiveProject(curUser model.User, project *projectv1.Project) error
 	// POST /api/v1/projects/:project_id/unarchive

@@ -1,8 +1,9 @@
-import { Tooltip } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import React, { useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Section from 'components/Section';
+import { unflattenObject } from 'shared/utils/data';
 import { clamp } from 'shared/utils/number';
 import {
   ExperimentBase, HyperparameterType, TrialDetails,
@@ -29,13 +30,14 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
       return {
         name: name,
         range: value.type === HyperparameterType.Log ?
-          [ (value.base || 10) ** (value.minval || -5),
-            (value.base || 10) ** (value.maxval || 1) ] :
-          [ value.minval || 0, value.maxval || 1 ],
+          [ (value.base ?? 10) ** (value.minval ?? -5),
+            (value.base ?? 10) ** (value.maxval ?? 1) ] :
+          [ value.minval ?? 0, value.maxval ?? 1 ],
         type: value.type,
-        val: String(trial.hyperparameters[name] || 0),
-        vals: value.vals?.map((val) => String(val)) ||
-          [ String(value.minval || 0), String(value.maxval || 1) ],
+        val: JSON.stringify(trial.hyperparameters[name] ??
+          unflattenObject(trial.hyperparameters)[name] ?? 0),
+        vals: value.vals?.map((val) => JSON.stringify(val)) ??
+          [ JSON.stringify(value.minval ?? 0), JSON.stringify(value.maxval ?? 1) ],
       };
     });
   }, [ experiment.hyperparameters, trial.hyperparameters ]);
@@ -106,8 +108,13 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
     case HyperparameterType.Categorical:
       return (
         <div className={css.valuesTrack}>
-          {hp.vals.map((option) =>
-            <p className={css.text} key={option.toString()}>{option}</p>)}
+          {hp.vals.map((option) => (
+            <Typography.Paragraph
+              ellipsis={{ rows: 1, tooltip: true }}
+              key={option.toString()}>
+              <p className={css.text}>{option}</p>
+            </Typography.Paragraph>
+          ))}
         </div>
       );
     case HyperparameterType.Log:
@@ -116,7 +123,7 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
           {(new Array(Math.floor(Math.log10((hp.range[1]) / (hp.range[0])) + 1))).fill(null)
             .map((_, idx) => (
               <p className={css.text} key={idx}>
-                {String((hp.range[1]) / (10 ** idx)).length > 4 ?
+                {JSON.stringify((hp.range[1]) / (10 ** idx)).length > 4 ?
                   ((hp.range[1]) / (10 ** idx)).toExponential() :
                   (hp.range[1]) / (10 ** idx)}
               </p>
@@ -173,9 +180,12 @@ interface PHRVProps {
 const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp }: PHRVProps) => {
   switch (hp.type) {
     case HyperparameterType.Categorical:
-      return <p className={css.text}>{hp.val}</p>;
     case HyperparameterType.Constant:
-      return <p className={css.text}>{hp.val}</p>;
+      return (
+        <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+          <p className={css.text}>{hp.val}</p>
+        </Typography.Paragraph>
+      );
     case HyperparameterType.Double:
       return (
         <p className={css.text}>

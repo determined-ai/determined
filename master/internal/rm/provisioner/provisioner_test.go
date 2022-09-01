@@ -27,7 +27,7 @@ func (t TestInstanceType) Slots() int {
 }
 
 func newInstanceIDSet(instanceIDs []string) map[string]bool {
-	set := make(map[string]bool)
+	set := make(map[string]bool, len(instanceIDs))
 	for _, inst := range instanceIDs {
 		set[inst] = true
 	}
@@ -96,7 +96,7 @@ type mockProvider struct {
 }
 
 func newMockProvider(config *mockConfig) (*mockProvider, error) {
-	instMap := make(map[string]*Instance)
+	instMap := make(map[string]*Instance, len(config.initInstances))
 	for _, inst := range config.initInstances {
 		instMap[inst.ID] = inst
 	}

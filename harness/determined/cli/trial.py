@@ -7,9 +7,8 @@ from argparse import Namespace
 from datetime import datetime
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
+from determined import cli
 from determined.cli import render
-from determined.cli.session import setup_session
-from determined.cli.util import limit_offset_paginator, make_pagination_args
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -108,19 +107,21 @@ def _workloads_tabulate(
 
 @authentication.required
 def describe_trial(args: Namespace) -> None:
-    session = setup_session(args)
+    session = cli.setup_session(args)
 
     trial_response = bindings.get_GetTrial(session, trialId=args.trial_id)
-    workloads: List[bindings.v1WorkloadContainer] = limit_offset_paginator(
-        bindings.get_GetTrialWorkloads,
-        "workloads",
-        session,
-        limit=args.limit,
-        offset=args.offset,
-        pages=args.pages,
-        trialId=args.trial_id,
-        includeBatchMetrics=args.metrics,
-    )
+
+    def get_with_offset(offset: int) -> bindings.v1GetTrialWorkloadsResponse:
+        return bindings.get_GetTrialWorkloads(
+            session,
+            offset=offset,
+            limit=args.limit,
+            trialId=args.trial_id,
+            includeBatchMetrics=args.metrics,
+        )
+
+    resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
+    workloads = [w for r in resps for w in r.workloads]
 
     if args.json:
         data = trial_response.to_json()
@@ -263,9 +264,9 @@ def write_api_call(args: Namespace, temp_dir: str) -> Tuple[str, str]:
     api_experiment_filepath = os.path.join(temp_dir, "api_experiment_call.json")
     api_trial_filepath = os.path.join(temp_dir, "api_trial_call.json")
 
-    trial_obj = bindings.get_GetTrial(setup_session(args), trialId=args.trial_id).trial
+    trial_obj = bindings.get_GetTrial(cli.setup_session(args), trialId=args.trial_id).trial
     experiment_id = trial_obj.experimentId
-    exp_obj = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
+    exp_obj = bindings.get_GetExperiment(cli.setup_session(args), experimentId=experiment_id)
 
     create_json_file_in_dir(exp_obj.to_json(), api_experiment_filepath)
     create_json_file_in_dir(trial_obj.to_json(), api_trial_filepath)
@@ -366,7 +367,7 @@ args_description = [
                         Arg("--csv", action="store_true", help="print as CSV"),
                         Arg("--json", action="store_true", help="print JSON"),
                     ),
-                    *make_pagination_args(limit=1000),
+                    *cli.make_pagination_args(limit=1000),
                 ],
             ),
             Cmd(

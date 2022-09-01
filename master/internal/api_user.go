@@ -264,6 +264,16 @@ func (a *apiServer) PatchUser(
 
 	// TODO: handle any field name:
 	if req.User.DisplayName != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
 		u := &userv1.User{}
 		if req.User.DisplayName.Value == "" {
 			// Disallow empty diaplay name for sorting purpose.
@@ -288,6 +298,62 @@ func (a *apiServer) PatchUser(
 		} else if err != nil {
 			return nil, err
 		}
+	}
+
+	var toUpdate []string
+	if req.User.Active != nil {
+		if err = user.AuthZProvider.Get().
+			CanSetUsersActive(*curUser, targetUser, req.User.Active.Value); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+		targetUser.Active = req.User.Active.Value
+		toUpdate = append(toUpdate, "active")
+	}
+
+	if req.User.Admin != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersAdmin(*curUser, targetUser,
+			req.User.Admin.Value); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+		targetUser.Admin = req.User.Admin.Value
+		toUpdate = append(toUpdate, "admin")
+	}
+
+	var ug *model.AgentUserGroup
+	if pug := req.User.AgentUserGroup; pug != nil {
+		ug = &model.AgentUserGroup{
+			UID: int(req.User.AgentUserGroup.AgentUid),
+			GID: int(req.User.AgentUserGroup.AgentGid),
+		}
+		if err = user.AuthZProvider.Get().
+			CanSetUsersAgentUserGroup(*curUser, targetUser, *ug); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
+
+	switch err = a.m.db.UpdateUser(&targetUser, toUpdate, ug); {
+	case err == db.ErrNotFound:
+		return nil, errUserNotFound
+	case err != nil:
+		return nil, err
 	}
 
 	fullUser, err := getUser(a.m.db, uid)

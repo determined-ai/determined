@@ -227,6 +227,7 @@ const TrialRangeHyperparametersContainer = () => {
     parentArchived: false,
     projectId: 1,
     projectName: 'Uncategorized',
+    projectOwnerId: 1,
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
     state: RunState.Completed,
@@ -250,7 +251,6 @@ const TrialRangeHyperparametersContainer = () => {
     state: RunState.Completed,
     totalBatchesProcessed: 58,
     totalCheckpointSize: 13700356,
-    workloadCount: 3,
   };
 
   const storeDispatch = useStoreDispatch();

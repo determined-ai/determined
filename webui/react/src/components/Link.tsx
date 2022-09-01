@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import React, { MouseEvent, PropsWithChildren, useCallback } from 'react';
+import React, { MouseEvent, useCallback } from 'react';
 
 import { handlePath, linkPath } from 'routes/utils';
 import { AnyMouseEventHandler, windowOpenFeatures } from 'shared/utils/routes';
@@ -7,6 +7,7 @@ import { AnyMouseEventHandler, windowOpenFeatures } from 'shared/utils/routes';
 import css from './Link.module.scss';
 
 export interface Props {
+  children?: React.ReactNode;
   className?: string;
   disabled?: boolean;
   // is this external to the assets hosted by React?
@@ -26,7 +27,7 @@ const Link: React.FC<Props> = ({
   popout,
   onClick,
   ...props
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
 

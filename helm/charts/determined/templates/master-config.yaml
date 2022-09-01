@@ -53,13 +53,50 @@ data:
       ssl_root_cert: {{ include "determined.secretPath" . }}{{ $rootCert }}
       {{- end }}
 
-    {{- if .Values.tlsSecret }}
     security:
+      {{- if .Values.tlsSecret }}
       tls:
         cert: {{ include "determined.secretPath" . }}tls.crt
         key: {{ include "determined.secretPath" . }}tls.key
-    {{ end }}
+      {{- end }}
+      {{- if .Values.security }}
+      {{- if .Values.security.defaultTask }}
+      default_task:
+        user: {{ .Values.security.defaultTask.user }}
+        uid: {{ .Values.security.defaultTask.uid }}
+        group: {{ .Values.security.defaultTask.group }}
+        gid: {{ .Values.security.defaultTask.gid }}
+      {{- end }}
+      {{- end }}
     port: {{ include "determined.masterPort" . }}
+
+    {{- if .Values.enterpriseEdition }}
+    {{- if .Values.oidc }}
+    oidc:
+      enabled: {{ .Values.oidc.enabled | default true }}
+      provider: {{ required "A valid provider entry is required!" .Values.oidc.provider}}
+      idp_recipient_url: {{ required "A valid recipient url is required!" .Values.oidc.idpRecipientUrl }}
+      idp_sso_url: {{ required "A valid sso url is required!" .Values.oidc.idpSsoUrl }}
+      client_id: {{ required "A valid client ID is required!" .Values.oidc.clientId }}
+      {{- if .Values.oidc.authenticationClaim }}
+      authentication_claim: {{ .Values.oidc.authenticationClaim }}
+      {{- end }}
+      {{- if .Values.oidc.scimAuthenticationAttribute }}
+      scim_authentication_attribute: {{ .Values.oidc.scimAuthenticationAttribute }}
+      {{- end }}
+    {{- end }}
+
+    {{- if .Values.scim }}
+    scim:
+      enabled: {{ .Values.scim.enabled | default true }}
+      auth:
+        type: {{ required "A valid authentication type is required!" .Values.scim.auth.type }}
+        {{- if eq .Values.scim.auth.type "basic" }}
+        username: {{ required "A valid username is required!" .Values.scim.auth.username }}
+        password: {{ required "A valid password type is required!" .Values.scim.auth.password }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
 
     resource_manager:
       type: "kubernetes"

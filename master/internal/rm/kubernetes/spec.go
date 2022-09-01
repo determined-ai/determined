@@ -115,7 +115,7 @@ func (p *pod) configureEnvVars(
 func (p *pod) configureConfigMapSpec(
 	runArchives []cproto.RunArchive, fluentFiles map[string][]byte,
 ) (*k8sV1.ConfigMap, error) {
-	configMapData := make(map[string][]byte)
+	configMapData := make(map[string][]byte, len(runArchives))
 	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
 		zippedArchive, err := archive.ToTarGz(runArchive.Archive)

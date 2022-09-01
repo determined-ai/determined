@@ -36,6 +36,10 @@
     min-height: 0;
     overflow: hidden;
 
+    .actionButtons {
+      align-items: center;
+      display: flex;
+    }
     .noWorkspaces {
       align-self: center;
       color: var(--theme-stage-on-weak);

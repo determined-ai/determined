@@ -130,7 +130,11 @@ const LearningCurve: React.FC<Props> = ({
 
         (event.trials || []).forEach((trial) => {
           const id = trial.trialId;
-          const flatHParams = flattenObject(trial.hparams || {});
+
+          // This allows for both typical nested hyperparameters and nested categorgical
+          // hyperparameter values to be shown, with HpTrialTable deciding which are displayed.
+          const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };
+
           const hasHParams = Object.keys(flatHParams).length !== 0;
 
           if (hasHParams && !trialHpMap[id]) {

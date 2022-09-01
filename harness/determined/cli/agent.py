@@ -6,9 +6,9 @@ from collections import OrderedDict
 from operator import attrgetter
 from typing import Any, Callable, Dict, List
 
+from determined import cli
 from determined.cli import render
 from determined.cli import task as cli_task
-from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.check import check_false
@@ -21,7 +21,7 @@ def local_id(address: str) -> str:
 
 @authentication.required
 def list_agents(args: argparse.Namespace) -> None:
-    resp = bindings.get_GetAgents(setup_session(args))
+    resp = bindings.get_GetAgents(cli.setup_session(args))
 
     agents = [
         OrderedDict(

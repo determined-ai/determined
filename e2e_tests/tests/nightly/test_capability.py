@@ -5,14 +5,6 @@ from tests import experiment as exp
 
 
 @pytest.mark.nightly
-def test_mmdetection_pytorch_const() -> None:
-    config = conf.load_config(conf.cv_examples_path("mmdetection_pytorch/const_fake_data.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("mmdetection_pytorch"), 1)
-
-
-@pytest.mark.nightly
 def test_bert_glue_const() -> None:
     config = conf.load_config(conf.nlp_examples_path("bert_glue_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -106,4 +98,16 @@ def test_protein_pytorch_geometric() -> None:
 
     exp.run_basic_test_with_temp_config(
         config, conf.graphs_examples_path("proteins_pytorch_geometric"), 1
+    )
+
+
+@pytest.mark.nightly
+def test_deepspeed_cpu_offloading() -> None:
+    config = conf.load_config(
+        conf.deepspeed_examples_path("cifar10_cpu_offloading/zero_3_cpu_offload.yaml")
+    )
+    config = conf.set_max_length(config, {"batches": 100})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.deepspeed_examples_path("cifar10_cpu_offloading"), 1
     )

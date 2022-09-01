@@ -1,18 +1,18 @@
 import { Button, Select } from 'antd';
-import React, { PropsWithChildren, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import css from './TableBatch.module.scss';
 
-interface Action {
+interface Action<T> {
   disabled?: boolean;
-  label: string;
-  value: string;
+  label: T;
+  value: T;
 }
 
-interface Props {
-  actions?: Action[];
+interface Props<T> {
+  actions?: Action<T>[];
   ids?: string[];
-  onAction?: (action: string) => void;
+  onAction?: (action: T) => void;
   onClear?: () => void;
   selectedRowCount?: number;
 }
@@ -22,13 +22,13 @@ const defaultProps = {
   selectedRowCount: 0,
 };
 
-const TableBatch: React.FC<Props> = ({
+function TableBatch<T extends string>({
   actions,
   selectedRowCount,
   onAction,
   onClear,
-}: PropsWithChildren<Props>) => {
-  const [ action, setAction ] = useState<string>();
+}: Props<T>):React.ReactElement {
+  const [ action, setAction ] = useState<T | ''>();
   const classes = [ css.base ];
   const selectCount = selectedRowCount || 0;
 
@@ -47,7 +47,7 @@ const TableBatch: React.FC<Props> = ({
     setAction('');
     setTimeout(() => setAction(undefined), 100);
 
-    if (action && onAction) onAction(action);
+    if (action) onAction?.(action as T);
   }, [ onAction ]);
 
   const handleClear = useCallback(() => {
@@ -72,7 +72,7 @@ const TableBatch: React.FC<Props> = ({
       </div>
     </div>
   );
-};
+}
 
 TableBatch.defaultProps = defaultProps;
 

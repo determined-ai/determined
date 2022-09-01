@@ -1,10 +1,11 @@
 import { Tooltip } from 'antd';
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import Badge, { BadgeProps } from './Badge';
 import css from './BadgeTag.module.scss';
 
 export interface Props extends BadgeProps {
+  children?: React.ReactNode;
   label?: React.ReactNode;
   preLabel?: React.ReactNode;
 }
@@ -16,7 +17,7 @@ const BadgeTag: React.FC<Props> = ({
   label,
   preLabel,
   ...props
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   return (
     <span className={css.base}>
       {preLabel && (

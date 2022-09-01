@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Experiments with a single trial are now considered canceled when their trial is
-   canceled or killed.

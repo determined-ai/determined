@@ -46,7 +46,7 @@ const (
 var tensorboardsAddr = actor.Addr("tensorboard")
 
 func filesToArchive(files []*utilv1.File) archive.Archive {
-	filesArchive := make([]archive.Item, 0)
+	filesArchive := make([]archive.Item, 0, len(files))
 	for _, file := range files {
 		item := archive.Item{
 			Content:      file.Content,

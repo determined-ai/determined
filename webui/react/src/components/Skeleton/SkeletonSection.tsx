@@ -1,6 +1,6 @@
 import { Skeleton } from 'antd';
 import { SkeletonTitleProps } from 'antd/lib/skeleton/Title';
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import iconChart from 'shared/assets/images/icon-chart.svg';
 import iconLogs from 'shared/assets/images/icon-logs.svg';
@@ -9,6 +9,7 @@ import { isNumber } from 'shared/utils/data';
 import css from './SkeletonSection.module.scss';
 
 export interface Props {
+  children?: React.ReactNode;
   contentType?: ContentType;
   filters?: boolean | number | SkeletonTitleProps | SkeletonTitleProps[];
   size?: 'small' | 'medium' | 'large' | 'max';
@@ -34,7 +35,7 @@ const SkeletonSection: React.FC<Props> = ({
   filters,
   size = 'medium',
   title,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const classes = [ css.base, css[size] ];
   const showHeader = !!title || !!filters;
 

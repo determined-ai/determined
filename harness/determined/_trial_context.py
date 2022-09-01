@@ -1,4 +1,3 @@
-import abc
 import logging
 import pathlib
 from typing import Any, Dict
@@ -7,7 +6,7 @@ import determined as det
 from determined import core
 
 
-class TrialContext(metaclass=abc.ABCMeta):
+class TrialContext:
     """
     TrialContext is the system-provided API to a Trial class.
     """

@@ -49,7 +49,16 @@ def run_api_server(
 
         def _api_v1_models(self) -> Dict[str, Any]:
             assert self.headers["Authorization"] == f"Bearer {token}"
-            return {"models": []}
+            return {
+                "models": [],
+                "pagination": {
+                    "offset": 0,
+                    "limit": 100,
+                    "startIndex": 0,
+                    "endIndex": 0,
+                    "total": 0,
+                },
+            }
 
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
@@ -63,7 +72,7 @@ def run_api_server(
             fn = {
                 "/info": self._info,
                 "/users/me": self._users_me,
-                "/api/v1/models/": self._api_v1_models,
+                "/api/v1/models": self._api_v1_models,
             }.get(self.path.split("?")[0])
             self.do_core(fn)
 

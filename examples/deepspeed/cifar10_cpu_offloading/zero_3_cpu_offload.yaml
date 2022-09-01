@@ -7,18 +7,19 @@ debug: false
 #    sync_timings: false
 hyperparameters:
   deepspeed_config: ds_config_offload.json
+  deepspeed_offload: true
 environment:
-    environment_variables:
-        - NCCL_DEBUG=INFO
-        # You may need to modify this to match your network configuration.
-        - NCCL_SOCKET_IFNAME=ens,eth,ib
-    image:
-      gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-9119094
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-9119094
 bind_mounts:
-    - host_path: /tmp
-      container_path: /data
-    - host_path: /tmp
-      container_path: /root/.cache
+  - host_path: /tmp
+    container_path: /data
+  - host_path: /tmp
+    container_path: /root/.cache
 resources:
   slots_per_trial: 2
 records_per_epoch: 5000
@@ -33,7 +34,7 @@ entrypoint:
   - -m
   - determined.launch.deepspeed
   - --trial
-  - model_def_OOM_offload:CIFARTrial
+  - model_def:CIFARTrial
 checkpoint_policy: none
 max_restarts: 0
 scheduling_unit: 2000

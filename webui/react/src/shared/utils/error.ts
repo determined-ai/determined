@@ -1,11 +1,11 @@
-import Logger from 'shared/utils/Logger';
+import rootLogger from 'shared/utils/Logger';
 
 import { isString } from './data';
 import { LoggerInterface } from './Logger';
 
 export const ERROR_NAMESPACE = 'EH';
 export const DEFAULT_ERROR_MESSAGE = 'Unknown error encountered.';
-export const DEFAULT_LOGGER = new Logger(ERROR_NAMESPACE);
+const DEFAULT_LOGGER = rootLogger.extend(ERROR_NAMESPACE);
 
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
@@ -49,6 +49,17 @@ export const isError = (error: unknown): error is Error => {
 
 export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
+};
+
+/**
+ * used to preserve the public message potentially provided by lower levels where the error
+ * was generated or rethrowed.
+ * @param publicMessage a description of the error at this level.
+ * @returns wrapped publicMessage if there was any provided at lower levels.
+ */
+export const wrapPublicMessage = (e: DetError | unknown, publicMessage: string): string => {
+  if (!isDetError(e) || !e.publicMessage) return publicMessage;
+  return `${publicMessage}: ${e.publicMessage}`;
 };
 
 /**

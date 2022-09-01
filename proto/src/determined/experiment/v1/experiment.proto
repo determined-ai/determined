@@ -54,7 +54,9 @@ message Experiment {
         "job_id",
         "searcher_type",
         "project_id",
-        "original_config"
+        "original_config",
+        "project_owner_id",
+        "config"
       ]
     }
   };
@@ -111,6 +113,8 @@ message Experiment {
   google.protobuf.Struct config = 26;
   // The original configuration that the user submitted.
   string original_config = 27;
+  // The id of the user who created the parent project.
+  int32 project_owner_id = 28;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

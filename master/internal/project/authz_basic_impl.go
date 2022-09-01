@@ -96,6 +96,16 @@ func (a *ProjectAuthZBasic) CanMoveProject(
 	return nil
 }
 
+// CanMoveProjectExperiments returns an error if the user isn't a admin or owner of a project.
+func (a *ProjectAuthZBasic) CanMoveProjectExperiments(
+	curUser model.User, exp *model.Experiment, from, to *projectv1.Project,
+) error {
+	if !curUser.Admin && exp.OwnerID != nil && curUser.ID != *exp.OwnerID {
+		return fmt.Errorf("non admin users can't move others' experiments")
+	}
+	return nil
+}
+
 // CanArchiveProject returns an error if a non admin isn't the owner of the project or workspace.
 func (a *ProjectAuthZBasic) CanArchiveProject(
 	curUser model.User, project *projectv1.Project,

@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import { ShirtSize } from 'themes';
 
@@ -11,6 +11,7 @@ export enum GridMode {
 
 interface Props {
   border?: boolean;
+  children: React.ReactNode;
   gap?: ShirtSize;
   minItemWidth?: number;
   mode?: GridMode | number;
@@ -28,7 +29,7 @@ const Grid: React.FC<Props> = ({
   minItemWidth = 240,
   mode = GridMode.AutoFit,
   children,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const style = {
     gridGap: `calc(${sizeMap[gap]} + var(--theme-density) * 1px)`,
     gridTemplateColumns: `repeat(${mode}, minmax(${minItemWidth}px, 1fr))`,

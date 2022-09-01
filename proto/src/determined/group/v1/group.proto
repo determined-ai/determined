@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package determined.group.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/groupv1";
+
+import "determined/user/v1/user.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Group contains information about a specific Group
+message Group {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
+  // The id of the group being detailed
+  int32 group_id = 1;
+  // The name of the group
+  string name = 2;
+}
+
+// GroupDetails contains detailed information about a specific Group
+// including which users belong to the group.
+message GroupDetails {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
+  // The id of the group being detailed
+  int32 group_id = 1;
+  // The name of the group
+  string name = 2;
+  // The members of the group
+  repeated determined.user.v1.User users = 3;
+}
+
+// GroupSearchResult is the representation of groups as they're returned
+// by the search endpoint.
+message GroupSearchResult {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group", "num_members" ] }
+  };
+  // A group matching the search criteria
+  Group group = 1;
+  // The number of users that are in this group
+  int32 num_members = 2;
+}

@@ -348,6 +348,16 @@ export const decodeCheckpointState = (
   return checkpointStateMap[data];
 };
 
+export const encodeCheckpointState = (
+  state: types.CheckpointState,
+): Sdk.Determinedcheckpointv1State => {
+  const stateKey = Object
+    .keys(checkpointStateMap)
+    .find((key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state);
+  if (stateKey) return stateKey as unknown as Sdk.Determinedcheckpointv1State;
+  return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
+};
+
 export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): types.RunState => {
   return experimentStateMap[data];
 };
@@ -384,6 +394,7 @@ export const mapV1GetExperimentDetailsResponse = (
     originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
     projectName: exp.projectName ?? '',
+    projectOwnerId: exp.projectOwnerId ?? 0,
     workspaceId: exp.workspaceId ?? 0,
     workspaceName: exp.workspaceName ?? '',
   };
@@ -430,6 +441,9 @@ export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentI
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
   if (!isObject(metrics)) return undefined;
+  if (metrics.avgMetrics) {
+    return filterNonScalarMetrics(metrics.avgMetrics);
+  }
   const scalarMetrics: RawJson = {};
   for (const key in metrics) {
     if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
@@ -512,6 +526,15 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
   };
 };
 
+export const decodeCheckpoints = (
+  data: Sdk.V1GetExperimentCheckpointsResponse,
+): types.CheckpointPagination => {
+  return {
+    checkpoints: data.checkpoints.map(decodeCheckpoint),
+    pagination: mapV1Pagination(data.pagination),
+  };
+};
+
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     autoRestarts: data.restarts,
@@ -578,7 +601,6 @@ export const decodeTrialResponseToTrialDetails = (
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
     totalCheckpointSize: Number(data.trial.totalCheckpointSize) || 0,
-    workloadCount: data.trial.workloadCount || 0,
   };
 };
 

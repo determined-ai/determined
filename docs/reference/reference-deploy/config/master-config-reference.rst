@@ -116,8 +116,6 @@ The master supports the following configuration settings:
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
-.. _cluster-configuration-slurm:
-
 -  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
    -  ``type: agent``: The agent resource manager includes static and dynamic agents.
@@ -210,6 +208,8 @@ The master supports the following configuration settings:
 
          -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
 
+.. _cluster-configuration-slurm:
+
    -  ``type: slurm``: The ``slurm`` resource manager launches tasks on a Slurm cluster. For more
       information, see :ref:`using_slurm`.
 
@@ -285,6 +285,14 @@ The master supports the following configuration settings:
 
       -  ``tres_supported``: Indicates if ``SelectType=select/cons_tres`` is set in the Slurm
          configuration. Affects how Determined requests GPUs from Slurm. The default is true.
+
+      -  ``gres_supported``: Indicates if ``GresTypes=gpu`` is set in the Slurm configuration, and
+         nodes with GPUs have properly configured GRES indicating the presence of any GPUs. The
+         default is true. When false, Determined will request slots_per_trial nodes and utilize only
+         GPU 0 on each node. It is the user's responsibility to ensure that GPUs will be available
+         on nodes selected for the job using other configurations such as targeting a specific
+         resource pool with only GPU nodes or specifying a Slurm constraint in the experiment
+         configuration.
 
       -  ``partition_overrides``: A map of Slurm partition names to partition-level overrides. For
          each configuration, if it is set for a given partition, it overrides the setting at the

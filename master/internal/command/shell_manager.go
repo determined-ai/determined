@@ -34,11 +34,11 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetShellsRequest:
 		resp := &apiv1.GetShellsResponse{}
-		users := make(map[string]bool)
+		users := make(map[string]bool, len(msg.Users))
 		for _, user := range msg.Users {
 			users[user] = true
 		}
-		userIds := make(map[int32]bool)
+		userIds := make(map[int32]bool, len(msg.UserIds))
 		for _, user := range msg.UserIds {
 			userIds[user] = true
 		}

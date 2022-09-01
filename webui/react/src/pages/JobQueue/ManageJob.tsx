@@ -4,7 +4,7 @@ import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
-import { updateJobQueue } from 'services/api';
+import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
@@ -18,7 +18,8 @@ const { Option } = Select;
 interface Props {
   initialPool: string;
   job: Job;
-  jobs: Job[];
+  /** total number of jobs */
+  jobCount: number;
   onFinish?: () => void;
   rpStats: RPStats[];
   schedulerType: api.V1SchedulerType;
@@ -38,11 +39,10 @@ interface FormValues {
   weight?: string;
 }
 
-const formValuesToUpdate = (
+const formValuesToUpdate = async (
   values: FormValues,
   job: Job,
-  jobs: Job[],
-): api.V1QueueControl | undefined => {
+): Promise<api.V1QueueControl | undefined> => {
   const { position, resourcePool } = {
     position: parseInt(values.position, 10),
     resourcePool: values.resourcePool,
@@ -53,7 +53,8 @@ const formValuesToUpdate = (
     return { ...update, resourcePool };
   }
   if (position !== job.summary.jobsAhead + 1) {
-    return moveJobToPositionUpdate(jobs, job.jobId, position);
+    const allJobs = await getJobQ({ resourcePool }, {});
+    return moveJobToPositionUpdate(allJobs.jobs, job.jobId, position);
   }
   if (values.priority !== undefined) {
     const priority = parseInt(values.priority, 10);
@@ -70,7 +71,7 @@ const formValuesToUpdate = (
 };
 
 const ManageJob: React.FC<Props> = (
-  { onFinish, rpStats, job, jobs, schedulerType, initialPool },
+  { onFinish, rpStats, job, schedulerType, initialPool, jobCount },
 ) => {
   const formRef = useRef <FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
@@ -156,7 +157,7 @@ const ManageJob: React.FC<Props> = (
     async () => {
       try {
         const update = formRef.current &&
-          formValuesToUpdate(formRef.current.getFieldsValue(), job, jobs);
+          await formValuesToUpdate(formRef.current.getFieldsValue(), job);
         if (update) await updateJobQueue({ updates: [ update ] });
       } catch (e) {
         handleError(e, {
@@ -168,7 +169,7 @@ const ManageJob: React.FC<Props> = (
       }
       onFinish?.();
     },
-    [ formRef, onFinish, job, jobs ],
+    [ formRef, onFinish, job ],
   );
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
@@ -219,8 +220,8 @@ const ManageJob: React.FC<Props> = (
           label="Position in Queue"
           name="position">
           <Input
-            addonAfter={`out of ${jobs.length}`}
-            max={jobs.length}
+            addonAfter={`out of ${jobCount}`}
+            max={jobCount}
             min={1}
             type="number"
           />

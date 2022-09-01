@@ -14,7 +14,7 @@ min_validation_period:
 
 environment:
   image:
-    gpu: determinedai/model-hub-mmdetection:0.19.2-dev0
+    gpu: determinedai/model-hub-mmdetection:0.19.3-dev0
   environment_variables:
       - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
 

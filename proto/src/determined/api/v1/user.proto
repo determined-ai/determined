@@ -50,6 +50,9 @@ message GetUserRequest {
 }
 // Response to GetUserRequest.
 message GetUserResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
   // The requested user.
   determined.user.v1.User user = 1;
 }

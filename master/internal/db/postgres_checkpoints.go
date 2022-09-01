@@ -4,7 +4,34 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+// CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
+func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
+	var checkpoint model.Checkpoint
+	if err := db.query(`
+	SELECT * FROM checkpoints_view c
+	WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
+		return nil, nil
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
+	}
+	return &checkpoint, nil
+}
+
+// CheckpointByUUIDs looks up a checkpoint by list of UUIDS, returning nil if error.
+func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
+	var checkpoints []model.Checkpoint
+	if err := db.queryRows(`
+	SELECT * FROM checkpoints_view c WHERE c.uuid 
+	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
+		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
+	}
+	return checkpoints, nil
+}
 
 // GetRegisteredCheckpoints gets the checkpoints in
 // the model registrys from the list of checkpoints provided.
@@ -14,14 +41,14 @@ func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID
 	}
 
 	if err := db.queryRows(`
-	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv 
-	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[])); 
+	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv
+	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[]));
 `, &checkpointIDRows, checkpoints); err != nil {
 		return nil, fmt.Errorf(
 			"filtering checkpoint uuids by those registered in the model registry: %w", err)
 	}
 
-	checkpointIDs := make(map[uuid.UUID]bool)
+	checkpointIDs := make(map[uuid.UUID]bool, len(checkpointIDRows))
 
 	for _, cRow := range checkpointIDRows {
 		checkpointIDs[cRow.ID] = true

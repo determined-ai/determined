@@ -1,6 +1,6 @@
 import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
-import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
@@ -12,6 +12,7 @@ import { DetailedUser, Workspace } from 'types';
 import handleError from 'utils/error';
 
 interface Props {
+  children?: React.ReactNode;
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
@@ -31,7 +32,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   workspace,
   onComplete, trigger,
   onVisibleChange,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const [ canceler ] = useState(new AbortController());
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const {

@@ -26,6 +26,7 @@ SELECT
 	  (SELECT count(id) FROM trial_ids) AS num_trials,
     p.id AS project_id,
     p.name AS project_name,
+    p.user_id AS project_owner_id,
     w.id AS workspace_id,
     w.name AS workspace_name,
     (w.archived OR p.archived) AS parent_archived

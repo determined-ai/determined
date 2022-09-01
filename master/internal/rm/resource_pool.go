@@ -565,16 +565,19 @@ func (rp *ResourcePool) moveJob(
 	anchorID model.JobID,
 	aheadOf bool,
 ) error {
-	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
-		return fmt.Errorf("unable to perform operation on resource pool with %s",
-			rp.config.Scheduler.GetType())
-	}
 	if anchorID == "" || jobID == "" || anchorID == jobID {
 		return nil
 	}
 
+	// check whether the msg belongs to this resource pool or not.
+	// job messages to agent rm are forwarded to all resource pools.
 	if _, ok := rp.queuePositions[jobID]; !ok {
 		return nil
+	}
+
+	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+		return fmt.Errorf("unable to perform operation on resource pool with %s",
+			rp.config.Scheduler.GetType())
 	}
 
 	groupAddr, ok := rp.IDToGroupActor[jobID]
@@ -647,10 +650,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
 	case sproto.MoveJob:
-		if rp.config.Scheduler.GetType() != config.PriorityScheduling {
-			return fmt.Errorf("unable to perform operation on resource pool with %s",
-				rp.config.Scheduler.GetType())
-		}
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
 		ctx.Respond(err)
 

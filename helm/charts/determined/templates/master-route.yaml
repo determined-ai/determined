@@ -9,6 +9,9 @@ metadata:
     release: {{ .Release.Name }}
   name: determined-master-route-{{ .Release.Name }}
 spec:
+  {{- if .Values.openshiftRoute.host }}
+  host: {{ .Values.openshiftRoute.host }}
+  {{- end }}
   tls:
     termination: {{ .Values.openshiftRoute.termination }}
   to:

@@ -21,7 +21,10 @@ message Model {
         "creation_time",
         "last_updated_time",
         "num_versions",
-        "username"
+        "username",
+        "user_id",
+        "archived"
+        // notes column was added without default values
       ]
     }
   };
@@ -82,7 +85,9 @@ message ModelVersion {
         "checkpoint",
         "version",
         "creation_time",
-        "username"
+        "last_updated_time"
+        // notes, comment, and name columns were added without default values
+        // username and user_id columns were added without default values
       ]
     }
   };
