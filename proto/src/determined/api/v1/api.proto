@@ -1675,6 +1675,6 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
-    }
+    };
   }
 }

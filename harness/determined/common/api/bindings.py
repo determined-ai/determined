@@ -671,9 +671,9 @@ class v1AssignmentGroup:
     def __init__(
         self,
         *,
-        cluster: "typing.Optional[bool]" = None,
-        name: "typing.Optional[str]" = None,
-        workspaces: "typing.Optional[typing.Sequence[int]]" = None,
+        cluster: bool,
+        name: str,
+        workspaces: "typing.Sequence[int]",
     ):
         self.name = name
         self.workspaces = workspaces
@@ -682,16 +682,16 @@ class v1AssignmentGroup:
     @classmethod
     def from_json(cls, obj: Json) -> "v1AssignmentGroup":
         return cls(
-            name=obj.get("name", None),
-            workspaces=obj.get("workspaces", None),
-            cluster=obj.get("cluster", None),
+            name=obj["name"],
+            workspaces=obj["workspaces"],
+            cluster=obj["cluster"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "name": self.name if self.name is not None else None,
-            "workspaces": self.workspaces if self.workspaces is not None else None,
-            "cluster": self.cluster if self.cluster is not None else None,
+            "name": self.name,
+            "workspaces": self.workspaces,
+            "cluster": self.cluster,
         }
 
 class v1AwsCustomTag:
@@ -4353,10 +4353,10 @@ class v1Permission:
     def __init__(
         self,
         *,
-        globalOnly: "typing.Optional[bool]" = None,
-        id: "typing.Optional[int]" = None,
-        name: "typing.Optional[str]" = None,
-        workspaceOnly: "typing.Optional[bool]" = None,
+        globalOnly: bool,
+        id: int,
+        name: str,
+        workspaceOnly: bool,
     ):
         self.id = id
         self.name = name
@@ -4366,18 +4366,18 @@ class v1Permission:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Permission":
         return cls(
-            id=obj.get("id", None),
-            name=obj.get("name", None),
-            globalOnly=obj.get("globalOnly", None),
-            workspaceOnly=obj.get("workspaceOnly", None),
+            id=obj["id"],
+            name=obj["name"],
+            globalOnly=obj["globalOnly"],
+            workspaceOnly=obj["workspaceOnly"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
-            "name": self.name if self.name is not None else None,
-            "globalOnly": self.globalOnly if self.globalOnly is not None else None,
-            "workspaceOnly": self.workspaceOnly if self.workspaceOnly is not None else None,
+            "id": self.id,
+            "name": self.name,
+            "globalOnly": self.globalOnly,
+            "workspaceOnly": self.workspaceOnly,
         }
 
 class v1PostAllocationProxyAddressRequest:
@@ -5538,9 +5538,9 @@ class v1Role:
     def __init__(
         self,
         *,
-        id: "typing.Optional[int]" = None,
-        name: "typing.Optional[str]" = None,
-        permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None,
+        id: int,
+        name: str,
+        permissions: "typing.Sequence[v1Permission]",
     ):
         self.id = id
         self.name = name
@@ -5549,16 +5549,16 @@ class v1Role:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Role":
         return cls(
-            id=obj.get("id", None),
-            name=obj.get("name", None),
-            permissions=[v1Permission.from_json(x) for x in obj["permissions"]] if obj.get("permissions", None) is not None else None,
+            id=obj["id"],
+            name=obj["name"],
+            permissions=[v1Permission.from_json(x) for x in obj["permissions"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
-            "name": self.name if self.name is not None else None,
-            "permissions": [x.to_json() for x in self.permissions] if self.permissions is not None else None,
+            "id": self.id,
+            "name": self.name,
+            "permissions": [x.to_json() for x in self.permissions],
         }
 
 class v1RunnableOperation:
@@ -8150,7 +8150,7 @@ def get_GetNotebooks(
     raise APIHttpError("get_GetNotebooks", _resp)
 
 def get_GetPermissionsSummary(
-    session: "client.Session",
+    session: "api.Session",
 ) -> "v1GetPermissionsSummaryResponse":
     _params = None
     _resp = session._do_request(
@@ -8161,6 +8161,7 @@ def get_GetPermissionsSummary(
         data=None,
         headers=None,
         timeout=None,
+        stream=False,
     )
     if _resp.status_code == 200:
         return v1GetPermissionsSummaryResponse.from_json(_resp.json())

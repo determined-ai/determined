@@ -1132,19 +1132,19 @@ export interface V1AssignmentGroup {
      * @type {string}
      * @memberof V1AssignmentGroup
      */
-    name?: string;
+    name: string;
     /**
      * List of workspace IDs to apply the role.
      * @type {Array<number>}
      * @memberof V1AssignmentGroup
      */
-    workspaces?: Array<number>;
+    workspaces: Array<number>;
     /**
      * Cluster-wide scope for this role.
      * @type {boolean}
      * @memberof V1AssignmentGroup
      */
-    cluster?: boolean;
+    cluster: boolean;
 }
 
 /**
@@ -4879,25 +4879,25 @@ export interface V1Permission {
      * @type {number}
      * @memberof V1Permission
      */
-    id?: number;
+    id: number;
     /**
      * Name of the permission.
      * @type {string}
      * @memberof V1Permission
      */
-    name?: string;
+    name: string;
     /**
      * Global scope for the permission.
      * @type {boolean}
      * @memberof V1Permission
      */
-    globalOnly?: boolean;
+    globalOnly: boolean;
     /**
      * Workspace scope for the permission.
      * @type {boolean}
      * @memberof V1Permission
      */
-    workspaceOnly?: boolean;
+    workspaceOnly: boolean;
 }
 
 /**
@@ -6243,19 +6243,19 @@ export interface V1Role {
      * @type {number}
      * @memberof V1Role
      */
-    id?: number;
+    id: number;
     /**
      * Name for the role.
      * @type {string}
      * @memberof V1Role
      */
-    name?: string;
+    name: string;
     /**
      * List of permissions.
      * @type {Array<V1Permission>}
      * @memberof V1Role
      */
-    permissions?: Array<V1Permission>;
+    permissions: Array<V1Permission>;
 }
 
 /**
