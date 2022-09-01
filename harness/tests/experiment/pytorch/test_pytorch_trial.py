@@ -148,24 +148,7 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    @pytest.mark.parametrize(
-        "trial_class",
-        [
-            pytorch_xor_model.XORTrialWithLRScheduler,
-            pytorch_onevar_model.OneVarTrial,
-            pytorch_onevar_model.OneVarApexTrial,
-            pytorch_onevar_model.OneVarAutoAMPTrial,
-            pytorch_onevar_model.OneVarManualAMPTrial,
-        ],
-        ids=[
-            "xor",
-            "onevar",
-            "apex",
-            "autocast",
-            "manual",
-        ],
-    )
-    def test_checkpointing_and_restoring(self, trial_class, tmp_path: pathlib.Path) -> None:
+    def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
@@ -176,12 +159,48 @@ class TestPyTorchTrial:
                 "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
                 **self.hparams,
             }
-            if trial_class in [
-                #pytorch_onevar_model.OneVarApexTrial,
-                pytorch_onevar_model.OneVarAutoAMPTrial,
-                pytorch_onevar_model.OneVarManualAMPTrial,
-            ]:
-                updated_hparams["global_batch_size"] = 1
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=pytorch_xor_model.XORTrialWithLRScheduler,
+                hparams=updated_hparams,
+                workloads=workloads,
+                trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
+                steps_completed=steps_completed,
+                expose_gpus=True,
+            )
+
+        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.gpu
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_scaler_checkpointing_and_restoring(self, trial_class, tmp_path: pathlib.Path) -> None:
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
+
+        def make_trial_controller_fn(
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[str] = None,
+            steps_completed: int = 0,
+        ) -> det.TrialController:
+            updated_hparams = {
+                "global_batch_size": 1,
+                **self.hparams,
+            }
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=trial_class,
                 hparams=updated_hparams,
@@ -193,7 +212,7 @@ class TestPyTorchTrial:
                 expose_gpus=True,
             )
 
-        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+        utils.scaler_checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
     def test_restore_invalid_checkpoint(self, tmp_path: pathlib.Path) -> None:
         # Build, train, and save a checkpoint with the normal hyperparameters.
