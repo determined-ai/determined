@@ -180,20 +180,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.isFiltered = (settings) => !!(settings as Settings).state;
-        column.filters = [
-          RunState.Active,
-          RunState.Canceled,
-          RunState.Completed,
-          RunState.Errored,
-        ].map((value) => ({
-          text: (
-            <Badge
-              state={value === RunState.Active ? RunState.SharedActive : value}
-              type={BadgeType.State}
-            />
-          ),
-          value,
-        }));
+        column.filters = ([ 'ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR' ] as RunState[])
+          .map((value) => ({
+            text: <Badge state={value} type={BadgeType.State} />,
+            value,
+          }));
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
         column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {

@@ -238,7 +238,7 @@ export const getProjectExperimentForExperimentItem = (
 
 const runStateSortOrder: RunState[] = [
   RunState.Active,
-  RunState.SharedActive,
+  RunState.Running,
   RunState.Paused,
   RunState.Pending,
   RunState.Queued,

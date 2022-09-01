@@ -470,11 +470,7 @@ const ProjectDetails: React.FC = () => {
             RunState.Errored,
           ].includes(value))
           .map((value) => ({
-            text:
-  <Badge
-    state={value === RunState.Active ? RunState.SharedActive : value}
-    type={BadgeType.State}
-  />,
+            text: <Badge state={value} type={BadgeType.State} />,
             value,
           })),
         isFiltered: () => !!settings.state,

@@ -344,6 +344,7 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
   [Sdk.Determinedexperimentv1State.PENDING]: types.RunState.Pending,
   [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.Queued,
+  [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.Running,
 };
 
 export const decodeCheckpointState = (

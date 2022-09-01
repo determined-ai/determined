@@ -35,7 +35,7 @@ const stateColorMapping = {
   [RunState.Unspecified]: 'inactive',
   [RunState.Pending]: 'pending',
   [RunState.Queued]: 'warning',
-  [RunState.SharedActive]: 'active',
+  [RunState.Running]: 'active',
   [CommandState.Pending]: 'warning',
   [CommandState.Assigned]: 'warning',
   [CommandState.Pulling]: 'active',

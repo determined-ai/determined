@@ -332,7 +332,7 @@ export enum RunState {
   Unspecified = 'UNSPECIFIED',
   Pending = 'PENDING',
   Queued = 'QUEUED',
-  SharedActive = 'SHARED_ACTIVE',
+  Running = 'RUNNING',
 }
 
 export interface ValidationHistory {

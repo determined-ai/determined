@@ -69,8 +69,8 @@ export const terminalRunStates: Set<CompoundRunState> = new Set([
 ]);
 
 export const runStateToLabel: { [key in RunState]: string } = {
-  [RunState.Active]: 'Running',
-  [RunState.SharedActive]: 'Active',
+  [RunState.Active]: 'Active',
+  [RunState.Running]: 'Running',
   [RunState.Canceled]: 'Canceled',
   [RunState.Completed]: 'Completed',
   [RunState.Deleted]: 'Deleted',
