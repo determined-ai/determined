@@ -197,10 +197,9 @@ class TestPyTorchTrial:
             latest_checkpoint: typing.Optional[str] = None,
             steps_completed: int = 0,
         ) -> det.TrialController:
-            updated_hparams = {
-                "global_batch_size": 1,
-                **self.hparams,
-            }
+            updated_hparams = dict(self.hparams)
+            updated_hparams["global_batch_size"] = 1
+
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=trial_class,
                 hparams=updated_hparams,
