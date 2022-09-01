@@ -711,61 +711,6 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics)
 
-    @pytest.mark.skipif(not HAVE_APEX, reason="Apex not available")
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
-    @pytest.mark.gpu
-    def test_apex_checkpointing(self, tmp_path: pathlib.Path) -> None:
-        # There will be num_checkpoints-1 assertions made at the end of this test
-        num_checkpoints = 5
-        training_metrics = {}
-        validation_metrics = {}
-        checkpoint_dir = str(tmp_path.joinpath("apex_checkpoint"))
-        latest_checkpoint = None
-        steps_completed = 0
-
-        def make_workloads(checkpoint_idx: int = 0) -> workload.Stream:
-            # Train as usual
-            trainer = utils.TrainAndValidate()
-            # In order to expect the loss to decrease after loading the first checkpoint,
-            #  make sure the scaler has had enough steps to stop reducing so that training
-            #  can actually proceed.
-            yield from trainer.send(steps=10, validation_freq=10)
-            tm, vm = trainer.result()
-            training_metrics[checkpoint_idx] = tm
-            validation_metrics[checkpoint_idx] = vm
-            # Checkpoint
-            interceptor = workload.WorkloadResponseInterceptor()
-            yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint, steps_completed
-            latest_checkpoint = interceptor.metrics_result()["uuid"]
-            steps_completed = trainer.get_steps_completed()
-
-        for c in range(num_checkpoints):
-            controller = utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_onevar_model.OneVarApexTrial,
-                hparams=self.hparams,
-                workloads=make_workloads(c),
-                trial_seed=self.trial_seed,
-                checkpoint_dir=checkpoint_dir,
-                latest_checkpoint=latest_checkpoint,
-                steps_completed=steps_completed,
-                expose_gpus=True,
-            )
-            controller.run()
-
-        for c in range(1, num_checkpoints):
-            prev_checkpoint_last_loss = training_metrics[c - 1][-1]["loss"]
-            this_checkpoint_first_loss = training_metrics[c][0]["loss"]
-            assert (
-                this_checkpoint_first_loss < prev_checkpoint_last_loss
-            ), f"loss did not decrease after checkpoint {c-1}"
-            prev_checkpoint_saved_scale = training_metrics[c - 1][-1]["scale"]
-            this_checkpoint_loaded_scale = training_metrics[c][0]["scale_before"]
-            assert this_checkpoint_loaded_scale == prev_checkpoint_saved_scale, (
-                f"loss scale value saved to checkpoint {c-1} is different from value loaded "
-                f"({prev_checkpoint_saved_scale} != {this_checkpoint_loaded_scale})"
-            )
-
 
 @pytest.mark.parametrize(
     "ckpt,istrial",
