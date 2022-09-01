@@ -135,18 +135,25 @@ This exercise trains a single model for a fixed number of batches, using constan
 hyperparameters on a single *slot*. A slot is a CPU or GPU computing device, which the master
 schedules to run.
 
-#. To install the Determined library and start a cluster locally, enter:
+#. To install the Determined library, run the command below. It is suggested you install the package into a specific Python Environment rather than the Global Environment, so you might need to activate that Environment prior to this step:
 
    .. code:: bash
 
       pip install determined
+      
+#. Before you can start Determined, you need to make sure that you have :doc:`Docker installed
+</cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>` and open.
+
+#. To run Determined and start a cluster locally,  run the command below. If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
+
+   .. code:: bash
+
       det deploy local cluster-up
-
-   If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
-
+      
+   Non-Nvidia GPU option:
+   
    .. code:: bash
-
-      pip install determined
+   
       det deploy local cluster-up --no-gpu
 
 #. In the ``mnist_pytorch`` directory, create an experiment specifying the ``const.yaml``
@@ -160,7 +167,7 @@ schedules to run.
    directory* for your model. Determined copies the model context directory contents to the trial
    container working directory.
 
-   You should receive confirmation that the experiment is created:
+   You should receive confirmation that the experiment is created and scheduled to run:
 
    .. code:: console
 
