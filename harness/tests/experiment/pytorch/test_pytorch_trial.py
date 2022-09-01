@@ -148,7 +148,24 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_xor_model.XORTrialWithLRScheduler,
+            pytorch_onevar_model.OneVarTrial,
+            pytorch_onevar_model.OneVarApexTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "xor",
+            "onevar",
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_checkpointing_and_restoring(self, trial_class, tmp_path: pathlib.Path) -> None:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
@@ -159,14 +176,21 @@ class TestPyTorchTrial:
                 "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
                 **self.hparams,
             }
+            if trial_class in [
+                #pytorch_onevar_model.OneVarApexTrial,
+                pytorch_onevar_model.OneVarAutoAMPTrial,
+                pytorch_onevar_model.OneVarManualAMPTrial,
+            ]:
+                updated_hparams["global_batch_size"] = 1
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialWithLRScheduler,
+                trial_class=trial_class,
                 hparams=updated_hparams,
                 workloads=workloads,
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
                 steps_completed=steps_completed,
+                expose_gpus=True,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
