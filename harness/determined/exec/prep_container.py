@@ -55,7 +55,6 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
     with tarfile.open(fileobj=io.BytesIO(tgz), mode="r:gz") as model_def:
         # Ensure all members of the tarball resolve to subdirectories.
         for path in model_def.getnames():
-            print(path)
             if os.path.relpath(path).startswith("../"):
                 raise ValueError(f"'{path}' in tarball would expand to a parent directory")
         model_def.extractall(path=constants.MANAGED_TRAINING_MODEL_COPY)
@@ -254,7 +253,6 @@ if __name__ == "__main__":
     logging.debug("running prep_container")
 
     cert = certs.default_load(info.master_url)
-    print("CERT:", cert)
     sess = api.Session(
         info.master_url,
         util.get_det_username_from_env(),

@@ -54,7 +54,6 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/auth/logout",
 	"/proxy/:service/.*",
 	"/api/v1/allocations/.*",
-	//"/api/v1/experiments/.*",
 	"/api/v1/trials/.*",
 	"/api/v1/checkpoints",
 	"/agents\\?id=.*",
@@ -126,12 +125,7 @@ func GetService() *Service {
 // 1. The HTTP Authorization header.
 // 2. A cookie named "auth".
 func (s *Service) extractToken(r *http.Request) (string, error) {
-	//fmt.Println()
-	//fmt.Println("EXTRACING TOKEN")
 	authRaw := r.Header.Get("Authorization")
-	if r.Header.Get("test") == "test" {
-		fmt.Println("AUTHRAW:", authRaw)
-	}
 	if authRaw != "" {
 		// We attempt to parse out the token, which should be
 		// transmitted as a Bearer authentication token.
@@ -139,13 +133,11 @@ func (s *Service) extractToken(r *http.Request) (string, error) {
 			//fmt.Println("RETURNING UNAUTHORIZED")
 			return "", echo.ErrUnauthorized
 		}
-		//fmt.Println("BEARER PREFIX AND RETURNING")
 		return strings.TrimPrefix(authRaw, "Bearer "), nil
 	} else if cookie, err := r.Cookie("auth"); err == nil {
 		return cookie.Value, nil
 	}
 	// If we found no token, then abort the request with an HTTP 401.
-	//fmt.Println("ABORTING WITH 401")
 	return "", echo.NewHTTPError(http.StatusUnauthorized)
 }
 
@@ -157,11 +149,6 @@ func (s *Service) UserAndSessionFromRequest(
 	if err != nil {
 		return nil, nil, err
 	}
-	if r.Header.Get("test") == "test"{
-		fmt.Println("IMPORTANT TOKEN HERE:")
-	}
-	fmt.Println(token)
-	fmt.Println()
 	return s.db.UserByToken(token, s.extConfig)
 }
 
