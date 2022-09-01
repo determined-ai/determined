@@ -93,15 +93,22 @@ type TrialLogBackend interface {
 	DeleteTrialLogs(trialIDs []int) error
 }
 
+// Catches information on active running trials.
+type trialAllocation struct {
+	Running  bool
+	Starting bool
+	Task     model.TaskID
+}
+
 func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial, error) {
 	// filter allocations by TaskIDs on this page of trials
-	taskFilter := []string{}
+	taskFilter := make([]string, 0, len(trials))
 	for _, trial := range trials {
 		taskFilter = append(taskFilter, trial.TaskId)
 	}
 
 	// get active or pending tasks
-	tasks := []*experimentAllocation{}
+	tasks := []trialAllocation{}
 	err := a.m.db.Query(
 		"get_active_allocations_by_task",
 		&tasks,
@@ -112,19 +119,24 @@ func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial,
 	}
 
 	// Collect state information by TaskID
-	applyIDs := make(map[string]experimentv1.State)
+	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
 	for _, task := range tasks {
-		if task.NumRunning > 0 {
-			applyIDs[*task.TaskID] = experimentv1.State_STATE_ACTIVE
-		} else if task.NumStarting > 0 {
-			applyIDs[*task.TaskID] = experimentv1.State_STATE_PENDING
+		switch {
+		case task.Running:
+			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+		case task.Starting:
+			byTaskID[task.Task] = model.MostProgressedExperimentState(byTaskID[task.Task],
+				experimentv1.State_STATE_PENDING)
+		default:
+			byTaskID[task.Task] = model.MostProgressedExperimentState(byTaskID[task.Task],
+				experimentv1.State_STATE_QUEUED)
 		}
 	}
 
 	// Active trials should be converted to Queued, Pending, or kept Active (Running)
 	for _, trial := range trials {
 		if trial.State == experimentv1.State_STATE_ACTIVE {
-			if setState, ok := applyIDs[trial.TaskId]; ok {
+			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
 				trial.State = setState
 			} else {
 				trial.State = experimentv1.State_STATE_QUEUED

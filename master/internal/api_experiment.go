@@ -53,12 +53,11 @@ import (
 
 var experimentsAddr = actor.Addr("experiments")
 
-// Catches information on active running trials.
+// Catches information on active running experiments.
 type experimentAllocation struct {
-	JobID       *string
-	NumRunning  int32
-	NumStarting int32
-	TaskID      *string
+	Job      model.JobID
+	Running  bool
+	Starting bool
 }
 
 func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment) (
@@ -71,7 +70,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 	}
 
 	// get active or pending tasks
-	tasks := []*experimentAllocation{}
+	tasks := []experimentAllocation{}
 	err := a.m.db.Query(
 		"get_active_allocations_by_job",
 		&tasks,
@@ -84,20 +83,22 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 	// Collect state information by JobID
 	byJobID := make(map[model.JobID]experimentv1.State, len(tasks))
 	for _, task := range tasks {
-		if task.NumRunning > 0 {
-			byJobID[*task.JobID] = experimentv1.State_STATE_ACTIVE
-		} else if task.NumStarting > 0 {
-			_, expStoredState := byJobID[*task.JobID]
-			if !expStoredState {
-				byJobID[*task.JobID] = experimentv1.State_STATE_PENDING
-			}
+		switch {
+		case task.Running:
+			byJobID[task.Job] = experimentv1.State_STATE_RUNNING
+		case task.Starting:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_PENDING)
+		default:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_QUEUED)
 		}
 	}
 
 	// Active experiments should be converted to Queued, Pending, or kept Active (Running)
 	for _, exp := range experiments {
 		if exp.State == experimentv1.State_STATE_ACTIVE {
-			if setState, ok := byJobID[exp.JobId]; ok {
+			if setState, ok := byJobID[model.JobID(exp.JobId)]; ok {
 				exp.State = setState
 			} else {
 				exp.State = experimentv1.State_STATE_QUEUED
@@ -196,7 +197,7 @@ func (a *apiServer) GetExperiment(
 		Experiment: exp,
 	}
 
-	if !slices.Contains(experimentv1.State{
+	if !slices.Contains([]experimentv1.State{
 		experimentv1.State_STATE_ACTIVE,
 		experimentv1.State_STATE_PENDING, experimentv1.State_STATE_QUEUED,
 		experimentv1.State_STATE_RUNNING,

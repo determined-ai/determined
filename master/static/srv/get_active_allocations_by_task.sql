@@ -1,7 +1,7 @@
 SELECT
-  t.task_id,
-  BOOL_OR(CASE WHEN a.state IN ('PULLING', 'STARTING') THEN true ELSE false END) AS is_starting,
-  BOOL_OR(CASE WHEN a.state = 'RUNNING' THEN true ELSE false END) AS is_running
+  t.task_id AS task,
+  BOOL_OR(CASE WHEN a.state IN ('PULLING', 'STARTING') THEN true ELSE false END) AS starting,
+  BOOL_OR(CASE WHEN a.state = 'RUNNING' THEN true ELSE false END) AS running
 FROM tasks t
 JOIN allocations a ON a.task_id = t.task_id
 WHERE t.task_id IN (SELECT unnest(string_to_array($1, ',')))
