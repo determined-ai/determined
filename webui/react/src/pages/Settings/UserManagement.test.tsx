@@ -18,6 +18,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 jest.mock('services/api', () => ({
+  getGroups: () => Promise.resolve({ groups: [] }),
   getUsers: () => {
     const currentUser: DetailedUser = {
       displayName: DISPLAY_NAME,
@@ -29,7 +30,6 @@ jest.mock('services/api', () => ({
     const users: Array<DetailedUser> = [ currentUser ];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
-  getGroups: () => Promise.resolve({groups:[]}),
 }));
 
 const setup = () => render(
