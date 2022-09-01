@@ -2,8 +2,7 @@
 name: "Link artifacts"
 
 on:
-  status: {}
-  check_run: {}
+  status
 
 jobs:
   debugging:
@@ -13,7 +12,7 @@ jobs:
       # payload and can limit the conditional
       - name: Debug
         run:
-          echo '${{ toJSON(github.event) }}'
+          echo '${{ toJSON(github.event) }}' && exit 1
   link-artifacts:
     runs-on: ubuntu-latest
     # if: >-
