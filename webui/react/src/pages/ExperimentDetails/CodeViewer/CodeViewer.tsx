@@ -2,7 +2,7 @@ import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons'
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -164,10 +164,10 @@ const CodeViewer: React.FC<Props> = ({
     switchTreeViewToEditor();
   }, [ submittedConfig, runtimeConfig, switchTreeViewToEditor ]);
 
-  const clickHandler = useCallback(() => {
+  const downloadHandler = useCallback(() => {
     timeout.current = setTimeout(() => {
       URL.revokeObjectURL(downloadInfo.url);
-    }, 300);
+    }, 2000);
   }, [ downloadInfo.url ]);
 
   const fetchFileTree = useCallback(
@@ -306,8 +306,6 @@ const CodeViewer: React.FC<Props> = ({
           : 'generatedConfiguration.yaml',
         url,
       });
-
-      if (configDownloadButton.current) configDownloadButton.current.click();
     } else {
       handlePath(e, {
         external: true,
@@ -346,6 +344,14 @@ const CodeViewer: React.FC<Props> = ({
       if (timeout.current) clearTimeout(timeout.current);
     };
   }, []);
+
+  useLayoutEffect(() => {
+    if (
+      configDownloadButton.current
+      && downloadInfo.url
+      && downloadInfo.fileName
+    ) configDownloadButton.current.click();
+  }, [ downloadInfo ]);
 
   return (
     <section className={css.base}>
@@ -401,9 +407,7 @@ const CodeViewer: React.FC<Props> = ({
                       href={downloadInfo.url}
                       ref={configDownloadButton}
                       onClick={() => {
-                        clickHandler();
-
-                        if (timeout.current) clearTimeout(timeout.current);
+                        downloadHandler();
                       }}
                     />
                   </Tooltip>
