@@ -406,9 +406,7 @@ const CodeViewer: React.FC<Props> = ({
                       download={downloadInfo.fileName}
                       href={downloadInfo.url}
                       ref={configDownloadButton}
-                      onClick={() => {
-                        downloadHandler();
-                      }}
+                      onClick={downloadHandler}
                     />
                   </Tooltip>
                 }
