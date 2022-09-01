@@ -13,7 +13,8 @@ const mockCreateUser = jest.fn();
 
 jest.mock('services/api', () => ({
   postUser: (params: PostUserParams) => {
-    return mockCreateUser(params);
+    mockCreateUser(params);
+    return Promise.resolve({ user: { id: 1 } });
   },
 }));
 
@@ -23,7 +24,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalCreateUser({});
+  const { contextHolder, modalOpen } = useModalCreateUser({ groups: [] });
 
   return (
     <div>

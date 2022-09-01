@@ -1,9 +1,10 @@
-import { Form, Input, message, Switch } from 'antd';
+import { Form, Input, message, Select, Switch } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { patchUser, postUser } from 'services/api';
+import { patchUser, postUser, updateGroup } from 'services/api';
+import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, DetailedUser } from 'types';
@@ -20,20 +21,24 @@ export const MODAL_HEADER_LABEL_CREATE = 'Create User';
 export const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 export const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
+export const GROUP_LABEL = 'Add to Groups';
+export const GROUP_NAME = 'groups';
 
 interface Props {
   branding: BrandingType;
   form: FormInstance;
-  user?: DetailedUser
+  groups: V1GroupSearchResult[];
+  user?: DetailedUser;
 }
 
 interface FormValues {
   ADMIN_NAME: boolean;
   DISPLAY_NAME_NAME?: string;
+  GROUP_NAME?: number;
   USER_NAME_NAME: string;
 }
 
-const ModalForm: React.FC<Props> = ({ form, branding, user }) => {
+const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
@@ -72,16 +77,35 @@ const ModalForm: React.FC<Props> = ({ form, branding, user }) => {
           <Switch />
         </Form.Item>
       ) : null }
+      {!user && (
+        <Form.Item
+          label={GROUP_LABEL}
+          name={GROUP_NAME}>
+          <Select
+            mode="multiple"
+            optionFilterProp="children"
+            placeholder="Select Groups"
+            showSearch>{
+              groups.map((u) => (
+                <Select.Option key={u.group.groupId} value={u.group.groupId}>
+                  {u.group.name}
+                </Select.Option>
+              ))
+            }
+          </Select>
+        </Form.Item>
+      )}
     </Form>
   );
 };
 
 interface ModalProps {
+  groups: V1GroupSearchResult[];
   onClose?: () => void;
-  user?: DetailedUser
+  user?: DetailedUser;
 }
 
-const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
+const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
   const [ form ] = Form.useForm();
   const { info } = useStore();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
@@ -99,7 +123,14 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
         await patchUser({ userId: user.id, userParams: formData });
         message.success(API_SUCCESS_MESSAGE_EDIT);
       } else {
-        await postUser(formData);
+        const u = await postUser(formData);
+        const uid = u.user?.id;
+        if (uid && formData.groups) {
+          (formData.groups as number[]).forEach(async (gid) => {
+            await updateGroup({ addUsers: [ uid ], groupId: gid });
+          });
+        }
+
         message.success(API_SUCCESS_MESSAGE_CREATE);
       }
 
@@ -122,6 +153,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   <ModalForm
     branding={info.branding || BrandingType.Determined}
     form={form}
+    groups={groups}
     user={user}
   />,
       icon: null,
@@ -130,7 +162,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
       onOk: handleOk,
       title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
-  }, [ form, handleCancel, handleOk, openOrUpdate, info, user ]);
+  }, [ form, handleCancel, handleOk, openOrUpdate, info, user, groups ]);
 
   return { modalOpen, ...modalHook };
 };

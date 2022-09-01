@@ -9,8 +9,8 @@ import { checkmarkRenderer, defaultRowClassName,
   getFullPaginationConfig, relativeTimeRenderer } from 'components/Table';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { getUsers, patchUser } from 'services/api';
-import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
+import { getGroups, getUsers, patchUser } from 'services/api';
+import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
@@ -28,14 +28,15 @@ export const CREAT_USER_LABEL = 'new_user';
 
 interface DropdownProps {
   fetchUsers: () => void;
-  user: DetailedUser
+  groups: V1GroupSearchResult[];
+  user: DetailedUser;
 }
 
-const UserActionDropdown = ({ fetchUsers, user }: DropdownProps) => {
+const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const {
     modalOpen: openEditUserModal,
     contextHolder: modalEditUserContextHolder,
-  } = useModalCreateUser({ onClose: fetchUsers, user: user });
+  } = useModalCreateUser({ groups, onClose: fetchUsers, user });
   const onClickEditUser = () => {
     openEditUserModal();
   };
@@ -81,6 +82,7 @@ const UserActionDropdown = ({ fetchUsers, user }: DropdownProps) => {
 
 const UserManagement: React.FC = () => {
   const [ users, setUsers ] = useState<DetailedUser[]>([]);
+  const [ groups, setGroups ] = useState<V1GroupSearchResult[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
@@ -119,6 +121,22 @@ const UserManagement: React.FC = () => {
     settings.tableOffset,
   ]);
 
+  const fetchGroups = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getGroups(
+        {},
+        { signal: canceler.signal },
+      );
+
+      setGroups((prev) => {
+        if (isEqual(prev, response.groups)) return prev;
+        return response.groups || [];
+      });
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch groups.' });
+    }
+  }, [ canceler.signal ]);
+
   useEffect(() => {
     fetchUsers();
   }, [ settings.sortDesc,
@@ -127,10 +145,14 @@ const UserManagement: React.FC = () => {
     settings.tableOffset,
     fetchUsers ]);
 
+  useEffect(() => {
+    fetchGroups();
+  }, [ fetchGroups ]);
+
   const {
     modalOpen: openCreateUserModal,
     contextHolder: modalCreateUserContextHolder,
-  } = useModalCreateUser({ onClose: fetchUsers });
+  } = useModalCreateUser({ groups, onClose: fetchUsers });
 
   const onClickCreateUser = useCallback(() => {
     openCreateUserModal();
@@ -138,7 +160,7 @@ const UserManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: DetailedUser) => {
-      return <UserActionDropdown fetchUsers={fetchUsers} user={record} />;
+      return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
     };
     return [
       {
@@ -147,7 +169,7 @@ const UserManagement: React.FC = () => {
         key: V1GetUsersRequestSortBy.DISPLAYNAME,
         onCell: onRightClickableCell,
         sorter: true,
-        title: 'Display Name-',
+        title: 'Display Name',
       },
       {
         dataIndex: 'username',
@@ -196,7 +218,7 @@ const UserManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [ fetchUsers ]);
+  }, [ fetchUsers, groups ]);
 
   const table = useMemo(() => {
     return (
