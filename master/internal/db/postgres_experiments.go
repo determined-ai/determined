@@ -915,9 +915,9 @@ func (db *PgDB) ExperimentWithoutConfigByTrialID(id int) (*model.Experiment, err
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT e.id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-			 job_id, u.username as username, project_id
+SELECT e.id, e.state, e.model_definition, e.start_time, e.end_time, e.archived,
+       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
+			 e.job_id, u.username as username, e.project_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON e.owner_id = u.id
