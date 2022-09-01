@@ -70,7 +70,7 @@ export class DetError extends Error implements DetErrorOptions {
   id?: string;
   isUserTriggered: boolean;
   level: ErrorLevel;
-  logger: LoggerInterface;
+  logger: LoggerInterface; // CHECK: do we want this attached to DetError?
   payload?: unknown;
   publicMessage?: string;
   publicSubject?: string;
