@@ -212,7 +212,9 @@ class TestPyTorchTrial:
                 expose_gpus=True,
             )
 
-        utils.scaler_checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+        tm_A, tm_B = utils.scaler_checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+        amp_metrics_test(trial_class, tm_A)
+        amp_metrics_test(trial_class, tm_B)
 
     def test_restore_invalid_checkpoint(self, tmp_path: pathlib.Path) -> None:
         # Build, train, and save a checkpoint with the normal hyperparameters.
@@ -691,14 +693,24 @@ class TestPyTorchTrial:
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
 
+        training_metrics = {}
+
+        def make_amp_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
+            nonlocal training_metrics
+            training_metrics, _ = trainer.result()
+
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=hparams,
-            workloads=make_amp_workloads(trial_class),
+            workloads=make_amp_workloads(),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
         controller.run()
+
+        amp_metrics_test(trial_class, training_metrics)
 
     @pytest.mark.skipif(not HAVE_APEX, reason="Apex not available")
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
@@ -774,11 +786,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, torch.nn.Module), type(trial)
 
 
-def make_amp_workloads(trial_class) -> workload.Stream:
-    trainer = utils.TrainAndValidate()
-    yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
-    training_metrics, _ = trainer.result()
-
+def amp_metrics_test(trial_class, training_metrics):
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
