@@ -178,6 +178,7 @@ class determinedexperimentv1State(enum.Enum):
     STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
     STATE_PENDING = "STATE_PENDING"
     STATE_QUEUED = "STATE_QUEUED"
+    STATE_RUNNING = "STATE_RUNNING"
 
 class determinedjobv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"

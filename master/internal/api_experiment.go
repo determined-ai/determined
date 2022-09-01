@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/project"
@@ -194,7 +196,11 @@ func (a *apiServer) GetExperiment(
 		Experiment: exp,
 	}
 
-	if model.StateFromProto(exp.State) != model.ActiveState {
+	if !slices.Contains(experimentv1.State{
+		experimentv1.State_STATE_ACTIVE,
+		experimentv1.State_STATE_PENDING, experimentv1.State_STATE_QUEUED,
+		experimentv1.State_STATE_RUNNING,
+	}, exp.State) {
 		return &resp, nil
 	}
 
