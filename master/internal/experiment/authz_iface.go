@@ -38,6 +38,8 @@ type ExperimentAuthZ interface {
 	// GET /api/v1/trials/:trial_id/searcher/operation
 	// GET /api/v1/trials/:trial_id/logs
 	// GET /api/v1/trials/:trial_id/logs/fields
+	// GET /trials/:trial_id
+	// GET /trials/:trial_id/metrics
 	CanGetExperimentArtifacts(curUser model.User, e *model.Experiment) error
 
 	// DELETE /api/v1/experiments/:exp_id

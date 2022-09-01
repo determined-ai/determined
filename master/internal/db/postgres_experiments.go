@@ -908,7 +908,7 @@ WHERE e.id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
-// ExperimentWithoutConfigByTrialID looks up an experiment a trialID, returning an error if
+// ExperimentWithoutConfigByTrialID looks up an experiment by a given trialID, returning an error if
 // none exists. It loads the experiment without its configuration, for callers that do not need
 // it, or can't handle backwards incompatible changes.
 func (db *PgDB) ExperimentWithoutConfigByTrialID(id int) (*model.Experiment, error) {

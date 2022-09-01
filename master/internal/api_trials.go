@@ -190,13 +190,14 @@ func (a *apiServer) legacyTrialLogs(
 	}
 
 	var followState interface{}
-	trialLogsTimeSinceLastAuth := time.Now()
+	trialLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from a.TrialLogs.
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(trialLogsTimeSinceLastAuth) >= recheckAuthPeriod {
-			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+			if err = a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
+			trialLogsTimeSinceLastAuth = time.Now()
 		}
 
 		switch {
@@ -300,7 +301,7 @@ func (a *apiServer) TrialLogsFields(
 	defer cancel()
 
 	// Stream fields from trial logs table, just to support pre-task-logs trials with old logs.
-	trialLogsTimeSinceLastAuth := time.Now()
+	trialLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from above.
 	resOld := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
@@ -324,7 +325,7 @@ func (a *apiServer) TrialLogsFields(
 	).Run(ctx, resOld)
 
 	// Also stream fields from task logs table, for ordinary logs (as they are written now).
-	taskLogsTimeSinceLastAuth := time.Now()
+	taskLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from above.
 	resNew := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
