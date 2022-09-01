@@ -211,7 +211,9 @@ class TestPyTorchTrial:
                 expose_gpus=True,
             )
 
-        tm_A, tm_B = utils.scaler_checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+        tm_A, tm_B = utils.scaler_checkpointing_and_restoring_test(
+            make_trial_controller_fn, tmp_path
+        )
         amp_metrics_test(trial_class, tm_A)
         amp_metrics_test(trial_class, tm_B)
 

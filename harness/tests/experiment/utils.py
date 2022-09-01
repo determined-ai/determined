@@ -409,6 +409,7 @@ def checkpointing_and_restoring_test(
 
     return (training_metrics["A"], training_metrics["B"])
 
+
 def scaler_checkpointing_and_restoring_test(
     make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: pathlib.Path
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
