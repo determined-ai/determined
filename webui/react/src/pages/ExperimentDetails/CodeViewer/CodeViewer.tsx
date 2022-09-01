@@ -290,6 +290,35 @@ const CodeViewer: React.FC<Props> = ({
     return 'yaml';
   }, [ activeFile ]);
 
+  const handleDownloadClick = useCallback((e) => {
+    if (!activeFile) return;
+
+    const filePath = String(activeFile?.key);
+    if (filePath.includes('Configuration')) {
+      const isRuntimeConf = filePath.includes('runtime');
+      const url = isRuntimeConf
+        ? URL.createObjectURL(new Blob([ runtimeConfig ]))
+        : URL.createObjectURL(new Blob([ submittedConfig as string ]));
+
+      setDownloadInfo({
+        fileName: isRuntimeConf
+          ? 'runtimeConfiguration.yaml'
+          : 'generatedConfiguration.yaml',
+        url,
+      });
+
+      if (configDownloadButton.current) configDownloadButton.current.click();
+    } else {
+      handlePath(e, {
+        external: true,
+        path: paths.experimentFileFromTree(
+          experimentId,
+          String(activeFile?.key),
+        ),
+      });
+    }
+  }, [ activeFile, runtimeConfig, submittedConfig, experimentId ]);
+
   useEffect(() => {
     if (submittedConfig) {
       handleSelectConfig(Config.submitted);
@@ -362,32 +391,7 @@ const CodeViewer: React.FC<Props> = ({
                   <Tooltip title="Download File">
                     <DownloadOutlined
                       className={css.noBorderButton}
-                      onClick={(e) => {
-                        const filePath = String(activeFile.key);
-                        if (filePath.includes('Configuration')) {
-                          const isRuntimeConf = filePath.includes('runtime');
-                          const url = isRuntimeConf
-                            ? URL.createObjectURL(new Blob([ runtimeConfig ]))
-                            : URL.createObjectURL(new Blob([ submittedConfig as string ]));
-
-                          setDownloadInfo({
-                            fileName: isRuntimeConf
-                              ? 'runtimeConfiguration.yaml'
-                              : 'generatedConfiguration.yaml',
-                            url,
-                          });
-
-                          if (configDownloadButton.current) configDownloadButton.current.click();
-                        } else {
-                          handlePath(e, {
-                            external: true,
-                            path: paths.experimentFileFromTree(
-                              experimentId,
-                              String(activeFile.key),
-                            ),
-                          });
-                        }
-                      }}
+                      onClick={handleDownloadClick}
                     />
                     {/* this is an invisible button to programatically download the config files */}
                     <a
