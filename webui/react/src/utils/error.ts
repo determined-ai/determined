@@ -4,11 +4,11 @@ import { ArgsProps, NotificationApi } from 'antd/lib/notification';
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
 import history from 'shared/routes/history';
-import { DetError, DetErrorOptions, ERROR_NAMESPACE, ErrorLevel, ErrorType,
+import { DetError, DetErrorOptions, ERROR_NAMESPACE, ErrorLevel,
   isDetError } from 'shared/utils/error';
 import { LoggerInterface } from 'shared/utils/Logger';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-import { isAborted } from 'shared/utils/service';
+import { isAborted, isAuthFailure } from 'shared/utils/service';
 import { listToStr } from 'shared/utils/string';
 
 const errorLevelMap = {
@@ -36,7 +36,7 @@ const log = (e: DetError) => {
 
 // Handle an error at the point that you'd want to stop bubbling it up. Avoid handling
 // and re-throwing.
-const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
+const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetError | void => {
   // Ignore request cancellation errors.
   if (isAborted(error)) return;
 
@@ -57,8 +57,8 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): void
   e.isHandled = true;
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
-  if (e.type === ErrorType.Auth) {
-    // This check accounts for requestes that had not been aborted properly prior
+  if (isAuthFailure(e)) {
+    // This check accounts for requests that had not been aborted properly prior
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
@@ -83,6 +83,8 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): void
 
   // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
+
+  return e;
 };
 
 export default handleError;
