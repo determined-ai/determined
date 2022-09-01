@@ -1,12 +1,19 @@
-WITH role_assignments AS (
-  SELECT 1 AS group_id, 1 AS role_id
+WITH cluster_permissions AS (SELECT
+  1 AS id,
+  'view_user_permission' AS name,
+  True AS global_only,
+  False AS workspace_only
 ),
 roles AS (
-  SELECT 'view_user_permission' AS name
+  SELECT
+    1 AS id,
+    'Cluster Admin' AS name
 )
-SELECT array_to_json(array_agg(name)) AS editor,
-  array_to_json(array_agg(name)) AS viewer
+SELECT roles.id, roles.name,
+  to_json(array_agg(cluster_permissions)) AS permissions
 FROM roles
+  JOIN cluster_permissions ON TRUE
   WHERE TRUE
   AND $1 > 0
+GROUP BY roles.id, roles.name
   -- WHERE user_id = $1

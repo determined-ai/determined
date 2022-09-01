@@ -5,48 +5,48 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "protoc-gen-swagger/options/annotations.proto";
 
-// Cluster-scope editor and viewer permissions.
-message ClusterRoles {
+// Named permission with global or workspace scope.
+message Permission {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "editor", "viewer" ] }
+    json_schema: { required: [ "id", "name", "global_only", "workspace_only" ] }
   };
-  // List of cluster-scope editing permissions.
-  repeated string editor = 1;
-  // List of cluster-scope viewing permissions.
-  repeated string viewer = 2;
+
+  // Unique ID of the permission.
+  int32 id = 1;
+  // Name of the permission.
+  string name = 2;
+  // Global scope for the permission.
+  bool global_only = 3;
+  // Workspace scope for the permission.
+  bool workspace_only = 4;
 }
 
-// Collection of assigned objects by ID.
-message AssignmentCollection {
+// Named group of permissions.
+message Role {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workspaces" ] }
+    json_schema: { required: [ "id", "name", "permissions" ] }
   };
-  // List of workspace IDs in the assignment.
-  repeated int32 workspaces = 1;
+
+  // Unique ID for the role.
+  int32 id = 1;
+  // Name for the role.
+  string name = 2;
+  // List of permissions.
+  repeated Permission permissions = 3;
 }
 
-// Workspace editor and viewer assignments.
-message ClusterAssignments {
+// Associations of permissions with specific workspaces.
+message AssignmentGroup {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "editor", "viewer" ] }
-  };
-  // List of cluster-scope editing permissions.
-  AssignmentCollection editor = 1;
-  // List of cluster-scope viewing permissions.
-  AssignmentCollection viewer = 2;
-}
-
-// List cluster-wide permissions for the current user.
-message GetClusterPermissionsRequest {}
-
-// Response to GetClusterPermissionsRequest.
-message GetClusterPermissionsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "roles" ] }
+    json_schema: { required: [ "cluster", "name", "workspaces" ] }
   };
 
-  // A group of editor and viewer roles.
-  ClusterRoles roles = 1;
+  // Name for the role.
+  string name = 1;
+  // List of workspace IDs to apply the role.
+  repeated int32 workspaces = 2;
+  // Cluster-wide scope for this role.
+  bool cluster = 3;
 }
 
 // List all permissions for the current user in all parts of the cluster.
@@ -58,28 +58,8 @@ message GetPermissionsSummaryResponse {
     json_schema: { required: [ "assignments", "roles" ] }
   };
 
-  // Cluster-scoped editor and viewer roles.
-  ClusterRoles roles = 1;
-  // More specific assignments of editor and viewer roles.
-  ClusterAssignments assignments = 2;
-}
-
-// List workspace-specific permissions for the current user.
-message GetWorkspacePermissionsRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workspace_id" ] }
-  };
-
-  // The id of the workspace.
-  int32 workspace_id = 1;
-}
-
-// Response to GetWorkspacePermissionsRequest.
-message GetWorkspacePermissionsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "roles" ] }
-  };
-
-  // A group of editor and viewer roles.
-  ClusterRoles roles = 1;
+  // A group of roles in cluster and other scopes.
+  repeated Role roles = 1;
+  // Lists of assignments for the cluster and other scopes.
+  repeated AssignmentGroup assignments = 2;
 }
