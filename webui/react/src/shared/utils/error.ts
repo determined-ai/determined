@@ -76,6 +76,7 @@ export class DetError extends Error implements DetErrorOptions {
   silent: boolean;
   type: ErrorType;
   isHandled: boolean;
+  /** the wrapped error if one was provided. */
   sourceErr: unknown;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
