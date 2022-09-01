@@ -167,7 +167,6 @@ class TestPyTorchTrial:
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
                 steps_completed=steps_completed,
-                expose_gpus=True,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -211,8 +210,11 @@ class TestPyTorchTrial:
                 expose_gpus=True,
             )
 
-        tm_A, tm_B = utils.scaler_checkpointing_and_restoring_test(
-            make_trial_controller_fn, tmp_path
+        tm_A, tm_B = utils.checkpointing_and_restoring_test(
+            make_trial_controller_fn,
+            tmp_path,
+            steps=(2, 2),
+            scheduling_unit=1,
         )
         amp_metrics_test(trial_class, tm_A)
         amp_metrics_test(trial_class, tm_B)

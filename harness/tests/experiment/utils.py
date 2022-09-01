@@ -348,7 +348,10 @@ def train_and_validate(
 
 
 def checkpointing_and_restoring_test(
-    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: pathlib.Path
+    make_trial_controller_fn: RestorableMakeControllerFn,
+    tmp_path: pathlib.Path,
+    steps: Tuple[int, int] = (1, 1),
+    scheduling_unit: int = 100,
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
     """
     Tests if a trial controller of any framework can checkpoint and restore from that checkpoint
@@ -371,7 +374,7 @@ def checkpointing_and_restoring_test(
     def make_workloads(steps: int, tag: str, checkpoint: bool) -> workload.Stream:
         trainer = TrainAndValidate()
 
-        yield from trainer.send(steps, validation_freq=1, scheduling_unit=100)
+        yield from trainer.send(steps, validation_freq=1, scheduling_unit=scheduling_unit)
         tm, vm = trainer.result()
         training_metrics[tag] += tm
         validation_metrics[tag] += vm
@@ -384,72 +387,21 @@ def checkpointing_and_restoring_test(
             steps_completed = trainer.get_steps_completed()
 
     controller_A1 = make_trial_controller_fn(
-        make_workloads(1, "A", True),
+        make_workloads(steps[0], "A", True),
         checkpoint_dir=checkpoint_dir,
     )
     controller_A1.run()
     assert latest_checkpoint is not None, "make_workloads did not set the latest_checkpoint"
 
     controller_A2 = make_trial_controller_fn(
-        make_workloads(1, "A", False),
+        make_workloads(steps[1], "A", False),
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
         steps_completed=steps_completed,
     )
     controller_A2.run()
 
-    controller_B = make_trial_controller_fn(make_workloads(2, "B", False))
-    controller_B.run()
-
-    for A, B in zip(training_metrics["A"], training_metrics["B"]):
-        assert_equivalent_metrics(A, B)
-
-    for A, B in zip(validation_metrics["A"], validation_metrics["B"]):
-        assert_equivalent_metrics(A, B)
-
-    return (training_metrics["A"], training_metrics["B"])
-
-
-def scaler_checkpointing_and_restoring_test(
-    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: pathlib.Path
-) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
-    training_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
-    validation_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
-    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-    latest_checkpoint = None
-    steps_completed = 0
-
-    def make_workloads(steps: int, tag: str, checkpoint: bool) -> workload.Stream:
-        trainer = TrainAndValidate()
-
-        yield from trainer.send(steps, validation_freq=1, scheduling_unit=1)
-        tm, vm = trainer.result()
-        training_metrics[tag] += tm
-        validation_metrics[tag] += vm
-
-        if checkpoint is not None:
-            interceptor = workload.WorkloadResponseInterceptor()
-            yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint, steps_completed
-            latest_checkpoint = interceptor.metrics_result()["uuid"]
-            steps_completed = trainer.get_steps_completed()
-
-    controller_A1 = make_trial_controller_fn(
-        make_workloads(2, "A", True),
-        checkpoint_dir=checkpoint_dir,
-    )
-    controller_A1.run()
-    assert latest_checkpoint is not None, "make_workloads did not set the latest_checkpoint"
-
-    controller_A2 = make_trial_controller_fn(
-        make_workloads(2, "A", False),
-        checkpoint_dir=checkpoint_dir,
-        latest_checkpoint=latest_checkpoint,
-        steps_completed=steps_completed,
-    )
-    controller_A2.run()
-
-    controller_B = make_trial_controller_fn(make_workloads(4, "B", False))
+    controller_B = make_trial_controller_fn(make_workloads(steps[0] + steps[1], "B", False))
     controller_B.run()
 
     for A, B in zip(training_metrics["A"], training_metrics["B"]):
