@@ -19,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -50,9 +51,6 @@ var (
 
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
-
-	// Common errors.
-	trialNotFound = status.Error(codes.NotFound, "trial not found")
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
@@ -67,13 +65,18 @@ type TrialLogBackend interface {
 	DeleteTrialLogs(trialIDs []int) error
 }
 
+// TODO test
+// TODO to the middle
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
 ) error {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return err
+	}
+
 	var taskID model.TaskID
 	switch t, err := a.m.db.TrialByID(int(req.TrialId)); {
-	case errors.Is(err, sql.ErrNoRows), errors.Is(err, db.ErrNotFound):
-		return trialNotFound
 	case err != nil:
 		return err
 	default:
@@ -245,9 +248,16 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 	return filters, nil
 }
 
+// TODO test
+// TODO to the middle
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer,
 ) error {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return err
+	}
+
 	trial, err := a.m.db.TrialByID(int(req.TrialId))
 	if err != nil {
 		return errors.Wrap(err, "retreiving trial")
@@ -304,14 +314,35 @@ func (a *apiServer) TrialLogsFields(
 	})
 }
 
+func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
+	trialID int, actionFunc func(model.User, *model.Experiment) error,
+) error {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return err
+	}
+
+	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
+	exp, err := a.m.db.ExperimentWithoutConfigByTrialID(trialID)
+	if errors.Is(err, db.ErrNotFound) {
+		return trialNotFound
+	} else if err != nil {
+		return err
+	}
+
+	if err = actionFunc(*curUser, exp); err != nil {
+		return err
+	}
+	return nil
+}
+
+// TODO test
 func (a *apiServer) GetTrialCheckpoints(
-	_ context.Context, req *apiv1.GetTrialCheckpointsRequest,
+	ctx context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	switch exists, err := a.m.db.CheckTrialExists(int(req.Id)); {
-	case err != nil:
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
-	case !exists:
-		return nil, status.Error(codes.NotFound, "trial not found")
 	}
 
 	resp := &apiv1.GetTrialCheckpointsResponse{}
@@ -369,15 +400,17 @@ func (a *apiServer) GetTrialCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
+// TODO test
 func (a *apiServer) KillTrial(
 	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
 	t, err := a.m.db.TrialByID(int(req.Id))
-	switch {
-	case errors.Cause(err) == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "trial %d not found", req.Id)
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to get trial: %s", err)
+	if err != nil {
+		return nil, err
 	}
 
 	tr := actor.Addr("experiments", t.ExperimentID, t.RequestID)
@@ -391,15 +424,13 @@ func (a *apiServer) KillTrial(
 	return &apiv1.KillTrialResponse{}, nil
 }
 
+// TODO test
 func (a *apiServer) GetExperimentTrials(
-	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
+	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (*apiv1.GetExperimentTrialsResponse, error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.ExperimentId))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.ExperimentId)
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
 	}
 
 	// Construct the trial filtering expression.
@@ -483,20 +514,23 @@ func (a *apiServer) GetExperimentTrials(
 	return resp, nil
 }
 
-func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
+// TODO test
+func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
 	resp := &apiv1.GetTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProtof(
+	if err := a.m.db.QueryProtof(
 		"proto_get_trials_plus",
 		[]any{"($1::int, $2::int)"},
 		resp.Trial,
 		req.TrialId,
 		1,
-	); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
-	case err != nil:
+	); err != nil {
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 	return resp, nil
@@ -562,14 +596,17 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	return metrics, nil
 }
 
-func (a *apiServer) SummarizeTrial(_ context.Context,
+// TODO test
+func (a *apiServer) SummarizeTrial(ctx context.Context,
 	req *apiv1.SummarizeTrialRequest,
 ) (*apiv1.SummarizeTrialResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
 	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
-	case err != nil:
+	if err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); err != nil {
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
@@ -584,11 +621,17 @@ func (a *apiServer) SummarizeTrial(_ context.Context,
 	return resp, nil
 }
 
-func (a *apiServer) CompareTrials(_ context.Context,
+// TODO test
+func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
 	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
+		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return nil, err
+		}
+
 		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
 		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {
 		case err == db.ErrNotFound:
@@ -609,9 +652,15 @@ func (a *apiServer) CompareTrials(_ context.Context,
 	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
 }
 
-func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWorkloadsRequest) (
+// TODO test
+func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+
 	resp := &apiv1.GetTrialWorkloadsResponse{}
 	limit := &req.Limit
 	if *limit == 0 {
@@ -647,15 +696,15 @@ func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWork
 	return resp, nil
 }
 
+// TODO in middle
+// TODO test
 func (a *apiServer) GetTrialProfilerMetrics(
 	req *apiv1.GetTrialProfilerMetricsRequest,
 	resp apiv1.Determined_GetTrialProfilerMetricsServer,
 ) error {
-	switch exists, err := a.m.db.CheckTrialExists(int(req.Labels.TrialId)); {
-	case err != nil:
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.Labels.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
-	case !exists:
-		return status.Error(codes.NotFound, "trial not found")
 	}
 
 	labelsJSON, err := protojson.Marshal(req.Labels)
@@ -695,15 +744,15 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	})
 }
 
+// TODO in middle
+// TODO test
 func (a *apiServer) GetTrialProfilerAvailableSeries(
 	req *apiv1.GetTrialProfilerAvailableSeriesRequest,
 	resp apiv1.Determined_GetTrialProfilerAvailableSeriesServer,
 ) error {
-	switch exists, err := a.m.db.CheckTrialExists(int(req.TrialId)); {
-	case err != nil:
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
-	case !exists:
-		return trialNotFound
 	}
 
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
@@ -734,8 +783,9 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	})
 }
 
+// TODO test
 func (a *apiServer) PostTrialProfilerMetricsBatch(
-	_ context.Context,
+	ctx context.Context,
 	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
 	var errs *multierror.Error
@@ -743,15 +793,9 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	for _, batch := range req.Batches {
 		trialID := int(batch.Labels.TrialId)
 		if !existingTrials[trialID] {
-			switch exists, err := a.m.db.CheckTrialExists(trialID); {
-			case err != nil:
-				errs = multierror.Append(errs, err)
-				continue
-			case !exists:
-				errs = multierror.Append(errs, status.Error(codes.NotFound, "trial not found"))
-				continue
-			default:
-				existingTrials[trialID] = true
+			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, trialID,
+				expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+				return nil, err
 			}
 		}
 
@@ -784,6 +828,7 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
+// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
@@ -816,6 +861,7 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 }
 
+// TODO(nick) auth with allocations.
 func (a *apiServer) AckAllocationPreemptionSignal(
 	_ context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
 ) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
@@ -836,6 +882,7 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
+// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationPendingPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPendingPreemptionSignalRequest,
@@ -850,6 +897,7 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	return &apiv1.AllocationPendingPreemptionSignalResponse{}, nil
 }
 
+// TODO(nick) auth with allocations.
 func (a *apiServer) MarkAllocationResourcesDaemon(
 	_ context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {
@@ -871,14 +919,16 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
 }
 
+// TODO test
 func (a *apiServer) GetCurrentTrialSearcherOperation(
-	_ context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
+	ctx context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
 ) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return nil, trialNotFound
-	case err != nil:
+	if err != nil {
 		return nil, err
 	}
 	exp := actor.Addr("experiments", eID)
@@ -900,14 +950,16 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 	}, nil
 }
 
+// TODO test
 func (a *apiServer) CompleteTrialSearcherValidation(
-	_ context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
+	ctx context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
 ) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return nil, trialNotFound
-	case err != nil:
+	if err != nil {
 		return nil, err
 	}
 	exp := actor.Addr("experiments", eID)
@@ -922,14 +974,16 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 	return &apiv1.CompleteTrialSearcherValidationResponse{}, nil
 }
 
+// TODO test
 func (a *apiServer) ReportTrialSearcherEarlyExit(
-	_ context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
+	ctx context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return nil, trialNotFound
-	case err != nil:
+	if err != nil {
 		return nil, err
 	}
 	trial := actor.Addr("experiments", eID, rID)
@@ -943,14 +997,16 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	return &apiv1.ReportTrialSearcherEarlyExitResponse{}, nil
 }
 
+// TODO test
 func (a *apiServer) ReportTrialProgress(
-	_ context.Context, req *apiv1.ReportTrialProgressRequest,
+	ctx context.Context, req *apiv1.ReportTrialProgressRequest,
 ) (*apiv1.ReportTrialProgressResponse, error) {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return nil, trialNotFound
-	case err != nil:
+	if err != nil {
 		return nil, err
 	}
 	exp := actor.Addr("experiments", eID)
@@ -964,10 +1020,12 @@ func (a *apiServer) ReportTrialProgress(
 	return &apiv1.ReportTrialProgressResponse{}, nil
 }
 
+// TODO test
 func (a *apiServer) ReportTrialTrainingMetrics(
 	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
 ) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
-	if err := a.checkTrialExists(int(req.TrainingMetrics.TrialId)); err != nil {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrainingMetrics.TrialId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 	if err := a.m.db.AddTrainingMetrics(ctx, req.TrainingMetrics); err != nil {
@@ -976,10 +1034,12 @@ func (a *apiServer) ReportTrialTrainingMetrics(
 	return &apiv1.ReportTrialTrainingMetricsResponse{}, nil
 }
 
+// TODO test
 func (a *apiServer) ReportTrialValidationMetrics(
 	ctx context.Context, req *apiv1.ReportTrialValidationMetricsRequest,
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
-	if err := a.checkTrialExists(int(req.ValidationMetrics.TrialId)); err != nil {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.ValidationMetrics.TrialId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 	if err := a.m.db.AddValidationMetrics(ctx, req.ValidationMetrics); err != nil {
@@ -988,6 +1048,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
 }
 
+// TODO(nick) authz with tasks.
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {
@@ -1045,6 +1106,7 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 	return c, nil
 }
 
+// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationRendezvousInfo(
 	ctx context.Context, req *apiv1.AllocationRendezvousInfoRequest,
 ) (*apiv1.AllocationRendezvousInfoResponse, error) {
@@ -1084,10 +1146,12 @@ func (a *apiServer) AllocationRendezvousInfo(
 	}
 }
 
+// TODO test
 func (a *apiServer) PostTrialRunnerMetadata(
-	_ context.Context, req *apiv1.PostTrialRunnerMetadataRequest,
+	ctx context.Context, req *apiv1.PostTrialRunnerMetadataRequest,
 ) (*apiv1.PostTrialRunnerMetadataResponse, error) {
-	if err := a.checkTrialExists(int(req.TrialId)); err != nil {
+	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
@@ -1096,18 +1160,6 @@ func (a *apiServer) PostTrialRunnerMetadata(
 	}
 
 	return &apiv1.PostTrialRunnerMetadataResponse{}, nil
-}
-
-func (a *apiServer) checkTrialExists(id int) error {
-	ok, err := a.m.db.CheckTrialExists(id)
-	switch {
-	case err != nil:
-		return status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
-	case !ok:
-		return status.Errorf(codes.NotFound, "trial %d not found", id)
-	default:
-		return nil
-	}
 }
 
 func (a *apiServer) checkTaskExists(id model.TaskID) error {

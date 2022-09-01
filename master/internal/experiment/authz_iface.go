@@ -27,6 +27,17 @@ type ExperimentAuthZ interface {
 	// GET /api/v1/experiments/:exp_id/metrics-stream/trials-snapshot
 	// GET /api/v1/experiments/:exp_id/metrics-stream/trials-sample
 	// GET /api/v1/experiments/{experimentId}/hyperparameter-importance
+	// GET /api/v1/trials/:trial_id/checkpoints
+	// GET /api/v1/experiments/:trial_id/trials
+	// GET /api/v1/trials/:trial_id
+	// GET /api/v1/trials/:trial_id/summarize
+	// GET /api/v1/trials/compare
+	// GET /api/v1/trials/:trial_id/workloads
+	// GET /api/v1/trials/:trial_id/profiler/metrics
+	// GET /api/v1/trials/:trial_id/profiler/available_series
+	// GET /api/v1/trials/:trial_id/searcher/operation
+	// GET /api/v1/trials/:trial_id/logs
+	// GET /api/v1/trials/:trial_id/logs/fields
 	CanGetExperimentArtifacts(curUser model.User, e *model.Experiment) error
 
 	// DELETE /api/v1/experiments/:exp_id
@@ -53,6 +64,14 @@ type ExperimentAuthZ interface {
 	// POST /api/v1/experiments/:exp_id/kill
 	// POST /api/v1/experiments/:exp_id/hyperparameter-importance
 	// POST /api/v1/experiments/:exp_id/cancel
+	// POST /api/v1/trials/:trial_id/kill
+	// POST /api/v1/trials/profiler/metrics
+	// POST /api/v1/trials/:trial_id/searcher/completed_operation
+	// POST /api/v1/trials/:trial_id/early_exit
+	// POST /api/v1/trials/:trial_id/progress
+	// POST /api/v1/trials/:trial_id/training_metrics
+	// POST /api/v1/trials/:trial_id/validation_metrics
+	// POST /api/v1/trials/:trial_id/runner/metadata
 	CanEditExperiment(curUser model.User, e *model.Experiment) error
 
 	// POST /api/v1/experiments/:exp_id/archive
