@@ -487,9 +487,9 @@ func (a *apiServer) GetExperiments(
 		return nil, err
 	}
 
-	resp.Experiments = a.enrichExperimentState(resp.Experiments)
+	resp.Experiments, err = a.enrichExperimentState(resp.Experiments)
 
-	return resp, nil
+	return resp, err
 }
 
 func runPagedBunExperimentsQuery(
