@@ -28,9 +28,9 @@ const CheckpointModalTrigger: React.FC<Props> = ({
 
   const handleOnCloseCheckpointRegister = useCallback((
     reason?: ModalCloseReason,
-    checkpointUuid?: string,
+    checkpoints?: string[],
   ) => {
-    if (checkpointUuid) openModalCreateModel({ checkpointUuid });
+    if (checkpoints) openModalCreateModel({ checkpoints });
   }, [ openModalCreateModel ]);
 
   const {
@@ -40,7 +40,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
 
   const handleOnCloseCheckpoint = useCallback((reason?: ModalCloseReason) => {
     if (reason === ModalCloseReason.Ok && checkpoint.uuid) {
-      openModalCheckpointRegister({ checkpointUuid: checkpoint.uuid });
+      openModalCheckpointRegister({ checkpoints: checkpoint.uuid });
     }
   }, [ checkpoint, openModalCheckpointRegister ]);
 

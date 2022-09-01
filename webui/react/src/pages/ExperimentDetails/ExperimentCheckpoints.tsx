@@ -54,19 +54,29 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
+  const handleOnCloseCreateModel = useCallback((
+    reason?: ModalCloseReason,
+    checkpoints?: string[],
+    modelName?: string,
+  ) => {
+    if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+  }, [ openModalCheckpointRegister ]);
+
   const {
     contextHolder: modalModelCreateContextHolder,
     modalOpen: openModalCreateModel,
-  } = useModalModelCreate();
+  } = useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const handleOnCloseCheckpointRegister = useCallback((
     reason?: ModalCloseReason,
-    checkpointUuid?: string,
+    checkpoints?: string[],
   ) => {
-    if (checkpointUuid) openModalCreateModel({ checkpointUuid });
+    if (checkpoints) openModalCreateModel({ checkpoints });
   }, [ openModalCreateModel ]);
 
-  const {
+  // Has to use var to hoist openModalCheckpointRegister for use above
+  /* eslint-disable-next-line no-var */
+  var {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({ onClose: handleOnCloseCheckpointRegister });
@@ -101,18 +111,19 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
-  const handleRegisterCheckpoint = useCallback((checkpointUuid: string) => {
-    openModalCheckpointRegister({ checkpointUuid: checkpointUuid });
+  const handleRegisterCheckpoint = useCallback((checkpoints: string[]) => {
+    openModalCheckpointRegister({ checkpoints });
   }, [ openModalCheckpointRegister ]);
 
   const handleDeleteCheckpoint = useCallback((checkpoints: string[]) => {
     openModalCheckpointDelete({ checkpoints });
   }, [ openModalCheckpointDelete ]);
 
-  const dropDownOnTrigger = useCallback((checkpointUuid: string) => {
+  const dropDownOnTrigger = useCallback((checkpoints: string | string[]) => {
+    const checkpointsArr = Array.isArray(checkpoints) ? checkpoints : [ checkpoints ];
     return {
-      [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointUuid),
-      [checkpointAction.Delete]: () => handleDeleteCheckpoint([ checkpointUuid ]),
+      [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointsArr),
+      [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
     };
   }, [ handleDeleteCheckpoint, handleRegisterCheckpoint ]);
 
@@ -229,8 +240,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   ]);
 
   const submitBatchAction = useCallback(async (action: CheckpointAction) => {
+    if (!settings.row) return;
     try {
-      // TODO: Actions
+      dropDownOnTrigger(settings.row)[action]();
 
       // Refetch experiment list to get updates based on batch action.
       await fetchExperimentCheckpoints();
@@ -244,7 +256,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         type: ErrorType.Server,
       });
     }
-  }, [ fetchExperimentCheckpoints ]);
+  }, [ dropDownOnTrigger, fetchExperimentCheckpoints, settings.row ]);
 
   usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
 
@@ -265,9 +277,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     return () => canceler.abort();
   }, [ canceler ]);
 
-  // const handleTableRowSelect = useCallback((rowKeys) => {
-  //   updateSettings({ row: rowKeys });
-  // }, [ updateSettings ]);
+  const handleTableRowSelect = useCallback((rowKeys) => {
+    updateSettings({ row: rowKeys });
+  }, [ updateSettings ]);
 
   return (
     <div className={css.base}>
@@ -293,11 +305,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           }, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="uuid"
-          // rowSelection={{
-          //   onChange: handleTableRowSelect,
-          //   preserveSelectedRowKeys: true,
-          //   selectedRowKeys: settings.row ?? [],
-          // }}
+          rowSelection={{
+            onChange: handleTableRowSelect,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys: settings.row ?? [],
+          }}
           settings={settings}
           showSorterTooltip={false}
           size="small"
