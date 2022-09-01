@@ -33,6 +33,7 @@ export enum ErrorType {
   Input = 'input', // the issue is caused by unexpected/invalid user input.
   ApiBadResponse = 'apiBadResponse', // unexpected response structure.
   Api = 'api', // third-party api
+  Assert = 'assert', // assertion failure.
 }
 
 const defaultErrOptions: DetErrorOptions = {

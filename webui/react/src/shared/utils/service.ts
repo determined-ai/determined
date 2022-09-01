@@ -21,6 +21,12 @@ export const getResponseStatus = (e: unknown): number | undefined =>
  * @returns
  */
 export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean => {
+  if (u instanceof Promise) {
+    throw new DetError(u, {
+      publicMessage: 'isAuthFailure: unexpected input type',
+      type: ErrorType.Assert,
+    });
+  }
   if (u instanceof DetError) {
     if (u.type === ErrorType.Auth) return true;
     if (u.sourceErr !== undefined) return isAuthFailure(u.sourceErr, supportExternalAuth);
