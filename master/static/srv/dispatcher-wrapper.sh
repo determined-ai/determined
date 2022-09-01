@@ -20,8 +20,10 @@
 #    - DET_SLOT_IDS inherited from SLURM-provided CUDA_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES
 #    - DET_UNIQUE_PORT_OFFSET inherited from SLURM-provided least(CUDA_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES)
 
-# Fail on unexpected non-zero exit statuses.
-set -e
+# Fail on unexpected non-zero exit statuses, but enable ERR trap.
+set -eE
+trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container initilization.  See stderr messages above.' ERR 
+
 
 # Controls debug logging for this method
 DEBUG=0
@@ -32,12 +34,19 @@ DEBUG=0
 # options are not supported on Ubuntu which breaks the which use in the entrypoints.
 unset -f $(declare -Ffx | cut -f 3 -d ' ')
 
-# Debug log method
+# Debug log method (logged only if DEBUG=1)
 # Args: {Level} {Message}...
-log() {
+log_debug() {
     if [ $DEBUG == 1 ]; then
        echo -e "$*" >&2
     fi 
+}
+
+
+# Unconditional log method
+# Args: {Level} {Message}...
+log() {
+    echo -e "$*" >&2
 }
 
 # The PBS Pro equivalent of the SLURM_PROCID environment variable is PBS_TASKNUM.
@@ -91,7 +100,7 @@ if [ ! -z "${PBS_TASKNUM}" ] && [ -z "${SLURM_PROCID}" ]
 then
     export SLURM_PROCID="$(getPbsTaskNum ${PBS_TASKNUM})"
 
-    log "DEBUG: Converted PBS_TASKNUM=${PBS_TASKNUM} to SLURM_PROCID=${SLURM_PROCID}"
+    log_debug "DEBUG: Converted PBS_TASKNUM=${PBS_TASKNUM} to SLURM_PROCID=${SLURM_PROCID}"
 fi
 
 # Container-local directory to host determined directory
@@ -110,7 +119,7 @@ if [ -d $ROOT/run ] ; then
     mkdir -p $PROCDIR
     for dir in $ROOT/*; do
         if [[ -d $dir && $dir != $PROCDIR_ROOT ]] ; then
-            log "INFO: Clone $dir -> $PROCDIR"
+            log_debug "INFO: Clone $dir -> $PROCDIR"
             cp -p -R $dir $PROCDIR >&2
         fi
     done
@@ -121,11 +130,11 @@ if [ -d $ROOT/run ] ; then
     fi
 
     # Container-local directory for links to container-specific /run/determined content
-    log "INFO: Creating $LOCALTMP/determined"
+    log_debug "INFO: Creating $LOCALTMP/determined"
     mkdir -m 0700 -p $LOCALTMP/determined >&2
     for dir in $ROOT/run/determined/*; do
         dirname=${dir##*/}
-        log "INFO: ln -sfnT $PROCDIR/run/determined/${dirname} $LOCALTMP/determined/${dirname}"
+        log_debug "DEBUG: ln -sfnT $PROCDIR/run/determined/${dirname} $LOCALTMP/determined/${dirname}"
         if [ ! -w $PROCDIR/run/determined ]; then
             log "ERROR: User$(id) does not have write access to $PROCDIR/run/determined/${dirname}.  You may have may not have properly configured your determined agent user/group."
         fi 
@@ -141,9 +150,12 @@ if  [ "$DET_CONTAINER_LOCAL_TMP" == "1" ]; then
     # Create a per-container tmp
     mkdir -p $PROCDIR/tmp
     # Replace /tmp with a link to our private 
-    rm -rf /tmp
-    ln -fs $PROCDIR/tmp /
-    log "DEBUG: Replaced tmp $(ls -l /tmp)"
+    if rmdir /tmp; then
+        ln -fs $PROCDIR/tmp /
+        log_debug "DEBUG: Replaced tmp $(ls -l /tmp)"
+    else
+        log "ERROR: Unable to replace /tmp with per-container $PROCDIR/tmp (potential bind mount conflict?).  Free space in /tmp may be limited."
+    fi
 fi
 
 # When the task container is invoked via SLURM, we have
@@ -165,12 +177,12 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                     VISIBLE_SLOTS="$(nvidia-smi --query-gpu=index --format=csv,noheader | sed -z 's/\n/,/g;s/,$/\n/')"
                     for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do 
                         if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
-                            echo "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
+                            log "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
                         fi 
                     done
         
                 else
-                    echo "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
+                    log "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
                 fi
             else
                 # If CUDA_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
@@ -197,14 +209,14 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                     mkdir -p /run/determined/pythonuserbase/bin/
                     echo -e '#!/bin/bash\npython3 /usr/bin/rocm-smi $*' > /run/determined/pythonuserbase/bin/rocm-smi
                     chmod +x /run/determined/pythonuserbase/bin/rocm-smi
-                    echo "INFO: Adding rocm-smi wrapper script /run/determined/pythonuserbase/bin/rocm-smi." 1>&2
+                    log "INFO: Adding rocm-smi wrapper script /run/determined/pythonuserbase/bin/rocm-smi." 1>&2
                 fi
             fi
 
             if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
                 # Test if "rocm-smi" exists in the PATH before trying to invoking it.
                 if [ ! type rocm-smi > /dev/null 2>&1 ]; then
-                    echo "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
+                    log "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
                 fi
             else
                 # If ROCR_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
@@ -221,14 +233,14 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
             ;;
 
         *)
-            echo "ERROR: unsupported slot type: ${DET_SLOT_TYPE}"
+            log "ERROR: unsupported slot type: ${DET_SLOT_TYPE}"
             exit 1
             ;;
     esac
 fi
 
 
-log "INFO: Resetting workdir to $DET_WORKDIR"
+log "INFO: Setting workdir to $DET_WORKDIR"
 cd $DET_WORKDIR
 
 log "INFO: executing $@" >&2
