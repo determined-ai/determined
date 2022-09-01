@@ -40,6 +40,11 @@ describe('Service Utilities', () => {
 
       expect(service.isAuthFailure(response, true)).toBe(true);
     });
+    it('marks true wrapped auth errors', () => {
+      const response = new Response('unauthorized', { status: 401 });
+      expect(service.isAuthFailure(response, false)).toBe(true);
+      expect(service.isAuthFailure(new DetError(response), false)).toBe(true);
+    });
   });
 
   describe('isApiResponse', () => {
