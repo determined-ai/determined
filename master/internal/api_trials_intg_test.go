@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package internal
 
 import (
@@ -174,22 +177,22 @@ func TestTrialAuthZ(t *testing.T) {
 	}
 
 	for _, curCase := range cases {
-		require.Equal(t, curCase.IDToReqCall(-999), errTrialNotFound(-999))
+		require.Equal(t, errTrialNotFound(-999), curCase.IDToReqCall(-999))
 
 		// Can't view trials experiment gives same error.
 		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
-		require.Equal(t, curCase.IDToReqCall(trial.ID), errTrialNotFound(trial.ID))
+		require.Equal(t, errTrialNotFound(trial.ID), curCase.IDToReqCall(trial.ID))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
 		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
-		require.Equal(t, curCase.IDToReqCall(trial.ID), expectedErr)
+		require.Equal(t, expectedErr, curCase.IDToReqCall(trial.ID))
 
 		// Action func error returns error in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
 		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
-		require.Equal(t, curCase.IDToReqCall(trial.ID), expectedErr)
+		require.Equal(t, expectedErr, curCase.IDToReqCall(trial.ID))
 	}
 }
