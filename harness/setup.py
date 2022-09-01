@@ -11,6 +11,8 @@ setup(
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    # Technically, we haven't supported 3.6 or tested against it since it went EOL.  But some users
+    # are still using it successfully so there's hardly a point in breaking them.
     python_requires=">=3.6",
     package_data={"determined": ["py.typed"]},
     include_package_data=True,
