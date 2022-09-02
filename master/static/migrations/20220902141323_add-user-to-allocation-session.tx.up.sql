@@ -1,7 +1,7 @@
 ALTER TABLE public.allocation_sessions
 	ADD COLUMN owner_id int REFERENCES users(id);
 
--- Add owner_id to for in progress trials.
+-- Add owner_id for in progress trials.
 UPDATE public.allocation_sessions allocation_sessions
 	SET owner_id = experiments.owner_id
     FROM public.experiments experiments
