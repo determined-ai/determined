@@ -30,6 +30,7 @@ HELPEND=$(($LINENO - 1))
 INTUNNEL=1
 TUNNEL=1
 DEVLAUNCHER=
+USERNAME=$USER
 
 if [[ $1 == '-n' ]]; then
     INTUNNEL=
@@ -51,19 +52,24 @@ if [[ $1 == '-d' ]]; then
     DEVLAUNCHER=1
     shift
 fi
+if [[ $1 == '-u' ]]; then
+    USERNAME=$2
+    shift 2
+fi
 if [[ $1 == '-a' ]]; then
     PULL_AUTH=1
     shift
 fi
 
 if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
-    echo "Usage: $0 [-h] [-n] [-x] [-t] [-p] [-d] [-a] {cluster}"
+    echo "Usage: $0 [-h] [-n] [-x] [-t] [-p] [-d] [-u] {username} [-a] {cluster}"
     echo "  -h     This help message.   Options are order sensitive."
     echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
     echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
     echo "  -t     Force debug level to trace regardless of cluster configuration value."
     echo "  -p     Use podman as a container host (otherwise singlarity)."
     echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
+    echo "  -u     Use provided username."
     echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
     echo
     echo "Documentation:"
@@ -112,6 +118,7 @@ function pull_auth_token() {
 }
 
 # Update your username/port pair
+USERPORT_madagund=8083
 USERPORT_stokc=8084
 USERPORT_rcorujo=8085
 USERPORT_phillipgaisford=8086
@@ -122,9 +129,9 @@ USERPORT_jerryharrow=8090
 USERPORT_cameronquilici=8093
 USERPORT_canmingcobble=8092
 
-USERPORT=$(lookup "USERPORT_$USER")
+USERPORT=$(lookup "USERPORT_$USERNAME")
 if [[ -z $USERPORT ]]; then
-    echo "$0: User $USER does not have a configured port, update the script."
+    echo "$0: User $USERNAME does not have a configured port, update the script."
     exit 1
 fi
 
@@ -140,6 +147,7 @@ elif [[ ! " ${CLUSTERS[*]} " =~ " $CLUSTER "  ]]; then
 fi
 
 # Update your JETTY HTTP/SSL username/port pair from loadDevLauncher.sh
+DEV_LAUNCHER_PORT_madagund=18083
 DEV_LAUNCHER_PORT_stokc=18084
 DEV_LAUNCHER_PORT_rcorujo=18085
 DEV_LAUNCHER_PORT_phillipgaisford=18086
@@ -147,7 +155,7 @@ DEV_LAUNCHER_PORT_pankaj=18087
 DEV_LAUNCHER_PORT_alyssa=18088
 DEV_LAUNCHER_PORT_jerryharrow=18090
 DEV_LAUNCHER_PORT_canmingcobble=18092
-DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USER")
+DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USERNAME")
 
 # Configuration for casablanca (really casablanca-mgmt1)
 OPT_name_casablanca=casablanca-mgmt1.us.cray.com
@@ -299,7 +307,7 @@ fi
 
 if [[ -n $DEVLAUNCHER ]]; then
     if [ -z $DEV_LAUNCHER_PORT ]; then
-        echo "$0: User $USER does not have a configured DEV_LAUNCHER_PORT, update the script."
+        echo "$0: User $USERNAME does not have a configured DEV_LAUNCHER_PORT, update the script."
         exit 1
     fi
     OPT_LAUNCHERPORT=$DEV_LAUNCHER_PORT
