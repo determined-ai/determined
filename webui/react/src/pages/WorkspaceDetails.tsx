@@ -10,6 +10,7 @@ import InteractiveTable, { ColumnDef,
   onRightClickableCell } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
@@ -355,8 +356,8 @@ const WorkspaceDetails: React.FC = () => {
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find Workspace ${workspaceId}` :
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message =
       `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {

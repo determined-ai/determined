@@ -7,6 +7,7 @@ import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
@@ -236,8 +237,8 @@ const ModelVersionDetails: React.FC = () => {
   } else if (isNaN(parseInt(versionId))) {
     return <Message title={`Invalid Version ID ${versionId}`} />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find model ${modelId} version ${versionId}` :
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message =
       `Unable to fetch model ${modelId} version ${versionId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion) {

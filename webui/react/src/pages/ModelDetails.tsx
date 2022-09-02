@@ -7,6 +7,7 @@ import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'component
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
@@ -352,8 +353,8 @@ const ModelDetails: React.FC = () => {
   if (!modelId) {
     return <Message title="Model name is empty" />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find model ${modelId}` :
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message =
       `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!model) {
