@@ -958,9 +958,6 @@ func (a *apiServer) CreateExperiment(
 			CanForkFromExperiment(*user, modelExp); err != nil {
 			return nil, status.Errorf(codes.PermissionDenied, err.Error())
 		}
-		if parentExp.Archived {
-			return nil, status.Errorf(codes.Internal, "forking an archived experiment")
-		}
 		if parentExp.ParentArchived {
 			return nil, status.Errorf(codes.Internal,
 				"forking an experiment in an archived workspace/project")
