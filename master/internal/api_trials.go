@@ -555,7 +555,7 @@ func (a *apiServer) GetExperimentTrials(
 	}
 
 	resp = &apiv1.GetExperimentTrialsResponse{}
-	if err := a.m.db.QueryProtof(
+	if err = a.m.db.QueryProtof(
 		"proto_get_trial_ids_for_experiment",
 		[]interface{}{orderExpr},
 		resp,
@@ -579,7 +579,7 @@ func (a *apiServer) GetExperimentTrials(
 		trialIDs = append(trialIDs, trial.Id)
 	}
 
-	switch err := a.m.db.QueryProtof(
+	switch err = a.m.db.QueryProtof(
 		"proto_get_trials_plus",
 		[]any{strings.Join(valuesExpr, ", ")},
 		&resp.Trials,
