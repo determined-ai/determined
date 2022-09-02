@@ -1,14 +1,17 @@
 import React, { useEffect } from 'react';
 
 import Page from 'components/Page';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import Icon from 'shared/components/Icon/Icon';
 
 import css from './NoPermissions.module.scss';
 
 const NoPermissions: React.FC = () => {
 
-  const systemAdmin = 'Placeholder' // TODO: Implement querying for the system admin
+  const { users } = useStore();
+
+  const systemAdmin = users.find((user) => user.isAdmin);
+  // TODO: Implement querying for the system admin
 
   const storeDispatch = useStoreDispatch();
   useEffect(() => storeDispatch({ type: StoreAction.HideUIChrome }), [ storeDispatch ]);
@@ -23,7 +26,7 @@ const NoPermissions: React.FC = () => {
         <h6>You don&lsquo;t have access to a workspace</h6>
         <p className={css.message}>
           In order to access and use Determined you need to be added to a workspace.
-          Contact {systemAdmin} to request to be added to a workspace.
+          Contact {systemAdmin?.username } to request to be added to a workspace.
         </p>
       </div>
     </Page>

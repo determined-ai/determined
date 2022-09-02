@@ -56,6 +56,7 @@ import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
   CommandTask,
+  DetailedUser,
   ExperimentItem,
   Note,
   Project,
@@ -117,14 +118,15 @@ const ProjectDetails: React.FC = () => {
 
   const id = parseInt(projectId);
 
-  const userHasPermissions = () => false; // TODO: Determine if user has permissions.
-
   const {
     settings,
     updateSettings,
     resetSettings,
     activeSettings,
   } = useSettings<ProjectDetailsSettings>(settingsConfig);
+
+  const userHasPermissions = (user: DetailedUser | undefined) =>
+    user ? false : false; // TODO: Determine if user has permissions.
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -329,6 +331,8 @@ const ProjectDetails: React.FC = () => {
         onChange={experimentTags.handleTagListChange(record.id)}
       />
     );
+
+    if (!userHasPermissions(user)) return (<NoPermissions />);
 
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return (
@@ -951,7 +955,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
-  return (userHasPermissions() ? (
+  return (
     <Page
       bodyNoPadding
       containerRef={pageRef}
@@ -968,7 +972,6 @@ const ProjectDetails: React.FC = () => {
       {modalExperimentMoveContextHolder}
       {modalProjectNodeDeleteContextHolder}
     </Page>
-  ) : <NoPermissions />
   );
 };
 
