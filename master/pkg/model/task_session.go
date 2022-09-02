@@ -4,4 +4,5 @@ package model
 type AllocationSession struct {
 	ID           SessionID    `db:"id" json:"id"`
 	AllocationID AllocationID `db:"allocation_id" json:"allocation_id"`
+	OwnerID      UserID       `db:"user_id" json:"user_id"`
 }
