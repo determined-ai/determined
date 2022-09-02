@@ -9,11 +9,12 @@ import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHe
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
 import {
-  getExperimentDetails, getExpValidationHistory, isNotFound,
+  getExperimentDetails, getExpValidationHistory,
 } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
+import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';

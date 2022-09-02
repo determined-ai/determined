@@ -33,6 +33,7 @@ export enum ErrorType {
   Input = 'input', // the issue is caused by unexpected/invalid user input.
   ApiBadResponse = 'apiBadResponse', // unexpected response structure.
   Api = 'api', // third-party api
+  Assert = 'assert', // assertion failure.
 }
 
 const defaultErrOptions: DetErrorOptions = {
@@ -69,13 +70,15 @@ export class DetError extends Error implements DetErrorOptions {
   id?: string;
   isUserTriggered: boolean;
   level: ErrorLevel;
-  logger: LoggerInterface;
+  logger: LoggerInterface; // CHECK: do we want this attached to DetError?
   payload?: unknown;
   publicMessage?: string;
   publicSubject?: string;
   silent: boolean;
   type: ErrorType;
   isHandled: boolean;
+  /** the wrapped error if one was provided. */
+  sourceErr: unknown;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
     const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
@@ -96,6 +99,7 @@ export class DetError extends Error implements DetErrorOptions {
 
     this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
     this.isHandled = false;
+    this.sourceErr = e;
   }
 
   loadOptions(options: DetErrorOptions): void {

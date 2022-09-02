@@ -5,7 +5,8 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { isAuthFailure } from 'shared/utils/service';
 import handleError from 'utils/error';
 
 const SignOut: React.FC = () => {
@@ -21,7 +22,7 @@ const SignOut: React.FC = () => {
       try {
         await logout({});
       } catch (e) {
-        if (!(e instanceof DetError && e.type === ErrorType.Auth)) {
+        if (!isAuthFailure(e)) {
           handleError(e, {
             isUserTriggered: false,
             level: ErrorLevel.Warn,
