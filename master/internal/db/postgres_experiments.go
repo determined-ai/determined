@@ -928,6 +928,27 @@ WHERE t.id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
+// ExperimentWithoutConfigByAllocationID looks up an experiment by a given allocationID.
+// Many allocationIDs are not associated with an experiment and will return not found
+// in that case. It loads the experiment without its configuration, for callers that do not need
+// it, or can't handle backwards incompatible changes.
+func (db *PgDB) ExperimentWithoutConfigByAllocationID(id int) (*model.Experiment, error) {
+	var experiment model.Experiment
+
+	if err := db.query(`
+SELECT e.id, e.state, e.model_definition, e.start_time, e.end_time, e.archived,
+       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
+			 e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON e.owner_id = u.id
+WHERE t.id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
 // ExperimentIDByTrialID looks up an experiment ID by a trial ID.
 func (db *PgDB) ExperimentIDByTrialID(trialID int) (int, error) {
 	var experimentID int

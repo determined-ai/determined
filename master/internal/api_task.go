@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
+// TODO auth
 func (a *apiServer) GetTask(
 	_ context.Context, req *apiv1.GetTaskRequest,
 ) (resp *apiv1.GetTaskResponse, err error) {

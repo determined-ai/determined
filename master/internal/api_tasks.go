@@ -35,6 +35,11 @@ var (
 	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
 
+func (a *apiServer) canEditAllocation(ctx context.Context, allocationID int) error {
+	return nil
+}
+
+// TODO auth (easy)
 func (a *apiServer) AllocationReady(
 	ctx context.Context, req *apiv1.AllocationReadyRequest,
 ) (*apiv1.AllocationReadyResponse, error) {
@@ -42,6 +47,7 @@ func (a *apiServer) AllocationReady(
 		a.m.system,
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
+	fmt.Println(resp, err)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +116,7 @@ func (a *apiServer) AllocationAllGather(
 	}
 }
 
+// TODO auth (easy)
 func (a *apiServer) PostAllocationProxyAddress(
 	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
@@ -133,6 +140,8 @@ func (a *apiServer) PostAllocationProxyAddress(
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
 }
 
+// TODO auth
+// TODO taskid
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {
@@ -168,6 +177,7 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+// TODO(nick) AuthZ with commands.
 func (a *apiServer) GetActiveTasksCount(
 	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
@@ -327,6 +337,8 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 	return filters, nil
 }
 
+// TODO auth
+// TODO TaskId
 func (a *apiServer) TaskLogsFields(
 	req *apiv1.TaskLogsFieldsRequest, resp apiv1.Determined_TaskLogsFieldsServer,
 ) error {
