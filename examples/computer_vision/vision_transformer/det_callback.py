@@ -10,6 +10,7 @@ from transformers import (
 import os
 import determined as det
 import logging
+import torch
 
 import weakref
 import importlib.util
@@ -41,8 +42,7 @@ class DetCallback(TrainerCallback):
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
 
-    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
-               **kwargs):
+    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, logs=None, **kwargs):
         if state.is_world_process_zero:
             metrics, metric_type = self.get_metrics(logs)
             if metric_type == TRAIN:
@@ -116,7 +116,13 @@ class DetCallback(TrainerCallback):
             else:
                 resume_step = metadata['steps_completed']
             checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
-            self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
+
+            if self.core_context.distributed.local_rank == 0:
+                self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
+                torch.distributed.barrier()
+            else:
+                # wait until local rank 0 finishes downloading data
+                torch.distributed.barrier()
 
             args.resume_from_checkpoint = checkpoint_path
 
