@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import queryString from 'query-string';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -353,10 +354,14 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     }
 
   }, [ configMap, storage, user ]);
-
+  const { refetch } = useQuery(
+    [ 'fetchUserSetting' ],
+    fetchUserSetting,
+    { enabled: false, staleTime: 10000 },
+  );
   useEffect(() => {
-    fetchUserSetting();
-  }, [ fetchUserSetting ]);
+    refetch();
+  }, [ refetch ]);
 
   useEffect(() => {
     if (location.search === prevSearch) return;

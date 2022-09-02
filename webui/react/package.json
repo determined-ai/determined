@@ -22,6 +22,8 @@
     "storybook:build": "NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
+    "@tanstack/react-query": "^4.2.3",
+    "@tanstack/react-query-devtools": "^4.2.3",
     "ansi-to-html": "^0.7.1",
     "antd": "^4.21.4",
     "dayjs": "^1.10.7",
