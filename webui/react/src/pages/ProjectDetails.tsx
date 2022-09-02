@@ -71,11 +71,11 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
+import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
-
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
 interface Params {
@@ -116,6 +116,8 @@ const ProjectDetails: React.FC = () => {
   }, [ updateDestinationSettings, project?.workspaceId ]);
 
   const id = parseInt(projectId);
+
+  const userHasPermissions = () => false; // TODO: Determine if user has permissions.
 
   const {
     settings,
@@ -949,7 +951,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
-  return (
+  return (userHasPermissions() ? (
     <Page
       bodyNoPadding
       containerRef={pageRef}
@@ -966,6 +968,7 @@ const ProjectDetails: React.FC = () => {
       {modalExperimentMoveContextHolder}
       {modalProjectNodeDeleteContextHolder}
     </Page>
+  ) : <NoPermissions />
   );
 };
 
