@@ -8,6 +8,9 @@ roles AS (
   SELECT
     1 AS id,
     'Cluster Admin' AS name
+  UNION SELECT
+    2 as id,
+    'Foo Editor' AS name
 )
 SELECT roles.id, roles.name,
   to_json(array_agg(cluster_permissions)) AS permissions

@@ -18,7 +18,7 @@ func (a *apiServer) GetPermissionsSummary(
 	// load permissions for cluster and other scopes
 	roles := []*apiv1.Role{}
 	err = a.m.db.QueryProto(
-		"get_cluster_permissions",
+		"get_permission_roles",
 		&roles,
 		int32(curUser.ID),
 	)
@@ -29,7 +29,7 @@ func (a *apiServer) GetPermissionsSummary(
 	// load list of workspace IDs on assignments
 	assignments := []*apiv1.AssignmentGroup{}
 	err = a.m.db.QueryProto(
-		"get_assigned_permissions",
+		"get_permission_assignments",
 		&assignments,
 		int32(curUser.ID),
 	)
