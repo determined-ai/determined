@@ -510,8 +510,8 @@ func (a *apiServer) KillTrial(
 
 func (a *apiServer) GetExperimentTrials(
 	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
-) (*apiv1.GetExperimentTrialsResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+) (resp *apiv1.GetExperimentTrialsResponse, err error) {
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -554,7 +554,7 @@ func (a *apiServer) GetExperimentTrials(
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 
-	resp := &apiv1.GetExperimentTrialsResponse{}
+	resp = &apiv1.GetExperimentTrialsResponse{}
 	if err := a.m.db.QueryProtof(
 		"proto_get_trial_ids_for_experiment",
 		[]interface{}{orderExpr},
@@ -579,7 +579,7 @@ func (a *apiServer) GetExperimentTrials(
 		trialIDs = append(trialIDs, trial.Id)
 	}
 
-	switch err = a.m.db.QueryProtof(
+	switch err := a.m.db.QueryProtof(
 		"proto_get_trials_plus",
 		[]any{strings.Join(valuesExpr, ", ")},
 		&resp.Trials,
