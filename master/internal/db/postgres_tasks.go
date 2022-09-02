@@ -161,11 +161,11 @@ func (db *PgDB) StartAllocationSession(
 		AllocationID: allocationID,
 	}
 	if owner != nil {
-		taskSession.OwnerID = owner.ID
+		taskSession.OwnerID = &owner.ID
 	}
 
 	query := `
-INSERT INTO allocation_sessions (allocation_id, user_id) VALUES 
+INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES 
 	(:allocation_id, :owner_id) RETURNING id`
 	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
 		return "", err

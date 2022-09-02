@@ -87,6 +87,11 @@ func (a *apiServer) Logout(
 	if err != nil {
 		return nil, err
 	}
+	if userSession == nil {
+		return nil, status.Error(codes.InvalidArgument,
+			"cannot manually logout of an allocation session")
+	}
+
 	err = a.m.db.DeleteUserSessionByID(userSession.ID)
 	return &apiv1.LogoutResponse{}, err
 }
