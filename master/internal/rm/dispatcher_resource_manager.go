@@ -1118,6 +1118,9 @@ func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
 
 // resourceQueryPostActions performs actions to clean up after any dispatch
 // completion (either a Slurm resource query, or launched manifest allocation).
+// In the case of retrieving the details of HPC Resources, the job is synchronous
+// and is not being monitored, removeDispatchEnvironment is called to remove the
+// slurm-resources-info file.
 // We use dispatcher REST API calls to instruct the dispatcher to clean up.
 // On success, the Dispatch (if present) is removed from the DB (if present).
 // When querying Slurm resource information, the DispatchID is not registered
@@ -1128,7 +1131,9 @@ func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
 func (m *dispatcherResourceManager) resourceQueryPostActions(ctx *actor.Context,
 	dispatchID string, owner string,
 ) {
-	m.terminateDispatcherJob(ctx, dispatchID, owner)
+	if m.terminateDispatcherJob(ctx, dispatchID, owner) {
+		m.removeDispatchEnvironment(ctx, owner, dispatchID)
+	}
 }
 
 // terminateDispatcherJob terminates the dispatcher job with the given ID.
