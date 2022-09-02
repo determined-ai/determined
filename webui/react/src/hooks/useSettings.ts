@@ -318,50 +318,46 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     await updateSettings(newSettings);
   }, [ config.settings, updateSettings ]);
 
-  const fetchUserSetting = useCallback(async () => {
-    if (!user) return;
-    try {
-      const userSettingResponse = await getUserSetting({ userId: user.id });
-      userSettingResponse.settings.forEach((setting) => {
-        const {
-          key,
-          value,
-          storagePath,
-        } = setting;
-        const jsonValue = JSON.parse(value || '');
-        const config = configMap[key];
-        if (!config) return;
-        const isValid = validateSetting(config, jsonValue);
-        const isDefault = isEqual(config.defaultValue, jsonValue);
+  useQuery(
+    [ 'fetchUserSetting', user?.id ?? 0 ],
+    async () => {
+      if (!user) return;
+      try {
+        const data = await getUserSetting({ userId: user.id });
+        // const userSettingResponse = await getUserSetting({ userId: user.id });
+        data.settings.forEach((setting) => {
+          const {
+            key,
+            value,
+            storagePath,
+          } = setting;
+          const jsonValue = JSON.parse(value || '');
+          const config = configMap[key];
+          if (!config) return;
+          const isValid = validateSetting(config, jsonValue);
+          const isDefault = isEqual(config.defaultValue, jsonValue);
 
-        // Store or clear setting if `storageKey` is available.
-        if (config.storageKey && isValid) {
-          if (jsonValue === undefined || isDefault) {
-            storage.remove(config.storageKey, storagePath);
-          } else {
-            storage.set(config.storageKey, jsonValue, storagePath);
+          // Store or clear setting if `storageKey` is available.
+          if (config.storageKey && isValid) {
+            if (jsonValue === undefined || isDefault) {
+              storage.remove(config.storageKey, storagePath);
+            } else {
+              storage.set(config.storageKey, jsonValue, storagePath);
+            }
           }
-        }
-      });
-    } catch (e) {
-      handleError(e, {
-        isUserTriggered: false,
-        publicMessage: 'Unable to fetch user settings.',
-        publicSubject: 'GET user settings failed',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-
-  }, [ configMap, storage, user ]);
-  const { refetch } = useQuery(
-    [ 'fetchUserSetting' ],
-    fetchUserSetting,
-    { enabled: false, staleTime: 10000 },
+        });
+      } catch (e) {
+        handleError(e, {
+          isUserTriggered: false,
+          publicMessage: 'Unable to fetch user settings.',
+          publicSubject: 'GET user settings failed',
+          silent: true,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    { cacheTime: 10000, enabled: true, staleTime: 10000 },
   );
-  useEffect(() => {
-    refetch();
-  }, [ refetch ]);
 
   useEffect(() => {
     if (location.search === prevSearch) return;
