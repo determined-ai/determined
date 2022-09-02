@@ -2495,7 +2495,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p3.8xlarge"]
+              compute-agent-instance-type: ["g4dn.12xlarge"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
@@ -2840,7 +2840,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
-              compute-agent-instance-type: ["p3.8xlarge"]
+              compute-agent-instance-type: ["g4dn.12xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
