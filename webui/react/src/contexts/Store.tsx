@@ -266,7 +266,6 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
 };
 
 const reducer = (state: State, action: Action): State => {
-  logger.trace('reducer', action.type);
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
