@@ -155,7 +155,7 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
-const initInfo = {
+const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
