@@ -383,6 +383,7 @@ const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   const [ state, dispatch ] = useReducer((state: State, action: Action) => {
     const newState = reducer(state, action);
     if (isEqual(state, newState)) return state; // CHECK: performance concerns?
+    logger.debug('store state updated', action.type);
     return newState;
   }, initState);
   return (
