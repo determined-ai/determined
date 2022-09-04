@@ -62,9 +62,9 @@ describe('InteractiveTask', () => {
     expect(await screen.findByText('View Logs')).toBeInTheDocument();
   });
 
-  it('should render page with default title', async () => {
+  it('should render page with correct title', async () => {
     await setup();
-    expect(document.title).toEqual(DEFAULT_TASK_PAGE_TITLE);
+    expect(document.title).toEqual(TASK_NAME);
   });
 
 });
