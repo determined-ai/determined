@@ -26,7 +26,7 @@ enum PageView {
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 
-const getTitleState = (commandState?: CommandState): string => {
+const getTitleState = (commandState?: CommandState, taskName?: string): string => {
   if (!commandState){
     return DEFAULT_PAGE_TITLE;
   }
@@ -34,7 +34,7 @@ const getTitleState = (commandState?: CommandState): string => {
     [CommandState.Pending]: 'Pending',
     [CommandState.Assigned]: 'Assigned',
     [CommandState.Pulling]: 'Pulling',
-    [CommandState.Running]: DEFAULT_PAGE_TITLE,
+    [CommandState.Running]: taskName || DEFAULT_PAGE_TITLE,
     [CommandState.Terminating]: 'Terminating',
     [CommandState.Terminated]: 'Terminated',
     [CommandState.Starting]: 'Starting',
@@ -85,7 +85,7 @@ export const InteractiveTask: React.FC = () => {
     return () => clearInterval(queryTask);
   }, [ taskId ]);
 
-  const title = ui.isPageHidden ? getTitleState(taskState) : DEFAULT_PAGE_TITLE;
+  const title = ui.isPageHidden ? getTitleState(taskState, taskName) : taskName;
 
   return (
     <>
