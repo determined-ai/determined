@@ -72,6 +72,17 @@ jest.mock('components/MonacoEditor', () => ({
   default: () => MonacoEditorMock,
 }));
 
+jest.mock('hooks/useSettings', () => {
+  const actualModule = jest.requireActual('hooks/useSettings');
+  const useSettings = jest.fn(() => ({ settings: { fileName: '' }, updateSettings: jest.fn() }));
+
+  return {
+    __esModule: true,
+    ...actualModule,
+    default: useSettings,
+  };
+});
+
 const experimentIdMock = 123;
 const user = userEvent.setup();
 
