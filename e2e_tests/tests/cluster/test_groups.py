@@ -39,7 +39,12 @@ def test_group_creation(add_users: List[str]) -> None:
 
     # Can view through list.
     group_list = det_cmd_json(["user-group", "list", "--json"])
-    assert sum([group["name"] == group_name for group in group_list["groups"]]) == 1
+    assert sum([group["group"]["name"] == group_name for group in group_list["groups"]]) == 1
+
+    # Can view through list with userID filter.
+    for add_user in add_users:
+        group_list = det_cmd_json(["user-group", "list", "--json", "--user", add_user])
+        assert sum([group["group"]["name"] == group_name for group in group_list["groups"]]) == 1
 
     # Can describe properly.
     group_desc = det_cmd_json(["user-group", "describe", group_name, "--json"])
@@ -48,7 +53,7 @@ def test_group_creation(add_users: List[str]) -> None:
         assert sum([u["username"] == add_user for u in group_desc["users"]]) == 1
 
     # Can delete.
-    assert det_cmd(["user-group", "delete", group_name]).returncode == 0
+    assert det_cmd(["user-group", "delete", group_name, "--yes"]).returncode == 0
     det_cmd_expect_error(["user-group", "describe", group_name], "not find")
 
 
@@ -108,7 +113,7 @@ def test_group_errors() -> None:
     assert det_cmd(["user-group", "create", group_name]).returncode == 0
 
     # Creating group with same name.
-    det_cmd_expect_error(["user-group", "create", group_name], "Duplicate")
+    det_cmd_expect_error(["user-group", "create", group_name], "already exists")
 
     # Adding non existent users to groups.
     fake_user = get_random_string()
