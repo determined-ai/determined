@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -35,19 +38,59 @@ var (
 	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
 
-func (a *apiServer) canEditAllocation(ctx context.Context, allocationID int) error {
+// TODO rename...
+func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
+	allocNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	alloc, err := a.m.db.AllocationByID(model.AllocationID(allocationID))
+	if errors.Is(err, db.ErrNotFound) {
+		return allocNotFound
+	} else if err != nil {
+		return err
+	}
+
+	t, err := a.m.db.TaskByID(alloc.TaskID)
+	if err != nil {
+		return err
+	}
+
+	switch t.TaskType {
+	case model.TaskTypeTrial:
+		exp, err := a.m.db.ExperimentWithoutConfigByTaskID(t.TaskID)
+		if err != nil {
+			return err
+		}
+
+		curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+		if err != nil {
+			return err
+		}
+		var ok bool
+		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+			return err
+		} else if !ok {
+			return allocNotFound
+		}
+		if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
+			return status.Error(codes.PermissionDenied, err.Error())
+		}
+	default:
+		return nil // TODO(nick) add AuthZ for other task types.
+	}
+
 	return nil
 }
 
-// TODO auth (easy)
 func (a *apiServer) AllocationReady(
 	ctx context.Context, req *apiv1.AllocationReadyRequest,
 ) (*apiv1.AllocationReadyResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	resp, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
-	fmt.Println(resp, err)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +123,9 @@ func (a *apiServer) AllocationAllGather(
 ) (*apiv1.AllocationAllGatherResponse, error) {
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
 	}
 
 	handler, err := a.m.rm.GetAllocationHandler(
@@ -116,12 +162,14 @@ func (a *apiServer) AllocationAllGather(
 	}
 }
 
-// TODO auth (easy)
 func (a *apiServer) PostAllocationProxyAddress(
 	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
 	}
 
 	handler, err := a.m.rm.GetAllocationHandler(
@@ -142,6 +190,7 @@ func (a *apiServer) PostAllocationProxyAddress(
 
 // TODO auth
 // TODO taskid
+// TODO auth task
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {
