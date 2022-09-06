@@ -52,10 +52,6 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/master",
 	"/api/v1/auth/login",
 	"/api/v1/auth/logout",
-	"/proxy/:service/.*",
-	"/api/v1/allocations/.*",
-	"/api/v1/trials/.*",
-	"/api/v1/checkpoints",
 	"/agents\\?id=.*",
 }
 
@@ -130,7 +126,6 @@ func (s *Service) extractToken(r *http.Request) (string, error) {
 		// We attempt to parse out the token, which should be
 		// transmitted as a Bearer authentication token.
 		if !strings.HasPrefix(authRaw, "Bearer ") {
-			//fmt.Println("RETURNING UNAUTHORIZED")
 			return "", echo.ErrUnauthorized
 		}
 		return strings.TrimPrefix(authRaw, "Bearer "), nil
