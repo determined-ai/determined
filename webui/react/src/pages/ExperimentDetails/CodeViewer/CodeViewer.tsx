@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
 import useResize from 'hooks/useResize';
+import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
@@ -90,6 +91,21 @@ const CodeViewer: React.FC<Props> = ({
   runtimeConfig: _runtimeConfig,
 }) => {
   const resize = useResize();
+  const configForExperiment = (experimentId: number): SettingsConfig => ({
+    applicableRoutespace: '/experiments',
+    settings: [
+      {
+        defaultValue: _submittedConfig ? 'Submitted Configuation' : 'Runtime Configuration',
+        key: 'fileName',
+        storageKey: 'fileName',
+        type: { baseType: BaseType.String },
+      },
+    ],
+    storagePath: `selected-file-${experimentId}`,
+  });
+
+  const { settings, updateSettings } =
+    useSettings<{ fileName: string }>(configForExperiment(experimentId));
 
   const submittedConfig = useMemo(() => {
     if (!_submittedConfig) return;
@@ -253,6 +269,8 @@ const CodeViewer: React.FC<Props> = ({
       return;
     }
 
+    updateSettings({ fileName: String(info.node.title) });
+
     if (isConfig(selectedKey)) {
       handleSelectConfig(selectedKey);
       return;
@@ -280,6 +298,7 @@ const CodeViewer: React.FC<Props> = ({
     handleSelectConfig,
     treeData,
     switchTreeViewToEditor,
+    updateSettings,
   ]);
 
   const getSyntaxHighlight = useCallback(() => {
@@ -302,8 +321,8 @@ const CodeViewer: React.FC<Props> = ({
 
       setDownloadInfo({
         fileName: isRuntimeConf
-          ? 'runtimeConfiguration.yaml'
-          : 'generatedConfiguration.yaml',
+          ? `${experimentId}_submitted_configuration.yaml`
+          : `${experimentId}_runtime_configuration.yaml`,
         url,
       });
     } else {
@@ -353,6 +372,30 @@ const CodeViewer: React.FC<Props> = ({
     ) configDownloadButton.current.click();
   }, [ downloadInfo ]);
 
+  useEffect(
+    () => {
+      if (settings.fileName && (activeFile?.title !== settings.fileName)) {
+        const fileNode = treeData.find((node) => node.title === settings.fileName);
+
+        if (!fileNode) return;
+
+        if (settings.fileName.includes('Configuration')) {
+          handleSelectConfig(fileNode.key as Config);
+        } else {
+          fetchFile(fileNode.key, settings.fileName);
+        }
+      }
+    },
+    [
+      treeData,
+      settings.fileName,
+      activeFile,
+      handleDownloadClick,
+      fetchFile,
+      handleSelectConfig,
+    ],
+  );
+
   return (
     <section className={css.base}>
       <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="fileTree">
@@ -361,7 +404,10 @@ const CodeViewer: React.FC<Props> = ({
             className={css.fileTree}
             data-testid="fileTree"
             defaultExpandAll
-            defaultSelectedKeys={viewMode ? [ Config.submitted ] : undefined}
+            defaultSelectedKeys={viewMode
+              ? [ settings?.fileName ? settings.fileName : Config.submitted ]
+              : undefined
+            }
             treeData={treeData}
             onSelect={handleSelectFile}
           />
