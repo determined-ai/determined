@@ -44,8 +44,8 @@ def create_group(args: Namespace) -> None:
 def list_groups(args: Namespace) -> None:
     sess = setup_session(args)
     user_id = None
-    if args.user:
-        user_id = usernames_to_user_ids(sess, [args.user])[0]
+    if args.groups_user_belongs_to:
+        user_id = usernames_to_user_ids(sess, [args.groups_user_belongs_to])[0]
 
     body = bindings.v1GetGroupsRequest(offset=args.offset, limit=args.limit, userId=user_id)
     resp = bindings.post_GetGroups(sess, body=body)
@@ -212,7 +212,11 @@ args_description = [
                 "list user groups",
                 [
                     *default_pagination_args,
-                    Arg("--user", help="list groups that the username is in"),
+                    Arg(
+                        "--groups-user-belongs-to",
+                        default=None,
+                        help="list groups that the username is in",
+                    ),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,

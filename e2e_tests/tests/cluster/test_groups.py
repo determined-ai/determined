@@ -43,7 +43,9 @@ def test_group_creation(add_users: List[str]) -> None:
 
     # Can view through list with userID filter.
     for add_user in add_users:
-        group_list = det_cmd_json(["user-group", "list", "--json", "--user", add_user])
+        group_list = det_cmd_json(
+            ["user-group", "list", "--json", "--groups-user-belongs-to", add_user]
+        )
         assert sum([group["group"]["name"] == group_name for group in group_list["groups"]]) == 1
 
     # Can describe properly.
