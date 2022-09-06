@@ -50,7 +50,7 @@ from determined.common.util import (
     safe_load_yaml_with_exceptions,
 )
 
-from .errors import EnterpriseOnlyError
+from .errors import EnterpriseOnlyError, FeatureFlagDisabled
 
 
 @authentication.required
@@ -272,6 +272,8 @@ def main(
             )
         except EnterpriseOnlyError as e:
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
+        except FeatureFlagDisabled as e:
+            die(f"Master does not support this operation: {e}")
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:

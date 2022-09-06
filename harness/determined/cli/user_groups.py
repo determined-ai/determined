@@ -3,8 +3,7 @@ from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
 
-from determined.cli.experiment import pagination_args
-from determined.cli.session import setup_session
+from determined.cli import setup_session, default_pagination_args, require_feature_flag
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
@@ -22,12 +21,16 @@ v1GroupHeaders = namedtuple(
     ["groupId", "name"],
 )
 
+rbac_flag_disabled_message = ("User groups commands require the Determined Enterprise Edition " +
+                              "and the Master Configuration option security.rbac.enabled.")
+
 
 @authentication.required
+@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def create_group(args: Namespace) -> None:
     session = setup_session(args)
     add_users = usernames_to_user_ids(session, args.add_user)
-    body = bindings.v1CreateGroupRequest(add_users, args.group_name)
+    body = bindings.v1CreateGroupRequest(name=args.group_name, addUsers=add_users)
     resp = bindings.post_CreateGroup(session, body=body)
     group = resp.group
 
@@ -38,8 +41,9 @@ def create_group(args: Namespace) -> None:
 
 @authentication.required
 def list_groups(args: Namespace) -> None:
-    body = bindings.v1GroupSearchRequest(offset=args.offset, limit=args.limit)
+    body = bindings.v1GetGroupsRequest(offset=args.offset, limit=args.limit)
     resp = bindings.post_GetGroups(setup_session(args), body=body)
+    # TODO userId
     if args.json:
         print(json.dumps(resp.to_json(), indent=2))
     else:
@@ -183,7 +187,7 @@ args_description = [
                 list_groups,
                 "list user groups",
                 [
-                    *pagination_args,
+                    *default_pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,

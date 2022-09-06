@@ -240,6 +240,7 @@ type SecurityConfig struct {
 	TLS         TLSConfig            `json:"tls"`
 	SSH         SSHConfig            `json:"ssh"`
 	AuthZ       AuthZConfig          `json:"authz"`
+	RBAC        RBACConfig           `json:"rbac"`
 }
 
 // SSHConfig is the configuration setting for SSH.
@@ -288,6 +289,11 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 	}
 	cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
 	return &cert, err
+}
+
+// RBACConfig is the configuration for RBAC.
+type RBACConfig struct {
+	Enabled bool `json:"enabled"`
 }
 
 // InternalConfig is the configuration for internal knobs.
