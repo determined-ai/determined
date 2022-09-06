@@ -449,5 +449,3 @@ export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Pro
       return await killTensorBoard({ commandId: task.id });
   }
 };
-export { isNotFound } from 'shared/utils/service';
-export { isAuthFailure } from 'shared/utils/service';

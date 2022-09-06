@@ -171,6 +171,54 @@ class TestPyTorchTrial:
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.gpu
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_scaler_checkpointing_and_restoring(self, trial_class, tmp_path: pathlib.Path) -> None:
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
+
+        def make_trial_controller_fn(
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[str] = None,
+            steps_completed: int = 0,
+        ) -> det.TrialController:
+            updated_hparams = dict(self.hparams)
+            updated_hparams["global_batch_size"] = 1
+
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=trial_class,
+                hparams=updated_hparams,
+                workloads=workloads,
+                trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
+                steps_completed=steps_completed,
+                expose_gpus=True,
+            )
+
+        tm_A, tm_B = utils.checkpointing_and_restoring_test(
+            make_trial_controller_fn,
+            tmp_path,
+            steps=(2, 2),
+            scheduling_unit=1,
+        )
+        amp_metrics_test(trial_class, tm_A)
+        amp_metrics_test(trial_class, tm_B)
+
     def test_restore_invalid_checkpoint(self, tmp_path: pathlib.Path) -> None:
         # Build, train, and save a checkpoint with the normal hyperparameters.
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -648,14 +696,24 @@ class TestPyTorchTrial:
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
 
+        training_metrics = {}
+
+        def make_amp_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
+            nonlocal training_metrics
+            training_metrics, _ = trainer.result()
+
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=hparams,
-            workloads=make_amp_workloads(trial_class),
+            workloads=make_amp_workloads(),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
         controller.run()
+
+        amp_metrics_test(trial_class, training_metrics)
 
 
 @pytest.mark.parametrize(
@@ -676,11 +734,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, torch.nn.Module), type(trial)
 
 
-def make_amp_workloads(trial_class) -> workload.Stream:
-    trainer = utils.TrainAndValidate()
-    yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
-    training_metrics, _ = trainer.result()
-
+def amp_metrics_test(trial_class, training_metrics):
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760

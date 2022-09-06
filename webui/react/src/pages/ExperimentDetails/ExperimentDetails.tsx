@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
@@ -9,11 +10,12 @@ import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHe
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
 import {
-  getExperimentDetails, getExpValidationHistory, isNotFound,
+  getExperimentDetails, getExpValidationHistory,
 } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
+import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
@@ -23,7 +25,6 @@ interface Params {
 }
 
 export const INVALID_ID_MESSAGE = 'Invalid Experiment ID';
-export const MISSING_MESSAGE = 'Unable to find Experiment ';
 export const ERROR_MESSAGE = 'Unable to fetch Experiment';
 
 const ExperimentDetails: React.FC = () => {
@@ -85,8 +86,8 @@ const ExperimentDetails: React.FC = () => {
   if (isNaN(id)) {
     return <Message title={`${INVALID_ID_MESSAGE} ${experimentId}`} />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `${MISSING_MESSAGE} ${experimentId}` :
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message =
       `${ERROR_MESSAGE} ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!experiment || isSingleTrial === undefined) {

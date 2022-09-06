@@ -105,6 +105,12 @@ export const isExperimentModifiable = (
   user?: DetailedUser,
 ): boolean => !experiment.archived && !experiment.parentArchived;
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export const isExperimentForkable = (
+  experiment: ProjectExperiment,
+  user?: DetailedUser,
+): boolean => !experiment.parentArchived;
+
 export const alwaysTrueExperimentChecker = (
   experiment: ProjectExperiment,
   user?: DetailedUser,
@@ -145,7 +151,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.HyperparameterSearch]: alwaysTrueExperimentChecker,
 
-  [ExperimentAction.Fork]: isExperimentModifiable,
+  [ExperimentAction.Fork]: isExperimentForkable,
 
   [ExperimentAction.Kill]: (experiment, user) =>
     killableRunStates.includes(experiment.state),

@@ -10,6 +10,7 @@ import InteractiveTable, { ColumnDef,
   onRightClickableCell } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
@@ -19,13 +20,13 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getWorkspace, getWorkspaceProjects, isNotFound, patchProject } from 'services/api';
+import { getWorkspace, getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum } from 'shared/utils/service';
+import { isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -355,8 +356,8 @@ const WorkspaceDetails: React.FC = () => {
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find Workspace ${workspaceId}` :
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message =
       `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
