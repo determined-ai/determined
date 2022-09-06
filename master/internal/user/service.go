@@ -39,7 +39,7 @@ const (
 	authAdmin = 2
 )
 
-// unauthenticatedPointsList contains URIs that are exempted from authentication.
+// unauthenticatedPointsList contains URIs and paths that are exempted from authentication.
 var unauthenticatedPointsList = []string{
 	"/",
 	"/det/",
