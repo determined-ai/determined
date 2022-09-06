@@ -531,6 +531,7 @@ const InteractiveTable: InteractiveTable = ({
                 columns={renderColumns as ColumnsType<any>}
                 components={components}
                 dataSource={dataSource}
+                scroll={scroll}
                 tableLayout="fixed"
                 onChange={handleChange}
                 onRow={(record, index) => ({

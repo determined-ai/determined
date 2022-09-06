@@ -4,6 +4,15 @@
     overflow-y: hidden;
   }
 }
+.row {
+  height: 60px;
+
+  > td {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+  }
+}
 .headerCell {
   cursor: move;
 
