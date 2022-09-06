@@ -41,18 +41,25 @@ export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean 
 };
 
 export const isNotFound = (u: Response | Error | DetError): boolean => {
+  const MAGIC_PHRASE = 'not found';
   if (u instanceof Response) return u.status === 404;
   let errorStrings: string[] = [];
   if (u instanceof Error) errorStrings = [ u.message ];
   if (u instanceof DetError) {
     errorStrings = [ u.message, u.publicMessage ?? '', u.publicSubject ?? '' ];
+    if (errorStrings.join(' ').toLocaleLowerCase().includes(MAGIC_PHRASE))
+      return true;
+    if (u.sourceErr !== undefined)
+      return isNotFound(u.sourceErr as Response | Error | DetError);
   }
-  return errorStrings.join(' ').toLocaleLowerCase().includes('not found');
+  return errorStrings.join(' ').toLocaleLowerCase().includes(MAGIC_PHRASE);
 };
 
 export const isAborted = (e: unknown): boolean => {
+  if (e instanceof DetError && e.sourceErr !== undefined) return isAborted(e);
   return e instanceof Error && e.name === 'AbortError';
 };
+
 /* Fits API errors into a DetError. */
 export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
   const isAuthError = isAuthFailure(e);
