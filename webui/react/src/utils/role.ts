@@ -41,6 +41,18 @@ export const canDeleteExperiment = (
     : permitted.has('delete_experiment');
 };
 
+export const canMoveExperiment = (
+  experiment: ProjectExperiment,
+  user: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
+  return !!experiment && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
+    : permitted.has('move_experiment');
+};
+
 // Model and ModelVersion actions
 export const canDeleteModel = (
   model: ModelItem,

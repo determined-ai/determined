@@ -26,7 +26,7 @@ import {
   UserAssignment,
   UserRole,
 } from 'types';
-import { canDeleteExperiment } from 'utils/role';
+import { canDeleteExperiment, canMoveExperiment } from 'utils/role';
 
 type ExperimentChecker = (
   experiment: ProjectExperiment, user?: DetailedUser, trial?: TrialDetails,
@@ -161,9 +161,9 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.Kill]: (experiment, user) =>
     killableRunStates.includes(experiment.state),
 
-  [ExperimentAction.Move]: (experiment, user) =>
+  [ExperimentAction.Move]: (experiment, user, _, userAssignments, userRoles) =>
     !!user &&
-    (user.isAdmin || user.id === experiment.userId) &&
+    canMoveExperiment(experiment, user, userAssignments, userRoles) &&
     !experiment?.parentArchived &&
     !experiment.archived,
 
@@ -200,18 +200,35 @@ export const getActionsForExperiment = (
   experiment: ProjectExperiment,
   targets: ExperimentAction[],
   user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
-  return targets.filter((action) => canUserActionExperiment(user, action, experiment));
+  return targets.filter((action) => canUserActionExperiment(
+    user,
+    action,
+    experiment,
+    undefined,
+    userAssignments,
+    userRoles,
+  ));
 };
 
 export const getActionsForExperimentsUnion = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
   user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
 ): ExperimentAction[] => {
   if (!experiments.length) return []; // redundant, for clarity
-  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets, user));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(
+    e,
+    targets,
+    user,
+    userAssignments,
+    userRoles,
+  ));
   return targets.filter((action) =>
     actionsForExperiments.some((experimentActions) => experimentActions.includes(action)));
 };
@@ -220,9 +237,17 @@ export const getActionsForExperimentsIntersection = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
   user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
 ): ExperimentAction[] => {
   if (!experiments.length) [];
-  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets, user));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(
+    e,
+    targets,
+    user,
+    userAssignments,
+    userRoles,
+  ));
   return targets.filter((action) =>
     actionsForExperiments.every((experimentActions) => experimentActions.includes(action)));
 };

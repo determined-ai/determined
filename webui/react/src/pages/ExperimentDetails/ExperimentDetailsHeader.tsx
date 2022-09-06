@@ -13,6 +13,7 @@ import {
   stateToLabel,
   terminalRunStates,
 } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
@@ -100,7 +101,16 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
 
-  const isMovable = canUserActionExperiment(curUser, Action.Move, experiment);
+  const { userAssignments, userRoles } = useStore();
+
+  const isMovable = canUserActionExperiment(
+    curUser,
+    Action.Move,
+    experiment,
+    undefined,
+    userAssignments,
+    userRoles,
+  );
 
   const {
     contextHolder: modalExperimentStopContextHolder,
@@ -324,7 +334,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
 
-    const availableActions = getActionsForExperiment(experiment, headerActions, curUser);
+    const availableActions = getActionsForExperiment(
+      experiment,
+      headerActions,
+      curUser,
+      userAssignments,
+      userRoles,
+    );
 
     return availableActions.map((action) => options[action]) as Option[];
   }, [ isRunningArchive,
@@ -338,7 +354,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningUnarchive,
     experiment,
     curUser,
-    fetchExperimentDetails ]);
+    fetchExperimentDetails,
+    userAssignments,
+    userRoles ]);
 
   const jobInfoLinkText = useMemo(() => {
     if (!experiment.jobSummary) return 'Not available';

@@ -97,7 +97,7 @@ const batchActions = [
 ];
 
 const ProjectDetails: React.FC = () => {
-  const { users, auth: { user } } = useStore();
+  const { users, auth: { user }, userAssignments, userRoles } = useStore();
   const { projectId } = useParams<Params>();
   const [ project, setProject ] = useState<Project>();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
@@ -139,8 +139,14 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, batchActions, user);
-  }, [ experimentMap, settings.row, user ]);
+    return getActionsForExperimentsUnion(
+      experiments,
+      batchActions,
+      user,
+      userAssignments,
+      userRoles,
+    );
+  }, [ experimentMap, settings.row, user, userAssignments, userRoles ]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -566,7 +572,14 @@ const ProjectDetails: React.FC = () => {
     if (action === Action.Move) {
       return openMoveModal({
         experimentIds: settings.row.filter((id) =>
-          canUserActionExperiment(user, Action.Move, experimentMap[id])),
+          canUserActionExperiment(
+            user,
+            Action.Move,
+            experimentMap[id],
+            undefined,
+            userAssignments,
+            userRoles,
+          )),
         sourceProjectId: project?.id,
         sourceWorkspaceId: project?.workspaceId,
       });
@@ -596,7 +609,8 @@ const ProjectDetails: React.FC = () => {
           return Promise.resolve();
       }
     }));
-  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, user ]);
+  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, user,
+    userAssignments, userRoles ]);
 
   const submitBatchAction = useCallback(async (action: Action) => {
     try {
