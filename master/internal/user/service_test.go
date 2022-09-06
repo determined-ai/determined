@@ -56,6 +56,4 @@ func TestNoAuth(t *testing.T) {
 	require.Equal(t, authStandard, service.getAuthLevel(c))
 	c.SetRequest(httptest.NewRequest(http.MethodPatch, "/agents?id=1", nil))
 	require.Equal(t, authNone, service.getAuthLevel(c))
-	c.SetRequest(httptest.NewRequest(http.MethodPatch, "/proxy/:service/serviceHash", nil))
-	require.Equal(t, authNone, service.getAuthLevel(c))
 }
