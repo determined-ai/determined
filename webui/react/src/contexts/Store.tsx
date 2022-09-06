@@ -291,6 +291,7 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
+      if (isEqual(action.value, state.auth.user)) return state;
       const users = [ ...state.users ];
       const userIdx = users.findIndex((user) => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
