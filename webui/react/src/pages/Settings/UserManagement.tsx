@@ -40,6 +40,9 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const onClickEditUser = () => {
     openEditUserModal();
   };
+  const onClickViewUser = () => {
+    openEditUserModal(true);
+  };
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
     message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
@@ -48,12 +51,14 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
   enum MenuKey {
     EDIT = 'edit',
-    STATE = 'state'
+    STATE = 'state',
+    VIEW = 'view'
   }
 
   const funcs = {
     [MenuKey.EDIT]: () => { onClickEditUser(); },
     [MenuKey.STATE]: () => { onToggleActive(); },
+    [MenuKey.VIEW]: () => { onClickViewUser(); },
   };
 
   const onItemClick: MenuProps['onClick'] = (e) => {
@@ -61,8 +66,9 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   };
 
   const menuItems: MenuProps['items'] = [
-    { key: 'edit', label: 'Edit' },
-    { key: 'state', label: `${user.isActive ? 'Deactive' : 'Active'}` },
+    { key: MenuKey.VIEW, label: 'View Profile' },
+    { key: MenuKey.EDIT, label: 'Edit' },
+    { key: MenuKey.STATE, label: `${user.isActive ? 'Deactive' : 'Active'}` },
   ];
 
   return (

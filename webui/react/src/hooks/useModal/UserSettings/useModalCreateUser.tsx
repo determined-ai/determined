@@ -5,7 +5,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useStore } from 'contexts/Store';
 import { patchUser, postUser, updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, DetailedUser } from 'types';
 import handleError from 'utils/error';
@@ -29,6 +29,7 @@ interface Props {
   form: FormInstance;
   groups: V1GroupSearchResult[];
   user?: DetailedUser;
+  viewOnly?: boolean;
 }
 
 interface FormValues {
@@ -38,7 +39,7 @@ interface FormValues {
   USER_NAME_NAME: string;
 }
 
-const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
+const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
@@ -67,14 +68,14 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
       <Form.Item
         label={DISPLAY_NAME_LABEL}
         name={DISPLAY_NAME_NAME}>
-        <Input maxLength={128} placeholder="Display Name" />
+        <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
       {branding === BrandingType.Determined ? (
         <Form.Item
           label={ADMIN_LABEL}
           name={ADMIN_NAME}
           valuePropName="checked">
-          <Switch />
+          <Switch disabled={viewOnly} />
         </Form.Item>
       ) : null }
       {!user && (
@@ -105,6 +106,10 @@ interface ModalProps {
   user?: DetailedUser;
 }
 
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (viewOnly?: boolean) => void;
+}
+
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
   const [ form ] = Form.useForm();
   const { info } = useStore();
@@ -114,7 +119,11 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     form.resetFields();
   }, [ form ]);
 
-  const handleOk = useCallback(async () => {
+  const handleOk = useCallback(async (viewOnly?: boolean) => {
+    if (viewOnly) {
+      handleCancel();
+      return;
+    }
     await form.validateFields();
 
     const formData = form.getFieldsValue();
@@ -145,7 +154,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     }
   }, [ form, onClose, user ]);
 
-  const modalOpen = useCallback(() => {
+  const modalOpen = useCallback((viewOnly?: boolean) => {
     openOrUpdate({
       closable: true,
       // passing a default brandind due to changes on the initial state
@@ -155,11 +164,12 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     form={form}
     groups={groups}
     user={user}
+    viewOnly={viewOnly}
   />,
       icon: null,
-      okText: user ? 'Update' : 'Create User',
+      okText: viewOnly ? 'Close' : (user ? 'Update' : 'Create User'),
       onCancel: handleCancel,
-      onOk: handleOk,
+      onOk: () => handleOk(viewOnly),
       title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
   }, [ form, handleCancel, handleOk, openOrUpdate, info, user, groups ]);
