@@ -12,6 +12,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelVersion } from 'types';
 import handleError from 'utils/error';
+import { canDeleteModelVersion } from 'utils/role';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason) => void;
@@ -22,12 +23,12 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const { auth: { user } } = useStore();
+  const { auth: { user }, userAssignments, userRoles } = useStore();
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
 
   const isDeletable = useMemo(() => {
-    return user?.isAdmin || user?.id === modelVersion?.userId;
-  }, [ user, modelVersion ]);
+    return canDeleteModelVersion(modelVersion, user, userAssignments, userRoles);
+  }, [ modelVersion, user, userAssignments, userRoles ]);
 
   const handleOnClose = useCallback(() => {
     setModelVersion(undefined);

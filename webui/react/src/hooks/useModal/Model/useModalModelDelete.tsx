@@ -12,6 +12,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
+import { canDeleteModel } from 'utils/role';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason) => void;
@@ -22,12 +23,11 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const { auth: { user } } = useStore();
+  const { auth: { user }, userAssignments, userRoles } = useStore();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
   const getModalProps = useCallback((model: ModelItem): ModalFuncProps => {
-    const isDeletable = user?.isAdmin || user?.id === model?.userId;
     const handleOk = async () => {
       try {
         await deleteModel({ modelName: model.name });
@@ -42,7 +42,8 @@ const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     };
-    return isDeletable ? {
+
+    return canDeleteModel(model, user?.id, user?.isAdmin, userAssignments, userRoles) ? {
       closable: true,
       content: `
         Are you sure you want to delete this model "${model?.name}"
@@ -55,7 +56,7 @@ const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
       onOk: handleOk,
       title: 'Confirm Delete',
     } : clone(CANNOT_DELETE_MODAL_PROPS);
-  }, [ user?.id, user?.isAdmin ]);
+  }, [ user?.id, user?.isAdmin, userAssignments, userRoles ]);
 
   const modalOpen = useCallback((model: ModelItem) => {
     openOrUpdate(getModalProps(model));

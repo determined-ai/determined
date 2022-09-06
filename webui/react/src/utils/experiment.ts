@@ -23,10 +23,15 @@ import {
   RunState,
   TrialDetails,
   TrialHyperparameters,
+  UserAssignment,
+  UserRole,
 } from 'types';
+import { canDeleteExperiment } from 'utils/role';
 
 type ExperimentChecker = (
-  experiment: ProjectExperiment, user?: DetailedUser, trial?: TrialDetails) => boolean
+  experiment: ProjectExperiment, user?: DetailedUser, trial?: TrialDetails,
+  userAssignments?: UserAssignment[], userRoles?: UserRole[],
+) => boolean
 
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
@@ -142,8 +147,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.ContinueTrial]: canExperimentContinueTrial,
 
-  [ExperimentAction.Delete]: (experiment, user) =>
-    !!user && (user.isAdmin || user.id === experiment.userId)
+  [ExperimentAction.Delete]: (experiment, user, _, userAssignments, userRoles) =>
+    !!user && canDeleteExperiment(experiment, user, userAssignments, userRoles)
       ? deletableRunStates.has(experiment.state)
       : false,
 
@@ -179,7 +184,17 @@ export const canUserActionExperiment = (
   action: ExperimentAction,
   experiment: ProjectExperiment,
   trial?: TrialDetails,
-): boolean => !!experiment && experimentCheckers[action](experiment, user, trial);
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  return !!experiment && experimentCheckers[action](
+    experiment,
+    user,
+    trial,
+    userAssignments,
+    userRoles,
+  );
+};
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
