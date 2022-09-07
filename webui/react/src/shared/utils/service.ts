@@ -56,7 +56,7 @@ export const isNotFound = (u: Response | Error | DetError): boolean => {
 };
 
 export const isAborted = (e: unknown): boolean => {
-  if (e instanceof DetError && e.sourceErr !== undefined) return isAborted(e);
+  if (e instanceof DetError && e.sourceErr !== undefined) return isAborted(e.sourceErr);
   return e instanceof Error && e.name === 'AbortError';
 };
 
