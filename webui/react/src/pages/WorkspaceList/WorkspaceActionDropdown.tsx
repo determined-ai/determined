@@ -2,21 +2,19 @@ import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
+import usePermissions from 'hooks/usePermissions';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
-import { DetailedUser, Workspace } from 'types';
+import { Workspace } from 'types';
 import handleError from 'utils/error';
-import { canDeleteWorkspace, canModifyWorkspace } from 'utils/role';
 
 interface Props {
   children?: React.ReactNode;
   className?: string;
-  curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
@@ -28,7 +26,6 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const WorkspaceActionDropdown: React.FC<Props> = ({
   children,
-  curUser,
   className,
   direction = 'vertical',
   workspace,
@@ -46,15 +43,15 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     modalOpen: openWorkspaceEdit,
   } = useModalWorkspaceEdit({ onClose: onComplete, workspace });
 
-  const { userAssignments, userRoles } = useStore();
+  const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
   const canDelete = useMemo(() => {
-    return canDeleteWorkspace(workspace, curUser, userAssignments, userRoles);
-  }, [ curUser, userAssignments, userRoles, workspace ]);
+    return canDeleteWorkspace({ workspace });
+  }, [ canDeleteWorkspace, workspace ]);
 
   const canModify = useMemo(() => {
-    return canModifyWorkspace(workspace, curUser, userAssignments, userRoles);
-  }, [ curUser, userAssignments, userRoles, workspace ]);
+    return canModifyWorkspace({ workspace });
+  }, [ canModifyWorkspace, workspace ]);
 
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {

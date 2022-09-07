@@ -13,7 +13,7 @@ import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ExperimentAction as Action, ExperimentAction, ExperimentBase,
   TrialDetails, TrialWorkloadFilter } from 'types';
-import { canUserActionExperiment } from 'utils/experiment';
+import { canActionExperiment } from 'utils/experiment';
 import { openCommand } from 'utils/wait';
 
 interface Props {
@@ -82,7 +82,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
     }
 
-    if (canUserActionExperiment(undefined, ExperimentAction.ContinueTrial, experiment, trial)) {
+    if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
           icon: <Icon name="fork" size="small" />,
@@ -100,8 +100,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       }
     }
 
-    if (canUserActionExperiment(
-      undefined,
+    if (canActionExperiment(
       ExperimentAction.HyperparameterSearch,
       experiment,
       trial,

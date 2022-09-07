@@ -13,7 +13,6 @@ import {
   stateToLabel,
   terminalRunStates,
 } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
@@ -23,6 +22,7 @@ import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperiment
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
 import {
@@ -38,19 +38,17 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
-  DetailedUser,
   ExperimentBase,
   RunState,
   TrialItem,
 } from 'types';
 import handleError from 'utils/error';
-import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
+import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommand } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
 
 interface Props {
-  curUser?: DetailedUser;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
   name?: string;
@@ -74,7 +72,6 @@ const headerActions = [
 ];
 
 const ExperimentDetailsHeader: React.FC<Props> = ({
-  curUser,
   experiment,
   fetchExperimentDetails,
   trial,
@@ -101,16 +98,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
 
-  const { userAssignments, userRoles } = useStore();
+  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
 
-  const isMovable = canUserActionExperiment(
-    curUser,
+  const isMovable = canActionExperiment(
     Action.Move,
     experiment,
-    undefined,
-    userAssignments,
-    userRoles,
-  );
+  ) && canMoveExperiment({ experiment });
 
   const {
     contextHolder: modalExperimentStopContextHolder,
@@ -337,13 +330,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     const availableActions = getActionsForExperiment(
       experiment,
       headerActions,
-      curUser,
-      userAssignments,
-      userRoles,
-    );
+    ).filter((action) => [ Action.Delete, Action.Move ].includes(action)
+      ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
+        (action === Action.Move && canMoveExperiment({ experiment }))
+      : true);
 
     return availableActions.map((action) => options[action]) as Option[];
-  }, [ isRunningArchive,
+  }, [ canDeleteExperiment,
+    canMoveExperiment,
+    isRunningArchive,
     handleContinueTrialClick,
     isRunningDelete,
     handleDeleteClick,
@@ -353,10 +348,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningTensorBoard,
     isRunningUnarchive,
     experiment,
-    curUser,
     fetchExperimentDetails,
-    userAssignments,
-    userRoles ]);
+  ]);
 
   const jobInfoLinkText = useMemo(() => {
     if (!experiment.jobSummary) return 'Not available';

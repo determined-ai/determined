@@ -125,7 +125,6 @@ const WorkspaceList: React.FC = () => {
 
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
       <WorkspaceActionDropdown
-        curUser={user}
         workspace={record}
         onComplete={fetchWorkspaces}
       />
@@ -216,7 +215,6 @@ const WorkspaceList: React.FC = () => {
   const actionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
       <WorkspaceActionDropdown
-        curUser={user}
         workspace={record}
         onComplete={fetchWorkspaces}
         onVisibleChange={onVisibleChange}>

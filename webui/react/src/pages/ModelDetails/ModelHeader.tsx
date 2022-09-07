@@ -11,11 +11,11 @@ import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { ModelItem } from 'types';
-import { canDeleteModel } from 'utils/role';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
@@ -35,8 +35,8 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const { users, auth: { user }, userAssignments, userRoles } = useStore();
-
+  const { users } = useStore();
+  const { canDeleteModel } = usePermissions();
   const { contextHolder, modalOpen } = useModalModelDelete();
 
   const infoRows: InfoRow[] = useMemo(() => {
@@ -96,13 +96,12 @@ const ModelHeader: React.FC<Props> = ({
       { key: MenuKey.SWITCH_ARCHIVED, label: model.archived ? 'Unarchive' : 'Archive' },
     ];
 
-    if (canDeleteModel(model, user?.id, user?.isAdmin, userAssignments, userRoles)) {
+    if (canDeleteModel({ model })) {
       menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete' });
     }
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ handleDelete, model, onSwitchArchive, user?.id, user?.isAdmin, userAssignments, userRoles,
-  ]);
+  }, [ canDeleteModel, handleDelete, model, onSwitchArchive ]);
 
   return (
     <header className={css.base}>

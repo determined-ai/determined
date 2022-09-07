@@ -806,3 +806,7 @@ export interface UserRole {
   name: string;
   permissions: Permission[];
 }
+
+export interface ExperimentPermissionsArgs {
+  experiment: ProjectExperiment;
+}

@@ -38,7 +38,7 @@ const relevantPermissions = (
 // Experiment actions
 export const canDeleteExperiment = (
   experiment: ProjectExperiment,
-  user: DetailedUser,
+  user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 ): boolean => {
@@ -50,7 +50,7 @@ export const canDeleteExperiment = (
 
 export const canMoveExperiment = (
   experiment: ProjectExperiment,
-  user: DetailedUser,
+  user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 ): boolean => {
@@ -63,20 +63,19 @@ export const canMoveExperiment = (
 // Model and ModelVersion actions
 export const canDeleteModel = (
   model: ModelItem,
-  userId?: number,
-  userAdmin?: boolean,
+  user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!model && !!userId &&
-    permitted.has('oss_user') ? (userAdmin || userId === model.userId)
+  return !!model && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === model.userId)
     : permitted.has('delete_model');
 };
 
 export const canDeleteModelVersion = (
-  modelVersion: ModelVersion | undefined,
-  user: DetailedUser | undefined,
+  modelVersion?: ModelVersion,
+  user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 ): boolean => {

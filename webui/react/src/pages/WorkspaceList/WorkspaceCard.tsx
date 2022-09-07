@@ -27,7 +27,6 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
 
   return (
     <WorkspaceActionDropdown
-      curUser={curUser}
       workspace={workspace}
       onComplete={fetchWorkspaces}>
       <div className={css.base} onClick={handleCardClick}>
@@ -58,7 +57,6 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
         {!workspace.immutable && (
           <WorkspaceActionDropdown
             className={css.action}
-            curUser={curUser}
             direction="horizontal"
             workspace={workspace}
             onComplete={fetchWorkspaces}
