@@ -51,6 +51,7 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/master",
 	"/api/v1/auth/login",
 	"/api/v1/auth/logout",
+	"/proxy/:service/.*",
 	"/agents\\?id=.*",
 }
 
