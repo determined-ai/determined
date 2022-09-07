@@ -428,6 +428,8 @@ const CodeViewer: React.FC<Props> = ({
     ],
   );
 
+  const classes = [ css.base, pageError ? css.noEditor : '' ];
+
   return (
     <section className={classes.join(' ')}>
       <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="fileTree">
