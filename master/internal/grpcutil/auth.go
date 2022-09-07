@@ -7,12 +7,17 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/o1egl/paseto"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -41,8 +46,30 @@ var (
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )
 
-// GetAllocationSession returns the currently running task.
-func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSession, error) {
+func allocationSessionByTokenBun(token string) (*model.AllocationSession, error) {
+	v2 := paseto.NewV2()
+
+	var session model.AllocationSession
+	err := v2.Verify(token, db.GetTokenKeys().PublicKey, &session, nil)
+	if err != nil {
+		log.WithError(err).Debug("failed to verify allocation_session token")
+		return nil, db.ErrNotFound
+	}
+
+	err = db.Bun().NewSelect().Model(&session).Where("id = ?", session.ID).Scan(context.Background())
+	if errors.Cause(err) == db.ErrNotFound {
+		log.WithField("allocation_sessions.id", session.ID).Debug("allocation_session not found")
+		return nil, db.ErrNotFound
+	} else if err != nil {
+		log.WithError(err).WithField("allocation_sessions.id", session.ID).
+			Debug("failed to lookup allocation_session")
+		return nil, err
+	}
+
+	return &session, nil
+}
+
+func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, ErrTokenMissing
@@ -58,7 +85,7 @@ func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSes
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	switch session, err := d.AllocationSessionByToken(token); err {
+	switch session, err := allocationSessionByTokenBun(token); err {
 	case nil:
 		return session, nil
 	case db.ErrNotFound:
@@ -69,9 +96,9 @@ func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSes
 }
 
 // GetUser returns the currently logged in user.
-func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions) (*model.User,
-	*model.UserSession, error,
-) {
+func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
+	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, nil, ErrTokenMissing
@@ -81,7 +108,7 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 		tokens = md[gatewayTokenHeader]
 	}
 	if len(tokens) == 0 {
-		allocationSession, err := GetAllocationSession(ctx, d)
+		allocationSession, err := getAllocationSessionBun(ctx)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -89,7 +116,7 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 			return nil, nil, status.Error(codes.InvalidArgument,
 				"allocation session has no associated user")
 		}
-		u, err := d.UserByID(*allocationSession.OwnerID)
+		u, err := user.UserByID(*allocationSession.OwnerID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -102,16 +129,16 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	var user *model.User
+	var userModel *model.User
 	var session *model.UserSession
 	var err error
-	user, session, err = d.UserByToken(token, extConfig)
+	userModel, session, err = user.UserByToken(token, &extConfig)
 	switch err {
 	case nil:
-		if !user.Active {
+		if !userModel.Active {
 			return nil, nil, ErrPermissionDenied
 		}
-		return user, session, nil
+		return userModel, session, nil
 	case db.ErrNotFound:
 		return nil, nil, ErrInvalidCredentials
 	default:
@@ -127,7 +154,7 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 		return nil
 	}
 
-	switch _, err := GetAllocationSession(ctx, db); err {
+	switch _, err := getAllocationSessionBun(ctx); err {
 	case ErrTokenMissing:
 		// Try user token.
 	case nil:
@@ -136,7 +163,7 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 		return err
 	}
 
-	if _, _, err := GetUser(ctx, db, extConfig); err != nil {
+	if _, _, err := GetUser(ctx); err != nil {
 		return err
 	}
 	return nil

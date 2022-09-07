@@ -184,29 +184,6 @@ func (_m *DB) AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
 	return r0, r1
 }
 
-// AllocationSessionByToken provides a mock function with given fields: token
-func (_m *DB) AllocationSessionByToken(token string) (*model.AllocationSession, error) {
-	ret := _m.Called(token)
-
-	var r0 *model.AllocationSession
-	if rf, ok := ret.Get(0).(func(string) *model.AllocationSession); ok {
-		r0 = rf(token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.AllocationSession)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // AuthTokenKeypair provides a mock function with given fields:
 func (_m *DB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	ret := _m.Called()

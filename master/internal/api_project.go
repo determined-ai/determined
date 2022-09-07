@@ -37,7 +37,7 @@ func (a *apiServer) GetProjectByID(id int32, curUser model.User) (*projectv1.Pro
 func (a *apiServer) getProjectAndCheckCanDoActions(
 	ctx context.Context, projectID int32, canDoActions ...func(model.User, *projectv1.Project) error,
 ) (*projectv1.Project, model.User, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, model.User{}, err
 	}
@@ -72,7 +72,7 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(project *projectv1.Project) e
 func (a *apiServer) GetProject(
 	ctx context.Context, req *apiv1.GetProjectRequest,
 ) (*apiv1.GetProjectResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (a *apiServer) GetProject(
 func (a *apiServer) PostProject(
 	ctx context.Context, req *apiv1.PostProjectRequest,
 ) (*apiv1.PostProjectResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +196,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	expList []*model.Experiment,
 ) (err error) {
 	holder := &projectv1.Project{}
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		log.WithError(err).Errorf("failed to access user and delete project %d", projectID)
 		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
@@ -260,7 +260,7 @@ func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
 	error,
 ) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}

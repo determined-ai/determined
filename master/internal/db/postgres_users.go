@@ -57,6 +57,7 @@ func (db *PgDB) DeleteUserSessionByToken(token string) error {
 }
 
 // UserByToken returns a user session given an authentication token.
+// Deprecated.
 func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
 	*model.User, *model.UserSession, error,
 ) {
@@ -97,6 +98,7 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 }
 
 // UserByExternalToken returns a user session derived from an external authentication token.
+// Deprecated.
 func (db *PgDB) UserByExternalToken(tokenText string,
 	ext *model.ExternalSessions,
 ) (*model.User, *model.UserSession, error) {
@@ -174,6 +176,7 @@ func (db *PgDB) DeleteUserSessionByID(sessionID model.SessionID) error {
 }
 
 // UserByUsername looks up a user by name in the database.
+// Deprecated.
 func (db *PgDB) UserByUsername(username string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE username=$1`
@@ -359,6 +362,7 @@ func (db *PgDB) UserImage(username string) (photo []byte, err error) {
 }
 
 // UserByID returns the full user for a given ID.
+// Deprecated.
 func (db *PgDB) UserByID(userID model.UserID) (*model.FullUser, error) {
 	var fu model.FullUser
 	if err := db.query(`
@@ -407,6 +411,7 @@ func (db *PgDB) initAuthKeys() error {
 	default:
 		db.tokenKeys = storedKeys
 	}
+	setTokenKeys(db.tokenKeys)
 	return nil
 }
 

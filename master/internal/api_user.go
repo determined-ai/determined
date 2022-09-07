@@ -62,7 +62,7 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 // TODO remove this eventually since authz replaces this
 // We can't yet since we use it else where.
 func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
-	u, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (a *apiServer) GetUsers(
 		return nil, err
 	}
 
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (a *apiServer) GetUsers(
 func (a *apiServer) GetUser(
 	ctx context.Context, req *apiv1.GetUserRequest,
 ) (*apiv1.GetUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (a *apiServer) PostUser(
 		}
 	}
 
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest,
 ) (*apiv1.SetUserPasswordResponse, error) {
 	// TODO if ExternalSessions is there, don't even allow this
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (a *apiServer) SetUserPassword(
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest,
 ) (*apiv1.PatchUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (a *apiServer) PatchUser(
 func (a *apiServer) GetUserSetting(
 	ctx context.Context, req *apiv1.GetUserSettingRequest,
 ) (*apiv1.GetUserSettingResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func (a *apiServer) PostUserSetting(
 		return nil, status.Error(codes.InvalidArgument, "must specify setting")
 	}
 
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +403,7 @@ func (a *apiServer) PostUserSetting(
 func (a *apiServer) ResetUserSetting(
 	ctx context.Context, req *apiv1.ResetUserSettingRequest,
 ) (*apiv1.ResetUserSettingResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}

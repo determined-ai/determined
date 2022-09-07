@@ -150,7 +150,6 @@ type DB interface {
 	GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error)
 	ExperimentBestSearcherValidation(id int) (float32, error)
 	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
-	AllocationSessionByToken(token string) (*model.AllocationSession, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocation model.Allocation) error
 	UpdateAllocationStartTime(allocation model.Allocation) error
