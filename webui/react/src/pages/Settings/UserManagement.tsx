@@ -37,12 +37,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     modalOpen: openEditUserModal,
     contextHolder: modalEditUserContextHolder,
   } = useModalCreateUser({ groups, onClose: fetchUsers, user });
-  const onClickEditUser = () => {
-    openEditUserModal();
-  };
-  const onClickViewUser = () => {
-    openEditUserModal(true);
-  };
+  
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
     message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
@@ -56,9 +51,9 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   }
 
   const funcs = {
-    [MenuKey.EDIT]: () => { onClickEditUser(); },
+    [MenuKey.EDIT]: () => { openEditUserModal(); },
     [MenuKey.STATE]: () => { onToggleActive(); },
-    [MenuKey.VIEW]: () => { onClickViewUser(); },
+    [MenuKey.VIEW]: () => { openEditUserModal(true); },
   };
 
   const onItemClick: MenuProps['onClick'] = (e) => {
@@ -68,7 +63,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const menuItems: MenuProps['items'] = [
     { key: MenuKey.VIEW, label: 'View Profile' },
     { key: MenuKey.EDIT, label: 'Edit' },
-    { key: MenuKey.STATE, label: `${user.isActive ? 'Deactive' : 'Active'}` },
+    { key: MenuKey.STATE, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
   ];
 
   return (
