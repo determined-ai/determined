@@ -42,23 +42,27 @@ const terminatedDuration = 24 * time.Hour
 // should stop and garbage collect its state.
 type terminateForGC struct{}
 
+// pendStates are allocation states which the API and UI will show as "Pending".
+var pendStates = []taskv1.State{
+	taskv1.State_STATE_PULLING,
+	taskv1.State_STATE_STARTING,
+}
+
+// queueStates are allocation states which the API and UI will show as "Queued".
+var queueStates = []taskv1.State{
+	taskv1.State_STATE_PENDING,
+	taskv1.State_STATE_ASSIGNED,
+}
+
 func enrichState(state taskv1.State) taskv1.State {
-	pendStates := []taskv1.State{
-		taskv1.State_STATE_PULLING,
-		taskv1.State_STATE_STARTING,
-	}
-
-	queueStates := []taskv1.State{
-		taskv1.State_STATE_PENDING,
-		taskv1.State_STATE_ASSIGNED,
-	}
-
-	if slices.Contains(queueStates, state) {
+	switch {
+	case slices.Contains(queueStates, state):
 		return taskv1.State_STATE_QUEUED
-	} else if slices.Contains(pendStates, state) {
+	case slices.Contains(pendStates, state):
 		return taskv1.State_STATE_PENDING
+	default:
+		return state
 	}
-	return state
 }
 
 func createGenericCommandActor(

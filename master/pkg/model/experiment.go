@@ -466,7 +466,7 @@ type TrialMetrics struct {
 }
 
 // Represent order of active states (Queued -> Pending -> Running).
-var allocationStateIndex = map[experimentv1.State]int{
+var experimentStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED: -2,
 	experimentv1.State_STATE_ACTIVE:      -1,
 	experimentv1.State_STATE_QUEUED:      0,
@@ -475,12 +475,12 @@ var allocationStateIndex = map[experimentv1.State]int{
 }
 
 // MostProgressedExperimentState returns the more advanced active state
-// based on allocationStateIndex (Queued -> Pending -> Running).
+// based on experimentStateIndex (Queued -> Pending -> Running).
 func MostProgressedExperimentState(
 	state1 experimentv1.State, state2 experimentv1.State,
 ) experimentv1.State {
-	stateValue1 := allocationStateIndex[state1]
-	stateValue2 := allocationStateIndex[state2]
+	stateValue1 := experimentStateIndex[state1]
+	stateValue2 := experimentStateIndex[state2]
 	if stateValue1 > stateValue2 {
 		return state1
 	}

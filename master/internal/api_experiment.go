@@ -853,6 +853,7 @@ func (a *apiServer) PatchExperiment(
 	if err != nil {
 		return nil, err
 	}
+
 	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(*curUser, modelExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
@@ -916,7 +917,13 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	return &apiv1.PatchExperimentResponse{Experiment: exp}, nil
+	// include queued / pending / running state
+	expListForm, err := a.enrichExperimentState([]*experimentv1.Experiment{exp})
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PatchExperimentResponse{Experiment: expListForm[0]}, nil
 }
 
 func (a *apiServer) GetExperimentCheckpoints(

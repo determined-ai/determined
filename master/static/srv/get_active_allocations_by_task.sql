@@ -5,4 +5,4 @@ SELECT
 FROM tasks t
 JOIN allocations a ON a.task_id = t.task_id
 WHERE t.task_id IN (SELECT unnest(string_to_array($1, ',')))
-GROUP BY t.task_id;
+GROUP BY t.task_id
