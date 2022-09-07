@@ -1,1 +1,1 @@
-pip install -qq diffusers["training"] transformers ftfy
+pip install diffusers["training"]==0.2.4 transformers==4.21.3 ftfy==6.1.1 setuptools==59.5.0
