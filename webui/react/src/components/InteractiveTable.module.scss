@@ -4,6 +4,15 @@
     overflow-y: hidden;
   }
 }
+.row {
+  height: 60px;
+
+  > td {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+  }
+}
 .headerCell {
   cursor: move;
 
@@ -81,7 +90,17 @@
 }
 .cell {
   .rightClickableCellWrapper {
-    display: inline;
+    display: inline-table;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+  }
+  /* stylelint-disable at-rule-empty-line-before */
+  // only for firefox
+  @-moz-document url-prefix() {
+    .rightClickableCellWrapper {
+      display: inline-block; // just override display
+    }
   }
 }
 .headerFilterOn {

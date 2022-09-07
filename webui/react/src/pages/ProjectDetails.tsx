@@ -8,7 +8,6 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
-import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
@@ -24,6 +23,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import TextEditorModal from 'components/TextEditorModal';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -341,10 +341,10 @@ const ProjectDetails: React.FC = () => {
     };
 
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
-      <InlineEditor
+      <TextEditorModal
         disabled={record.archived}
-        maxLength={500}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
+        title="Edit description"
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
       />
@@ -894,6 +894,7 @@ const ProjectDetails: React.FC = () => {
               preserveSelectedRowKeys: true,
               selectedRowKeys: settings.row ?? [],
             }}
+            scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
