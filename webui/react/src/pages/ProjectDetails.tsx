@@ -894,7 +894,7 @@ const ProjectDetails: React.FC = () => {
               preserveSelectedRowKeys: true,
               selectedRowKeys: settings.row ?? [],
             }}
-            scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '200' : '260'}px)` }}
+            scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"

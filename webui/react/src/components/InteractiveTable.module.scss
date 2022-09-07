@@ -90,10 +90,17 @@
 }
 .cell {
   .rightClickableCellWrapper {
-    display: inline-block;
+    display: inline-table;
     overflow-x: auto;
     overflow-y: hidden;
     width: 100%;
+  }
+  /* stylelint-disable at-rule-empty-line-before */
+  // only for firefox
+  @-moz-document url-prefix() {
+    .rightClickableCellWrapper {
+      display: inline-block; // just override display
+    }
   }
 }
 .headerFilterOn {
