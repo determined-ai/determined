@@ -14,6 +14,9 @@
   :global(.ant-form-item-explain) {
     display: none;
   }
+  :global(.ant-form-item) {
+    min-width: fit-content;
+  }
   .base {
     display: flex;
     flex-direction: column;
@@ -37,6 +40,8 @@
     }
     .inputRow {
       display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
       gap: 8px;
     
       & > div {
@@ -77,11 +82,15 @@
         align-items: center;
         display: flex;
       }
-      h2 {
-        border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
-        font-size: 1rem;
-        margin: 0;
-        text-align: center;
+      label {
+        align-self: end;
+
+        h2 {
+          border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
+          font-size: 1rem;
+          margin: 0;
+          text-align: center;
+        }
       }
       h3 {
         font-size: 1rem;
@@ -125,5 +134,16 @@
     font-size: 12px;
     grid-column: 1 / -1;
     margin-block: -8px !important;
+  }
+}
+
+@media only screen and (max-width: $breakpoint-tablet) {
+  .modal:global(.ant-modal) > :global(.ant-modal-content) > :global(.ant-modal-body) .base {
+    .inputRow {
+      flex-direction: column;
+    }
+    .hyperparameterContainer {
+      overflow-x: auto;
+    }
   }
 }
