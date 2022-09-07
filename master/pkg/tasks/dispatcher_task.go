@@ -173,6 +173,9 @@ func (t *TaskSpec) ToDispatcherManifest(
 		return nil, "", "", errList[0]
 	}
 
+	// TODO FOUNDENG-207: Add support for custom PBS job arguments
+	// customParams["pbsArgs"] = pbsArgs
+
 	if containerRunType == podman {
 		var portMappings []string = *getPortMappings(t)
 		if len(portMappings) != 0 {
@@ -278,7 +281,8 @@ func (t *TaskSpec) computeLaunchConfig(
 		"enableWritableTmpFs": trueValue,
 	}
 	if slurmPartition != "" {
-		launchConfig["partition"] = slurmPartition
+		// Use queue config as both Slurm/PBS support it
+		launchConfig["queue"] = slurmPartition
 	}
 	if slotType == device.CUDA {
 		launchConfig["enableNvidia"] = trueValue

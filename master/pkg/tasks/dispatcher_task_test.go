@@ -145,7 +145,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				"workingDir":          workDir,
 				"enableNvidia":        trueValue,
 				"enableWritableTmpFs": trueValue,
-				"partition":           "partitionName",
+				"queue":               "partitionName",
 			},
 		},
 		{
@@ -159,7 +159,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				"workingDir":          workDir,
 				"enableROCM":          trueValue,
 				"enableWritableTmpFs": trueValue,
-				"partition":           "partitionName",
+				"queue":               "partitionName",
 			},
 		},
 		{
