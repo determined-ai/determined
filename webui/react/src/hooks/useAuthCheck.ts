@@ -9,7 +9,7 @@ import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
-import { getCookie } from 'utils/browser';
+import { getCookie, setCookie } from 'utils/browser';
 import handleError from 'utils/error';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
@@ -39,6 +39,11 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     const jwtToken = jwt && !Array.isArray(jwt) ? jwt : null;
     const cookieToken = getCookie(AUTH_COOKIE_KEY);
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
+
+    // saas provisioned auth doesn't set a cookie on login.
+    // CHECK: do we want to do this client side or could the bakcend handle this to
+    // keep the behavior the same
+    if (jwtToken) setCookie(AUTH_COOKIE_KEY, jwtToken);
 
     /*
      * If auth token found, update the API bearer token and validate it with the current user API.
