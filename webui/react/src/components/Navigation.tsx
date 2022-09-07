@@ -25,7 +25,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
-  usePolling(fetchUserSettings, 60000);
+  usePolling(fetchUserSettings, { interval: 60000 });
 
   useEffect(() => {
     fetchResourcePools();
