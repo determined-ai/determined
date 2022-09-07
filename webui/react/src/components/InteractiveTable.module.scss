@@ -90,7 +90,10 @@
 }
 .cell {
   .rightClickableCellWrapper {
-    display: inline;
+    display: inline-block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
   }
 }
 .headerFilterOn {
