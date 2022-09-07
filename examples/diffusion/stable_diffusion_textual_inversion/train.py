@@ -159,6 +159,7 @@ def train(
             vae=vae,
             unet=unet,
             tokenizer=tokenizer,
+            # Use faster PNDMScheduler for inference
             scheduler=PNDMScheduler(
                 beta_start=0.00085,
                 beta_end=0.012,
@@ -171,7 +172,7 @@ def train(
             feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
         )
         with core_context.checkpoint.store_path({"steps_completed": 1}) as (path, storage_id):
-            print(80 * "=", f"Saving pipeline to {path}", 80 * "=", sep="\n")
+            print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
             pipeline.save_pretrained(path)
             # Also save the newly trained embeddings
             learned_embeds = (
@@ -180,4 +181,5 @@ def train(
                 .weight[placeholder_token_id]
             )
             learned_embeds_dict = {placeholder_token: learned_embeds.detach().cpu()}
+            print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
             torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))

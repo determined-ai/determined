@@ -136,15 +136,15 @@ if __name__ == "__main__":
         )
 
         print(80 * "=", "INFERENCE", 80 * "=", sep="\n")
-
-        pipe = StableDiffusionPipeline.from_pretrained(
-            hparams.output_dir, torch_dtype=torch.float16
-        ).to("cuda")
-
-        with autocast("cuda"):
-            images = pipe(
-                list(hparams.prompts),
-                num_inference_steps=hparams.num_inference_steps,
-                guidance_scale=hparams.guidance_scale,
-            )["sample"]
-            print(images)
+        #
+        # pipe = StableDiffusionPipeline.from_pretrained(
+        #     hparams.output_dir, torch_dtype=torch.float16
+        # ).to("cuda")
+        #
+        # with autocast("cuda"):
+        #     images = pipe(
+        #         list(hparams.prompts),
+        #         num_inference_steps=hparams.num_inference_steps,
+        #         guidance_scale=hparams.guidance_scale,
+        #     )["sample"]
+        #     print(images)
