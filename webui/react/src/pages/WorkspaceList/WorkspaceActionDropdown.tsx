@@ -2,6 +2,7 @@ import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { useStore } from 'contexts/Store';
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
@@ -10,6 +11,7 @@ import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { DetailedUser, Workspace } from 'types';
 import handleError from 'utils/error';
+import { canDeleteWorkspace, canModifyWorkspace } from 'utils/role';
 
 interface Props {
   children?: React.ReactNode;
@@ -44,9 +46,15 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     modalOpen: openWorkspaceEdit,
   } = useModalWorkspaceEdit({ onClose: onComplete, workspace });
 
-  const userHasPermissions = useMemo(() => {
-    return curUser?.isAdmin || curUser?.id === workspace.userId;
-  }, [ curUser?.id, curUser?.isAdmin, workspace.userId ]);
+  const { userAssignments, userRoles } = useStore();
+
+  const canDelete = useMemo(() => {
+    return canDeleteWorkspace(workspace, curUser, userAssignments, userRoles);
+  }, [ curUser, userAssignments, userRoles, workspace ]);
+
+  const canModify = useMemo(() => {
+    return canModifyWorkspace(workspace, curUser, userAssignments, userRoles);
+  }, [ curUser, userAssignments, userRoles, workspace ]);
 
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {
@@ -118,26 +126,27 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
     } ];
 
-    if (userHasPermissions && !workspace.archived) {
+    if (canModify && !workspace.archived) {
       menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
     }
-    if (userHasPermissions) {
+    if (canModify) {
       menuItems.push({
         key: MenuKey.SWITCH_ARCHIVED,
         label: workspace.archived ? 'Unarchive' : 'Archive',
       });
     }
-    if (userHasPermissions && workspace.numExperiments === 0) {
+    if (canDelete && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });
       menuItems.push({ key: MenuKey.DELETE, label: 'Delete...' });
     }
     return <Menu items={menuItems} onClick={onItemClick} />;
   }, [
+    canDelete,
+    canModify,
     handlePinClick,
     workspace.pinned,
     workspace.archived,
     workspace.numExperiments,
-    userHasPermissions,
     handleEditClick,
     handleArchiveClick,
     handleDeleteClick,

@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
+import { useStore } from 'contexts/Store';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
@@ -24,6 +25,12 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate(
     { workspaceId: workspace.id },
   );
+
+  const { userAssignments, userRoles } = useStore();
+
+  const canModify = useMemo(() => {
+    return canModifyWorkspace(workspace, curUser, userAssignments, userRoles);
+  }, [ curUser, userAssignments, userRoles, workspace ]);
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
@@ -52,7 +59,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
           <InlineEditor
             disabled={workspace.immutable ||
                  workspace.archived
-                || (!curUser?.isAdmin && curUser?.id !== workspace.userId)}
+                || !canModify}
             maxLength={80}
             value={workspace.name}
             onSave={handleNameChange}

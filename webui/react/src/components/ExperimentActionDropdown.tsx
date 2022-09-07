@@ -160,8 +160,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser, userAssignments,
-    userRoles).map((action) => (
+  const menuItems = getActionsForExperiment(
+    experiment,
+    dropdownActions,
+    curUser,
+    userAssignments,
+    userRoles,
+  ).map((action) => (
     { danger: action === Action.Delete, key: action, label: action }
   ));
 

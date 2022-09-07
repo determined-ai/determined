@@ -6,6 +6,7 @@ import {
   ProjectExperiment,
   UserAssignment,
   UserRole,
+  Workspace,
 } from 'types';
 
 // Permissions inside this workspace scope (no workspace = cluster-wide scope)
@@ -81,5 +82,40 @@ export const canDeleteModelVersion = (
 };
 
 // Project actions
+// Currently the smallest scope is workspace
+export const canModifyWorkspaceProjects = (
+  workspace: Workspace,
+  user: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
+  return !!workspace && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
+    : permitted.has('modify_projects');
+};
 
 // Workspace actions
+export const canDeleteWorkspace = (
+  workspace: Workspace,
+  user: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
+  return !!workspace && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
+    : permitted.has('delete_workspace');
+};
+
+export const canModifyWorkspace = (
+  workspace: Workspace,
+  user: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
+  return !!workspace && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
+    : permitted.has('modify_workspace');
+};
