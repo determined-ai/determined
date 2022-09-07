@@ -23,11 +23,15 @@ import { Determinedcheckpointv1State,
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { RecordKey } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
+  checkpointAction,
+  CheckpointAction,
   CheckpointState, CoreApiGenericCheckpoint, ExperimentBase,
 } from 'types';
+import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
 import handleError from 'utils/error';
 
 import settingsConfig, { Settings } from './ExperimentCheckpoints.settings';
@@ -39,12 +43,10 @@ interface Props {
   pageRef: React.RefObject<HTMLElement>;
 }
 
-const checkpointAction = {
-  Delete: 'Delete',
-  Register: 'Register',
-} as const;
-
-type CheckpointAction = typeof checkpointAction[keyof typeof checkpointAction];
+const batchActions = [
+  checkpointAction.Register,
+  checkpointAction.Delete,
+];
 
 const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ total, setTotal ] = useState(0);
@@ -133,11 +135,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   ) => {
     return (
       <ActionDropdown<CheckpointAction>
-        actionOrder={[
-          'Register',
-          'Delete',
-        ]}
+        actionOrder={batchActions}
         danger={{ [checkpointAction.Delete]: true }}
+        disabled={{
+          [checkpointAction.Register]:
+            !canActionCheckpoint(checkpointAction.Register, record),
+          [checkpointAction.Delete]:
+            !canActionCheckpoint(checkpointAction.Delete, record),
+        }}
         id={record.uuid}
         kind="checkpoint"
         trigger={[ 'contextMenu' ]}
@@ -152,11 +157,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
-        actionOrder={[
-          'Register',
-          'Delete',
-        ]}
+        actionOrder={batchActions}
         danger={{ [checkpointAction.Delete]: true }}
+        disabled={{
+          [checkpointAction.Register]:
+            !canActionCheckpoint(checkpointAction.Register, record),
+          [checkpointAction.Delete]:
+            !canActionCheckpoint(checkpointAction.Delete, record),
+        }}
         id={record.uuid}
         kind="checkpoint"
         onError={handleError}
@@ -281,14 +289,27 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
+  const checkpointMap = useMemo(() => {
+    return (checkpoints ?? []).reduce((acc, checkpoint) => {
+      acc[checkpoint.uuid] = checkpoint;
+      return acc;
+    }, {} as Record<RecordKey, CoreApiGenericCheckpoint>);
+  }, [ checkpoints ]);
+
+  const availableBatchActions = useMemo(() => {
+    const checkpoints = settings.row?.map((uuid) => checkpointMap[uuid]) ?? [];
+    return getActionsForCheckpointsUnion(checkpoints, batchActions);
+  }, [ checkpointMap, settings.row ]);
+
   return (
     <div className={css.base}>
       <Section>
         <TableBatch
-          actions={[
-            { label: checkpointAction.Register, value: checkpointAction.Register },
-            { label: checkpointAction.Delete, value: checkpointAction.Delete },
-          ]}
+          actions={batchActions.map((action) => ({
+            disabled: !availableBatchActions.includes(action),
+            label: action,
+            value: action,
+          }))}
           selectedRowCount={(settings.row ?? []).length}
           onAction={(action) => submitBatchAction(action)}
           onClear={clearSelected}

@@ -42,8 +42,8 @@ const useModalCheckpointDelete = ({ onClose }: Props): ModalHooks => {
 
   const modalProps: ModalFuncProps = useMemo(() => {
     const content =
-      `Are you sure you want to request checkpoint deletion for all batches in
-${numCheckpoints > 1 ? numCheckpoints : ''} ${pluralizer(numCheckpoints, 'checkpoint')}. 
+      `Are you sure you want to request deletion for 
+${numCheckpoints} ${pluralizer(numCheckpoints, 'checkpoint')}?
 This action may complete or fail without further notification.`;
 
     return {

@@ -434,6 +434,13 @@ export interface CheckpointPagination extends WithPagination {
   checkpoints: CoreApiGenericCheckpoint[];
 }
 
+export const checkpointAction = {
+  Delete: 'Delete',
+  Register: 'Register',
+} as const;
+
+export type CheckpointAction = typeof checkpointAction[keyof typeof checkpointAction];
+
 export interface TrialPagination extends WithPagination {
   trials: TrialItem[];
 }
