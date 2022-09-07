@@ -8,6 +8,7 @@ import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
 import { Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo,
   PoolOverview, ResourcePool, ResourceType, UserAssignment, UserRole, Workspace } from 'types';
+import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
 
@@ -181,6 +182,14 @@ const clearAuthCookie = (): void => {
   document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
+/**
+ * set the auth cookie if it's not already set.
+ * @param token auth token
+ */
+const ensureAuthCookieSet = (token: string): void => {
+  if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
+};
+
 export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   // Deep clone for render detection.
   const overview: ClusterOverview = clone(initClusterOverview);
@@ -251,6 +260,12 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, auth: { ...state.auth, checked: false } };
     case StoreAction.SetAuth:
       if (action.value.token) {
+        /**
+         * project Samuel provisioned auth doesn't set a cookie
+         * like our other auth methods do.
+         *
+        */
+        ensureAuthCookieSet(action.value.token);
         globalStorage.authToken = action.value.token;
       }
       return { ...state, auth: { ...action.value, checked: true } };
