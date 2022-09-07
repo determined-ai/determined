@@ -9,6 +9,7 @@ import {
   getInfo,
   getResourcePools,
   getUsers,
+  getUserSetting,
   getWorkspaces,
 } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
@@ -77,6 +78,17 @@ export const useFetchUsers = (canceler: AbortController): () => Promise<void> =>
     try {
       const usersResponse = await getUsers({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetUsers, value: usersResponse.users });
+    } catch (e) { handleError(e); }
+  }, [ canceler, storeDispatch ]);
+};
+
+export const useFetchUserSettings = (canceler: AbortController): () => Promise<void> => {
+  const storeDispatch = useStoreDispatch();
+
+  return useCallback(async (): Promise<void> => {
+    try {
+      const userSettingResponse = await getUserSetting({}, { signal: canceler.signal });
+      storeDispatch({ type: StoreAction.SetUserSettings, value: userSettingResponse.settings });
     } catch (e) { handleError(e); }
   }, [ canceler, storeDispatch ]);
 };

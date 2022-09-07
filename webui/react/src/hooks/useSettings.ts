@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
-import { getUserSetting, updateUserSetting } from 'services/api';
+import { updateUserSetting } from 'services/api';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
 import usePrevious from 'shared/hooks/usePrevious';
@@ -206,7 +206,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(options?.storagePath || config.storagePath);
-  const { auth: { user } } = useStore();
+  const { auth: { user }, userSettings } = useStore();
   const prevSearch = usePrevious(location.search, undefined);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
   const [ pathChange, setPathChange ] = useState<PathChange<T>>(defaultPathChange);
@@ -318,46 +318,33 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     await updateSettings(newSettings);
   }, [ config.settings, updateSettings ]);
 
-  const fetchUserSetting = useCallback(async () => {
-    if (!user?.id) return;
-    try {
-      const userSettingResponse = await getUserSetting({});
-      userSettingResponse.settings.forEach((setting) => {
-        const {
-          key,
-          value,
-          storagePath,
-        } = setting;
-        const jsonValue = JSON.parse(value ?? '');
-        const config = configMap[key];
-        if (!config) return;
-        const isValid = validateSetting(config, jsonValue);
-        const isDefault = isEqual(config.defaultValue, jsonValue);
+  const decodeUserSettings = useCallback(() => {
+    userSettings.forEach((setting) => {
+      const {
+        key,
+        value,
+        storagePath,
+      } = setting;
+      const jsonValue = JSON.parse(value ?? '');
+      const config = configMap[key];
+      if (!config) return;
+      const isValid = validateSetting(config, jsonValue);
+      const isDefault = isEqual(config.defaultValue, jsonValue);
 
-        // Store or clear setting if `storageKey` is available.
-        if (config.storageKey && isValid) {
-          if (jsonValue === undefined || isDefault) {
-            storage.remove(config.storageKey, storagePath);
-          } else {
-            storage.set(config.storageKey, jsonValue, storagePath);
-          }
+      // Store or clear setting if `storageKey` is available.
+      if (config.storageKey && isValid) {
+        if (jsonValue === undefined || isDefault) {
+          storage.remove(config.storageKey, storagePath);
+        } else {
+          storage.set(config.storageKey, jsonValue, storagePath);
         }
-      });
-    } catch (e) {
-      handleError(e, {
-        isUserTriggered: false,
-        publicMessage: 'Unable to fetch user settings.',
-        publicSubject: 'GET user settings failed',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-
-  }, [ configMap, storage, user?.id ]);
+      }
+    });
+  }, [ configMap, storage, userSettings ]);
 
   useEffect(() => {
-    fetchUserSetting();
-  }, [ fetchUserSetting ]);
+    decodeUserSettings();
+  }, [ decodeUserSettings ]);
 
   useEffect(() => {
     if (location.search === prevSearch) return;
