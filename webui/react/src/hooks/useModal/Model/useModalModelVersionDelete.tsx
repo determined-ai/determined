@@ -1,5 +1,5 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -25,10 +25,6 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
 
   const { canDeleteModelVersion } = usePermissions();
-
-  const isDeletable = useMemo(() => {
-    return canDeleteModelVersion({ modelVersion });
-  }, [ canDeleteModelVersion, modelVersion ]);
 
   const handleOnClose = useCallback(() => {
     setModelVersion(undefined);
@@ -58,7 +54,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
   }, [ modelVersion ]);
 
   const getModalProps = useCallback((modelVersion: ModelVersion): ModalFuncProps => {
-    return isDeletable ? {
+    return canDeleteModelVersion({ modelVersion }) ? {
       closable: true,
       content: `
         Are you sure you want to delete this version
@@ -72,7 +68,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
       onOk: handleOk,
       title: 'Confirm Delete',
     } : clone(CANNOT_DELETE_MODAL_PROPS);
-  }, [ handleOk, isDeletable ]);
+  }, [ canDeleteModelVersion, handleOk ]);
 
   const modalOpen = useCallback((modelVersion: ModelVersion) => setModelVersion(modelVersion), []);
 

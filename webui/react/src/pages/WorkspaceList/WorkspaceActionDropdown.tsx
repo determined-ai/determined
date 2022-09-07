@@ -45,14 +45,6 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
-  const canDelete = useMemo(() => {
-    return canDeleteWorkspace({ workspace });
-  }, [ canDeleteWorkspace, workspace ]);
-
-  const canModify = useMemo(() => {
-    return canModifyWorkspace({ workspace });
-  }, [ canModifyWorkspace, workspace ]);
-
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {
       try {
@@ -123,27 +115,25 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
     } ];
 
-    if (canModify && !workspace.archived) {
-      menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
-    }
-    if (canModify) {
+    if (canModifyWorkspace({ workspace })) {
+      if (!workspace.archived) {
+        menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
+      }
       menuItems.push({
         key: MenuKey.SWITCH_ARCHIVED,
         label: workspace.archived ? 'Unarchive' : 'Archive',
       });
     }
-    if (canDelete && workspace.numExperiments === 0) {
+    if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });
       menuItems.push({ key: MenuKey.DELETE, label: 'Delete...' });
     }
     return <Menu items={menuItems} onClick={onItemClick} />;
   }, [
-    canDelete,
-    canModify,
+    canDeleteWorkspace,
+    canModifyWorkspace,
     handlePinClick,
-    workspace.pinned,
-    workspace.archived,
-    workspace.numExperiments,
+    workspace,
     handleEditClick,
     handleArchiveClick,
     handleDeleteClick,

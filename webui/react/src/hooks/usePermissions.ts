@@ -1,17 +1,15 @@
 import { useStore } from 'contexts/Store';
-import { ExperimentPermissionsArgs, ModelItem, ModelVersion, Project } from 'types';
 import {
-  canDeleteExperiment,
-  canDeleteModel,
-  canDeleteModelVersion,
-  canDeleteWorkspace,
-  canDeleteWorkspaceProjects,
-  canModifyWorkspace,
-  canModifyWorkspaceProjects,
-  canMoveExperiment,
-  canMoveWorkspaceProjects,
-  PermissionWorkspace,
-} from 'utils/role';
+  DetailedUser,
+  ExperimentPermissionsArgs,
+  ModelItem,
+  ModelVersion,
+  Permission,
+  Project,
+  ProjectExperiment,
+  UserAssignment,
+  UserRole,
+} from 'types';
 
 interface ModelPermissionsArgs {
   model: ModelItem;
@@ -24,6 +22,11 @@ interface ModelVersionPermissionsArgs {
 interface ProjectPermissionsArgs {
   project?: Project;
   workspace?: PermissionWorkspace;
+}
+
+interface PermissionWorkspace {
+  id: number;
+  userId?: number;
 }
 
 interface WorkspacePermissionsArgs {
@@ -104,6 +107,143 @@ const usePermissions = (): PermissionsHook => {
       userRoles,
     ),
   };
+};
+
+// Permissions inside this workspace scope (no workspace = cluster-wide scope)
+const relevantPermissions = (
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+  workspaceId?: number,
+): Set<string> => {
+  if (!userAssignments || !userRoles) {
+    // console.error('missing UserAssignment or UserRole');
+    return new Set<string>();
+  }
+  const relevantAssigned = userAssignments.filter((a) => a.cluster ||
+    (workspaceId && a.workspaces && a.workspaces.includes(workspaceId))).map((a) => a.name);
+  let permissions = Array<Permission>();
+  userRoles.filter((r) => relevantAssigned.includes(r.name)).forEach((r) => {
+    // TODO: is it possible a role is assigned to this workspace,
+    // but not all of its permissions?
+    permissions = permissions.concat(r.permissions.filter((p) => p.globalOnly || workspaceId));
+  });
+  return new Set<string>(permissions.map((p) => p.name));
+};
+
+// Experiment actions
+const canDeleteExperiment = (
+  experiment: ProjectExperiment,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
+  return !!experiment && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
+    : permitted.has('delete_experiment');
+};
+
+const canMoveExperiment = (
+  experiment: ProjectExperiment,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
+  return !!experiment && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
+    : permitted.has('move_experiment');
+};
+
+// Model and ModelVersion actions
+const canDeleteModel = (
+  model: ModelItem,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!model && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === model.userId)
+    : permitted.has('delete_model');
+};
+
+const canDeleteModelVersion = (
+  modelVersion?: ModelVersion,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!modelVersion && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === modelVersion.userId)
+    : permitted.has('delete_model_version');
+};
+
+// Project actions
+// Currently the smallest scope is workspace
+const canDeleteWorkspaceProjects = (
+  workspace?: PermissionWorkspace,
+  project?: Project,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && !!user && !!project &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
+    : permitted.has('delete_projects');
+};
+
+const canModifyWorkspaceProjects = (
+  workspace?: PermissionWorkspace,
+  project?: Project,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && !!user && !!project &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
+    : permitted.has('modify_projects');
+};
+
+const canMoveWorkspaceProjects = (
+  workspace?: PermissionWorkspace,
+  project?: Project,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && !!user && !!project &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
+    : permitted.has('move_projects');
+};
+
+// Workspace actions
+const canDeleteWorkspace = (
+  workspace?: PermissionWorkspace,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
+    : permitted.has('delete_workspace');
+};
+
+const canModifyWorkspace = (
+  workspace?: PermissionWorkspace,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && !!user &&
+    permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
+    : permitted.has('modify_workspace');
 };
 
 export default usePermissions;
