@@ -17,6 +17,7 @@ import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
 import "determined/api/v1/project.proto";
+import "determined/api/v1/rbac.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
@@ -1666,6 +1667,79 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
+    };
+  }
+
+  rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search/by-ids"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest) returns (GetRolesAssignedToUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/search/by-user/{user_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest) returns (GetRolesAssignedToGroupResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/search/by-group/{group_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest) returns (SearchRolesAssignableToScopeResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // ListRoles returns roles and groups/users granted that role.
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // AssignRoles adds a set of role assignments to the system.
+  rpc AssignRoles(AssignRolesRequest) returns (AssignRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/add-assignments"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // RemoveAssignments removes a set of role assignments from the system.
+  rpc RemoveAssignments(RemoveAssignmentsRequest)
+      returns (RemoveAssignmentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/remove-assignments"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
     };
   }
 }
