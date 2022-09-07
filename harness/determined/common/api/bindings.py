@@ -75,6 +75,34 @@ class ExpCompareTrialsSampleResponseExpTrial:
             "experimentId": self.experimentId,
         }
 
+class ExperimentFilterRestriction(enum.Enum):
+    UNSPECIFIED = "UNSPECIFIED"
+    INCLUDE = "INCLUDE"
+    EXCLUDE = "EXCLUDE"
+
+class GetExperimentsRequestExperimentFilter:
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+        restriction: "typing.Optional[ExperimentFilterRestriction]" = None,
+    ):
+        self.restriction = restriction
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "GetExperimentsRequestExperimentFilter":
+        return cls(
+            restriction=ExperimentFilterRestriction(obj["restriction"]) if obj.get("restriction", None) is not None else None,
+            experimentIds=obj.get("experimentIds", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "restriction": self.restriction.value if self.restriction is not None else None,
+            "experimentIds": self.experimentIds if self.experimentIds is not None else None,
+        }
+
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -7631,6 +7659,8 @@ def get_GetExperiments(
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
+    experimentFilter_experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+    experimentFilter_restriction: "typing.Optional[ExperimentFilterRestriction]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
@@ -7645,6 +7675,8 @@ def get_GetExperiments(
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "description": description,
+        "experimentFilter.experimentIds": experimentFilter_experimentIds,
+        "experimentFilter.restriction": experimentFilter_restriction.value if experimentFilter_restriction is not None else None,
         "labels": labels,
         "limit": limit,
         "name": name,

@@ -43,6 +43,17 @@ message GetExperimentResponse {
 
 // Get a list of experiments.
 message GetExperimentsRequest {
+  // filtering by experiment ids
+  message ExperimentFilter {
+    enum Restriction {
+      UNSPECIFIED = 0;
+      INCLUDE     = 1;
+      EXCLUDE     = 2;
+    }
+    Restriction restriction       = 1;
+    repeated int32 experiment_ids = 2;
+  }
+
   // Sorts experiments by the given field.
   enum SortBy {
     // Returns experiments in an unsorted list.
@@ -104,6 +115,8 @@ message GetExperimentsRequest {
   // Limit experiments to those within a specified project, or 0 for all
   // projects.
   int32 project_id = 12;
+  // filtering by experiment ids
+  ExperimentFilter experimentFilter = 13;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {

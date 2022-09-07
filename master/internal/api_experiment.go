@@ -390,6 +390,15 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
+	if req.ExperimentFilter != nil {
+		expRestriction := req.ExperimentFilter.Restriction.String()
+		if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[1] {
+			query = query.Where("e.id IN (?)", bun.In(req.ExperimentFilter.ExperimentIds))
+		} else if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[2] {
+			query = query.Where("e.id NOT IN (?)", bun.In(req.ExperimentFilter.ExperimentIds))
+		}
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
