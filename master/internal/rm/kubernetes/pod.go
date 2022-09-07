@@ -79,6 +79,8 @@ type PodSlotResourceRequests struct {
 // FluentConfig stores k8s-configurable Fluent Bit-related options.
 type FluentConfig struct {
 	Image string `json:"image"`
+	UID   int    `json:"uid"`
+	GID   int    `json:"gid"`
 }
 
 // DefaultFluentConfig stores defaults for k8s-configurable Fluent Bit-related options.
