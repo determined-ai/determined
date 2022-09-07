@@ -609,8 +609,16 @@ const ProjectDetails: React.FC = () => {
           return Promise.resolve();
       }
     }));
-  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, user,
-    userAssignments, userRoles ]);
+  }, [
+    settings.row,
+    openMoveModal,
+    project?.workspaceId,
+    project?.id,
+    experimentMap,
+    user,
+    userAssignments,
+    userRoles,
+  ]);
 
   const submitBatchAction = useCallback(async (action: Action) => {
     try {

@@ -15,6 +15,7 @@ const relevantPermissions = (
   workspaceId?: number,
 ): Set<string> => {
   if (!userAssignments || !userRoles) {
+    // console.error('missing UserAssignment or UserRole');
     return new Set<string>();
   }
   const relevantAssigned = userAssignments.filter((a) => a.cluster ||

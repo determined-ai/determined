@@ -3,6 +3,7 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
 
+import { useStore } from 'contexts/Store';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -63,6 +64,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
   } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
+
+  const { userAssignments, userRoles } = useStore();
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
@@ -157,7 +160,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser).map((action) => (
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser, userAssignments,
+    userRoles).map((action) => (
     { danger: action === Action.Delete, key: action, label: action }
   ));
 
