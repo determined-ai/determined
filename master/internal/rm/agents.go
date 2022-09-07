@@ -34,7 +34,7 @@ func initializeAgents(
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
 	e.PATCH("/agents*", api.Route(system, nil),
-		echo.MiddlewareFunc(user.GetService().ProcessAdminAuthentication))
+		echo.MiddlewareFunc(user.GetService().ProcessAuthentication))
 }
 
 type agents struct {
