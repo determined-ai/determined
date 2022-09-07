@@ -905,8 +905,8 @@ func (a *apiServer) PatchExperiment(
 			Description: exp.Description,
 			Name:        exp.Name,
 		}
-		marshalledPatches, err := json.Marshal(patches)
-		if err != nil {
+		marshalledPatches, patchErr := json.Marshal(patches)
+		if patchErr != nil {
 			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
 		}
 
