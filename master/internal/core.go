@@ -815,6 +815,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
+	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
+	adminAuthFuncs := []echo.MiddlewareFunc{userService.ProcessAdminAuthentication}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
 		HTTPAuth: userService.ProcessProxyAuthentication,
@@ -882,8 +884,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
-	m.echo.Use(userService.ProcessAuthentication)
-
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
@@ -908,7 +908,7 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
-	tasksGroup := m.echo.Group("/tasks")
+	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
 
@@ -937,6 +937,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.db,
 		m.rm,
 		m.taskLogger,
+		authFuncs...,
 	)
 
 	if err = m.closeOpenAllocations(); err != nil {
@@ -1003,25 +1004,25 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
+	m.echo.GET("/config", api.Route(m.getConfig), adminAuthFuncs...)
 	m.echo.GET("/info", api.Route(m.getInfo))
-	m.echo.GET("/logs", api.Route(m.getMasterLogs))
+	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
-	experimentsGroup := m.echo.Group("/experiments")
+	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/file/download", m.getExperimentModelFile)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
-	searcherGroup := m.echo.Group("/searcher")
+	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
 
-	trialsGroup := m.echo.Group("/trials")
+	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
-	resourcesGroup := m.echo.Group("/resources")
+	resourcesGroup := m.echo.Group("/resources", authFuncs...)
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
@@ -1032,20 +1033,23 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 
-	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
+	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)), authFuncs...)
 	m.echo.Any(
 		"/debug/pprof/cmdline",
 		echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)),
+		authFuncs...,
 	)
 	m.echo.Any(
 		"/debug/pprof/profile",
 		echo.WrapHandler(http.HandlerFunc(pprof.Profile)),
+		authFuncs...,
 	)
 	m.echo.Any(
 		"/debug/pprof/symbol",
 		echo.WrapHandler(http.HandlerFunc(pprof.Symbol)),
+		authFuncs...,
 	)
-	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)), authFuncs...)
 
 	if m.config.Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
@@ -1060,8 +1064,8 @@ func (m *Master) Run(ctx context.Context) error {
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
 
-	user.RegisterAPIHandler(m.echo, userService)
-	template.RegisterAPIHandler(m.echo, m.db)
+	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
+	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	telemetry.Setup(
 		m.system,
