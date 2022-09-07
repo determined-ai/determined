@@ -295,7 +295,7 @@ const CodeViewer: React.FC<Props> = ({
 
     const filePath = String(activeFile?.key);
     if (filePath.includes('Configuration')) {
-      const isRuntimeConf = filePath.includes('runtime');
+      const isRuntimeConf = filePath.toLowerCase().includes('runtime');
       const url = isRuntimeConf
         ? URL.createObjectURL(new Blob([ runtimeConfig ]))
         : URL.createObjectURL(new Blob([ submittedConfig as string ]));
