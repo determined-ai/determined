@@ -8,18 +8,17 @@ import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { DetailedUser, Workspace } from 'types';
+import { Workspace } from 'types';
 
 import WorkspaceActionDropdown from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
 
 interface Props {
-  curUser?: DetailedUser;
   fetchWorkspaces?: () => void;
   workspace: Workspace;
 }
 
-const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }: Props) => {
+const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
 
   const handleCardClick = useCallback(() => {
     routeToReactUrl(paths.workspaceDetails(workspace.id));

@@ -10,18 +10,17 @@ import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown
 import { patchWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { DetailedUser, Workspace } from 'types';
+import { Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
 
 interface Props {
-  curUser?: DetailedUser;
   fetchWorkspace: () => void;
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWorkspace }: Props) => {
+const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate(
     { workspaceId: workspace.id },
   );

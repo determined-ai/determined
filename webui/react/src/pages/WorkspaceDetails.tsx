@@ -370,7 +370,6 @@ const WorkspaceDetails: React.FC = () => {
       containerRef={pageRef}
       headerComponent={(
         <WorkspaceDetailsHeader
-          curUser={user}
           fetchWorkspace={fetchAll}
           workspace={workspace}
         />
