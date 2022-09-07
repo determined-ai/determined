@@ -4,6 +4,15 @@ import os
 
 import attrdict
 import determined as det
+import logging
+import math
+import os
+
+import torch
+import torch.nn.functional as F
+import torch.utils.checkpoint
+from accelerate import Accelerator
+from accelerate.logging import get_logger
 from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
@@ -11,11 +20,16 @@ from diffusers import (
     StableDiffusionPipeline,
     UNet2DConditionModel,
 )
-from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
+from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
+from torch import autocast
 from torch.utils.data import DataLoader
-
+from tqdm.auto import tqdm
+from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
+from train import train
+
+logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
 
 if __name__ == "__main__":
@@ -70,7 +84,7 @@ if __name__ == "__main__":
 
         # Extend the size of the text_encoder to account for the new placeholder_token
         text_encoder.resize_token_embeddings(len(tokenizer))
-        # Initalize the placeholder_token vector to coincide with teh initializer_token vector
+        # Initalize the placeholder_token vector to coincide with the initializer_token vector
         token_embeds = text_encoder.get_input_embeddings().weight.data
         token_embeds[placeholder_token_id] = token_embeds[initializer_token_id]
 
@@ -102,23 +116,35 @@ if __name__ == "__main__":
             split="train",
         )
 
-        def create_dataloader(train_batch_size=1):
-            return DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
+        print(80 * "=", "TRAINING", 80 * "=", sep="\n")
 
-        noise_scheduler = DDPMScheduler(
-            beta_start=0.00085,
-            beta_end=0.012,
-            beta_schedule="scaled_linear",
-            num_train_timesteps=1000,
-            tensor_format="pt",
+        train(
+            train_dataset=train_dataset,
+            placeholder_token=hparams.placeholder_token,
+            placeholder_token_id=placeholder_token_id,
+            text_encoder=text_encoder,
+            tokenizer=tokenizer,
+            vae=vae,
+            unet=unet,
+            train_batch_size=hparams.train_batch_size,
+            gradient_accumulation_steps=hparams.gradient_accumulation_steps,
+            learning_rate=hparams.learning_rate,
+            max_train_steps=hparams.max_train_steps,  # Original 3000, edited for speed
+            output_dir=hparams.output_dir,
+            scale_lr=True,
+            core_context=core_context,
         )
 
-        hyperparameters = {
-            "learning_rate": 5e-04,
-            "scale_lr": True,
-            "max_train_steps": 3000,
-            "train_batch_size": 1,
-            "gradient_accumulation_steps": 4,
-            "seed": 42,
-            "output_dir": "sd-concept-output",
-        }
+        print(80 * "=", "INFERENCE", 80 * "=", sep="\n")
+
+        pipe = StableDiffusionPipeline.from_pretrained(
+            hparams.output_dir, torch_dtype=torch.float16
+        ).to("cuda")
+
+        with autocast("cuda"):
+            images = pipe(
+                list(hparams.prompts),
+                num_inference_steps=hparams.num_inference_steps,
+                guidance_scale=hparams.guidance_scale,
+            )["sample"]
+            print(images)
