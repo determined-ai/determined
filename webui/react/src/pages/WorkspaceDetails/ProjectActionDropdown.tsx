@@ -2,16 +2,15 @@ import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
+import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { DetailedUser, Project } from 'types';
 import handleError from 'utils/error';
-import { canModifyWorkspaceProjects } from 'utils/role';
 
 interface Props {
   children?: React.ReactNode;
@@ -30,7 +29,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
   {
-    project, children, curUser, onVisibleChange, showChildrenIfEmpty = true,
+    project, children, onVisibleChange, showChildrenIfEmpty = true,
     className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
   }
   : Props,
@@ -48,11 +47,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     modalOpen: openProjectEdit,
   } = useModalProjectEdit({ onClose: onComplete, project });
 
-  const { userAssignments, userRoles } = useStore();
-
-  const canModifyProjects = useMemo(() => {
-    return canModifyWorkspaceProjects(workspace, curUser, userAssignments, userRoles);
-  }, [ curUser, userAssignments, userRoles ]);
+  const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
   const handleEditClick = useCallback(() => openProjectEdit(), [ openProjectEdit ]);
 
@@ -100,26 +95,33 @@ const ProjectActionDropdown: React.FC<Props> = (
     };
 
     const items: MenuProps['items'] = [];
-    if (canModifyProjects && !project.archived) {
+    if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived) {
       items.push({ key: MenuKey.EDIT, label: 'Edit...' });
+    }
+    if (canMoveProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived) {
       items.push({ key: MenuKey.MOVE, label: 'Move...' });
     }
-    if (canModifyProjects && !workspaceArchived) {
+    if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !workspaceArchived) {
       const label = project.archived ? 'Unarchive' : 'Archive';
       items.push({ key: MenuKey.SWITCH_ARCHIVED, label: label });
     }
-    if (canModifyProjects && !project.archived && project.numExperiments === 0) {
+    if (canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived && project.numExperiments === 0) {
       items.push({ danger: true, key: MenuKey.DELETE, label: 'Delete...' });
     }
     return { items: items, onClick: onItemClick };
   }, [
+    canDeleteProjects,
     canModifyProjects,
+    canMoveProjects,
     handleArchiveClick,
     handleDeleteClick,
     handleEditClick,
     handleMoveClick,
-    project.archived,
-    project.numExperiments,
+    project,
     workspaceArchived,
   ]);
 
