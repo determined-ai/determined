@@ -95,7 +95,9 @@ class TextualInversionDataset(Dataset):
         if self.center_crop:
             crop_size = min(image_t.shape[-1], image_t.shape[-2])
             image_t = transforms.CenterCrop(crop_size)(image_t)
-        image_t = transforms.Resize(self.size, interpolation=self.interpolation)(image_t)
+        image_t = transforms.Resize((self.size, self.size), interpolation=self.interpolation)(
+            image_t
+        )
         # Normalize the tensor to be in the range [-1, 1]
         image_t = (image_t - 0.5) * 2.0
         example["pixel_values"] = image_t
