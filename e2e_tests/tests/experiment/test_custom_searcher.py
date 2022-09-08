@@ -263,11 +263,11 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
     # 16 trials in rung 1 (#batches = 187)
-    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
+    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
     # at least 4 trials in rung 2 (#batches = 750)
-    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
+    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
     # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
+    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -326,11 +326,11 @@ def test_run_asha_searcher_exp_core_api(exp_name: str, exception_points: List[st
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
 
     # 16 trials in rung 1 (#batches = 187)
-    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
+    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
     # at least 4 trials in rung 2 (#batches = 750)
-    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
+    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
     # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
+    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -442,11 +442,11 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
     # 16 trials in rung 1 (#batches = 187)
-    assert sum([t.totalBatchesProcessed >= 187 for t in response_trials]) == 16
+    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
     # at least 4 trials in rung 2 (#batches = 750)
-    assert sum([t.totalBatchesProcessed >= 750 for t in response_trials]) >= 4
+    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
     # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum([t.totalBatchesProcessed == 3000 for t in response_trials]) >= 1
+    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
