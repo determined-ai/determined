@@ -237,14 +237,15 @@ class AMPTestDataset(OnesDataset):
         "large": 2e4,
     }
 
-    def __init__(self, stages: Iterable[str]) -> None:
+    def __init__(self, stages: Iterable[str], aggregation_freq: int = 1) -> None:
         self.stages = stages
+        self._agg_freq = aggregation_freq
 
     def __len__(self) -> int:
-        return len(self.stages)
+        return len(self.stages) * self._agg_freq
 
     def __getitem__(self, index: int) -> Tuple:
-        x = self.STAGE_DATUM[self.stages[index]]
+        x = self.STAGE_DATUM[self.stages[index // self._agg_freq]]
         return torch.Tensor([float(x)]), torch.Tensor([float(x)])
 
 
@@ -261,10 +262,12 @@ class OneVarAMPBaseTrial(OneVarTrial):
         + 4 * ["one"]
         + []
     )
+    _agg_freq = 1
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         return pytorch.DataLoader(
-            AMPTestDataset(self._stages), batch_size=self.context.get_per_slot_batch_size()
+            AMPTestDataset(self._stages, self._agg_freq),
+            batch_size=self.context.get_per_slot_batch_size(),
         )
 
 
@@ -288,6 +291,10 @@ class OneVarApexAMPTrial(OneVarAMPBaseTrial):
         metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
         metrics["stage"] = self._stages[batch_idx]
         return metrics
+
+
+class OneVarApexAMPAggregationTrial(OneVarApexAMPTrial):
+    _agg_freq = 2
 
 
 class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
@@ -314,6 +321,10 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
         # self.scaler.update() gets called after this method returns
         metrics["stage"] = self._stages[batch_idx]
         return metrics
+
+
+class OneVarAutoAMPAggregationTrial(OneVarAutoAMPTrial):
+    _agg_freq = 2
 
 
 class OneVarManualAMPTrial(OneVarAMPBaseTrial):
@@ -373,6 +384,10 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
             output = self.model(data)
             loss = self.loss_fn(output, label)
         return {"val_loss": loss}
+
+
+class OneVarManualAMPAggregationTrial(OneVarManualAMPTrial):
+    _agg_freq = 2
 
 
 if __name__ == "__main__":

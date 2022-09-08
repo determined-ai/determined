@@ -669,13 +669,18 @@ class TestPyTorchTrial:
 
     @pytest.mark.parallel
     def test_gradient_aggregation(self) -> None:
+        AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
-            self.hparams, 1, pytorch_onevar_model.OneVarTrial._searcher_metric,
+            self.hparams,
+            scheduling_unit=1,
+            searcher_metric=pytorch_onevar_model.OneVarTrial._searcher_metric,
         )
-        exp_config["optimizations"].update({
-            "aggregation_frequency": 2,
-            "average_aggregated_gradients": True,
-        })
+        exp_config["optimizations"].update(
+            {
+                "aggregation_frequency": AGG_FREQ,
+                "average_aggregated_gradients": True,
+            }
+        )
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
@@ -684,7 +689,7 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             # Check the gradient update at every step.
-            for idx, batch_metrics in enumerate(training_metrics):
+            for idx, batch_metrics in enumerate(training_metrics[AGG_FREQ - 1 :: AGG_FREQ]):
                 pytorch_onevar_model.OneVarTrial.check_batch_metrics(
                     batch_metrics,
                     idx,
@@ -757,9 +762,9 @@ class TestPyTorchTrial:
     @pytest.mark.parametrize(
         "trial_class",
         [
-            pytorch_onevar_model.OneVarApexAMPTrial,
-            pytorch_onevar_model.OneVarAutoAMPTrial,
-            pytorch_onevar_model.OneVarManualAMPTrial,
+            pytorch_onevar_model.OneVarApexAMPAggregationTrial,
+            pytorch_onevar_model.OneVarAutoAMPAggregationTrial,
+            pytorch_onevar_model.OneVarManualAMPAggregationTrial,
         ],
         ids=[
             "apex",
@@ -768,8 +773,7 @@ class TestPyTorchTrial:
         ],
     )
     def test_amp_with_gradient_aggregation(self, trial_class) -> None:
-        """Similar to test_amp but with gradient aggregation.
-        """
+        """Similar to test_amp but with gradient aggregation."""
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
 
@@ -777,13 +781,18 @@ class TestPyTorchTrial:
         hparams = dict(self.hparams)
         hparams["global_batch_size"] = 1
 
+        AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
-            hparams, 1, trial_class._searcher_metric,
+            hparams,
+            scheduling_unit=1,
+            searcher_metric=trial_class._searcher_metric,
         )
-        exp_config["optimizations"].update({
-            "aggregation_frequency": 2,
-            "average_aggregated_gradients": True,
-        })
+        exp_config["optimizations"].update(
+            {
+                "aggregation_frequency": AGG_FREQ,
+                "average_aggregated_gradients": True,
+            }
+        )
 
         training_metrics = {}
 
@@ -825,15 +834,23 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
 
 
 def amp_metrics_test(trial_class, training_metrics):
+    agg_freq = 2
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
     growth_countdown = GROWTH_INTERVAL
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
-    for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
+    for idx, (metrics, next_metrics) in enumerate(
+        zip(
+            training_metrics[agg_freq - 1 : -agg_freq : agg_freq],
+            training_metrics[agg_freq::agg_freq],
+        )
+    ):
+        if idx % agg_freq != 0:
+            continue
         # Because the scaler is updated during the optimizer step, which occurs after training from
-        #  a batch, the metrics dictionary may not have the updated scale, but we can get it
+        #  a (mini-)batch, the metrics dictionary may not have the updated scale, but we can get it
         #  from the next step.
         scale = next_metrics["scale_before"]
         if "scale" in metrics:
