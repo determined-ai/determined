@@ -766,8 +766,8 @@ const ProjectDetails: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    fetchExperiments();
     setIsLoading(true);
+    fetchExperiments();
   }, [
     fetchExperiments,
     settings.archived,
