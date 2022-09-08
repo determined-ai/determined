@@ -6,36 +6,38 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-type ArchiveWriter interface {
+type archiveWriter interface {
 	WriteFileHeader(fname string, size int64) error
 	Write(b []byte) (int, error)
 }
 
-type TarArchiveWriter struct {
+type tarArchiveWriter struct {
 	tw *tar.Writer
 }
 
-func (aw *TarArchiveWriter) WriteFileHeader(fname string, size int64) error {
+func (aw *tarArchiveWriter) WriteFileHeader(fname string, size int64) error {
 	hdr := tar.Header{
 		Name: fname,
 		Mode: 0666,
-		Size: int64(size),
+		Size: size,
 	}
 	if strings.HasSuffix(fname, "/") {
 		// This a directory
@@ -44,16 +46,16 @@ func (aw *TarArchiveWriter) WriteFileHeader(fname string, size int64) error {
 	return aw.tw.WriteHeader(&hdr)
 }
 
-func (aw *TarArchiveWriter) Write(p []byte) (int, error) {
+func (aw *tarArchiveWriter) Write(p []byte) (int, error) {
 	return aw.tw.Write(p)
 }
 
-type ZipArchiveWriter struct {
+type zipArchiveWriter struct {
 	zw        *zip.Writer
 	zwContent io.Writer
 }
 
-func (aw *ZipArchiveWriter) WriteFileHeader(fname string, size int64) error {
+func (aw *zipArchiveWriter) WriteFileHeader(fname string, size int64) error {
 	// Zip by default sets mode 0666 and 077 for files and folders respectively
 	zwc, err := aw.zw.Create(fname)
 	if err != nil {
@@ -63,7 +65,7 @@ func (aw *ZipArchiveWriter) WriteFileHeader(fname string, size int64) error {
 	return nil
 }
 
-func (aw *ZipArchiveWriter) Write(p []byte) (int, error) {
+func (aw *zipArchiveWriter) Write(p []byte) (int, error) {
 	var w io.Writer
 	if aw.zwContent == nil {
 		return 0, nil
@@ -72,13 +74,13 @@ func (aw *ZipArchiveWriter) Write(p []byte) (int, error) {
 	return w.Write(p)
 }
 
-type DelayWriter struct {
+type delayWriter struct {
 	delayBytes int
 	buf        []byte
 	next       io.Writer
 }
 
-func (w *DelayWriter) Write(p []byte) (int, error) {
+func (w *delayWriter) Write(p []byte) (int, error) {
 	if w.buf == nil {
 		return w.next.Write(p)
 	}
@@ -86,14 +88,15 @@ func (w *DelayWriter) Write(p []byte) (int, error) {
 	w.buf = append(w.buf, p...)
 	if len(w.buf) < w.delayBytes {
 		return len(p), nil
-	} else {
-		n, err := w.next.Write(w.buf)
-		w.buf = nil
-		return n, err
 	}
+
+	n, err := w.next.Write(w.buf)
+	w.buf = nil
+	return n, err
 }
 
-func (w *DelayWriter) Close() error {
+// Flush the buffer if it is nonempty.
+func (w *delayWriter) Close() error {
 	if w.buf != nil && len(w.buf) > 0 {
 		_, err := w.next.Write(w.buf)
 		return err
@@ -101,30 +104,27 @@ func (w *DelayWriter) Close() error {
 	return nil
 }
 
-func newDelayWriter(w io.Writer, delayBytes int) *DelayWriter {
-	return &DelayWriter{
+func newDelayWriter(w io.Writer, delayBytes int) *delayWriter {
+	return &delayWriter{
 		delayBytes: delayBytes,
 		buf:        make([]byte, 0, delayBytes),
 		next:       w,
 	}
 }
 
-// S3 APIs generally require a io.WriterAt, but we can only provide an io.Writer.  We could either
-// configure an elaborate buffer system to download in parallel but respond to the user serially, or
-// we can configure S3 with concurrency=1, and then it promises to download sequentially [1].  Then
-// we can just discard the extra arg of the WriteAt call.
-//
-// [1] https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#Downloader
-type S3SeqWriterAt struct {
+// S3SeqWriterAt satisfies S3 APIs' io.WriterAt interface while staying sequential.
+// Ref: https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#Downloader
+type s3SeqWriterAt struct {
 	next    io.Writer
 	written int64
 }
 
-func newS3SeqWriterAt(w io.Writer) *S3SeqWriterAt {
-	return &S3SeqWriterAt{next: w}
+func newS3SeqWriterAt(w io.Writer) *s3SeqWriterAt {
+	return &s3SeqWriterAt{next: w}
 }
 
-func (w *S3SeqWriterAt) WriteAt(p []byte, off int64) (int, error) {
+// WriteAt writes the content in buffer p.
+func (w *s3SeqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 	if off != w.written {
 		return 0, fmt.Errorf(
 			"only supporting sequential writes,"+
@@ -141,18 +141,19 @@ func (w *S3SeqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 }
 
 // BatchDownloadIterator implements s3's BatchDownloadIterator API.
-type BatchDownloadIterator struct {
+type batchDownloadIterator struct {
 	// The objects we are writing
 	objects []*s3.Object
 	// The output we are writing to
-	aw ArchiveWriter
+	aw archiveWriter
 	// Internal states
 	err    error
 	pos    int
 	bucket string
 }
 
-func (i *BatchDownloadIterator) Next() bool {
+// Next() returns true if the next item is available.
+func (i *batchDownloadIterator) Next() bool {
 	i.pos++
 	if i.pos == len(i.objects) {
 		return false
@@ -165,11 +166,13 @@ func (i *BatchDownloadIterator) Next() bool {
 	return true
 }
 
-func (i *BatchDownloadIterator) Err() error {
+// Err() eturns the error if any.
+func (i *batchDownloadIterator) Err() error {
 	return i.err
 }
 
-func (i *BatchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
+// DownloadObject() eturns a DownloadObject.
+func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 	return s3manager.BatchDownloadObject{
 		Object: ptrs.Ptr(s3.GetObjectInput{
 			Bucket: ptrs.Ptr(i.bucket),
@@ -179,9 +182,9 @@ func (i *BatchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 	}
 }
 
-func newBatchDownloadIterator(aw ArchiveWriter,
-	bucket string, objs []*s3.Object) *BatchDownloadIterator {
-	return &BatchDownloadIterator{
+func newBatchDownloadIterator(aw archiveWriter,
+	bucket string, objs []*s3.Object) *batchDownloadIterator {
+	return &batchDownloadIterator{
 		aw:      aw,
 		bucket:  bucket,
 		objects: objs,
@@ -201,11 +204,11 @@ func getAwsRegion() string {
 		return defaultRegion
 	}
 
-	defer resp.Body.Close()
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return defaultRegion
 	}
+	_ = resp.Body.Close()
 
 	var jsonObj map[string]interface{}
 	err = json.Unmarshal(bytes, &jsonObj)
@@ -226,7 +229,7 @@ func getAwsRegion() string {
 }
 
 func s3DownloadCheckpoint(
-	c echo.Context, aw ArchiveWriter, bucket string, prefix string,
+	c echo.Context, aw archiveWriter, bucket string, prefix string,
 ) error {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(getAwsRegion()),
@@ -240,7 +243,7 @@ func s3DownloadCheckpoint(
 
 	var errs []error
 	downloader := s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
-		d.Concurrency = 1 // Setting concurrency to 1 to use S3SeqWriterAt
+		d.Concurrency = 1 // Setting concurrency to 1 to use s3SeqWriterAt
 	})
 	funcReadPage := func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 		iter := newBatchDownloadIterator(aw, bucket, output.Contents)
@@ -279,7 +282,7 @@ func s3DownloadCheckpoint(
 }
 
 // It is assumed that a http status code is not sent until the first write to w.
-func buildWriterPipeline(w io.Writer, mimeType string) (ArchiveWriter, []io.Closer, error) {
+func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Closer, error) {
 	// DelayWriter delays the first write until we have successfully downloaded
 	// some bytes and are more confident that the download will succeed.
 	dw := newDelayWriter(w, 16*1024)
@@ -292,13 +295,13 @@ func buildWriterPipeline(w io.Writer, mimeType string) (ArchiveWriter, []io.Clos
 		tw := tar.NewWriter(gz)
 		closers = append(closers, tw)
 
-		return &TarArchiveWriter{tw}, closers, nil
+		return &tarArchiveWriter{tw}, closers, nil
 
 	case "application/zip":
 		zw := zip.NewWriter(dw)
 		closers = append(closers, zw)
 
-		return &ZipArchiveWriter{zw, nil}, closers, nil
+		return &zipArchiveWriter{zw, nil}, closers, nil
 
 	default:
 		return nil, nil, fmt.Errorf(
@@ -354,7 +357,10 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 	}
 
 	for i := len(closers) - 1; i >= 0; i-- {
-		closers[i].Close()
+		err = closers[i].Close()
+		if err != nil {
+			return err
+		}
 	}
 	c.Response().Flush()
 

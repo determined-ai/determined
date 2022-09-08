@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/google/uuid"
@@ -114,7 +115,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	return groupeIDcUUIDS, nil
 }
 
-// ExperimentConfigForCheckpoint looks up the experiment config of the checkpoint
+// ExperimentConfigForCheckpoint looks up the experiment config of the checkpoint.
 func (db *PgDB) ExperimentConfigForCheckpoint(id uuid.UUID) (*expconf.ExperimentConfig, error) {
 	checkpoint, err := db.CheckpointByUUID(id)
 	if err != nil {
@@ -129,8 +130,6 @@ func (db *PgDB) ExperimentConfigForCheckpoint(id uuid.UUID) (*expconf.Experiment
 	var config expconf.ExperimentConfig
 	err = json.Unmarshal(bytes, &config)
 	if err != nil {
-		fmt.Println("-->>-- err:", err)
-		return nil, err
 	}
 
 	return &config, nil
