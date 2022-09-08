@@ -25,6 +25,9 @@ const generateStrongWeak = (theme: Theme): Theme => {
 };
 
 const themeBase = {
+  // Color schemes
+  colorScheme: 'normal',
+
   // Font styles.
   fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
   fontFamilyCode: '"Source Code Pro", monospace',
@@ -150,6 +153,9 @@ const themeBase = {
 };
 
 const themeLight = {
+  // Color schemes
+  colorScheme: 'light',
+
   // Palette colors for strong/weak calculations.
   strong: 'rgba(0, 0, 0, 1.0)',
   weak: 'rgba(255, 255, 255, 1.0)',
@@ -189,6 +195,9 @@ const themeLight = {
 };
 
 const themeDark = {
+  // Color schemes
+  colorScheme: 'dark',
+
   // Palette colors for strong/weak calculations.
   strong: 'rgba(255, 255, 255, 1.0)',
   weak: 'rgba(0, 0, 0, 1.0)',

@@ -162,7 +162,13 @@ recommended to optimize how Determined interacts with Slurm:
    <https://slurm.schedmd.com/gres.html#GPU_Management>`__ such that Slurm can schedule nodes with
    the GPUs you want.
 
-   Minimally, Slurm must be configured for ``GresTypes=gpu``.
+   For the automatic selection of nodes with GPUs, Slurm must be configured for ``GresTypes=gpu``
+   and nodes with GPUs must have properly configured GRES indicating the presence of any GPUs. If
+   Slurm GRES cannot be properly configured, specify the :ref:`slurm section
+   <cluster-configuration-slurm>` ``gres_supported`` option to ``false``, and it is the user's
+   responsibility to ensure that GPUs will be available on nodes selected for the job using other
+   configurations such as targeting a specific resource pool with only GPU nodes, or specifying a
+   Slurm constraint in the experiment configuration.
 
 -  Ensure homogeneous Slurm partitions.
 

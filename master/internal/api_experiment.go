@@ -958,9 +958,6 @@ func (a *apiServer) CreateExperiment(
 			CanForkFromExperiment(*user, modelExp); err != nil {
 			return nil, status.Errorf(codes.PermissionDenied, err.Error())
 		}
-		if parentExp.Archived {
-			return nil, status.Errorf(codes.Internal, "forking an archived experiment")
-		}
 		if parentExp.ParentArchived {
 			return nil, status.Errorf(codes.Internal,
 				"forking an experiment in an archived workspace/project")
@@ -1108,7 +1105,6 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
-// TODO(nick) add trial authz to this.
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
@@ -1126,7 +1122,19 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 			"at least one trial id required",
 		)
 	}
+
+	var timeSinceLastAuth time.Time
 	for {
+		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			for _, trialID := range req.TrialId {
+				if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(trialID),
+					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+					return err
+				}
+			}
+			timeSinceLastAuth = time.Now()
+		}
+
 		var response apiv1.ExpCompareMetricNamesResponse
 
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,

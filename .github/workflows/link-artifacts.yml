@@ -5,20 +5,27 @@ on:
   status
 
 jobs:
-  link-artifacts:
+  link-storybook:
     runs-on: ubuntu-latest
     if: >-
       github.event.state == 'success' &&
-      github.event.context == 'test-e2e'
+      contains(github.event.context, 'build-storybook')
     steps:
-      # TODO(danh): remove this once we understand the incoming event webhook
-      # payload and can limit the conditional
-      - name: Debug
-        run:
-          echo '${{ toJSON(github.event) }}'
       - uses: larsoner/circleci-artifacts-redirector-action@master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           artifact-path: 0/webui/react/build-storybook/index.html
           circleci-jobs: build-storybook
           job-title: Check the rendered storybook here!
+  link-docs:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.state == 'success' &&
+      contains(github.event.context, 'build-docs')
+    steps:
+      - uses: larsoner/circleci-artifacts-redirector-action@master
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-path: 0/docs/site/html/index.html
+          circleci-jobs: build-docs
+          job-title: Check the rendered doc pages here!

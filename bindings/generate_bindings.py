@@ -658,7 +658,7 @@ def gen_paginated(defs: TypeDefs) -> typing.List[str]:
 
 def pybindings(swagger: dict) -> str:
     prefix = """
-# The contents of this file are programatically generated.
+# The contents of this file are programmatically generated.
 import enum
 import math
 import typing

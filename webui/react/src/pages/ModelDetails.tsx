@@ -7,6 +7,7 @@ import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'component
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
@@ -16,7 +17,7 @@ import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersio
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
-  archiveModel, getModelDetails, isNotFound, patchModel,
+  archiveModel, getModelDetails, patchModel,
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -24,7 +25,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { isAborted, validateDetApiEnum } from 'shared/utils/service';
+import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
@@ -352,8 +353,8 @@ const ModelDetails: React.FC = () => {
   if (!modelId) {
     return <Message title="Model name is empty" />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find model ${modelId}` :
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message =
       `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!model) {

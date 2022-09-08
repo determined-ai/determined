@@ -198,7 +198,7 @@ environments using :ref:`custom images <custom-docker-images>`:
    FROM determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.1
 
    # Create a virtual environment
-   RUN conda create -n myenv python=3.6
+   RUN conda create -n myenv python=3.8
    RUN eval "$(conda shell.bash hook)" && \
       conda activate myenv && \
       pip install scikit-learn
