@@ -392,10 +392,15 @@ func (a *apiServer) GetExperiments(
 
 	if req.ExperimentFilter != nil {
 		expRestriction := req.ExperimentFilter.Restriction.String()
+		experimentIds := make([]int32, 0)
+		if req.ExperimentFilter.ExperimentIds != nil {
+			experimentIds = append(experimentIds, req.ExperimentFilter.ExperimentIds...)
+		}
 		if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[1] {
-			query = query.Where("e.id IN (?)", bun.In(req.ExperimentFilter.ExperimentIds))
-		} else if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[2] {
-			query = query.Where("e.id NOT IN (?)", bun.In(req.ExperimentFilter.ExperimentIds))
+			query = query.Where("e.id = ANY (ARRAY[?]::integer[])", bun.In(experimentIds))
+		} else if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[2] &&
+			len(experimentIds) > 0 {
+			query = query.Where("NOT (e.id = ANY (ARRAY[?]::integer[]))", bun.In(experimentIds))
 		}
 	}
 

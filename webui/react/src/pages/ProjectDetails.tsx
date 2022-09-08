@@ -168,40 +168,33 @@ const ProjectDetails: React.FC = () => {
         labels: settings.label,
         limit: settings.tableLimit,
         name: settings.search,
-        offset: settings.tableOffset,
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
         projectId: id,
         sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
         states: validateDetApiEnumList(Determinedexperimentv1State, states),
         users: settings.user,
       };
-      const pinnedIds = settings.pinned
-        .filter((p) => p.projectId === Number(projectId))
-        .map((p) => p.experimentId);
-      const pinnedExperimentsResponse = await getExperiments(
+      const experimentIds = settings.pinned[id];
+      const pinnedExperimentsRequest = getExperiments(
         {
           ...experimentFilter,
-          experimentFilter: { experimentIds: pinnedIds, restriction: 'INCLUDE' },
+          experimentFilter: { experimentIds: experimentIds, restriction: 'RESTRICTION_INCLUDE' },
           offset: 0,
         },
         { signal: canceler.signal },
       );
-      const otherExperimentsResponse = await getExperiments(
+      const otherExperimentsRequest = getExperiments(
         {
           ...experimentFilter,
-          experimentFilter: { experimentIds: pinnedIds, restriction: 'EXCLUDE' },
+          experimentFilter: { experimentIds: experimentIds, restriction: 'RESTRICTION_EXCLUDE' },
+          offset: settings.tableOffset,
         },
         { signal: canceler.signal },
       );
-      const allExperiments = [
-        ...pinnedExperimentsResponse.experiments,
-        ...otherExperimentsResponse.experiments,
-      ];
-      setTotal(otherExperimentsResponse.pagination.total ?? 0);
-      setExperiments((prev) => {
-        if (isEqual(prev, allExperiments)) return prev;
-        return allExperiments;
-      });
+      const allRequests = [ pinnedExperimentsRequest, otherExperimentsRequest ];
+      const [ pinnedExpResponse, otherExpResponse ] = await Promise.all(allRequests);
+      setTotal(otherExpResponse.pagination.total ?? 0);
+      setExperiments([ ...pinnedExpResponse.experiments, ...otherExpResponse.experiments ]);
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
@@ -210,7 +203,6 @@ const ProjectDetails: React.FC = () => {
   }, [
     canceler.signal,
     id,
-    projectId,
     settings.archived,
     settings.label,
     settings.pinned,
@@ -802,6 +794,7 @@ const ProjectDetails: React.FC = () => {
     settings.sortDesc,
     settings.sortKey,
     settings.state,
+    settings.pinned,
     settings.tableLimit,
     settings.tableOffset,
     settings.user,
@@ -907,7 +900,7 @@ const ProjectDetails: React.FC = () => {
             ContextMenu={ContextMenu}
             dataSource={experiments}
             loading={isLoading}
-            numOfPinned={settings.pinned.filter((p) => p.projectId === Number(projectId)).length}
+            numOfPinned={settings.pinned[id]?.length ?? 0}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
@@ -954,6 +947,7 @@ const ProjectDetails: React.FC = () => {
     isLoading,
     total,
     handleTableRowSelect,
+    availableBatchActions,
     updateSettings,
     ExperimentTabOptions,
     project?.archived,
@@ -961,7 +955,7 @@ const ProjectDetails: React.FC = () => {
     handleDeleteNote,
     handleNewNotesPage,
     handleSaveNotes,
-    availableBatchActions,
+    id,
   ]);
 
   if (isNaN(id)) {

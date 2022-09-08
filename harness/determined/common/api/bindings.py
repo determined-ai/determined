@@ -76,9 +76,9 @@ class ExpCompareTrialsSampleResponseExpTrial:
         }
 
 class ExperimentFilterRestriction(enum.Enum):
-    UNSPECIFIED = "UNSPECIFIED"
-    INCLUDE = "INCLUDE"
-    EXCLUDE = "EXCLUDE"
+    RESTRICTION_UNSPECIFIED = "RESTRICTION_UNSPECIFIED"
+    RESTRICTION_INCLUDE = "RESTRICTION_INCLUDE"
+    RESTRICTION_EXCLUDE = "RESTRICTION_EXCLUDE"
 
 class GetExperimentsRequestExperimentFilter:
     def __init__(

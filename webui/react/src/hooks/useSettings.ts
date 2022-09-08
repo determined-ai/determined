@@ -34,7 +34,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-type GenericSettingsType = Primitive | Primitive[] | undefined;
+type GenericSettingsType = Primitive | Primitive[] | Record<number, number[]> | undefined;
 type GenericSettings = Record<string, GenericSettingsType>;
 type PathChange<T> = { querySettings: Partial<T>, type: PathChangeType }
 

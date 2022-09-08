@@ -1,4 +1,4 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined, PushpinOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
@@ -105,16 +105,19 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           break;
         }
         case Action.Pin: {
-          const pinList = Array.from(new Set([ ...settings.pinned, {
-            experimentId: id,
-            projectId: experiment.projectId,
-          } ]));
-          updateSettings({ pinned: pinList });
+          const newPinned = { ...settings.pinned };
+          const pinSet = new Set(newPinned[experiment.projectId]);
+          pinSet.add(id);
+          newPinned[experiment.projectId] = Array.from(pinSet);
+          updateSettings({ pinned: { ...newPinned } });
           break;
         }
         case Action.Unpin: {
-          const pinList = settings.pinned.filter((pin) => pin.experimentId !== id);
-          updateSettings({ pinned: pinList });
+          const newPinned = { ...settings.pinned };
+          const pinSet = new Set(newPinned[experiment.projectId]);
+          pinSet.delete(id);
+          newPinned[experiment.projectId] = Array.from(pinSet);
+          updateSettings({ pinned: { ...newPinned } });
           break;
         }
         case Action.Kill:
@@ -178,7 +181,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser)
     .filter((action) => {
-      const isPinned = settings.pinned.map((p) => p.experimentId).includes(experiment.id);
+      const isPinned = (settings.pinned[experiment.projectId] ?? []).includes(experiment.id);
       if ((isPinned && action === Action.Pin) || (!isPinned && action === Action.Unpin)) {
         return false;
       } else {
@@ -214,7 +217,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
-          <Icon name="overflow-vertical" />
+          {(settings.pinned[experiment.projectId] ?? []).includes(id) ?
+            <PushpinOutlined /> : <Icon name="overflow-vertical" />}
         </button>
       </Dropdown>
       {modalExperimentMoveContextHolder}

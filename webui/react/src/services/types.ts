@@ -65,7 +65,7 @@ export interface GetExperimentsParams extends PaginationParams {
   description?: string;
   experimentFilter?: {
     experimentIds: number[],
-    restriction: 'UNSPECIFIED' | 'INCLUDE' | 'EXCLUDE',
+    restriction: 'RESTRICTION_UNSPECIFIED' | 'RESTRICTION_INCLUDE' | 'RESTRICTION_EXCLUDE',
   }
   labels?: Array<string>;
   name?: string;

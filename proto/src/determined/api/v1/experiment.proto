@@ -45,12 +45,18 @@ message GetExperimentResponse {
 message GetExperimentsRequest {
   // filtering by experiment ids
   message ExperimentFilter {
+    // Filter restriction
     enum Restriction {
-      UNSPECIFIED = 0;
-      INCLUDE     = 1;
-      EXCLUDE     = 2;
+      // Return all experiments
+      RESTRICTION_UNSPECIFIED = 0;
+      //  Return experiments with the ids
+      RESTRICTION_INCLUDE = 1;
+      //  Return experiments without the ids
+      RESTRICTION_EXCLUDE = 2;
     }
-    Restriction restriction       = 1;
+    // Filter restriction
+    Restriction restriction = 1;
+    // Experiment ids to include or exclude experiments
     repeated int32 experiment_ids = 2;
   }
 
@@ -116,7 +122,7 @@ message GetExperimentsRequest {
   // projects.
   int32 project_id = 12;
   // filtering by experiment ids
-  ExperimentFilter experimentFilter = 13;
+  ExperimentFilter experiment_filter = 13;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
