@@ -334,6 +334,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
     slurm: Optional[List[str]] = None
+    pbs: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
@@ -347,6 +348,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
         slurm: Optional[List[str]] = None,
+        pbs: Optional[List[str]] = None,
     ) -> None:
         pass
 

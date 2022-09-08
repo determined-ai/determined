@@ -51,6 +51,7 @@ type EnvironmentConfigV0 struct {
 	RawForcePullImage *bool             `json:"force_pull_image"`
 	RawPodSpec        *PodSpec          `json:"pod_spec"`
 	RawSlurm          []string          `json:"slurm"`
+	RawPbs            []string          `json:"pbs"`
 
 	RawAddCapabilities  []string `json:"add_capabilities"`
 	RawDropCapabilities []string `json:"drop_capabilities"`
