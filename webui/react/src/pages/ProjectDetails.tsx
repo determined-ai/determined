@@ -194,7 +194,9 @@ const ProjectDetails: React.FC = () => {
       }, { signal: canceler.signal });
       const allRequests = [ pinnedExperimentsRequest, otherExperimentsRequest ];
       const [ pinnedExpResponse, otherExpResponse ] = await Promise.all(allRequests);
-      setTotal(otherExpResponse.pagination.total ?? 0);
+      setTotal(
+        (pinnedExpResponse.pagination.total ?? 0) + (otherExpResponse.pagination.total ?? 0),
+      );
       setExperiments([ ...pinnedExpResponse.experiments, ...otherExpResponse.experiments ]);
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
@@ -535,7 +537,6 @@ const ProjectDetails: React.FC = () => {
     users,
     project,
     experimentTags,
-    user,
     settings,
     updateSettings,
     handleActionComplete,
@@ -829,7 +830,7 @@ const ProjectDetails: React.FC = () => {
         </ExperimentActionDropdown>
       );
     },
-    [ user, project, settings, updateSettings, handleActionComplete ],
+    [ project, settings, updateSettings, handleActionComplete ],
   );
 
   const ExperimentTabOptions = useMemo(() => {
