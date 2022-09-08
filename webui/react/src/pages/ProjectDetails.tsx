@@ -1,5 +1,5 @@
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Collapse, Dropdown, Menu, Modal, Popconfirm, Space } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +7,6 @@ import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
-import ExperimentCard from 'components/ExperimentCard';
 import FilterCounter from 'components/FilterCounter';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
@@ -45,6 +44,7 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
+import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -163,42 +163,65 @@ const ProjectDetails: React.FC = () => {
       const states = (settings.state || []).map((state) => (
         encodeExperimentState(state as RunState)
       ));
-      const response = await getExperiments(
+      const experimentFilter: GetExperimentsParams = {
+        archived: settings.archived ? undefined : false,
+        labels: settings.label,
+        limit: settings.tableLimit,
+        name: settings.search,
+        offset: settings.tableOffset,
+        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+        projectId: id,
+        sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
+        states: validateDetApiEnumList(Determinedexperimentv1State, states),
+        users: settings.user,
+      };
+      const pinnedIds = settings.pinned
+        .filter((p) => p.projectId === Number(projectId))
+        .map((p) => p.experimentId);
+      const pinnedExperimentsResponse = await getExperiments(
         {
-          archived: settings.archived ? undefined : false,
-          labels: settings.label,
-          limit: settings.tableLimit,
-          name: settings.search,
-          offset: settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          projectId: id,
-          sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Determinedexperimentv1State, states),
-          users: settings.user,
+          ...experimentFilter,
+          experimentFilter: { experimentIds: pinnedIds, restriction: 'INCLUDE' },
+          offset: 0,
         },
         { signal: canceler.signal },
       );
-      setTotal(response.pagination.total ?? 0);
+      const otherExperimentsResponse = await getExperiments(
+        {
+          ...experimentFilter,
+          experimentFilter: { experimentIds: pinnedIds, restriction: 'EXCLUDE' },
+        },
+        { signal: canceler.signal },
+      );
+      const allExperiments = [
+        ...pinnedExperimentsResponse.experiments,
+        ...otherExperimentsResponse.experiments,
+      ];
+      setTotal(otherExperimentsResponse.pagination.total ?? 0);
       setExperiments((prev) => {
-        if (isEqual(prev, response.experiments)) return prev;
-        return response.experiments;
+        if (isEqual(prev, allExperiments)) return prev;
+        return allExperiments;
       });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal,
+  }, [
+    canceler.signal,
     id,
+    projectId,
     settings.archived,
     settings.label,
+    settings.pinned,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
     settings.state,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user ]);
+    settings.user,
+  ]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -863,43 +886,6 @@ const ProjectDetails: React.FC = () => {
     settings.archived,
     switchShowArchived ]);
 
-  const PinnedExperiments = useMemo(() => {
-    const getExtra = () => {
-      return (
-        <Popconfirm
-          cancelText="No"
-          okText="Yes"
-          title="Are you sure to unpin all across entire projects?"
-          onCancel={(e) => e?.stopPropagation()}
-          onConfirm={(e) => {
-            e?.stopPropagation();
-            updateSettings({ pinned: [] });
-          }}>
-          <DeleteOutlined onClick={(e) => e.stopPropagation()} />
-        </Popconfirm>
-      );
-    };
-
-    return (
-      <Collapse>
-        <Collapse.Panel extra={getExtra()} header="Pinned Experiments" key="1">
-          <div className={css.pinnedContainer}>
-            {experiments
-              .filter((experiment) => settings.pinned.includes(experiment.id))
-              .map((experiment) => (
-                <ExperimentCard
-                  experiment={experiment}
-                  key={experiment.id}
-                  project={project}
-                />
-              ))
-            }
-          </div>
-        </Collapse.Panel>
-      </Collapse>
-    );
-  }, [ experiments, project, settings.pinned ]);
-
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {
       body: (
@@ -914,7 +900,6 @@ const ProjectDetails: React.FC = () => {
             onAction={handleBatchAction}
             onClear={clearSelected}
           />
-          {settings.pinned.length > 0 && <>{ PinnedExperiments }</>}
           <InteractiveTable
             areRowsSelected={!!settings.row}
             columns={columns}
@@ -922,6 +907,7 @@ const ProjectDetails: React.FC = () => {
             ContextMenu={ContextMenu}
             dataSource={experiments}
             loading={isLoading}
+            numOfPinned={settings.pinned.filter((p) => p.projectId === Number(projectId)).length}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
@@ -962,7 +948,6 @@ const ProjectDetails: React.FC = () => {
     settings,
     handleBatchAction,
     clearSelected,
-    PinnedExperiments,
     columns,
     ContextMenu,
     experiments,

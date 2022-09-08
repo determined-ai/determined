@@ -55,7 +55,7 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: ExperimentColumnName[];
   label?: string[];
-  pinned: number[];
+  pinned: {experimentId: number, projectId: number}[];
   row?: number[];
   search?: string;
   sortKey: V1GetExperimentsRequestSortBy;
@@ -70,7 +70,7 @@ const config: SettingsConfig = {
       key: 'pinned',
       storageKey: 'pinned',
       type: {
-        baseType: BaseType.Integer,
+        baseType: BaseType.Object,
         isArray: true,
       },
     },

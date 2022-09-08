@@ -105,13 +105,16 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           break;
         }
         case Action.Pin: {
-          updateSettings({ pinned: Array.from(new Set([ ...settings.pinned, id ])) });
+          const pinList = Array.from(new Set([ ...settings.pinned, {
+            experimentId: id,
+            projectId: experiment.projectId,
+          } ]));
+          updateSettings({ pinned: pinList });
           break;
         }
         case Action.Unpin: {
-          const pinList = new Set(settings.pinned);
-          pinList.delete(id);
-          updateSettings({ pinned: Array.from(pinList) });
+          const pinList = settings.pinned.filter((pin) => pin.experimentId !== id);
+          updateSettings({ pinned: pinList });
           break;
         }
         case Action.Kill:
@@ -175,7 +178,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser)
     .filter((action) => {
-      const isPinned = settings.pinned.includes(experiment.id);
+      const isPinned = settings.pinned.map((p) => p.experimentId).includes(experiment.id);
       if ((isPinned && action === Action.Pin) || (!isPinned && action === Action.Unpin)) {
         return false;
       } else {
