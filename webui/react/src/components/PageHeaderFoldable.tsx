@@ -68,28 +68,27 @@ const PageHeaderFoldable: React.FC<Props> = (
         </div>
         <div className={css.options}>
           {foldableContent && (
-            // div is needed to make nth-of-type selectors for overflow actions work correctly
-            <div>
-              <IconButton
-                icon={isExpanded ? 'arrow-up' : 'arrow-down'}
-                iconSize="tiny"
-                label="Toggle"
-                type="text"
-                onClick={() => setIsExpanded((prev) => !prev)}
-              />
-            </div>
+            <IconButton
+              icon={isExpanded ? 'arrow-up' : 'arrow-down'}
+              iconSize="tiny"
+              label="Toggle"
+              type="text"
+              onClick={() => setIsExpanded((prev) => !prev)}
+            />
           )}
-          {options?.slice(0, 3).map((option) => (
-            <Button
-              className={css.optionsMainButton}
-              disabled={option.disabled || !option.onClick}
-              ghost
-              icon={option?.icon}
-              key={option.key}
-              loading={option.isLoading}
-              onClick={option.onClick}>{renderOptionLabel(option)}
-            </Button>
-          ))}
+          <div className={css.optionsButtons}>
+            {options?.slice(0, 3).map((option) => (
+              <Button
+                className={css.optionsMainButton}
+                disabled={option.disabled || !option.onClick}
+                ghost
+                icon={option?.icon}
+                key={option.key}
+                loading={option.isLoading}
+                onClick={option.onClick}>{renderOptionLabel(option)}
+              </Button>
+            ))}
+          </div>
           {dropdownOptions && (
             <Dropdown overlay={dropdownOptions} placement="bottomRight" trigger={[ 'click' ]}>
               <Button
