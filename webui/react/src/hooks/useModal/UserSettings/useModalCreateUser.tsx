@@ -136,6 +136,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
         <Table
           columns={columns}
           dataSource={permissions}
+          pagination={{ hideOnSinglePage: true, size: 'small' }}
         />
       )}
     </Form>
