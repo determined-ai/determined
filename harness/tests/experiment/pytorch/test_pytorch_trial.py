@@ -672,9 +672,9 @@ class TestPyTorchTrial:
     @pytest.mark.parametrize(
         "trial_class",
         [
-            (pytorch_onevar_model.OneVarApexAMPTrial),
-            (pytorch_onevar_model.OneVarAutoAMPTrial),
-            (pytorch_onevar_model.OneVarManualAMPTrial),
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
         ],
         ids=[
             "apex",
@@ -705,6 +705,60 @@ class TestPyTorchTrial:
             training_metrics, _ = trainer.result()
 
         controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=trial_class,
+            hparams=hparams,
+            workloads=make_amp_workloads(),
+            trial_seed=self.trial_seed,
+            expose_gpus=True,
+        )
+        controller.run()
+
+        amp_metrics_test(trial_class, training_metrics)
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.gpu
+    @pytest.mark.parallel
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_amp_with_gradient_aggregation(self, trial_class) -> None:
+        """Similar to test_amp but with gradient aggregation.
+        """
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
+
+        # The assertions logic in make_amp_workloads require a batch size of one
+        hparams = dict(self.hparams)
+        hparams["global_batch_size"] = 1
+
+        exp_config = utils.make_default_exp_config(
+            hparams, 1, trial_class._searcher_metric,
+        )
+        exp_config["optimizations"].update({
+            "aggregation_frequency": 2,
+            "average_aggregated_gradients": True,
+        })
+
+        training_metrics = {}
+
+        def make_amp_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
+            nonlocal training_metrics
+            training_metrics, _ = trainer.result()
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            exp_config=exp_config,
             trial_class=trial_class,
             hparams=hparams,
             workloads=make_amp_workloads(),
