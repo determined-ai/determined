@@ -152,8 +152,6 @@ const ProjectDetails: React.FC = () => {
       setPageError(undefined);
     } catch (e) {
       if (!pageError) setPageError(e as Error);
-    } finally {
-      setIsLoading(false);
     }
   }, [ canceler.signal, id, pageError ]);
 
@@ -316,7 +314,6 @@ const ProjectDetails: React.FC = () => {
         publicMessage: 'Unable to save experiment description.',
         silent: false,
       });
-      setIsLoading(false);
       return e as Error;
     }
   }, [ ]);
@@ -768,8 +765,8 @@ const ProjectDetails: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    fetchExperiments();
     setIsLoading(true);
+    fetchExperiments();
   }, [
     fetchExperiments,
     settings.archived,
