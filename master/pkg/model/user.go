@@ -7,6 +7,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
@@ -21,20 +23,22 @@ type SessionID int
 
 // User corresponds to a row in the "users" DB table.
 type User struct {
-	ID           UserID      `db:"id" json:"id"`
-	Username     string      `db:"username" json:"username"`
-	PasswordHash null.String `db:"password_hash" json:"-"`
-	DisplayName  null.String `db:"display_name" json:"display_name"`
-	Admin        bool        `db:"admin" json:"admin"`
-	Active       bool        `db:"active" json:"active"`
-	ModifiedAt   time.Time   `db:"modified_at" json:"modified_at"`
+	bun.BaseModel `bun:"table:users"`
+	ID            UserID      `db:"id" json:"id"`
+	Username      string      `db:"username" json:"username"`
+	PasswordHash  null.String `db:"password_hash" json:"-"`
+	DisplayName   null.String `db:"display_name" json:"display_name"`
+	Admin         bool        `db:"admin" json:"admin"`
+	Active        bool        `db:"active" json:"active"`
+	ModifiedAt    time.Time   `db:"modified_at" json:"modified_at"`
 }
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
 type UserSession struct {
-	ID     SessionID `db:"id" json:"id"`
-	UserID UserID    `db:"user_id" json:"user_id"`
-	Expiry time.Time `db:"expiry" json:"expiry"`
+	bun.BaseModel `bun:"table:user_sessions"`
+	ID            SessionID `db:"id" json:"id"`
+	UserID        UserID    `db:"user_id" json:"user_id"`
+	Expiry        time.Time `db:"expiry" json:"expiry"`
 }
 
 // A FullUser is a User joined with any other user relations.

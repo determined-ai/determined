@@ -56,7 +56,7 @@ var (
 func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
 	trialID int, actionFunc func(model.User, *model.Experiment) error,
 ) error {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
 	}
