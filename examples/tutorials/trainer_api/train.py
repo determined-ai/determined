@@ -49,6 +49,9 @@ class MNistTrial(pytorch.PyTorchTrial):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
+        data = self.context.to_device(data)
+        labels = self.context.to_device(labels)
+
         output = self.model(data)
         loss = torch.nn.functional.nll_loss(output, labels)
 
@@ -60,6 +63,9 @@ class MNistTrial(pytorch.PyTorchTrial):
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
+
+        data = self.context.to_device(data)
+        labels = self.context.to_device(labels)
 
         output = self.model(data)
         validation_loss = torch.nn.functional.nll_loss(output, labels).item()
@@ -116,5 +122,5 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+    logging.basicConfig(level=logging.DEBUG, format=det.LOG_FORMAT)
     main()

@@ -2,12 +2,13 @@ import contextlib
 from enum import Enum
 
 import determined as det
-from determined import core
+from determined import core, horovod
 from determined import pytorch
 from typing import Any, Callable, Dict, Iterator, List, Optional
 import torch
 import torch.nn as nn
 from determined.common import check
+from determined.horovod import hvd
 
 import logging
 
@@ -25,6 +26,8 @@ class Trainer:
         self.context = context
         self.core_context = self.context._core
         self.train_loader = None
+        self.distributed_backend = det._DistributedBackend()
+        self.is_chief = self.core_context.distributed.rank == 0
 
     def _build_training_loader(self):
         train_data = self.trial.build_training_data_loader()
@@ -38,6 +41,11 @@ class Trainer:
 
     def _build_validation_loader(self):
         val_data = self.trial.build_validation_data_loader()
+        if self.is_chief:
+            return val_data.get_data_loader(
+                repeat=False, skip=0, num_replicas=1, rank=0
+            )
+
         num_replicas = self.core_context.distributed.size
         rank = self.core_context.distributed.rank
 
@@ -68,6 +76,11 @@ class Trainer:
         # TODO: figure out a better way to do this.
         self.context.aggregation_frequency = aggregation_frequency
 
+        if self.context.distributed.size > 1 and self.distributed_backend.use_horovod():
+            hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
+            for optimizer in self.context.optimizers:
+                hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+
         training_loader = self._build_training_loader()
         self.train_loader = training_loader
 
@@ -91,14 +104,18 @@ class Trainer:
         return
 
     def report_training_metrics(self, records_completed, steps_completed, metrics):
-        metrics = self._prepare_metrics(num_inputs=records_completed, batch_metrics=metrics)
-        self.core_context.train.report_training_metrics(
-            steps_completed=steps_completed, metrics=metrics
-        )
+        metrics = self.context.distributed.broadcast(metrics)
+        # Only report on the chief worker
+        if self.is_chief:
+            metrics = self._prepare_metrics(num_inputs=records_completed, batch_metrics=metrics)
+            self.core_context.train.report_training_metrics(
+                steps_completed=steps_completed, metrics=metrics
+            )
 
     def validate_and_report_metrics(self, steps_completed):
         val_metrics = self.validate()
-        self.core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics=val_metrics)
+        if self.is_chief:
+            self.core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics=val_metrics)
 
     def validate(self):
         val_loader = self._build_validation_loader()
@@ -127,6 +144,10 @@ class Trainer:
             metrics_reducers=pytorch._prepare_metrics_reducers(
                 self.trial.evaluation_reducer(), keys=keys
             ),
+        )
+
+        metrics.update(
+            pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
         # Set models back to training mode
@@ -208,9 +229,26 @@ class TrainLoop:
             self._train_step()
 
 
+def initialize_distributed_backend():
+    distributed_backend = det._DistributedBackend()
+    if distributed_backend.use_horovod():
+        hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
+        hvd.init()
+        return core.DistributedContext.from_horovod(horovod.hvd)
+    elif distributed_backend.use_torch():
+        if torch.cuda.is_available():
+            dist.init_process_group(backend="nccl")  # type: ignore
+        else:
+            dist.init_process_group(backend="gloo")  # type: ignore
+        return core.DistributedContext.from_torch_distributed()
+    else:
+        print(f"Backend {distributed_backend} not supported")
+
+
 @contextlib.contextmanager
 def init():
-    core_context = core.init()
+    distributed_context = initialize_distributed_backend()
+    core_context = core.init(distributed=distributed_context)
     context = PyTorchTrialContext(core_context, hparams={"global_batch_size": 32})
     yield context
 
