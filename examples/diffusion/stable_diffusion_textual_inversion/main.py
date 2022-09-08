@@ -99,14 +99,13 @@ if __name__ == "__main__":
 
         # Create the training dataset
         train_dataset = data.TextualInversionDataset(
-            data_root=hparams.save_path,
+            train_img_dir=hparams.train_img_dir,
             tokenizer=tokenizer,
             size=hparams.size,
             placeholder_token=hparams.placeholder_token,
             repeats=hparams.repeats,
             learnable_property=hparams.what_to_teach,
             center_crop=hparams.center_crop,
-            split="train",
         )
 
         print(80 * "=", "TRAINING", 80 * "=", sep="\n")
