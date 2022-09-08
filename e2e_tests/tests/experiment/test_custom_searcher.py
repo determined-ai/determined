@@ -3,7 +3,11 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+<<<<<<< HEAD
 from typing import List, Optional
+=======
+from typing import Dict, List, Optional, Set, Sequence 
+>>>>>>> 79f778bbd (todo, remove triggering event gor get events)
 
 from numpy import float64
 
@@ -851,11 +855,23 @@ class SimulateMaster():
         self.validation_fn = validation_fn 
         self.simulation_results = None # holds all created trials and executed workloads for each trial. Only represented by ValidateAfter why?
         return
-    
-    def process_operations(self, experiment_id: int,  event: bindings.v1SearcherEvent, operations: List[Operation]): 
+   
+    def post_operations_message(self, experiment_id: int,  event: bindings.v1SearcherEvent, operations: List[Operation]):
+        # here you need to implement RemoveUpTo stuff 
+        self._process_operations(experiment_id, operations)
+
+    def removeUpTo(event: bindings.v1SearcherEvent):
+        # you'll need to get the id from the searcherEvent. (don't need the type it's stored in the overall.)
+        # need to remove the events from event queue upto 
+        pass 
+    def _process_operations(self, experiment_id: int, operations: List[Operation]): 
         for op in operations: 
             self.events_queue.append({"id": self.events_count, "event": self._get_event_for_op(op)})
     
+    def get_events(self, experiment_id: int) ->  Optional[Sequence[bindings.v1SearcherEvent]]: 
+        # if experiment inactive etc? 
+        return self.events_queue
+
     def _get_event_for_op(self,op: Operation):
         if type(op) == ValidateAfter: 
             metric = 0 #figure out how to get metric 
@@ -866,9 +882,16 @@ class SimulateMaster():
         
         if type(op) == Progress: 
             event = None # is there any event here? 
+                         # no but you need to update the progress of the custom searcher state. it only ever mattered to master tho. 
         
         if type(op) == Close: 
-            event = bindings.v1SearcherEvent.trialClosedrequestId=str(op.request_id)()
+            event = bindings.v1SearcherEvent.trialClosed(requestId=str(op.request_id))
+
+        if type(op) == Shutdown: 
+            # you need to end the simulation 
+            event = None 
+    
+
     def constant_validation(trial_id) -> float64:
         return 1
     
