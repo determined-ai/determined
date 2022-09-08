@@ -138,7 +138,7 @@ def train(
                     grads = text_encoder.get_input_embeddings().weight.grad
                 # Get the index for tokens that we want to zero the grads for
                 index_grads_to_zero = torch.arange(len(tokenizer)) != placeholder_token_id
-                grads.data[index_grads_to_zero, :] = grads.data[index_grads_to_zero, :].fill_(0)
+                grads.data[index_grads_to_zero] = 0.0
 
                 optimizer.step()
                 optimizer.zero_grad()
