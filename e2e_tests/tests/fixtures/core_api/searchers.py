@@ -1,4 +1,3 @@
-import argparse
 import dataclasses
 import json
 import logging
@@ -7,13 +6,10 @@ import random
 import sys
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
-import determined as det
-from determined.common import util
-from determined.searcher.core_search_runner import CoreSearchRunner
 from determined.searcher.search_method import (
     Close,
     Create,
@@ -25,12 +21,57 @@ from determined.searcher.search_method import (
 )
 
 
+class SingleSearchMethod(SearchMethod):
+    def __init__(self, experiment_config: dict, max_length: int) -> None:
+        super().__init__()
+        # since this is a single trial the hyperparameter space comprises a single point
+        self.hyperparameters = experiment_config["hyperparameters"]
+        self.max_length = max_length
+        self.trial_closed = False
+
+    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+        return []
+
+    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+        return []
+
+    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+        self.trial_closed = True
+        return [Shutdown()]
+
+    def progress(self) -> float:
+        if self.trial_closed:
+            return 1.0
+        (the_trial,) = self.searcher_state.trials_created
+        return self.searcher_state.trial_progress[the_trial] / self.max_length
+
+    def on_trial_exited_early(
+        self, request_id: uuid.UUID, exit_reason: ExitedReason
+    ) -> List[Operation]:
+        logging.warning(f"Trial {request_id} exited early: {exit_reason}")
+        return [Shutdown()]
+
+    def initial_operations(self) -> List[Operation]:
+        logging.info("initial_operations")
+
+        create = Create(
+            request_id=uuid.uuid4(),
+            hparams=self.hyperparameters,
+            checkpoint=None,
+        )
+        validate_after = ValidateAfter(request_id=create.request_id, length=self.max_length)
+        close = Close(request_id=create.request_id)
+        logging.debug(f"Create({create.request_id}, {create.hparams})")
+        return [create, validate_after, close]
+
+
 class RandomSearchMethod(SearchMethod):
     def __init__(
         self,
         max_trials: int,
         max_concurrent_trials: int,
         max_length: int,
+        test_type: str = "core_api",
         exception_points: Optional[List[str]] = None,
     ) -> None:
         super().__init__()
@@ -38,6 +79,7 @@ class RandomSearchMethod(SearchMethod):
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
 
+        self.test_type = test_type
         self.exception_points = exception_points
 
         # TODO remove created_trials and closed_trials before merging the feature branch
@@ -149,7 +191,11 @@ class RandomSearchMethod(SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self) -> Dict[str, int]:
-        hparams = {"increment_by": random.randint(10, 100)}
+        if self.test_type == "noop":
+            hparams = {"global_batch_size": random.randint(10, 100)}
+        elif self.test_type == "core_api":
+            hparams = {"increment_by": random.randint(10, 100)}
+
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -179,10 +225,19 @@ class RandomSearchMethod(SearchMethod):
             self.created_trials = state["created_trials"]
             self.pending_trials = state["pending_trials"]
             self.closed_trials = state["closed_trials"]
-            self.exception_points = state["exception_points"]
+
+            if self.test_type == "core_api":
+                # ony restore exception points for core_api searcher tests;
+                # local searcher is providing new exception point on resumption,
+                # and it shouldn't be overridden
+                self.exception_points = state["exception_points"]
 
     def raise_exception(self, exception_id: str) -> None:
-        if len(self.exception_points) > 0 and exception_id == self.exception_points[0]:
+        if (
+            self.exception_points is not None
+            and len(self.exception_points) > 0
+            and exception_id == self.exception_points[0]
+        ):
             logging.info(f"Raising exception in {exception_id}")
             ex = MaxRetryError(
                 HTTPConnectionPool(host="dummyhost", port=8080),
@@ -285,6 +340,7 @@ class ASHASearchMethod(SearchMethod):
         max_trials: int,
         num_rungs: int,
         divisor: int,
+        test_type: str = "core_api",
         max_concurrent_trials: int = 0,
         exception_points: Optional[List[str]] = None,
     ) -> None:
@@ -292,6 +348,7 @@ class ASHASearchMethod(SearchMethod):
         self.asha_search_state = ASHASearchMethodState(
             max_length, max_trials, num_rungs, divisor, max_concurrent_trials
         )
+        self.test_type = test_type
         self.exception_points = exception_points
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
@@ -476,7 +533,16 @@ class ASHASearchMethod(SearchMethod):
         return ops
 
     def sample_params(self) -> Dict[str, object]:
-        hparams = {"increment_by": len(self.asha_search_state.trial_rungs) + 1}
+        if self.test_type == "noop":
+            hparams = {
+                "global_batch_size": 10,
+                "metrics_base": 0.05 * (len(self.asha_search_state.trial_rungs) + 1),
+                "metrics_progression": "constant",
+            }
+        elif self.test_type == "core_api":
+            hparams = {"increment_by": len(self.asha_search_state.trial_rungs) + 1}
+        else:
+            raise RuntimeError(f"Unknown test type {self.test_type}.")
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -511,96 +577,20 @@ class ASHASearchMethod(SearchMethod):
         with checkpoint_path.open("rb") as f:
             self.asha_search_state = pickle.load(f)
 
-        exception_path = path.joinpath("exceptions")
-        with exception_path.open("rb") as f:
-            self.exception_points = pickle.load(f)
+        if self.test_type == "core_api":
+            # ony restore exception points for core_api searcher tests;
+            # local searcher is providing new exception point on resumption,
+            # and it shouldn't be overridden
+            exception_path = path.joinpath("exceptions")
+            with exception_path.open("rb") as f:
+                self.exception_points = pickle.load(f)
 
     def raise_exception(self, exception_id: str) -> None:
-        if len(self.exception_points) > 0 and exception_id == self.exception_points[0]:
+        if (
+            self.exception_points is not None
+            and len(self.exception_points) > 0
+            and exception_id == self.exception_points[0]
+        ):
             logging.info(f"Raising exception in {exception_id}")
             ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
             raise ex
-
-
-def load_config(config_path: str):
-    with open(config_path) as f:
-        config = util.safe_load_yaml_with_exceptions(f)
-    return config
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--searcher", choices=["asha", "random"], required=True)
-    parser.add_argument("--exp-name", type=str, required=True)
-    parser.add_argument("--max-length", type=int, required=True)
-    parser.add_argument("--max-trials", type=int, required=True)
-    parser.add_argument("--max-concurrent-trials", type=int, default=0)
-    parser.add_argument("--divisor", type=int, default=3)
-    parser.add_argument("--num-rungs", type=int, default=16)
-    parser.add_argument("--exception-points", type=str, nargs="+", default=[])
-
-    return parser.parse_args()
-
-
-def create_search_method(args, exception_points: Optional[List[str]] = None):
-    if args.searcher == "asha":
-        return ASHASearchMethod(
-            max_trials=args.max_trials,
-            max_length=args.max_length,
-            divisor=args.divisor,
-            num_rungs=args.num_rungs,
-            exception_points=exception_points,
-        )
-    elif args.searcher == "random":
-        return RandomSearchMethod(
-            max_trials=args.max_trials,
-            max_length=args.max_length,
-            max_concurrent_trials=args.max_concurrent_trials,
-            exception_points=exception_points,
-        )
-    else:
-        raise ValueError("Unknown searcher type")
-
-
-class FallibleSearchRunner(CoreSearchRunner):
-    def __init__(self, search_method: SearchMethod, core_context: det.core.Context) -> None:
-        super(FallibleSearchRunner, self).__init__(search_method, core_context)
-        self.fail_on_save = False
-
-    def load_state(self, storage_id: str) -> Tuple[int, List[Operation]]:
-        result = super(FallibleSearchRunner, self).load_state(storage_id)
-
-        # on every load remove first exception from the list since that exception was raised in the previous run;
-        # this testing approach works as long as the there is at least one save between consecutive exceptions
-        self.search_method.exception_points.pop(0)
-
-        if len(self.search_method.exception_points) > 0:
-            if self.search_method.exception_points[0] == "after_save":
-                self.fail_on_save = True
-
-        return result
-
-    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
-        super(FallibleSearchRunner, self).save_state(experiment_id, operations)
-        if self.fail_on_save:
-            logging.info(
-                "Raising exception in after saving the state and before posting operations"
-            )
-            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
-            raise ex
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
-
-    info = det.get_cluster_info()
-    assert info is not None, "this example only runs on-cluster"
-    args = parse_args()
-
-    config = load_config("core_api_model.yaml")
-    config["name"] = args.exp_name
-
-    with det.core.init() as core_context:
-        search_method = create_search_method(args, args.exception_points)
-        search_runner = FallibleSearchRunner(search_method, core_context)
-        search_runner.run(config)
