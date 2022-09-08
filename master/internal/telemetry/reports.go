@@ -30,7 +30,7 @@ func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 	}
 
 	gpuTotalNum, gpuUsedNum := 0, 0
-	poolTypes := make(map[string]int)
+	poolTypes := make(map[string]int, len(resp.ResourcePools))
 	for _, pool := range resp.ResourcePools {
 		poolTypes[sproto.StringFromResourcePoolTypeProto(pool.Type)]++
 		if pool.SlotType == devicev1.Type_TYPE_CUDA || pool.SlotType == devicev1.Type_TYPE_ROCM {

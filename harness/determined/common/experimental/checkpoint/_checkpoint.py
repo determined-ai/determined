@@ -7,6 +7,7 @@ import warnings
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import api, constants, storage
+from determined.common.api import bindings
 from determined.common.storage import shared
 
 
@@ -16,23 +17,40 @@ class ModelFramework(enum.Enum):
 
 
 class CheckpointState(enum.Enum):
-    UNSPECIFIED = 0
-    ACTIVE = 1
-    COMPLETED = 2
-    ERROR = 3
-    DELETED = 4
+    UNSPECIFIED = bindings.determinedcheckpointv1State.STATE_UNSPECIFIED.value
+    ACTIVE = bindings.determinedcheckpointv1State.STATE_ACTIVE.value
+    COMPLETED = bindings.determinedcheckpointv1State.STATE_COMPLETED.value
+    ERROR = bindings.determinedcheckpointv1State.STATE_ERROR.value
+    DELETED = bindings.determinedcheckpointv1State.STATE_DELETED.value
 
 
 @dataclasses.dataclass
 class CheckpointTrainingMetadata:
     experiment_config: Dict[str, Any]
-    experiment_id: str
-    trial_id: str
+    experiment_id: int
+    trial_id: int
     hparams: Dict[str, Any]
     validation_metrics: Dict[str, Any]
 
+    @classmethod
+    def _from_bindings(
+        cls, tm: bindings.v1CheckpointTrainingMetadata
+    ) -> "Optional[CheckpointTrainingMetadata]":
+        if not tm.trialId:
+            return None
+        assert tm.experimentConfig
+        assert tm.experimentId
 
-class Checkpoint(object):
+        return cls(
+            experiment_config=tm.experimentConfig,
+            experiment_id=tm.experimentId,
+            trial_id=tm.trialId,
+            hparams=tm.hparams or {},
+            validation_metrics=tm.validationMetrics and tm.validationMetrics.to_json() or {},
+        )
+
+
+class Checkpoint:
     """
     A Checkpoint object is usually obtained from
     ``determined.experimental.client.get_checkpoint()``.
@@ -49,8 +67,8 @@ class Checkpoint(object):
     def __init__(
         self,
         session: api.Session,
-        task_id: str,
-        allocation_id: str,
+        task_id: Optional[str],
+        allocation_id: Optional[str],
         uuid: str,
         report_time: Optional[str],
         resources: Dict[str, Any],
@@ -224,6 +242,19 @@ class Checkpoint(object):
         ckpt_path = self.download(path)
         return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
 
+    def _push_metadata(self) -> None:
+        # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
+        req = bindings.v1PostCheckpointMetadataRequest(
+            checkpoint=bindings.v1Checkpoint(
+                uuid=self.uuid,
+                metadata=self.metadata,
+                resources={},
+                training=bindings.v1CheckpointTrainingMetadata(),
+                state=bindings.determinedcheckpointv1State.STATE_UNSPECIFIED,
+            ),
+        )
+        bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
+
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
         Adds user-defined metadata to the checkpoint. The ``metadata`` argument must be a
@@ -239,10 +270,7 @@ class Checkpoint(object):
         for key, val in metadata.items():
             self.metadata[key] = val
 
-        self._session.post(
-            "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-            json={"checkpoint": {"metadata": self.metadata}},
-        )
+        self._push_metadata()
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -259,10 +287,7 @@ class Checkpoint(object):
             if key in self.metadata:
                 del self.metadata[key]
 
-        self._session.post(
-            "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-            json={"checkpoint": {"metadata": self.metadata}},
-        )
+        self._push_metadata()
 
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
@@ -383,6 +408,20 @@ class Checkpoint(object):
             return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
     @classmethod
+    def _from_bindings(cls, ckpt: bindings.v1Checkpoint, session: api.Session) -> "Checkpoint":
+        return cls(
+            session=session,
+            task_id=ckpt.taskId,
+            allocation_id=ckpt.allocationId,
+            uuid=ckpt.uuid,
+            report_time=ckpt.reportTime,
+            resources=ckpt.resources,
+            metadata=ckpt.metadata,
+            state=CheckpointState(ckpt.state.value),
+            training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
+        )
+
+    @classmethod
     def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "Checkpoint":
         metadata = data.get("metadata", {})
         training_data = data.get("training")
@@ -400,14 +439,14 @@ class Checkpoint(object):
 
         return cls(
             session,
-            data["taskId"],
-            data["allocationId"],
-            data["uuid"],
-            data.get("reportTime"),
-            data["resources"],
-            metadata,
-            data["state"],
-            training,
+            task_id=data["taskId"],
+            allocation_id=data["allocationId"],
+            uuid=data["uuid"],
+            report_time=data.get("reportTime"),
+            resources=data["resources"],
+            metadata=metadata,
+            state=data["state"],
+            training=training,
         )
 
     @classmethod

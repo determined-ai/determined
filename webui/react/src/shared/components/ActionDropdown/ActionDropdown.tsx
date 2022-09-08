@@ -18,17 +18,23 @@ export type Confirmations<T extends string> =
   Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'> }>
 type DisabledActions<T extends string> =
   Partial<{ [key in T]: boolean }>
+type DangerousActions<T extends string> = DisabledActions<T>;
 
 interface Props<T extends string> {
   /**
    * define the order of actions to show up in the dropdown menu.
    */
   actionOrder: T[];
+  children?: React.ReactNode;
   /**
    * whether to prompt the user to confirm the action before executing it
    * with options to customize the generated modal.
    */
   confirmations?: Confirmations<T>
+  /**
+   * whether the action is marked as dangerous or not.
+   */
+  danger?: DangerousActions<T>;
   /**
    * whether to disable the action or not.
    */
@@ -54,12 +60,30 @@ interface Props<T extends string> {
    * what to do when an action is selected.
    */
   onTrigger: Triggers<T>;
+  onVisibleChange?: (visible: boolean) => void;
+  /**
+   * how to open dropdown.
+   */
+  trigger?: ('click' | 'contextMenu' | 'hover')[]
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ActionDropdown = <T extends string>(
-  { id, kind, onComplete, onTrigger, confirmations, disabled, actionOrder, onError }: Props<T>,
+  {
+    id,
+    kind,
+    onComplete,
+    onTrigger,
+    confirmations,
+    danger,
+    disabled,
+    actionOrder,
+    onError,
+    trigger,
+    onVisibleChange,
+    children,
+  }: Props<T>,
 ): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
 
   const menuClickErrorHandler = useCallback((
@@ -110,7 +134,12 @@ const ActionDropdown = <T extends string>(
 
   const menuItems: MenuProps['items'] = actionOrder
     .filter((act) => !!onTrigger[act])
-    .map((action) => ({ disabled: disabled?.[action], key: action, label: action }));
+    .map((action) => ({
+      danger: danger?.[action],
+      disabled: disabled?.[action],
+      key: action,
+      label: action,
+    }));
 
   if (menuItems.length === 0) {
     return (
@@ -122,12 +151,23 @@ const ActionDropdown = <T extends string>(
     );
   }
 
-  return (
+  return children ? (
+    <>
+      <Dropdown
+        overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
+        placement="bottomRight"
+        trigger={trigger ?? [ 'contextMenu' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+    </>
+  ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown
         overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
         placement="bottomRight"
-        trigger={[ 'click' ]}>
+        trigger={trigger ?? [ 'click' ]}
+        onVisibleChange={onVisibleChange}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

@@ -1,6 +1,6 @@
 # type: ignore
 """
-A one-variable linear model with no bias. The datset emits only pairs of (data, label) = (1, 1),
+A one-variable linear model with no bias. The dataset emits only pairs of (data, label) = (1, 1),
 meaning that the one weight in the model should approach 1 as gradient descent continues.
 
 We will use the mean squared error as the loss.  Since each record is the same, the "mean" part of
@@ -34,7 +34,7 @@ Finally, we can calculate the updated weight (w') in terms of w0:
 TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -42,6 +42,11 @@ import yaml
 
 from determined import experimental, pytorch
 from determined.pytorch import samplers
+
+try:
+    import apex
+except ImportError:  # pragma: no cover
+    pass
 
 
 class OnesDataset(torch.utils.data.Dataset):
@@ -133,7 +138,8 @@ class OneVarTrial(pytorch.PyTorchTrial):
         loss_exp = (label[0] - data[0] * w_before) ** 2
         w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
 
-        loss = self.loss_fn(self.model(data), label)
+        output = self.model(data)
+        loss = self.loss_fn(output, label)
 
         self.context.backward(loss)
         self.context.step_optimizer(self.opt)
@@ -148,23 +154,27 @@ class OneVarTrial(pytorch.PyTorchTrial):
             "w_before": w_before,
             "w_after": w_after,
             "w_exp": w_exp,
+            "output": output,
         }
 
     @staticmethod
-    def check_batch_metrics(metrics: Dict[str, Any], batch_idx: int) -> None:
-        """A check to be applied to the output of every train_batch in a test."""
-
-        def float_eq(a: np.ndarray, b: np.ndarray) -> bool:
-            epsilon = 0.000001
-            return (abs(a - b) < epsilon).all()
-
-        assert float_eq(
-            metrics["loss"], metrics["loss_exp"]
-        ), f'{metrics["loss"]} does not match {metrics["loss_exp"]} at batch {batch_idx}'
-
-        assert float_eq(
-            metrics["w_after"], metrics["w_exp"]
-        ), f'{metrics["w_after"]} does not match {metrics["w_exp"]} at batch {batch_idx}'
+    def check_batch_metrics(
+        metrics: Dict[str, Any],
+        batch_idx: int,
+        metric_keyname_pairs: Iterable[Tuple[str, str]],
+        atol=1e-6,
+    ) -> None:
+        """Check that given metrics are equal or close enough to each other."""
+        for k_a, k_b in metric_keyname_pairs:
+            m_a, m_b = metrics[k_a], metrics[k_b]
+            try:
+                assert torch.isclose(
+                    m_a, m_b, atol=atol
+                ), f"Metrics {k_a}={m_a} and {k_b}={m_b} do not match at batch {batch_idx}"
+            except TypeError:
+                assert np.allclose(
+                    m_a, m_b, atol=atol
+                ), f"Metrics {k_a}={m_a} and {k_b}={m_b} do not match at batch {batch_idx}"
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, label = batch
@@ -182,7 +192,6 @@ class OneVarTrial(pytorch.PyTorchTrial):
             )
         elif self.hparams["dataloader_type"] == "torch":
             dataset = OnesDataset()
-
             seed = self.context.get_trial_seed()
             num_workers = self.context.distributed.get_size()
             rank = self.context.distributed.get_rank()
@@ -207,7 +216,6 @@ class OneVarTrial(pytorch.PyTorchTrial):
             )
         elif self.hparams["dataloader_type"] == "torch":
             dataset = OnesDataset()
-
             num_workers = self.context.distributed.get_size()
             rank = self.context.distributed.get_rank()
             batch_size = self.context.get_per_slot_batch_size()
@@ -221,12 +229,150 @@ class OneVarTrial(pytorch.PyTorchTrial):
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
 
-class OneVarTrialWithApexAmp(OneVarTrial):
+class AMPTestDataset(OnesDataset):
+    STAGE_DATUM = {
+        "one": 1.0,
+        "zero": 0.0,
+        "small": 2e-14,
+        "large": 2e4,
+    }
+
+    def __init__(self, stages: Iterable[str]) -> None:
+        self.stages = stages
+
+    def __len__(self) -> int:
+        return len(self.stages)
+
+    def __getitem__(self, index: int) -> Tuple:
+        x = self.STAGE_DATUM[self.stages[index]]
+        return torch.Tensor([float(x)]), torch.Tensor([float(x)])
+
+
+class OneVarAMPBaseTrial(OneVarTrial):
+    _init_scale = None
+    _growth_interval = None
+    _stages = (
+        5 * ["one"]
+        + 1 * ["large"]
+        + 4 * ["one"]
+        + 1 * ["small"]
+        + 4 * ["one"]
+        + 1 * ["zero"]
+        + 4 * ["one"]
+        + []
+    )
+
+    def build_training_data_loader(self) -> torch.utils.data.DataLoader:
+        return pytorch.DataLoader(
+            AMPTestDataset(self._stages), batch_size=self.context.get_per_slot_batch_size()
+        )
+
+
+class OneVarApexAMPTrial(OneVarAMPBaseTrial):
+    _growth_interval = 2000
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
-            models=self.model, optimizers=self.opt
+            models=self.model,
+            optimizers=self.opt,
+            opt_level="O2",
         )
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        scale_before = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
+        metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        metrics["scale_before"] = scale_before
+        metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
+        metrics["stage"] = self._stages[batch_idx]
+        return metrics
+
+
+class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
+    _init_scale = 65536
+    _growth_interval = 4
+
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        context.experimental.use_amp()
+        # HACK: overwrite the scaler with a manually configured one, which
+        #  is not something we don't actually allow with the use_amp() API.
+        context._scaler = torch.cuda.amp.GradScaler(
+            init_scale=self._init_scale,
+            growth_interval=self._growth_interval,
+        )
+        super().__init__(context)
+        self.scaler = self.context._scaler
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        scale_before = self.scaler.get_scale()
+        metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        metrics["scale_before"] = scale_before
+        # self.scaler.update() gets called after this method returns
+        metrics["stage"] = self._stages[batch_idx]
+        return metrics
+
+
+class OneVarManualAMPTrial(OneVarAMPBaseTrial):
+    _init_scale = 65536
+    _growth_interval = 4
+
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        self.scaler = context.wrap_scaler(
+            torch.cuda.amp.GradScaler(
+                init_scale=self._init_scale, growth_interval=self._growth_interval
+            )
+        )
+        super().__init__(context)
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        data, label = batch
+
+        scale_before = self.scaler.get_scale()
+
+        # Measure the weight right now.
+        w_before = self.model.weight.data.item()
+
+        # Calculate expected values for loss (eq 1) and weight (eq 4).
+        loss_exp = (label[0] - data[0] * w_before) ** 2
+        w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
+
+        with torch.cuda.amp.autocast():
+            output = self.model(data)
+            loss = self.loss_fn(output, label)
+
+        scaled_loss = self.scaler.scale(loss)
+        self.context.backward(scaled_loss)
+        self.context.step_optimizer(self.opt, scaler=self.scaler)
+        self.scaler.update()
+
+        # Measure the weight after the update.
+        w_after = self.model.weight.data.item()
+
+        # Return values that we can compare as part of the tests.
+        return {
+            "stage": self._stages[batch_idx],
+            "scale_before": scale_before,
+            "scale": self.scaler.get_scale(),
+            "loss": loss,
+            "loss_exp": loss_exp,
+            "w_before": w_before,
+            "w_after": w_after,
+            "w_exp": w_exp,
+            "output": output,
+        }
+
+    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+        data, label = batch
+        with torch.cuda.amp.autocast():
+            output = self.model(data)
+            loss = self.loss_fn(output, label)
+        return {"val_loss": loss}
 
 
 if __name__ == "__main__":

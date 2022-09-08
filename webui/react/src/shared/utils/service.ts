@@ -21,28 +21,45 @@ export const getResponseStatus = (e: unknown): number | undefined =>
  * @returns
  */
 export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean => {
+  if (u instanceof Promise) {
+    throw new DetError(u, {
+      publicMessage: 'isAuthFailure: unexpected input type',
+      type: ErrorType.Assert,
+    });
+  }
+  if (u instanceof DetError) {
+    if (u.type === ErrorType.Auth) return true;
+    if (u.sourceErr !== undefined) return isAuthFailure(u.sourceErr, supportExternalAuth);
+    return false;
+  }
   if (!isApiResponse(u)) return false;
-  const status = u.status;
   const authFailureStatuses = [
     401, // Unauthorized
   ];
   if (supportExternalAuth) authFailureStatuses.push(500);
-  return authFailureStatuses.includes(status);
+  return authFailureStatuses.includes(u.status);
 };
 
 export const isNotFound = (u: Response | Error | DetError): boolean => {
+  const MAGIC_PHRASE = 'not found';
   if (u instanceof Response) return u.status === 404;
   let errorStrings: string[] = [];
   if (u instanceof Error) errorStrings = [ u.message ];
   if (u instanceof DetError) {
     errorStrings = [ u.message, u.publicMessage ?? '', u.publicSubject ?? '' ];
+    if (errorStrings.join(' ').toLocaleLowerCase().includes(MAGIC_PHRASE))
+      return true;
+    if (u.sourceErr !== undefined)
+      return isNotFound(u.sourceErr as Response | Error | DetError);
   }
-  return errorStrings.join(' ').toLocaleLowerCase().includes('not found');
+  return errorStrings.join(' ').toLocaleLowerCase().includes(MAGIC_PHRASE);
 };
 
 export const isAborted = (e: unknown): boolean => {
+  if (e instanceof DetError && e.sourceErr !== undefined) return isAborted(e.sourceErr);
   return e instanceof Error && e.name === 'AbortError';
 };
+
 /* Fits API errors into a DetError. */
 export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
   const isAuthError = isAuthFailure(e);
@@ -65,7 +82,7 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
   if (isApiResponse(e)) {
     try {
       const response = await e.json();
-      options.publicMessage = response.error?.error || response.message;
+      options.publicMessage = response.error?.error || response.error || response.message;
     } catch (err) {
       options.payload = err;
     }

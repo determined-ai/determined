@@ -1,0 +1,19 @@
+.flexRow {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.modalBody {
+  height: 60vh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  width: 100%;
+}
+.ellipsis {
+  > a {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: calc(clamp(320px, 50vw, 1000px) - 16%);
+  }
+}

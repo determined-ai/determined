@@ -1,6 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { PropsWithChildren, useState } from 'react';
+import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import StoreProvider from 'contexts/Store';
@@ -19,7 +19,7 @@ const setup = ({
   tooltip = CONTENT_TOOLTIP,
   type = BadgeType.Header,
   ...props
-}: PropsWithChildren<BadgeProps> = {}) => {
+}: BadgeProps = {}) => {
   return render(
     <StoreProvider>
       <Badge tooltip={tooltip} type={type} {...props}>{children}</Badge>

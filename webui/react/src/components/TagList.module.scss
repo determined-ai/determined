@@ -14,10 +14,6 @@
     background: var(--theme-colors-monochrome-17);
     border-style: dashed;
   }
-  .tagEdit {
-    white-space: break-spaces;
-    word-break: break-word;
-  }
   .tagPlus:hover,
   .tagEdit:hover {
     border-color: var(--theme-status-active);

@@ -13,6 +13,7 @@ import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
+import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -208,9 +209,16 @@ const NavigationSideBar: React.FC = () => {
           <section className={css.workspaces}>
             <NavigationItem
               action={(
-                <Button type="text" onClick={handleCreateWorkspace}>
-                  <Icon name="add-small" size="tiny" />
-                </Button>
+                <div className={css.actionButtons}>
+                  <WorkspaceQuickSearch>
+                    <Button type="text">
+                      <Icon name="search" size="tiny" />
+                    </Button>
+                  </WorkspaceQuickSearch>
+                  <Button type="text" onClick={handleCreateWorkspace}>
+                    <Icon name="add-small" size="tiny" />
+                  </Button>
+                </div>
               )}
               icon="workspaces"
               key="workspaces"
@@ -223,7 +231,6 @@ const NavigationSideBar: React.FC = () => {
                 <ul className={css.pinnedWorkspaces} role="list">
                   {pinnedWorkspaces.map((workspace) => (
                     <WorkspaceActionDropdown
-                      curUser={auth.user}
                       key={workspace.id}
                       trigger={[ 'contextMenu' ]}
                       workspace={workspace}>

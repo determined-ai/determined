@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
+import { Button, Dropdown, Menu, message, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,8 +9,8 @@ import { checkmarkRenderer, defaultRowClassName,
   getFullPaginationConfig, relativeTimeRenderer } from 'components/Table';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { getUsers } from 'services/api';
-import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
+import { getGroups, getUsers, patchUser } from 'services/api';
+import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
@@ -26,8 +26,63 @@ export const USER_TITLE = 'Users';
 export const CREATE_USER = 'New User';
 export const CREAT_USER_LABEL = 'new_user';
 
+interface DropdownProps {
+  fetchUsers: () => void;
+  groups: V1GroupSearchResult[];
+  user: DetailedUser;
+}
+
+const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
+  const {
+    modalOpen: openEditUserModal,
+    contextHolder: modalEditUserContextHolder,
+  } = useModalCreateUser({ groups, onClose: fetchUsers, user });
+  const onClickEditUser = () => {
+    openEditUserModal();
+  };
+  const onToggleActive = async () => {
+    await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
+    message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
+    fetchUsers();
+  };
+
+  enum MenuKey {
+    EDIT = 'edit',
+    STATE = 'state'
+  }
+
+  const funcs = {
+    [MenuKey.EDIT]: () => { onClickEditUser(); },
+    [MenuKey.STATE]: () => { onToggleActive(); },
+  };
+
+  const onItemClick: MenuProps['onClick'] = (e) => {
+    funcs[e.key as MenuKey]();
+  };
+
+  const menuItems: MenuProps['items'] = [
+    { key: 'edit', label: 'Edit' },
+    { key: 'state', label: `${user.isActive ? 'Deactive' : 'Active'}` },
+  ];
+
+  return (
+    <div className={dropdownCss.base}>
+      <Dropdown
+        overlay={<Menu items={menuItems} onClick={onItemClick} />}
+        placement="bottomRight"
+        trigger={[ 'click' ]}>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
+        </Button>
+      </Dropdown>
+      {modalEditUserContextHolder}
+    </div>
+  );
+};
+
 const UserManagement: React.FC = () => {
   const [ users, setUsers ] = useState<DetailedUser[]>([]);
+  const [ groups, setGroups ] = useState<V1GroupSearchResult[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
@@ -49,7 +104,6 @@ const UserManagement: React.FC = () => {
         },
         { signal: canceler.signal },
       );
-
       setTotal(response.pagination.total ?? 0);
       setUsers((prev) => {
         if (isEqual(prev, response.users)) return prev;
@@ -58,7 +112,6 @@ const UserManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     } finally {
-
       setIsLoading(false);
     }
   }, [ canceler.signal,
@@ -68,6 +121,22 @@ const UserManagement: React.FC = () => {
     settings.tableOffset,
   ]);
 
+  const fetchGroups = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getGroups(
+        {},
+        { signal: canceler.signal },
+      );
+
+      setGroups((prev) => {
+        if (isEqual(prev, response.groups)) return prev;
+        return response.groups || [];
+      });
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch groups.' });
+    }
+  }, [ canceler.signal ]);
+
   useEffect(() => {
     fetchUsers();
   }, [ settings.sortDesc,
@@ -76,10 +145,14 @@ const UserManagement: React.FC = () => {
     settings.tableOffset,
     fetchUsers ]);
 
+  useEffect(() => {
+    fetchGroups();
+  }, [ fetchGroups ]);
+
   const {
     modalOpen: openCreateUserModal,
     contextHolder: modalCreateUserContextHolder,
-  } = useModalCreateUser({ onClose: fetchUsers });
+  } = useModalCreateUser({ groups, onClose: fetchUsers });
 
   const onClickCreateUser = useCallback(() => {
     openCreateUserModal();
@@ -87,24 +160,7 @@ const UserManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: DetailedUser) => {
-      const menuItems: MenuProps['items'] = [
-        { key: 'edit', label: 'Edit' },
-        { key: 'state', label: `${record.isActive ? 'Deactive' : 'Active'}` },
-      ];
-
-      return (
-        <div className={dropdownCss.base}>
-          <Dropdown
-            overlay={<Menu items={menuItems} />}
-            placement="bottomRight"
-            trigger={[ 'click' ]}>
-            <Button className={css.overflow} type="text">
-              <Icon name="overflow-vertical" />
-            </Button>
-          </Dropdown>
-        </div>
-
-      );
+      return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
     };
     return [
       {
@@ -162,7 +218,7 @@ const UserManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, []);
+  }, [ fetchUsers, groups ]);
 
   const table = useMemo(() => {
     return (

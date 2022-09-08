@@ -1,15 +1,16 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import css from './OverviewStats.module.scss';
 
 interface Props {
+  children: React.ReactNode;
   clickable?: boolean
   focused?: boolean;
   onClick?: () => void;
   title: string;
 }
 
-const OverviewStats: React.FC<Props> = (props: PropsWithChildren<Props>) => {
+const OverviewStats: React.FC<Props> = (props: Props) => {
   const classes = [ css.base ];
   if (props.onClick || props.clickable) classes.push(css.clickable);
   if (props.focused) classes.push(css.focused);

@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import { paths } from 'routes/utils';
 import {
@@ -21,6 +21,7 @@ import { isTaskKillable } from 'utils/task';
 import Link from './Link';
 
 interface Props {
+  children?: React.ReactNode;
   curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
@@ -34,7 +35,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   onComplete,
   onVisibleChange,
   children,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
 
   const isKillable = isTaskKillable(task);
 

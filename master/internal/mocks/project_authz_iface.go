@@ -5,8 +5,6 @@ package mocks
 import (
 	mock "github.com/stretchr/testify/mock"
 
-	experimentv1 "github.com/determined-ai/determined/proto/pkg/experimentv1"
-
 	model "github.com/determined-ai/determined/master/pkg/model"
 
 	projectv1 "github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -97,11 +95,11 @@ func (_m *ProjectAuthZ) CanMoveProject(curUser model.User, _a1 *projectv1.Projec
 }
 
 // CanMoveProjectExperiments provides a mock function with given fields: curUser, exp, from, to
-func (_m *ProjectAuthZ) CanMoveProjectExperiments(curUser model.User, exp *experimentv1.Experiment, from *projectv1.Project, to *projectv1.Project) error {
+func (_m *ProjectAuthZ) CanMoveProjectExperiments(curUser model.User, exp *model.Experiment, from *projectv1.Project, to *projectv1.Project) error {
 	ret := _m.Called(curUser, exp, from, to)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *experimentv1.Experiment, *projectv1.Project, *projectv1.Project) error); ok {
+	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, *projectv1.Project, *projectv1.Project) error); ok {
 		r0 = rf(curUser, exp, from, to)
 	} else {
 		r0 = ret.Error(0)

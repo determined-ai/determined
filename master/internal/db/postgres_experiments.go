@@ -860,7 +860,7 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 	if err := db.query(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username
+		 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = $1`, &experiment, id); err != nil {
@@ -898,10 +898,30 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 	if err := db.query(`
 SELECT e.id, state, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-			 job_id, u.username as username
+			 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
 WHERE e.id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentWithoutConfigByTrialID looks up an experiment by a given trialID, returning an error if
+// none exists. It loads the experiment without its configuration, for callers that do not need
+// it, or can't handle backwards incompatible changes.
+func (db *PgDB) ExperimentWithoutConfigByTrialID(id int) (*model.Experiment, error) {
+	var experiment model.Experiment
+
+	if err := db.query(`
+SELECT e.id, e.state, e.model_definition, e.start_time, e.end_time, e.archived,
+       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
+			 e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON e.owner_id = u.id
+WHERE t.id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
 

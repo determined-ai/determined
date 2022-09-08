@@ -4,6 +4,7 @@ import { useHistory, useParams } from 'react-router';
 import { useLocation } from 'react-router-dom';
 
 import Page from 'components/Page';
+import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
@@ -46,12 +47,19 @@ const SettingsContent: React.FC = () => {
   }, [ history, rbacEnabled ]);
 
   return showTabs ? (
-    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+    <Tabs
+      className="no-padding"
+      defaultActiveKey={tabKey}
+      destroyInactiveTabPane
+      onChange={handleTabChange}>
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
       <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
         <UserManagement />
+      </TabPane>
+      <TabPane key="group-management" tab="Group Management">
+        <GroupManagement />
       </TabPane>
     </Tabs>
   ) : (

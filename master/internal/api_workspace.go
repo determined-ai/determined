@@ -86,8 +86,10 @@ func (a *apiServer) GetWorkspaceProjects(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = a.GetWorkspaceByID(req.Id, *curUser, false); err != nil {
-		return nil, err
+	if req.Id != 0 {
+		if _, err = a.GetWorkspaceByID(req.Id, *curUser, false); err != nil {
+			return nil, err
+		}
 	}
 
 	nameFilter := req.Name

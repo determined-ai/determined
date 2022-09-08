@@ -1,6 +1,6 @@
 import { Tooltip } from 'antd';
 import dayjs from 'dayjs';
-import React, { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewerEntry, {
   DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH,
@@ -15,17 +15,18 @@ import { LogLevel, RunState, TrialDetails } from 'types';
 import css from './TrialLogPreview.module.scss';
 
 interface Props {
+  children?: React.ReactNode;
   hidePreview?: boolean;
   onViewLogs?: () => void;
   trial?: TrialDetails;
 }
 
-const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
+const TrialLogPreview: React.FC<Props> = ({
   children,
   hidePreview = false,
   onViewLogs,
   trial,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const nonEmptyLogFound = useRef(false);
   const [ logEntry, setLogEntry ] = useState<LogEntry>();

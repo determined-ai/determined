@@ -6,9 +6,8 @@ from typing import Any, List
 import pytz
 import yaml
 
+from determined import cli
 from determined.cli import render
-from determined.cli.session import setup_session
-from determined.cli.util import format_args, limit_offset_paginator, make_pagination_args
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -16,22 +15,24 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def ls(args: Namespace) -> None:
-    session = setup_session(args)
-    pools = bindings.get_GetResourcePools(setup_session(args))
+    session = cli.setup_session(args)
+    pools = bindings.get_GetResourcePools(cli.setup_session(args))
     is_priority = check_is_priority(pools, args.resource_pool)
 
     order_by = (
         bindings.v1OrderBy.ORDER_BY_ASC if not args.reverse else bindings.v1OrderBy.ORDER_BY_DESC
     )
-    jobs: List[bindings.v1Job] = limit_offset_paginator(
-        bindings.get_GetJobs,
-        "jobs",
-        session,
-        limit=args.limit,
-        offset=args.offset,
-        pages=args.pages,
-        orderBy=order_by,
-    )
+
+    def get_with_offset(offset: int) -> bindings.v1GetJobsResponse:
+        return bindings.get_GetJobs(
+            session,
+            offset=offset,
+            limit=args.limit,
+            orderBy=order_by,
+        )
+
+    resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
+    jobs = [j for r in resps for j in r.jobs]
 
     if args.yaml or args.json:
         data = {
@@ -91,13 +92,13 @@ def update(args: Namespace) -> None:
         aheadOf=args.ahead_of,
     )
     bindings.post_UpdateJobQueue(
-        setup_session(args), body=bindings.v1UpdateJobQueueRequest(updates=[update])
+        cli.setup_session(args), body=bindings.v1UpdateJobQueueRequest(updates=[update])
     )
 
 
 @authentication.required
 def process_updates(args: Namespace) -> None:
-    session = setup_session(args)
+    session = cli.setup_session(args)
     for arg in args.operation:
         inputs = validate_operation_args(arg)
         _single_update(session=session, **inputs)
@@ -183,12 +184,12 @@ args_description = [
                         type=str,
                         help="The target resource pool, if any.",
                     ),
-                    *make_pagination_args(limit=100, supports_reverse=True),
+                    *cli.make_pagination_args(limit=100, supports_reverse=True),
                     Group(
-                        format_args["json"],
-                        format_args["yaml"],
-                        format_args["table"],
-                        format_args["csv"],
+                        cli.output_format_args["json"],
+                        cli.output_format_args["yaml"],
+                        cli.output_format_args["table"],
+                        cli.output_format_args["csv"],
                     ),
                 ],
                 is_default=True,

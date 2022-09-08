@@ -120,6 +120,16 @@ export const getUsers: DetApi<
   ),
 };
 
+export const getUser: DetApi<
+  Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser
+> = {
+  name: 'getUser',
+  postProcess: (response) => decoder.mapV1User(response.user),
+  request: (params) => detApi.Users.getUser(
+    params.userId,
+  ),
+};
+
 export const postUser: DetApi<
   Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
 > = {
@@ -186,6 +196,91 @@ export const resetUserSetting: DetApi<
   name: 'resetUserSetting',
   postProcess: (response) => response,
   request: () => detApi.Users.resetUserSetting(),
+};
+
+export const getUserPermissions: DetApi<
+  Service.GetUserParams, number, Type.Permission[]
+> = {
+  name: 'getUserPermissions',
+  postProcess: (response) => {
+    const fillerPermission: Type.Permission = {
+      globalOnly: true,
+      id: response,
+      name: 'oss_user',
+      workspaceOnly: false,
+    };
+    return [ fillerPermission ];
+  },
+  request: (params) => new Promise((resolve) => {
+    resolve(-1 * params.userId);
+  }),
+};
+
+/* Group */
+
+export const createGroup: DetApi<
+Service.CreateGroupsParams,
+Api.V1CreateGroupResponse, Api.V1CreateGroupResponse
+> = {
+  name: 'createGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.createGroup(
+    {
+      addUsers: params.addUsers,
+      name: params.name,
+    },
+  ),
+};
+
+export const getGroup: DetApi<
+  Service.GetGroupParams, Api.V1GetGroupResponse, Api.V1GetGroupResponse
+> = {
+  name: 'getGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.getGroup(
+    params.groupId,
+  ),
+};
+
+export const getGroups: DetApi<
+  Service.GetGroupsParams, Api.V1GetGroupsResponse, Api.V1GetGroupsResponse
+> = {
+  name: 'getGroups',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.getGroups(
+    {
+      limit: params.limit || 10,
+      offset: params.offset,
+    },
+  ),
+};
+
+export const updateGroup: DetApi<
+Service.UpdateGroupParams,
+ Api.V1UpdateGroupResponse, Api.V1UpdateGroupResponse
+> = {
+  name: 'updateGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.updateGroup(
+    params.groupId,
+    {
+      addUsers: params.addUsers,
+      groupId: params.groupId,
+      name: params.name,
+      removeUsers: params.removeUsers,
+    },
+  ),
+};
+
+export const deleteGroup: DetApi<
+Service.DeleteGroupParams,
+ Api.V1DeleteGroupResponse, Api.V1DeleteGroupResponse
+> = {
+  name: 'deleteGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.deleteGroup(
+    params.groupId,
+  ),
 };
 
 /* Info */
@@ -400,6 +495,24 @@ export const getExperimentDetails: DetApi<
   name: 'getExperimentDetails',
   postProcess: (response) => decoder.mapV1GetExperimentDetailsResponse(response),
   request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
+};
+
+export const getExperimentCheckpoints: DetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetExperimentCheckpointsResponse,
+  Type.CheckpointPagination
+> = {
+  name: 'getExperimentCheckpoints',
+  postProcess: (response) => decoder.decodeCheckpoints(response),
+  request: (params, options) => detApi.Experiments.getExperimentCheckpoints(
+    params.id,
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.states,
+    options,
+  ),
 };
 
 export const getExpValidationHistory: DetApi<

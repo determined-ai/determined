@@ -348,6 +348,16 @@ export const decodeCheckpointState = (
   return checkpointStateMap[data];
 };
 
+export const encodeCheckpointState = (
+  state: types.CheckpointState,
+): Sdk.Determinedcheckpointv1State => {
+  const stateKey = Object
+    .keys(checkpointStateMap)
+    .find((key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state);
+  if (stateKey) return stateKey as unknown as Sdk.Determinedcheckpointv1State;
+  return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
+};
+
 export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): types.RunState => {
   return experimentStateMap[data];
 };
@@ -513,6 +523,15 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
     uuid: data.uuid,
     validationMetrics:
       data.training.validationMetrics && decodeMetrics(data.training.validationMetrics),
+  };
+};
+
+export const decodeCheckpoints = (
+  data: Sdk.V1GetExperimentCheckpointsResponse,
+): types.CheckpointPagination => {
+  return {
+    checkpoints: data.checkpoints.map(decodeCheckpoint),
+    pagination: mapV1Pagination(data.pagination),
   };
 };
 

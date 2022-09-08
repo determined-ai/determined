@@ -55,7 +55,8 @@ message Experiment {
         "searcher_type",
         "project_id",
         "original_config",
-        "project_owner_id"
+        "project_owner_id",
+        "config"
       ]
     }
   };

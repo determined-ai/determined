@@ -348,14 +348,17 @@ def train_and_validate(
 
 
 def checkpointing_and_restoring_test(
-    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: pathlib.Path
+    make_trial_controller_fn: RestorableMakeControllerFn,
+    tmp_path: pathlib.Path,
+    steps: Tuple[int, int] = (1, 1),
+    scheduling_unit: int = 100,
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
     """
     Tests if a trial controller of any framework can checkpoint and restore from that checkpoint
     without state changes.
 
     This test runs two trials.
-    1) Trial A runs for one steps of 100 batches, checkpoints itself, and restores from
+    1) Trial A runs for one step of 100 batches, checkpoints itself, and restores from
        that checkpoint.
     2) Trial B runs for two steps of 100 batches.
 
@@ -371,7 +374,7 @@ def checkpointing_and_restoring_test(
     def make_workloads(steps: int, tag: str, checkpoint: bool) -> workload.Stream:
         trainer = TrainAndValidate()
 
-        yield from trainer.send(steps, validation_freq=1, scheduling_unit=100)
+        yield from trainer.send(steps, validation_freq=1, scheduling_unit=scheduling_unit)
         tm, vm = trainer.result()
         training_metrics[tag] += tm
         validation_metrics[tag] += vm
@@ -384,21 +387,21 @@ def checkpointing_and_restoring_test(
             steps_completed = trainer.get_steps_completed()
 
     controller_A1 = make_trial_controller_fn(
-        make_workloads(1, "A", True),
+        make_workloads(steps[0], "A", True),
         checkpoint_dir=checkpoint_dir,
     )
     controller_A1.run()
     assert latest_checkpoint is not None, "make_workloads did not set the latest_checkpoint"
 
     controller_A2 = make_trial_controller_fn(
-        make_workloads(1, "A", False),
+        make_workloads(steps[1], "A", False),
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
         steps_completed=steps_completed,
     )
     controller_A2.run()
 
-    controller_B = make_trial_controller_fn(make_workloads(2, "B", False))
+    controller_B = make_trial_controller_fn(make_workloads(steps[0] + steps[1], "B", False))
     controller_B.run()
 
     for A, B in zip(training_metrics["A"], training_metrics["B"]):

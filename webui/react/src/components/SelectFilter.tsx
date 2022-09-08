@@ -2,7 +2,6 @@ import { Select } from 'antd';
 import { RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
 import React, {
   forwardRef,
-  PropsWithChildren,
   useCallback,
   useMemo,
   useState,
@@ -44,7 +43,7 @@ const countOptions = (children: React.ReactNode): number => {
   return count;
 };
 
-const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function SelectFilter(
+const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
   {
     className = '',
     disableTags = false,
@@ -58,7 +57,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
     showSearch = true,
     verticalLayout = false,
     ...props
-  }: PropsWithChildren<Props>,
+  }: Props,
   ref?: React.Ref<RefSelectProps>,
 ) {
   const [ isOpen, setIsOpen ] = useState(false);

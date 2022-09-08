@@ -1,11 +1,12 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
@@ -15,7 +16,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import {
-  ExperimentAction as Action, DetailedUser, ProjectExperiment,
+  ExperimentAction as Action, ProjectExperiment,
 } from 'types';
 import handleError from 'utils/error';
 import {
@@ -24,7 +25,7 @@ import {
 import { openCommand } from 'utils/wait';
 
 interface Props {
-  curUser?: DetailedUser;
+  children?: React.ReactNode;
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
@@ -49,10 +50,9 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
   onComplete,
-  curUser,
   onVisibleChange,
   children,
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const id = experiment.id;
   const {
     contextHolder: modalExperimentMoveContextHolder,
@@ -156,7 +156,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser).map((action) => (
+  const { canMoveExperiment, canDeleteExperiment } = usePermissions();
+
+  const menuItems = getActionsForExperiment(
+    experiment,
+    dropdownActions,
+  ).filter((action) => [ Action.Delete, Action.Move ].includes(action)
+    ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
+      (action === Action.Move && canMoveExperiment({ experiment }))
+    : true).map((action) => (
     { danger: action === Action.Delete, key: action, label: action }
   ));
 

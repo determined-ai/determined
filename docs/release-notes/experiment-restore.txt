@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Fix an issue where restoring a job in into a Kubernetes set up could crash the
-   resource manager.

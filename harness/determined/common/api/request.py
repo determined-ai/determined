@@ -76,6 +76,7 @@ def add_token_to_headers(
     user_token = ""
     if auth is not None:
         user_token = auth.get_session_token()
+
     if user_token:
         return {**headers, "Authorization": "Bearer {}".format(user_token)}
 

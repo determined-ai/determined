@@ -201,6 +201,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
               col.title = 'Partition';
               col.dataIndex = 'resourcePool';
               break;
+            case Api.V1SchedulerType.PBS:
+              col.title = 'Queue';
+              col.dataIndex = 'resourcePool';
+              break;
             case Api.V1SchedulerType.PRIORITY:
             case Api.V1SchedulerType.KUBERNETES:
               col.title = 'Priority';
@@ -266,16 +270,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   useEffect(() => {
     setPageState((cur) => ({ ...cur, isLoading: true }));
-    fetchAll();
-    return () => canceler.abort();
-  }, [
-    fetchAll,
-    canceler,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
+  }, [ settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset ]);
 
   useEffect(() => {
     if (!managingJob) return;

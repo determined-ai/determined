@@ -8,12 +8,12 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
-import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
 import { checkmarkRenderer, defaultRowClassName, experimentDurationRenderer,
   experimentNameRenderer, experimentProgressRenderer, ExperimentRenderer,
@@ -23,6 +23,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import TextEditorModal from 'components/TextEditorModal';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -33,6 +34,7 @@ import useModalExperimentMove, {
   settingsConfig as moveExperimentSettingsConfig,
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -64,7 +66,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import {
-  canUserActionExperiment,
+  canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
@@ -106,6 +108,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -138,8 +141,13 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, batchActions, user);
-  }, [ experimentMap, settings.row, user ]);
+    return getActionsForExperimentsUnion(
+      experiments,
+      batchActions,
+      canDeleteExperiment,
+      canMoveExperiment,
+    );
+  }, [ canDeleteExperiment, canMoveExperiment, experimentMap, settings.row ]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -148,10 +156,9 @@ const ProjectDetails: React.FC = () => {
         if (isEqual(prev, response)) return prev;
         return response;
       });
+      setPageError(undefined);
     } catch (e) {
       if (!pageError) setPageError(e as Error);
-    } finally {
-      setIsLoading(false);
     }
   }, [ canceler.signal, id, pageError ]);
 
@@ -314,7 +321,6 @@ const ProjectDetails: React.FC = () => {
         publicMessage: 'Unable to save experiment description.',
         silent: false,
       });
-      setIsLoading(false);
       return e as Error;
     }
   }, [ ]);
@@ -331,7 +337,6 @@ const ProjectDetails: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return (
         <ExperimentActionDropdown
-          curUser={user}
           experiment={getProjectExperimentForExperimentItem(record, project)}
           onComplete={handleActionComplete}
         />
@@ -339,10 +344,10 @@ const ProjectDetails: React.FC = () => {
     };
 
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
-      <InlineEditor
+      <TextEditorModal
         disabled={record.archived}
-        maxLength={500}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
+        title="Edit description"
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
       />
@@ -507,7 +512,6 @@ const ProjectDetails: React.FC = () => {
     ] as ColumnDef<ExperimentItem>[];
 
   }, [
-    user,
     handleActionComplete,
     experimentTags,
     labelFilterDropdown,
@@ -564,7 +568,10 @@ const ProjectDetails: React.FC = () => {
     if (action === Action.Move) {
       return openMoveModal({
         experimentIds: settings.row.filter((id) =>
-          canUserActionExperiment(user, Action.Move, experimentMap[id])),
+          canActionExperiment(
+            Action.Move,
+            experimentMap[id],
+          ) && canMoveExperiment({ experiment: experimentMap[id] })),
         sourceProjectId: project?.id,
         sourceWorkspaceId: project?.workspaceId,
       });
@@ -594,7 +601,14 @@ const ProjectDetails: React.FC = () => {
           return Promise.resolve();
       }
     }));
-  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, user ]);
+  }, [
+    canMoveExperiment,
+    settings.row,
+    openMoveModal,
+    project?.workspaceId,
+    project?.id,
+    experimentMap,
+  ]);
 
   const submitBatchAction = useCallback(async (action: Action) => {
     try {
@@ -766,8 +780,8 @@ const ProjectDetails: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    fetchExperiments();
     setIsLoading(true);
+    fetchExperiments();
   }, [
     fetchExperiments,
     settings.archived,
@@ -789,7 +803,6 @@ const ProjectDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => {
       return (
         <ExperimentActionDropdown
-          curUser={user}
           experiment={getProjectExperimentForExperimentItem(record, project)}
           onComplete={handleActionComplete}
           onVisibleChange={onVisibleChange}>
@@ -797,7 +810,7 @@ const ProjectDetails: React.FC = () => {
         </ExperimentActionDropdown>
       );
     },
-    [ user, handleActionComplete, project ],
+    [ handleActionComplete, project ],
   );
 
   const ExperimentTabOptions = useMemo(() => {
@@ -892,6 +905,7 @@ const ProjectDetails: React.FC = () => {
               preserveSelectedRowKeys: true,
               selectedRowKeys: settings.row ?? [],
             }}
+            scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
@@ -937,9 +951,8 @@ const ProjectDetails: React.FC = () => {
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (pageError) {
-    const message = isNotFound(pageError) ?
-      `Unable to find Project ${projectId}` :
-      `Unable to fetch Project ${projectId}`;
+    if (isNotFound(pageError)) return <PageNotFound />;
+    const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!project) {
     return (

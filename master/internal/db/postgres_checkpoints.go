@@ -41,14 +41,14 @@ func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID
 	}
 
 	if err := db.queryRows(`
-	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv 
-	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[])); 
+	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv
+	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[]));
 `, &checkpointIDRows, checkpoints); err != nil {
 		return nil, fmt.Errorf(
 			"filtering checkpoint uuids by those registered in the model registry: %w", err)
 	}
 
-	checkpointIDs := make(map[uuid.UUID]bool)
+	checkpointIDs := make(map[uuid.UUID]bool, len(checkpointIDRows))
 
 	for _, cRow := range checkpointIDRows {
 		checkpointIDs[cRow.ID] = true

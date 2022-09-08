@@ -1,3 +1,4 @@
+import datetime
 import functools
 import io
 import json
@@ -172,3 +173,15 @@ def get_max_retries_config() -> urllib3.util.retry.Retry:
             backoff_factor=0.5,
             method_whitelist=False,  # type: ignore
         )
+
+
+def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
+    # Protobuf emits timestamps in RFC3339 format, which are identical to canonical JavaScript date
+    # stamps [1].  datetime.datetime.fromisoformat parses a subset of ISO8601 timestamps, but
+    # notably does not handle the trailing Z to signify the UTC timezone [2].
+    #
+    # [1] https://tc39.es/ecma262/#sec-date-time-string-format
+    # [2] https://bugs.python.org/issue35829
+    if ts.endswith("Z"):
+        ts = ts[:-1] + "+00:00"
+    return datetime.datetime.fromisoformat(ts)

@@ -1196,7 +1196,7 @@ export interface V1Checkpoint {
      * @type {Determinedcheckpointv1State}
      * @memberof V1Checkpoint
      */
-    state?: Determinedcheckpointv1State;
+    state: Determinedcheckpointv1State;
     /**
      * Training-related data for this checkpoint.
      * @type {V1CheckpointTrainingMetadata}
@@ -1540,6 +1540,40 @@ export interface V1CreateExperimentResponse {
 }
 
 /**
+ * CreateGroupRequest is the body of the request for the call to create a group.
+ * @export
+ * @interface V1CreateGroupRequest
+ */
+export interface V1CreateGroupRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1CreateGroupRequest
+     */
+    name: string;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1CreateGroupRequest
+     */
+    addUsers?: Array<number>;
+}
+
+/**
+ * CreateGroupResponse is the body of the response for the call to update a group and its members.
+ * @export
+ * @interface V1CreateGroupResponse
+ */
+export interface V1CreateGroupResponse {
+    /**
+     * Info about the group after the update succeeded.
+     * @type {V1GroupDetails}
+     * @memberof V1CreateGroupResponse
+     */
+    group: V1GroupDetails;
+}
+
+/**
  * Response to CurrentUserRequest.
  * @export
  * @interface V1CurrentUserResponse
@@ -1601,6 +1635,14 @@ export interface V1DeleteCheckpointsResponse {
  * @interface V1DeleteExperimentResponse
  */
 export interface V1DeleteExperimentResponse {
+}
+
+/**
+ * DeleteGroupResponse is the body of the response for the call to delete a group.
+ * @export
+ * @interface V1DeleteGroupResponse
+ */
+export interface V1DeleteGroupResponse {
 }
 
 /**
@@ -1964,7 +2006,7 @@ export interface V1Experiment {
      * @type {any}
      * @memberof V1Experiment
      */
-    config?: any;
+    config: any;
     /**
      * The original configuration that the user submitted.
      * @type {string}
@@ -2106,7 +2148,7 @@ export interface V1FileNode {
 }
 
 /**
- * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.
+ * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.  - FITTING_POLICY_PBS: A PBS placeholder. When running on PBS, task placement is delegated.
  * @export
  * @enum {string}
  */
@@ -2115,7 +2157,8 @@ export enum V1FittingPolicy {
     BEST = <any> 'FITTING_POLICY_BEST',
     WORST = <any> 'FITTING_POLICY_WORST',
     KUBERNETES = <any> 'FITTING_POLICY_KUBERNETES',
-    SLURM = <any> 'FITTING_POLICY_SLURM'
+    SLURM = <any> 'FITTING_POLICY_SLURM',
+    PBS = <any> 'FITTING_POLICY_PBS'
 }
 
 /**
@@ -2220,7 +2263,7 @@ export interface V1GetCheckpointResponse {
      * @type {V1Checkpoint}
      * @memberof V1GetCheckpointResponse
      */
-    checkpoint?: V1Checkpoint;
+    checkpoint: V1Checkpoint;
 }
 
 /**
@@ -2455,6 +2498,72 @@ export interface V1GetExperimentsResponse {
      * @memberof V1GetExperimentsResponse
      */
     pagination: V1Pagination;
+}
+
+/**
+ * GetGroupResponse is the body of the response for the call to get a group by id.
+ * @export
+ * @interface V1GetGroupResponse
+ */
+export interface V1GetGroupResponse {
+    /**
+     * 
+     * @type {V1GroupDetails}
+     * @memberof V1GetGroupResponse
+     */
+    group: V1GroupDetails;
+}
+
+/**
+ * GetGroupsRequest is the body of the request for the call to search for groups.
+ * @export
+ * @interface V1GetGroupsRequest
+ */
+export interface V1GetGroupsRequest {
+    /**
+     * The id of the user to use to find groups to which the user belongs.
+     * @type {number}
+     * @memberof V1GetGroupsRequest
+     */
+    userId?: number;
+    /**
+     * The group name to use when searching.
+     * @type {string}
+     * @memberof V1GetGroupsRequest
+     */
+    name?: string;
+    /**
+     * Skip the number of groups before returning results. Negative values denote number of groups to skip from the end before returning results.
+     * @type {number}
+     * @memberof V1GetGroupsRequest
+     */
+    offset?: number;
+    /**
+     * Limit the number of groups. Required and must be must be <= 500.
+     * @type {number}
+     * @memberof V1GetGroupsRequest
+     */
+    limit: number;
+}
+
+/**
+ * GetGroupsResponse is the body of the response for the call to search for groups.
+ * @export
+ * @interface V1GetGroupsResponse
+ */
+export interface V1GetGroupsResponse {
+    /**
+     * 
+     * @type {Array<V1GroupSearchResult>}
+     * @memberof V1GetGroupsResponse
+     */
+    groups?: Array<V1GroupSearchResult>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetGroupsResponse
+     */
+    pagination?: V1Pagination;
 }
 
 /**
@@ -3082,13 +3191,13 @@ export interface V1GetTrialCheckpointsResponse {
      * @type {Array<V1Checkpoint>}
      * @memberof V1GetTrialCheckpointsResponse
      */
-    checkpoints?: Array<V1Checkpoint>;
+    checkpoints: Array<V1Checkpoint>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetTrialCheckpointsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -3164,7 +3273,7 @@ export interface V1GetUserResponse {
      * @type {V1User}
      * @memberof V1GetUserResponse
      */
-    user?: V1User;
+    user: V1User;
 }
 
 /**
@@ -3292,6 +3401,72 @@ export interface V1GetWorkspacesResponse {
      * @memberof V1GetWorkspacesResponse
      */
     pagination: V1Pagination;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1Group
+ */
+export interface V1Group {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Group
+     */
+    groupId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Group
+     */
+    name?: string;
+}
+
+/**
+ * GroupDetails contains detailed information about a specific Group including which users belong to the group.
+ * @export
+ * @interface V1GroupDetails
+ */
+export interface V1GroupDetails {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GroupDetails
+     */
+    groupId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1GroupDetails
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<V1User>}
+     * @memberof V1GroupDetails
+     */
+    users?: Array<V1User>;
+}
+
+/**
+ * GroupSearchResult is the representation of groups as they're returned by the search endpoint.
+ * @export
+ * @interface V1GroupSearchResult
+ */
+export interface V1GroupSearchResult {
+    /**
+     * 
+     * @type {V1Group}
+     * @memberof V1GroupSearchResult
+     */
+    group: V1Group;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GroupSearchResult
+     */
+    numMembers: number;
 }
 
 /**
@@ -4063,13 +4238,13 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    userId?: number;
+    userId: number;
     /**
      * Whether this model is archived or not.
      * @type {boolean}
      * @memberof V1Model
      */
-    archived?: boolean;
+    archived: boolean;
     /**
      * Notes associated with this model.
      * @type {string}
@@ -4131,7 +4306,7 @@ export interface V1ModelVersion {
      * @type {Date}
      * @memberof V1ModelVersion
      */
-    lastUpdatedTime?: Date;
+    lastUpdatedTime: Date;
     /**
      * Comment associated with this model version.
      * @type {string}
@@ -4143,7 +4318,7 @@ export interface V1ModelVersion {
      * @type {string}
      * @memberof V1ModelVersion
      */
-    username: string;
+    username?: string;
     /**
      * Id of the user who created this model version.
      * @type {number}
@@ -4572,11 +4747,29 @@ export interface V1PatchProjectResponse {
  */
 export interface V1PatchUser {
     /**
+     * Bool denoting whether the account is an admin account.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    admin?: boolean;
+    /**
+     * Bool denoting whether the account is active.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    active?: boolean;
+    /**
      * Name to display in the web UI.
      * @type {string}
      * @memberof V1PatchUser
      */
     displayName?: string;
+    /**
+     * The user and group on the agent host machine.
+     * @type {V1AgentUserGroup}
+     * @memberof V1PatchUser
+     */
+    agentUserGroup?: V1AgentUserGroup;
 }
 
 /**
@@ -6024,7 +6217,7 @@ export enum V1Scale {
 }
 
 /**
- * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.
+ * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.  - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is delegated.
  * @export
  * @enum {string}
  */
@@ -6034,7 +6227,8 @@ export enum V1SchedulerType {
     FAIRSHARE = <any> 'SCHEDULER_TYPE_FAIR_SHARE',
     ROUNDROBIN = <any> 'SCHEDULER_TYPE_ROUND_ROBIN',
     KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
-    SLURM = <any> 'SCHEDULER_TYPE_SLURM'
+    SLURM = <any> 'SCHEDULER_TYPE_SLURM',
+    PBS = <any> 'SCHEDULER_TYPE_PBS'
 }
 
 /**
@@ -6947,6 +7141,52 @@ export interface V1UnarchiveWorkspaceResponse {
  * @interface V1UnpinWorkspaceResponse
  */
 export interface V1UnpinWorkspaceResponse {
+}
+
+/**
+ * UpdateGroupRequest is the body of the request for the call to update a group and its members.
+ * @export
+ * @interface V1UpdateGroupRequest
+ */
+export interface V1UpdateGroupRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1UpdateGroupRequest
+     */
+    groupId: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1UpdateGroupRequest
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1UpdateGroupRequest
+     */
+    addUsers?: Array<number>;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1UpdateGroupRequest
+     */
+    removeUsers?: Array<number>;
+}
+
+/**
+ * UpdateGroupResponse is the body of the response for the call to update a group and its members.
+ * @export
+ * @interface V1UpdateGroupResponse
+ */
+export interface V1UpdateGroupResponse {
+    /**
+     * Info about the group after the update succeeded.
+     * @type {V1GroupDetails}
+     * @memberof V1UpdateGroupResponse
+     */
+    group: V1GroupDetails;
 }
 
 /**
@@ -12539,6 +12779,83 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create a group with optional members on creation
+         * @param {V1CreateGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGroup(body: V1CreateGroupRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createGroup.');
+            }
+            const localVarPath = `/api/v1/groups`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1CreateGroupRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Remove a group
+         * @param {number} groupId The id of the group that should be deleted.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGroup(groupId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling deleteGroup.');
+            }
+            const localVarPath = `/api/v1/groups/{groupId}`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a trial.
          * @param {Array<number>} trialId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -12733,6 +13050,83 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a group by id
+         * @param {number} groupId The id of the group to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroup(groupId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getGroup.');
+            }
+            const localVarPath = `/api/v1/groups/{groupId}`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Search for groups with optional filters
+         * @param {V1GetGroupsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroups(body: V1GetGroupsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getGroups.');
+            }
+            const localVarPath = `/api/v1/groups/search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1GetGroupsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -13716,6 +14110,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Update group info
+         * @param {number} groupId The id of the group
+         * @param {V1UpdateGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateGroup(groupId: number, body: V1UpdateGroupRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling updateGroup.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateGroup.');
+            }
+            const localVarPath = `/api/v1/groups/{groupId}`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PUT' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1UpdateGroupRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Control the job queues.
          * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
@@ -13943,6 +14383,44 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create a group with optional members on creation
+         * @param {V1CreateGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGroup(body: V1CreateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGroup(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Remove a group
+         * @param {number} groupId The id of the group that should be deleted.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(groupId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a trial.
          * @param {Array<number>} trialId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -14015,6 +14493,44 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a group by id
+         * @param {number} groupId The id of the group to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroup(groupId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Search for groups with optional filters
+         * @param {V1GetGroupsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14443,6 +14959,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Update group info
+         * @param {number} groupId The id of the group
+         * @param {V1UpdateGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateGroup(groupId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Control the job queues.
          * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
@@ -14568,6 +15104,26 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create a group with optional members on creation
+         * @param {V1CreateGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGroup(body: V1CreateGroupRequest, options?: any) {
+            return InternalApiFp(configuration).createGroup(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Remove a group
+         * @param {number} groupId The id of the group that should be deleted.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGroup(groupId: number, options?: any) {
+            return InternalApiFp(configuration).deleteGroup(groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a trial.
          * @param {Array<number>} trialId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -14613,6 +15169,26 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any) {
             return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a group by id
+         * @param {number} groupId The id of the group to return.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroup(groupId: number, options?: any) {
+            return InternalApiFp(configuration).getGroup(groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Search for groups with optional filters
+         * @param {V1GetGroupsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroups(body: V1GetGroupsRequest, options?: any) {
+            return InternalApiFp(configuration).getGroups(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14852,6 +15428,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Update group info
+         * @param {number} groupId The id of the group
+         * @param {V1UpdateGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any) {
+            return InternalApiFp(configuration).updateGroup(groupId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Control the job queues.
          * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
@@ -14987,6 +15574,30 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary Create a group with optional members on creation
+     * @param {V1CreateGroupRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createGroup(body: V1CreateGroupRequest, options?: any) {
+        return InternalApiFp(this.configuration).createGroup(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Remove a group
+     * @param {number} groupId The id of the group that should be deleted.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteGroup(groupId: number, options?: any) {
+        return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get the set of metric names recorded for a trial.
      * @param {Array<number>} trialId The id of the experiment.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -15039,6 +15650,30 @@ export class InternalApi extends BaseAPI {
      */
     public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
         return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a group by id
+     * @param {number} groupId The id of the group to return.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getGroup(groupId: number, options?: any) {
+        return InternalApiFp(this.configuration).getGroup(groupId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Search for groups with optional filters
+     * @param {V1GetGroupsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getGroups(body: V1GetGroupsRequest, options?: any) {
+        return InternalApiFp(this.configuration).getGroups(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -15315,6 +15950,19 @@ export class InternalApi extends BaseAPI {
      */
     public trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Update group info
+     * @param {number} groupId The id of the group
+     * @param {V1UpdateGroupRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any) {
+        return InternalApiFp(this.configuration).updateGroup(groupId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21935,7 +22583,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Get projects associated with a workspace.
-         * @param {number} id The id of the workspace.
+         * @param {number} id The id of the workspace. When id is set to 0, return all projects across the all workspaces.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
@@ -22341,7 +22989,7 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get projects associated with a workspace.
-         * @param {number} id The id of the workspace.
+         * @param {number} id The id of the workspace. When id is set to 0, return all projects across the all workspaces.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
@@ -22528,7 +23176,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         /**
          * 
          * @summary Get projects associated with a workspace.
-         * @param {number} id The id of the workspace.
+         * @param {number} id The id of the workspace. When id is set to 0, return all projects across the all workspaces.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
@@ -22659,7 +23307,7 @@ export class WorkspacesApi extends BaseAPI {
     /**
      * 
      * @summary Get projects associated with a workspace.
-     * @param {number} id The id of the workspace.
+     * @param {number} id The id of the workspace. When id is set to 0, return all projects across the all workspaces.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.

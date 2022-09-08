@@ -85,7 +85,7 @@ func newScaleDecider(
 func (s *scaleDecider) updateScalingInfo(info *sproto.ScalingInfo) {
 	s.desiredNewInstances = info.DesiredNewInstances
 	s.idleAgentSnapshot = make(map[string]sproto.AgentSummary)
-	s.connectedAgentSnapshot = make(map[string]sproto.AgentSummary)
+	s.connectedAgentSnapshot = make(map[string]sproto.AgentSummary, len(info.Agents))
 	for _, agent := range info.Agents {
 		if agent.IsIdle {
 			s.idleAgentSnapshot[agent.Name] = agent
@@ -96,7 +96,7 @@ func (s *scaleDecider) updateScalingInfo(info *sproto.ScalingInfo) {
 
 func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 	updateSnapshot := func() {
-		s.instanceSnapshot = make(map[string]*Instance)
+		s.instanceSnapshot = make(map[string]*Instance, len(instances))
 		for _, inst := range instances {
 			s.instanceSnapshot[inst.ID] = inst
 		}
@@ -283,7 +283,7 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 			break
 		}
 	}
-	instances := make([]*Instance, 0)
+	instances := make([]*Instance, 0, len(s.instances))
 	for _, inst := range s.instances {
 		instances = append(instances, inst)
 	}

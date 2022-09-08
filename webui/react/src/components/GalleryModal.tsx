@@ -1,6 +1,6 @@
 import { Modal } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
-import React, { PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
@@ -11,18 +11,19 @@ import css from './GalleryModal.module.scss';
 import IconButton from './IconButton';
 
 interface Props extends ModalProps {
+  children: React.ReactNode;
   height?: number | string;
   onNext?: () => void;
   onPrevious?: () => void;
 }
 
-const GalleryModal: React.FC<PropsWithChildren<Props>> = ({
+const GalleryModal: React.FC<Props> = ({
   height = '80%',
   onNext,
   onPrevious,
   children,
   ...props
-}: PropsWithChildren<Props>) => {
+}: Props) => {
   const resize = useResize();
   const [ width, setWidth ] = useState<number>();
   const [ minHeight, setMinHeight ] = useState<number>();

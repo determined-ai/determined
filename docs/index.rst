@@ -126,12 +126,6 @@ so you can spend your time building models instead of managing infrastructure.
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="cluster-setup-guide/basic.html">
-                 <h2 class="tile-title">Administrator Guide</h2>
-                 <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
-             </a>
-         </div>
-         <div class="tile-container">
              <a class="tile" href="training/dtrain-introduction.html">
                  <h2 class="tile-title">Model Developer Guide</h2>
                  <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>

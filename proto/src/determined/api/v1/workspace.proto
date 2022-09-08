@@ -63,6 +63,7 @@ message GetWorkspaceProjectsRequest {
   int32 limit = 4;
 
   // The id of the workspace.
+  // When id is set to 0, return all projects across the all workspaces.
   int32 id = 5;
 
   // Limit the projects to those matching the name.

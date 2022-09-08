@@ -34,6 +34,10 @@ export const getCurrentUser = generateDetApi<
   EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 >(Config.getCurrentUser);
 
+export const getUser = generateDetApi<
+  Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser
+>(Config.getUser);
+
 export const postUser = generateDetApi<
   Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
 >(Config.postUser);
@@ -62,6 +66,37 @@ export const updateUserSetting = generateDetApi<
 export const resetUserSetting = generateDetApi<
   EmptyParams, Api.V1ResetUserSettingResponse, void
 >(Config.resetUserSetting);
+
+export const getUserPermissions = generateDetApi<
+  Service.GetUserParams, number, Type.Permission[]
+>(Config.getUserPermissions);
+
+/* Groups */
+
+export const createGroup = generateDetApi<
+  Service.CreateGroupsParams,
+   Api.V1CreateGroupResponse, Api.V1CreateGroupResponse
+>(Config.createGroup);
+
+export const getGroup = generateDetApi<
+  Service.GetGroupParams,
+   Api.V1GetGroupResponse, Api.V1GetGroupResponse
+>(Config.getGroup);
+
+export const getGroups = generateDetApi<
+  Service.GetGroupsParams,
+   Api.V1GetGroupsResponse, Api.V1GetGroupsResponse
+>(Config.getGroups);
+
+export const updateGroup = generateDetApi<
+Service.UpdateGroupParams,
+ Api.V1UpdateGroupResponse, Api.V1UpdateGroupResponse
+>(Config.updateGroup);
+
+export const deleteGroup = generateDetApi<
+Service.DeleteGroupParams,
+ Api.V1DeleteGroupResponse, Api.V1DeleteGroupResponse
+>(Config.deleteGroup);
 
 /* Info */
 
@@ -120,6 +155,12 @@ export const getExperiment = generateDetApi<
 export const getExperimentDetails = generateDetApi<
   Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 >(Config.getExperimentDetails);
+
+export const getExperimentCheckpoints = generateDetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetExperimentCheckpointsResponse,
+  Type.CheckpointPagination
+>(Config.getExperimentCheckpoints);
 
 export const getExpTrials = generateDetApi<
   Service.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
@@ -412,5 +453,3 @@ export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Pro
       return await killTensorBoard({ commandId: task.id });
   }
 };
-export { isNotFound } from 'shared/utils/service';
-export { isAuthFailure } from 'shared/utils/service';

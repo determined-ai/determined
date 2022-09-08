@@ -43,6 +43,30 @@ useNodePortForMaster: false
   #   group: det-nobody
   #   gid: 65533
 
+# oidc (EE-only) enables OpenID Connect Integration, which is only available if enterpriseEdition
+# is true. It allows users to use single sign-on with their organization’s identity provider.
+# clientSecretKey is the key of the secret contained in the secret.
+# oidc:
+#   enabled:
+#   provider:
+#   idpRecipientUrl:
+#   idpSsoUrl:
+#   clientId:
+#   clientSecretKey:
+#   clientSecretName:
+#   authenticationClaim:
+#   scimAuthenticationAttribute:
+
+# scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
+# only available if enterpriseEdition is true. It allows administrators to easily and securely
+# provision users and groups through their standard identity provider (IdP).
+# scim:
+#   enabled: true
+#   auth:
+#     type: basic
+#     username: determined
+#     password: password
+
 # db sets the configurations for the database.
 db:
   # To deploy your own Postgres DB, provide a hostAddress. If hostAddress is provided, Determined
@@ -100,7 +124,7 @@ checkpointStorage:
   # type: gcs
   # bucket: <bucket_name>
   # prefix: <prefix>
-  
+
   # For storing in S3.
   # type: s3
   # bucket: <bucket_name>
@@ -213,7 +237,8 @@ telemetry:
 ## scheduling with preemption
 # defaultScheduler: preemption
 
-## Configure settings about how Determined launches the Fluentbit sidecar.
+## Configure settings about how Determined launches the Fluent Bit sidecar.
 # fluent:
-#   image: fluent/fluent-bit:1.9.3
-
+#   image: fluent/fluent-bit:1.6
+#   uid: 0
+#   gid: 0

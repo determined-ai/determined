@@ -354,7 +354,7 @@ func setupSchedulerStates(
 	map[*actor.Ref]*group,
 	map[*actor.Ref]*AgentState,
 ) {
-	agents := make(map[*actor.Ref]*AgentState)
+	agents := make(map[*actor.Ref]*AgentState, len(mockAgents))
 	for _, mockAgent := range mockAgents {
 		ref, created := system.ActorOf(actor.Addr(mockAgent.id), mockAgent)
 		assert.Assert(t, created)
@@ -370,8 +370,8 @@ func setupSchedulerStates(
 		agents[ref] = agent
 	}
 
-	groups := make(map[*actor.Ref]*group)
-	groupActors := make(map[*mockGroup]*actor.Ref)
+	groups := make(map[*actor.Ref]*group, len(mockGroups))
+	groupActors := make(map[*mockGroup]*actor.Ref, len(mockGroups))
 	for _, mockGroup := range mockGroups {
 		ref, created := system.ActorOf(actor.Addr(mockGroup.id), mockGroup)
 		assert.Assert(t, created)

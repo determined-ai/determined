@@ -70,6 +70,34 @@ data:
       {{- end }}
     port: {{ include "determined.masterPort" . }}
 
+    {{- if .Values.enterpriseEdition }}
+    {{- if .Values.oidc }}
+    oidc:
+      enabled: {{ .Values.oidc.enabled | default true }}
+      provider: {{ required "A valid provider entry is required!" .Values.oidc.provider}}
+      idp_recipient_url: {{ required "A valid recipient url is required!" .Values.oidc.idpRecipientUrl }}
+      idp_sso_url: {{ required "A valid sso url is required!" .Values.oidc.idpSsoUrl }}
+      client_id: {{ required "A valid client ID is required!" .Values.oidc.clientId }}
+      {{- if .Values.oidc.authenticationClaim }}
+      authentication_claim: {{ .Values.oidc.authenticationClaim }}
+      {{- end }}
+      {{- if .Values.oidc.scimAuthenticationAttribute }}
+      scim_authentication_attribute: {{ .Values.oidc.scimAuthenticationAttribute }}
+      {{- end }}
+    {{- end }}
+
+    {{- if .Values.scim }}
+    scim:
+      enabled: {{ .Values.scim.enabled | default true }}
+      auth:
+        type: {{ required "A valid authentication type is required!" .Values.scim.auth.type }}
+        {{- if eq .Values.scim.auth.type "basic" }}
+        username: {{ required "A valid username is required!" .Values.scim.auth.username }}
+        password: {{ required "A valid password type is required!" .Values.scim.auth.password }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+
     resource_manager:
       type: "kubernetes"
       namespace: {{ .Release.Namespace }}
@@ -88,8 +116,8 @@ data:
       {{- end }}
       {{- if .Values.fluent }}
       fluent:
-        {{- if .Values.fluent.image }}
-        image: {{ .Values.fluent.image }}
+        {{- if .Values.fluent }}
+        {{- toYaml .Values.fluent | nindent 8}}
         {{- end }}
       {{- end }}
 

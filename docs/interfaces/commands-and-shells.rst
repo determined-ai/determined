@@ -56,7 +56,7 @@ Installation
 The CLI is distributed as a Python wheel package. Each user should install a copy of the CLI on
 their local development machine.
 
-The CLI requires Python >= 3.6. It is recommended that you install the CLI into a `virtualenv
+The CLI requires Python >= 3.7. It is recommended that you install the CLI into a `virtualenv
 <https://virtualenv.pypa.io/en/latest/>`__, although this is optional. To install the CLI into a
 virtualenv, activate the virtualenv before entering the following command.
 

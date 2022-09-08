@@ -210,6 +210,21 @@ def wait_for_experiment_active_workload(
     )
 
 
+def wait_for_at_least_n_trials(
+    experiment_id: int,
+    n: int,
+    timeout: int = 30,
+) -> List["TrialPlusWorkload"]:
+    """Wait for enough trials to start, then return the trials found."""
+    deadline = time.time() + timeout
+    while True:
+        trials = experiment_trials(experiment_id)
+        if len(trials) >= n:
+            return trials
+        if time.time() > deadline:
+            raise TimeoutError(f"did not see {n} trials running in {timeout}s; trials={trials}")
+
+
 def wait_for_experiment_workload_progress(
     experiment_id: int, max_ticks: int = conf.MAX_TRIAL_BUILD_SECS
 ) -> None:

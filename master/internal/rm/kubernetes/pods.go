@@ -548,7 +548,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 	results := ctx.AskAll(getPodNodeInfo{}, podHandlers...).GetAll()
 
 	// Separate pods by nodes.
-	podByNode := make(map[string][]podNodeInfo)
+	podByNode := make(map[string][]podNodeInfo, len(results))
 	for _, result := range results {
 		info := result.(podNodeInfo)
 		if len(info.nodeName) == 0 {
@@ -561,7 +561,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 
 	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
 
-	summary := make(map[string]model.AgentSummary)
+	summary := make(map[string]model.AgentSummary, len(p.currentNodes))
 	for _, node := range p.currentNodes {
 		var numSlots int64
 		var deviceType device.Type
@@ -668,7 +668,7 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 }
 
 func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int64) {
-	nodeToTasks := make(map[string][]string)
+	nodeToTasks := make(map[string][]string, len(p.currentNodes))
 	taskSlots := make(map[string]int64)
 
 	nonDetPods := p.getNonDetPods()

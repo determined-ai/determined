@@ -2,7 +2,7 @@ import json
 from argparse import Namespace
 from typing import Any, List, Optional
 
-from determined.cli.session import setup_session
+from determined import cli
 from determined.common import experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
@@ -46,7 +46,7 @@ def list_checkpoints(args: Namespace) -> None:
     else:
         sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_END_TIME
     r = bindings.get_GetExperimentCheckpoints(
-        setup_session(args),
+        cli.setup_session(args),
         id=args.experiment_id,
         limit=args.best,
         sortBy=sorter,
@@ -116,7 +116,7 @@ def delete_checkpoints(args: Namespace) -> None:
     ):
         c_uuids = args.checkpoints_uuids.split(",")
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=c_uuids)
-        bindings.delete_DeleteCheckpoints(setup_session(args), body=delete_body)
+        bindings.delete_DeleteCheckpoints(cli.setup_session(args), body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
     else:
         print("Aborting deletion of checkpoints.")

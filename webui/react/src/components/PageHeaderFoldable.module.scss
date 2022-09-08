@@ -37,8 +37,13 @@
       justify-content: flex-end;
       max-width: fit-content;
 
-      .optionsMainButton {
-        display: none;
+      .optionsButtons {
+        display: flex;
+        gap: 8px;
+
+        .optionsMainButton {
+          display: none;
+        }
       }
     }
     .optionsDropdown {
@@ -76,7 +81,7 @@
   .options {
     flex: 1 0 45%;
   }
-  .optionsMainButton:nth-of-type(1) {
+  .optionsButtons :nth-child(1) {
     display: inline-block !important;
   }
   .optionsDropdownItem:nth-child(1) {
@@ -88,7 +93,7 @@
 }
 
 @media only screen and (min-width: $breakpoint-desktop-medium) {
-  .optionsMainButton:nth-of-type(2) {
+  .optionsButtons :nth-child(2) {
     display: inline-block !important;
   }
   .optionsDropdownItem:nth-child(2) {
@@ -100,7 +105,7 @@
 }
 
 @media only screen and (min-width: $breakpoint-desktop-large) {
-  .optionsMainButton:nth-of-type(3) {
+  .optionsButtons :nth-child(3) {
     display: inline-block !important;
   }
   .optionsDropdownItem:nth-child(3) {

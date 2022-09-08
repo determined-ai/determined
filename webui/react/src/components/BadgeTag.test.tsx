@@ -1,10 +1,12 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { generateAlphaNumeric } from 'shared/utils/string';
+import { StateOfUnion } from 'themes';
 
+import { BadgeType } from './Badge';
 import BadgeTag, { Props } from './BadgeTag';
 
 const LABEL = generateAlphaNumeric();
@@ -15,7 +17,12 @@ jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
 
   // We need to mock Tooltip in order to set mouseEnterDelay to 0.
-  const Tooltip = (props: unknown) => {
+  const Tooltip = (props: {
+    label?: React.ReactNode;
+    preLabel?: React.ReactNode;
+    state?: StateOfUnion | undefined;
+    type?: BadgeType | undefined;
+  }) => {
     return (
       <antd.Tooltip {...props} mouseEnterDelay={0} />
     );
@@ -32,7 +39,7 @@ const setup = ({
   children = CONTENT,
   tooltip = CONTENT_TOOLTIP,
   ...props
-}: PropsWithChildren<Props> = {}) => {
+}: Props = {}) => {
   const view = render(
     <StoreProvider>
       <BadgeTag tooltip={tooltip} {...props}>{children}</BadgeTag>
