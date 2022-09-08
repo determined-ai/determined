@@ -8,7 +8,13 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from training_templates import imagenet_templates_small, imagenet_style_templates_small
+from training_templates import IMAGEN_OBJECT_TEMPLATES_SMALL, IMAGEN_STYLE_TEMPLATES_SMALL
+
+INTERPOLATION_DICT = {
+    "nearest": transforms.InterpolationMode.NEAREST,
+    "bilinear": transforms.InterpolationMode.BILINEAR,
+    "bicubic": transforms.InterpolationMode.BICUBIC,
+}
 
 
 class TextualInversionDataset(Dataset):
@@ -43,18 +49,20 @@ class TextualInversionDataset(Dataset):
 
         if split == "train":
             self._length = self.num_images * repeats
+        assert (
+            interpolation in INTERPOLATION_DICT
+        ), f"interpolation must be in {list(INTERPOLATION_DICT.keys())}"
+        self.interpolation = INTERPOLATION_DICT[interpolation]
 
-        self.interpolation = {
-            "linear": PIL.Image.LINEAR,
-            "bilinear": PIL.Image.BILINEAR,
-            "bicubic": PIL.Image.BICUBIC,
-            "lanczos": PIL.Image.LANCZOS,
-        }[interpolation]
+        assert learnable_property in (
+            "object",
+            "style",
+        ), f'learnable_property must be "object" or "style", not {learnable_property}'
 
         self.templates = (
-            imagenet_style_templates_small
+            IMAGEN_STYLE_TEMPLATES_SMALL
             if learnable_property == "style"
-            else imagenet_templates_small
+            else IMAGEN_OBJECT_TEMPLATES_SMALL
         )
         self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
 
@@ -63,11 +71,8 @@ class TextualInversionDataset(Dataset):
 
     def __getitem__(self, i):
         example = {}
-        image = Image.open(self.image_paths[i % self.num_images])
 
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-
+        # Add the tokenized input text to the example
         placeholder_string = self.placeholder_token
         text = random.choice(self.templates).format(placeholder_string)
 
@@ -79,23 +84,17 @@ class TextualInversionDataset(Dataset):
             return_tensors="pt",
         ).input_ids[0]
 
-        # default to score-sde preprocessing
-        img = np.array(image).astype(np.uint8)
-
+        # Add the normalized image tensor to the example
+        image = Image.open(self.image_paths[i % self.num_images])
+        if not image.mode == "RGB":
+            image = image.convert("RGB")
+        image_t = transforms.ToTensor()(image)
         if self.center_crop:
-            crop = min(img.shape[0], img.shape[1])
-            h, w, = (
-                img.shape[0],
-                img.shape[1],
-            )
-            img = img[(h - crop) // 2 : (h + crop) // 2, (w - crop) // 2 : (w + crop) // 2]
+            crop_size = min(image_t.shape[-1], image_t.shape[-2])
+            image_t = transforms.CenterCrop(crop_size)(image_t)
+        image_t = transforms.Resize(self.size, interpolation=self.interpolation)(image_t)
+        # Normalize the tensor to be in the range [-1, 1]
+        image_t = (image_t - 0.5) * 2.0
+        example["pixel_values"] = image_t
 
-        image = Image.fromarray(img)
-        image = image.resize((self.size, self.size), resample=self.interpolation)
-
-        image = self.flip_transform(image)
-        image = np.array(image).astype(np.uint8)
-        image = (image / 127.5 - 1.0).astype(np.float32)
-
-        example["pixel_values"] = torch.from_numpy(image).permute(2, 0, 1)
         return example

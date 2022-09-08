@@ -122,7 +122,6 @@ def train(
 
                 # Predict the noise residual
                 noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
-                print(80 * "=", noise_pred.shape, 80 * "=", sep="\n")
                 loss = F.mse_loss(noise_pred, noise)
                 accelerator.backward(loss)
 

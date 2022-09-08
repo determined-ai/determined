@@ -1,4 +1,4 @@
-imagenet_templates_small = [
+IMAGEN_OBJECT_TEMPLATES_SMALL = [
     "a photo of a {}",
     "a rendering of a {}",
     "a cropped photo of the {}",
@@ -28,7 +28,7 @@ imagenet_templates_small = [
     "a photo of a small {}",
 ]
 
-imagenet_style_templates_small = [
+IMAGEN_STYLE_TEMPLATES_SMALL = [
     "a painting in the style of {}",
     "a rendering in the style of {}",
     "a cropped painting in the style of {}",

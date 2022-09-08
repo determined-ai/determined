@@ -39,13 +39,6 @@ if __name__ == "__main__":
     distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
-        rank = core_context.distributed.rank
-        local_rank = core_context.distributed.local_rank
-        size = core_context.distributed.size
-        is_distributed = size > 1
-        is_chief = rank == 0
-        is_local_chief = local_rank == 0
-
         # Build the tokenizer and add the new token
         tokenizer = CLIPTokenizer.from_pretrained(
             hparams.pretrained_model_name_or_path,
@@ -129,13 +122,13 @@ if __name__ == "__main__":
             train_batch_size=hparams.train_batch_size,
             gradient_accumulation_steps=hparams.gradient_accumulation_steps,
             learning_rate=hparams.learning_rate,
-            max_train_steps=hparams.max_train_steps,  # Original 3000, edited for speed
+            max_train_steps=hparams.max_train_steps,
             output_dir=hparams.output_dir,
             scale_lr=True,
             core_context=core_context,
         )
 
-        print(80 * "=", "INFERENCE", 80 * "=", sep="\n")
+        # print(80 * "=", "INFERENCE", 80 * "=", sep="\n")
         #
         # pipe = StableDiffusionPipeline.from_pretrained(
         #     hparams.output_dir, torch_dtype=torch.float16
