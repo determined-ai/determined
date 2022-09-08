@@ -152,8 +152,6 @@ const ProjectDetails: React.FC = () => {
       setPageError(undefined);
     } catch (e) {
       if (!pageError) setPageError(e as Error);
-    } finally {
-      setIsLoading(false);
     }
   }, [ canceler.signal, id, pageError ]);
 
