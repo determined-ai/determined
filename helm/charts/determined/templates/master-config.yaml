@@ -116,8 +116,8 @@ data:
       {{- end }}
       {{- if .Values.fluent }}
       fluent:
-        {{- if .Values.fluent.image }}
-        image: {{ .Values.fluent.image }}
+        {{- if .Values.fluent }}
+        {{- toYaml .Values.fluent | nindent 8}}
         {{- end }}
       {{- end }}
 

@@ -1,4 +1,4 @@
-# The contents of this file are programatically generated.
+# The contents of this file are programmatically generated.
 import enum
 import math
 import typing

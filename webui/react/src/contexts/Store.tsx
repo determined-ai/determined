@@ -1,6 +1,7 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
+import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { DarkLight, Mode, Theme } from 'shared/themes';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
@@ -44,6 +45,7 @@ export interface State {
   pool: PoolOverview;
   resourcePools: ResourcePool[];
   ui: UI;
+  userSettings: V1UserWebSetting[];
   users: DetailedUser[];
 }
 
@@ -75,6 +77,9 @@ export enum StoreAction {
   // Users
   SetUsers,
   SetCurrentUser,
+
+  // User Settings
+  SetUserSettings,
 
   // Omnibar
   HideOmnibar,
@@ -111,6 +116,7 @@ export type Action =
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
 | { type: StoreAction.SetCurrentUser; value: DetailedUser }
+| { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
 | { type: StoreAction.SetResourcePools; value: ResourcePool[] }
 | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
 | { type: StoreAction.HideOmnibar }
@@ -173,6 +179,7 @@ const initState: State = {
   resourcePools: [],
   ui: initUI,
   users: [],
+  userSettings: [],
 };
 
 const StateContext = React.createContext<State | undefined>(undefined);
@@ -291,11 +298,15 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
+      if (isEqual(action.value, state.auth.user)) return state;
       const users = [ ...state.users ];
       const userIdx = users.findIndex((user) => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }
+    case StoreAction.SetUserSettings:
+      if (isEqual(state.userSettings, action.value)) return state;
+      return { ...state, userSettings: action.value };
     case StoreAction.SetResourcePools:
       if (isEqual(state.resourcePools, action.value)) return state;
       return { ...state, resourcePools: action.value };

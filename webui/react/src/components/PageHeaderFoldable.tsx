@@ -76,17 +76,19 @@ const PageHeaderFoldable: React.FC<Props> = (
               onClick={() => setIsExpanded((prev) => !prev)}
             />
           )}
-          {options?.slice(0, 3).map((option) => (
-            <Button
-              className={css.optionsMainButton}
-              disabled={option.disabled || !option.onClick}
-              ghost
-              icon={option?.icon}
-              key={option.key}
-              loading={option.isLoading}
-              onClick={option.onClick}>{renderOptionLabel(option)}
-            </Button>
-          ))}
+          <div className={css.optionsButtons}>
+            {options?.slice(0, 3).map((option) => (
+              <Button
+                className={css.optionsMainButton}
+                disabled={option.disabled || !option.onClick}
+                ghost
+                icon={option?.icon}
+                key={option.key}
+                loading={option.isLoading}
+                onClick={option.onClick}>{renderOptionLabel(option)}
+              </Button>
+            ))}
+          </div>
           {dropdownOptions && (
             <Dropdown overlay={dropdownOptions} placement="bottomRight" trigger={[ 'click' ]}>
               <Button

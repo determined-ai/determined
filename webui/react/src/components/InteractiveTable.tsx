@@ -58,9 +58,9 @@ const SOURCE_TYPE = 'DraggableColumn';
 type DndItem = {
   index?: number;
 }
-interface ContextMenuProps {
+export interface ContextMenuProps<RecordType> {
   onVisibleChange: (visible: boolean) => void;
-  record: Record<string, unknown>;
+  record: RecordType;
 }
 
 export interface ColumnDef<RecordType> extends ColumnType<RecordType> {
@@ -74,7 +74,7 @@ export type ColumnDefs<ColumnName extends string, RecordType> = Record<
 >;
 
 interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
-  ContextMenu?: React.FC<ContextMenuProps>;
+  ContextMenu?: React.FC<ContextMenuProps<RecordType>>;
   areRowsSelected?: boolean;
   columns: ColumnDef<RecordType>[],
   containerRef: MutableRefObject<HTMLElement | null>,
@@ -84,14 +84,15 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => JSX.Element;
+type Row = <T extends object>(props: RowProps<T>) => JSX.Element;
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
-interface RowProps {
-  ContextMenu?: React.FC<ContextMenuProps>;
+interface RowProps<RecordType> {
+  ContextMenu?: React.FC<ContextMenuProps<RecordType>>;
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
-  record: Record<string, unknown>;
+  record: RecordType;
 }
 
 interface HeaderCellProps {
@@ -123,14 +124,14 @@ const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
 
 const RightClickableRowContext = createContext({});
 
-const Row = ({
+const Row: Row = ({
   className,
   children,
   record,
   ContextMenu,
   areRowsSelected,
   ...props
-}: RowProps) => {
+}) => {
   const classes = [ className, css.row ];
 
   const [ rowHovered, setRowHovered ] = useState(false);
@@ -301,7 +302,6 @@ const InteractiveTable: InteractiveTable = ({
   areRowsSelected,
   ...props
 }) => {
-
   const columnDefs = useMemo(
     () =>
       columns
@@ -531,6 +531,7 @@ const InteractiveTable: InteractiveTable = ({
                 columns={renderColumns as ColumnsType<any>}
                 components={components}
                 dataSource={dataSource}
+                scroll={scroll}
                 tableLayout="fixed"
                 onChange={handleChange}
                 onRow={(record, index) => ({

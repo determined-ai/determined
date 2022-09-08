@@ -124,7 +124,7 @@ checkpointStorage:
   # type: gcs
   # bucket: <bucket_name>
   # prefix: <prefix>
-  
+
   # For storing in S3.
   # type: s3
   # bucket: <bucket_name>
@@ -237,7 +237,8 @@ telemetry:
 ## scheduling with preemption
 # defaultScheduler: preemption
 
-## Configure settings about how Determined launches the Fluentbit sidecar.
+## Configure settings about how Determined launches the Fluent Bit sidecar.
 # fluent:
-#   image: fluent/fluent-bit:1.9.3
-
+#   image: fluent/fluent-bit:1.6
+#   uid: 0
+#   gid: 0

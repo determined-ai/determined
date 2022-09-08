@@ -11,7 +11,6 @@ import urllib3
 
 import determined as det
 import determined.common.requests
-from determined.common import util
 from determined.common.api import authentication, certs, errors
 
 
@@ -77,10 +76,6 @@ def add_token_to_headers(
     user_token = ""
     if auth is not None:
         user_token = auth.get_session_token()
-    else:
-        token = util.get_det_user_token_from_env()
-        if token is not None:
-            user_token = token
 
     if user_token:
         return {**headers, "Authorization": "Bearer {}".format(user_token)}

@@ -42,6 +42,36 @@ interface TreeNode extends DataNode {
   text?: string;
 }
 
+const sortTree = (a:TreeNode, b: TreeNode) => {
+  if (a.children) a.children.sort(sortTree);
+
+  if (b.children) b.children.sort(sortTree);
+  // sorting first by having an extension or not, then by extension first
+  // and finally alphabetically.
+  const titleA = String(a.title);
+  const titleB = String(b.title);
+
+  if (!a.isLeaf && b.isLeaf) return -1;
+
+  if (a.isLeaf && !b.isLeaf) return 1;
+
+  if (!a.isLeaf && !b.isLeaf)
+    return titleA.localeCompare(titleB) - titleB.localeCompare(titleA);
+
+  // had to use RegEx due to some files being ".<filename>"
+  const [ stringA, extensionA ] = titleA.split(/(?<=[a-zA-Z])\./);
+  const [ stringB, extensionB ] = titleB.split(/(?<=[a-zA-Z])\./);
+
+  if (!extensionA && extensionB) return 1;
+
+  if (!extensionB && extensionA) return -1;
+
+  if (!extensionA && !extensionB)
+    return stringA.localeCompare(stringB) - stringB.localeCompare(stringA);
+
+  return extensionA.localeCompare(extensionB) - extensionB.localeCompare(extensionB);
+};
+
 const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
   children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
   isLeaf: !node.isDir,
@@ -51,7 +81,7 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
 
 enum PageError {
   decode = 'Could not decode file.',
-  empty = 'Empty file! Please choose a diferent file.',
+  empty = 'File has no content.',
   fetch = 'Unable to fetch file.',
   none = ''
 }
@@ -193,7 +223,9 @@ const CodeViewer: React.FC<Props> = ({
         const fileTree = await getExperimentFileTree({ experimentId });
         setIsFetchingTree(false);
 
-        const tree = fileTree.map<TreeNode>((node) => convertV1FileNodeToTreeNode(node));
+        const tree = fileTree
+          .map<TreeNode>((node) => convertV1FileNodeToTreeNode(node))
+          .sort(sortTree);
 
         if (runtimeConfig) tree.unshift({
           icon: configIcon,
@@ -314,7 +346,7 @@ const CodeViewer: React.FC<Props> = ({
 
     const filePath = String(activeFile?.key);
     if (filePath.includes('Configuration')) {
-      const isRuntimeConf = filePath.includes('runtime');
+      const isRuntimeConf = filePath.toLowerCase().includes('runtime');
       const url = isRuntimeConf
         ? URL.createObjectURL(new Blob([ runtimeConfig ]))
         : URL.createObjectURL(new Blob([ submittedConfig as string ]));
@@ -396,8 +428,10 @@ const CodeViewer: React.FC<Props> = ({
     ],
   );
 
+  const classes = [ css.base, pageError ? css.noEditor : '' ];
+
   return (
-    <section className={css.base}>
+    <section className={classes.join(' ')}>
       <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="fileTree">
         <Spinner spinning={isFetchingTree}>
           <DirectoryTree
@@ -471,7 +505,7 @@ const CodeViewer: React.FC<Props> = ({
             pageError ? (
               <Message
                 style={{
-                  justifyContent: 'flex-start',
+                  justifyContent: 'center',
                   padding: '120px',
                 }}
                 title={pageError}

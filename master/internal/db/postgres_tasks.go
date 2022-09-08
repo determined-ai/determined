@@ -154,12 +154,19 @@ WHERE allocation_id = $1
 }
 
 // StartAllocationSession creates a row in the allocation_sessions table.
-func (db *PgDB) StartAllocationSession(allocationID model.AllocationID) (string, error) {
+func (db *PgDB) StartAllocationSession(
+	allocationID model.AllocationID, owner *model.User,
+) (string, error) {
 	taskSession := &model.AllocationSession{
 		AllocationID: allocationID,
 	}
+	if owner != nil {
+		taskSession.OwnerID = &owner.ID
+	}
 
-	query := "INSERT INTO allocation_sessions (allocation_id) VALUES (:allocation_id) RETURNING id"
+	query := `
+INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES 
+	(:allocation_id, :owner_id) RETURNING id`
 	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
 		return "", err
 	}

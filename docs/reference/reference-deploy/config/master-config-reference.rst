@@ -208,6 +208,10 @@ The master supports the following configuration settings:
 
          -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
 
+         -  ``uid``/``gid``: The UID and GID to run the Fluent Bit sidecar as. If these are not
+            specified, the container will run as root when the associated task container is running
+            as root and as a default non-root user otherwise.
+
 .. _cluster-configuration-slurm:
 
    -  ``type: slurm``: The ``slurm`` resource manager launches tasks on a Slurm cluster. For more
