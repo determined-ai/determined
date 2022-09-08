@@ -667,6 +667,42 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    @pytest.mark.parallel
+    def test_gradient_aggregation(self) -> None:
+        exp_config = utils.make_default_exp_config(
+            self.hparams, 1, pytorch_onevar_model.OneVarTrial._searcher_metric,
+        )
+        exp_config["optimizations"].update({
+            "aggregation_frequency": 2,
+            "average_aggregated_gradients": True,
+        })
+
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=100, validation_freq=10)
+            training_metrics, validation_metrics = trainer.result()
+
+            # Check the gradient update at every step.
+            for idx, batch_metrics in enumerate(training_metrics):
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
+
+            for older, newer in zip(training_metrics, training_metrics[1:]):
+                assert newer["loss"] <= older["loss"]
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            exp_config=exp_config,
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
