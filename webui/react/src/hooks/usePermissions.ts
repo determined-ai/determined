@@ -146,7 +146,7 @@ const canDeleteExperiment = (
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return !!experiment && !!user &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
-    : permitted.has('delete_experiment'));
+      : permitted.has('delete_experiment'));
 };
 
 const canMoveExperiment = (
@@ -158,7 +158,7 @@ const canMoveExperiment = (
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return !!experiment && !!user &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
-    : permitted.has('move_experiment'));
+      : permitted.has('move_experiment'));
 };
 
 // User actions
@@ -182,7 +182,7 @@ const canDeleteModel = (
   const permitted = relevantPermissions(userAssignments, userRoles);
   return !!model && !!user &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === model.userId)
-    : permitted.has('delete_model'));
+      : permitted.has('delete_model'));
 };
 
 const canDeleteModelVersion = (
@@ -194,7 +194,7 @@ const canDeleteModelVersion = (
   const permitted = relevantPermissions(userAssignments, userRoles);
   return !!modelVersion && !!user &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === modelVersion.userId)
-    : permitted.has('delete_model_version'));
+      : permitted.has('delete_model_version'));
 };
 
 // Project actions
@@ -209,7 +209,7 @@ const canDeleteWorkspaceProjects = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !!workspace && !!user && !!project &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
-    : permitted.has('delete_projects'));
+      : permitted.has('delete_projects'));
 };
 
 const canModifyWorkspaceProjects = (
@@ -222,7 +222,7 @@ const canModifyWorkspaceProjects = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !!workspace && !!user && !!project &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
-    : permitted.has('modify_projects'));
+      : permitted.has('modify_projects'));
 };
 
 const canMoveWorkspaceProjects = (
@@ -235,7 +235,7 @@ const canMoveWorkspaceProjects = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !!workspace && !!user && !!project &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
-    : permitted.has('move_projects'));
+      : permitted.has('move_projects'));
 };
 
 // Workspace actions
@@ -248,7 +248,7 @@ const canDeleteWorkspace = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !!workspace && !!user &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
-    : permitted.has('delete_workspace'));
+      : permitted.has('delete_workspace'));
 };
 
 const canModifyWorkspace = (
@@ -260,7 +260,7 @@ const canModifyWorkspace = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !!workspace && !!user &&
     (permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
-    : permitted.has('modify_workspace'));
+      : permitted.has('modify_workspace'));
 };
 
 export default usePermissions;

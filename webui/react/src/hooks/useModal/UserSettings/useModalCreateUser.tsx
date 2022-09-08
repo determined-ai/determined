@@ -6,6 +6,7 @@ import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';
 import { getUserPermissions, patchUser, postUser, updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, DetailedUser, Permission } from 'types';
@@ -70,13 +71,13 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
     {
       dataIndex: 'globalOnly',
       key: 'globalOnly',
-      render: (val: boolean) => val ? '✓' : '',
+      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
       title: 'Global?',
     },
     {
       dataIndex: 'workspaceOnly',
       key: 'workspaceOnly',
-      render: (val: boolean) => val ? '✓' : '',
+      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
       title: 'Workspaces?',
     },
   ];
