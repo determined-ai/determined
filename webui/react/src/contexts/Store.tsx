@@ -4,12 +4,15 @@ import { globalStorage } from 'globalStorage';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { DarkLight, Mode, Theme } from 'shared/themes';
 import { clone, isEqual } from 'shared/utils/data';
+import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
 import {
   Agent, Auth, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
   UserAssignment, UserRole, Workspace,
 } from 'types';
+
+const logger = rootLogger.extend('store');
 
 interface Props {
   children?: React.ReactNode;
@@ -53,56 +56,56 @@ export interface State {
 }
 
 export enum StoreAction {
-  Reset,
+  Reset = 'Reset',
 
   // Agents
-  SetAgents,
+  SetAgents = 'SetAgents',
 
   // Auth
-  ResetAuth,
-  ResetAuthCheck,
-  SetAuth,
-  SetAuthCheck,
+  ResetAuth = 'ResetAuth',
+  ResetAuthCheck = 'ResetAuthCheck',
+  SetAuth = 'SetAuth',
+  SetAuthCheck = 'SetAuthCheck',
 
   // Info
-  SetInfo,
-  SetInfoCheck,
+  SetInfo = 'SetInfo',
+  SetInfoCheck = 'SetInfoCheck',
 
   // UI
-  HideUIChrome,
-  HideUISpinner,
-  SetMode,
-  SetPageVisibility,
-  SetTheme,
-  ShowUIChrome,
-  ShowUISpinner,
+  HideUIChrome = 'HideUIChrome',
+  HideUISpinner = 'HideUISpinner',
+  SetMode = 'SetMode',
+  SetPageVisibility = 'SetPageVisibility',
+  SetTheme = 'SetTheme',
+  ShowUIChrome = 'ShowUIChrome',
+  ShowUISpinner = 'ShowUISpinner',
 
   // Users
-  SetUsers,
-  SetCurrentUser,
+  SetUsers = 'SetUsers',
+  SetCurrentUser = 'SetCurrentUser',
 
   // User Settings
-  SetUserSettings,
+  SetUserSettings = 'SetUserSettings',
 
   // Omnibar
-  HideOmnibar,
-  ShowOmnibar,
+  HideOmnibar = 'HideOmnibar',
+  ShowOmnibar = 'ShowOmnibar',
 
   // ResourcePools
-  SetResourcePools,
+  SetResourcePools = 'SetResourcePools',
 
   // PinnedWorkspaces
-  SetPinnedWorkspaces,
+  SetPinnedWorkspaces = 'SetPinnedWorkspaces',
 
   // Tasks
-  SetActiveTasks,
+  SetActiveTasks = 'SetActiveTasks',
 
   // Active Experiments
-  SetActiveExperiments,
+  SetActiveExperiments = 'SetActiveExperiments',
 
   // User assignments, roles, and derived permissions
-  SetUserAssignments,
-  SetUserRoles,
+  SetUserAssignments = 'SetUserAssignments',
+  SetUserRoles = 'SetUserRoles',
 }
 
 export type Action =
@@ -152,7 +155,7 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
-const initInfo = {
+const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
@@ -376,7 +379,12 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 };
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
-  const [ state, dispatch ] = useReducer(reducer, initState);
+  const [ state, dispatch ] = useReducer((state: State, action: Action) => {
+    const newState = reducer(state, action);
+    if (isEqual(state, newState)) return state; // CHECK: performance concerns?
+    logger.debug('store state updated', action.type);
+    return newState;
+  }, initState);
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>
