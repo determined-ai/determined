@@ -1,13 +1,14 @@
-import { Form, Input, message, Select, Switch } from 'antd';
+import { Form, Input, message, Select, Switch, Table } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { patchUser, postUser, updateGroup } from 'services/api';
+import usePermissions from 'hooks/usePermissions';
+import { getUserPermissions, patchUser, postUser, updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, DetailedUser } from 'types';
+import { BrandingType, DetailedUser, Permission } from 'types';
 import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
@@ -39,12 +40,47 @@ interface FormValues {
 }
 
 const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
+  const [ permissions, setPermissions ] = useState<Permission[]>([]);
+
+  const canSeePermissions = usePermissions().canGetPermissions();
+
+  const updatePermissions = useCallback(async () => {
+    if (user && canSeePermissions) {
+      const viewPermissions = await getUserPermissions({ userId: user.id });
+      setPermissions(viewPermissions);
+    }
+  }, [ canSeePermissions, user ]);
+
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
     });
-  }, [ user, form ]);
+    if (user) {
+      updatePermissions();
+    }
+  }, [ form, updatePermissions, user ]);
+
+  const columns = [
+    {
+      dataIndex: 'name',
+      key: 'name',
+      title: 'Name',
+    },
+    {
+      dataIndex: 'globalOnly',
+      key: 'globalOnly',
+      render: (val: boolean) => val ? '✓' : '',
+      title: 'Global?',
+    },
+    {
+      dataIndex: 'workspaceOnly',
+      key: 'workspaceOnly',
+      render: (val: boolean) => val ? '✓' : '',
+      title: 'Workspaces?',
+    },
+  ];
+
   return (
     <Form<FormValues>
       form={form}
@@ -94,6 +130,12 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
             }
           </Select>
         </Form.Item>
+      )}
+      {!!user && canSeePermissions && (
+        <Table
+          columns={columns}
+          dataSource={permissions}
+        />
       )}
     </Form>
   );

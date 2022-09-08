@@ -39,6 +39,7 @@ interface PermissionsHook {
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
+  canGetPermissions: () => boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
@@ -76,6 +77,11 @@ const usePermissions = (): PermissionsHook => {
     ),
     canDeleteWorkspace: (args: WorkspacePermissionsArgs) => canDeleteWorkspace(
       args.workspace,
+      user,
+      userAssignments,
+      userRoles,
+    ),
+    canGetPermissions: () => canGetPermissions(
       user,
       userAssignments,
       userRoles,
@@ -153,6 +159,17 @@ const canMoveExperiment = (
   return !!experiment && !!user &&
     permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
     : permitted.has('move_experiment');
+};
+
+// User actions
+const canGetPermissions = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!user && (permitted.has('oss_user') ? user.isAdmin
+    : permitted.has('view_permissions'));
 };
 
 // Model and ModelVersion actions
