@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -78,9 +79,21 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 	tokens := md[userTokenHeader]
 	if len(tokens) == 0 {
 		tokens = md[gatewayTokenHeader]
-		if len(tokens) == 0 {
-			return nil, nil, ErrTokenMissing
+	}
+	if len(tokens) == 0 {
+		allocationSession, err := GetAllocationSession(ctx, d)
+		if err != nil {
+			return nil, nil, err
 		}
+		if allocationSession.OwnerID == nil {
+			return nil, nil, status.Error(codes.InvalidArgument,
+				"allocation session has no associated user")
+		}
+		u, err := d.UserByID(*allocationSession.OwnerID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return ptrs.Ptr(u.ToUser()), nil, nil
 	}
 
 	token := tokens[0]

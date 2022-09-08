@@ -113,7 +113,6 @@ const EditableTagList: React.FC<Props> = (
 
           const tagElement = (
             <Tag
-              className={css.tagEdit}
               closable={!disabled}
               id={htmlId}
               key={tag}

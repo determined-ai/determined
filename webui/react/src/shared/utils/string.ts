@@ -122,3 +122,9 @@ export const validateLength = (str: string, minLen = 1, maxLen = 80, trim = true
   if (trim) strLen = str.trim().length;
   return strLen >= minLen && strLen <= maxLen;
 };
+
+export const pluralizer = (count: number, inputString: string, plural?: string): string => {
+  if (count === 1) return inputString;
+  if (plural) return plural;
+  return inputString + 's';
+};

@@ -1589,20 +1589,20 @@ func (_m *DB) SetHPImportance(experimentID int, value model.ExperimentHPImportan
 	return r0
 }
 
-// StartAllocationSession provides a mock function with given fields: allocationID
-func (_m *DB) StartAllocationSession(allocationID model.AllocationID) (string, error) {
-	ret := _m.Called(allocationID)
+// StartAllocationSession provides a mock function with given fields: allocationID, owner
+func (_m *DB) StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error) {
+	ret := _m.Called(allocationID, owner)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(model.AllocationID) string); ok {
-		r0 = rf(allocationID)
+	if rf, ok := ret.Get(0).(func(model.AllocationID, *model.User) string); ok {
+		r0 = rf(allocationID, owner)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.AllocationID) error); ok {
-		r1 = rf(allocationID)
+	if rf, ok := ret.Get(1).(func(model.AllocationID, *model.User) error); ok {
+		r1 = rf(allocationID, owner)
 	} else {
 		r1 = ret.Error(1)
 	}
