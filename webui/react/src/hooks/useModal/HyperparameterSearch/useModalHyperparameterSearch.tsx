@@ -335,8 +335,8 @@ const useModalHyperparameterSearch = ({
         <div
           className={css.hyperparameterContainer}
           style={{
-            gridTemplateColumns: `180px minmax(60, 1.4fr) 
-              repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(60, 1fr))`,
+            gridTemplateColumns: `180px minmax(60px, 1.4fr) 
+              repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(60px, 1fr))`,
           }}>
           <label id="hyperparameter"><h2>Hyperparameter</h2></label>
           <label id="type"><h2>Type</h2></label>
