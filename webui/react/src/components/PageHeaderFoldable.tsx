@@ -68,13 +68,16 @@ const PageHeaderFoldable: React.FC<Props> = (
         </div>
         <div className={css.options}>
           {foldableContent && (
-            <IconButton
-              icon={isExpanded ? 'arrow-up' : 'arrow-down'}
-              iconSize="tiny"
-              label="Toggle"
-              type="text"
-              onClick={() => setIsExpanded((prev) => !prev)}
-            />
+            // div is needed to make nth-of-type selectors for overflow actions work correctly
+            <div>
+              <IconButton
+                icon={isExpanded ? 'arrow-up' : 'arrow-down'}
+                iconSize="tiny"
+                label="Toggle"
+                type="text"
+                onClick={() => setIsExpanded((prev) => !prev)}
+              />
+            </div>
           )}
           {options?.slice(0, 3).map((option) => (
             <Button
