@@ -198,6 +198,24 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
+export const getUserPermissions: DetApi<
+  Service.GetUserParams, number, Type.Permission[]
+> = {
+  name: 'getUserPermissions',
+  postProcess: (response) => {
+    const fillerPermission: Type.Permission = {
+      globalOnly: true,
+      id: response,
+      name: 'oss_user',
+      workspaceOnly: false,
+    };
+    return [ fillerPermission ];
+  },
+  request: (params) => new Promise((resolve) => {
+    resolve(-1 * params.userId);
+  }),
+};
+
 /* Group */
 
 export const createGroup: DetApi<
