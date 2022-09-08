@@ -314,7 +314,6 @@ const ProjectDetails: React.FC = () => {
         publicMessage: 'Unable to save experiment description.',
         silent: false,
       });
-      setIsLoading(false);
       return e as Error;
     }
   }, [ ]);
