@@ -6,9 +6,8 @@ import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';
 import { getUserPermissions, patchUser, postUser, updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import Icon from 'shared/components/Icon/Icon';
-
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, DetailedUser, Permission } from 'types';
 import handleError from 'utils/error';
@@ -41,7 +40,6 @@ interface FormValues {
   GROUP_NAME?: number;
   USER_NAME_NAME: string;
 }
-
 
 const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
   const [ permissions, setPermissions ] = useState<Permission[]>([]);
