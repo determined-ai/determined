@@ -4,7 +4,7 @@ import random
 from PIL import Image
 
 import numpy as np
-import torch
+import torch.nn as nn
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -26,21 +26,22 @@ class TextualInversionDataset(Dataset):
 
     def __init__(
         self,
-        train_img_dir,
-        tokenizer,
-        learnable_property="object",  # [object, style]
-        size=512,
-        repeats=100,
-        interpolation="bicubic",
-        flip_p=0.5,
-        placeholder_token="*",
-        center_crop=False,
+        train_img_dir: str,
+        tokenizer: nn.Module,
+        placeholder_token: str,
+        learnable_property: str = "object",
+        size: int = 512,
+        repeats: int = 100,
+        interpolation: str = "bicubic",
+        flip_p: float = 0.5,
+        center_crop: bool = False,
     ):
 
         self.train_img_dir = train_img_dir
         self.tokenizer = tokenizer
         self.learnable_property = learnable_property
         self.size = size
+        self.repeats = repeats
         self.placeholder_token = placeholder_token
         self.center_crop = center_crop
         self.flip_p = flip_p
@@ -49,11 +50,8 @@ class TextualInversionDataset(Dataset):
             os.path.join(self.train_img_dir, file_path)
             for file_path in os.listdir(self.train_img_dir)
         ]
-
         self.num_images = len(self.image_paths)
-        self._length = self.num_images
 
-        self._length = self.num_images * repeats
         assert (
             interpolation in INTERPOLATION_DICT
         ), f"interpolation must be in {list(INTERPOLATION_DICT.keys())}"
@@ -72,7 +70,7 @@ class TextualInversionDataset(Dataset):
         self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
 
     def __len__(self):
-        return self._length
+        return self.num_images * self.repeats
 
     def __getitem__(self, i):
         example = {}

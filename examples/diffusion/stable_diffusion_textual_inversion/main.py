@@ -36,43 +36,44 @@ if __name__ == "__main__":
     HF_AUTH_TOKEN = os.environ["HF_AUTH_TOKEN"]
     info = det.get_cluster_info()
     hparams = attrdict.AttrDict(info.trial.hparams)
+    model_hps, data_hps, train_hps = hparams.model, hparams.data, hparams.train
     distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
         # Build the tokenizer and add the new token
         tokenizer = CLIPTokenizer.from_pretrained(
-            hparams.pretrained_model_name_or_path,
+            model_hps.pretrained_model_name_or_path,
             subfolder="tokenizer",
             use_auth_token=HF_AUTH_TOKEN,
         )
 
-        num_added_tokens = tokenizer.add_tokens(hparams.placeholder_token)
+        num_added_tokens = tokenizer.add_tokens(data_hps.placeholder_token)
         if num_added_tokens == 0:
             raise ValueError(
-                f"The tokenizer already contains the token {hparams.placeholder_token}. "
+                f"The tokenizer already contains the token {data_hps.placeholder_token}. "
                 "Please pass: a different `placeholder_token` that is not already in the tokenizer."
             )
 
         # Convert the initializer_token, placeholder_token to ids
-        token_ids = tokenizer.encode(hparams.initializer_token, add_special_tokens=False)
+        token_ids = tokenizer.encode(data_hps.initializer_token, add_special_tokens=False)
         # Check if initializer_token is a single token or a sequence of tokens
         if len(token_ids) > 1:
             raise ValueError("The initializer token must be a single token.")
 
         initializer_token_id = token_ids[0]
-        placeholder_token_id = tokenizer.convert_tokens_to_ids(hparams.placeholder_token)
+        placeholder_token_id = tokenizer.convert_tokens_to_ids(data_hps.placeholder_token)
 
         # Load models and create wrapper for stable diffusion
         text_encoder = CLIPTextModel.from_pretrained(
-            hparams.pretrained_model_name_or_path,
+            model_hps.pretrained_model_name_or_path,
             subfolder="text_encoder",
             use_auth_token=HF_AUTH_TOKEN,
         )
         vae = AutoencoderKL.from_pretrained(
-            hparams.pretrained_model_name_or_path, subfolder="vae", use_auth_token=HF_AUTH_TOKEN
+            model_hps.pretrained_model_name_or_path, subfolder="vae", use_auth_token=HF_AUTH_TOKEN
         )
         unet = UNet2DConditionModel.from_pretrained(
-            hparams.pretrained_model_name_or_path, subfolder="unet", use_auth_token=HF_AUTH_TOKEN
+            model_hps.pretrained_model_name_or_path, subfolder="unet", use_auth_token=HF_AUTH_TOKEN
         )
 
         # Extend the size of the text_encoder to account for the new placeholder_token
@@ -99,31 +100,34 @@ if __name__ == "__main__":
 
         # Create the training dataset
         train_dataset = data.TextualInversionDataset(
-            train_img_dir=hparams.train_img_dir,
+            train_img_dir=data_hps.train_img_dir,
             tokenizer=tokenizer,
-            size=hparams.size,
-            placeholder_token=hparams.placeholder_token,
-            repeats=hparams.repeats,
-            learnable_property=hparams.what_to_teach,
-            center_crop=hparams.center_crop,
+            placeholder_token=data_hps.placeholder_token,
+            learnable_property=data_hps.learnable_property,
+            size=data_hps.size,
+            repeats=data_hps.repeats,
+            interpolation=data_hps.interpolation,
+            flip_p=data_hps.flip_p,
+            center_crop=data_hps.center_crop,
         )
 
         print(80 * "=", "TRAINING", 80 * "=", sep="\n")
 
         train(
             train_dataset=train_dataset,
-            placeholder_token=hparams.placeholder_token,
+            placeholder_token=data_hps.placeholder_token,
             placeholder_token_id=placeholder_token_id,
             text_encoder=text_encoder,
             tokenizer=tokenizer,
             vae=vae,
             unet=unet,
-            train_batch_size=hparams.train_batch_size,
-            gradient_accumulation_steps=hparams.gradient_accumulation_steps,
-            learning_rate=hparams.learning_rate,
-            max_train_steps=hparams.max_train_steps,
+            train_batch_size=train_hps.train_batch_size,
+            gradient_accumulation_steps=train_hps.gradient_accumulation_steps,
+            learning_rate=train_hps.learning_rate,
+            max_train_steps=train_hps.max_train_steps,
             output_dir=hparams.output_dir,
-            scale_lr=True,
+            scale_lr=train_hps.scale_lr,
+            num_train_timesteps=train_hps.num_train_timesteps,
             core_context=core_context,
         )
 

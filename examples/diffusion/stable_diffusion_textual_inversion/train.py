@@ -58,6 +58,7 @@ def train(
             * train_batch_size
             * accelerator.num_processes
         )
+        logger.info(f"  scaled learning rate = {learning_rate}")
 
     # Initialize the optimizer
     optimizer = torch.optim.AdamW(
