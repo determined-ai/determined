@@ -465,17 +465,18 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
-// Represent order of active states (Queued -> Pending -> Running).
+// Represent order of active states (Queued -> Pulling -> Starting -> Running).
 var experimentStateIndex = map[experimentv1.State]int{
 	experimentv1.State_STATE_UNSPECIFIED: -2,
 	experimentv1.State_STATE_ACTIVE:      -1,
 	experimentv1.State_STATE_QUEUED:      0,
-	experimentv1.State_STATE_PENDING:     1,
-	experimentv1.State_STATE_RUNNING:     2,
+	experimentv1.State_STATE_PULLING:     1,
+	experimentv1.State_STATE_STARTING:    2,
+	experimentv1.State_STATE_RUNNING:     3,
 }
 
 // MostProgressedExperimentState returns the more advanced active state
-// based on experimentStateIndex (Queued -> Pending -> Running).
+// based on experimentStateIndex (Queued -> Pulling -> Starting -> Running).
 func MostProgressedExperimentState(
 	state1 experimentv1.State, state2 experimentv1.State,
 ) experimentv1.State {

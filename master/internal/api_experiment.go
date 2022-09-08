@@ -56,6 +56,7 @@ var experimentsAddr = actor.Addr("experiments")
 // Catches information on active running experiments.
 type experimentAllocation struct {
 	Job      model.JobID
+	Pulling  bool
 	Running  bool
 	Starting bool
 }
@@ -69,7 +70,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 		jobFilter = append(jobFilter, exp.JobId)
 	}
 
-	// get active or pending tasks
+	// get active experiments by JobID
 	tasks := []experimentAllocation{}
 	err := a.m.db.Query(
 		"get_active_allocations_by_job",
@@ -88,14 +89,17 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 			byJobID[task.Job] = experimentv1.State_STATE_RUNNING
 		case task.Starting:
 			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
-				experimentv1.State_STATE_PENDING)
+				experimentv1.State_STATE_STARTING)
+		case task.Pulling:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_PULLING)
 		default:
 			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
 				experimentv1.State_STATE_QUEUED)
 		}
 	}
 
-	// Active experiments should be converted to Queued, Pending, or kept Active (Running)
+	// Active experiments converted to Queued, Pulling, Starting, or Running
 	for _, exp := range experiments {
 		if exp.State == experimentv1.State_STATE_ACTIVE {
 			if setState, ok := byJobID[model.JobID(exp.JobId)]; ok {
@@ -199,8 +203,8 @@ func (a *apiServer) GetExperiment(
 
 	if !slices.Contains([]experimentv1.State{
 		experimentv1.State_STATE_ACTIVE,
-		experimentv1.State_STATE_PENDING, experimentv1.State_STATE_QUEUED,
-		experimentv1.State_STATE_RUNNING,
+		experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
+		experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
 	}, exp.State) {
 		return &resp, nil
 	}
@@ -917,7 +921,7 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	// include queued / pending / running state
+	// include queued / pulling / starting / running state
 	expListForm, err := a.enrichExperimentState([]*experimentv1.Experiment{exp})
 	if err != nil {
 		return nil, err

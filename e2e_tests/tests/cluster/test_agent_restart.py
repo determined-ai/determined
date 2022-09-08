@@ -94,7 +94,8 @@ def test_agent_restart_exp_container_failure(managed_cluster_restarts: ManagedCl
         assert state in [
             EXP_STATE.STATE_ACTIVE,
             EXP_STATE.STATE_QUEUED,
-            EXP_STATE.STATE_PENDING,
+            EXP_STATE.STATE_PULLING,
+            EXP_STATE.STATE_STARTING,
             EXP_STATE.STATE_RUNNING,
         ]
         exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_RUNNING)
