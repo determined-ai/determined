@@ -37,7 +37,6 @@ class TextualInversionTrainer:
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
         learning_rate: float = 5e-04,
-        max_train_steps: int = 3000,
         scale_lr: bool = True,
         beta_start: float = 0.00085,
         beta_end: float = 0.012,
@@ -58,7 +57,6 @@ class TextualInversionTrainer:
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.learning_rate = learning_rate
-        self.max_train_steps = max_train_steps
         self.output_dir = output_dir
         self.scale_lr = scale_lr
         self.beta_start = beta_start
@@ -105,31 +103,26 @@ class TextualInversionTrainer:
         distributed = det.core.DistributedContext.from_torch_distributed()
         with det.core.init(distributed=distributed) as core_context:
             self._restore_latest_checkpoint(core_context)
-            # We need to recalculate our total training steps as the size of the training dataloader may have changed.
-            num_update_steps_per_epoch = math.ceil(
-                len(self.train_dataloader) / self.gradient_accumulation_steps
-            )
-            num_train_epochs = math.ceil(self.max_train_steps / num_update_steps_per_epoch)
+            # # We need to recalculate our total training steps as the size of the training dataloader may have changed.
+            # num_update_steps_per_epoch = math.ceil(
+            #     len(self.train_dataloader) / self.gradient_accumulation_steps
+            # )
+            # num_train_epochs = math.ceil(self.max_train_steps / num_update_steps_per_epoch)
 
             # Train!
-            self.logger.info("***** Running training *****")
-            self.logger.info(f"  Num examples = {len(self.train_dataset)}")
-            self.logger.info(f"  Instantaneous batch size per device = {self.train_batch_size}")
-            self.logger.info(
-                f"  Total train batch size (w. parallel, distributed & accumulation) = {self.effective_batch_size}"
-            )
-            self.logger.info(f"  Gradient Accumulation steps = {self.gradient_accumulation_steps}")
-            self.logger.info(f"  Total optimization steps = {self.max_train_steps}")
-            # Only show the progress bar once on each machine.
-            progress_bar = tqdm(
-                range(self.max_train_steps), disable=not self.accelerator.is_local_main_process
-            )
-            progress_bar.set_description("Steps")
-            self.steps_completed = 0
-
-            for epoch in range(num_train_epochs):
-                self.text_encoder.train()
-                for step, batch in enumerate(self.train_dataloader):
+            # self.logger.info("***** Running training *****")
+            # self.logger.info(f"  Num examples = {len(self.train_dataset)}")
+            # self.logger.info(f"  Instantaneous batch size per device = {self.train_batch_size}")
+            # self.logger.info(
+            #     f"  Total train batch size (w. parallel, distributed & accumulation) = {self.effective_batch_size}"
+            # )
+            # self.logger.info(f"  Gradient Accumulation steps = {self.gradient_accumulation_steps}")
+            # self.logger.info(f"  Total optimization steps = {self.max_train_steps}")
+            # # Only show the progress bar once on each machine.
+            for op in core_context.searcher.operations():
+                while self.steps_completed < op.length:
+                    batch = next(iter(self.train_dataloader))
+                    # Use the accumulate method for efficient gradient accumulation.
                     with self.accelerator.accumulate(self.text_encoder):
                         # Convert images to latent space
                         latents = self.vae.encode(batch["pixel_values"]).sample().detach()
@@ -180,50 +173,45 @@ class TextualInversionTrainer:
 
                     # Checks if the self.accelerator has performed an optimization step behind the scenes
                     if self.accelerator.sync_gradients:
-                        progress_bar.update(1)
                         self.steps_completed += 1
 
                     logs = {"loss": loss.detach().item()}
-                    progress_bar.set_postfix(**logs)
-
-                    if self.steps_completed >= self.max_train_steps:
-                        break
 
                 self.accelerator.wait_for_everyone()
 
-        # Create the pipeline using the trained modules and save it.
-        if self.accelerator.is_main_process:
-            pipeline = StableDiffusionPipeline(
-                text_encoder=self.accelerator.unwrap_model(self.text_encoder),
-                vae=self.vae,
-                unet=self.unet,
-                tokenizer=self.tokenizer,
-                # Use faster PNDMScheduler for inference
-                scheduler=PNDMScheduler(
-                    beta_start=self.beta_start,
-                    beta_end=self.beta_end,
-                    beta_schedule=self.beta_schedule,
-                    skip_prk_steps=True,
-                ),
-                safety_checker=StableDiffusionSafetyChecker.from_pretrained(
-                    "CompVis/stable-diffusion-safety-checker"
-                ),
-                feature_extractor=CLIPFeatureExtractor.from_pretrained(
-                    "openai/clip-vit-base-patch32"
-                ),
-            )
-            with core_context.checkpoint.store_path({"steps_completed": 1}) as (path, storage_id):
-                print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
-                pipeline.save_pretrained(path)
-                # Also save the newly trained embeddings
-                learned_embeds = (
-                    self.accelerator.unwrap_model(self.text_encoder)
-                    .get_input_embeddings()
-                    .weight[self.placeholder_token_id]
-                )
-                learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
-                print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
-                torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+        # # Create the pipeline using the trained modules and save it.
+        # if self.accelerator.is_main_process:
+        #     pipeline = StableDiffusionPipeline(
+        #         text_encoder=self.accelerator.unwrap_model(self.text_encoder),
+        #         vae=self.vae,
+        #         unet=self.unet,
+        #         tokenizer=self.tokenizer,
+        #         # Use faster PNDMScheduler for inference
+        #         scheduler=PNDMScheduler(
+        #             beta_start=self.beta_start,
+        #             beta_end=self.beta_end,
+        #             beta_schedule=self.beta_schedule,
+        #             skip_prk_steps=True,
+        #         ),
+        #         safety_checker=StableDiffusionSafetyChecker.from_pretrained(
+        #             "CompVis/stable-diffusion-safety-checker"
+        #         ),
+        #         feature_extractor=CLIPFeatureExtractor.from_pretrained(
+        #             "openai/clip-vit-base-patch32"
+        #         ),
+        #     )
+        #     with core_context.checkpoint.store_path({"steps_completed": 1}) as (path, storage_id):
+        #         print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
+        #         pipeline.save_pretrained(path)
+        #         # Also save the newly trained embeddings
+        #         learned_embeds = (
+        #             self.accelerator.unwrap_model(self.text_encoder)
+        #             .get_input_embeddings()
+        #             .weight[self.placeholder_token_id]
+        #         )
+        #         learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
+        #         print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
+        #         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _setup(self):
         """Combined setup steps per HF Accelerator best practices."""
@@ -338,6 +326,7 @@ class TextualInversionTrainer:
         )
         self.vae.to(self.accelerator.device)
         self.unet.to(self.accelerator.device)
+        self.text_encoder.train()
         self.vae.eval()
         self.unet.eval()
 
