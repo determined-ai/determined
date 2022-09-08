@@ -97,11 +97,6 @@ class TextualInversionTrainer:
         self.train_noise_scheduler = None
 
         self._setup()
-        print(80 * "=")
-        print("DL TEST")
-        print(self.train_dataset[0])
-        print(len(self.train_dataloader))
-        print(next(iter(self.train_dataloader)))
 
     def train(self) -> None:
         distributed = det.core.DistributedContext.from_torch_distributed()
@@ -111,25 +106,26 @@ class TextualInversionTrainer:
             for op in core_context.searcher.operations():
                 print(80 * "$")
                 print(f"Step {self.steps_completed} of {op.length}")
-                for batch in self.train_dataloader:
-                    print("batch")
-                    # Use the accumulate method for efficient gradient accumulation.
-                    with self.accelerator.accumulate(self.text_encoder):
-                        print("getting loss")
-                        loss = self._train_one_batch_and_get_loss(batch)
+                while self.steps_completed < op.length:
+                    for batch in self.train_dataloader:
+                        print("batch")
+                        # Use the accumulate method for efficient gradient accumulation.
+                        with self.accelerator.accumulate(self.text_encoder):
+                            print("getting loss")
+                            loss = self._train_one_batch_and_get_loss(batch)
 
-                    # Check if gradients have been
-                    print("check grad sync")
-                    if self.accelerator.sync_gradients:
-                        print(80 * "$")
-                        print(f"Sync gradients at Step {self.steps_completed} of {op.length}")
-                        self.steps_completed += 1
-                        if self.steps_completed % self.checkpoint_step_freq == 0:
-                            self._save_train_checkpoint(core_context)
-                        if core_context.preempt.should_preempt():
-                            return
-                        if self.steps_completed >= op.length:
-                            break
+                        # Check if gradients have been
+                        print("check grad sync")
+                        if self.accelerator.sync_gradients:
+                            print(80 * "$")
+                            print(f"Sync gradients at Step {self.steps_completed} of {op.length}")
+                            self.steps_completed += 1
+                            if self.steps_completed % self.checkpoint_step_freq == 0:
+                                self._save_train_checkpoint(core_context)
+                            if core_context.preempt.should_preempt():
+                                return
+                            if self.steps_completed >= op.length:
+                                break
                 if self.accelerator.is_main_process:
                     print(80 * "$")
                     print(f"reporting complete")

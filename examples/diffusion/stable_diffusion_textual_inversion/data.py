@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from training_templates import IMAGEN_OBJECT_TEMPLATES_SMALL, IMAGEN_STYLE_TEMPLATES_SMALL
+from training_templates import TEMPLATE_DICT
 
 INTERPOLATION_DICT = {
     "nearest": transforms.InterpolationMode.NEAREST,
@@ -56,20 +56,16 @@ class TextualInversionDataset(Dataset):
         ), f"interpolation must be in {list(INTERPOLATION_DICT.keys())}"
         self.interpolation = INTERPOLATION_DICT[interpolation]
 
-        assert learnable_property in (
-            "object",
-            "style",
-        ), f'learnable_property must be "object" or "style", not {learnable_property}'
+        assert (
+            learnable_property in TEMPLATE_DICT
+        ), f"learnable_property must be one of {list(TEMPLATE_DICT.keys())}"
 
-        self.templates = (
-            IMAGEN_STYLE_TEMPLATES_SMALL
-            if learnable_property == "style"
-            else IMAGEN_OBJECT_TEMPLATES_SMALL
-        )
+        self.templates = TEMPLATE_DICT[learnable_property]
+        self.num_templates = len(self.templates)
         self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
 
     def __len__(self):
-        return MAX_INT
+        return self.num_images * self.num_templates
 
     def __getitem__(self, i):
         example = {}
