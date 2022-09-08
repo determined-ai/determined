@@ -1,7 +1,7 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { useCallback } from 'react';
 
-import { useStore } from 'contexts/Store';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { deleteModel } from 'services/api';
 import useModal, {
@@ -22,12 +22,11 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const { auth: { user } } = useStore();
-
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
+  const { canDeleteModel } = usePermissions();
+
   const getModalProps = useCallback((model: ModelItem): ModalFuncProps => {
-    const isDeletable = user?.isAdmin || user?.id === model?.userId;
     const handleOk = async () => {
       try {
         await deleteModel({ modelName: model.name });
@@ -42,7 +41,8 @@ const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     };
-    return isDeletable ? {
+
+    return canDeleteModel({ model }) ? {
       closable: true,
       content: `
         Are you sure you want to delete this model "${model?.name}"
@@ -55,7 +55,7 @@ const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
       onOk: handleOk,
       title: 'Confirm Delete',
     } : clone(CANNOT_DELETE_MODAL_PROPS);
-  }, [ user?.id, user?.isAdmin ]);
+  }, [ canDeleteModel ]);
 
   const modalOpen = useCallback((model: ModelItem) => {
     openOrUpdate(getModalProps(model));

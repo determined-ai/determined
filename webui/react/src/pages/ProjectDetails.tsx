@@ -34,6 +34,7 @@ import useModalExperimentMove, {
   settingsConfig as moveExperimentSettingsConfig,
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -65,7 +66,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import {
-  canUserActionExperiment,
+  canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
@@ -107,6 +108,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -139,8 +141,13 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, batchActions, user);
-  }, [ experimentMap, settings.row, user ]);
+    return getActionsForExperimentsUnion(
+      experiments,
+      batchActions,
+      canDeleteExperiment,
+      canMoveExperiment,
+    );
+  }, [ canDeleteExperiment, canMoveExperiment, experimentMap, settings.row ]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -330,7 +337,6 @@ const ProjectDetails: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return (
         <ExperimentActionDropdown
-          curUser={user}
           experiment={getProjectExperimentForExperimentItem(record, project)}
           onComplete={handleActionComplete}
         />
@@ -506,7 +512,6 @@ const ProjectDetails: React.FC = () => {
     ] as ColumnDef<ExperimentItem>[];
 
   }, [
-    user,
     handleActionComplete,
     experimentTags,
     labelFilterDropdown,
@@ -563,7 +568,10 @@ const ProjectDetails: React.FC = () => {
     if (action === Action.Move) {
       return openMoveModal({
         experimentIds: settings.row.filter((id) =>
-          canUserActionExperiment(user, Action.Move, experimentMap[id])),
+          canActionExperiment(
+            Action.Move,
+            experimentMap[id],
+          ) && canMoveExperiment({ experiment: experimentMap[id] })),
         sourceProjectId: project?.id,
         sourceWorkspaceId: project?.workspaceId,
       });
@@ -593,7 +601,14 @@ const ProjectDetails: React.FC = () => {
           return Promise.resolve();
       }
     }));
-  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, user ]);
+  }, [
+    canMoveExperiment,
+    settings.row,
+    openMoveModal,
+    project?.workspaceId,
+    project?.id,
+    experimentMap,
+  ]);
 
   const submitBatchAction = useCallback(async (action: Action) => {
     try {
@@ -788,7 +803,6 @@ const ProjectDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => {
       return (
         <ExperimentActionDropdown
-          curUser={user}
           experiment={getProjectExperimentForExperimentItem(record, project)}
           onComplete={handleActionComplete}
           onVisibleChange={onVisibleChange}>
@@ -796,7 +810,7 @@ const ProjectDetails: React.FC = () => {
         </ExperimentActionDropdown>
       );
     },
-    [ user, handleActionComplete, project ],
+    [ handleActionComplete, project ],
   );
 
   const ExperimentTabOptions = useMemo(() => {

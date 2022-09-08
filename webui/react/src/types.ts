@@ -794,3 +794,26 @@ export interface Project {
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
 }
+
+export interface UserAssignment {
+  cluster: boolean;
+  name: string;
+  workspaces?: number[];
+}
+
+export interface Permission {
+  globalOnly: boolean;
+  id: number;
+  name: string;
+  workspaceOnly: boolean;
+}
+
+export interface UserRole {
+  id: number;
+  name: string;
+  permissions: Permission[];
+}
+
+export interface ExperimentPermissionsArgs {
+  experiment: ProjectExperiment;
+}

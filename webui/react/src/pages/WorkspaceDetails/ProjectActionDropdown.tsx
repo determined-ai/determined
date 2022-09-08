@@ -5,6 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
+import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
@@ -28,7 +29,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
   {
-    project, children, curUser, onVisibleChange, showChildrenIfEmpty = true,
+    project, children, onVisibleChange, showChildrenIfEmpty = true,
     className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
   }
   : Props,
@@ -46,9 +47,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     modalOpen: openProjectEdit,
   } = useModalProjectEdit({ onClose: onComplete, project });
 
-  const userHasPermissions = useMemo(() => {
-    return curUser?.isAdmin || curUser?.id === project.userId;
-  }, [ curUser?.id, curUser?.isAdmin, project.userId ]);
+  const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
   const handleEditClick = useCallback(() => openProjectEdit(), [ openProjectEdit ]);
 
@@ -96,26 +95,33 @@ const ProjectActionDropdown: React.FC<Props> = (
     };
 
     const items: MenuProps['items'] = [];
-    if (userHasPermissions && !project.archived) {
+    if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived) {
       items.push({ key: MenuKey.EDIT, label: 'Edit...' });
+    }
+    if (canMoveProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived) {
       items.push({ key: MenuKey.MOVE, label: 'Move...' });
     }
-    if (userHasPermissions && !workspaceArchived) {
+    if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !workspaceArchived) {
       const label = project.archived ? 'Unarchive' : 'Archive';
       items.push({ key: MenuKey.SWITCH_ARCHIVED, label: label });
     }
-    if (userHasPermissions && !project.archived && project.numExperiments === 0) {
+    if (canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived && project.numExperiments === 0) {
       items.push({ danger: true, key: MenuKey.DELETE, label: 'Delete...' });
     }
     return { items: items, onClick: onItemClick };
   }, [
+    canDeleteProjects,
+    canModifyProjects,
+    canMoveProjects,
     handleArchiveClick,
     handleDeleteClick,
     handleEditClick,
     handleMoveClick,
-    project.archived,
-    project.numExperiments,
-    userHasPermissions,
+    project,
     workspaceArchived,
   ]);
 
