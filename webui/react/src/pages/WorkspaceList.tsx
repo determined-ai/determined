@@ -125,7 +125,6 @@ const WorkspaceList: React.FC = () => {
 
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
       <WorkspaceActionDropdown
-        curUser={user}
         workspace={record}
         onComplete={fetchWorkspaces}
       />
@@ -178,7 +177,7 @@ const WorkspaceList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Workspace>[];
-  }, [ fetchWorkspaces, user ]);
+  }, [ fetchWorkspaces ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: WorkspaceColumnName[];
@@ -216,14 +215,13 @@ const WorkspaceList: React.FC = () => {
   const actionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
       <WorkspaceActionDropdown
-        curUser={user}
         workspace={record}
         onComplete={fetchWorkspaces}
         onVisibleChange={onVisibleChange}>
         {children}
       </WorkspaceActionDropdown>
     ),
-    [ fetchWorkspaces, user ],
+    [ fetchWorkspaces ],
   );
 
   const workspacesList = useMemo(() => {
@@ -236,7 +234,6 @@ const WorkspaceList: React.FC = () => {
             mode={GridMode.AutoFill}>
             {workspaces.map((workspace) => (
               <WorkspaceCard
-                curUser={user}
                 fetchWorkspaces={fetchWorkspaces}
                 key={workspace.id}
                 workspace={workspace}
@@ -271,7 +268,6 @@ const WorkspaceList: React.FC = () => {
     settings,
     total,
     updateSettings,
-    user,
     workspaces,
   ]);
 

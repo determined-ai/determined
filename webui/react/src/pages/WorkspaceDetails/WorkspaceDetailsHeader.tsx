@@ -5,25 +5,27 @@ import React, { useCallback } from 'react';
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
+import usePermissions from 'hooks/usePermissions';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { DetailedUser, Workspace } from 'types';
+import { Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
 
 interface Props {
-  curUser?: DetailedUser;
   fetchWorkspace: () => void;
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWorkspace }: Props) => {
+const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate(
     { workspaceId: workspace.id },
   );
+
+  const canModify = usePermissions().canModifyWorkspace;
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
@@ -52,7 +54,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
           <InlineEditor
             disabled={workspace.immutable ||
                  workspace.archived
-                || (!curUser?.isAdmin && curUser?.id !== workspace.userId)}
+                || !canModify({ workspace: workspace })}
             maxLength={80}
             value={workspace.name}
             onSave={handleNameChange}
@@ -72,7 +74,6 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
         )}
         {!workspace.immutable && (
           <WorkspaceActionDropdown
-            curUser={curUser}
             trigger={[ 'click' ]}
             workspace={workspace}
             onComplete={fetchWorkspace}>
