@@ -2,6 +2,7 @@ package grpcutil
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"strings"
 	"time"
@@ -57,7 +58,7 @@ func allocationSessionByTokenBun(token string) (*model.AllocationSession, error)
 	}
 
 	err = db.Bun().NewSelect().Model(&session).Where("id = ?", session.ID).Scan(context.Background())
-	if errors.Cause(err) == db.ErrNotFound {
+	if errors.Cause(err) == sql.ErrNoRows {
 		log.WithField("allocation_sessions.id", session.ID).Debug("allocation_session not found")
 		return nil, db.ErrNotFound
 	} else if err != nil {
