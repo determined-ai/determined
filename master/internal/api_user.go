@@ -43,16 +43,16 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	}
 }
 
-func getFullModelUser(d *db.PgDB, userID model.UserID) (*model.FullUser, error) {
-	user, err := d.UserByID(userID)
+func getFullModelUser(userID model.UserID) (*model.FullUser, error) {
+	userModel, err := user.UserByID(userID)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, errUserNotFound
 	}
-	return user, err
+	return userModel, err
 }
 
 func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
-	user, err := getFullModelUser(d, userID)
+	user, err := getFullModelUser(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-	targetFullUser, err := getFullModelUser(a.m.db, model.UserID(req.UserId))
+	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (a *apiServer) SetUserPassword(
 		return nil, err
 	}
 
-	targetFullUser, err := getFullModelUser(a.m.db, model.UserID(req.UserId))
+	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +247,7 @@ func (a *apiServer) PatchUser(
 	}
 
 	uid := model.UserID(req.UserId)
-	targetFullUser, err := getFullModelUser(a.m.db, uid)
+	targetFullUser, err := getFullModelUser(uid)
 	if err != nil {
 		return nil, err
 	}

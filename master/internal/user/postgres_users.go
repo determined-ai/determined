@@ -48,7 +48,7 @@ func UserByUsername(username string) (*model.User, error) {
 
 // AddUserExec execs an INSERT to create a new user.
 func AddUserExec(user *model.User) error {
-	_, err := db.Bun().NewInsert().Model(user).Returning("*").Exec(context.TODO())
+	_, err := db.Bun().NewInsert().Model(user).ExcludeColumn("id").Returning("*").Exec(context.TODO())
 	return err
 }
 

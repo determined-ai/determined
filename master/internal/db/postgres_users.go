@@ -3,19 +3,14 @@ package db
 import (
 	"context"
 	"crypto/ed25519"
-	"crypto/rsa"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -56,137 +51,10 @@ func (db *PgDB) DeleteUserSessionByToken(token string) error {
 	return db.DeleteUserSessionByID(session.ID)
 }
 
-// UserByToken returns a user session given an authentication token.
-// Deprecated.
-func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
-	*model.User, *model.UserSession, error,
-) {
-	if ext.JwtKey != "" {
-		return db.UserByExternalToken(token, ext)
-	}
-
-	v2 := paseto.NewV2()
-
-	var session model.UserSession
-	err := v2.Verify(token, db.tokenKeys.PublicKey, &session, nil)
-	if err != nil {
-		return nil, nil, ErrNotFound
-	}
-
-	query := `SELECT * FROM user_sessions WHERE id=$1`
-	if err := db.query(query, &session, session.ID); errors.Cause(err) == ErrNotFound {
-		return nil, nil, ErrNotFound
-	} else if err != nil {
-		return nil, nil, err
-	}
-
-	if session.Expiry.Before(time.Now()) {
-		return nil, nil, ErrNotFound
-	}
-
-	var user model.User
-	if err := db.query(`
-SELECT users.* FROM users
-JOIN user_sessions ON user_sessions.user_id = users.id
-WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound {
-		return nil, nil, ErrNotFound
-	} else if err != nil {
-		return nil, nil, err
-	}
-
-	return &user, &session, nil
-}
-
-// UserByExternalToken returns a user session derived from an external authentication token.
-// Deprecated.
-func (db *PgDB) UserByExternalToken(tokenText string,
-	ext *model.ExternalSessions,
-) (*model.User, *model.UserSession, error) {
-	type externalToken struct {
-		*jwt.StandardClaims
-		Email string
-	}
-
-	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
-		func(token *jwt.Token) (interface{}, error) {
-			var publicKey rsa.PublicKey
-			err := json.Unmarshal([]byte(ext.JwtKey), &publicKey)
-			if err != nil {
-				log.Errorf("error parsing JWT key: %s", err.Error())
-				return nil, err
-			}
-			return &publicKey, nil
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	claims := token.Claims.(*externalToken)
-
-	// Access control logic can be applied here
-
-	tx, err := db.sql.Beginx()
-	defer func() {
-		if tx == nil {
-			return
-		}
-
-		if rErr := tx.Rollback(); rErr != nil {
-			log.Errorf("error during rollback: %v", rErr)
-		}
-	}()
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-	user, err := db.UserByUsername(claims.Email)
-	if err != nil {
-		if err != ErrNotFound {
-			return nil, nil, err
-		}
-		user = &model.User{
-			Username:     claims.Email,
-			PasswordHash: null.NewString("", false),
-			Admin:        true,
-			Active:       true,
-		}
-		userID, err := addUser(tx, user)
-		if err != nil {
-			return nil, nil, errors.WithStack(err)
-		}
-		user.ID = userID
-		if err := tx.Commit(); err != nil {
-			return nil, nil, errors.WithStack(err)
-		}
-		tx = nil
-	}
-
-	session := &model.UserSession{
-		ID:     model.SessionID(user.ID),
-		UserID: user.ID,
-		Expiry: time.Unix(claims.ExpiresAt, 0),
-	}
-
-	return user, session, nil
-}
-
 // DeleteUserSessionByID deletes the user session with the given ID.
 func (db *PgDB) DeleteUserSessionByID(sessionID model.SessionID) error {
 	_, err := db.sql.Exec("DELETE FROM user_sessions WHERE id=$1", sessionID)
 	return err
-}
-
-// UserByUsername looks up a user by name in the database.
-// Deprecated.
-func (db *PgDB) UserByUsername(username string) (*model.User, error) {
-	var user model.User
-	query := `SELECT * FROM users WHERE username=$1`
-	if err := db.query(query, &user, strings.ToLower(username)); errors.Cause(err) == ErrNotFound {
-		return nil, ErrNotFound
-	} else if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
 }
 
 func addUser(tx *sqlx.Tx, user *model.User) (model.UserID, error) {
@@ -359,23 +227,6 @@ func (db *PgDB) UserImage(username string) (photo []byte, err error) {
 	var userPhoto photoRow
 	err = db.Query("get_user_image", &userPhoto, username)
 	return userPhoto.Photo, err
-}
-
-// UserByID returns the full user for a given ID.
-// Deprecated.
-func (db *PgDB) UserByID(userID model.UserID) (*model.FullUser, error) {
-	var fu model.FullUser
-	if err := db.query(`
-SELECT
-	u.id, u.username, u.display_name, u.admin, u.active,
-	h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group
-FROM users u
-LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
-WHERE u.id = $1`, &fu, userID); err != nil {
-		return nil, err
-	}
-
-	return &fu, nil
 }
 
 // AgentUserGroup returns the AgentUserGroup for the user or nil if none exists.

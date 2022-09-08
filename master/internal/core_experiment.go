@@ -22,6 +22,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -236,7 +237,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	dbExp, user, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, true)
+	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +270,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		agentUserGroup = &m.config.Security.DefaultTask
 	}
 
-	ownerFullUser, err := m.db.UserByID(*dbExp.OwnerID)
+	ownerFullUser, err := user.UserByID(*dbExp.OwnerID)
 	if err != nil {
 		return nil, errors.Errorf("cannot find user %v who owns experiment", dbExp.OwnerID)
 	}
@@ -278,7 +279,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		resources := dbExp.Config.Resources()
 		if patch.Resources.MaxSlots.IsPresent {
 			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsMaxSlots(user, dbExp, *patch.Resources.MaxSlots.Value); err != nil {
+				CanSetExperimentsMaxSlots(userModel, dbExp, *patch.Resources.MaxSlots.Value); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
 
@@ -286,7 +287,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Weight != nil {
 			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsWeight(user, dbExp, *patch.Resources.Weight); err != nil {
+				CanSetExperimentsWeight(userModel, dbExp, *patch.Resources.Weight); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
 
@@ -294,7 +295,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Priority != nil {
 			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsPriority(user, dbExp, *patch.Resources.Priority); err != nil {
+				CanSetExperimentsPriority(userModel, dbExp, *patch.Resources.Priority); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
 
@@ -304,7 +305,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	}
 	if patch.CheckpointStorage != nil {
 		if err = expauth.AuthZProvider.Get().
-			CanSetExperimentsCheckpointGCPolicy(user, dbExp); err != nil {
+			CanSetExperimentsCheckpointGCPolicy(userModel, dbExp); err != nil {
 			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 
