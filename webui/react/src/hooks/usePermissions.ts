@@ -43,10 +43,15 @@ interface PermissionsHook {
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canViewWorkspaces: boolean;
 }
 
 const usePermissions = (): PermissionsHook => {
   const { auth: { user }, userAssignments, userRoles } = useStore();
+
+  // Determine if the user has access to any workspaces
+  // Should be updated to check user assignments and roles once available
+  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user')
 
   return {
     canDeleteExperiment: (args: ExperimentPermissionsArgs) => canDeleteExperiment(
@@ -106,6 +111,7 @@ const usePermissions = (): PermissionsHook => {
       userAssignments,
       userRoles,
     ),
+    canViewWorkspaces
   };
 };
 

@@ -109,7 +109,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
+  const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces} = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -128,8 +128,7 @@ const ProjectDetails: React.FC = () => {
     activeSettings,
   } = useSettings<ProjectDetailsSettings>(settingsConfig);
 
-  const userHasPermissions = (user: DetailedUser | undefined) =>
-    user ? false : false; // TODO: Determine if user has permissions.
+  if (!canViewWorkspaces) return (<NoPermissions />);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -338,8 +337,7 @@ const ProjectDetails: React.FC = () => {
       />
     );
 
-    if (!userHasPermissions(user)) return (<NoPermissions />);
-
+    
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return (
         <ExperimentActionDropdown
