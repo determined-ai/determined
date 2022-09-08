@@ -342,8 +342,9 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
   [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
   [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
-  [Sdk.Determinedexperimentv1State.PENDING]: types.RunState.Pending,
   [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.Queued,
+  [Sdk.Determinedexperimentv1State.PULLING]: types.RunState.Pulling,
+  [Sdk.Determinedexperimentv1State.STARTING]: types.RunState.Starting,
   [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.Running,
 };
 

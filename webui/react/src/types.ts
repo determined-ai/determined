@@ -330,8 +330,9 @@ export enum RunState {
   Deleting = 'DELETING',
   DeleteFailed = 'DELETE_FAILED',
   Unspecified = 'UNSPECIFIED',
-  Pending = 'PENDING',
   Queued = 'QUEUED',
+  Pulling = 'PULLING',
+  Starting = 'STARTING',
   Running = 'RUNNING',
 }
 

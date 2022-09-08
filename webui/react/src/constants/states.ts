@@ -82,8 +82,9 @@ export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
   [RunState.Unspecified]: 'Unspecified',
-  [RunState.Pending]: 'Pending',
   [RunState.Queued]: 'Queued',
+  [RunState.Pulling]: 'Pulling Image',
+  [RunState.Starting]: 'Running (preparing env)',
 };
 
 export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } = {
