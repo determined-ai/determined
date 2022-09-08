@@ -127,6 +127,9 @@ if __name__ == "__main__":
             max_train_steps=train_hps.max_train_steps,
             output_dir=hparams.output_dir,
             scale_lr=train_hps.scale_lr,
+            beta_start=train_hps.beta_start,
+            beta_end=train_hps.beta_end,
+            beta_schedule=train_hps.beta_schedule,
             num_train_timesteps=train_hps.num_train_timesteps,
             core_context=core_context,
         )

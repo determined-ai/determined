@@ -34,6 +34,10 @@ def train(
     max_train_steps: int,
     output_dir: str,
     scale_lr: bool,
+    beta_start: float,
+    beta_end: float,
+    beta_schedule: str,
+    num_train_timesteps: int,
     core_context: det.core.Context,
 ):
     logger = get_logger(__name__)
@@ -47,7 +51,7 @@ def train(
         beta_start=0.00085,
         beta_end=0.012,
         beta_schedule="scaled_linear",
-        num_train_timesteps=1000,
+        num_train_timesteps=num_train_timesteps,
         tensor_format="pt",
     )
 
