@@ -278,28 +278,28 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     "exp_name,exception_points",
     [
         ("custom-searcher-asha-test", []),
-        (
+        (   # test fail on initialization
+            # test single resubmit of operations
+            # test resumption on fail before saving
             "custom-searcher-asha-test-fail1",
             [
-                "initial_operations_start",  # fail before sending initial operations
-                "after_save",  # fail on save - should not send initial operations again
-                "on_validation_completed",
+                "initial_operations_start",
                 "after_save",
-                "_get_close_rungs_ops",
+                "on_validation_completed",
             ],
         ),
-        (
+        (   # test resubmitting operations multiple times
+            # test fail on shutdown
             "custom-searcher-asha-test-fail2",
             [
                 "on_validation_completed",
                 "after_save",
                 "after_save",
                 "after_save",
-                "on_validation_completed",
                 "shutdown",
             ],
-        ),
-    ],
+        )
+    ]
 )
 def test_run_asha_searcher_exp_core_api(exp_name: str, exception_points: List[str]) -> None:
     config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_asha.yaml"))
