@@ -22,8 +22,8 @@ MAX_INT = 2 ** 32 - 1
 class TextualInversionDataset(Dataset):
     """Create an effectively infinite dataset. The Dataset's __getitem__ method returns a dictionary with
     input_ids and pixel_values keys, where input_ids come from applying the tokenizer to a caption
-    describing the image (randomly drawn from fixed templates) and pixel_values are the normalized
-    tensor values of the image."""
+    describing the img (randomly drawn from fixed templates) and pixel_values are the normalized
+    tensor values of the img."""
 
     def __init__(
         self,
@@ -45,11 +45,11 @@ class TextualInversionDataset(Dataset):
         self.center_crop = center_crop
         self.flip_p = flip_p
 
-        self.image_paths = [
+        self.img_paths = [
             os.path.join(self.train_img_dir, file_path)
             for file_path in os.listdir(self.train_img_dir)
         ]
-        self.num_images = len(self.image_paths)
+        self.num_imgs = len(self.img_paths)
 
         assert (
             interpolation in INTERPOLATION_DICT
@@ -65,15 +65,15 @@ class TextualInversionDataset(Dataset):
         self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
 
     def __len__(self):
-        return self.num_images * self.num_templates
+        return self.num_imgs * self.num_templates
 
-    def __getitem__(self, i):
+    def __getitem__(self, idx):
+        template_idx, img_idx = divmod(idx, self.num_imgs)
         example = {}
-        print("generated example")
+
         # Generate a random caption drawn from the templates and include in the example.
         placeholder_string = self.placeholder_token
-        text = random.choice(self.templates).format(placeholder_string)
-        print("tokenize example")
+        text = self.templates[template_idx].format(placeholder_string)
         example["input_ids"] = self.tokenizer(
             text,
             padding="max_length",
@@ -81,20 +81,18 @@ class TextualInversionDataset(Dataset):
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids[0]
-        print("open image")
-        # Add the corresponding normalized image tensor to the example.
-        image = Image.open(self.image_paths[i % self.num_images])
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-        image_t = transforms.ToTensor()(image)
+
+        # Add the corresponding normalized img tensor to the example.
+        img = Image.open(self.img_paths[img_idx])
+        if not img.mode == "RGB":
+            img = img.convert("RGB")
+        img_t = transforms.ToTensor()(img)
         if self.center_crop:
-            crop_size = min(image_t.shape[-1], image_t.shape[-2])
-            image_t = transforms.CenterCrop(crop_size)(image_t)
-        image_t = transforms.Resize((self.size, self.size), interpolation=self.interpolation)(
-            image_t
-        )
+            crop_size = min(img_t.shape[-1], img_t.shape[-2])
+            img_t = transforms.CenterCrop(crop_size)(img_t)
+        img_t = transforms.Resize((self.size, self.size), interpolation=self.interpolation)(img_t)
         # Normalize the tensor to be in the range [-1, 1]
-        image_t = (image_t - 0.5) * 2.0
-        example["pixel_values"] = image_t
+        img_t = (img_t - 0.5) * 2.0
+        example["pixel_values"] = img_t
 
         return example

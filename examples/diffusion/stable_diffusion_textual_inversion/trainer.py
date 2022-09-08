@@ -114,8 +114,7 @@ class TextualInversionTrainer:
                             print("getting loss")
                             loss = self._train_one_batch_and_get_loss(batch)
 
-                        # Check if gradients have been
-                        print("check grad sync")
+                        # Check if gradients have been synced, in which case we have performed a step
                         if self.accelerator.sync_gradients:
                             print(80 * "$")
                             print(f"Sync gradients at Step {self.steps_completed} of {op.length}")
@@ -124,47 +123,14 @@ class TextualInversionTrainer:
                                 self._save_train_checkpoint(core_context)
                             if core_context.preempt.should_preempt():
                                 return
-                            if self.steps_completed >= op.length:
+                            if self.steps_completed == op.length:
                                 break
+                self.accelerator.wait_for_everyone()
                 if self.accelerator.is_main_process:
                     print(80 * "$")
                     print(f"reporting complete")
                     op.report_completed(loss.detach().item())
-                self.accelerator.wait_for_everyone()
-
-        # # Create the pipeline using the trained modules and save it.
-        # if self.accelerator.is_main_process:
-        #     pipeline = StableDiffusionPipeline(
-        #         text_encoder=self.accelerator.unwrap_model(self.text_encoder),
-        #         vae=self.vae,
-        #         unet=self.unet,
-        #         tokenizer=self.tokenizer,
-        #         # Use faster PNDMScheduler for inference
-        #         scheduler=PNDMScheduler(
-        #             beta_start=self.beta_start,
-        #             beta_end=self.beta_end,
-        #             beta_schedule=self.beta_schedule,
-        #             skip_prk_steps=True,
-        #         ),
-        #         safety_checker=StableDiffusionSafetyChecker.from_pretrained(
-        #             "CompVis/stable-diffusion-safety-checker"
-        #         ),
-        #         feature_extractor=CLIPFeatureExtractor.from_pretrained(
-        #             "openai/clip-vit-base-patch32"
-        #         ),
-        #     )
-        #     with core_context.checkpoint.store_path({"steps_completed": 1}) as (path, storage_id):
-        #         print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
-        #         pipeline.save_pretrained(path)
-        #         # Also save the newly trained embeddings
-        #         learned_embeds = (
-        #             self.accelerator.unwrap_model(self.text_encoder)
-        #             .get_input_embeddings()
-        #             .weight[self.placeholder_token_id]
-        #         )
-        #         learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
-        #         print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
-        #         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+                    self._save_pipeline(core_context)
 
     def _setup(self):
         """Combined setup steps per HF Accelerator best practices."""
@@ -334,3 +300,34 @@ class TextualInversionTrainer:
         self.optimizer.step()
 
         return loss
+
+    def _save_pipeline(self, core_context: det.core.Context) -> None:
+        pipeline = StableDiffusionPipeline(
+            text_encoder=self.accelerator.unwrap_model(self.text_encoder),
+            vae=self.vae,
+            unet=self.unet,
+            tokenizer=self.tokenizer,
+            # Use faster PNDMScheduler for inference
+            scheduler=PNDMScheduler(
+                beta_start=self.beta_start,
+                beta_end=self.beta_end,
+                beta_schedule=self.beta_schedule,
+                skip_prk_steps=True,
+            ),
+            safety_checker=StableDiffusionSafetyChecker.from_pretrained(
+                "CompVis/stable-diffusion-safety-checker"
+            ),
+            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+        )
+        with core_context.checkpoint.store_path({"steps_completed": 1}) as (path, storage_id):
+            print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
+            pipeline.save_pretrained(path)
+            # Also save the newly trained embeddings
+            learned_embeds = (
+                self.accelerator.unwrap_model(self.text_encoder)
+                .get_input_embeddings()
+                .weight[self.placeholder_token_id]
+            )
+            learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
+            print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
+            torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
