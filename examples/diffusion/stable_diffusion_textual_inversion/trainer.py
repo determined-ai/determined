@@ -99,6 +99,7 @@ class TextualInversionTrainer:
         self._setup()
         print(80 * "=")
         print("DL TEST")
+        print(self.train_dataset[0])
         print(len(self.train_dataloader))
         print(next(iter(self.train_dataloader)))
 
