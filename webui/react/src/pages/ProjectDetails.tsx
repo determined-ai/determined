@@ -103,7 +103,7 @@ const ProjectDetails: React.FC = () => {
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
-  const [ isLoading, setIsLoading ] = useState(true);
+  const [ isLoading, setIsLoading ] = useState({ experiments: true, project: true });
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
