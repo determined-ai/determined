@@ -105,19 +105,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           break;
         }
         case Action.Pin: {
-          const newPinned = { ...settings.pinned };
-          const pinSet = new Set(newPinned[experiment.projectId]);
-          pinSet.add(id);
-          newPinned[experiment.projectId] = Array.from(pinSet);
-          updateSettings({ pinned: { ...newPinned } });
+          const pinList = [ ...settings.pinned ];
+          pinList.push(id);
+          updateSettings({ pinned: [ ...Array.from(new Set(pinList)) ] });
           break;
         }
         case Action.Unpin: {
-          const newPinned = { ...settings.pinned };
-          const pinSet = new Set(newPinned[experiment.projectId]);
-          pinSet.delete(id);
-          newPinned[experiment.projectId] = Array.from(pinSet);
-          updateSettings({ pinned: { ...newPinned } });
+          const pinList = settings.pinned.filter((p) => p !== id);
+          updateSettings({ pinned: [ ...Array.from(new Set(pinList)) ] });
           break;
         }
         case Action.Kill:
@@ -181,7 +176,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser)
     .filter((action) => {
-      const isPinned = (settings.pinned[experiment.projectId] ?? []).includes(experiment.id);
+      const isPinned = settings.pinned.includes(experiment.id);
       if ((isPinned && action === Action.Pin) || (!isPinned && action === Action.Unpin)) {
         return false;
       } else {
@@ -217,7 +212,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
-          {(settings.pinned[experiment.projectId] ?? []).includes(id) ?
+          {settings.pinned.includes(id) ?
             <PushpinOutlined /> : <Icon name="overflow-vertical" />}
         </button>
       </Dropdown>

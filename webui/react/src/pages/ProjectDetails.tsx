@@ -54,6 +54,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { intersection } from 'shared/utils/set';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
@@ -166,7 +167,6 @@ const ProjectDetails: React.FC = () => {
       const experimentFilter: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
-        limit: settings.tableLimit,
         name: settings.search,
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
         projectId: id,
@@ -174,11 +174,11 @@ const ProjectDetails: React.FC = () => {
         states: validateDetApiEnumList(Determinedexperimentv1State, states),
         users: settings.user,
       };
-      const experimentIds = settings.pinned[id];
       const pinnedExperimentsRequest = getExperiments(
         {
           ...experimentFilter,
-          experimentFilter: { experimentIds: experimentIds, restriction: 'RESTRICTION_INCLUDE' },
+          experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_INCLUDE' },
+          limit: 0,
           offset: 0,
         },
         { signal: canceler.signal },
@@ -186,8 +186,10 @@ const ProjectDetails: React.FC = () => {
       const otherExperimentsRequest = getExperiments(
         {
           ...experimentFilter,
-          experimentFilter: { experimentIds: experimentIds, restriction: 'RESTRICTION_EXCLUDE' },
-          offset: settings.tableOffset,
+          experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_EXCLUDE' },
+          limit: settings.tableLimit - settings.pinned.length,
+          offset: settings.tableOffset -
+            (settings.tableOffset / settings.tableLimit) * settings.pinned.length,
         },
         { signal: canceler.signal },
       );
@@ -900,7 +902,12 @@ const ProjectDetails: React.FC = () => {
             ContextMenu={ContextMenu}
             dataSource={experiments}
             loading={isLoading}
-            numOfPinned={settings.pinned[id]?.length ?? 0}
+            numOfPinned={
+              Array.from(intersection(
+                new Set(experiments.map((e) => e.id)),
+                new Set(settings.pinned),
+              )).length
+            }
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
@@ -955,7 +962,6 @@ const ProjectDetails: React.FC = () => {
     handleDeleteNote,
     handleNewNotesPage,
     handleSaveNotes,
-    id,
   ]);
 
   if (isNaN(id)) {
