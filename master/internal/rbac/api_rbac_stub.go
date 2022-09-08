@@ -11,7 +11,7 @@ import (
 
 type rbacAPIServerStub struct{}
 
-const stubUnimplementedMessage = "rbac API not available in this version of the software"
+const stubUnimplementedMessage = "Determined Enterprise Edition is required for this functionality"
 
 func (s *rbacAPIServerStub) GetRolesByID(ctx context.Context, req *apiv1.GetRolesByIDRequest) (
 	resp *apiv1.GetRolesByIDResponse, err error) {

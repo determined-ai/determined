@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -53,9 +54,16 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 		return Group{}, nil, err
 	}
 
-	err = AddUsersToGroupTx(ctx, tx, group.ID, uids...)
-	if err != nil {
-		return Group{}, nil, err
+	idsToAdd := make([]model.UserID, 0, len(uids)+1)
+	idsToAdd = append(idsToAdd, uids...)
+	if group.OwnerID != 0 && !slices.Contains(idsToAdd, group.OwnerID) {
+		idsToAdd = append(idsToAdd, group.OwnerID)
+	}
+	if len(idsToAdd) > 0 {
+		err = AddUsersToGroupTx(ctx, tx, group.ID, idsToAdd...)
+		if err != nil {
+			return Group{}, nil, err
+		}
 	}
 
 	users, err := UsersInGroupTx(ctx, tx, group.ID)
@@ -100,7 +108,7 @@ func SearchGroups(ctx context.Context,
 		query = query.Where("group_name = ?", name)
 	}
 
-	if userBelongsTo > 0 {
+	if userBelongsTo != 0 {
 		query = query.Where(
 			`EXISTS(SELECT 1
 			FROM user_group_membership AS m
@@ -292,7 +300,8 @@ func UpdateGroupAndMembers(
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, "", errors.Wrapf(db.MatchSentinelError(err), "Error committing changes to group %d", gid)
+		return nil, "", errors.Wrapf(db.MatchSentinelError(err),
+			"Error committing changes to group %d", gid)
 	}
 
 	return users, newName, nil

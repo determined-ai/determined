@@ -25,7 +25,7 @@ type apiServer struct {
 	m *Master
 
 	usergroup.UserGroupAPIServer
-	rbac.RBACAPIServer
+	rbac.RBACAPIServerWrapper
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.
