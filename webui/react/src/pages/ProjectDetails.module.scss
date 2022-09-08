@@ -15,15 +15,6 @@
 :global(.ant-tabs-nav-list) {
   height: min-content;
 }
-.pinnedContainer {
-  align-items: center;
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 12px;
-  overflow-x: scroll;
-  overflow-y: none;
-  padding: 20px 0;
-}
 
 @media only screen and (max-width: $breakpoint-tablet) {
   .tabOptions {

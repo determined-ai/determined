@@ -164,7 +164,7 @@ const ProjectDetails: React.FC = () => {
       const states = (settings.state || []).map((state) => (
         encodeExperimentState(state as RunState)
       ));
-      const experimentFilter: GetExperimentsParams = {
+      const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
         name: settings.search,
@@ -174,25 +174,19 @@ const ProjectDetails: React.FC = () => {
         states: validateDetApiEnumList(Determinedexperimentv1State, states),
         users: settings.user,
       };
-      const pinnedExperimentsRequest = getExperiments(
-        {
-          ...experimentFilter,
-          experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_INCLUDE' },
-          limit: 0,
-          offset: 0,
-        },
-        { signal: canceler.signal },
-      );
-      const otherExperimentsRequest = getExperiments(
-        {
-          ...experimentFilter,
-          experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_EXCLUDE' },
-          limit: settings.tableLimit - settings.pinned.length,
-          offset: settings.tableOffset -
+      const pinnedExperimentsRequest = getExperiments({
+        ...baseParams,
+        experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_INCLUDE' },
+        limit: settings.tableLimit,
+        offset: 0,
+      }, { signal: canceler.signal });
+      const otherExperimentsRequest = getExperiments({
+        ...baseParams,
+        experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_EXCLUDE' },
+        limit: settings.tableLimit - settings.pinned.length,
+        offset: settings.tableOffset -
             (settings.tableOffset / settings.tableLimit) * settings.pinned.length,
-        },
-        { signal: canceler.signal },
-      );
+      }, { signal: canceler.signal });
       const allRequests = [ pinnedExperimentsRequest, otherExperimentsRequest ];
       const [ pinnedExpResponse, otherExpResponse ] = await Promise.all(allRequests);
       setTotal(otherExpResponse.pagination.total ?? 0);
@@ -353,6 +347,8 @@ const ProjectDetails: React.FC = () => {
         <ExperimentActionDropdown
           curUser={user}
           experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
           onComplete={handleActionComplete}
         />
       );
@@ -527,19 +523,20 @@ const ProjectDetails: React.FC = () => {
     ] as ColumnDef<ExperimentItem>[];
 
   }, [
-    user,
-    handleActionComplete,
-    experimentTags,
+    nameFilterSearch,
+    tableSearchIcon,
     labelFilterDropdown,
     labels,
-    nameFilterSearch,
-    saveExperimentDescription,
-    settings,
-    project,
     stateFilterDropdown,
-    tableSearchIcon,
     userFilterDropdown,
     users,
+    project,
+    experimentTags,
+    user,
+    settings,
+    updateSettings,
+    handleActionComplete,
+    saveExperimentDescription,
   ]);
 
   useEffect(() => {
@@ -812,13 +809,15 @@ const ProjectDetails: React.FC = () => {
         <ExperimentActionDropdown
           curUser={user}
           experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
           onComplete={handleActionComplete}
           onVisibleChange={onVisibleChange}>
           {children}
         </ExperimentActionDropdown>
       );
     },
-    [ user, handleActionComplete, project ],
+    [ user, project, settings, updateSettings, handleActionComplete ],
   );
 
   const ExperimentTabOptions = useMemo(() => {

@@ -68,6 +68,7 @@ const config: SettingsConfig = {
     {
       defaultValue: [],
       key: 'pinned',
+      skipUrlEncoding: true,
       storageKey: 'pinned',
       type: { baseType: BaseType.Integer, isArray: true },
     },

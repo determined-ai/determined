@@ -142,6 +142,7 @@ const Row: Row = ({
   const [ rowHovered, setRowHovered ] = useState(false);
   const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
   const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
+  const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
 
   if (areRowsSelected) {
     return <tr className={classes.join(' ')} {...props}>{children}</tr>;
@@ -159,6 +160,11 @@ const Row: Row = ({
   if (rowContextMenuTriggerableOrOpen) {
     classes.push('ant-table-row-selected');
   }
+
+  if (isPinned && numOfPinned === index + 1) {
+    classes.push(css.lastPinnedRow);
+  }
+
   return (record && ContextMenu) ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
@@ -167,8 +173,7 @@ const Row: Row = ({
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
           {...props}
-          style={Array.from(Array(numOfPinned).keys()).includes(index) ?
-            { position: 'sticky', top: 60 * (index), zIndex: 10 } : undefined}>
+          style={isPinned ? { position: 'sticky', top: 60 * (index), zIndex: 10 } : undefined}>
           {children}
         </tr>
       </ContextMenu>

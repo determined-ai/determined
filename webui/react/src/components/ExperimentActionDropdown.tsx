@@ -1,13 +1,13 @@
-import { ExclamationCircleOutlined, PushpinOutlined } from '@ant-design/icons';
-import { Dropdown, Menu, Modal } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Menu, Modal, notification } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
-import useSettings from 'hooks/useSettings';
-import settingsConfig, { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
+import { UpdateSettings } from 'hooks/useSettings';
+import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
@@ -31,12 +31,13 @@ interface Props {
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
+  settings: ProjectDetailsSettings;
+  updateSettings: UpdateSettings<ProjectDetailsSettings>;
   workspaceId?: number;
 }
 
 const dropdownActions = [
-  Action.Pin,
-  Action.Unpin,
+  Action.SwitchPin,
   Action.Activate,
   Action.Pause,
   Action.Archive,
@@ -56,10 +57,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   onComplete,
   curUser,
   onVisibleChange,
+  settings,
+  updateSettings,
   children,
 }: Props) => {
-  const { settings, updateSettings } = useSettings<ProjectDetailsSettings>(settingsConfig);
-
   const id = experiment.id;
   const {
     contextHolder: modalExperimentMoveContextHolder,
@@ -104,15 +105,21 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           openCommand(tensorboard);
           break;
         }
-        case Action.Pin: {
-          const pinList = [ ...settings.pinned ];
-          pinList.push(id);
-          updateSettings({ pinned: [ ...Array.from(new Set(pinList)) ] });
-          break;
-        }
-        case Action.Unpin: {
-          const pinList = settings.pinned.filter((p) => p !== id);
-          updateSettings({ pinned: [ ...Array.from(new Set(pinList)) ] });
+        case Action.SwitchPin: {
+          const pinSet = new Set(settings.pinned);
+          if (pinSet.has(id)) {
+            pinSet.delete(id);
+          } else {
+            if (pinSet.size >= 5) {
+              notification.warn({
+                description: 'Up to 5 pinned items',
+                message: 'Unable to pin this item',
+              });
+              break;
+            }
+            pinSet.add(id);
+          }
+          updateSettings({ pinned: Array.from(pinSet) });
           break;
         }
         case Action.Kill:
@@ -175,14 +182,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   };
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser)
-    .filter((action) => {
-      const isPinned = settings.pinned.includes(experiment.id);
-      if ((isPinned && action === Action.Pin) || (!isPinned && action === Action.Unpin)) {
-        return false;
-      } else {
-        return true;
-      }
-    }).map((action) => ({ danger: action === Action.Delete, key: action, label: action }));
+    .map((action) => ({ danger: action === Action.Delete, key: action, label: action }));
 
   if (menuItems.length === 0) {
     return (children as JSX.Element) ?? (
@@ -212,8 +212,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
-          {settings.pinned.includes(id) ?
-            <PushpinOutlined /> : <Icon name="overflow-vertical" />}
+          <Icon name="overflow-vertical" />
         </button>
       </Dropdown>
       {modalExperimentMoveContextHolder}
