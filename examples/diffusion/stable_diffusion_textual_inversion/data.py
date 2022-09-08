@@ -20,10 +20,7 @@ MAX_INT = 2 ** 32 - 1
 
 
 class TextualInversionDataset(Dataset):
-    """Create an effectively infinite dataset. The Dataset's __getitem__ method returns a dictionary with
-    input_ids and pixel_values keys, where input_ids come from applying the tokenizer to a caption
-    describing the img (randomly drawn from fixed templates) and pixel_values are the normalized
-    tensor values of the img."""
+    """Dataset for textual inversion, pairing tokenized captions with images."""
 
     def __init__(
         self,

@@ -104,31 +104,28 @@ class TextualInversionTrainer:
             self._restore_latest_checkpoint(core_context)
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
-                print(80 * "$")
-                print(f"Step {self.steps_completed} of {op.length}")
                 while self.steps_completed < op.length:
                     for batch in self.train_dataloader:
-                        print("batch")
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
-                            print("getting loss")
                             loss = self._train_one_batch_and_get_loss(batch)
 
                         # Check if gradients have been synced, in which case we have performed a step
                         if self.accelerator.sync_gradients:
-                            print(80 * "$")
-                            print(f"Sync gradients at Step {self.steps_completed} of {op.length}")
                             self.steps_completed += 1
                             if self.steps_completed % self.checkpoint_step_freq == 0:
                                 self._save_train_checkpoint(core_context)
+                                if self.accelerator.is_main_process:
+                                    core_context.train.report_training_metrics(
+                                        steps_completed=self.steps_completed,
+                                        metrics={"loss": loss.detach().item()},
+                                    )
                             if core_context.preempt.should_preempt():
                                 return
                             if self.steps_completed == op.length:
                                 break
                 self.accelerator.wait_for_everyone()
                 if self.accelerator.is_main_process:
-                    print(80 * "$")
-                    print(f"reporting complete")
                     op.report_completed(loss.detach().item())
                     self._save_pipeline(core_context)
 
@@ -258,7 +255,7 @@ class TextualInversionTrainer:
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
                 self.accelerator.save_state(path)
 
-    def _train_one_batch_and_get_loss(self, batch: TorchData) -> None:
+    def _train_one_batch_and_get_loss(self, batch: TorchData) -> torch.Tensor:
         self.optimizer.zero_grad()
         # Convert images to latent space
         latents = self.vae.encode(batch["pixel_values"]).sample().detach()
