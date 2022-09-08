@@ -37,7 +37,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     modalOpen: openEditUserModal,
     contextHolder: modalEditUserContextHolder,
   } = useModalCreateUser({ groups, onClose: fetchUsers, user });
-  
+
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
     message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);

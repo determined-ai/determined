@@ -152,7 +152,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [ form, onClose, user ]);
+  }, [ form, onClose, user, handleCancel ]);
 
   const modalOpen = useCallback((viewOnly?: boolean) => {
     openOrUpdate({
