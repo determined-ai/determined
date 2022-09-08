@@ -278,7 +278,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     "exp_name,exception_points",
     [
         ("custom-searcher-asha-test", []),
-        (   # test fail on initialization
+        (  # test fail on initialization
             # test single resubmit of operations
             # test resumption on fail before saving
             "custom-searcher-asha-test-fail1",
@@ -288,7 +288,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "on_validation_completed",
             ],
         ),
-        (   # test resubmitting operations multiple times
+        (  # test resubmitting operations multiple times
             # test fail on shutdown
             "custom-searcher-asha-test-fail2",
             [
@@ -298,8 +298,8 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "after_save",
                 "shutdown",
             ],
-        )
-    ]
+        ),
+    ],
 )
 def test_run_asha_searcher_exp_core_api(exp_name: str, exception_points: List[str]) -> None:
     config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_asha.yaml"))
