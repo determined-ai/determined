@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"crypto/rsa"
+	"database/sql"
 	"encoding/json"
 	"strings"
 	"time"
@@ -28,6 +29,10 @@ FROM users u
 LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
 WHERE u.id = ?`
 	if err := db.Bun().NewRaw(query, userID).Scan(context.Background(), &fu); err != nil {
+		if errors.Cause(err) == sql.ErrNoRows {
+			return nil, db.ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -41,6 +46,10 @@ func UserByUsername(username string) (*model.User, error) {
 	err := db.Bun().NewSelect().Model(&user).
 		Where("username = ?", username).Scan(context.Background())
 	if err != nil {
+		if errors.Cause(err) == sql.ErrNoRows {
+			return nil, db.ErrNotFound
+		}
+
 		return nil, err
 	}
 	return &user, nil
