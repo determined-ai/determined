@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -82,7 +83,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
-	owner, err := m.db.UserByUsername(expModel.Username)
+	owner, err := user.UserByUsername(expModel.Username)
 	if err != nil {
 		return errors.Wrapf(err, "retrieving full user on restart")
 	}

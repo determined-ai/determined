@@ -85,7 +85,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	withConfig bool,
 	actions ...func(model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, model.User{}, err
 	}
@@ -121,7 +121,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 func (a *apiServer) GetExperiment(
 	ctx context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -390,7 +390,7 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -472,7 +472,7 @@ func runPagedBunExperimentsQuery(
 func (a *apiServer) GetExperimentLabels(ctx context.Context,
 	req *apiv1.GetExperimentLabelsRequest,
 ) (*apiv1.GetExperimentLabelsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -546,7 +546,7 @@ func (a *apiServer) GetExperimentValidationHistory(
 func (a *apiServer) PreviewHPSearch(
 	ctx context.Context, req *apiv1.PreviewHPSearchRequest,
 ) (*apiv1.PreviewHPSearchResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -765,7 +765,7 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -930,7 +930,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
