@@ -434,6 +434,13 @@ export interface CheckpointPagination extends WithPagination {
   checkpoints: CoreApiGenericCheckpoint[];
 }
 
+export const checkpointAction = {
+  Delete: 'Delete',
+  Register: 'Register',
+} as const;
+
+export type CheckpointAction = typeof checkpointAction[keyof typeof checkpointAction];
+
 export interface TrialPagination extends WithPagination {
   trials: TrialItem[];
 }
@@ -786,4 +793,27 @@ export interface Project {
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
+}
+
+export interface UserAssignment {
+  cluster: boolean;
+  name: string;
+  workspaces?: number[];
+}
+
+export interface Permission {
+  globalOnly: boolean;
+  id: number;
+  name: string;
+  workspaceOnly: boolean;
+}
+
+export interface UserRole {
+  id: number;
+  name: string;
+  permissions: Permission[];
+}
+
+export interface ExperimentPermissionsArgs {
+  experiment: ProjectExperiment;
 }

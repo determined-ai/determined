@@ -12,22 +12,23 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { pluralizer } from 'shared/utils/string';
 import { Metadata, ModelItem } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalCheckpointRegister.module.scss';
 
 interface Props {
-  onClose?: (reason?: ModalCloseReason, checkpointUuid?: string) => void;
+  onClose?: (reason?: ModalCloseReason, checkpoints?: string[]) => void;
 }
 
 interface ModalOpenProps {
-  checkpointUuid: string;
+  checkpoints: string | string[];
   selectedModelName?: string;
 }
 
 interface ModalState {
-  checkpointUuid?: string;
+  checkpoints?: string[];
   expandDetails: boolean;
   metadata: Metadata;
   models: ModelItem[];
@@ -78,40 +79,68 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const registerModelVersion = useCallback(async (state: ModalState) => {
     const {
       selectedModelName, versionDescription, tags,
-      metadata, versionName, checkpointUuid,
+      metadata, versionName, checkpoints,
     } = state;
-    if (!selectedModelName || !checkpointUuid) return;
+    if (!selectedModelName || !checkpoints) return;
     try {
-      const response = await postModelVersion({
-        body: {
-          checkpointUuid,
-          comment: versionDescription,
-          labels: tags,
-          metadata,
+      if (checkpoints.length === 1) {
+        const response = await postModelVersion({
+          body: {
+            checkpointUuid: checkpoints[0],
+            comment: versionDescription,
+            labels: tags,
+            metadata,
+            modelName: selectedModelName,
+            name: versionName,
+          },
           modelName: selectedModelName,
-          name: versionName,
-        },
-        modelName: selectedModelName,
-      });
+        });
 
-      if (!response) return;
+        if (!response) return;
 
-      modalClose(ModalCloseReason.Ok);
+        modalClose(ModalCloseReason.Ok);
 
-      notification.open({
-        btn: null,
-        description: (
-          <div className={css.toast}>
-            <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-            <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
-              View Model Version
-            </Link>
-          </div>),
-        message: '',
-      });
+        notification.open({
+          btn: null,
+          description: (
+            <div className={css.toast}>
+              <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
+              <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
+                View Model Version
+              </Link>
+            </div>),
+          message: '',
+        });
+      } else {
+        for (const checkpointUuid of checkpoints) {
+          await postModelVersion({
+            body: {
+              checkpointUuid,
+              comment: versionDescription,
+              labels: tags,
+              metadata,
+              modelName: selectedModelName,
+            },
+            modelName: selectedModelName,
+          });
+        }
+        modalClose(ModalCloseReason.Ok);
+
+        notification.open({
+          btn: null,
+          description: (
+            <div className={css.toast}>
+              <p>{checkpoints.length} versions registered</p>
+              <Link path={paths.modelDetails(selectedModelName)}>
+                View Model
+              </Link>
+            </div>),
+          message: '',
+        });
+      }
     } catch (e) {
       handleError(e, {
-        publicSubject: 'Unable to register checkpoint.',
+        publicSubject: `Unable to register ${pluralizer(checkpoints.length, 'checkpoint')}.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -148,7 +177,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
 
   const launchNewModelModal = useCallback((state: ModalState) => {
     modalClose(ModalCloseReason.Cancel);
-    onClose?.(ModalCloseReason.Cancel, state.checkpointUuid);
+    onClose?.(ModalCloseReason.Cancel, state.checkpoints);
   }, [ modalClose, onClose ]);
 
   const fetchModels = useCallback(async () => {
@@ -175,14 +204,17 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     }
   }, [ canceler.signal, modalState.visible ]);
 
-  const modalOpen = useCallback(({ checkpointUuid, selectedModelName }: ModalOpenProps) => {
-    fetchModels();
+  const modalOpen = useCallback(async ({ checkpoints, selectedModelName }: ModalOpenProps) => {
     setModalState({
       ...INITIAL_MODAL_STATE,
-      checkpointUuid,
-      selectedModelName,
       visible: true,
     });
+    await fetchModels();
+    setModalState((prev) => ({
+      ...prev,
+      checkpoints: Array.isArray(checkpoints) ? checkpoints : [ checkpoints ],
+      selectedModelName,
+    }));
   }, [ fetchModels ]);
 
   const handleCancel = useCallback(() => modalClose(), [ modalClose ]);
@@ -190,7 +222,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const getModalContent = useCallback((state: ModalState): React.ReactNode => {
     const {
       selectedModelName, versionDescription,
-      tags, metadata, versionName, expandDetails,
+      tags, metadata, versionName, expandDetails, checkpoints,
     } = state;
 
     // We always render the form regardless of mode to provide a reference to it.
@@ -219,10 +251,13 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
             <div>
               <h2>Version Name</h2>
               <Input
+                disabled={checkpoints?.length != null && checkpoints.length > 1}
                 placeholder={`Version ${selectedModelNumVersions + 1}`}
                 value={versionName}
                 onChange={updateVersionName}
               />
+              {(checkpoints?.length != null && checkpoints.length > 1) &&
+              <p>Cannot specify version name when batch registering.</p>}
             </div>
             <div>
               <h2>Description <span>(optional)</span></h2>

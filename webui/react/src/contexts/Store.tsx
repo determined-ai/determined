@@ -7,7 +7,8 @@ import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
 import {
   Agent, Auth, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
+  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
+  UserAssignment, UserRole, Workspace,
 } from 'types';
 
 interface Props {
@@ -45,6 +46,8 @@ export interface State {
   pool: PoolOverview;
   resourcePools: ResourcePool[];
   ui: UI;
+  userAssignments: UserAssignment[];
+  userRoles: UserRole[];
   userSettings: V1UserWebSetting[];
   users: DetailedUser[];
 }
@@ -96,6 +99,10 @@ export enum StoreAction {
 
   // Active Experiments
   SetActiveExperiments,
+
+  // User assignments, roles, and derived permissions
+  SetUserAssignments,
+  SetUserRoles,
 }
 
 export type Action =
@@ -128,6 +135,8 @@ export type Action =
   tensorboards: number;
 }}
 | { type: StoreAction.SetActiveExperiments, value: number }
+| { type: StoreAction.SetUserRoles, value: UserRole[] }
+| { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -178,6 +187,20 @@ const initState: State = {
   pool: {},
   resourcePools: [],
   ui: initUI,
+  userAssignments: [ {
+    cluster: true,
+    name: 'OSS User',
+  } ],
+  userRoles: [ {
+    id: -1,
+    name: 'OSS User',
+    permissions: [ {
+      globalOnly: true,
+      id: -1,
+      name: 'oss_user',
+      workspaceOnly: false,
+    } ],
+  } ],
   users: [],
   userSettings: [],
 };
@@ -325,6 +348,12 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetActiveTasks:
       if (isEqual(state.activeTasks, action.value)) return state;
       return { ...state, activeTasks: action.value };
+    case StoreAction.SetUserRoles:
+      if (isEqual(state.userRoles, action.value)) return state;
+      return { ...state, userRoles: action.value };
+    case StoreAction.SetUserAssignments:
+      if (isEqual(state.userAssignments, action.value)) return state;
+      return { ...state, userAssignments: action.value };
     default:
       return state;
   }

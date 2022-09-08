@@ -279,4 +279,20 @@ describe('String Utilities', () => {
       expect(utils.validateLength(space5, 1, 5, false)).toBeTruthy();
     });
   });
+  describe('pluralizer', () => {
+    it("shouldn't pluralize if count === 1", () => {
+      expect(utils.pluralizer(1, 'apple')).toBe('apple');
+      expect(utils.pluralizer(1, 'octopus')).toBe('octopus');
+    });
+
+    it('should pluralize if count !== 1', () => {
+      expect(utils.pluralizer(2, 'apple')).toBe('apples');
+      expect(utils.pluralizer(-1, 'apple')).toBe('apples');
+      expect(utils.pluralizer(0.5, 'apple')).toBe('apples');
+    });
+
+    it('should handle non-standard plurals', () => {
+      expect(utils.pluralizer(2, 'octopus', 'octopi')).toBe('octopi');
+    });
+  });
 });

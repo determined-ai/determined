@@ -9,7 +9,6 @@ import InteractiveTask from './InteractiveTask';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
-const DEFAULT_TASK_PAGE_TITLE = 'Tasks - Determined';
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
@@ -62,9 +61,9 @@ describe('InteractiveTask', () => {
     expect(await screen.findByText('View Logs')).toBeInTheDocument();
   });
 
-  it('should render page with default title', async () => {
+  it('should render page with correct title', async () => {
     await setup();
-    expect(document.title).toEqual(DEFAULT_TASK_PAGE_TITLE);
+    expect(document.title).toEqual(TASK_NAME);
   });
 
 });

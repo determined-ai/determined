@@ -4,10 +4,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
-import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { clone, isEqual } from 'shared/utils/data';
 import { DetError, ErrorType } from 'shared/utils/error';
@@ -16,17 +15,21 @@ import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';
 
+interface Props {
+  onClose?: (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => void;
+}
+
 interface FormInputs {
   description?: string;
   modelName: string;
 }
 
 interface OpenProps {
-  checkpointUuid?: string;
+  checkpoints?: string[];
 }
 
 interface ModalState {
-  checkpointUuid?: string;
+  checkpoints?: string[];
   expandDetails: boolean;
   metadata: Metadata;
   modelDescription: string;
@@ -48,22 +51,15 @@ const DEFAULT_MODAL_STATE = {
   visible: false,
 };
 
-const useModalModelCreate = (): ModalHooks => {
+const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
   const [ form ] = Form.useForm<FormInputs>();
 
-  const handleOnCancel = useCallback(() => {
+  const handleOnClose = useCallback((reason?: ModalCloseReason) => {
+    onClose?.(reason, modalState.checkpoints, modalState.modelName || undefined);
     setModalState(DEFAULT_MODAL_STATE);
-  }, []);
-
-  const { modalOpen: modalOpenCheckpointRegister } = useModalCheckpointRegister(
-    { onClose: handleOnCancel },
-  );
-
-  const handleOnClose = useCallback(() => {
-    setModalState(DEFAULT_MODAL_STATE);
-  }, []);
+  }, [ modalState, onClose ]);
 
   const {
     modalClose,
@@ -71,13 +67,13 @@ const useModalModelCreate = (): ModalHooks => {
     ...modalHook
   } = useModal({ onClose: handleOnClose });
 
-  const modalOpen = useCallback(({ checkpointUuid }: OpenProps = {}) => {
+  const modalOpen = useCallback(({ checkpoints }: OpenProps = {}) => {
     const newState = clone(DEFAULT_MODAL_STATE);
-    setModalState({ ...newState, checkpointUuid, visible: true });
+    setModalState({ ...newState, checkpoints, visible: true });
   }, []);
 
   const createModel = useCallback(async (state: ModalState) => {
-    const { checkpointUuid, modelDescription, tags, metadata, modelName } = state;
+    const { modelDescription, tags, metadata, modelName } = state;
     try {
       const response = await postModel({
         description: modelDescription,
@@ -85,12 +81,7 @@ const useModalModelCreate = (): ModalHooks => {
         metadata: metadata,
         name: modelName,
       });
-
       if (!response?.id) return;
-
-      if (checkpointUuid) {
-        modalOpenCheckpointRegister({ checkpointUuid, selectedModelName: response.name });
-      }
 
       notification.open({
         btn: null,
@@ -120,7 +111,7 @@ const useModalModelCreate = (): ModalHooks => {
         });
       }
     }
-  }, [ modalOpenCheckpointRegister ]);
+  }, []);
 
   const handleOk = useCallback(async (state: ModalState) => {
     const values = await form.validateFields();
@@ -138,12 +129,20 @@ const useModalModelCreate = (): ModalHooks => {
     setModalState((prev) => ({ ...prev, expandDetails: true }));
   }, []);
 
-  const updateMetadata = useCallback((value) => {
+  const handleMetadataChange = useCallback((value) => {
     setModalState((prev) => ({ ...prev, metadata: value }));
   }, []);
 
-  const updateTags = useCallback((value) => {
+  const handleTagsChange = useCallback((value) => {
     setModalState((prev) => ({ ...prev, tags: value }));
+  }, []);
+
+  const handleNameChange = useCallback((e) => {
+    setModalState((prev) => ({ ...prev, modelName: e.target.value }));
+  }, []);
+
+  const handleDescriptionChange = useCallback((e) => {
+    setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
   const getModalContent = useCallback((state: ModalState): React.ReactNode => {
@@ -159,10 +158,10 @@ const useModalModelCreate = (): ModalHooks => {
           label="Model name"
           name="modelName"
           rules={[ { message: 'Model name is required ', required: true } ]}>
-          <Input />
+          <Input onChange={handleNameChange} />
         </Form.Item>
         <Form.Item label="Description (optional)" name="description">
-          <Input.TextArea />
+          <Input.TextArea onChange={handleDescriptionChange} />
         </Form.Item>
         {expandDetails ? (
           <>
@@ -171,21 +170,24 @@ const useModalModelCreate = (): ModalHooks => {
               <EditableMetadata
                 editing={true}
                 metadata={metadata}
-                updateMetadata={updateMetadata}
+                updateMetadata={handleMetadataChange}
               />
             </div>
             <div>
               <h2>Tags <span>(optional)</span></h2>
-              <EditableTagList tags={tags} onChange={updateTags} />
+              <EditableTagList tags={tags} onChange={handleTagsChange} />
             </div>
           </>
         ) :
           <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
       </Form>
     );
-  }, [ form, updateMetadata, updateTags, openDetails ]);
-
-  const handleCancel = useCallback(() => modalClose(), [ modalClose ]);
+  }, [ form,
+    handleDescriptionChange,
+    handleMetadataChange,
+    handleNameChange,
+    handleTagsChange,
+    openDetails ]);
 
   const getModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
     return {
@@ -195,11 +197,10 @@ const useModalModelCreate = (): ModalHooks => {
       icon: null,
       maskClosable: true,
       okText: 'Create Model',
-      onCancel: handleCancel,
       onOk: () => handleOk(state),
       title: 'Create Model',
     };
-  }, [ getModalContent, handleCancel, handleOk ]);
+  }, [ getModalContent, handleOk ]);
 
   /**
    * When modal props changes are detected, such as modal content
