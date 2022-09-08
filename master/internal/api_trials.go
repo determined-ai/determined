@@ -126,14 +126,11 @@ func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial,
 		case task.Running:
 			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
 		case task.Starting:
-			byTaskID[task.Task] = model.MostProgressedExperimentState(byTaskID[task.Task],
-				experimentv1.State_STATE_STARTING)
+			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
 		case task.Pulling:
-			byTaskID[task.Task] = model.MostProgressedExperimentState(byTaskID[task.Task],
-				experimentv1.State_STATE_PULLING)
+			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
 		default:
-			byTaskID[task.Task] = model.MostProgressedExperimentState(byTaskID[task.Task],
-				experimentv1.State_STATE_QUEUED)
+			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
 		}
 	}
 
