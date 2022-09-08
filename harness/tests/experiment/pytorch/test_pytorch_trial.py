@@ -798,7 +798,7 @@ class TestPyTorchTrial:
 
         def make_amp_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=20, validation_freq=1, scheduling_unit=1)
+            yield from trainer.send(steps=20 * AGG_FREQ, validation_freq=1, scheduling_unit=1)
             nonlocal training_metrics
             training_metrics, _ = trainer.result()
 
@@ -812,7 +812,7 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-        amp_metrics_test(trial_class, training_metrics)
+        amp_metrics_test(trial_class, training_metrics, agg_freq=AGG_FREQ)
 
 
 @pytest.mark.parametrize(
@@ -833,8 +833,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, torch.nn.Module), type(trial)
 
 
-def amp_metrics_test(trial_class, training_metrics):
-    agg_freq = 2
+def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
@@ -843,11 +842,12 @@ def amp_metrics_test(trial_class, training_metrics):
     #  we may not have the updated scale from the final batch.
     for idx, (metrics, next_metrics) in enumerate(
         zip(
-            training_metrics[agg_freq - 1 : -agg_freq : agg_freq],
-            training_metrics[agg_freq::agg_freq],
+            training_metrics[:-1],
+            training_metrics[1:],
         )
     ):
-        if idx % agg_freq != 0:
+        if (idx + 1) % agg_freq != 0:
+            # Don't test mini-batches
             continue
         # Because the scaler is updated during the optimizer step, which occurs after training from
         #  a (mini-)batch, the metrics dictionary may not have the updated scale, but we can get it

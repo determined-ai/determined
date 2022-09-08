@@ -289,7 +289,7 @@ class OneVarApexAMPTrial(OneVarAMPBaseTrial):
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale_before"] = scale_before
         metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
-        metrics["stage"] = self._stages[batch_idx]
+        metrics["stage"] = self._stages[batch_idx // self._agg_freq]
         return metrics
 
 
@@ -319,7 +319,7 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale_before"] = scale_before
         # self.scaler.update() gets called after this method returns
-        metrics["stage"] = self._stages[batch_idx]
+        metrics["stage"] = self._stages[batch_idx // self._agg_freq]
         return metrics
 
 
@@ -360,14 +360,15 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
         scaled_loss = self.scaler.scale(loss)
         self.context.backward(scaled_loss)
         self.context.step_optimizer(self.opt, scaler=self.scaler)
-        self.scaler.update()
+        if (batch_idx + 1) % self._agg_freq == 0:
+            self.scaler.update()
 
         # Measure the weight after the update.
         w_after = self.model.weight.data.item()
 
         # Return values that we can compare as part of the tests.
         return {
-            "stage": self._stages[batch_idx],
+            "stage": self._stages[batch_idx // self._agg_freq],
             "scale_before": scale_before,
             "scale": self.scaler.get_scale(),
             "loss": loss,
