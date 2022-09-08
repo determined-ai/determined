@@ -16,10 +16,11 @@ INTERPOLATION_DICT = {
     "bicubic": transforms.InterpolationMode.BICUBIC,
 }
 
+MAX_INT = 2 ** 32 - 1
+
 
 class TextualInversionDataset(Dataset):
-    """Create a dataset of size num_images * repeats, with num_images the number of training
-    images included in train_img_dir. The Dataset's __getitem__ method returns a dictionary with
+    """Create an effectively infinite dataset. The Dataset's __getitem__ method returns a dictionary with
     input_ids and pixel_values keys, where input_ids come from applying the tokenizer to a caption
     describing the image (randomly drawn from fixed templates) and pixel_values are the normalized
     tensor values of the image."""
@@ -31,7 +32,6 @@ class TextualInversionDataset(Dataset):
         placeholder_token: str,
         learnable_property: str = "object",
         size: int = 512,
-        repeats: int = 100,
         interpolation: str = "bicubic",
         flip_p: float = 0.5,
         center_crop: bool = False,
@@ -41,7 +41,6 @@ class TextualInversionDataset(Dataset):
         self.tokenizer = tokenizer
         self.learnable_property = learnable_property
         self.size = size
-        self.repeats = repeats
         self.placeholder_token = placeholder_token
         self.center_crop = center_crop
         self.flip_p = flip_p
@@ -70,15 +69,15 @@ class TextualInversionDataset(Dataset):
         self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
 
     def __len__(self):
-        return self.num_images * self.repeats
+        return MAX_INT
 
     def __getitem__(self, i):
         example = {}
-
+        print("generated example")
         # Generate a random caption drawn from the templates and include in the example.
         placeholder_string = self.placeholder_token
         text = random.choice(self.templates).format(placeholder_string)
-
+        print("tokenize example")
         example["input_ids"] = self.tokenizer(
             text,
             padding="max_length",
@@ -86,7 +85,7 @@ class TextualInversionDataset(Dataset):
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids[0]
-
+        print("open image")
         # Add the corresponding normalized image tensor to the example.
         image = Image.open(self.image_paths[i % self.num_images])
         if not image.mode == "RGB":
