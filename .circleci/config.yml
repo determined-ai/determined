@@ -42,6 +42,9 @@ parameters:
   cache-buster:
     type: string
     default: v1dev12
+  gke-version:
+    type: string
+    default: "1.21.14"
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -1872,7 +1875,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.12"
+        default: <<pipeline.parameters.gke-version>>
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1957,7 +1960,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.12"
+        default: <<pipeline.parameters.gke-version>>
       machine-type:
         type: string
         default: "n1-standard-8"
