@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import Page from 'components/Page';
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import Icon from 'shared/components/Icon/Icon';
 
 import css from './NoPermissions.module.scss';

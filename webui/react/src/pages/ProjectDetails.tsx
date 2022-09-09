@@ -58,7 +58,6 @@ import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
   CommandTask,
-  DetailedUser,
   ExperimentItem,
   Note,
   Project,
@@ -109,7 +108,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces} = usePermissions();
+  const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces } = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -127,8 +126,6 @@ const ProjectDetails: React.FC = () => {
     resetSettings,
     activeSettings,
   } = useSettings<ProjectDetailsSettings>(settingsConfig);
-
-  if (!canViewWorkspaces) return (<NoPermissions />);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -337,7 +334,6 @@ const ProjectDetails: React.FC = () => {
       />
     );
 
-    
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return (
         <ExperimentActionDropdown
@@ -848,6 +844,7 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
+    if (!canViewWorkspaces) return (<NoPermissions />);
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -871,7 +868,9 @@ const ProjectDetails: React.FC = () => {
         </div>
       </div>
     );
-  }, [ filterCount,
+  }, [
+    canViewWorkspaces,
+    filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
