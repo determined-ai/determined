@@ -115,7 +115,9 @@ func PaginateBun(
 		direction = SortDirectionAsc
 	}
 	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
-	query = query.Order(orderExp)
+
+	// needed this in order to order by e.g. metrics->>'loss'
+	query = query.OrderExpr(orderExp)
 
 	query = query.Offset(offset)
 
