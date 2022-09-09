@@ -716,6 +716,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 99d9b3ec1 (fmt, remove asha from test it's in fixture,)
@@ -1047,6 +1048,8 @@ class ASHASearchMethod(SearchMethod):
             raise ex
 
 
+=======
+>>>>>>> 6ea761f80 (fmt, remove asha from test it's in fixture,)
 class SimulateMaster:
     def __init__(self, validation_fn):
         self.events_queue = []  # store event and
