@@ -131,10 +131,12 @@ class TextualInversionTrainer:
                         if took_sgd_step:
                             self.steps_completed += 1
                             is_end_of_training = self.steps_completed == op.length
-                            self._report_train_metrics(core_context)
-                            self._save(core_context, is_end_of_training)
-                            if core_context.preempt.should_preempt():
-                                return
+                            if self._should_report_metrics():
+                                self._report_train_metrics(core_context)
+                            if is_end_of_training or self._should_checkpoint():
+                                self._save(core_context, is_end_of_training)
+                                if core_context.preempt.should_preempt():
+                                    return
                             if is_end_of_training:
                                 break
                 if self.accelerator.is_main_process:
@@ -311,20 +313,18 @@ class TextualInversionTrainer:
         """Checkpoints the training state at regular intervals and saves the final stable diffusion
         pipeline at the end of training.
         """
-        should_write_train_checkpoint = self.steps_completed % self.checkpoint_step_freq == 0
-        if should_write_train_checkpoint or is_end_of_training:
-            self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
-            self.accelerator.wait_for_everyone()
-            self.logger.info("done waiting.")
-            if self.accelerator.is_main_process:
-                checkpoint_metadata = {
-                    "steps_completed": self.steps_completed,
-                }
-                with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
-                    if should_write_train_checkpoint:
-                        self._write_train_checkpoint(path)
-                    if is_end_of_training:
-                        self._write_pipline_to_path(path)
+        self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
+        self.accelerator.wait_for_everyone()
+        self.logger.info("done waiting.")
+        if self.accelerator.is_main_process:
+            checkpoint_metadata = {
+                "steps_completed": self.steps_completed,
+            }
+            with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
+                if self._should_checkpoint():
+                    self._write_train_checkpoint(path)
+                if is_end_of_training:
+                    self._write_pipline_to_path(path)
 
     def _write_train_checkpoint(self, path: pathlib.Path) -> None:
         self.accelerator.save_state(path)
@@ -360,16 +360,21 @@ class TextualInversionTrainer:
         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
-        should_report_train_metrics = self.steps_completed % self.metric_report_step_freq == 0
-        if should_report_train_metrics:
-            self.logger.info("reporting train metrics")
-            self.logger.info("computing loss mean")
-            mean_loss = self.mean_loss_metric.compute().item()
-            if self.accelerator.is_main_process:
-                self.logger.info("reporting loss mean")
-                core_context.train.report_training_metrics(
-                    steps_completed=self.steps_completed,
-                    metrics={"loss": mean_loss},
-                )
-            self.logger.info("resetting loss mean")
-            self.mean_loss_metric.reset()
+        """Report training metrics to the Determined master."""
+        self.logger.info("reporting train metrics")
+        self.logger.info("computing loss mean")
+        mean_loss = self.mean_loss_metric.compute().item()
+        if self.accelerator.is_main_process:
+            self.logger.info("reporting loss mean")
+            core_context.train.report_training_metrics(
+                steps_completed=self.steps_completed,
+                metrics={"loss": mean_loss},
+            )
+        self.logger.info("resetting loss mean")
+        self.mean_loss_metric.reset()
+
+    def _should_checkpoint(self) -> bool:
+        return self.steps_completed % self.checkpoint_step_freq == 0
+
+    def _should_report_metrics(self) -> bool:
+        return self.steps_completed % self.metric_report_step_freq == 0
