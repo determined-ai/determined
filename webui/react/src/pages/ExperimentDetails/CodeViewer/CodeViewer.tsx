@@ -125,7 +125,13 @@ const CodeViewer: React.FC<Props> = ({
     applicableRoutespace: '/experiments',
     settings: [
       {
-        defaultValue: _submittedConfig ? 'Submitted Configuation' : 'Runtime Configuration',
+        defaultValue: _submittedConfig ? 'Submitted Configuration' : 'Runtime Configuration',
+        key: 'filePath',
+        storageKey: 'filePath',
+        type: { baseType: BaseType.String },
+      },
+      {
+        defaultValue: _submittedConfig ? 'Submitted Configuration' : 'Runtime Configuration',
         key: 'fileName',
         storageKey: 'fileName',
         type: { baseType: BaseType.String },
@@ -135,7 +141,7 @@ const CodeViewer: React.FC<Props> = ({
   });
 
   const { settings, updateSettings } =
-    useSettings<{ fileName: string }>(configForExperiment(experimentId));
+    useSettings < { fileName: string, filePath: string }>(configForExperiment(experimentId));
 
   const submittedConfig = useMemo(() => {
     if (!_submittedConfig) return;
@@ -301,10 +307,9 @@ const CodeViewer: React.FC<Props> = ({
       return;
     }
 
-    updateSettings({ fileName: String(info.node.title) });
-
     if (isConfig(selectedKey)) {
       handleSelectConfig(selectedKey);
+      updateSettings({ fileName: String(info.node.title), filePath: String(info.node.key) });
       return;
     }
 
@@ -320,6 +325,7 @@ const CodeViewer: React.FC<Props> = ({
     }
 
     if (targetNode.isLeaf) {
+      updateSettings({ fileName: String(info.node.title), filePath: String(info.node.key) });
       setIsFetchingFile(true);
       await fetchFile(selectedKey, selectedTitle);
       switchTreeViewToEditor();
@@ -406,23 +412,19 @@ const CodeViewer: React.FC<Props> = ({
 
   useEffect(
     () => {
-      if (settings.fileName && (activeFile?.title !== settings.fileName)) {
-        const fileNode = treeData.find((node) => node.title === settings.fileName);
-
-        if (!fileNode) return;
-
-        if (settings.fileName.includes('Configuration')) {
-          handleSelectConfig(fileNode.key as Config);
+      if (settings.filePath && (activeFile?.title !== settings.fileName)) {
+        if (isConfig(settings.fileName)) {
+          handleSelectConfig(settings.fileName);
         } else {
-          fetchFile(fileNode.key, settings.fileName);
+          fetchFile(settings.filePath, settings.fileName);
         }
       }
     },
     [
       treeData,
       settings.fileName,
+      settings.filePath,
       activeFile,
-      handleDownloadClick,
       fetchFile,
       handleSelectConfig,
     ],
@@ -438,8 +440,8 @@ const CodeViewer: React.FC<Props> = ({
             className={css.fileTree}
             data-testid="fileTree"
             defaultExpandAll
-            defaultSelectedKeys={viewMode
-              ? [ settings?.fileName ? settings.fileName : Config.submitted ]
+            defaultSelectedKeys={viewMode !== 'editor'
+              ? [ ...settings?.filePath.split('/') ]
               : undefined
             }
             treeData={treeData}
