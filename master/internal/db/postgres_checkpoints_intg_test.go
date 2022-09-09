@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +18,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
+
+func sortUuidSlice(uuids []uuid.UUID) {
+	sort.Slice(uuids, func(i, j int) bool {
+		return uuids[i].String() < uuids[j].String()
+	})
+}
 
 func TestDeleteCheckpoints(t *testing.T) {
 	etc.SetRootPath(RootFromDB)
@@ -95,6 +102,8 @@ func TestDeleteCheckpoints(t *testing.T) {
 	reqCheckpointUUIDs := []uuid.UUID{checkpoint1.UUID, checkpoint2.UUID, checkpoint3.UUID}
 	checkpointsByUUIDs, err := db.CheckpointByUUIDs(reqCheckpointUUIDs)
 	dbCheckpointsUUIDs := []uuid.UUID{*checkpointsByUUIDs[0].UUID, *checkpointsByUUIDs[1].UUID, *checkpointsByUUIDs[2].UUID}
+	sortUuidSlice(reqCheckpointUUIDs)
+	sortUuidSlice(dbCheckpointsUUIDs)
 	require.NoError(t, err)
 	require.Equal(t, reqCheckpointUUIDs, dbCheckpointsUUIDs)
 
