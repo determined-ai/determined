@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import tempfile
+<<<<<<< HEAD
 import time
 from pathlib import Path
 <<<<<<< HEAD
@@ -14,6 +15,10 @@ from numpy import float64
 =======
 from typing import Any, Dict, List, Optional, Sequence, Set
 >>>>>>> 5320f9b74 (random and ASHA mock master)
+=======
+from pathlib import Path
+from typing import List, Optional
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 
 import pytest
 from numpy import float64
@@ -21,6 +26,7 @@ from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
 from determined.common.api import bindings
 from determined.experimental import client
+<<<<<<< HEAD
 <<<<<<< HEAD
 from determined.searcher.search_method import Operation, SearchMethod
 =======
@@ -35,6 +41,9 @@ from determined.searcher.search_method import (
     ValidateAfter,
 )
 >>>>>>> 903fb9e49 (simulate master)
+=======
+from determined.searcher.search_method import Operation, SearchMethod
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 from determined.searcher.search_runner import LocalSearchRunner
 from tests import config as conf
 from tests import experiment as exp
@@ -43,8 +52,11 @@ from tests.fixtures.custom_searcher.searchers import (
     RandomSearchMethod,
     SingleSearchMethod,
 )
+<<<<<<< HEAD
 
 TIMESTAMP = int(time.time())
+=======
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 
 
 @pytest.mark.e2e_cpu
@@ -231,6 +243,103 @@ def test_run_random_searcher_exp_core_api(
 
 @pytest.mark.e2e_cpu_2a
 @pytest.mark.parametrize(
+    "config_name,exp_name,exception_points",
+    [
+        ("core_api_model.yaml", "custom-searcher-random-test", []),
+        (
+            "core_api_model.yaml",
+            "custom-searcher-random-test-fail1",
+            ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
+        ),
+        (
+            "core_api_model.yaml",
+            "custom-searcher-random-test-fail2",
+            ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
+        ),
+        (
+            "core_api_model.yaml",
+            "custom-searcher-random-test-fail3",
+            ["on_trial_created", "after_save"],
+        ),
+        (
+            "core_api_model.yaml",
+            "custom-searcher-random-test-fail5",
+            [
+                "on_trial_created",
+                "after_save",
+                "after_save",
+                "on_validation_completed",
+                "after_save",
+            ],
+        ),
+        ("noop.yaml", "custom-searcher-random-test-noop", []),
+        (
+            "noop.yaml",
+            "custom-searcher-random-test-noop-fail1",
+            ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
+        ),
+        (
+            "noop.yaml",
+            "custom-searcher-random-test-noop-fail2",
+            [
+                "on_trial_created",
+                "after_save",
+                "after_save",
+                "on_validation_completed",
+                "after_save",
+            ],
+        ),
+    ],
+)
+def test_run_random_searcher_exp_core_api(
+    config_name: str, exp_name: str, exception_points: List[str]
+) -> None:
+    config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
+    config["entrypoint"] += " --exp-name " + exp_name
+    config["entrypoint"] += " --config-name " + config_name
+    if len(exception_points) > 0:
+        config["entrypoint"] += " --exception-points " + " ".join(exception_points)
+    config["max_restarts"] = len(exception_points)
+
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("custom_searcher"), 1
+    )
+
+    session = exp.determined_test_session()
+
+    # searcher experiment
+    searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
+    assert searcher_exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+
+    # actual experiment
+    response = bindings.get_GetExperiments(session, name=exp_name)
+    experiments = response.experiments
+    assert len(experiments) == 1
+
+    experiment = experiments[0]
+    assert experiment.numTrials == 5
+
+    trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
+    for trial in trials:
+        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+        assert trial.totalBatchesProcessed == 500
+
+    # check logs to ensure failures actually happened
+    logs = str(
+        subprocess.check_output(
+            ["det", "-m", conf.make_master_url(), "experiment", "logs", str(experiment_id)]
+        )
+    )
+    failures = logs.count("Max retries exceeded with url: http://dummyurl (Caused by None)")
+    assert failures == len(exception_points)
+
+    # check for resubmitting operations
+    resubmissions = logs.count("root: Resubmitting operations for event.id=")
+    assert resubmissions == sum([x == "after_save" for x in exception_points])
+
+
+@pytest.mark.e2e_cpu_2a
+@pytest.mark.parametrize(
     "exceptions",
     [
         ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
@@ -310,6 +419,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     assert search_method.progress() == pytest.approx(1.0)
 
 
+<<<<<<< HEAD
 @pytest.mark.e2e_cpu
 def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
@@ -339,6 +449,8 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     )
 
 
+=======
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 @pytest.mark.e2e_cpu
 def test_run_asha_batches_exp(tmp_path: Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
@@ -388,12 +500,20 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "config_name,exp_name,exception_points",
     [
+<<<<<<< HEAD
         ("core_api_model.yaml", f"custom-searcher-asha-test-{TIMESTAMP}", []),
+=======
+        ("core_api_model.yaml", "custom-searcher-asha-test", []),
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
         (  # test fail on initialization
             # test single resubmit of operations
             # test resumption on fail before saving
             "core_api_model.yaml",
+<<<<<<< HEAD
             f"custom-searcher-asha-test-fail1-{TIMESTAMP}",
+=======
+            "custom-searcher-asha-test-fail1",
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
             [
                 "initial_operations_start",
                 "after_save",
@@ -403,7 +523,11 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
         (  # test resubmitting operations multiple times
             # test fail on shutdown
             "core_api_model.yaml",
+<<<<<<< HEAD
             f"custom-searcher-asha-test-fail2-{TIMESTAMP}",
+=======
+            "custom-searcher-asha-test-fail2",
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
             [
                 "on_validation_completed",
                 "after_save",
@@ -412,10 +536,17 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "shutdown",
             ],
         ),
+<<<<<<< HEAD
         ("noop.yaml", f"custom-searcher-asha-noop-test-{TIMESTAMP}", []),
         (
             "noop.yaml",
             f"custom-searcher-asha-test-noop-fail1-{TIMESTAMP}",
+=======
+        ("noop.yaml", "custom-searcher-asha-noop-test", []),
+        (
+            "noop.yaml",
+            "custom-searcher-asha-test-noop-fail1",
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
             [
                 "initial_operations_start",
                 "after_save",
@@ -582,6 +713,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     assert search_method.progress() == pytest.approx(1.0)
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 @dataclasses.dataclass
@@ -1070,6 +1202,8 @@ class MockMasterSearchRunner(LocalSearchRunner):
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
 
 
+=======
+>>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 class FallibleSearchRunner(LocalSearchRunner):
     def __init__(
         self,
