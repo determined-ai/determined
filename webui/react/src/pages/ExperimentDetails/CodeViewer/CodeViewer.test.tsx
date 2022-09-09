@@ -74,7 +74,7 @@ jest.mock('components/MonacoEditor', () => ({
 
 jest.mock('hooks/useSettings', () => {
   const actualModule = jest.requireActual('hooks/useSettings');
-  const useSettings = jest.fn(() => ({ settings: { fileName: '', filepath: '' }, updateSettings: jest.fn() }));
+  const useSettings = jest.fn(() => ({ settings: { fileName: '', filePath: '' }, updateSettings: jest.fn() }));
 
   return {
     __esModule: true,
