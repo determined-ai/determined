@@ -354,12 +354,13 @@ class TextualInversionTrainer:
         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
-        self.logger.info("reporting train metrics")
-        self.accelerator.wait_for_everyone()
-        if self.accelerator.is_main_process:
-            mean_loss = self.mean_loss_metric.compute()
-            core_context.train.report_training_metrics(
-                steps_completed=self.steps_completed,
-                metrics={"loss": mean_loss},
-            )
-        self.mean_loss_metric.reset()
+        should_report_train_metrics = self.steps_completed % self.metric_report_step_freq == 0
+        if should_report_train_metrics:
+            self.logger.info("reporting train metrics")
+            if self.accelerator.is_main_process:
+                mean_loss = self.mean_loss_metric.compute()
+                core_context.train.report_training_metrics(
+                    steps_completed=self.steps_completed,
+                    metrics={"loss": mean_loss},
+                )
+            self.mean_loss_metric.reset()
