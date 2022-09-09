@@ -101,7 +101,7 @@ type trialAllocation struct {
 	Task     model.TaskID
 }
 
-func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial, error) {
+func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 	// filter allocations by TaskIDs on this page of trials
 	taskFilter := make([]string, 0, len(trials))
 	for _, trial := range trials {
@@ -116,7 +116,7 @@ func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial,
 		strings.Join(taskFilter, ","),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Collect state information by TaskID
@@ -144,8 +144,7 @@ func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial,
 			}
 		}
 	}
-
-	return trials, nil
+	return nil
 }
 
 func (a *apiServer) TrialLogs(
@@ -592,8 +591,7 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
 	}
 
-	resp.Trials, err = a.enrichTrialState(resp.Trials)
-	if err != nil {
+	if err = a.enrichTrialState(resp.Trials...); err != nil {
 		return nil, err
 	}
 
@@ -620,11 +618,9 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	}
 
 	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
-		trials, err := a.enrichTrialState([]*trialv1.Trial{resp.Trial})
-		if err != nil {
+		if err := a.enrichTrialState(resp.Trial); err != nil {
 			return nil, err
 		}
-		resp.Trial = trials[0]
 	}
 
 	return resp, nil

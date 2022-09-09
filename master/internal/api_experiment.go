@@ -61,9 +61,7 @@ type experimentAllocation struct {
 	Starting bool
 }
 
-func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment) (
-	[]*experimentv1.Experiment, error,
-) {
+func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experiment) error {
 	// filter allocations by JobIDs on this page of experiments
 	jobFilter := make([]string, 0, len(experiments))
 	for _, exp := range experiments {
@@ -78,7 +76,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 		strings.Join(jobFilter, ","),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Collect state information by JobID
@@ -109,7 +107,7 @@ func (a *apiServer) enrichExperimentState(experiments []*experimentv1.Experiment
 			}
 		}
 	}
-	return experiments, nil
+	return nil
 }
 
 func (a *apiServer) getExperiment(
@@ -138,8 +136,7 @@ func (a *apiServer) getExperiment(
 		return exp.TrialIds[i] < exp.TrialIds[j]
 	})
 
-	_, err = a.enrichExperimentState([]*experimentv1.Experiment{exp})
-	if err != nil {
+	if err = a.enrichExperimentState(exp); err != nil {
 		return nil, err
 	}
 
@@ -491,9 +488,11 @@ func (a *apiServer) GetExperiments(
 		return nil, err
 	}
 
-	resp.Experiments, err = a.enrichExperimentState(resp.Experiments)
+	if err = a.enrichExperimentState(resp.Experiments...); err != nil {
+		return nil, err
+	}
 
-	return resp, err
+	return resp, nil
 }
 
 func runPagedBunExperimentsQuery(
@@ -922,8 +921,7 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	// include queued / pulling / starting / running state
-	_, err = a.enrichExperimentState([]*experimentv1.Experiment{exp})
-	if err != nil {
+	if err = a.enrichExperimentState(exp); err != nil {
 		return nil, err
 	}
 
