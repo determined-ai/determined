@@ -374,7 +374,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       setSettings((prevSettings) => {
         const defaultSettings = getDefaultSettings<T>(config, storage);
         const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
-        return { ...prevSettings, ...defaultSettings, ...querySettings };
+        return { ...defaultSettings, ...prevSettings, ...querySettings };
       });
     }
   }, [ config, history, location.pathname, location.search, prevSearch, settings, storage ]);
