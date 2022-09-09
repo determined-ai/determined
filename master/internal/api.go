@@ -23,7 +23,7 @@ import (
 type apiServer struct {
 	m *Master
 
-	usergroup.APIServer
+	usergroup.UserGroupAPIServer
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.
