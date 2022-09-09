@@ -13,38 +13,40 @@ type rbacAPIServerStub struct{}
 
 const stubUnimplementedMessage = "Determined Enterprise Edition is required for this functionality"
 
+var UnimplementedError = status.Error(codes.Unimplemented, stubUnimplementedMessage)
+
 func (s *rbacAPIServerStub) GetRolesByID(ctx context.Context, req *apiv1.GetRolesByIDRequest) (
 	resp *apiv1.GetRolesByIDResponse, err error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }
 
 func (s *rbacAPIServerStub) GetRolesAssignedToUser(ctx context.Context,
 	req *apiv1.GetRolesAssignedToUserRequest) (*apiv1.GetRolesAssignedToUserResponse, error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }
 
 func (s *rbacAPIServerStub) GetRolesAssignedToGroup(ctx context.Context,
 	req *apiv1.GetRolesAssignedToGroupRequest) (*apiv1.GetRolesAssignedToGroupResponse, error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }
 
 func (s *rbacAPIServerStub) SearchRolesAssignableToScope(ctx context.Context,
 	req *apiv1.SearchRolesAssignableToScopeRequest) (*apiv1.SearchRolesAssignableToScopeResponse,
 	error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }
 
 func (s *rbacAPIServerStub) ListRoles(ctx context.Context, req *apiv1.ListRolesRequest) (
 	*apiv1.ListRolesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }
 
 func (s *rbacAPIServerStub) AssignRoles(ctx context.Context, req *apiv1.AssignRolesRequest) (
 	*apiv1.AssignRolesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }
 
 func (s *rbacAPIServerStub) RemoveAssignments(ctx context.Context,
 	req *apiv1.RemoveAssignmentsRequest) (*apiv1.RemoveAssignmentsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, stubUnimplementedMessage)
+	return nil, UnimplementedError
 }

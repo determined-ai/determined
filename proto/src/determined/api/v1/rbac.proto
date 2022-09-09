@@ -36,13 +36,13 @@ message SearchRolesAssignableToScopeRequest {
     json_schema: { required: [ "limit" ] }
   };
 
-  int32 limit = 1;
-  int32 offset = 2;
+  int32 limit                 = 1;
+  int32 offset                = 2;
   optional int32 workspace_id = 3;
 }
 
 message SearchRolesAssignableToScopeResponse {
-  Pagination pagination = 1;
+  Pagination pagination                  = 1;
   repeated determined.rbac.v1.Role roles = 2;
 }
 
@@ -52,7 +52,7 @@ message ListRolesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "limit" ] }
   };
-  
+
   int32 offset = 3;
   // the limit for pagination.
   int32 limit = 4;

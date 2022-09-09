@@ -1681,7 +1681,8 @@ service Determined {
     };
   }
 
-  rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest) returns (GetRolesAssignedToUserResponse) {
+  rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest)
+      returns (GetRolesAssignedToUserResponse) {
     option (google.api.http) = {
       get: "/api/v1/roles/search/by-user/{user_id}"
     };
@@ -1691,7 +1692,8 @@ service Determined {
     };
   }
 
-  rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest) returns (GetRolesAssignedToGroupResponse) {
+  rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest)
+      returns (GetRolesAssignedToGroupResponse) {
     option (google.api.http) = {
       get: "/api/v1/roles/search/by-group/{group_id}"
     };
@@ -1701,9 +1703,10 @@ service Determined {
     };
   }
 
-  rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest) returns (SearchRolesAssignableToScopeResponse) {
+  rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest)
+      returns (SearchRolesAssignableToScopeResponse) {
     option (google.api.http) = {
-      post: "/api/v1/roles/search"
+      post: "/api/v1/roles/search/by-assignability"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
