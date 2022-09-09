@@ -14,11 +14,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// APIServer is an embedded api server struct.
-type APIServer struct{}
+// UserGroupAPIServer is an embedded api server struct.
+type UserGroupAPIServer struct{}
 
 // CreateGroup creates a group and adds members to it, if any.
-func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
+func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.CreateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -45,7 +45,7 @@ func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 }
 
 // GetGroups searches for groups that fulfills the criteria given by the user.
-func (a *APIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
+func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
 ) (resp *apiv1.GetGroupsResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -83,7 +83,7 @@ func (a *APIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
 }
 
 // GetGroup finds and returns details of the group specified.
-func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
+func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 ) (resp *apiv1.GetGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -113,7 +113,7 @@ func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 }
 
 // UpdateGroup updates the group and returns the newly updated group details.
-func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
+func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
 ) (resp *apiv1.UpdateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -149,7 +149,7 @@ func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 }
 
 // DeleteGroup deletes the database entry for the group.
-func (a *APIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
+func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
 ) (resp *apiv1.DeleteGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
