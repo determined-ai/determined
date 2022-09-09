@@ -419,9 +419,8 @@ export const mapV1Experiment = (
     projectId: data.projectId,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
-    slotsPerTrial: data.slotsPerTrial,
     startTime: data.startTime as unknown as string,
-    state: displayState,
+    state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
   };
@@ -429,7 +428,7 @@ export const mapV1Experiment = (
 
 export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
   // empty JobSummary
-  return data.map(e => mapV1Experiment(e));
+  return data.map((e) => mapV1Experiment(e));
 };
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
