@@ -113,11 +113,8 @@ class SearchRunner:
         return operations
 
     def run_experiment(
-        self, experiment_id: int, prior_operations: Optional[List[Operation]]
+        self, experiment_id: int, prior_operations: Optional[List[Operation]], session: client.Session,
     ) -> None:
-        assert client._determined is not None
-        session = client._determined._session
-
         experiment_is_active = True
 
         try:
@@ -257,8 +254,10 @@ class LocalSearchRunner(SearchRunner):
             self.search_method.searcher_state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
-
-        self.run_experiment(experiment_id, operations)
+        
+        assert client._determined is not None
+        session = client._determined._session
+        self.run_experiment(experiment_id, operations, session)
         return experiment_id
 
     def load_state(self, experiment_id: int) -> Tuple[int, List[Operation]]:
