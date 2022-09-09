@@ -9,4 +9,4 @@ searcher:
 max_restarts: 0
 resources:
   slots_per_trial: 8
-entrypoint: python3 -m determined.launch.horovod python3 train.py
+entrypoint: python3 -m determined.launch.torch_distributed python3 train.py

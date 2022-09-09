@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from determined.common import check
 from determined.horovod import hvd
-
+import torch.distributed as dist
 import logging
 
 from determined.pytorch import PyTorchTrialContext
