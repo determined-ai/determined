@@ -259,7 +259,6 @@ func s3DownloadCheckpoint(
 		// Return False to stop paging
 		return len(errs) == 0
 	}
-	prefix = "checkpoint_down"
 	err = s3client.ListObjectsV2PagesWithContext(
 		c.Request().Context(),
 		&s3.ListObjectsV2Input{
@@ -325,12 +324,16 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 				args.CheckpointUUID, err))
 	}
 
-	// Assume we always have experiment configs for a checkpoint
+	// Assume a checkpoint always has experiment configs
 	expConfig, err := m.db.ExperimentConfigForCheckpoint(checkpointUUID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to retrieve experiment config for checkpoint %s: %s",
 				args.CheckpointUUID, err.Error()))
+	}
+	if expConfig == nil {
+		return echo.NewHTTPError(http.StatusNotFound,
+			fmt.Sprintf("checkpoint %s does not exist", args.CheckpointUUID))
 	}
 	storageUnion := expConfig.CheckpointStorage()
 
