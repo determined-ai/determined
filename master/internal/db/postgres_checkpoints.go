@@ -116,7 +116,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 }
 
 // ExperimentConfigForCheckpoint looks up the experiment config of the checkpoint by the
-// checkpoint UUID, and it returns nil if the checkpoint does not exist
+// checkpoint UUID, and it returns nil if the checkpoint does not exist.
 func (db *PgDB) ExperimentConfigForCheckpoint(id uuid.UUID) (*expconf.ExperimentConfig, error) {
 	checkpoint, err := db.CheckpointByUUID(id)
 	if err != nil {
