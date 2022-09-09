@@ -25,6 +25,8 @@ import data
 
 
 class TextualInversionTrainer:
+    """Class for training a textual inversion model. Assumes GPU training."""
+
     def __init__(
         self,
         use_auth_token: str,
@@ -79,6 +81,7 @@ class TextualInversionTrainer:
         )
         self.steps_completed = 0
         self.mean_loss_metric = torchmetrics.MeanMetric()
+        self.mean_loss_metric.cuda()
 
         self.effective_batch_size = (
             self.gradient_accumulation_steps
@@ -116,8 +119,8 @@ class TextualInversionTrainer:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while self.steps_completed < op.length:
-                    for batch in self.train_dataloader:
-                        self.logger.info("batch")
+                    for batch_idx, batch in enumerate(self.train_dataloader):
+                        print(f"batch {batch_idx}")
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
                             self._train_one_batch(batch)
@@ -134,6 +137,8 @@ class TextualInversionTrainer:
                                 return
                             if is_end_of_training:
                                 break
+                if self.accelerator.is_main_process:
+                    op.report_completed(0.0)
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
@@ -310,6 +315,7 @@ class TextualInversionTrainer:
         if should_write_train_checkpoint or is_end_of_training:
             self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
             self.accelerator.wait_for_everyone()
+            self.logger.info("done waiting.")
             if self.accelerator.is_main_process:
                 checkpoint_metadata = {
                     "steps_completed": self.steps_completed,
@@ -357,10 +363,13 @@ class TextualInversionTrainer:
         should_report_train_metrics = self.steps_completed % self.metric_report_step_freq == 0
         if should_report_train_metrics:
             self.logger.info("reporting train metrics")
+            self.logger.info("computing loss mean")
+            mean_loss = self.mean_loss_metric.compute().item()
             if self.accelerator.is_main_process:
-                mean_loss = self.mean_loss_metric.compute()
+                self.logger.info("reporting loss mean")
                 core_context.train.report_training_metrics(
                     steps_completed=self.steps_completed,
                     metrics={"loss": mean_loss},
                 )
+            self.logger.info("resetting loss mean")
             self.mean_loss_metric.reset()
