@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/shopspring/decimal"
+	"golang.org/x/exp/slices"
 
 	"github.com/stretchr/testify/require"
 
@@ -156,9 +157,18 @@ func TestAllocationState(t *testing.T) {
 			// Ensure our state is the same as allocation.
 			require.Equal(t, len(tOut.Allocations), 1, "failed to get exactly 1 allocation")
 			aOut := tOut.Allocations[0]
-			require.Equal(t, a.State.Proto(), aOut.State, "proto state not equal")
-			require.Equal(t, fmt.Sprintf("STATE_%s", *a.State), aOut.State.String(),
-				"proto state to strings not equal")
+
+			if slices.Contains(model.AllocationState{
+				AllocationStatePending,
+				AllocationStateAssigned,
+			}, a.State) {
+				require.Equal(t, "STATE_QUEUED", aOut.State.String(),
+					"allocation states not converted to queued")
+			} else {
+				require.Equal(t, a.State.Proto(), aOut.State, "proto state not equal")
+				require.Equal(t, fmt.Sprintf("STATE_%s", *a.State), aOut.State.String(),
+					"proto state to strings not equal")
+			}
 		}
 	}
 }
