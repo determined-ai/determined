@@ -992,6 +992,7 @@ class SimulateMaster:
         return random.random()
 
 
+<<<<<<< HEAD
 >>>>>>> 903fb9e49 (simulate master)
 class FallibleSearchRunner(LocalSearchRunner):
     def __init__(
@@ -1015,6 +1016,8 @@ class FallibleSearchRunner(LocalSearchRunner):
             raise ex
 
 
+=======
+>>>>>>> 2af8b2a8f (switch positions)
 class MockMasterSearchRunner(LocalSearchRunner):
     def __init__(
         self,
@@ -1065,3 +1068,25 @@ class MockMasterSearchRunner(LocalSearchRunner):
 
     def _get_state_path(self, experiment_id: int) -> Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
+
+
+class FallibleSearchRunner(LocalSearchRunner):
+    def __init__(
+        self,
+        exception_point: str,
+        search_method: SearchMethod,
+        searcher_dir: Optional[Path] = None,
+    ):
+        super(FallibleSearchRunner, self).__init__(search_method, searcher_dir)
+        self.fail_on_save = False
+        if exception_point == "after_save":
+            self.fail_on_save = True
+
+    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
+        super(FallibleSearchRunner, self).save_state(experiment_id, operations)
+        if self.fail_on_save:
+            logging.info(
+                "Raising exception in after saving the state and before posting operations"
+            )
+            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            raise ex
