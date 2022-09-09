@@ -194,9 +194,14 @@ const ProjectDetails: React.FC = () => {
       }, { signal: canceler.signal });
       const allRequests = [ pinnedExperimentsRequest, otherExperimentsRequest ];
       const [ pinnedExpResponse, otherExpResponse ] = await Promise.all(allRequests);
-      setTotal(
-        (pinnedExpResponse.pagination.total ?? 0) + (otherExpResponse.pagination.total ?? 0),
+
+      // Due to showing pinned items in all pages, we need to adjust the number of total items
+      const totalItems = (
+        (pinnedExpResponse.pagination.total ?? 0) + (otherExpResponse.pagination.total ?? 0)
       );
+      const expectedNumPages = Math.ceil(totalItems / settings.tableLimit);
+      const imaginaryTotalItems = totalItems + pinnedIds.length * expectedNumPages;
+      setTotal(imaginaryTotalItems);
       setExperiments([ ...pinnedExpResponse.experiments, ...otherExpResponse.experiments ]);
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
