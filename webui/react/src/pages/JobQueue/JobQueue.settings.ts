@@ -35,7 +35,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<JobColumnName, number> = {
   priority: 107,
   resourcePool: 107,
   slots: 74,
-  status: 106,
+  status: 160,
   submissionTime: 117,
   type: 75,
   user: 85,
