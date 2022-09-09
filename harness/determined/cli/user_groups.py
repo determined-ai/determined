@@ -21,7 +21,7 @@ v1GroupHeaders = namedtuple(
 
 rbac_flag_disabled_message = (
     "User groups commands require the Determined Enterprise Edition "
-    + "and the Master Configuration option security.rbac.enabled."
+    + "and the Master Configuration option security.authz.rbac_ui_enabled."
 )
 
 
@@ -187,7 +187,7 @@ args_description = [
                 create_group,
                 "creates a user group",
                 [
-                    Arg("group_name", default=None, help="name of user group to be created"),
+                    Arg("group_name", help="name of user group to be created"),
                     Arg(
                         "--add-user",
                         action="append",
@@ -202,7 +202,7 @@ args_description = [
                 delete_group,
                 "deletes a user group",
                 [
-                    Arg("group_name", default=None, help="name of user group to be deleted"),
+                    Arg("group_name", help="name of user group to be deleted"),
                     Arg("--yes", action="store_true", help="skip prompt asking for confirmation"),
                 ],
             ),
@@ -212,11 +212,7 @@ args_description = [
                 "list user groups",
                 [
                     *default_pagination_args,
-                    Arg(
-                        "--groups-user-belongs-to",
-                        default=None,
-                        help="list groups that the username is in",
-                    ),
+                    Arg("--groups-user-belongs-to", help="list groups that the username is in"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,
@@ -226,7 +222,7 @@ args_description = [
                 describe_group,
                 "describes a user group",
                 [
-                    Arg("group_name", default=None, help="name of user group to describe"),
+                    Arg("group_name", help="name of user group to describe"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -235,8 +231,8 @@ args_description = [
                 add_user_to_group,
                 "add users to a group",
                 [
-                    Arg("group_name", default=None, help="name of user group to add users to"),
-                    Arg("usernames", default=None, help="a comma seperated list of usernames"),
+                    Arg("group_name", help="name of user group to add users to"),
+                    Arg("usernames", help="a comma seperated list of usernames"),
                 ],
             ),
             Cmd(
@@ -244,8 +240,8 @@ args_description = [
                 remove_user_from_group,
                 "removes user from a group",
                 [
-                    Arg("group_name", default=None, help="name of user group to remove users from"),
-                    Arg("usernames", default=None, help="a comma seperated list of usernames"),
+                    Arg("group_name", help="name of user group to remove users from"),
+                    Arg("usernames", help="a comma seperated list of usernames"),
                 ],
             ),
             Cmd(
@@ -253,8 +249,8 @@ args_description = [
                 change_group_name,
                 "changes name of a user group",
                 [
-                    Arg("old_group_name", default=None, help="name of user group to be updated"),
-                    Arg("new_group_name", default=None, help="name of user group to change to"),
+                    Arg("old_group_name", help="name of user group to be updated"),
+                    Arg("new_group_name", help="name of user group to change to"),
                 ],
             ),
         ],

@@ -22,8 +22,8 @@ stages:
         cache: 
           cache_dir: /tmp/determined-cache
         security:
-          rbac: 
-            enabled: true
+          authz:
+            rbac_ui_enabled: true
             
   - custom:
       name: proxy

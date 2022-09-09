@@ -9,15 +9,17 @@ from tests import config as conf
 from .test_users import get_random_string
 
 
-def det_cmd(cmd: List[str]) -> subprocess.CompletedProcess:
+def det_cmd(cmd: List[str], **kwargs: Any) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["det", "-m", conf.make_master_url()] + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        ["det", "-m", conf.make_master_url()] + cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        **kwargs,
     )
 
 
 def det_cmd_json(cmd: List[str]) -> Any:
-    res = det_cmd(cmd)
-    assert res.returncode == 0
+    res = det_cmd(cmd, check=True)
     return json.loads(res.stdout)
 
 
@@ -34,39 +36,43 @@ def test_group_creation(add_users: List[str]) -> None:
     create_group_cmd = ["user-group", "create", group_name]
     for add_user in add_users:
         create_group_cmd += ["--add-user", add_user]
-
-    assert det_cmd(create_group_cmd).returncode == 0
+    det_cmd(create_group_cmd, check=True)
 
     # Can view through list.
     group_list = det_cmd_json(["user-group", "list", "--json"])
-    assert sum([group["group"]["name"] == group_name for group in group_list["groups"]]) == 1
+    assert (
+        len([group for group in group_list["groups"] if group["group"]["name"] == group_name]) == 1
+    )
 
     # Can view through list with userID filter.
     for add_user in add_users:
         group_list = det_cmd_json(
             ["user-group", "list", "--json", "--groups-user-belongs-to", add_user]
         )
-        assert sum([group["group"]["name"] == group_name for group in group_list["groups"]]) == 1
+        assert (
+            len([group for group in group_list["groups"] if group["group"]["name"] == group_name])
+            == 1
+        )
 
     # Can describe properly.
     group_desc = det_cmd_json(["user-group", "describe", group_name, "--json"])
     assert group_desc["name"] == group_name
     for add_user in add_users:
-        assert sum([u["username"] == add_user for u in group_desc["users"]]) == 1
+        assert len([u for u in group_desc["users"] if u["username"] == add_user]) == 1
 
     # Can delete.
-    assert det_cmd(["user-group", "delete", group_name, "--yes"]).returncode == 0
+    det_cmd(["user-group", "delete", group_name, "--yes"], check=True)
     det_cmd_expect_error(["user-group", "describe", group_name], "not find")
 
 
 @pytest.mark.e2e_cpu
 def test_group_updates() -> None:
     group_name = get_random_string()
-    assert det_cmd(["user-group", "create", group_name]).returncode == 0
+    det_cmd(["user-group", "create", group_name], check=True)
 
     # Adds admin and determined to our group then remove determined.
-    assert det_cmd(["user-group", "add-user", group_name, "admin,determined"]).returncode == 0
-    assert det_cmd(["user-group", "remove-user", group_name, "determined"]).returncode == 0
+    det_cmd(["user-group", "add-user", group_name, "admin,determined"], check=True)
+    det_cmd(["user-group", "remove-user", group_name, "determined"], check=True)
 
     group_desc = det_cmd_json(["user-group", "describe", group_name, "--json"])
     assert group_desc["name"] == group_name
@@ -75,7 +81,7 @@ def test_group_updates() -> None:
 
     # Rename our group.
     new_group_name = get_random_string()
-    assert det_cmd(["user-group", "change-name", group_name, new_group_name]).returncode == 0
+    det_cmd(["user-group", "change-name", group_name, new_group_name], check=True)
 
     # Old name is gone.
     det_cmd_expect_error(["user-group", "describe", group_name, "--json"], "not find")
@@ -96,7 +102,7 @@ def test_group_list_pagination(offset: int, limit: int) -> None:
     group_list = det_cmd_json(["user-group", "list", "--json"])["groups"]
     needed_groups = max(n - len(group_list), 0)
     for _ in range(needed_groups):
-        assert det_cmd(["user-group", "create", get_random_string()]).returncode == 0
+        det_cmd(["user-group", "create", get_random_string()], check=True)
 
     # Get baseline group list to compare pagination to.
     group_list = det_cmd_json(["user-group", "list", "--json"])["groups"]
@@ -112,7 +118,7 @@ def test_group_list_pagination(offset: int, limit: int) -> None:
 def test_group_errors() -> None:
     fake_group = get_random_string()
     group_name = get_random_string()
-    assert det_cmd(["user-group", "create", group_name]).returncode == 0
+    det_cmd(["user-group", "create", group_name], check=True)
 
     # Creating group with same name.
     det_cmd_expect_error(["user-group", "create", group_name], "already exists")

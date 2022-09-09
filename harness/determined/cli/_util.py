@@ -92,7 +92,7 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
     def decorator(function: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(args: argparse.Namespace) -> None:
             resp = bindings.get_GetMaster(setup_session(args))
-            if not resp.to_json()["rbacEnabled"]:
+            if not resp.to_json().get("rbacEnabled"):
                 raise FeatureFlagDisabled(error_message)
             function(args)
 
