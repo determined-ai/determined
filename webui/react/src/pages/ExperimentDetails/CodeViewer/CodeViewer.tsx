@@ -121,17 +121,19 @@ const CodeViewer: React.FC<Props> = ({
   runtimeConfig: _runtimeConfig,
 }) => {
   const resize = useResize();
+  const firstConfig = useMemo(() =>
+    _submittedConfig ? Config.submitted : Config.runtime, [ _submittedConfig ]);
   const configForExperiment = (experimentId: number): SettingsConfig => ({
     applicableRoutespace: '/experiments',
     settings: [
       {
-        defaultValue: _submittedConfig ? 'Submitted Configuration' : 'Runtime Configuration',
+        defaultValue: firstConfig,
         key: 'filePath',
         storageKey: 'filePath',
         type: { baseType: BaseType.String },
       },
       {
-        defaultValue: _submittedConfig ? 'Submitted Configuration' : 'Runtime Configuration',
+        defaultValue: firstConfig,
         key: 'fileName',
         storageKey: 'fileName',
         type: { baseType: BaseType.String },
@@ -194,7 +196,6 @@ const CodeViewer: React.FC<Props> = ({
     () => setViewMode((view) => view === 'editor' ? 'tree' : view)
     , [],
   );
-
   const switchSplitViewToTree = useCallback(
     () => setViewMode((view) => view === 'split' ? 'tree' : view)
     , [],
@@ -207,6 +208,7 @@ const CodeViewer: React.FC<Props> = ({
       setPageError(PageError.none);
 
     } else setPageError(PageError.fetch);
+
     setActiveFile({
       icon: configIcon,
       key: c,
@@ -295,12 +297,11 @@ const CodeViewer: React.FC<Props> = ({
     });
   }, [ experimentId ]);
 
-  const handleSelectFile = useCallback(async (
+  const handleSelectFile = useCallback((
     _,
     info: { node: DataNode },
   ) => {
     const selectedKey = String(info.node.key);
-    const selectedTitle = info.node.title;
 
     if (selectedKey === activeFile?.key) {
       if (info.node.isLeaf) switchTreeViewToEditor();
@@ -326,12 +327,8 @@ const CodeViewer: React.FC<Props> = ({
 
     if (targetNode.isLeaf) {
       updateSettings({ fileName: String(info.node.title), filePath: String(info.node.key) });
-      setIsFetchingFile(true);
-      await fetchFile(selectedKey, selectedTitle);
-      switchTreeViewToEditor();
     }
   }, [
-    fetchFile,
     activeFile?.key,
     handleSelectConfig,
     treeData,
@@ -351,8 +348,8 @@ const CodeViewer: React.FC<Props> = ({
     if (!activeFile) return;
 
     const filePath = String(activeFile?.key);
-    if (filePath.includes('Configuration')) {
-      const isRuntimeConf = filePath.toLowerCase().includes('runtime');
+    if (isConfig(filePath)) {
+      const isRuntimeConf = filePath === Config.runtime;
       const url = isRuntimeConf
         ? URL.createObjectURL(new Blob([ runtimeConfig ]))
         : URL.createObjectURL(new Blob([ submittedConfig as string ]));
@@ -374,49 +371,21 @@ const CodeViewer: React.FC<Props> = ({
     }
   }, [ activeFile, runtimeConfig, submittedConfig, experimentId ]);
 
-  useEffect(() => {
-    if (submittedConfig) {
-      handleSelectConfig(Config.submitted);
-    } else {
-      handleSelectConfig(Config.runtime);
-    }
-  }, [ handleSelectConfig, submittedConfig ]);
-
-  useEffect(() => {
-    if (resize.width <= 1024) {
-      switchSplitViewToTree();
-    } else {
-      setViewMode('split');
-    }
-  }, [ resize.width, switchSplitViewToTree ]);
-
   // map the file tree
   useEffect(() => {
     fetchFileTree();
   }, [ fetchFileTree ]);
 
-  // clear the timeout ref from memory
-  useEffect(() => {
-    return () => {
-      if (timeout.current) clearTimeout(timeout.current);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    if (
-      configDownloadButton.current
-      && downloadInfo.url
-      && downloadInfo.fileName
-    ) configDownloadButton.current.click();
-  }, [ downloadInfo ]);
-
+  // Set the selected node based on the active settings
   useEffect(
     () => {
       if (settings.filePath && (activeFile?.title !== settings.fileName)) {
         if (isConfig(settings.fileName)) {
           handleSelectConfig(settings.fileName);
         } else {
+          setIsFetchingFile(true);
           fetchFile(settings.filePath, settings.fileName);
+          switchTreeViewToEditor();
         }
       }
     },
@@ -427,8 +396,32 @@ const CodeViewer: React.FC<Props> = ({
       activeFile,
       fetchFile,
       handleSelectConfig,
+      switchTreeViewToEditor,
     ],
   );
+
+  useLayoutEffect(() => {
+    if (
+      configDownloadButton.current
+      && downloadInfo.url
+      && downloadInfo.fileName
+    ) configDownloadButton.current.click();
+  }, [ downloadInfo ]);
+
+  useEffect(() => {
+    if (resize.width <= 1024) {
+      switchSplitViewToTree();
+    } else {
+      setViewMode('split');
+    }
+  }, [ resize.width, switchSplitViewToTree ]);
+
+  // clear the timeout ref from memory
+  useEffect(() => {
+    return () => {
+      if (timeout.current) clearTimeout(timeout.current);
+    };
+  }, []);
 
   const classes = [ css.base, pageError ? css.noEditor : '' ];
 
@@ -440,9 +433,9 @@ const CodeViewer: React.FC<Props> = ({
             className={css.fileTree}
             data-testid="fileTree"
             defaultExpandAll
-            defaultSelectedKeys={viewMode !== 'editor'
+            defaultSelectedKeys={viewMode
             // this is to ensure that, at least, the most parent node gets highlighted...
-              ? [ ...settings?.filePath.split('/')[0] ]
+              ? [ ...settings.filePath.split('/')[0] ?? firstConfig ]
               : undefined
             }
             treeData={treeData}
