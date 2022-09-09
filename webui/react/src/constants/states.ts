@@ -6,8 +6,6 @@ import {
 } from 'types';
 
 export const activeCommandStates = [
-  CommandState.Assigned,
-  CommandState.Pending,
   CommandState.Pulling,
   CommandState.Queued,
   CommandState.Running,
@@ -43,8 +41,6 @@ export const cancellableRunStates: Set<CompoundRunState> = new Set([
 ]);
 
 export const killableCommandStates = [
-  CommandState.Assigned,
-  CommandState.Pending,
   CommandState.Pulling,
   CommandState.Queued,
   CommandState.Running,
@@ -106,8 +102,6 @@ export const V1SchedulerTypeToLabel : { [key in V1SchedulerType]: string } = {
 };
 
 export const commandStateToLabel: { [key in CommandState]: string } = {
-  [CommandState.Pending]: 'Pending',
-  [CommandState.Assigned]: 'Assigned',
   [CommandState.Pulling]: 'Pulling',
   [CommandState.Queued]: 'Queued',
   [CommandState.Starting]: 'Starting',

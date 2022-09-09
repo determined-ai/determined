@@ -43,16 +43,16 @@ const terminatedDuration = 24 * time.Hour
 type terminateForGC struct{}
 
 // queueStates are allocation states which the API and UI will show as "Queued".
-var queueStates = []taskv1.State{
-	taskv1.State_STATE_PENDING,
-	taskv1.State_STATE_ASSIGNED,
+var queueStates = []model.AllocationState{
+	model.AllocationStatePending,
+	model.AllocationStateAssigned,
 }
 
-func enrichState(state taskv1.State) taskv1.State {
+func enrichState(state model.AllocationState) taskv1.State {
 	if slices.Contains(queueStates, state) {
 		return taskv1.State_STATE_QUEUED
 	}
-	return state
+	return state.Proto()
 }
 
 func createGenericCommandActor(
@@ -559,7 +559,7 @@ func (c *command) serviceAddress() string {
 
 func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 	allo := c.refreshAllocationState(ctx)
-	state := enrichState(allo.State.Proto())
+	state := enrichState(allo.State)
 
 	return &notebookv1.Notebook{
 		Id:             c.stringID(),
@@ -579,7 +579,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 	allo := c.refreshAllocationState(ctx)
-	state := enrichState(allo.State.Proto())
+	state := enrichState(allo.State)
 	return &commandv1.Command{
 		Id:           c.stringID(),
 		State:        state,
@@ -597,7 +597,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 
 func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 	allo := c.refreshAllocationState(ctx)
-	state := enrichState(allo.State.Proto())
+	state := enrichState(allo.State)
 	return &shellv1.Shell{
 		Id:             c.stringID(),
 		State:          state,
@@ -619,7 +619,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 
 func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 	allo := c.refreshAllocationState(ctx)
-	state := enrichState(allo.State.Proto())
+	state := enrichState(allo.State)
 	return &tensorboardv1.Tensorboard{
 		Id:             c.stringID(),
 		State:          state,

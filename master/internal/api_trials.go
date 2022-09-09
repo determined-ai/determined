@@ -111,7 +111,7 @@ func (a *apiServer) enrichTrialState(trials []*trialv1.Trial) ([]*trialv1.Trial,
 	// get active trials by TaskId
 	tasks := []trialAllocation{}
 	err := a.m.db.Query(
-		"get_active_allocations_by_task",
+		"aggregate_allocation_state_by_task",
 		&tasks,
 		strings.Join(taskFilter, ","),
 	)

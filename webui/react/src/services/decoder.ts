@@ -109,10 +109,6 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
 const mapV1TaskState =
   (containerState: Sdk.Determinedtaskv1State): types.CommandState => {
     switch (containerState) {
-      case Sdk.Determinedtaskv1State.PENDING:
-        return types.CommandState.Pending;
-      case Sdk.Determinedtaskv1State.ASSIGNED:
-        return types.CommandState.Assigned;
       case Sdk.Determinedtaskv1State.PULLING:
         return types.CommandState.Pulling;
       case Sdk.Determinedtaskv1State.STARTING:
@@ -121,10 +117,8 @@ const mapV1TaskState =
         return types.CommandState.Running;
       case Sdk.Determinedtaskv1State.TERMINATED:
         return types.CommandState.Terminated;
-      case Sdk.Determinedtaskv1State.QUEUED:
-        return types.CommandState.Queued;
       default:
-        return types.CommandState.Pending;
+        return types.CommandState.Queued;
     }
   };
 
@@ -179,14 +173,12 @@ export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
   return {
     allocations: task.allocations?.map((a) => {
       const setState = {
-        STATE_ASSIGNED: types.CommandState.Assigned,
-        STATE_PENDING: types.CommandState.Pending,
         STATE_PULLING: types.CommandState.Pulling,
         STATE_RUNNING: types.CommandState.Running,
         STATE_STARTING: types.CommandState.Starting,
         STATE_TERMINATED: types.CommandState.Terminated,
         STATE_TERMINATING: types.CommandState.Terminating,
-      }[String(a?.state) || 'STATE_PENDING'] || types.CommandState.Pending;
+      }[String(a?.state) || 'STATE_QUEUED'] || types.CommandState.Queued;
 
       return {
         isReady: a.isReady || false,
@@ -342,10 +334,6 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
   [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
   [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
-  [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.Queued,
-  [Sdk.Determinedexperimentv1State.PULLING]: types.RunState.Pulling,
-  [Sdk.Determinedexperimentv1State.STARTING]: types.RunState.Starting,
-  [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.Running,
 };
 
 export const decodeCheckpointState = (
@@ -422,7 +410,7 @@ export const mapV1Experiment = (
     hyperparameters,
     id: data.id,
     jobId: data.jobId,
-    jobSummary,
+    jobSummary: jobSummary,
     labels: data.labels || [],
     name: data.name,
     notes: data.notes,
@@ -431,8 +419,9 @@ export const mapV1Experiment = (
     projectId: data.projectId,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
+    slotsPerTrial: data.slotsPerTrial,
     startTime: data.startTime as unknown as string,
-    state: decodeExperimentState(data.state),
+    state: displayState,
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
   };
@@ -440,7 +429,7 @@ export const mapV1Experiment = (
 
 export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
   // empty JobSummary
-  return data.map((e) => mapV1Experiment(e, undefined));
+  return data.map(e => mapV1Experiment(e));
 };
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
