@@ -19,7 +19,7 @@ data:
       bucket: {{ .Values.s3.bucket }}
       access_key: {{ .Values.s3.accessKey }}
       secret_key: {{ .Values.s3.secretKey }}
-      endpoint_url: https://s3.{{ .Values.s3.region | lower }}.coreweave.com
+      endpoint_url: https://object.{{ .Values.s3.region | lower }}.coreweave.com
       prefix: {{ .Values.checkpointStorage.prefix | quote }}
       {{- else if eq .Values.checkpointStorage.type "azure" }}
       {{- if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.account_url }}
