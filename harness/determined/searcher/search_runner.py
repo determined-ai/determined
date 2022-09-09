@@ -30,6 +30,7 @@ class SearchRunner:
         search_method: SearchMethod,
     ) -> None:
         self.search_method = search_method
+        client._require_singleton(lambda: None)()
 
     def _get_operations(self, event: bindings.v1SearcherEvent) -> List[Operation]:
         if event.initialOperations:
@@ -78,10 +79,12 @@ class SearchRunner:
             request_id = uuid.UUID(event.validationCompleted.requestId)
             if event.validationCompleted.metric is None:
                 raise RuntimeError("validationCompleted event is invalid without a metric")
+
             operations = self.search_method.on_validation_completed(
                 request_id,
                 event.validationCompleted.metric,
             )
+
         elif event.experimentInactive:
             logging.info(
                 f"experiment {self.search_method.searcher_state.experiment_id} is "
@@ -93,6 +96,7 @@ class SearchRunner:
             ):
                 self.search_method.searcher_state.experiment_completed = True
             raise _ExperimentInactiveException()
+
         elif event.trialProgress:
             logging.debug(
                 f"trialProgress({event.trialProgress.requestId}, "
