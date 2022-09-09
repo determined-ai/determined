@@ -1053,6 +1053,16 @@ func (m *Master) Run(ctx context.Context) error {
 
 	if m.config.Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
+		// Group and obscure URLs returning 400 or 500 errors outside of /api/v1 and /det
+		p.RequestCounterURLLabelMappingFunc = func(c echo.Context) string {
+			if strings.HasPrefix(c.Path(), "/det/") || strings.HasPrefix(c.Path(), "/api/v1/") {
+				return c.Path()
+			}
+			if c.Response().Status >= 400 {
+				return "/**"
+			}
+			return c.Path()
+		}
 		p.Use(m.echo)
 		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))
 		m.echo.Any("/prom/det-state-metrics",
@@ -1063,6 +1073,10 @@ func (m *Master) Run(ctx context.Context) error {
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
+
+	m.echo.Any("/*", func (c echo.Context) error {
+		return c.String(http.StatusBadRequest, "Page not found")
+	})
 
 	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
