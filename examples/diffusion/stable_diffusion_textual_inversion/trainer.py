@@ -111,6 +111,10 @@ class TextualInversionTrainer:
         self._setup()
 
     def train(self) -> None:
+        assert self.text_encoder.training(), "Text encoder should be in training mode"
+        assert not self.vae.training(), "VAE should be in eval mode"
+        assert not self.unet.training(), "UNet should be in eval mode"
+
         """Run the full latent inversion training loop."""
         self.logger.info("--------------- Starting training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
@@ -123,8 +127,7 @@ class TextualInversionTrainer:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while self.steps_completed < op.length:
-                    for batch_idx, batch in enumerate(self.train_dataloader):
-                        print(f"batch {batch_idx}")
+                    for batch in self.train_dataloader:
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
                             self._train_one_batch(batch)
@@ -188,13 +191,13 @@ class TextualInversionTrainer:
 
         self.accelerator.backward(loss)
 
+        # Get the gradients. An extra .module attr is needed due to the .prepare() call
+        grads = self.text_encoder.module.get_input_embeddings().weight.grad
         # Zero out the gradients for all token embeddings except the newly added
         # embeddings for the concept, as we only want to train the concept embeddings
-
-        # An extra .module attr is needed due to the .prepare() call
-        grads = self.text_encoder.module.get_input_embeddings().weight.grad
         index_grads_to_zero = torch.arange(len(self.tokenizer)) != self.placeholder_token_id
         grads.data[index_grads_to_zero] = 0.0
+        print(grads[1:3])
         self.optimizer.step()
 
         return loss
@@ -239,18 +242,18 @@ class TextualInversionTrainer:
         """
         Add new concept tokens to the tokenizer.
         """
-        # Convert the initializer_token, placeholder_token to ids
+        # Convert the initializer_token, placeholder_token to ids.
         token_ids = self.tokenizer.encode(self.initializer_token, add_special_tokens=False)
-        # Check if initializer_token is a single token or a sequence of tokens
+        # Check if initializer_token is a single token or a sequence of tokens.
         if len(token_ids) > 1:
             raise ValueError("The initializer token must be a single token.")
 
         initializer_token_id = token_ids[0]
         self.placeholder_token_id = self.tokenizer.convert_tokens_to_ids(self.placeholder_token)
 
-        # Extend the size of the self.text_encoder to account for the new placeholder_token
+        # Extend the size of the self.text_encoder to account for the new placeholder_token.
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
-        # Initalize the placeholder_token vector to coincide with the initializer_token vector
+        # Initalize the placeholder_token vector to coincide with the initializer_token vector.
         token_embeds = self.text_encoder.get_input_embeddings().weight.data
         token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id]
 
@@ -262,14 +265,14 @@ class TextualInversionTrainer:
             for param in params:
                 param.requires_grad = False
 
-        freeze_params(self.vae.parameters())
-        freeze_params(self.unet.parameters())
-        for p in (
+        for params in (
+            self.vae.parameters(),
+            self.unet.parameters(),
             self.text_encoder.text_model.encoder.parameters(),
             self.text_encoder.text_model.final_layer_norm.parameters(),
             self.text_encoder.text_model.embeddings.position_embedding.parameters(),
         ):
-            freeze_params(p)
+            freeze_params(params)
 
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
@@ -324,7 +327,6 @@ class TextualInversionTrainer:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
-                print(path)
                 with open(path.joinpath("metadata.json"), "r") as f:
                     metadata_dict = json.load(f)
                 self.steps_completed = metadata_dict["steps_completed"]
