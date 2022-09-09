@@ -1,5 +1,7 @@
 import json
 import pathlib
+import shutil
+import tempfile
 from typing import Literal, Union
 
 
@@ -82,18 +84,20 @@ class TextualInversionTrainer:
         self.steps_completed = 0
         self.mean_loss_metric = torchmetrics.MeanMetric()
         self.mean_loss_metric.cuda()
+        # Save the current mean loss as an attr.s
+        self.mean_loss = 0.0
 
-        self.effective_batch_size = (
+        self.effective_global_batch_size = (
             self.gradient_accumulation_steps
             * self.train_batch_size
             * self.accelerator.num_processes
         )
         # If scale_lr, we linearly scale the bare learning rate by the effective batch size
         if scale_lr:
-            self.learning_rate *= self.effective_batch_size
+            self.learning_rate *= self.effective_global_batch_size
             self.logger.info(f"Using scaled learning rate {self.learning_rate}")
 
-        # attrs below instantiated in _setup
+        # The below are instantiated in _setup
         self.tokenizer = None
         self.text_encoder = None
         self.vae = None
@@ -109,7 +113,7 @@ class TextualInversionTrainer:
     def train(self) -> None:
         """Run the full latent inversion training loop."""
         self.logger.info("--------------- Starting training ---------------")
-        self.logger.info(f"Effective batch size: {self.effective_batch_size}")
+        self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
         self.logger.info(f"Learning rate: {self.learning_rate}")
         self.logger.info(f"Train dataset size: {len(self.train_dataset)}")
 
@@ -127,12 +131,13 @@ class TextualInversionTrainer:
                         # An SGD step has been taken when self.accelerator.sync_gradients is True.
                         took_sgd_step = self.accelerator.sync_gradients
                         if took_sgd_step:
-                            self.logger.info("took_sgd_step")
-                        if took_sgd_step:
                             self.steps_completed += 1
-                            is_end_of_training = self.steps_completed == op.length
+                            self.logger.info(f"Step {self.steps_completed} completed")
+                            # Report metrics, if appropriate.
                             if self._should_report_metrics():
                                 self._report_train_metrics(core_context)
+                            # Save checkpoint and/or preempt, if appropriate.
+                            is_end_of_training = self.steps_completed == op.length
                             if is_end_of_training or self._should_checkpoint():
                                 self._save(core_context, is_end_of_training)
                                 if core_context.preempt.should_preempt():
@@ -140,7 +145,8 @@ class TextualInversionTrainer:
                             if is_end_of_training:
                                 break
                 if self.accelerator.is_main_process:
-                    op.report_completed(0.0)  # TODO: Figure out sensible val to report here
+                    # Report the final mean loss.
+                    op.report_completed(self.mean_loss)
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
@@ -173,14 +179,16 @@ class TextualInversionTrainer:
         # Predict the noise residual
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
         loss = F.mse_loss(noise_pred, noise)
+
         # Update the mean loss metric
         self.mean_loss_metric.update(loss.detach().item())
 
         self.accelerator.backward(loss)
 
         # Zero out the gradients for all token embeddings except the newly added
-        # embeddings for the concept, as we only want to optimize the concept embeddings
-        # DDP inserts an extra module attr which we need to draw from.
+        # embeddings for the concept, as we only want to train the concept embeddings
+
+        # An extra .module attr is needed due to the .prepare() call
         grads = self.text_encoder.module.get_input_embeddings().weight.grad
         index_grads_to_zero = torch.arange(len(self.tokenizer)) != self.placeholder_token_id
         grads.data[index_grads_to_zero] = 0.0
@@ -191,7 +199,8 @@ class TextualInversionTrainer:
     def _setup(self):
         """Combined setup steps per HF Accelerator best practices."""
         self._build_models()
-        self._add_new_tokens_and_freeze()
+        self._add_new_tokens()
+        self._freeze_layers()
         self._build_dataset_and_dataloader()
         self._build_optimizer()
         self._build_train_noise_scheduler()
@@ -223,9 +232,9 @@ class TextualInversionTrainer:
                 use_auth_token=self.use_auth_token,
             )
 
-    def _add_new_tokens_and_freeze(self) -> None:
+    def _add_new_tokens(self) -> None:
         """
-        Add new concept tokens to the tokenizer and freeze all non-trained layers.
+        Add new concept tokens to the tokenizer.
         """
         # Convert the initializer_token, placeholder_token to ids
         token_ids = self.tokenizer.encode(self.initializer_token, add_special_tokens=False)
@@ -242,21 +251,22 @@ class TextualInversionTrainer:
         token_embeds = self.text_encoder.get_input_embeddings().weight.data
         token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id]
 
-        # Freeze the vae and unet completely, and everything in the text encoder except the
-        # embedding layer
-        self._freeze_params(self.vae.parameters())
-        self._freeze_params(self.unet.parameters())
+    def _freeze_layers(self) -> None:
+        """Freeze all non-trained layers."""
+
+        def freeze_params(params) -> None:
+            """Helper function for freezing parameters."""
+            for param in params:
+                param.requires_grad = False
+
+        freeze_params(self.vae.parameters())
+        freeze_params(self.unet.parameters())
         for p in (
             self.text_encoder.text_model.encoder.parameters(),
             self.text_encoder.text_model.final_layer_norm.parameters(),
             self.text_encoder.text_model.embeddings.position_embedding.parameters(),
         ):
-            self._freeze_params(p)
-
-    def _freeze_params(self, params) -> None:
-        """Helper function for freezing parameters."""
-        for param in params:
-            param.requires_grad = False
+            freeze_params(p)
 
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
@@ -294,6 +304,10 @@ class TextualInversionTrainer:
     def _wrap_and_prepare(self) -> None:
         """Wrap necessary modules for distributed training and set unwrapped, non-trained modules
         to the appropriate eval state."""
+
+        # Freeze the vae and unet completely, and everything in the text encoder except the
+        # embedding layer
+
         self.text_encoder, self.optimizer, self.train_dataloader = self.accelerator.prepare(
             self.text_encoder, self.optimizer, self.train_dataloader
         )
@@ -320,19 +334,40 @@ class TextualInversionTrainer:
         """
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
-        self.logger.info("done waiting.")
+        if self._should_checkpoint():
+            train_checkpoint_path = self._write_train_checkpoint_and_get_dir(core_context)
+        else:
+            train_checkpoint_path = None
+
         if self.accelerator.is_main_process:
             checkpoint_metadata = {
                 "steps_completed": self.steps_completed,
+                "placeholder_tokens": self.placeholder_token,
             }
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
-                if self._should_checkpoint():
-                    self._write_train_checkpoint(path)
+                # TODO: Avoid this copy
+                if train_checkpoint_path is not None:
+                    shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
                 if is_end_of_training:
                     self._write_pipline_to_path(path)
+            if train_checkpoint_path is not None:
+                shutil.rmtree(train_checkpoint_path)
 
-    def _write_train_checkpoint(self, path: pathlib.Path) -> None:
-        self.accelerator.save_state(path)
+    def _write_train_checkpoint_and_get_dir(self, core_context: det.core.Context) -> pathlib.Path:
+        """Accelerator's save_state method requires all workers to write to disk. Writes to a
+        temp dir and returns the corresponding path object."""
+        # Have the chief create a temp dir
+        if self.accelerator.is_main_process:
+            dirpath = tempfile.mkdtemp()
+        else:
+            dirpath = None
+        # Broadcast to all workers
+        dirpath = core_context.distributed.broadcast(dirpath)
+        dirpath = pathlib.Path(dirpath)
+        print("saving to dirpath")
+        self.accelerator.save_state(dirpath)
+        self.accelerator.wait_for_everyone()
+        return dirpath
 
     def _write_pipline_to_path(self, path: pathlib.Path) -> None:
         pipeline = StableDiffusionPipeline(
@@ -352,7 +387,6 @@ class TextualInversionTrainer:
             ),
             feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
         )
-        print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
         pipeline.save_pretrained(path)
         # Also save the newly trained embeddings
         learned_embeds = (
@@ -361,21 +395,16 @@ class TextualInversionTrainer:
             .weight[self.placeholder_token_id]
         )
         learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
-        print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
-        self.logger.info("reporting train metrics")
-        self.logger.info("computing loss mean")
-        mean_loss = self.mean_loss_metric.compute().item()
+        self.mean_loss = self.mean_loss_metric.compute().item()
         if self.accelerator.is_main_process:
-            self.logger.info("reporting loss mean")
             core_context.train.report_training_metrics(
                 steps_completed=self.steps_completed,
-                metrics={"loss": mean_loss},
+                metrics={"loss": self.mean_loss},
             )
-        self.logger.info("resetting loss mean")
         self.mean_loss_metric.reset()
 
     def _should_checkpoint(self) -> bool:
