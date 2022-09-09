@@ -156,7 +156,6 @@ class TextualInversionTrainer:
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
-        self.optimizer.zero_grad()
         # Convert images to latent space
         latents = self.vae.encode(batch["pixel_values"]).sample().detach()
         # In 2112.10752, it was found that the latent space variance plays a large role in image
@@ -199,6 +198,7 @@ class TextualInversionTrainer:
         grads.data[index_grads_to_zero] = 0.0
         print(grads[1:3])
         self.optimizer.step()
+        self.optimizer.zero_grad()
 
         return loss
 
