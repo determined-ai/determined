@@ -2126,6 +2126,7 @@ class v1GetMasterResponse:
         branding: "typing.Optional[str]" = None,
         externalLoginUri: "typing.Optional[str]" = None,
         externalLogoutUri: "typing.Optional[str]" = None,
+        rbacEnabled: "typing.Optional[bool]" = None,
         ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None,
         telemetryEnabled: "typing.Optional[bool]" = None,
     ):
@@ -2138,6 +2139,7 @@ class v1GetMasterResponse:
         self.externalLoginUri = externalLoginUri
         self.externalLogoutUri = externalLogoutUri
         self.branding = branding
+        self.rbacEnabled = rbacEnabled
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -2151,6 +2153,7 @@ class v1GetMasterResponse:
             externalLoginUri=obj.get("externalLoginUri", None),
             externalLogoutUri=obj.get("externalLogoutUri", None),
             branding=obj.get("branding", None),
+            rbacEnabled=obj.get("rbacEnabled", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -2164,6 +2167,7 @@ class v1GetMasterResponse:
             "externalLoginUri": self.externalLoginUri if self.externalLoginUri is not None else None,
             "externalLogoutUri": self.externalLogoutUri if self.externalLogoutUri is not None else None,
             "branding": self.branding if self.branding is not None else None,
+            "rbacEnabled": self.rbacEnabled if self.rbacEnabled is not None else None,
         }
 
 class v1GetModelDefFileRequest:

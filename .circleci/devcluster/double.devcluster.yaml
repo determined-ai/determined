@@ -21,7 +21,10 @@ stages:
         root: tools/build
         cache: 
           cache_dir: /tmp/determined-cache
-
+        security:
+          authz:
+            rbac_ui_enabled: true
+            
   - custom:
       name: proxy
       cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
