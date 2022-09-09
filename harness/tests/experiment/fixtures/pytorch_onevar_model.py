@@ -262,7 +262,12 @@ class OneVarAMPBaseTrial(OneVarTrial):
         + 4 * ["one"]
         + []
     )
-    _agg_freq = 1
+
+    def __init__(self, context: pytorch.PyTorchTrialContext):
+        super().__init__(context)
+        self._agg_freq = self.context.env.experiment_config.get_optimizations_config()[
+            "aggregation_frequency"
+        ]
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         return pytorch.DataLoader(
@@ -293,10 +298,6 @@ class OneVarApexAMPTrial(OneVarAMPBaseTrial):
         return metrics
 
 
-class OneVarApexAMPAggregationTrial(OneVarApexAMPTrial):
-    _agg_freq = 2
-
-
 class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
     _init_scale = 65536
     _growth_interval = 4
@@ -321,10 +322,6 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
         # self.scaler.update() gets called after this method returns
         metrics["stage"] = self._stages[batch_idx // self._agg_freq]
         return metrics
-
-
-class OneVarAutoAMPAggregationTrial(OneVarAutoAMPTrial):
-    _agg_freq = 2
 
 
 class OneVarManualAMPTrial(OneVarAMPBaseTrial):
@@ -385,10 +382,6 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
             output = self.model(data)
             loss = self.loss_fn(output, label)
         return {"val_loss": loss}
-
-
-class OneVarManualAMPAggregationTrial(OneVarManualAMPTrial):
-    _agg_freq = 2
 
 
 if __name__ == "__main__":

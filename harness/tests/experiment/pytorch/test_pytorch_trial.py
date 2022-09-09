@@ -689,7 +689,10 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             # Check the gradient update at every step.
-            for idx, batch_metrics in enumerate(training_metrics[AGG_FREQ - 1 :: AGG_FREQ]):
+            for idx, batch_metrics in enumerate(training_metrics):
+                if (idx + 1) % AGG_FREQ != 0:
+                    # Don't test mini-batches
+                    continue
                 pytorch_onevar_model.OneVarTrial.check_batch_metrics(
                     batch_metrics,
                     idx,
@@ -762,9 +765,9 @@ class TestPyTorchTrial:
     @pytest.mark.parametrize(
         "trial_class",
         [
-            pytorch_onevar_model.OneVarApexAMPAggregationTrial,
-            pytorch_onevar_model.OneVarAutoAMPAggregationTrial,
-            pytorch_onevar_model.OneVarManualAMPAggregationTrial,
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
         ],
         ids=[
             "apex",
