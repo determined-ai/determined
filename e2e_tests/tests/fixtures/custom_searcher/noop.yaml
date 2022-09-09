@@ -1,0 +1,8 @@
+description: noop_single
+searcher:
+  metric: validation_error
+  smaller_is_better: true
+  name: custom
+  unit: batches
+max_restarts: 0
+entrypoint: model_noop:NoOpTrial
