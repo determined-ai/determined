@@ -715,7 +715,10 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 99d9b3ec1 (fmt, remove asha from test it's in fixture,)
 @dataclasses.dataclass
 class TrialMetric:
     request_id: uuid.UUID
@@ -1202,8 +1205,11 @@ class MockMasterSearchRunner(LocalSearchRunner):
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
 
 
+<<<<<<< HEAD
 =======
 >>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
+=======
+>>>>>>> 99d9b3ec1 (fmt, remove asha from test it's in fixture,)
 class FallibleSearchRunner(LocalSearchRunner):
     def __init__(
         self,
