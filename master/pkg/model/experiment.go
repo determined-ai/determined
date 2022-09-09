@@ -467,12 +467,23 @@ type TrialMetrics struct {
 
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).
 var experimentStateIndex = map[experimentv1.State]int{
-	experimentv1.State_STATE_UNSPECIFIED: -2,
-	experimentv1.State_STATE_ACTIVE:      -1,
-	experimentv1.State_STATE_QUEUED:      0,
-	experimentv1.State_STATE_PULLING:     1,
-	experimentv1.State_STATE_STARTING:    2,
-	experimentv1.State_STATE_RUNNING:     3,
+	experimentv1.State_STATE_UNSPECIFIED:        0,
+	experimentv1.State_STATE_ACTIVE:             1,
+	experimentv1.State_STATE_QUEUED:             2,
+	experimentv1.State_STATE_PULLING:            3,
+	experimentv1.State_STATE_STARTING:           4,
+	experimentv1.State_STATE_RUNNING:            5,
+	experimentv1.State_STATE_PAUSED:             6,
+	experimentv1.State_STATE_COMPLETED:          7,
+	experimentv1.State_STATE_CANCELED:           8,
+	experimentv1.State_STATE_ERROR:              9,
+	experimentv1.State_STATE_STOPPING_COMPLETED: 10,
+	experimentv1.State_STATE_STOPPING_KILLED:    12,
+	experimentv1.State_STATE_STOPPING_CANCELED:  13,
+	experimentv1.State_STATE_STOPPING_ERROR:     14,
+	experimentv1.State_STATE_DELETED:            15,
+	experimentv1.State_STATE_DELETING:           16,
+	experimentv1.State_STATE_DELETE_FAILED:      17,
 }
 
 // MostProgressedExperimentState returns the more advanced active state

@@ -138,12 +138,12 @@ func (a *apiServer) getExperiment(
 		return exp.TrialIds[i] < exp.TrialIds[j]
 	})
 
-	expListForm, err := a.enrichExperimentState([]*experimentv1.Experiment{exp})
+	_, err = a.enrichExperimentState([]*experimentv1.Experiment{exp})
 	if err != nil {
 		return nil, err
 	}
 
-	return expListForm[0], nil
+	return exp, nil
 }
 
 func (a *apiServer) getExperimentAndCheckCanDoActions(
@@ -922,12 +922,12 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	// include queued / pulling / starting / running state
-	expListForm, err := a.enrichExperimentState([]*experimentv1.Experiment{exp})
+	_, err = a.enrichExperimentState([]*experimentv1.Experiment{exp})
 	if err != nil {
 		return nil, err
 	}
 
-	return &apiv1.PatchExperimentResponse{Experiment: expListForm[0]}, nil
+	return &apiv1.PatchExperimentResponse{Experiment: exp}, nil
 }
 
 func (a *apiServer) GetExperimentCheckpoints(
