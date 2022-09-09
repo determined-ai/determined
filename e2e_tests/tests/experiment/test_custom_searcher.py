@@ -7,6 +7,7 @@ from pathlib import Path
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 from typing import List, Optional
 =======
 from typing import Dict, List, Optional, Set, Sequence 
@@ -23,13 +24,16 @@ from typing import List, Optional
 =======
 from typing import Any, Dict, List, Optional, Sequence
 >>>>>>> f196a05c1 (move to unit tests)
+=======
+from typing import List, Optional
+>>>>>>> 58afbf332 (fmt)
 
 import pytest
-from numpy import float64
 from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
 from determined.common.api import bindings
 from determined.experimental import client
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 from determined.searcher.search_method import Operation, SearchMethod
@@ -47,6 +51,9 @@ from determined.searcher.search_method import (
 =======
 from determined.searcher.search_method import Operation, SearchMethod
 >>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
+=======
+from determined.searcher.search_method import Operation, SearchMethod
+>>>>>>> 58afbf332 (fmt)
 from determined.searcher.search_runner import LocalSearchRunner
 from tests import config as conf
 from tests import experiment as exp
