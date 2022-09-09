@@ -111,9 +111,9 @@ class TextualInversionTrainer:
         self._setup()
 
     def train(self) -> None:
-        assert self.text_encoder.training(), "Text encoder should be in training mode"
-        assert not self.vae.training(), "VAE should be in eval mode"
-        assert not self.unet.training(), "UNet should be in eval mode"
+        assert self.text_encoder.training, "Text encoder should be in training mode"
+        assert not self.vae.training, "VAE should be in eval mode"
+        assert not self.unet.training, "UNet should be in eval mode"
 
         """Run the full latent inversion training loop."""
         self.logger.info("--------------- Starting training ---------------")
