@@ -203,13 +203,14 @@ const routes: RouteConfig[] = [
   {
     id: 'settings',
     needAuth: true,
-    path: '/settings',
+    path: '/settings/:tab',
     title: 'Settings',
   },
   {
     id: 'settings',
     needAuth: true,
-    path: '/settings/:tab',
+    path: '/settings',
+    redirect: '/settings/account',
     title: 'Settings',
   },
 ];
