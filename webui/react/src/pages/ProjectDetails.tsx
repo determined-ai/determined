@@ -55,7 +55,6 @@ import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { intersection } from 'shared/utils/set';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
@@ -179,18 +178,19 @@ const ProjectDetails: React.FC = () => {
         states: validateDetApiEnumList(Determinedexperimentv1State, states),
         users: settings.user,
       };
+      const pinnedIds = (settings.pinned[id] ?? []);
       const pinnedExperimentsRequest = getExperiments({
         ...baseParams,
-        experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_INCLUDE' },
+        experimentFilter: { experimentIds: pinnedIds, restriction: 'RESTRICTION_INCLUDE' },
         limit: settings.tableLimit,
         offset: 0,
       }, { signal: canceler.signal });
       const otherExperimentsRequest = getExperiments({
         ...baseParams,
-        experimentFilter: { experimentIds: settings.pinned, restriction: 'RESTRICTION_EXCLUDE' },
-        limit: settings.tableLimit - settings.pinned.length,
+        experimentFilter: { experimentIds: pinnedIds, restriction: 'RESTRICTION_EXCLUDE' },
+        limit: settings.tableLimit - pinnedIds.length,
         offset: settings.tableOffset -
-            (settings.tableOffset / settings.tableLimit) * settings.pinned.length,
+            (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
       }, { signal: canceler.signal });
       const allRequests = [ pinnedExperimentsRequest, otherExperimentsRequest ];
       const [ pinnedExpResponse, otherExpResponse ] = await Promise.all(allRequests);
@@ -914,12 +914,7 @@ const ProjectDetails: React.FC = () => {
             ContextMenu={ContextMenu}
             dataSource={experiments}
             loading={isLoading}
-            numOfPinned={
-              Array.from(intersection(
-                new Set(experiments.map((e) => e.id)),
-                new Set(settings.pinned),
-              )).length
-            }
+            numOfPinned={(settings.pinned[id] ?? []).length}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
@@ -964,6 +959,7 @@ const ProjectDetails: React.FC = () => {
     ContextMenu,
     experiments,
     isLoading,
+    id,
     total,
     handleTableRowSelect,
     availableBatchActions,

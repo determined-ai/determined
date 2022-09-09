@@ -391,16 +391,19 @@ func (a *apiServer) GetExperiments(
 	}
 
 	if req.ExperimentFilter != nil {
-		if req.ExperimentFilter.ExperimentIds == nil || len(req.ExperimentFilter.ExperimentIds) == 0 {
-			return nil, status.Errorf(codes.Internal, "empty experimentIds is not allowed")
+		experimentIds := make([]int32, 0)
+		if req.ExperimentFilter.ExperimentIds != nil {
+			experimentIds = append(experimentIds, req.ExperimentFilter.ExperimentIds...)
 		}
 		expRestriction := req.ExperimentFilter.Restriction.String()
-		experimentIds := make([]int32, 0, len(req.ExperimentFilter.ExperimentIds))
-		experimentIds = append(experimentIds, req.ExperimentFilter.ExperimentIds...)
-		if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[1] {
+		restrictionName := apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name
+		if expRestriction == restrictionName[1] {
+			if len(experimentIds) == 0 {
+				resp.Pagination = &apiv1.Pagination{}
+				return resp, nil
+			}
 			query = query.Where("e.id IN (?)", bun.In(experimentIds))
-		} else if expRestriction == apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name[2] &&
-			len(experimentIds) > 0 {
+		} else if expRestriction == restrictionName[2] && len(experimentIds) > 0 {
 			query = query.Where("e.id NOT IN (?)", bun.In(experimentIds))
 		}
 	}

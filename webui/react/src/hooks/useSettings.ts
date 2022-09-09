@@ -8,7 +8,8 @@ import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Primitive, RecordKey } from 'shared/types';
-import { clone, hasObjectKeys, isBoolean, isEqual, isNumber, isString } from 'shared/utils/data';
+import { clone, hasObjectKeys, isBoolean, isEqual,
+  isNumber, isObject, isString } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
@@ -19,6 +20,7 @@ export enum BaseType {
   Boolean = 'Boolean',
   Float = 'Float',
   Integer = 'Integer',
+  Object = 'Object',
   String = 'String',
 }
 
@@ -32,7 +34,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-type GenericSettingsType = Primitive | Primitive[] | undefined;
+type GenericSettingsType = Primitive | Primitive[] | Record<number, number[]> | undefined;
 type GenericSettings = Record<string, GenericSettingsType>;
 type PathChange<T> = { querySettings: Partial<T>, type: PathChangeType }
 
@@ -83,6 +85,7 @@ export const validateBaseType = (type: BaseType, value: unknown): boolean => {
   if (type === BaseType.Integer && isNumber(value) &&
       Math.ceil(value) === Math.floor(value)) return true;
   if (type === BaseType.String && isString(value)) return true;
+  if (type === BaseType.Object && isObject(value)) return true;
   return false;
 };
 
@@ -113,6 +116,7 @@ export const queryParamToType = (type: BaseType, param: string | null): Primitiv
     const value = type === BaseType.Float ? parseFloat(param) : parseInt(param);
     return !isNaN(value) ? value : undefined;
   }
+  if (type === BaseType.Object) return JSON.parse(param);
   if (type === BaseType.String) return param;
   return undefined;
 };

@@ -105,7 +105,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           break;
         }
         case Action.SwitchPin: {
-          const pinSet = new Set(settings.pinned);
+          const newPinned = { ...settings.pinned };
+          const pinSet = new Set(newPinned[experiment.projectId]);
           if (pinSet.has(id)) {
             pinSet.delete(id);
           } else {
@@ -118,7 +119,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             }
             pinSet.add(id);
           }
-          updateSettings({ pinned: Array.from(pinSet) });
+          newPinned[experiment.projectId] = Array.from(pinSet);
+          updateSettings({ pinned: newPinned });
           break;
         }
         case Action.Kill:
