@@ -2,7 +2,8 @@ import json
 import pathlib
 import shutil
 import tempfile
-from typing import Literal, Union
+from PIL import Image
+from typing import List, Literal, Optional, Union
 
 
 import determined as det
@@ -53,6 +54,7 @@ class TextualInversionTrainer:
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.5,
         center_crop: bool = False,
+        inference_prompt: Optional[str] = None,
     ) -> None:
         self.use_auth_token = use_auth_token
         self.latest_checkpoint = latest_checkpoint
@@ -76,6 +78,8 @@ class TextualInversionTrainer:
         self.interpolation = interpolation
         self.flip_p = flip_p
         self.center_crop = center_crop
+        # TODO: Fix inference_prompt
+        self.inference_prompt = inference_prompt or f"a painting of a {self.placeholder_token}"
 
         self.logger = get_logger(__name__)
         self.accelerator = Accelerator(
@@ -86,6 +90,7 @@ class TextualInversionTrainer:
         self.mean_loss_metric.cuda()
         # Save the current mean loss as an attr.s
         self.mean_loss = 0.0
+        self.generated_imgs = []
 
         self.effective_global_batch_size = (
             self.gradient_accumulation_steps
@@ -102,6 +107,8 @@ class TextualInversionTrainer:
         self.text_encoder = None
         self.vae = None
         self.unet = None
+        self.safety_checker = None
+        self.feature_extractor = None
         self.placeholder_token_id = None
         self.train_dataset = None
         self.train_dataloader = None
@@ -111,10 +118,6 @@ class TextualInversionTrainer:
         self._setup()
 
     def train(self) -> None:
-        assert self.text_encoder.training, "Text encoder should be in training mode"
-        assert not self.vae.training, "VAE should be in eval mode"
-        assert not self.unet.training, "UNet should be in eval mode"
-
         """Run the full latent inversion training loop."""
         self.logger.info("--------------- Starting training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
@@ -196,7 +199,6 @@ class TextualInversionTrainer:
         # embeddings for the concept, as we only want to train the concept embeddings
         index_grads_to_zero = torch.arange(len(self.tokenizer)) != self.placeholder_token_id
         grads.data[index_grads_to_zero] = 0.0
-        print(grads[1:3])
         self.optimizer.step()
         self.optimizer.zero_grad()
 
@@ -218,24 +220,34 @@ class TextualInversionTrainer:
         """
         with self.accelerator.main_process_first():
             self.tokenizer = CLIPTokenizer.from_pretrained(
-                self.pretrained_model_name_or_path,
+                pretrained_model_name_or_path=self.pretrained_model_name_or_path,
                 subfolder="tokenizer",
                 use_auth_token=self.use_auth_token,
             )
             self.text_encoder = CLIPTextModel.from_pretrained(
-                self.pretrained_model_name_or_path,
+                pretrained_model_name_or_path=self.pretrained_model_name_or_path,
                 subfolder="text_encoder",
                 use_auth_token=self.use_auth_token,
             )
             self.vae = AutoencoderKL.from_pretrained(
-                self.pretrained_model_name_or_path,
+                pretrained_model_name_or_path=self.pretrained_model_name_or_path,
                 subfolder="vae",
                 use_auth_token=self.use_auth_token,
             )
             self.unet = UNet2DConditionModel.from_pretrained(
-                self.pretrained_model_name_or_path,
+                pretrained_model_name_or_path=self.pretrained_model_name_or_path,
                 subfolder="unet",
                 use_auth_token=self.use_auth_token,
+            )
+        # Modules for StableDiffusionPipeline only required by chief worker.
+        if self.accelerator.is_main_process:
+            self.safety_checker = (
+                StableDiffusionSafetyChecker.from_pretrained(
+                    "CompVis/stable-diffusion-safety-checker"
+                ),
+            )
+            self.feature_extractor = (
+                CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
             )
 
     def _add_new_tokens(self) -> None:
@@ -366,6 +378,7 @@ class TextualInversionTrainer:
         return dirpath
 
     def _write_pipline_to_path(self, path: pathlib.Path) -> None:
+        # Construct and save pipeline
         pipeline = StableDiffusionPipeline(
             text_encoder=self.accelerator.unwrap_model(self.text_encoder),
             vae=self.vae,
@@ -378,12 +391,21 @@ class TextualInversionTrainer:
                 beta_schedule=self.beta_schedule,
                 skip_prk_steps=True,
             ),
-            safety_checker=StableDiffusionSafetyChecker.from_pretrained(
-                "CompVis/stable-diffusion-safety-checker"
-            ),
-            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+            safety_checker=self.safety_checker,
+            feature_extractor=self.feature_extractor,
         )
         pipeline.save_pretrained(path)
+
+        # Generate a new image using the pipeline.
+        # Fixed generator for reproducibility.
+        generator = pipeline.Generator().manual_seed(2147483647)
+        generated_img = pipeline(
+            self.inference_prompt, num_inference_steps=50, guidance_scale=7.5, generator=generator
+        )["sample"]
+        self.generated_imgs.append((self.steps_completed, generated_img))
+        imgs = self._create_image_grid([img for _, img in self.generated_imgs])
+        imgs.save(path.joinpath("generated_imgs.png"))
+
         # Also save the newly trained embeddings
         learned_embeds = (
             self.accelerator.unwrap_model(self.text_encoder)
@@ -392,6 +414,13 @@ class TextualInversionTrainer:
         )
         learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+
+    def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int):
+        w, h = images[0].size
+        image_grid = Image.new("RGB", size=(cols * w, rows * h))
+        for idx, img in enumerate(images):
+            image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
+        return image_grid
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
