@@ -32,6 +32,11 @@ const (
 	cookieName            = "auth"
 )
 
+type (
+	userContextKey        struct{}
+	userSessionContextKey struct{}
+)
+
 var unauthenticatedMethods = map[string]bool{
 	"/determined.api.v1.Determined/Login":        true,
 	"/determined.api.v1.Determined/GetMaster":    true,
@@ -98,6 +103,13 @@ func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, err
 
 // GetUser returns the currently logged in user.
 func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
+	if user, ok := ctx.Value(userContextKey{}).(*model.User); ok {
+		if session, ok := ctx.Value(userSessionContextKey{}).(*model.UserSession); ok {
+			return user, session, nil // User token cache hit.
+		}
+		return user, nil, nil // Allocation token cache hit.
+	}
+
 	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
 
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -140,7 +152,7 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 			return nil, nil, ErrPermissionDenied
 		}
 		return userModel, session, nil
-	case db.ErrNotFound:
+	case sql.ErrNoRows:
 		return nil, nil, ErrInvalidCredentials
 	default:
 		return nil, nil, err
@@ -150,24 +162,12 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 // Return error if user cannot be authenticated or lacks authorization.
 func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 	extConfig *model.ExternalSessions,
-) error {
+) (*model.User, *model.UserSession, error) {
 	if unauthenticatedMethods[fullMethod] {
-		return nil
+		return nil, nil, nil
 	}
 
-	switch _, err := getAllocationSessionBun(ctx); err {
-	case ErrTokenMissing:
-		// Try user token.
-	case nil:
-		return nil
-	default:
-		return err
-	}
-
-	if _, _, err := GetUser(ctx); err != nil {
-		return err
-	}
-	return nil
+	return GetUser(ctx)
 }
 
 func streamAuthInterceptor(db *db.PgDB,
@@ -176,7 +176,10 @@ func streamAuthInterceptor(db *db.PgDB,
 	return func(
 		srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler,
 	) error {
-		err := auth(ss.Context(), db, info.FullMethod, extConfig)
+		// Don't cache the result of the stream auth interceptor because
+		// we can't easily modify ss's context and
+		// we would have to worry about the user session expiring in the context.
+		_, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
 		if err != nil {
 			return err
 		}
@@ -191,10 +194,17 @@ func unaryAuthInterceptor(db *db.PgDB,
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		err = auth(ctx, db, info.FullMethod, extConfig)
+		user, session, err := auth(ctx, db, info.FullMethod, extConfig)
 		if err != nil {
 			return nil, err
 		}
+		if user != nil {
+			ctx = context.WithValue(ctx, userContextKey{}, user)
+		}
+		if session != nil {
+			ctx = context.WithValue(ctx, userSessionContextKey{}, session)
+		}
+
 		return handler(ctx, req)
 	}
 }
