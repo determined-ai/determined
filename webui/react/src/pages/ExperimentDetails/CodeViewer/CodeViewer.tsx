@@ -435,7 +435,7 @@ const CodeViewer: React.FC<Props> = ({
             defaultExpandAll
             defaultSelectedKeys={viewMode
             // this is to ensure that, at least, the most parent node gets highlighted...
-              ? [ ...settings.filePath.split('/')[0] ?? firstConfig ]
+              ? [ settings.filePath.split('/')[0] ?? firstConfig ]
               : undefined
             }
             treeData={treeData}
