@@ -78,23 +78,44 @@ def test_run_random_searcher_exp() -> None:
 
 @pytest.mark.e2e_cpu_2a
 @pytest.mark.parametrize(
-    "exp_name,exception_points",
+    "config_name,exp_name,exception_points",
     [
-        ("custom-searcher-random-test", []),
+        ("core_api_model.yaml", "custom-searcher-random-test", []),
         (
+            "core_api_model.yaml",
             "custom-searcher-random-test-fail1",
             ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
         ),
         (
+            "core_api_model.yaml",
             "custom-searcher-random-test-fail2",
             ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
         ),
         (
+            "core_api_model.yaml",
             "custom-searcher-random-test-fail3",
             ["on_trial_created", "after_save"],
         ),
         (
+            "core_api_model.yaml",
             "custom-searcher-random-test-fail5",
+            [
+                "on_trial_created",
+                "after_save",
+                "after_save",
+                "on_validation_completed",
+                "after_save",
+            ],
+        ),
+        ("single.yaml", "custom-searcher-random-test-noop", []),
+        (
+            "single.yaml",
+            "custom-searcher-random-test-noop-fail1",
+            ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
+        ),
+        (
+            "single.yaml",
+            "custom-searcher-random-test-noop-fail2",
             [
                 "on_trial_created",
                 "after_save",
@@ -105,9 +126,12 @@ def test_run_random_searcher_exp() -> None:
         ),
     ],
 )
-def test_run_random_searcher_exp_core_api(exp_name: str, exception_points: List[str]) -> None:
+def test_run_random_searcher_exp_core_api(
+    config_name: str, exp_name: str, exception_points: List[str]
+) -> None:
     config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_random.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
+    config["entrypoint"] += " --config-name " + config_name
     if len(exception_points) > 0:
         config["entrypoint"] += " --exception-points " + " ".join(exception_points)
     config["max_restarts"] = len(exception_points)
@@ -275,12 +299,13 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
 
 @pytest.mark.e2e_cpu_2a
 @pytest.mark.parametrize(
-    "exp_name,exception_points",
+    "config_name,exp_name,exception_points",
     [
-        ("custom-searcher-asha-test", []),
+        ("core_api_model.yaml", "custom-searcher-asha-test", []),
         (  # test fail on initialization
             # test single resubmit of operations
             # test resumption on fail before saving
+            "core_api_model.yaml",
             "custom-searcher-asha-test-fail1",
             [
                 "initial_operations_start",
@@ -290,6 +315,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
         ),
         (  # test resubmitting operations multiple times
             # test fail on shutdown
+            "core_api_model.yaml",
             "custom-searcher-asha-test-fail2",
             [
                 "on_validation_completed",
@@ -299,11 +325,24 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "shutdown",
             ],
         ),
+        ("single.yaml", "custom-searcher-asha-noop-test", []),
+        (
+            "single.yaml",
+            "custom-searcher-asha-test-noop-fail1",
+            [
+                "initial_operations_start",
+                "after_save",
+                "on_validation_completed",
+            ],
+        ),
     ],
 )
-def test_run_asha_searcher_exp_core_api(exp_name: str, exception_points: List[str]) -> None:
+def test_run_asha_searcher_exp_core_api(
+    config_name: str, exp_name: str, exception_points: List[str]
+) -> None:
     config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_asha.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
+    config["entrypoint"] += " --config-name " + config_name
     if len(exception_points) > 0:
         config["entrypoint"] += " --exception-points " + " ".join(exception_points)
     config["max_restarts"] = len(exception_points)

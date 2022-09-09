@@ -69,4 +69,4 @@ if __name__ == "__main__":
     hparams = info.trial.hparams
 
     with det.core.init() as core_context:
-        main(core_context, latest_checkpoint, trial_id, increment_by=hparams["increment_by"])
+        main(core_context, latest_checkpoint, trial_id, increment_by=hparams["global_batch_size"])

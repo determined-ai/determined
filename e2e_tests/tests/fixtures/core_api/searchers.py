@@ -191,11 +191,7 @@ class RandomSearchMethod(SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self) -> Dict[str, int]:
-        if self.test_type == "noop":
-            hparams = {"global_batch_size": random.randint(10, 100)}
-        elif self.test_type == "core_api":
-            hparams = {"increment_by": random.randint(10, 100)}
-
+        hparams = {"global_batch_size": random.randint(10, 100)}
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -533,16 +529,11 @@ class ASHASearchMethod(SearchMethod):
         return ops
 
     def sample_params(self) -> Dict[str, object]:
-        if self.test_type == "noop":
-            hparams = {
-                "global_batch_size": 10,
-                "metrics_base": 0.05 * (len(self.asha_search_state.trial_rungs) + 1),
-                "metrics_progression": "constant",
-            }
-        elif self.test_type == "core_api":
-            hparams = {"increment_by": len(self.asha_search_state.trial_rungs) + 1}
-        else:
-            raise RuntimeError(f"Unknown test type {self.test_type}.")
+        hparams = {
+            "global_batch_size": 10,
+            "metrics_base": 0.05 * (len(self.asha_search_state.trial_rungs) + 1),
+            "metrics_progression": "constant",
+        }
         logging.info(f"hparams={hparams}")
         return hparams
 

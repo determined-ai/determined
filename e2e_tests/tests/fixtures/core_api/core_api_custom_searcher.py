@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument("--divisor", type=int, default=3)
     parser.add_argument("--num-rungs", type=int, default=16)
     parser.add_argument("--exception-points", type=str, nargs="+", default=[])
-
+    parser.add_argument("--config-name", type=str, required=True)
     return parser.parse_args()
 
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     assert info is not None, "this example only runs on-cluster"
     args = parse_args()
 
-    config = load_config("core_api_model.yaml")
+    config = load_config(args.config_name)
     config["name"] = args.exp_name
 
     with det.core.init() as core_context:
