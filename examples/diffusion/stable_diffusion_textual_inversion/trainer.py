@@ -140,14 +140,18 @@ class TextualInversionTrainer:
                             if is_end_of_training:
                                 break
                 if self.accelerator.is_main_process:
-                    op.report_completed(0.0)
+                    op.report_completed(0.0)  # TODO: Figure out sensible val to report here
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
         self.optimizer.zero_grad()
         # Convert images to latent space
         latents = self.vae.encode(batch["pixel_values"]).sample().detach()
-        latents = latents * 0.18215  # Why?
+        # In 2112.10752, it was found that the latent space variance plays a large role in image
+        # quality.  The following scale factor helps to maintain unit latent variance.  See
+        # https://github.com/huggingface/diffusers/issues/437 for more details.
+        scale_factor = 0.18215
+        latents = latents * scale_factor
 
         # Sample noise that we'll add to the latents
         noise = torch.randn(latents.shape).to(latents.device)
@@ -303,6 +307,7 @@ class TextualInversionTrainer:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
+                print(path)
                 with open(path.joinpath("metadata.json"), "r") as f:
                     metadata_dict = json.load(f)
                 self.steps_completed = metadata_dict["steps_completed"]
