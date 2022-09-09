@@ -441,7 +441,8 @@ const CodeViewer: React.FC<Props> = ({
             data-testid="fileTree"
             defaultExpandAll
             defaultSelectedKeys={viewMode !== 'editor'
-              ? [ ...settings?.filePath.split('/') ]
+            // this is to ensure that, at least, the most parent node gets highlighted...
+              ? [ ...settings?.filePath.split('/')[0] ]
               : undefined
             }
             treeData={treeData}
