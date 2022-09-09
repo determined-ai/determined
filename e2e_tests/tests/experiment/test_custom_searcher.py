@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 from typing import List, Optional
 =======
 from typing import Dict, List, Optional, Set, Sequence 
@@ -19,6 +20,9 @@ from typing import Any, Dict, List, Optional, Sequence, Set
 from pathlib import Path
 from typing import List, Optional
 >>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
+=======
+from typing import Any, Dict, List, Optional, Sequence
+>>>>>>> f196a05c1 (move to unit tests)
 
 import pytest
 from numpy import float64
@@ -33,7 +37,6 @@ from determined.searcher.search_method import Operation, SearchMethod
 from determined.searcher.search_method import (
     Close,
     Create,
-    ExitedReason,
     Operation,
     Progress,
     SearchMethod,
@@ -108,35 +111,6 @@ def test_run_random_searcher_exp() -> None:
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
     assert response.experiment.numTrials == 5
-    assert search_method.created_trials == 5
-    assert search_method.pending_trials == 0
-    assert search_method.closed_trials == 5
-    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
-    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
-
-
-@pytest.mark.e2e_cpu_2a
-def test_run_random_searcher_exp_mock_master() -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "random"
-    config["description"] = "custom searcher"
-
-    max_trials = 5
-    max_concurrent_trials = 2
-    max_length = 500
-
-    with tempfile.TemporaryDirectory() as searcher_dir:
-        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
-        mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
-        search_runner = MockMasterSearchRunner(search_method, Path(searcher_dir), mock_master_obj)
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
-
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
     assert search_method.closed_trials == 5
@@ -421,6 +395,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
 <<<<<<< HEAD
 @pytest.mark.e2e_cpu
+<<<<<<< HEAD
 def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
@@ -452,6 +427,8 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
 =======
 >>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 @pytest.mark.e2e_cpu
+=======
+>>>>>>> f196a05c1 (move to unit tests)
 def test_run_asha_batches_exp(tmp_path: Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
@@ -713,6 +690,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     assert search_method.progress() == pytest.approx(1.0)
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1213,6 +1191,8 @@ class MockMasterSearchRunner(LocalSearchRunner):
 >>>>>>> 5676c5d7c (test: fault tolerance for core api searcher [DET-8272] (#4972))
 =======
 >>>>>>> 99d9b3ec1 (fmt, remove asha from test it's in fixture,)
+=======
+>>>>>>> f196a05c1 (move to unit tests)
 class FallibleSearchRunner(LocalSearchRunner):
     def __init__(
         self,
