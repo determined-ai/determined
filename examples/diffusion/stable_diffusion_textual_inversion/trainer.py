@@ -1,10 +1,12 @@
 import json
-import math
+import pathlib
 from typing import Literal, Union
+
 
 import determined as det
 import torch
 import torch.nn.functional as F
+import torchmetrics
 from accelerate.logging import get_logger
 from accelerate import Accelerator
 from determined.pytorch import TorchData
@@ -38,6 +40,7 @@ class TextualInversionTrainer:
         learning_rate: float = 5e-04,
         scale_lr: bool = True,
         checkpoint_step_freq: int = 100,
+        metric_report_step_freq: int = 100,
         beta_start: float = 0.00085,
         beta_end: float = 0.012,
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
@@ -59,6 +62,7 @@ class TextualInversionTrainer:
         self.output_dir = output_dir
         self.scale_lr = scale_lr
         self.checkpoint_step_freq = checkpoint_step_freq
+        self.metric_report_step_freq = metric_report_step_freq
         self.beta_start = beta_start
         self.beta_end = beta_end
         self.beta_schedule = beta_schedule
@@ -74,6 +78,7 @@ class TextualInversionTrainer:
             gradient_accumulation_steps=self.gradient_accumulation_steps,
         )
         self.steps_completed = 0
+        self.mean_loss_metric = torchmetrics.MeanMetric()
 
         self.effective_batch_size = (
             self.gradient_accumulation_steps
@@ -99,6 +104,12 @@ class TextualInversionTrainer:
         self._setup()
 
     def train(self) -> None:
+        """Run the full latent inversion training loop."""
+        self.logger.info("--------------- Starting training ---------------")
+        self.logger.info(f"Effective batch size: {self.effective_batch_size}")
+        self.logger.info(f"Learning rate: {self.learning_rate}")
+        self.logger.info(f"Train dataset size: {len(self.train_dataset)}")
+
         distributed = det.core.DistributedContext.from_torch_distributed()
         with det.core.init(distributed=distributed) as core_context:
             self._restore_latest_checkpoint(core_context)
@@ -106,33 +117,68 @@ class TextualInversionTrainer:
             for op in core_context.searcher.operations():
                 while self.steps_completed < op.length:
                     for batch in self.train_dataloader:
+                        self.logger.info("batch")
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
-                            loss = self._train_one_batch_and_get_loss(batch)
-
-                        # Check if gradients have been synced, in which case we have performed a step
-                        if self.accelerator.sync_gradients:
+                            self._train_one_batch(batch)
+                        # An SGD step has been taken when self.accelerator.sync_gradients is True.
+                        took_sgd_step = self.accelerator.sync_gradients
+                        if took_sgd_step:
+                            self.logger.info("took_sgd_step")
+                        if took_sgd_step:
                             self.steps_completed += 1
-                            if self.steps_completed % self.checkpoint_step_freq == 0:
-                                self._save_train_checkpoint(core_context)
-                                if self.accelerator.is_main_process:
-                                    core_context.train.report_training_metrics(
-                                        steps_completed=self.steps_completed,
-                                        metrics={"loss": loss.detach().item()},
-                                    )
+                            is_end_of_training = self.steps_completed == op.length
+                            self._report_train_metrics(core_context)
+                            self._save(core_context, is_end_of_training)
                             if core_context.preempt.should_preempt():
                                 return
-                            if self.steps_completed == op.length:
+                            if is_end_of_training:
                                 break
-                self.accelerator.wait_for_everyone()
-                if self.accelerator.is_main_process:
-                    op.report_completed(loss.detach().item())
-                    self._save_pipeline(core_context)
+
+    def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
+        """Train on a single batch, returning the loss and updating internal metrics."""
+        self.optimizer.zero_grad()
+        # Convert images to latent space
+        latents = self.vae.encode(batch["pixel_values"]).sample().detach()
+        latents = latents * 0.18215  # Why?
+
+        # Sample noise that we'll add to the latents
+        noise = torch.randn(latents.shape).to(latents.device)
+        # Sample a random timestep for each image
+        timesteps = torch.randint(
+            0,
+            self.num_train_timesteps,
+            (self.train_batch_size,),
+            device=latents.device,
+        ).long()
+
+        # Add noise to the latents according to the noise magnitude at each timestep
+        # (this is the forward diffusion process)
+        noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, timesteps)
+
+        # Get the text embedding for conditioning
+        encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
+
+        # Predict the noise residual
+        noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
+        loss = F.mse_loss(noise_pred, noise)
+        # Update the mean loss metric
+        self.mean_loss_metric.update(loss.detach().item())
+
+        self.accelerator.backward(loss)
+
+        # Zero out the gradients for all token embeddings except the newly added
+        # embeddings for the concept, as we only want to optimize the concept embeddings
+        # DDP inserts an extra module attr which we need to draw from.
+        grads = self.text_encoder.module.get_input_embeddings().weight.grad
+        index_grads_to_zero = torch.arange(len(self.tokenizer)) != self.placeholder_token_id
+        grads.data[index_grads_to_zero] = 0.0
+        self.optimizer.step()
+
+        return loss
 
     def _setup(self):
         """Combined setup steps per HF Accelerator best practices."""
-        # Set model attrs using deferred execution:
-        # https://huggingface.co/docs/accelerate/concept_guides/deferring_execution
         self._build_models()
         self._add_new_tokens_and_freeze()
         self._build_dataset_and_dataloader()
@@ -141,6 +187,9 @@ class TextualInversionTrainer:
         self._wrap_and_prepare()
 
     def _build_models(self) -> None:
+        """Download the relevant models using deferred execution:
+        https://huggingface.co/docs/accelerate/concept_guides/deferring_execution
+        """
         with self.accelerator.main_process_first():
             self.tokenizer = CLIPTokenizer.from_pretrained(
                 self.pretrained_model_name_or_path,
@@ -164,6 +213,9 @@ class TextualInversionTrainer:
             )
 
     def _add_new_tokens_and_freeze(self) -> None:
+        """
+        Add new concept tokens to the tokenizer and freeze all non-trained layers.
+        """
         # Convert the initializer_token, placeholder_token to ids
         token_ids = self.tokenizer.encode(self.initializer_token, add_special_tokens=False)
         # Check if initializer_token is a single token or a sequence of tokens
@@ -191,10 +243,12 @@ class TextualInversionTrainer:
             self._freeze_params(p)
 
     def _freeze_params(self, params) -> None:
+        """Helper function for freezing parameters."""
         for param in params:
             param.requires_grad = False
 
     def _build_dataset_and_dataloader(self) -> None:
+        """Build the dataset and dataloader."""
         self.train_dataset = data.TextualInversionDataset(
             train_img_dir=self.train_img_dir,
             tokenizer=self.tokenizer,
@@ -227,7 +281,8 @@ class TextualInversionTrainer:
         )
 
     def _wrap_and_prepare(self) -> None:
-        """Wrap necessary modules for distributed training and set unwrapped modules appropriately."""
+        """Wrap necessary modules for distributed training and set unwrapped, non-trained modules
+        to the appropriate eval state."""
         self.text_encoder, self.optimizer, self.train_dataloader = self.accelerator.prepare(
             self.text_encoder, self.optimizer, self.train_dataloader
         )
@@ -247,58 +302,28 @@ class TextualInversionTrainer:
                 with self.accelerator.main_process_first():
                     self.accelerator.load_state(path)
 
-    def _save_train_checkpoint(self, core_context: det.core.Context) -> None:
-        if self.accelerator.is_main_process:
-            checkpoint_metadata = {
-                "steps_completed": self.steps_completed,
-            }
-            with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
-                self.accelerator.save_state(path)
+    def _save(self, core_context: det.core.Context, is_end_of_training: bool) -> None:
+        """Checkpoints the training state at regular intervals and saves the final stable diffusion
+        pipeline at the end of training.
+        """
+        should_write_train_checkpoint = self.steps_completed % self.checkpoint_step_freq == 0
+        if should_write_train_checkpoint or is_end_of_training:
+            self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
+            self.accelerator.wait_for_everyone()
+            if self.accelerator.is_main_process:
+                checkpoint_metadata = {
+                    "steps_completed": self.steps_completed,
+                }
+                with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
+                    if should_write_train_checkpoint:
+                        self._write_train_checkpoint(path)
+                    if is_end_of_training:
+                        self._write_pipline_to_path(path)
 
-    def _train_one_batch_and_get_loss(self, batch: TorchData) -> torch.Tensor:
-        self.optimizer.zero_grad()
-        # Convert images to latent space
-        latents = self.vae.encode(batch["pixel_values"]).sample().detach()
-        latents = latents * 0.18215  # Why?
+    def _write_train_checkpoint(self, path: pathlib.Path) -> None:
+        self.accelerator.save_state(path)
 
-        # Sample noise that we'll add to the latents
-        noise = torch.randn(latents.shape).to(latents.device)
-        # Sample a random timestep for each image
-        timesteps = torch.randint(
-            0,
-            self.num_train_timesteps,
-            (self.train_batch_size,),
-            device=latents.device,
-        ).long()
-
-        # Add noise to the latents according to the noise magnitude at each timestep
-        # (this is the forward diffusion process)
-        noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, timesteps)
-
-        # Get the text embedding for conditioning
-        encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
-
-        # Predict the noise residual
-        noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
-        loss = F.mse_loss(noise_pred, noise)
-        self.accelerator.backward(loss)
-
-        # Zero out the gradients for all token embeddings except the newly added
-        # embeddings for the concept, as we only want to optimize the concept embeddings
-        # DDP inserts an extra module attr which we need to draw from.
-        grads = self.text_encoder.module.get_input_embeddings().weight.grad
-        # try:
-        #     grads = self.text_encoder.module.get_input_embeddings().weight.grad
-        # except AttributeError:
-        #     grads = self.text_encoder.get_input_embeddings().weight.grad
-        # Get the index for tokens that we want to zero the grads for
-        index_grads_to_zero = torch.arange(len(self.tokenizer)) != self.placeholder_token_id
-        grads.data[index_grads_to_zero] = 0.0
-        self.optimizer.step()
-
-        return loss
-
-    def _save_pipeline(self, core_context: det.core.Context) -> None:
+    def _write_pipline_to_path(self, path: pathlib.Path) -> None:
         pipeline = StableDiffusionPipeline(
             text_encoder=self.accelerator.unwrap_model(self.text_encoder),
             vae=self.vae,
@@ -316,15 +341,25 @@ class TextualInversionTrainer:
             ),
             feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
         )
-        with core_context.checkpoint.store_path({"steps_completed": 1}) as (path, storage_id):
-            print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
-            pipeline.save_pretrained(path)
-            # Also save the newly trained embeddings
-            learned_embeds = (
-                self.accelerator.unwrap_model(self.text_encoder)
-                .get_input_embeddings()
-                .weight[self.placeholder_token_id]
+        print(80 * "=", f"Saving pipeline", 80 * "=", sep="\n")
+        pipeline.save_pretrained(path)
+        # Also save the newly trained embeddings
+        learned_embeds = (
+            self.accelerator.unwrap_model(self.text_encoder)
+            .get_input_embeddings()
+            .weight[self.placeholder_token_id]
+        )
+        learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
+        print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
+        torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+
+    def _report_train_metrics(self, core_context: det.core.Context) -> None:
+        self.logger.info("reporting train metrics")
+        self.accelerator.wait_for_everyone()
+        if self.accelerator.is_main_process:
+            mean_loss = self.mean_loss_metric.compute()
+            core_context.train.report_training_metrics(
+                steps_completed=self.steps_completed,
+                metrics={"loss": mean_loss},
             )
-            learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
-            print(80 * "=", f"Saving learned_embeds", 80 * "=", sep="\n")
-            torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+        self.mean_loss_metric.reset()
