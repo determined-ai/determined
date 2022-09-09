@@ -22,7 +22,8 @@ if __name__ == "__main__":
         latest_checkpoint=latest_checkpoint,
         **hparams.model,
         **hparams.data,
-        **hparams.trainer
+        **hparams.trainer,
+        **hparams.inference
     )
     trainer.train()
 

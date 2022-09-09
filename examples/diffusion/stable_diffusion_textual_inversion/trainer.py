@@ -55,6 +55,9 @@ class TextualInversionTrainer:
         flip_p: float = 0.5,
         center_crop: bool = False,
         inference_prompt: Optional[str] = None,
+        num_inference_steps: int = 50,
+        guidance_scale: float = 7.5,
+        generator_seed: int = 2147483647,
     ) -> None:
         self.use_auth_token = use_auth_token
         self.latest_checkpoint = latest_checkpoint
@@ -80,6 +83,9 @@ class TextualInversionTrainer:
         self.center_crop = center_crop
         # TODO: Fix inference_prompt
         self.inference_prompt = inference_prompt or f"a painting of a {self.placeholder_token}"
+        self.num_inference_steps = num_inference_steps
+        self.guidance_scale = guidance_scale
+        self.generator_seed = generator_seed
 
         self.logger = get_logger(__name__)
         self.accelerator = Accelerator(
@@ -115,6 +121,9 @@ class TextualInversionTrainer:
         self.optimizer = None
         self.train_noise_scheduler = None
 
+        # The StableDiffusionPipeline is instantiated upon checkpoing writing
+        self.pipeline = None
+
         self._setup()
 
     def train(self) -> None:
@@ -148,7 +157,7 @@ class TextualInversionTrainer:
                                 is_end_of_training
                                 or self.steps_completed % self.metric_report_step_freq == 0
                             ):
-                                self._save(core_context, is_end_of_training)
+                                self._save(core_context)
                                 if core_context.preempt.should_preempt():
                                     return
                             if is_end_of_training:
@@ -241,13 +250,11 @@ class TextualInversionTrainer:
             )
         # Modules for StableDiffusionPipeline only required by chief worker.
         if self.accelerator.is_main_process:
-            self.safety_checker = (
-                StableDiffusionSafetyChecker.from_pretrained(
-                    "CompVis/stable-diffusion-safety-checker"
-                ),
+            self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
+                "CompVis/stable-diffusion-safety-checker"
             )
-            self.feature_extractor = (
-                CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+            self.feature_extractor = CLIPFeatureExtractor.from_pretrained(
+                "openai/clip-vit-base-patch32"
             )
 
     def _add_new_tokens(self) -> None:
@@ -345,7 +352,7 @@ class TextualInversionTrainer:
                 with self.accelerator.main_process_first():
                     self.accelerator.load_state(path)
 
-    def _save(self, core_context: det.core.Context, is_end_of_training: bool) -> None:
+    def _save(self, core_context: det.core.Context) -> None:
         """Checkpoints the training state and pipeline."""
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
@@ -359,6 +366,7 @@ class TextualInversionTrainer:
                 # TODO: Avoid this copy
                 shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
                 self._write_pipline_to_path(path)
+                self._generate_and_write_imgs(path)
                 shutil.rmtree(train_checkpoint_path)
 
     def _write_train_checkpoint_and_get_dir(self, core_context: det.core.Context) -> pathlib.Path:
@@ -379,7 +387,7 @@ class TextualInversionTrainer:
 
     def _write_pipline_to_path(self, path: pathlib.Path) -> None:
         # Construct and save pipeline
-        pipeline = StableDiffusionPipeline(
+        self.pipeline = StableDiffusionPipeline(
             text_encoder=self.accelerator.unwrap_model(self.text_encoder),
             vae=self.vae,
             unet=self.unet,
@@ -393,18 +401,8 @@ class TextualInversionTrainer:
             ),
             safety_checker=self.safety_checker,
             feature_extractor=self.feature_extractor,
-        )
-        pipeline.save_pretrained(path)
-
-        # Generate a new image using the pipeline.
-        # Fixed generator for reproducibility.
-        generator = pipeline.Generator().manual_seed(2147483647)
-        generated_img = pipeline(
-            self.inference_prompt, num_inference_steps=50, guidance_scale=7.5, generator=generator
-        )["sample"]
-        self.generated_imgs.append((self.steps_completed, generated_img))
-        imgs = self._create_image_grid([img for _, img in self.generated_imgs])
-        imgs.save(path.joinpath("generated_imgs.png"))
+        ).to(self.accelerator.device)
+        self.pipeline.save_pretrained(path)
 
         # Also save the newly trained embeddings
         learned_embeds = (
@@ -414,6 +412,22 @@ class TextualInversionTrainer:
         )
         learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
         torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+
+    def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
+        # Generate a new image using the pipeline.
+        # Fixed generator for reproducibility.
+        generator = torch.Generator(device=self.accelerator.device).manual_seed(self.generator_seed)
+        generated_img = self.pipeline(
+            prompt=self.inference_prompt,
+            num_inference_steps=self.num_inference_steps,
+            guidance_scale=self.guidance_scale,
+            generator=generator,
+        )["sample"]
+        self.generated_imgs.append((self.steps_completed, generated_img))
+        imgs = self._create_image_grid(
+            [img for _, img in self.generated_imgs], rows=1, cols=len(self.generated_imgs)
+        )
+        imgs.save(path.joinpath("generated_imgs.png"))
 
     def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int):
         w, h = images[0].size
