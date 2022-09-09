@@ -13,7 +13,7 @@ from determined.searcher.search_method import Operation, SearchMethod
 from determined.searcher.search_runner import LocalSearchRunner
 from tests import config as conf
 from tests import experiment as exp
-from tests.fixtures.core_api.searchers import (
+from tests.fixtures.custom_searcher.searchers import (
     ASHASearchMethod,
     RandomSearchMethod,
     SingleSearchMethod,
@@ -107,14 +107,14 @@ def test_run_random_searcher_exp() -> None:
                 "after_save",
             ],
         ),
-        ("single.yaml", "custom-searcher-random-test-noop", []),
+        ("noop.yaml", "custom-searcher-random-test-noop", []),
         (
-            "single.yaml",
+            "noop.yaml",
             "custom-searcher-random-test-noop-fail1",
             ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
         ),
         (
-            "single.yaml",
+            "noop.yaml",
             "custom-searcher-random-test-noop-fail2",
             [
                 "on_trial_created",
@@ -129,14 +129,16 @@ def test_run_random_searcher_exp() -> None:
 def test_run_random_searcher_exp_core_api(
     config_name: str, exp_name: str, exception_points: List[str]
 ) -> None:
-    config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_random.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name " + config_name
     if len(exception_points) > 0:
         config["entrypoint"] += " --exception-points " + " ".join(exception_points)
     config["max_restarts"] = len(exception_points)
 
-    experiment_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("core_api"), 1)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("custom_searcher"), 1
+    )
 
     session = exp.determined_test_session()
 
@@ -325,9 +327,9 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "shutdown",
             ],
         ),
-        ("single.yaml", "custom-searcher-asha-noop-test", []),
+        ("noop.yaml", "custom-searcher-asha-noop-test", []),
         (
-            "single.yaml",
+            "noop.yaml",
             "custom-searcher-asha-test-noop-fail1",
             [
                 "initial_operations_start",
@@ -340,14 +342,16 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
 def test_run_asha_searcher_exp_core_api(
     config_name: str, exp_name: str, exception_points: List[str]
 ) -> None:
-    config = conf.load_config(conf.fixtures_path("core_api/core_api_searcher_asha.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_asha.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name " + config_name
     if len(exception_points) > 0:
         config["entrypoint"] += " --exception-points " + " ".join(exception_points)
     config["max_restarts"] = len(exception_points)
 
-    experiment_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("core_api"), 1)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("custom_searcher"), 1
+    )
     session = exp.determined_test_session()
 
     # searcher experiment

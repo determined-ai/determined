@@ -5,4 +5,4 @@ searcher:
   name: custom
   unit: batches
 max_restarts: 0
-entrypoint: model_def:NoOpTrial
+entrypoint: model_noop:NoOpTrial
