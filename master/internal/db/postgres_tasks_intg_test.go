@@ -158,10 +158,10 @@ func TestAllocationState(t *testing.T) {
 			require.Equal(t, len(tOut.Allocations), 1, "failed to get exactly 1 allocation")
 			aOut := tOut.Allocations[0]
 
-			if slices.Contains(model.AllocationState{
+			if slices.Contains([]model.AllocationState{
 				model.AllocationStatePending,
 				model.AllocationStateAssigned,
-			}, a.State) {
+			}, *a.State) {
 				require.Equal(t, "STATE_QUEUED", aOut.State.String(),
 					"allocation states not converted to queued")
 			} else {
