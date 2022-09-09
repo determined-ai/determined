@@ -229,6 +229,30 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
             "dir/file.py": "",
             "dir/subdir/A.py": "",
             "dir/subdir/B.py": "",
+            ".detignore": "\ndir/sub*/\n",
+        },
+    ) as tree:
+        model_def = context.read_legacy_context(tree)
+        assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
+
+    with FileTree(
+        tmp_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
+            ".detignore": "\ndir/sub*\n",
+        },
+    ) as tree:
+        model_def = context.read_legacy_context(tree)
+        assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
+
+    with FileTree(
+        tmp_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
             ".detignore": "\ndir/*/\n",
         },
     ) as tree:
