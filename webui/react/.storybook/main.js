@@ -1,25 +1,22 @@
 module.exports = {
   addons: [
-    {
-      name: 'storybook-preset-craco',
-      options: {
-        cracoConfigFile: '../../craco.config.js',
-      },
-    },
+    'storybook-preset-craco',
     {
       name: '@storybook/addon-docs',
       options: {
         configureJSX: true,
       },
     },
-    '@storybook/addon-actions',
-    '@storybook/addon-backgrounds',
     '@storybook/addon-links',
     '@storybook/addon-knobs',
     '@storybook/addon-postcss',
-    '@storybook/addon-toolbars',
-    '@storybook/addon-viewport',
+    '@storybook/addon-essentials'
   ],
+  features: { 
+    storyStoreV7: true, 
+    buildStoriesJson: true,
+    modernInlineRender: true 
+  },
   staticDirs: [
     '../public',
     { from: '../src/shared/assets', to: '/assets' }
