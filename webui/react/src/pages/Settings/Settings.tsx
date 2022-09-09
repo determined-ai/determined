@@ -1,5 +1,5 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 import { useLocation } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ const { TabPane } = Tabs;
 export enum TabType {
   Account = 'Account',
   UserManagement = 'User Management',
+  GroupManagement = 'Group Management'
 }
 
 interface Params {
@@ -23,13 +24,14 @@ interface Params {
 const TAB_KEYS = {
   [TabType.Account]: 'account',
   [TabType.UserManagement]: 'user-management',
+  [TabType.GroupManagement]: 'group-management',
 };
-const DEFAULT_TAB_KEY = TabType.Account;
+const DEFAULT_TAB_KEY = TAB_KEYS[TabType.Account];
 
 const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const location = useLocation();
-  const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const [ tabKey, setTabKey ] = useState<string>(tab || DEFAULT_TAB_KEY);
   const history = useHistory();
 
   const rbacEnabled = location.pathname.search('rbac-enabled') > 0;
@@ -41,10 +43,12 @@ const SettingsContent: React.FC = () => {
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
+  }, []);
 
-    const basePath = paths.settings(key);
+  useEffect(() => {
+    const basePath = paths.settings(tabKey);
     history.replace(`${basePath}/${rbacEnabled ? 'rbac-enabled' : ''}`);
-  }, [ history, rbacEnabled ]);
+  }, [ tabKey, history, rbacEnabled ]);
 
   return showTabs ? (
     <Tabs
@@ -58,7 +62,7 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
         <UserManagement />
       </TabPane>
-      <TabPane key="group-management" tab="Group Management">
+      <TabPane key={TAB_KEYS[TabType.GroupManagement]} tab={TabType.GroupManagement}>
         <GroupManagement />
       </TabPane>
     </Tabs>
