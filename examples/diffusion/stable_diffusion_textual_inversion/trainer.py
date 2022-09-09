@@ -138,7 +138,10 @@ class TextualInversionTrainer:
                                 self._report_train_metrics(core_context)
                             # Save checkpoint and/or preempt, if appropriate.
                             is_end_of_training = self.steps_completed == op.length
-                            if is_end_of_training or self._should_checkpoint():
+                            if (
+                                is_end_of_training
+                                or self.steps_completed % self.metric_report_step_freq == 0
+                            ):
                                 self._save(core_context, is_end_of_training)
                                 if core_context.preempt.should_preempt():
                                     return
@@ -329,16 +332,10 @@ class TextualInversionTrainer:
                     self.accelerator.load_state(path)
 
     def _save(self, core_context: det.core.Context, is_end_of_training: bool) -> None:
-        """Checkpoints the training state at regular intervals and saves the final stable diffusion
-        pipeline at the end of training.
-        """
+        """Checkpoints the training state and pipeline."""
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
-        if self._should_checkpoint():
-            train_checkpoint_path = self._write_train_checkpoint_and_get_dir(core_context)
-        else:
-            train_checkpoint_path = None
-
+        train_checkpoint_path = self._write_train_checkpoint_and_get_dir(core_context)
         if self.accelerator.is_main_process:
             checkpoint_metadata = {
                 "steps_completed": self.steps_completed,
@@ -346,11 +343,8 @@ class TextualInversionTrainer:
             }
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
                 # TODO: Avoid this copy
-                if train_checkpoint_path is not None:
-                    shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
-                if is_end_of_training:
-                    self._write_pipline_to_path(path)
-            if train_checkpoint_path is not None:
+                shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
+                self._write_pipline_to_path(path)
                 shutil.rmtree(train_checkpoint_path)
 
     def _write_train_checkpoint_and_get_dir(self, core_context: det.core.Context) -> pathlib.Path:
@@ -406,9 +400,6 @@ class TextualInversionTrainer:
                 metrics={"loss": self.mean_loss},
             )
         self.mean_loss_metric.reset()
-
-    def _should_checkpoint(self) -> bool:
-        return self.steps_completed % self.checkpoint_step_freq == 0
 
     def _should_report_metrics(self) -> bool:
         return self.steps_completed % self.metric_report_step_freq == 0
