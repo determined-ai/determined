@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import List, Optional
 
@@ -18,6 +19,8 @@ from tests.fixtures.custom_searcher.searchers import (
     RandomSearchMethod,
     SingleSearchMethod,
 )
+
+TIMESTAMP = int(time.time())
 
 
 @pytest.mark.e2e_cpu
@@ -80,25 +83,25 @@ def test_run_random_searcher_exp() -> None:
 @pytest.mark.parametrize(
     "config_name,exp_name,exception_points",
     [
-        ("core_api_model.yaml", "custom-searcher-random-test", []),
+        ("core_api_model.yaml", f"custom-searcher-random-test-{TIMESTAMP}", []),
         (
             "core_api_model.yaml",
-            "custom-searcher-random-test-fail1",
+            f"custom-searcher-random-test-fail1-{TIMESTAMP}",
             ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
         ),
         (
             "core_api_model.yaml",
-            "custom-searcher-random-test-fail2",
+            f"custom-searcher-random-test-fail2-{TIMESTAMP}",
             ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
         ),
         (
             "core_api_model.yaml",
-            "custom-searcher-random-test-fail3",
+            f"custom-searcher-random-test-fail3-{TIMESTAMP}",
             ["on_trial_created", "after_save"],
         ),
         (
             "core_api_model.yaml",
-            "custom-searcher-random-test-fail5",
+            f"custom-searcher-random-test-fail5-{TIMESTAMP}",
             [
                 "on_trial_created",
                 "after_save",
@@ -110,12 +113,12 @@ def test_run_random_searcher_exp() -> None:
         ("noop.yaml", "custom-searcher-random-test-noop", []),
         (
             "noop.yaml",
-            "custom-searcher-random-test-noop-fail1",
+            f"custom-searcher-random-test-noop-fail1-{TIMESTAMP}",
             ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
         ),
         (
             "noop.yaml",
-            "custom-searcher-random-test-noop-fail2",
+            f"custom-searcher-random-test-noop-fail2-{TIMESTAMP}",
             [
                 "on_trial_created",
                 "after_save",
@@ -303,12 +306,12 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "config_name,exp_name,exception_points",
     [
-        ("core_api_model.yaml", "custom-searcher-asha-test", []),
+        ("core_api_model.yaml", f"custom-searcher-asha-test-{TIMESTAMP}", []),
         (  # test fail on initialization
             # test single resubmit of operations
             # test resumption on fail before saving
             "core_api_model.yaml",
-            "custom-searcher-asha-test-fail1",
+            f"custom-searcher-asha-test-fail1-{TIMESTAMP}",
             [
                 "initial_operations_start",
                 "after_save",
@@ -318,7 +321,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
         (  # test resubmitting operations multiple times
             # test fail on shutdown
             "core_api_model.yaml",
-            "custom-searcher-asha-test-fail2",
+            f"custom-searcher-asha-test-fail2-{TIMESTAMP}",
             [
                 "on_validation_completed",
                 "after_save",
@@ -327,10 +330,10 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "shutdown",
             ],
         ),
-        ("noop.yaml", "custom-searcher-asha-noop-test", []),
+        ("noop.yaml", f"custom-searcher-asha-noop-test-{TIMESTAMP}", []),
         (
             "noop.yaml",
-            "custom-searcher-asha-test-noop-fail1",
+            f"custom-searcher-asha-test-noop-fail1-{TIMESTAMP}",
             [
                 "initial_operations_start",
                 "after_save",
