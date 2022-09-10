@@ -261,13 +261,23 @@ class TextualInversionTrainer:
         """
         Add new concept tokens to the tokenizer.
         """
+        # Add the placeholder token in tokenizer
+        num_added_tokens = self.tokenizer.add_tokens(self.placeholder_token)
+        if num_added_tokens == 0:
+            raise ValueError(
+                f"The tokenizer already contains the token {self.placeholder_token}. "
+                f"Please pass a different `placeholder_token` that is not already in the tokenizer."
+            )
+
         # Convert the initializer_token, placeholder_token to ids.
-        token_ids = self.tokenizer.encode(self.initializer_token, add_special_tokens=False)
+        initializer_token_id_list = self.tokenizer.encode(
+            self.initializer_token, add_special_tokens=False
+        )
         # Check if initializer_token is a single token or a sequence of tokens.
-        if len(token_ids) > 1:
+        if len(initializer_token_id_list) > 1:
             raise ValueError("The initializer token must be a single token.")
 
-        initializer_token_id = token_ids[0]
+        initializer_token_id = initializer_token_id_list[0]
         self.placeholder_token_id = self.tokenizer.convert_tokens_to_ids(self.placeholder_token)
 
         # Extend the size of the self.text_encoder to account for the new placeholder_token.
