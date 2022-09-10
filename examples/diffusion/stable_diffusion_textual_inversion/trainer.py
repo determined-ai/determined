@@ -433,11 +433,12 @@ class TextualInversionTrainer:
             guidance_scale=self.guidance_scale,
             generator=generator,
         )["sample"][0]
-        self.generated_imgs.append(generated_img)
+        self.generated_imgs.append((self.steps_completed, generated_img))
         img_grid = Image.new("RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size))
-        for idx, img in enumerate(self.generated_imgs):
+        for idx, (step, img) in enumerate(self.generated_imgs):
+            img.save(path.joinpath(f"img_step_{step}.png"))
             img_grid.paste(img, box=(idx * self.img_size, 0))
-        img_grid.save(path.joinpath("generated_imgs.png"))
+        img_grid.save(path.joinpath("all_imgs.png"))
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
