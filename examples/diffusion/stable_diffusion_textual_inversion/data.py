@@ -28,7 +28,7 @@ class TextualInversionDataset(Dataset):
         tokenizer: nn.Module,
         placeholder_token: str,
         learnable_property: str = "object",
-        size: int = 512,
+        img_size: int = 512,
         interpolation: str = "bicubic",
         flip_p: float = 0.5,
         center_crop: bool = False,
@@ -37,7 +37,7 @@ class TextualInversionDataset(Dataset):
         self.train_img_dir = train_img_dir
         self.tokenizer = tokenizer
         self.learnable_property = learnable_property
-        self.size = size
+        self.img_size = img_size
         self.placeholder_token = placeholder_token
         self.center_crop = center_crop
         self.flip_p = flip_p
@@ -87,7 +87,9 @@ class TextualInversionDataset(Dataset):
         if self.center_crop:
             crop_size = min(img_t.shape[-1], img_t.shape[-2])
             img_t = transforms.CenterCrop(crop_size)(img_t)
-        img_t = transforms.Resize((self.size, self.size), interpolation=self.interpolation)(img_t)
+        img_t = transforms.Resize((self.img_size, self.img_size), interpolation=self.interpolation)(
+            img_t
+        )
         # Normalize the tensor to be in the range [-1, 1]
         img_t = (img_t - 0.5) * 2.0
         example["pixel_values"] = img_t

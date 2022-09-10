@@ -50,7 +50,7 @@ class TextualInversionTrainer:
         beta_end: float = 0.012,
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         num_train_timesteps: int = 1000,
-        size: int = 512,
+        img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.5,
         center_crop: bool = False,
@@ -77,7 +77,7 @@ class TextualInversionTrainer:
         self.beta_schedule = beta_schedule
         self.num_train_timesteps = num_train_timesteps
         self.train_img_dir = train_img_dir
-        self.size = size
+        self.img_size = img_size
         self.interpolation = interpolation
         self.flip_p = flip_p
         self.center_crop = center_crop
@@ -300,7 +300,7 @@ class TextualInversionTrainer:
             tokenizer=self.tokenizer,
             placeholder_token=self.placeholder_token,
             learnable_property=self.learnable_property,
-            size=self.size,
+            img_size=self.img_size,
             interpolation=self.interpolation,
             flip_p=self.flip_p,
             center_crop=self.center_crop,
@@ -422,19 +422,12 @@ class TextualInversionTrainer:
             num_inference_steps=self.num_inference_steps,
             guidance_scale=self.guidance_scale,
             generator=generator,
-        )["sample"]
-        self.generated_imgs.append((self.steps_completed, generated_img))
-        imgs = self._create_image_grid(
-            [img for _, img in self.generated_imgs], rows=1, cols=len(self.generated_imgs)
-        )
-        imgs.save(path.joinpath("generated_imgs.png"))
-
-    def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int):
-        w, h = images[0].size
-        image_grid = Image.new("RGB", size=(cols * w, rows * h))
-        for idx, img in enumerate(images):
-            image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
-        return image_grid
+        )["sample"][0]
+        self.generated_imgs.append(generated_img)
+        img_grid = Image.new("RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size))
+        for idx, img in enumerate(self.generated_imgs):
+            img_grid.paste(img, box=(idx * self.img_size, 0))
+        img_grid.save(path.joinpath("generated_imgs.png"))
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
