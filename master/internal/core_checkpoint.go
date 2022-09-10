@@ -304,7 +304,7 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 
 	default:
 		return nil, nil, fmt.Errorf(
-			"MIME type must be applicatoin/gzip or application/zip but got " + mimeType)
+			"MIME type must be application/gzip or application/zip but got " + mimeType)
 	}
 }
 
@@ -320,7 +320,7 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 	checkpointUUID, err := uuid.Parse(args.CheckpointUUID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("unable to parse checkpoint_uuid %s: %s",
+			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
 				args.CheckpointUUID, err))
 	}
 
