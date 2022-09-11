@@ -15,8 +15,6 @@ import (
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -154,12 +152,19 @@ WHERE allocation_id = $1
 }
 
 // StartAllocationSession creates a row in the allocation_sessions table.
-func (db *PgDB) StartAllocationSession(allocationID model.AllocationID) (string, error) {
+func (db *PgDB) StartAllocationSession(
+	allocationID model.AllocationID, owner *model.User,
+) (string, error) {
 	taskSession := &model.AllocationSession{
 		AllocationID: allocationID,
 	}
+	if owner != nil {
+		taskSession.OwnerID = &owner.ID
+	}
 
-	query := "INSERT INTO allocation_sessions (allocation_id) VALUES (:allocation_id) RETURNING id"
+	query := `
+INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
+	(:allocation_id, :owner_id) RETURNING id`
 	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
 		return "", err
 	}
@@ -170,30 +175,6 @@ func (db *PgDB) StartAllocationSession(allocationID model.AllocationID) (string,
 		return "", errors.Wrap(err, "failed to generate task authentication token")
 	}
 	return token, nil
-}
-
-// AllocationSessionByToken returns a task session given an authentication token.
-func (db *PgDB) AllocationSessionByToken(token string) (*model.AllocationSession, error) {
-	v2 := paseto.NewV2()
-
-	var session model.AllocationSession
-	err := v2.Verify(token, db.tokenKeys.PublicKey, &session, nil)
-	if err != nil {
-		log.WithError(err).Debug("failed to verify allocation_session token")
-		return nil, ErrNotFound
-	}
-
-	query := `SELECT * FROM allocation_sessions WHERE id=$1`
-	if err := db.query(query, &session, session.ID); errors.Cause(err) == ErrNotFound {
-		log.WithField("allocation_sessions.id", session.ID).Debug("allocation_session not found")
-		return nil, ErrNotFound
-	} else if err != nil {
-		log.WithError(err).WithField("allocation_sessions.id", session.ID).
-			Debug("failed to lookup allocation_session")
-		return nil, err
-	}
-
-	return &session, nil
 }
 
 // DeleteAllocationSession deletes the task session with the given AllocationID.

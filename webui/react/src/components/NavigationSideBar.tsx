@@ -231,7 +231,6 @@ const NavigationSideBar: React.FC = () => {
                 <ul className={css.pinnedWorkspaces} role="list">
                   {pinnedWorkspaces.map((workspace) => (
                     <WorkspaceActionDropdown
-                      curUser={auth.user}
                       key={workspace.id}
                       trigger={[ 'contextMenu' ]}
                       workspace={workspace}>

@@ -3,12 +3,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
+import InteractiveTable, {
+  ContextMenuProps,
+  InteractiveTableSettings,
+} from 'components/InteractiveTable';
 import Section from 'components/Section';
 import { defaultRowClassName, getFullPaginationConfig,
   HumanReadableNumberRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import usePolling from 'hooks/usePolling';
@@ -19,11 +23,15 @@ import { Determinedcheckpointv1State,
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { RecordKey } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
+  checkpointAction,
+  CheckpointAction,
   CheckpointState, CoreApiGenericCheckpoint, ExperimentBase,
 } from 'types';
+import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
 import handleError from 'utils/error';
 
 import settingsConfig, { Settings } from './ExperimentCheckpoints.settings';
@@ -35,12 +43,10 @@ interface Props {
   pageRef: React.RefObject<HTMLElement>;
 }
 
-const checkpointAction = {
-  Delete: 'Delete',
-  Register: 'Register',
-} as const;
-
-type CheckpointAction = typeof checkpointAction[keyof typeof checkpointAction];
+const batchActions = [
+  checkpointAction.Register,
+  checkpointAction.Delete,
+];
 
 const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ total, setTotal ] = useState(0);
@@ -50,22 +56,37 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
+  const handleOnCloseCreateModel = useCallback((
+    reason?: ModalCloseReason,
+    checkpoints?: string[],
+    modelName?: string,
+  ) => {
+    if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+  }, [ openModalCheckpointRegister ]);
+
   const {
     contextHolder: modalModelCreateContextHolder,
     modalOpen: openModalCreateModel,
-  } = useModalModelCreate();
+  } = useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const handleOnCloseCheckpointRegister = useCallback((
     reason?: ModalCloseReason,
-    checkpointUuid?: string,
+    checkpoints?: string[],
   ) => {
-    if (checkpointUuid) openModalCreateModel({ checkpointUuid });
+    if (checkpoints) openModalCreateModel({ checkpoints });
   }, [ openModalCreateModel ]);
 
-  const {
+  // Has to use var to hoist openModalCheckpointRegister for use above
+  /* eslint-disable-next-line no-var */
+  var {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({ onClose: handleOnCloseCheckpointRegister });
+
+  const {
+    contextHolder: modalCheckpointDeleteContextHolder,
+    modalOpen: openModalCheckpointDelete,
+  } = useModalCheckpointDelete({});
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -92,24 +113,62 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
-  const handleRegisterCheckpoint = useCallback((checkpoint: CoreApiGenericCheckpoint) => {
-    openModalCheckpointRegister({ checkpointUuid: checkpoint.uuid });
+  const handleRegisterCheckpoint = useCallback((checkpoints: string[]) => {
+    openModalCheckpointRegister({ checkpoints });
   }, [ openModalCheckpointRegister ]);
 
-  const dropDownOnTrigger = useCallback((checkpoint: CoreApiGenericCheckpoint) => {
-    return { [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpoint) };
-  }, [ handleRegisterCheckpoint ]);
+  const handleDeleteCheckpoint = useCallback((checkpoints: string[]) => {
+    openModalCheckpointDelete({ checkpoints });
+  }, [ openModalCheckpointDelete ]);
+
+  const dropDownOnTrigger = useCallback((checkpoints: string | string[]) => {
+    const checkpointsArr = Array.isArray(checkpoints) ? checkpoints : [ checkpoints ];
+    return {
+      [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointsArr),
+      [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
+    };
+  }, [ handleDeleteCheckpoint, handleRegisterCheckpoint ]);
+
+  const CheckpointActionDropdown: React.FC<ContextMenuProps<CoreApiGenericCheckpoint>> =
+  useCallback((
+    { record, onVisibleChange, children },
+  ) => {
+    return (
+      <ActionDropdown<CheckpointAction>
+        actionOrder={batchActions}
+        danger={{ [checkpointAction.Delete]: true }}
+        disabled={{
+          [checkpointAction.Register]:
+            !canActionCheckpoint(checkpointAction.Register, record),
+          [checkpointAction.Delete]:
+            !canActionCheckpoint(checkpointAction.Delete, record),
+        }}
+        id={record.uuid}
+        kind="checkpoint"
+        trigger={[ 'contextMenu' ]}
+        onError={handleError}
+        onTrigger={dropDownOnTrigger(record.uuid)}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </ActionDropdown>
+    );
+  }, [ dropDownOnTrigger ]);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
-        actionOrder={[
-          'Register',
-        ]}
+        actionOrder={batchActions}
+        danger={{ [checkpointAction.Delete]: true }}
+        disabled={{
+          [checkpointAction.Register]:
+            !canActionCheckpoint(checkpointAction.Register, record),
+          [checkpointAction.Delete]:
+            !canActionCheckpoint(checkpointAction.Delete, record),
+        }}
         id={record.uuid}
         kind="checkpoint"
         onError={handleError}
-        onTrigger={dropDownOnTrigger(record)}
+        onTrigger={dropDownOnTrigger(record.uuid)}
       />
     );
 
@@ -189,8 +248,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   ]);
 
   const submitBatchAction = useCallback(async (action: CheckpointAction) => {
+    if (!settings.row) return;
     try {
-      // TODO: Actions
+      dropDownOnTrigger(settings.row)[action]();
 
       // Refetch experiment list to get updates based on batch action.
       await fetchExperimentCheckpoints();
@@ -204,7 +264,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         type: ErrorType.Server,
       });
     }
-  }, [ fetchExperimentCheckpoints ]);
+  }, [ dropDownOnTrigger, fetchExperimentCheckpoints, settings.row ]);
 
   usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
 
@@ -225,18 +285,31 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     return () => canceler.abort();
   }, [ canceler ]);
 
-  // const handleTableRowSelect = useCallback((rowKeys) => {
-  //   updateSettings({ row: rowKeys });
-  // }, [ updateSettings ]);
+  const handleTableRowSelect = useCallback((rowKeys) => {
+    updateSettings({ row: rowKeys });
+  }, [ updateSettings ]);
+
+  const checkpointMap = useMemo(() => {
+    return (checkpoints ?? []).reduce((acc, checkpoint) => {
+      acc[checkpoint.uuid] = checkpoint;
+      return acc;
+    }, {} as Record<RecordKey, CoreApiGenericCheckpoint>);
+  }, [ checkpoints ]);
+
+  const availableBatchActions = useMemo(() => {
+    const checkpoints = settings.row?.map((uuid) => checkpointMap[uuid]) ?? [];
+    return getActionsForCheckpointsUnion(checkpoints, batchActions);
+  }, [ checkpointMap, settings.row ]);
 
   return (
     <div className={css.base}>
       <Section>
         <TableBatch
-          actions={[
-            { label: checkpointAction.Register, value: checkpointAction.Register },
-            { label: checkpointAction.Delete, value: checkpointAction.Delete },
-          ]}
+          actions={batchActions.map((action) => ({
+            disabled: !availableBatchActions.includes(action),
+            label: action,
+            value: action,
+          }))}
           selectedRowCount={(settings.row ?? []).length}
           onAction={(action) => submitBatchAction(action)}
           onClear={clearSelected}
@@ -244,6 +317,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
+          ContextMenu={CheckpointActionDropdown}
           dataSource={checkpoints}
           loading={isLoading}
           pagination={getFullPaginationConfig({
@@ -252,11 +326,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           }, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="uuid"
-          // rowSelection={{
-          //   onChange: handleTableRowSelect,
-          //   preserveSelectedRowKeys: true,
-          //   selectedRowKeys: settings.row ?? [],
-          // }}
+          rowSelection={{
+            onChange: handleTableRowSelect,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys: settings.row ?? [],
+          }}
           settings={settings}
           showSorterTooltip={false}
           size="small"
@@ -265,6 +339,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       </Section>
       {modalModelCreateContextHolder}
       {modalCheckpointRegisterContextHolder}
+      {modalCheckpointDeleteContextHolder}
     </div>
   );
 };

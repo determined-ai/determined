@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -38,7 +39,7 @@ func (a *apiServer) Login(
 		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
 	}
 
-	user, err := a.m.db.UserByUsername(req.Username)
+	userModel, err := user.UserByUsername(req.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
@@ -53,26 +54,26 @@ func (a *apiServer) Login(
 	} else {
 		hashedPassword = replicateClientSideSaltAndHash(req.Password)
 	}
-	if !user.ValidatePassword(hashedPassword) {
+	if !userModel.ValidatePassword(hashedPassword) {
 		return nil, grpcutil.ErrInvalidCredentials
 	}
 
-	if !user.Active {
+	if !userModel.Active {
 		return nil, grpcutil.ErrPermissionDenied
 	}
 
-	token, err := a.m.db.StartUserSession(user)
+	token, err := a.m.db.StartUserSession(userModel)
 	if err != nil {
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, user.ID)
+	fullUser, err := getUser(a.m.db, userModel.ID)
 	return &apiv1.LoginResponse{Token: token, User: fullUser}, err
 }
 
 func (a *apiServer) CurrentUser(
 	ctx context.Context, _ *apiv1.CurrentUserRequest,
 ) (*apiv1.CurrentUserResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +84,15 @@ func (a *apiServer) CurrentUser(
 func (a *apiServer) Logout(
 	ctx context.Context, _ *apiv1.LogoutRequest,
 ) (*apiv1.LogoutResponse, error) {
-	_, userSession, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	_, userSession, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if userSession == nil {
+		return nil, status.Error(codes.InvalidArgument,
+			"cannot manually logout of an allocation session")
+	}
+
 	err = a.m.db.DeleteUserSessionByID(userSession.ID)
 	return &apiv1.LogoutResponse{}, err
 }

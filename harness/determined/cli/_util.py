@@ -1,8 +1,10 @@
 import argparse
-from typing import Dict, List
+from typing import Any, Callable, Dict, List
 
 from determined.common import api, declarative_argparse, util
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
+
+from .errors import FeatureFlagDisabled
 
 output_format_args: Dict[str, declarative_argparse.Arg] = {
     "json": declarative_argparse.Arg(
@@ -84,3 +86,16 @@ def setup_session(args: argparse.Namespace) -> api.Session:
     cert = certs.default_load(master_url)
 
     return api.Session(master_url, args.user, authentication.cli_auth, cert)
+
+
+def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
+    def decorator(function: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(args: argparse.Namespace) -> None:
+            resp = bindings.get_GetMaster(setup_session(args))
+            if not resp.to_json().get("rbacEnabled"):
+                raise FeatureFlagDisabled(error_message)
+            function(args)
+
+        return wrapper
+
+    return decorator

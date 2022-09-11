@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
@@ -29,7 +28,6 @@ export const ERROR_MESSAGE = 'Unable to fetch Experiment';
 
 const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
-  const { auth: { user } } = useStore();
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ trial, setTrial ] = useState<TrialItem>();
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
@@ -100,7 +98,6 @@ const ExperimentDetails: React.FC = () => {
       containerRef={pageRef}
       headerComponent={(
         <ExperimentDetailsHeader
-          curUser={user}
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
           trial={trial}

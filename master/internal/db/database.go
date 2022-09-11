@@ -18,18 +18,12 @@ import (
 // DB is an interface for _all_ the functionality packed into the DB.
 type DB interface {
 	StartUserSession(user *model.User) (string, error)
-	UserByToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error)
-	UserByExternalToken(
-		token string, ext *model.ExternalSessions,
-	) (*model.User, *model.UserSession, error)
 	DeleteUserSessionByID(sessionID model.SessionID) error
 	DeleteUserSessionByToken(userSessionToken string) error
-	UserByUsername(username string) (*model.User, error)
 	AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error)
 	UpdateUser(updated *model.User, toUpdate []string, ug *model.AgentUserGroup) error
 	UpdateUsername(userID *model.UserID, newUsername string) error
 	UserList() (values []model.FullUser, err error)
-	UserByID(userID model.UserID) (*model.FullUser, error)
 	AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
 	Migrate(migrationURL string, actions []string) error
 	Close() error
@@ -149,8 +143,7 @@ type DB interface {
 	SetHPImportance(experimentID int, value model.ExperimentHPImportance) error
 	GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error)
 	ExperimentBestSearcherValidation(id int) (float32, error)
-	StartAllocationSession(allocationID model.AllocationID) (string, error)
-	AllocationSessionByToken(token string) (*model.AllocationSession, error)
+	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocation model.Allocation) error
 	UpdateAllocationStartTime(allocation model.Allocation) error

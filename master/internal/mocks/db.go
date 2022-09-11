@@ -184,29 +184,6 @@ func (_m *DB) AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
 	return r0, r1
 }
 
-// AllocationSessionByToken provides a mock function with given fields: token
-func (_m *DB) AllocationSessionByToken(token string) (*model.AllocationSession, error) {
-	ret := _m.Called(token)
-
-	var r0 *model.AllocationSession
-	if rf, ok := ret.Get(0).(func(string) *model.AllocationSession); ok {
-		r0 = rf(token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.AllocationSession)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // AuthTokenKeypair provides a mock function with given fields:
 func (_m *DB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	ret := _m.Called()
@@ -1589,20 +1566,20 @@ func (_m *DB) SetHPImportance(experimentID int, value model.ExperimentHPImportan
 	return r0
 }
 
-// StartAllocationSession provides a mock function with given fields: allocationID
-func (_m *DB) StartAllocationSession(allocationID model.AllocationID) (string, error) {
-	ret := _m.Called(allocationID)
+// StartAllocationSession provides a mock function with given fields: allocationID, owner
+func (_m *DB) StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error) {
+	ret := _m.Called(allocationID, owner)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(model.AllocationID) string); ok {
-		r0 = rf(allocationID)
+	if rf, ok := ret.Get(0).(func(model.AllocationID, *model.User) string); ok {
+		r0 = rf(allocationID, owner)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.AllocationID) error); ok {
-		r1 = rf(allocationID)
+	if rf, ok := ret.Get(1).(func(model.AllocationID, *model.User) error); ok {
+		r1 = rf(allocationID, owner)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2208,116 +2185,6 @@ func (_m *DB) UpsertTemplate(tpl *model.Template) error {
 	}
 
 	return r0
-}
-
-// UserByExternalToken provides a mock function with given fields: token, ext
-func (_m *DB) UserByExternalToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error) {
-	ret := _m.Called(token, ext)
-
-	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(string, *model.ExternalSessions) *model.User); ok {
-		r0 = rf(token, ext)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
-	}
-
-	var r1 *model.UserSession
-	if rf, ok := ret.Get(1).(func(string, *model.ExternalSessions) *model.UserSession); ok {
-		r1 = rf(token, ext)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*model.UserSession)
-		}
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func(string, *model.ExternalSessions) error); ok {
-		r2 = rf(token, ext)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// UserByID provides a mock function with given fields: userID
-func (_m *DB) UserByID(userID model.UserID) (*model.FullUser, error) {
-	ret := _m.Called(userID)
-
-	var r0 *model.FullUser
-	if rf, ok := ret.Get(0).(func(model.UserID) *model.FullUser); ok {
-		r0 = rf(userID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.FullUser)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(model.UserID) error); ok {
-		r1 = rf(userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UserByToken provides a mock function with given fields: token, ext
-func (_m *DB) UserByToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error) {
-	ret := _m.Called(token, ext)
-
-	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(string, *model.ExternalSessions) *model.User); ok {
-		r0 = rf(token, ext)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
-	}
-
-	var r1 *model.UserSession
-	if rf, ok := ret.Get(1).(func(string, *model.ExternalSessions) *model.UserSession); ok {
-		r1 = rf(token, ext)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*model.UserSession)
-		}
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func(string, *model.ExternalSessions) error); ok {
-		r2 = rf(token, ext)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// UserByUsername provides a mock function with given fields: username
-func (_m *DB) UserByUsername(username string) (*model.User, error) {
-	ret := _m.Called(username)
-
-	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(string) *model.User); ok {
-		r0 = rf(username)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(username)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // UserList provides a mock function with given fields:

@@ -2694,6 +2694,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     branding?: string;
+    /**
+     * Feature flag for RBAC and user groups.
+     * @type {boolean}
+     * @memberof V1GetMasterResponse
+     */
+    rbacEnabled?: boolean;
 }
 
 /**

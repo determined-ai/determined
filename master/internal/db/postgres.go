@@ -22,6 +22,7 @@ import (
 var (
 	bunMutex  sync.Mutex
 	theOneBun *bun.DB
+	tokenKeys *model.AuthTokenKeypair
 )
 
 func initTheOneBun(db *sql.DB) {
@@ -39,6 +40,18 @@ func initTheOneBun(db *sql.DB) {
 
 	// This will print only the failed queries.
 	theOneBun.AddQueryHook(bundebug.NewQueryHook())
+}
+
+func setTokenKeys(tk *model.AuthTokenKeypair) {
+	bunMutex.Lock()
+	defer bunMutex.Unlock()
+
+	tokenKeys = tk
+}
+
+// GetTokenKeys returns tokenKeys.
+func GetTokenKeys() *model.AuthTokenKeypair {
+	return tokenKeys
 }
 
 // Bun returns the singleton database connection through the bun library. bun is the database

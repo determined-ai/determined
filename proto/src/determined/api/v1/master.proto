@@ -48,6 +48,8 @@ message GetMasterResponse {
   string external_logout_uri = 8;
   // Branding style to use on front-end.
   string branding = 9;
+  // Feature flag for RBAC and user groups.
+  bool rbac_enabled = 10;
 }
 
 // Get telemetry information.

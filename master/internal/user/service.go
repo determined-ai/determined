@@ -144,7 +144,7 @@ func (s *Service) UserAndSessionFromRequest(
 	if err != nil {
 		return nil, nil, err
 	}
-	return s.db.UserByToken(token, s.extConfig)
+	return UserByToken(token, s.extConfig)
 }
 
 // getAuthLevel returns what level of authentication a request needs.
@@ -206,7 +206,7 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 		return true, redirectToLogin(c)
 	}
 
-	switch user, _, err := s.db.UserByToken(token, s.extConfig); err {
+	switch user, _, err := UserByToken(token, s.extConfig); err {
 	case nil:
 		if !user.Active {
 			return true, redirectToLogin(c)
@@ -271,7 +271,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	}
 
 	// Get the user from the database.
-	user, err := s.db.UserByUsername(params.Username)
+	user, err := UserByUsername(params.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
@@ -319,7 +319,7 @@ func NewCookieFromToken(token string) *http.Cookie {
 // getMe returns information about the current authenticated user.
 func (s *Service) getMe(c echo.Context) (interface{}, error) {
 	me := c.(*context.DetContext).MustGetUser()
-	return s.db.UserByID(me.ID)
+	return UserByID(me.ID)
 }
 
 func (s *Service) getUsers(c echo.Context) (interface{}, error) {
@@ -375,7 +375,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	userNotFoundErr := echo.NewHTTPError(http.StatusBadRequest,
 		fmt.Sprintf("failed to get user '%s'", args.Username))
 	currUser := c.(*context.DetContext).MustGetUser()
-	user, err := s.db.UserByUsername(args.Username)
+	user, err := UserByUsername(args.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
@@ -468,7 +468,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	user, err := s.db.UserByUsername(args.Username)
+	user, err := UserByUsername(args.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +484,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	switch u, uErr := s.db.UserByUsername(*params.NewUsername); {
+	switch u, uErr := UserByUsername(*params.NewUsername); {
 	case uErr == db.ErrNotFound:
 	case uErr != nil:
 		return nil, uErr
@@ -569,7 +569,7 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	user, err := s.db.UserByUsername(args.Username)
+	user, err := UserByUsername(args.Username)
 	if err != nil {
 		return nil, err
 	}

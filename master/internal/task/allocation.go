@@ -447,7 +447,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if !a.req.Restore {
-		token, err := a.db.StartAllocationSession(a.model.AllocationID)
+		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
 		if err != nil {
 			return errors.Wrap(err, "starting a new allocation session")
 		}
