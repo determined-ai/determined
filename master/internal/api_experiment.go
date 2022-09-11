@@ -235,7 +235,6 @@ func (a *apiServer) PostSearcherOperations(ctx context.Context,
 	req *apiv1.PostSearcherOperationsRequest) (
 	resp *apiv1.PostSearcherOperationsResponse, err error,
 ) {
-
 	_, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanRunCustomSearch)
 	if err != nil {
