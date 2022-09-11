@@ -171,6 +171,20 @@ func (_m *ExperimentAuthZ) CanPreviewHPSearch(curUser model.User) error {
 	return r0
 }
 
+// CanRunCustomSearch provides a mock function with given fields: curUser, e
+func (_m *ExperimentAuthZ) CanRunCustomSearch(curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(curUser, e)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
+		r0 = rf(curUser, e)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanSetExperimentsCheckpointGCPolicy provides a mock function with given fields: curUser, e
 func (_m *ExperimentAuthZ) CanSetExperimentsCheckpointGCPolicy(curUser model.User, e *model.Experiment) error {
 	ret := _m.Called(curUser, e)
