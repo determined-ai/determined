@@ -133,7 +133,10 @@ class TextualInversionTrainer:
         self.logger.info(f"Learning rate: {self.learning_rate}")
         self.logger.info(f"Train dataset size: {len(self.train_dataset)}")
 
-        distributed = det.core.DistributedContext.from_torch_distributed()
+        try:
+            distributed = det.core.DistributedContext.from_torch_distributed()
+        except KeyError:
+            distributed = None
         with det.core.init(distributed=distributed) as core_context:
             self._restore_latest_checkpoint(core_context)
             # There will be a single op of len max_length, as defined in the searcher config.
@@ -284,24 +287,21 @@ class TextualInversionTrainer:
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
         # Initalize the placeholder_token vector to coincide with the initializer_token vector.
         token_embeds = self.text_encoder.get_input_embeddings().weight.data
-        token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id].detach()
+        token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id]
 
     def _freeze_layers(self) -> None:
-        """Freeze all non-trained layers."""
-
-        def freeze_params(params) -> None:
-            """Helper function for freezing parameters."""
-            for param in params:
+        """Freeze all not-to-be-trained layers."""
+        # Freeze everything and then unfreeze only the layers we want to train.
+        for model in (
+            self.vae,
+            self.unet,
+            self.text_encoder,
+        ):
+            for param in model.parameters():
                 param.requires_grad = False
 
-        for params in (
-            self.vae.parameters(),
-            self.unet.parameters(),
-            self.text_encoder.text_model.encoder.parameters(),
-            self.text_encoder.text_model.final_layer_norm.parameters(),
-            self.text_encoder.text_model.embeddings.position_embedding.parameters(),
-        ):
-            freeze_params(params)
+        for param in self.text_encoder.text_model.embeddings.token_embedding.parameters():
+            param.requires_grad = True
 
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
