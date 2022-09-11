@@ -110,7 +110,7 @@ def test_run_random_searcher_exp() -> None:
                 "after_save",
             ],
         ),
-        ("noop.yaml", "custom-searcher-random-test-noop", []),
+        ("noop.yaml", f"custom-searcher-random-test-noop-{TIMESTAMP}", []),
         (
             "noop.yaml",
             f"custom-searcher-random-test-noop-fail1-{TIMESTAMP}",
