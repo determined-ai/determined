@@ -1,9 +1,7 @@
 import os
 import PIL
-import random
 from PIL import Image
 
-import numpy as np
 import torch.nn as nn
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -42,11 +40,21 @@ class TextualInversionDataset(Dataset):
         self.center_crop = center_crop
         self.flip_p = flip_p
 
-        self.img_paths = [
+        # Load all images
+        img_paths = [
             os.path.join(self.train_img_dir, file_path)
             for file_path in os.listdir(self.train_img_dir)
         ]
-        self.num_imgs = len(self.img_paths)
+        self.imgs = []
+        for path in img_paths:
+            try:
+                img = Image.open(path)
+                if not img.mode == "RGB":
+                    img = img.convert("RGB")
+                self.imgs.append(img)
+            except PIL.UnidentifiedImageError:
+                print(f"Image at {path} raised UnidentifiedImageError")
+        self.num_imgs = len(self.imgs)
 
         assert (
             interpolation in INTERPOLATION_DICT
@@ -80,9 +88,7 @@ class TextualInversionDataset(Dataset):
         ).input_ids[0]
 
         # Add the corresponding normalized img tensor to the example.
-        img = Image.open(self.img_paths[img_idx])
-        if not img.mode == "RGB":
-            img = img.convert("RGB")
+        img = self.imgs[img_idx]
         img_t = transforms.ToTensor()(img)
         if self.center_crop:
             crop_size = min(img_t.shape[-1], img_t.shape[-2])
