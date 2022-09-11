@@ -284,7 +284,7 @@ class TextualInversionTrainer:
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
         # Initalize the placeholder_token vector to coincide with the initializer_token vector.
         token_embeds = self.text_encoder.get_input_embeddings().weight.data
-        token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id]
+        token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id].detach()
 
     def _freeze_layers(self) -> None:
         """Freeze all non-trained layers."""
