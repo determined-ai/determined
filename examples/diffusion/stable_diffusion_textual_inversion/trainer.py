@@ -11,7 +11,6 @@ import accelerate
 import determined as det
 import torch
 import torch.nn.functional as F
-import torchmetrics
 from determined.pytorch import TorchData
 from diffusers import (
     AutoencoderKL,
@@ -36,8 +35,7 @@ class TextualInversionTrainer:
         train_img_dirs: Union[str, Sequence[str]],
         placeholder_tokens: Union[str, Sequence[str]],
         initializer_tokens: Union[str, Sequence[str]],
-        latest_checkpoint: Optional[str] = None,
-        learnable_properties: Literal["object", "style"] = "object",
+        learnable_properties: Sequence[Literal["object", "style"]],
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
@@ -58,6 +56,7 @@ class TextualInversionTrainer:
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
         generator_seed: int = 2147483647,
+        latest_checkpoint: Optional[str] = None,
     ) -> None:
         self.use_auth_token = use_auth_token
         self.latest_checkpoint = latest_checkpoint
@@ -102,10 +101,8 @@ class TextualInversionTrainer:
 
         self.logger = accelerate.logging.get_logger(__name__)
         self.steps_completed = 0
-        self.mean_loss_metric = torchmetrics.MeanMetric()
-        self.mean_loss_metric.cuda()
-        # Save the current mean loss as an attr.s
-        self.mean_loss = 0.0
+        self.loss_history = []
+        self.last_mean_loss = None
         self.generated_imgs = []
 
         self.accelerator = accelerate.Accelerator(
@@ -145,7 +142,7 @@ class TextualInversionTrainer:
         self._build_optimizer()
         self._build_train_noise_scheduler()
         self._wrap_and_prepare()
-        self._build_pipeline()
+        # self._build_pipeline()
 
     def train(self) -> None:
         """Run the full latent inversion training loop."""
@@ -189,7 +186,7 @@ class TextualInversionTrainer:
                                 break
                 if self.accelerator.is_main_process:
                     # Report the final mean loss.
-                    op.report_completed(self.mean_loss)
+                    op.report_completed(self.last_mean_loss)
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
@@ -221,16 +218,12 @@ class TextualInversionTrainer:
         # Predict the noise residual
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
         loss = F.mse_loss(noise_pred, noise)
-
-        # Update the mean loss metric
-        self.mean_loss_metric.update(loss.detach().item())
-
+        self.loss_history.append(loss)
         self.accelerator.backward(loss)
 
         # Get the gradients. An extra .module attr is needed due to the .prepare() call
         grads = self.text_encoder.module.get_input_embeddings().weight.grad
-        # Zero out the gradients for all token embeddings except the newly added
-        # embeddings for the concept, as we only want to train the concept embeddings
+        # Zero out all gradients apart from those corresponding to the placeholder tokens
         index_grads_to_zero = torch.isin(
             torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
         )
@@ -410,7 +403,7 @@ class TextualInversionTrainer:
         # Broadcast to all workers
         dir_path = core_context.distributed.broadcast(dir_path)
         dir_path = pathlib.Path(dir_path)
-        print("saving to dir_path")
+        print(f"saving to {dir_path}")
         self.accelerator.save_state(dir_path)
         self.accelerator.wait_for_everyone()
         return dir_path
@@ -480,10 +473,13 @@ class TextualInversionTrainer:
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
-        self.mean_loss = self.mean_loss_metric.compute().item()
+        print(f"Reporting metrics at step {self.steps_completed}.")
+        print(self.loss_history)
+        self.last_mean_loss = self.accelerator.reduce(self.loss_history, reduction="mean").item()
+        print(self.last_mean_loss)
+        self.loss_history = []
         if self.accelerator.is_main_process:
             core_context.train.report_training_metrics(
                 steps_completed=self.steps_completed,
-                metrics={"loss": self.mean_loss},
+                metrics={"loss": self.last_mean_loss},
             )
-        self.mean_loss_metric.reset()

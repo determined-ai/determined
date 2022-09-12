@@ -1,7 +1,8 @@
 import os
 import PIL
+import torch
 from PIL import Image
-from typing import Sequence
+from typing import List, Sequence
 
 import torch.nn as nn
 from torch.utils.data import Dataset
@@ -19,7 +20,10 @@ MAX_INT = 2 ** 32 - 1
 
 
 class TextualInversionDataset(Dataset):
-    """Dataset for textual inversion, pairing tokenized captions with images."""
+    """Dataset for textual inversion, pairing tokenized captions with images.  Items are
+    dictionaries of tokenized-caption, image pairs, corresponding to the 'input_ids',
+    'pixel_values' keys, respectively.
+    """
 
     def __init__(
         self,
@@ -42,7 +46,7 @@ class TextualInversionDataset(Dataset):
         self.interpolation = INTERPOLATION_DICT[interpolation]
         for prop in learnable_properties:
             assert (
-                property in TEMPLATE_DICT
+                prop in TEMPLATE_DICT
             ), f"learnable_properties must be one of {list(TEMPLATE_DICT.keys())}, not {prop}."
 
         self.train_img_dirs = train_img_dirs
@@ -55,62 +59,62 @@ class TextualInversionDataset(Dataset):
 
         self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
 
-        # Create a dictionary of all images and their corresponding templates.
-        self.img_dict = {}
-        self.imgs = []
-        self.records = 0
-        for dir_path, learnable_property in zip(self.train_img_dirs, self.learnable_properties):
-            imgs = []
-            for file_path in os.listdir(dir_path):
-                path = os.path.join(dir_path, file_path)
-                try:
-                    img = Image.open(path)
-                    if not img.mode == "RGB":
-                        img = img.convert("RGB")
-                    imgs.append(img)
-                except PIL.UnidentifiedImageError:
-                    print(f"Image at {path} raised UnidentifiedImageError")
-            template = TEMPLATE_DICT[learnable_property]
-            self.img_dict["dir_path"] = {
-                "template": template,
-                "imgs": imgs,
-            }
-            self.records += len(imgs) * len(template)
+        self.records = []
+        for dir_path, token, prop in zip(
+            self.train_img_dirs, placeholder_tokens, self.learnable_properties
+        ):
+            templates = TEMPLATE_DICT[prop]
+            imgs = self._get_imgs_from_dir_path(dir_path)
+            img_ts = self._convert_imgs_to_tensors(imgs)
+            for img_t in img_ts:
+                for text in templates:
+                    self.records.append(
+                        {"input_ids": self._tokenize_text(text), "pixel_values": img_t}
+                    )
 
-    def __len__(self):
-        return self.records
+    def _get_imgs_from_dir_path(self, dir_path: str) -> List[Image.Image]:
+        """Gets all images from a directory and converts them to tensors."""
+        imgs = []
+        for file_path in os.listdir(dir_path):
+            path = os.path.join(dir_path, file_path)
+            try:
+                img = Image.open(path)
+                if not img.mode == "RGB":
+                    img = img.convert("RGB")
+                imgs.append(img)
+            except PIL.UnidentifiedImageError:
+                print(f"Image at {path} raised UnidentifiedImageError")
+        return imgs
 
-    def __getitem__(self, idx):
-        # Generate a random caption drawn from the templates and include in the example.
-        dir_idx, remainder = divmod(idx, self.train_img_dirs)
-        dir_dict = self.img_dict[self.train_img_dirs[dir_idx]]
-        template, imgs = dir_dict["template"], dir_dict["imgs"]
-        placeholder_string = self.placeholder_tokens[dir_idx]
+    def _convert_imgs_to_tensors(self, imgs: List[Image.Image]) -> List[torch.Tensor]:
+        """Converts a list of PIL images into appropriately transformed tensors."""
+        img_ts = []
+        for img in imgs:
+            img_t = transforms.ToTensor()(img)
+            if self.center_crop:
+                crop_size = min(img_t.shape[-1], img_t.shape[-2])
+                img_t = transforms.CenterCrop(crop_size)(img_t)
+            img_t = transforms.Resize(
+                (self.img_size, self.img_size), interpolation=self.interpolation
+            )(img_t)
+            # Normalize the tensor to be in the range [-1, 1]
+            img_t = (img_t - 0.5) * 2.0
+            img_ts.append(img_t)
+        return img_ts
 
-        template_idx, img_idx = divmod(remainder, len(template))
-        text = template[template_idx].format(placeholder_string)
-        img = imgs[img_idx]
-
-        # Add text to example.
-        example = {}
-        example["input_ids"] = self.tokenizer(
+    def _tokenize_text(self, text: str) -> torch.Tensor:
+        """Tokenizes text and removes the batch dimension."""
+        tokenized_text = self.tokenizer(
             text,
             padding="max_length",
             truncation=True,
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids[0]
+        return tokenized_text
 
-        # Add the corresponding normalized img tensor to the example.
-        img_t = transforms.ToTensor()(img)
-        if self.center_crop:
-            crop_size = min(img_t.shape[-1], img_t.shape[-2])
-            img_t = transforms.CenterCrop(crop_size)(img_t)
-        img_t = transforms.Resize((self.img_size, self.img_size), interpolation=self.interpolation)(
-            img_t
-        )
-        # Normalize the tensor to be in the range [-1, 1]
-        img_t = (img_t - 0.5) * 2.0
-        example["pixel_values"] = img_t
+    def __len__(self):
+        return len(self.records)
 
-        return example
+    def __getitem__(self, idx):
+        return self.records[idx]
