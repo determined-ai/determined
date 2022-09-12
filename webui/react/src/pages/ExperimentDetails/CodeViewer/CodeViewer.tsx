@@ -2,7 +2,16 @@ import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons'
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -17,6 +26,8 @@ import Spinner from 'shared/components/Spinner';
 import { RawJson } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
+
+const JupyterRenderer = lazy(() => import('./IpynbRenderer'));
 
 const { DirectoryTree } = Tree;
 
