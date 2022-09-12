@@ -374,7 +374,9 @@ class PyTorchTrialController(det.TrialController):
     def _should_update_scaler(self) -> bool:
         if not self.context._scaler or not self.context.experimental._auto_amp:
             return False
-        return self.context._should_communicate_and_update()  # type: ignore
+        if self.context.distributed.size > 1 or self.context._aggregation_frequency > 1:
+            return self.context._should_communicate_and_update()  # type: ignore
+        return True
 
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
