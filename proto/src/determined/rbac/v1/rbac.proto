@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.rbac.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/rbacv1";
 
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Role contains information about a specific Role
@@ -35,7 +36,7 @@ message RoleAssignment {
   Role role = 1;
   // The id of the workspace the role belongs to.
   // Omit for a global scope.
-  optional int32 scope_workspace_id = 2;
+  google.protobuf.Int32Value scope_workspace_id = 2;
 }
 
 // GroupRoleAssignment contains information about the groups

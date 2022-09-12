@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/rbac/v1/rbac.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -54,7 +55,7 @@ message SearchRolesAssignableToScopeRequest {
   // The offset to use with pagination
   int32 offset                = 2;
   // The id of the workspace to use if searching for a workspace-assignable role
-  optional int32 workspace_id = 3;
+  google.protobuf.Int32Value workspace_id = 3;
 }
 
 // Response object for SearchRolesAssignableToScope
