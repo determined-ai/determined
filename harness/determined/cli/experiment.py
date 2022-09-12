@@ -470,8 +470,8 @@ def experiment_logs(args: Namespace) -> None:
         return
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
 
-    api.pprint_trial_logs(
-        args.master,
+    logs = api.trial_logs(
+        cli.setup_session(args),
         first_trial_id,
         head=args.head,
         tail=args.tail,
@@ -481,10 +481,11 @@ def experiment_logs(args: Namespace) -> None:
         rank_ids=args.rank_ids,
         sources=args.sources,
         stdtypes=args.stdtypes,
-        level_above=args.level,
+        min_level=args.level,
         timestamp_before=args.timestamp_before,
         timestamp_after=args.timestamp_after,
     )
+    api.pprint_trial_logs(first_trial_id, logs)
 
 
 @authentication.required

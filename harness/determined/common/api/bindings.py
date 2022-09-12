@@ -1,5 +1,6 @@
 # The contents of this file are programmatically generated.
 import enum
+import json
 import math
 import typing
 
@@ -37,7 +38,20 @@ class APIHttpError(Exception):
         self.response = response
         self.operation_name = operation_name
         self.message = (
-            f"API Error: {operation_name} failed."
+            f"API Error: {operation_name} failed: {response.reason}."
+        )
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class APIHttpStreamError(APIHttpError):
+    # APIHttpStreamError is used if an streaming API request fails mid-stream.
+    def __init__(self, operation_name: str, error: "runtimeStreamError") -> None:
+        self.operation_name = operation_name
+        self.error = error
+        self.message = (
+            f"Stream Error during {operation_name}: {error.message}"
         )
 
     def __str__(self) -> str:
@@ -7326,6 +7340,82 @@ def post_EnableSlot(
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
 
+def get_ExpCompareMetricNames(
+    session: "api.Session",
+    *,
+    trialId: "typing.Sequence[int]",
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1ExpCompareMetricNamesResponse]":
+    _params = {
+        "periodSeconds": periodSeconds,
+        "trialId": trialId,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/metrics-stream/metric-names",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_ExpCompareMetricNames",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1ExpCompareMetricNamesResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_ExpCompareMetricNames", _resp)
+
+def get_ExpCompareTrialsSample(
+    session: "api.Session",
+    *,
+    experimentIds: "typing.Sequence[int]",
+    metricName: str,
+    metricType: "v1MetricType",
+    endBatches: "typing.Optional[int]" = None,
+    maxDatapoints: "typing.Optional[int]" = None,
+    maxTrials: "typing.Optional[int]" = None,
+    periodSeconds: "typing.Optional[int]" = None,
+    startBatches: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1ExpCompareTrialsSampleResponse]":
+    _params = {
+        "endBatches": endBatches,
+        "experimentIds": experimentIds,
+        "maxDatapoints": maxDatapoints,
+        "maxTrials": maxTrials,
+        "metricName": metricName,
+        "metricType": metricType.value,
+        "periodSeconds": periodSeconds,
+        "startBatches": startBatches,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiments-compare",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_ExpCompareTrialsSample",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1ExpCompareTrialsSampleResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_ExpCompareTrialsSample", _resp)
+
 def get_GetActiveTasksCount(
     session: "api.Session",
 ) -> "v1GetActiveTasksCountResponse":
@@ -7713,6 +7803,37 @@ def post_GetGroups(
     if _resp.status_code == 200:
         return v1GetGroupsResponse.from_json(_resp.json())
     raise APIHttpError("post_GetGroups", _resp)
+
+def get_GetHPImportance(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1GetHPImportanceResponse]":
+    _params = {
+        "periodSeconds": periodSeconds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_GetHPImportance",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1GetHPImportanceResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_GetHPImportance", _resp)
 
 def get_GetJobQueueStats(
     session: "api.Session",
@@ -8373,6 +8494,76 @@ def get_GetTrialCheckpoints(
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
+def get_GetTrialProfilerAvailableSeries(
+    session: "api.Session",
+    *,
+    trialId: int,
+    follow: "typing.Optional[bool]" = None,
+) -> "typing.Iterable[v1GetTrialProfilerAvailableSeriesResponse]":
+    _params = {
+        "follow": str(follow).lower() if follow is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/profiler/available_series",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_GetTrialProfilerAvailableSeries",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_GetTrialProfilerAvailableSeries", _resp)
+
+def get_GetTrialProfilerMetrics(
+    session: "api.Session",
+    *,
+    labels_trialId: int,
+    follow: "typing.Optional[bool]" = None,
+    labels_agentId: "typing.Optional[str]" = None,
+    labels_gpuUuid: "typing.Optional[str]" = None,
+    labels_metricType: "typing.Optional[TrialProfilerMetricLabelsProfilerMetricType]" = None,
+    labels_name: "typing.Optional[str]" = None,
+) -> "typing.Iterable[v1GetTrialProfilerMetricsResponse]":
+    _params = {
+        "follow": str(follow).lower() if follow is not None else None,
+        "labels.agentId": labels_agentId,
+        "labels.gpuUuid": labels_gpuUuid,
+        "labels.metricType": labels_metricType.value if labels_metricType is not None else None,
+        "labels.name": labels_name,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{labels_trialId}/profiler/metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_GetTrialProfilerMetrics",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
+
 def get_GetTrialWorkloads(
     session: "api.Session",
     *,
@@ -8843,6 +9034,106 @@ def post_MarkAllocationResourcesDaemon(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
+
+def get_MasterLogs(
+    session: "api.Session",
+    *,
+    follow: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1MasterLogsResponse]":
+    _params = {
+        "follow": str(follow).lower() if follow is not None else None,
+        "limit": limit,
+        "offset": offset,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/master/logs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_MasterLogs",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1MasterLogsResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_MasterLogs", _resp)
+
+def get_MetricBatches(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    metricName: str,
+    metricType: "v1MetricType",
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1MetricBatchesResponse]":
+    _params = {
+        "metricName": metricName,
+        "metricType": metricType.value,
+        "periodSeconds": periodSeconds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/metrics-stream/batches",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_MetricBatches",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1MetricBatchesResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_MetricBatches", _resp)
+
+def get_MetricNames(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1MetricNamesResponse]":
+    _params = {
+        "periodSeconds": periodSeconds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/metrics-stream/metric-names",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_MetricNames",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1MetricNamesResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_MetricNames", _resp)
 
 def post_MoveExperiment(
     session: "api.Session",
@@ -9629,6 +9920,258 @@ def get_SummarizeTrial(
     if _resp.status_code == 200:
         return v1SummarizeTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_SummarizeTrial", _resp)
+
+def get_TaskLogs(
+    session: "api.Session",
+    *,
+    taskId: str,
+    agentIds: "typing.Optional[typing.Sequence[str]]" = None,
+    allocationIds: "typing.Optional[typing.Sequence[str]]" = None,
+    containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+    follow: "typing.Optional[bool]" = None,
+    levels: "typing.Optional[typing.Sequence[v1LogLevel]]" = None,
+    limit: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    rankIds: "typing.Optional[typing.Sequence[int]]" = None,
+    searchText: "typing.Optional[str]" = None,
+    sources: "typing.Optional[typing.Sequence[str]]" = None,
+    stdtypes: "typing.Optional[typing.Sequence[str]]" = None,
+    timestampAfter: "typing.Optional[str]" = None,
+    timestampBefore: "typing.Optional[str]" = None,
+) -> "typing.Iterable[v1TaskLogsResponse]":
+    _params = {
+        "agentIds": agentIds,
+        "allocationIds": allocationIds,
+        "containerIds": containerIds,
+        "follow": str(follow).lower() if follow is not None else None,
+        "levels": [x.value for x in levels] if levels is not None else None,
+        "limit": limit,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "rankIds": rankIds,
+        "searchText": searchText,
+        "sources": sources,
+        "stdtypes": stdtypes,
+        "timestampAfter": timestampAfter,
+        "timestampBefore": timestampBefore,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/logs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_TaskLogs",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1TaskLogsResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_TaskLogs", _resp)
+
+def get_TaskLogsFields(
+    session: "api.Session",
+    *,
+    taskId: str,
+    follow: "typing.Optional[bool]" = None,
+) -> "typing.Iterable[v1TaskLogsFieldsResponse]":
+    _params = {
+        "follow": str(follow).lower() if follow is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/logs/fields",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_TaskLogsFields",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_TaskLogsFields", _resp)
+
+def get_TrialLogs(
+    session: "api.Session",
+    *,
+    trialId: int,
+    agentIds: "typing.Optional[typing.Sequence[str]]" = None,
+    containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+    follow: "typing.Optional[bool]" = None,
+    levels: "typing.Optional[typing.Sequence[v1LogLevel]]" = None,
+    limit: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    rankIds: "typing.Optional[typing.Sequence[int]]" = None,
+    searchText: "typing.Optional[str]" = None,
+    sources: "typing.Optional[typing.Sequence[str]]" = None,
+    stdtypes: "typing.Optional[typing.Sequence[str]]" = None,
+    timestampAfter: "typing.Optional[str]" = None,
+    timestampBefore: "typing.Optional[str]" = None,
+) -> "typing.Iterable[v1TrialLogsResponse]":
+    _params = {
+        "agentIds": agentIds,
+        "containerIds": containerIds,
+        "follow": str(follow).lower() if follow is not None else None,
+        "levels": [x.value for x in levels] if levels is not None else None,
+        "limit": limit,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "rankIds": rankIds,
+        "searchText": searchText,
+        "sources": sources,
+        "stdtypes": stdtypes,
+        "timestampAfter": timestampAfter,
+        "timestampBefore": timestampBefore,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/logs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_TrialLogs",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1TrialLogsResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_TrialLogs", _resp)
+
+def get_TrialLogsFields(
+    session: "api.Session",
+    *,
+    trialId: int,
+    follow: "typing.Optional[bool]" = None,
+) -> "typing.Iterable[v1TrialLogsFieldsResponse]":
+    _params = {
+        "follow": str(follow).lower() if follow is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/logs/fields",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_TrialLogsFields",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_TrialLogsFields", _resp)
+
+def get_TrialsSample(
+    session: "api.Session",
+    *,
+    experimentId: int,
+    metricName: str,
+    metricType: "v1MetricType",
+    endBatches: "typing.Optional[int]" = None,
+    maxDatapoints: "typing.Optional[int]" = None,
+    maxTrials: "typing.Optional[int]" = None,
+    periodSeconds: "typing.Optional[int]" = None,
+    startBatches: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1TrialsSampleResponse]":
+    _params = {
+        "endBatches": endBatches,
+        "maxDatapoints": maxDatapoints,
+        "maxTrials": maxTrials,
+        "metricName": metricName,
+        "metricType": metricType.value,
+        "periodSeconds": periodSeconds,
+        "startBatches": startBatches,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/metrics-stream/trials-sample",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_TrialsSample",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1TrialsSampleResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_TrialsSample", _resp)
+
+def get_TrialsSnapshot(
+    session: "api.Session",
+    *,
+    batchesProcessed: int,
+    experimentId: int,
+    metricName: str,
+    metricType: "v1MetricType",
+    batchesMargin: "typing.Optional[int]" = None,
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "typing.Iterable[v1TrialsSnapshotResponse]":
+    _params = {
+        "batchesMargin": batchesMargin,
+        "batchesProcessed": batchesProcessed,
+        "metricName": metricName,
+        "metricType": metricType.value,
+        "periodSeconds": periodSeconds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/metrics-stream/trials-snapshot",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        for _line in _resp.iter_lines():
+            _j = json.loads(_line)
+            if "error" in _j:
+                raise APIHttpStreamError(
+                    "get_TrialsSnapshot",
+                    runtimeStreamError.from_json(_j["error"])
+            )
+            yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        return
+    raise APIHttpError("get_TrialsSnapshot", _resp)
 
 def post_UnarchiveExperiment(
     session: "api.Session",

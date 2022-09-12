@@ -27,7 +27,8 @@ def run_command(args: Namespace) -> None:
         print(resp["id"])
         return
 
-    api.pprint_task_logs(args.master, resp["id"], follow=True)
+    logs = api.task_logs(cli.setup_session(args), resp["id"], follow=True)
+    api.pprint_task_logs(resp["id"], logs)
 
 
 # fmt: off
