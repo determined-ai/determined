@@ -3492,12 +3492,6 @@ export interface V1GetSearcherEventsResponse {
      * @memberof V1GetSearcherEventsResponse
      */
     searcherEvents?: Array<V1SearcherEvent>;
-    /**
-     * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
-     * @type {V1SearcherEvent}
-     * @memberof V1GetSearcherEventsResponse
-     */
-    lastTriggeringEvent?: V1SearcherEvent;
 }
 
 /**
