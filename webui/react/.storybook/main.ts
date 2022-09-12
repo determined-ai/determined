@@ -1,6 +1,8 @@
-module.exports = {
+import type { StorybookConfig } from '@storybook/core-common';
+
+const config: StorybookConfig = {
   addons: [
-    'storybook-preset-craco',
+    "storybook-preset-craco",
     {
       name: '@storybook/addon-docs',
       options: {
@@ -21,7 +23,9 @@ module.exports = {
     '../public',
     { from: '../src/shared/assets', to: '/assets' }
   ],
-  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  stories: [ {
+    directory: '../src',
+  } ],
   webpackFinal: config => {
     if (process.env.NODE_ENV !== 'production') return config;
     /*
@@ -30,16 +34,18 @@ module.exports = {
      * looks for the fonts in `static/css/static/media` instead of the
      * proper location of `static/media`.
      */
-    const oneOfs = config.module.rules.find(rule => !!rule.oneOf).oneOf;
+    const oneOfs = config?.module?.rules?.find(rule => !!rule.oneOf)?.oneOf;
     const fontMatcher = /\.woff2?$/;
 
     // Exclude fonts from default file-loader.
-    const fileLoader = oneOfs.find(oneOf => /file-loader/.test(oneOf.loader));
-    fileLoader.exclude.push(fontMatcher);
+    const fileLoader = oneOfs?.find(oneOf => /file-loader/.test(oneOf?.loader?.toString() ?? '')) ?? {};
+    if (Array.isArray(fileLoader.exclude)) fileLoader.exclude.push(fontMatcher);
+    else if (!!fileLoader.exclude) fileLoader.exclude = [fileLoader.exclude, fontMatcher];
+    else fileLoader.exclude = [fontMatcher];
 
     // Add a new file-loader to handle just fonts.
     const fileLoaderFont = {
-      loader: fileLoader.loader,
+      loader: fileLoader?.loader,
       options: {
         publicPath: '../media',
         outputPath: 'static/media',
@@ -48,8 +54,10 @@ module.exports = {
       },
       test: fontMatcher,
     };
-    oneOfs.push(fileLoaderFont);
+    oneOfs?.push(fileLoaderFont);
 
     return config;
   },
 };
+
+export default config;

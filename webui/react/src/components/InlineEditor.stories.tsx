@@ -11,8 +11,8 @@ export default {
   title: 'InlineEditor',
 };
 
-export const Default = (): React.ReactNode => {
-  const [value, setValue] = useState('Edit Me!');
+export const Default = (args): React.ReactNode => {
+  const [ value, setValue ] = useState('Edit Me!');
 
   const save = useCallback((newValue: string): Promise<void> => {
     return new Promise<void>((resolve) => {
@@ -32,13 +32,18 @@ export const Default = (): React.ReactNode => {
 
   return (
     <InlineEditor
-      allowNewline={boolean('allow newline (use <shift> + <enter>)', false)}
-      maxLength={number('max length', 100)}
-      placeholder={text('placeholder', 'placeholder text')}
+      // allowNewline={boolean('allow newline (use <shift> + <enter>)', false)}
+      // maxLength={number('max length', 100)}
+      // placeholder={text('placeholder', 'placeholder text')}
       value={value}
       onSave={handleSave}
+      {...args}
     />
   );
 };
 
-export const LargeText = (): React.ReactNode => <InlineEditor value={loremIpsum} />;
+export const LargeText = (): React.ReactNode => (
+  <InlineEditor value={loremIpsum} />
+);
+
+Default.args = { allowNewline: false, maxLength: 100, placeholder: 'placeholder text' };
