@@ -30,7 +30,7 @@ class SearchRunner:
         search_method: SearchMethod,
     ) -> None:
         self.search_method = search_method
-        client._require_singleton(lambda: None)()
+        # client._require_singleton(lambda: None)()
 
     def _get_operations(self, event: bindings.v1SearcherEvent) -> List[Operation]:
         if event.initialOperations:

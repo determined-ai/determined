@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
-from e2e_tests.tests.fixtures.custom_searcher.searchers import ASHASearchMethod, RandomSearchMethod
 from numpy import float64
 
 from determined.common.api import bindings
@@ -19,6 +18,7 @@ from determined.searcher.search_method import (
     ValidateAfter,
 )
 from determined.searcher.search_runner import LocalSearchRunner
+from determined.searcher.searchers import ASHASearchMethod, RandomSearchMethod
 
 
 def test_run_random_searcher_exp_mock_master() -> None:
@@ -30,7 +30,7 @@ def test_run_random_searcher_exp_mock_master() -> None:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
         mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
         search_runner = MockMasterSearchRunner(search_method, Path(searcher_dir), mock_master_obj)
-        search_runner.run(exp_config=None)
+        search_runner.run(exp_config=None, context_dir=None)
 
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -48,7 +48,7 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
     mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
     search_runner = MockMasterSearchRunner(search_method, tmp_path, mock_master_obj)
-    search_runner.run(exp_config=None)
+    search_runner.run(exp_config=None, context_dir=None)
 
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
