@@ -1,0 +1,10 @@
+name: stable_diffusion_textual_inversion
+entrypoint: python -m determined.launch.torch_distributed -- python3 main.py
+searcher:
+  name: single
+  metric: irrelevant # Not meaningful
+  max_length:
+    records: 1 # Not meaningful
+resources:
+  slots_per_trial: 1
+max_restarts: 0

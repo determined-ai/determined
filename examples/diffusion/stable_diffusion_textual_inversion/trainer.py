@@ -227,9 +227,13 @@ class TextualInversionTrainer:
         index_grads_to_zero = torch.isin(
             torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
         )
+        print("full grad sum pre-zero", grads.data.sum())
+        print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
+        print("specific grad sum pre-zero", grads.data[self.placeholder_token_ids[0]].sum())
         grads.data[index_grads_to_zero] = 0.0
-        print(grads.data[self.placeholder_token_ids[0]])
-        print(grads.data[self.placeholder_token_ids[0]].sum())
+        print("full grad sum post zero", grads.data.sum())
+        print("specific grad", grads.data[self.placeholder_token_ids[0]])
+        print("specific grad sum", grads.data[self.placeholder_token_ids[0]].sum())
         self.optimizer.step()
         self.optimizer.zero_grad()
 
@@ -276,6 +280,7 @@ class TextualInversionTrainer:
         # Add the placeholder token in tokenizer
         self.placeholder_token_ids = []
         initializer_token_ids = []
+        print("TOKENIZER LEN INIT", len(self.tokenizer))
         for placeholder, initializer in zip(self.placeholder_tokens, self.initializer_tokens):
             num_added_tokens = self.tokenizer.add_tokens(placeholder)
             if num_added_tokens == 0:
@@ -295,6 +300,7 @@ class TextualInversionTrainer:
             initializer_token_ids.append(initializer_token_id_list[0])
             placeholder_token_id = self.tokenizer.convert_tokens_to_ids(placeholder)
             self.placeholder_token_ids.append(placeholder_token_id)
+            print("TOKENIZER LEN", len(self.tokenizer))
 
         # Extend the size of the self.text_encoder to account for the new placeholder_tokens.
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
@@ -477,7 +483,6 @@ class TextualInversionTrainer:
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
-        print(self.loss_history)
         local_mean_loss = torch.tensor(self.loss_history, device=self.accelerator.device).mean()
         # reduction = 'mean' seems to return the sum rather than the mean:
         self.last_mean_loss = (

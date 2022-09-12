@@ -20,7 +20,7 @@ MAX_INT = 2 ** 32 - 1
 
 
 class TextualInversionDataset(Dataset):
-    """Dataset for textual inversion, pairing tokenized captions with images.  Items are
+    """Dataset for textual inversion, pairing tokenized captions with images.  Contains
     dictionaries of tokenized-caption, image pairs, corresponding to the 'input_ids',
     'pixel_values' keys, respectively.
     """
