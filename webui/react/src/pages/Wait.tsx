@@ -41,6 +41,10 @@ const Wait: React.FC = () => {
     message = 'Missing required parameters.';
   } else if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
     message = `${capitalizedTaskType} has been terminated.`;
+  } else if (capitalizedTaskType === 'Tensor-board'
+  && waitStatus
+  && waitStatus?.state === CommandState.Waiting) {
+    message = `Waiting for ${capitalizedTaskType} metrics step to be completed.`;
   }
 
   useEffect(() => {

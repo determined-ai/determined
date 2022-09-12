@@ -22,6 +22,8 @@ enum State {
   STATE_TERMINATED = 6;
   // The task has begun to exit.
   STATE_TERMINATING = 7;
+  // The task is waiting on something to complete.
+  STATE_WAITING     = 8;
 }
 
 // Allocation tracks a specific instance of a Task.

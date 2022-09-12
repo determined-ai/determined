@@ -140,6 +140,7 @@ export interface StartEndTimes extends EndTimes {
 
 /* Command */
 export enum CommandState {
+  Waiting = 'WAITING',
   Pending = 'PENDING',
   Assigned = 'ASSIGNED',
   Pulling = 'PULLING',

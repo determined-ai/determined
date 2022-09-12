@@ -184,6 +184,7 @@ export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
         STATE_STARTING: types.CommandState.Starting,
         STATE_TERMINATED: types.CommandState.Terminated,
         STATE_TERMINATING: types.CommandState.Terminating,
+        STATE_WAITING: types.CommandState.Waiting,
       }[String(a?.state) || 'STATE_PENDING'] || types.CommandState.Pending;
 
       return {

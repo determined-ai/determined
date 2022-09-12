@@ -33,6 +33,7 @@ const stateColorMapping = {
   [RunState.StoppingCompleted]: 'success',
   [RunState.StoppingError]: 'critical',
   [RunState.Unspecified]: 'inactive',
+  [CommandState.Waiting]: 'inactive',
   [CommandState.Pending]: 'warning',
   [CommandState.Assigned]: 'warning',
   [CommandState.Pulling]: 'active',

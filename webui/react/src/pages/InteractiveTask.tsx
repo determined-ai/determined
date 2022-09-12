@@ -31,6 +31,7 @@ const getTitleState = (commandState?: CommandState, taskName?: string): string =
     return DEFAULT_PAGE_TITLE;
   }
   const commandStateTitleMap = {
+    [CommandState.Waiting]: 'Waiting',
     [CommandState.Pending]: 'Pending',
     [CommandState.Assigned]: 'Assigned',
     [CommandState.Pulling]: 'Pulling',

@@ -269,13 +269,14 @@ export const tensorBoardMatchesSource = (
   return false;
 };
 const commandStateSortValues: Record<CommandState, number> = {
-  [CommandState.Pending]: 0,
-  [CommandState.Assigned]: 1,
-  [CommandState.Pulling]: 2,
-  [CommandState.Starting]: 3,
-  [CommandState.Running]: 4,
-  [CommandState.Terminating]: 5,
-  [CommandState.Terminated]: 6,
+  [CommandState.Waiting]: 0,
+  [CommandState.Pending]: 1,
+  [CommandState.Assigned]: 2,
+  [CommandState.Pulling]: 3,
+  [CommandState.Starting]: 4,
+  [CommandState.Running]: 5,
+  [CommandState.Terminating]: 6,
+  [CommandState.Terminated]: 7,
 };
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
