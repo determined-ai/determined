@@ -3528,17 +3528,17 @@ export interface V1Int32FieldFilter {
      */
     gte?: number;
     /**
-     * Comma-separated list of ints.
-     * @type {string}
+     * 
+     * @type {Array<number>}
      * @memberof V1Int32FieldFilter
      */
-    _in?: string;
+    _in?: Array<number>;
     /**
-     * Comma-separated list of ints.
-     * @type {string}
+     * 
+     * @type {Array<number>}
      * @memberof V1Int32FieldFilter
      */
-    notIn?: string;
+    notIn?: Array<number>;
 }
 
 /**
@@ -10340,16 +10340,16 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-         * @param {number} [experimentFilterLt] TODO: support exact. optional int32 exact &#x3D; 1;.
+         * @param {number} [experimentFilterLt] 
          * @param {number} [experimentFilterLte] 
          * @param {number} [experimentFilterGt] 
          * @param {number} [experimentFilterGte] 
-         * @param {string} [experimentFilterIn] Comma-separated list of ints.
-         * @param {string} [experimentFilterNotIn] Comma-separated list of ints.
+         * @param {Array<number>} [experimentFilterIn] 
+         * @param {Array<number>} [experimentFilterNotIn] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: string, experimentFilterNotIn?: string, options: any = {}): FetchArgs {
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: Array<number>, experimentFilterNotIn?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10428,11 +10428,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['experimentFilter.gte'] = experimentFilterGte;
             }
 
-            if (experimentFilterIn !== undefined) {
+            if (experimentFilterIn) {
                 localVarQueryParameter['experimentFilter.in'] = experimentFilterIn;
             }
 
-            if (experimentFilterNotIn !== undefined) {
+            if (experimentFilterNotIn) {
                 localVarQueryParameter['experimentFilter.notIn'] = experimentFilterNotIn;
             }
 
@@ -11401,16 +11401,16 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-         * @param {number} [experimentFilterLt] TODO: support exact. optional int32 exact &#x3D; 1;.
+         * @param {number} [experimentFilterLt] 
          * @param {number} [experimentFilterLte] 
          * @param {number} [experimentFilterGt] 
          * @param {number} [experimentFilterGte] 
-         * @param {string} [experimentFilterIn] Comma-separated list of ints.
-         * @param {string} [experimentFilterNotIn] Comma-separated list of ints.
+         * @param {Array<number>} [experimentFilterIn] 
+         * @param {Array<number>} [experimentFilterNotIn] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: string, experimentFilterNotIn?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: Array<number>, experimentFilterNotIn?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentFilterLt, experimentFilterLte, experimentFilterGt, experimentFilterGte, experimentFilterIn, experimentFilterNotIn, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -11885,16 +11885,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-         * @param {number} [experimentFilterLt] TODO: support exact. optional int32 exact &#x3D; 1;.
+         * @param {number} [experimentFilterLt] 
          * @param {number} [experimentFilterLte] 
          * @param {number} [experimentFilterGt] 
          * @param {number} [experimentFilterGte] 
-         * @param {string} [experimentFilterIn] Comma-separated list of ints.
-         * @param {string} [experimentFilterNotIn] Comma-separated list of ints.
+         * @param {Array<number>} [experimentFilterIn] 
+         * @param {Array<number>} [experimentFilterNotIn] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: string, experimentFilterNotIn?: string, options?: any) {
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: Array<number>, experimentFilterNotIn?: Array<number>, options?: any) {
             return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentFilterLt, experimentFilterLte, experimentFilterGt, experimentFilterGte, experimentFilterIn, experimentFilterNotIn, options)(fetch, basePath);
         },
         /**
@@ -12248,17 +12248,17 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
      * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-     * @param {number} [experimentFilterLt] TODO: support exact. optional int32 exact &#x3D; 1;.
+     * @param {number} [experimentFilterLt] 
      * @param {number} [experimentFilterLte] 
      * @param {number} [experimentFilterGt] 
      * @param {number} [experimentFilterGte] 
-     * @param {string} [experimentFilterIn] Comma-separated list of ints.
-     * @param {string} [experimentFilterNotIn] Comma-separated list of ints.
+     * @param {Array<number>} [experimentFilterIn] 
+     * @param {Array<number>} [experimentFilterNotIn] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: string, experimentFilterNotIn?: string, options?: any) {
+    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentFilterLt?: number, experimentFilterLte?: number, experimentFilterGt?: number, experimentFilterGte?: number, experimentFilterIn?: Array<number>, experimentFilterNotIn?: Array<number>, options?: any) {
         return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentFilterLt, experimentFilterLte, experimentFilterGt, experimentFilterGte, experimentFilterIn, experimentFilterNotIn, options)(this.fetch, this.basePath);
     }
 

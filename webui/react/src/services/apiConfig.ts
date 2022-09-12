@@ -370,8 +370,8 @@ export const getExperiments: DetApi<
       undefined,
       undefined,
       undefined,
-      params.experimentFilter?.in,
-      params.experimentFilter?.notIn,
+      params.experimentIdFilter?.in,
+      params.experimentIdFilter?.notIn,
       options,
     );
   },

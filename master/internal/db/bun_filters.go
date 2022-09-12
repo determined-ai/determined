@@ -1,24 +1,17 @@
 package db
 
 import (
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 )
 
-type FieldFilterComparison[T any] interface {
-	GetGt() T
-	GetGte() T
-	GetLt() T
-	GetLte() T
-}
-
+// FilterComparison makes you wish for properties in generic structs/interfaces.
 type FilterComparison[T any] struct {
 	Gt  *T
 	Gte *T
@@ -46,19 +39,7 @@ func applyFieldFilterComparison[T any](
 	return q, nil
 }
 
-func parseCommaSeparatedInt32Value(value string) ([]int32, error) {
-	arr := strings.Split(value, ",")
-	result := []int32{}
-	for i := range arr {
-		parsed, err := strconv.Atoi(arr[i])
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, int32(parsed))
-	}
-	return result, nil
-}
-
+// ApplyInt32FieldFilter applies filtering on a bun query for int32 field.
 func ApplyInt32FieldFilter(
 	q *bun.SelectQuery,
 	column schema.Ident,
@@ -75,27 +56,21 @@ func ApplyInt32FieldFilter(
 	}
 
 	if filter.In != nil {
-		if *filter.In == "" {
+		values := []int32{}
+		values = append(values, filter.In...)
+		if len(values) == 0 {
 			q = q.Where("false")
 		} else {
-			values, err := parseCommaSeparatedInt32Value(*filter.In)
-			if err != nil {
-				return nil, err
-			}
-
 			q = q.Where("? IN (?)", column, bun.In(values))
 		}
 	}
 
 	if filter.NotIn != nil {
-		if *filter.NotIn == "" {
+		values := []int32{}
+		values = append(values, filter.NotIn...)
+		if len(values) == 0 {
 			q = q.Where("true")
 		} else {
-			values, err := parseCommaSeparatedInt32Value(*filter.NotIn)
-			if err != nil {
-				return nil, err
-			}
-
 			q = q.Where("? NOT IN (?)", column, bun.In(values))
 		}
 	}
@@ -103,6 +78,7 @@ func ApplyInt32FieldFilter(
 	return q, nil
 }
 
+// ApplyDoubleFieldFilter applies filtering on a bun query for double field.
 func ApplyDoubleFieldFilter(
 	q *bun.SelectQuery,
 	column schema.Ident,
@@ -129,6 +105,7 @@ func tryAsTime(tspb *timestamppb.Timestamp) *time.Time {
 	return ptrs.Ptr(tspb.AsTime())
 }
 
+// ApplyTimestampFieldFilter applies filtering on a bun query for timestamp field.
 func ApplyTimestampFieldFilter(
 	q *bun.SelectQuery,
 	column schema.Ident,
@@ -140,7 +117,6 @@ func ApplyTimestampFieldFilter(
 		Lt:  tryAsTime(filter.Lt),
 		Lte: tryAsTime(filter.Lte),
 	})
-
 	if err != nil {
 		return nil, err
 	}

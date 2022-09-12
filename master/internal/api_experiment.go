@@ -390,9 +390,9 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
-	if req.ExperimentFilter != nil {
+	if req.ExperimentIdFilter != nil {
 		var err error
-		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentFilter)
+		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentIdFilter)
 		if err != nil {
 			return nil, err
 		}

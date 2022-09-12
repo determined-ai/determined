@@ -3049,10 +3049,10 @@ class v1Int32FieldFilter:
         *,
         gt: "typing.Optional[int]" = None,
         gte: "typing.Optional[int]" = None,
-        in: "typing.Optional[str]" = None,
+        in: "typing.Optional[typing.Sequence[int]]" = None,
         lt: "typing.Optional[int]" = None,
         lte: "typing.Optional[int]" = None,
-        notIn: "typing.Optional[str]" = None,
+        notIn: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.lt = lt
         self.lte = lte
@@ -7672,10 +7672,10 @@ def get_GetExperiments(
     description: "typing.Optional[str]" = None,
     experimentFilter_gt: "typing.Optional[int]" = None,
     experimentFilter_gte: "typing.Optional[int]" = None,
-    experimentFilter_in: "typing.Optional[str]" = None,
+    experimentFilter_in: "typing.Optional[typing.Sequence[int]]" = None,
     experimentFilter_lt: "typing.Optional[int]" = None,
     experimentFilter_lte: "typing.Optional[int]" = None,
-    experimentFilter_notIn: "typing.Optional[str]" = None,
+    experimentFilter_notIn: "typing.Optional[typing.Sequence[int]]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,

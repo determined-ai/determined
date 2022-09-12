@@ -18,30 +18,43 @@ message Metrics {
   repeated google.protobuf.Struct batch_metrics = 2;
 }
 
+// Double filters.
 message DoubleFieldFilter {
+  // Less than.
   optional double lt = 2;
+  // Less than or equal.
   optional double lte = 3;
+  // Greater than.
   optional double gt = 4;
+  // Greater than or equal.
   optional double gte = 5;
 }
 
+// Int32 filters.
 message Int32FieldFilter {
-  // TODO: support exact.
-  // optional int32 exact = 1;
+  // TODO(ilia): add `exact`.
+  // Less than.
   optional int32 lt = 2;
+  // Less than or equal.
   optional int32 lte = 3;
+  // Greater than.
   optional int32 gt = 4;
+  // Greater than or equal.
   optional int32 gte = 5;
-  // Comma-separated list of ints.
-  optional string in = 6;
-  // Comma-separated list of ints.
-  optional string not_in = 7;
+  // In a set.
+  repeated int32 in = 6;
+  // Not in a set.
+  repeated int32 not_in = 7;
 }
 
+// Timestamp filters.
 message TimestampFieldFilter {
-  optional google.protobuf.Timestamp exact = 1;
+  // Less than.
   optional google.protobuf.Timestamp lt = 2;
+  // Less than or equal.
   optional google.protobuf.Timestamp lte = 3;
+  // Greater than.
   optional google.protobuf.Timestamp gt = 4;
+  // Greater than or equal.
   optional google.protobuf.Timestamp gte = 5;
 }
