@@ -1075,7 +1075,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
 
 	m.echo.Any("/*", func (c echo.Context) error {
-		return c.String(http.StatusBadRequest, "Page not found")
+		return echo.ErrNotFound
 	})
 
 	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
