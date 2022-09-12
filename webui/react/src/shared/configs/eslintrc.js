@@ -113,6 +113,10 @@ module.exports = {
       component: true,
       html: true,
     } ],
+    'react-hooks/exhaustive-deps': [
+      'warn', { additionalHooks: '(useRecoilCallback|useRecoilTransaction_UNSTABLE)' },
+    ],
+    'react-hooks/rules-of-hooks': 'error',
     'require-await': 'error',
     'semi': [ 'error', 'always' ],
     'sort-imports': [ 'error', {
