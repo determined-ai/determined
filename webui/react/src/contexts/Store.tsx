@@ -114,7 +114,6 @@ export enum StoreAction {
   SetUserAssignments = 'SetUserAssignments',
   SetUserRoles = 'SetUserRoles',
 }
-
 type ActionSA =
 | { type: StoreActionSA.HideUIChrome }
 | { type: StoreActionSA.HideUISpinner }
@@ -124,7 +123,7 @@ type ActionSA =
 | { type: StoreActionSA.ShowUIChrome }
 | { type: StoreActionSA.ShowUISpinner }
 
-export type Action =
+type Action =
 | { type: StoreAction.Reset }
 | { type: StoreAction.SetAgents; value: Agent[] }
 | { type: StoreAction.ResetAuth }
@@ -157,7 +156,7 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-export const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
+const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.CUDA]: clone(initResourceTally),
