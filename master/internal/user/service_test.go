@@ -18,7 +18,7 @@ func TestStandardAuth(t *testing.T) {
 	service := Service{}
 	require.Equal(t, authStandard, service.getAuthLevel(c))
 
-	c.SetPath("/api/v1/master/info")
+	c.SetPath("/random/unlisted/endpoint")
 	require.Equal(t, authStandard, service.getAuthLevel(c))
 }
 
