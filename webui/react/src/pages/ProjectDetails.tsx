@@ -181,7 +181,7 @@ const ProjectDetails: React.FC = () => {
       const pinnedIds = (settings.pinned[id] ?? []);
       const pinnedExperimentsRequest = getExperiments({
         ...baseParams,
-        experimentIdFilter: { in: pinnedIds },
+        experimentIdFilter: { incl: pinnedIds },
         limit: settings.tableLimit,
         offset: 0,
       }, { signal: canceler.signal });

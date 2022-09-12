@@ -55,9 +55,9 @@ func ApplyInt32FieldFilter(
 		return nil, err
 	}
 
-	if filter.In != nil {
+	if filter.Incl != nil {
 		values := []int32{}
-		values = append(values, filter.In...)
+		values = append(values, filter.Incl...)
 		if len(values) == 0 {
 			q = q.Where("false")
 		} else {

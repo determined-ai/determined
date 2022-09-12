@@ -41,8 +41,8 @@ message Int32FieldFilter {
   optional int32 gt = 4;
   // Greater than or equal.
   optional int32 gte = 5;
-  // In a set.
-  repeated int32 in = 6;
+  // In a set. `in` is a reserved word in python.
+  repeated int32 incl = 6;
   // Not in a set.
   repeated int32 not_in = 7;
 }
