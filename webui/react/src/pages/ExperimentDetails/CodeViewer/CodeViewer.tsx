@@ -447,7 +447,7 @@ const CodeViewer: React.FC<Props> = ({
     };
   }, []);
 
-  const classes = [ css.base, pageError ? css.noEditor : '' ];
+  const classes = [ css.base, pageError || isFetchingFile ? css.noEditor : '' ];
 
   return (
     <section className={classes.join(' ')}>
