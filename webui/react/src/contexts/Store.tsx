@@ -39,7 +39,7 @@ interface StateSA {
   ui: UI;
 }
 
-enum StoreActionSA {
+export enum StoreActionSA {
   // UI
   HideUIChrome = 'HideUIChrome',
   HideUISpinner = 'HideUISpinner',
