@@ -180,11 +180,22 @@ func NewDispatcherResourceManager(
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
+
+	var rm *dispatcherResourceManager
+	if config.ResourceManager.DispatcherRM != nil {
+		// slurm type is configured
+		rm = newDispatcherResourceManager(
+			config.ResourceManager.DispatcherRM, tlsConfig, opts.LoggingOptions,
+		)
+	} else {
+		// pbs type is configured
+		rm = newDispatcherResourceManager(
+			config.ResourceManager.PbsRM, tlsConfig, opts.LoggingOptions,
+		)
+	}
 	ref, _ := system.ActorOf(
 		sproto.DispatcherRMAddr,
-		newDispatcherResourceManager(
-			config.ResourceManager.DispatcherRM, tlsConfig, opts.LoggingOptions,
-		),
+		rm,
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 	return &DispatcherResourceManager{ActorResourceManager: WrapRMActor(ref)}
