@@ -2524,23 +2524,19 @@ class v1GetSearcherEventsResponse:
     def __init__(
         self,
         *,
-        lastTriggeringEvent: "typing.Optional[v1SearcherEvent]" = None,
         searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None,
     ):
         self.searcherEvents = searcherEvents
-        self.lastTriggeringEvent = lastTriggeringEvent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
         return cls(
             searcherEvents=[v1SearcherEvent.from_json(x) for x in obj["searcherEvents"]] if obj.get("searcherEvents", None) is not None else None,
-            lastTriggeringEvent=v1SearcherEvent.from_json(obj["lastTriggeringEvent"]) if obj.get("lastTriggeringEvent", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "searcherEvents": [x.to_json() for x in self.searcherEvents] if self.searcherEvents is not None else None,
-            "lastTriggeringEvent": self.lastTriggeringEvent.to_json() if self.lastTriggeringEvent is not None else None,
         }
 
 class v1GetShellResponse:
