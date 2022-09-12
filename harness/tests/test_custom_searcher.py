@@ -1,8 +1,8 @@
 import logging
 import tempfile
-from unittest.mock import Mock
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
+from unittest.mock import Mock
 
 from determined.common.api import bindings
 from determined.experimental import client
