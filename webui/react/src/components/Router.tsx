@@ -24,7 +24,7 @@ const Router: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     if (auth.isAuthenticated) {
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionSA.HideUISpinner });
     }
   }, [ auth.isAuthenticated, storeDispatch ]);
 

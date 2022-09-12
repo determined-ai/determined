@@ -40,7 +40,7 @@ const ThemeToggle: React.FC = () => {
   const newThemeMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    storeDispatch({ type: StoreAction.SetMode, value: currentThemeOption.next });
+    storeDispatch({ type: StoreActionSA.SetMode, value: currentThemeOption.next });
   };
 
   return (

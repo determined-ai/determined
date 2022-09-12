@@ -56,8 +56,8 @@ export const InteractiveTask: React.FC = () => {
   const { ui } = useStore();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+    storeDispatch({ type: StoreActionSA.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionSA.ShowUIChrome });
   }, [ storeDispatch ]);
 
   useEffect(() => {

@@ -65,7 +65,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionSA.HideUISpinner });
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -78,13 +78,13 @@ const SignIn: React.FC = () => {
         routeAll(queries.redirect);
       }
     } else if (auth.checked) {
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionSA.HideUISpinner });
     }
   }, [ auth, info, location, queries, storeDispatch ]);
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+    storeDispatch({ type: StoreActionSA.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionSA.ShowUIChrome });
   }, [ storeDispatch ]);
 
   // Stop the polling upon a dismount of this page.

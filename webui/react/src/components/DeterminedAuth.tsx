@@ -32,7 +32,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
-    storeDispatch({ type: StoreAction.ShowUISpinner });
+    storeDispatch({ type: StoreActionSA.ShowUISpinner });
     setCanSubmit(false);
     try {
       const { token, user } = await login(
@@ -51,7 +51,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);
       setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionSA.HideUISpinner });
       const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
       if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
       handleError(e, {

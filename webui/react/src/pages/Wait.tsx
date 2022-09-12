@@ -44,8 +44,8 @@ const Wait: React.FC = () => {
   }
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+    storeDispatch({ type: StoreActionSA.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionSA.ShowUIChrome });
   }, [ storeDispatch ]);
 
   const handleTaskError = (err: Error) => {

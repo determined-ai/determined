@@ -25,7 +25,7 @@ const usePageVisibility = (): void => {
   const handleVisibilityChange = useCallback(() => {
     if (!hidden) return;
     storeDispatch({
-      type: StoreAction.SetPageVisibility,
+      type: StoreActionSA.SetPageVisibility,
       value: !!(document as DocumentHidden)[hidden as keyof DocumentHidden],
     });
   }, [ hidden, storeDispatch ]);

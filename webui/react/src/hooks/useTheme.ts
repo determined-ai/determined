@@ -102,7 +102,7 @@ export const useTheme = (): void => {
 
     const darkLight = getDarkLight(ui.mode, systemMode);
     storeDispatch({
-      type: StoreAction.SetTheme,
+      type: StoreActionSA.SetTheme,
       value: { darkLight, theme: themes[info.branding][darkLight] },
     });
   }, [ info.branding, storeDispatch, systemMode, ui.mode ]);
@@ -117,7 +117,7 @@ export const useTheme = (): void => {
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
     } else {
       // Initially set the mode from settings.
-      storeDispatch({ type: StoreAction.SetMode, value: settings.mode });
+      storeDispatch({ type: StoreActionSA.SetMode, value: settings.mode });
       setIsSettingsReady(true);
     }
   }, [ isSettingsReady, settings, storeDispatch, ui.mode, updateSettings ]);

@@ -9,7 +9,7 @@ import css from './NoPermissions.module.scss';
 const NoPermissions: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  useEffect(() => storeDispatch({ type: StoreAction.HideUIChrome }), [ storeDispatch ]);
+  useEffect(() => storeDispatch({ type: StoreActionSA.HideUIChrome }), [ storeDispatch ]);
 
   return (
     <Page
