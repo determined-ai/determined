@@ -262,12 +262,12 @@ func (db *PgDB) ensureStep(
 	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
 ) error {
 	var exists bool
-	if err := tx.QueryRowxContext(ctx, `
+	switch err := tx.QueryRowxContext(ctx, `
 SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
-		trialID, stepsCompleted).Scan(&exists); err != nil {
+		trialID, stepsCompleted).Scan(&exists); {
+	case err != nil:
 		return err
-	}
-	if exists {
+	case exists:
 		return nil
 	}
 

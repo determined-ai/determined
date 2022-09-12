@@ -114,14 +114,14 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		Metrics:        &commonv1.Metrics{AvgMetrics: trainMetrics},
 	}))
 
-	db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         uuid.New(),
 		TaskID:       task.TaskID,
 		AllocationID: a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 50},
-	})
+	}))
 
 	// Trial gets interrupted and starts in the future with a new trial run ID.
 	a = &model.Allocation{
@@ -156,14 +156,14 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		StepsCompleted: 400,
 		Metrics:        &commonv1.Metrics{AvgMetrics: valMetrics2},
 	}))
-	db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         checkpoint2UUID,
 		TaskID:       task.TaskID,
 		AllocationID: a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 400},
-	})
+	}))
 	checkpoints = []*checkpointv1.Checkpoint{}
 	require.NoError(t, db.QueryProto("get_checkpoints_for_experiment", &checkpoints, exp.ID))
 	require.Len(t, checkpoints, 2)
