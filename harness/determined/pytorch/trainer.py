@@ -103,11 +103,11 @@ class Trainer:
 
         return
 
-    def report_training_metrics(self, records_completed, steps_completed, metrics):
+    def report_training_metrics(self, steps_completed, metrics):
         metrics = self.context.distributed.broadcast(metrics)
         # Only report on the chief worker
         if self.is_chief:
-            metrics = self._prepare_metrics(num_inputs=records_completed, batch_metrics=metrics)
+            metrics = self._prepare_metrics(batch_metrics=metrics)
             self.core_context.train.report_training_metrics(
                 steps_completed=steps_completed, metrics=metrics
             )
@@ -155,7 +155,7 @@ class Trainer:
             model.train()
         return metrics
 
-    def _prepare_metrics(self, num_inputs: int, batch_metrics: List):
+    def _prepare_metrics(self, batch_metrics: List):
         for metrics in batch_metrics:
             for name, metric in metrics.items():
                 # Convert PyTorch metric values to NumPy, so that
@@ -164,7 +164,7 @@ class Trainer:
                 if isinstance(metric, torch.Tensor):
                     metric = metric.cpu().detach().numpy()
                 metrics[name] = metric
-        metrics = det.util.make_metrics(num_inputs, batch_metrics)
+        metrics = det.util.make_metrics(None, batch_metrics)
         metrics["avg_metrics"].update(
             pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
         )
@@ -185,7 +185,6 @@ class TrainLoop:
         self.max_steps = max_epochs if self.step_type == TrainStepType.EPOCH else max_batches
         self.batches_trained = 0
         self.epochs_trained = 0
-        self.records_completed = 0
         self.steps_completed = 0
         self.checkpoint_period = min_checkpoint_period
         self.validation_period = min_validation_period
@@ -205,7 +204,6 @@ class TrainLoop:
 
     def _train_batch(self, batch, epochs, batch_idx):
         self.trainer.context._current_batch_idx = self.batches_trained
-        self.records_completed += self.trainer.trial.get_batch_length(batch)
         batch_metrics = self.trainer.trial.train_batch(batch, epochs, batch_idx)
         self.training_metrics.append(batch_metrics)
         self._step_batch()
@@ -213,7 +211,7 @@ class TrainLoop:
     def _train_step(self):
         self.steps_completed += 1
         if self.steps_completed % self.reporting_period == 0:
-            self.trainer.report_training_metrics(self.records_completed, self.steps_completed, self.training_metrics)
+            self.trainer.report_training_metrics(self.steps_completed, self.training_metrics)
             self.training_metrics = []
         if self.steps_completed % self.validation_period == 0:
             self.trainer.validate_and_report_metrics(self.steps_completed)
