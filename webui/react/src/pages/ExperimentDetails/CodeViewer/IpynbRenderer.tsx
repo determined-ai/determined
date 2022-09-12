@@ -15,7 +15,7 @@ interface Props {
   file: IpynbInterface;
 }
 
-const JupyterRenderer: React.FC<Props> = ({ file }) => {
+const JupyterRenderer: React.FC<Props> = React.memo(({ file }) => {
   return (
     <IpynbRenderer
       bgTransparent={true}
@@ -33,6 +33,6 @@ const JupyterRenderer: React.FC<Props> = ({ file }) => {
       syntaxTheme="xonokai"
     />
   );
-};
+});
 
 export default JupyterRenderer;
