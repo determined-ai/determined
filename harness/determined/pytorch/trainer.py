@@ -140,14 +140,12 @@ class Trainer:
                 steps_completed=steps_completed, metrics=metrics
             )
 
-    def validate_and_report_metrics(self, steps_completed):
-        self.on_validation_epoch_start()
-        val_metrics = self.validate()
+    def report_validation_metrics(self, steps_completed, metrics):
         if self.is_chief:
-            self.core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics=val_metrics)
-        self.on_validation_epoch_end(val_metrics)
+            self.core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics=metrics)
 
     def validate(self):
+        self.on_validation_epoch_start()
         val_loader = self._build_validation_loader()
 
         # Set models to evaluation mode
@@ -179,6 +177,8 @@ class Trainer:
         metrics.update(
             pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
+
+        self.on_validation_epoch_end(metrics)
 
         # Set models back to training mode
         for model in self.context.models:
@@ -246,7 +246,8 @@ class TrainLoop:
             self.trainer.report_training_metrics(self.steps_completed, self.training_metrics)
             self.training_metrics = []
         if self.steps_completed % self.validation_period == 0:
-            self.trainer.validate_and_report_metrics(self.steps_completed)
+            val_metrics = self.trainer.validate()
+            self.trainer.report_validation_metrics(self.steps_completed, val_metrics)
 
     def _step_batch(self):
         self.batches_trained += 1
@@ -255,7 +256,6 @@ class TrainLoop:
 
     def _step_epoch(self):
         self.epochs_trained += 1
-
         if self.step_type == TrainStepType.EPOCH:
             self._train_step()
 
