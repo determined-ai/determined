@@ -41,7 +41,9 @@ class CoreSearchRunner(SearchRunner):
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
-        self.run_experiment(experiment_id, operations)
+        assert client._determined is not None
+        session = client._determined._session
+        self.run_experiment(experiment_id, operations, session)
 
         return experiment_id
 

@@ -1,19 +1,12 @@
 import logging
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
 from numpy import float64
-from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
 from determined.common.api import bindings
-from determined.e2e_tests.tests.fixtures.custom_searcher.searchers import (
-    ASHASearchMethod,
-    RandomSearchMethod,
-    SingleSearchMethod,
-)
 from determined.experimental import client
 from determined.searcher.search_method import (
     Close,
@@ -25,11 +18,11 @@ from determined.searcher.search_method import (
     ValidateAfter,
 )
 from determined.searcher.search_runner import LocalSearchRunner
-from tests import config as conf
-from tests import experiment as exp
+from .e2e_tests.tests.fixtures.custom_searcher.searchers import (
+    ASHASearchMethod,
+    RandomSearchMethod,
+)
 
-
-@pytest.mark.e2e_cpu_2a
 def test_run_random_searcher_exp_mock_master() -> None:
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
@@ -49,7 +42,7 @@ def test_run_random_searcher_exp_mock_master() -> None:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
         mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
         search_runner = MockMasterSearchRunner(search_method, Path(searcher_dir), mock_master_obj)
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -77,13 +70,14 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
     mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
     search_runner = MockMasterSearchRunner(search_method, tmp_path, mock_master_obj)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
     assert len(search_method.searcher_state.trials_closed) == len(
         search_method.asha_search_state.closed_trials
     )
+
 
 
 class SimulateMaster:
@@ -104,7 +98,7 @@ class SimulateMaster:
                 self.events_queue = self.events_queue[i + 1 :]
                 return
 
-        raise RuntimeError(f"event not found in events queue: {event}")
+        pytest.raises(RuntimeError(f"event not found in events queue: {event}"))
 
     def _process_operations(self, operations: List[Operation]):
         for op in operations:
@@ -215,3 +209,4 @@ class MockMasterSearchRunner(LocalSearchRunner):
 
     def _get_state_path(self, experiment_id: int) -> Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
+
