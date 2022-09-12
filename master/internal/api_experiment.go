@@ -391,20 +391,10 @@ func (a *apiServer) GetExperiments(
 	}
 
 	if req.ExperimentFilter != nil {
-		experimentIds := make([]int32, 0)
-		if req.ExperimentFilter.ExperimentIds != nil {
-			experimentIds = append(experimentIds, req.ExperimentFilter.ExperimentIds...)
-		}
-		expRestriction := req.ExperimentFilter.Restriction.String()
-		restrictionName := apiv1.GetExperimentsRequest_ExperimentFilter_Restriction_name
-		if expRestriction == restrictionName[1] {
-			if len(experimentIds) == 0 {
-				resp.Pagination = &apiv1.Pagination{}
-				return resp, nil
-			}
-			query = query.Where("e.id IN (?)", bun.In(experimentIds))
-		} else if expRestriction == restrictionName[2] && len(experimentIds) > 0 {
-			query = query.Where("e.id NOT IN (?)", bun.In(experimentIds))
+		var err error
+		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentFilter)
+		if err != nil {
+			return nil, err
 		}
 	}
 

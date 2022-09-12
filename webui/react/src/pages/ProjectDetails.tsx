@@ -181,13 +181,13 @@ const ProjectDetails: React.FC = () => {
       const pinnedIds = (settings.pinned[id] ?? []);
       const pinnedExperimentsRequest = getExperiments({
         ...baseParams,
-        experimentFilter: { experimentIds: pinnedIds, restriction: 'RESTRICTION_INCLUDE' },
+        experimentFilter: { in: pinnedIds.join(',') },
         limit: settings.tableLimit,
         offset: 0,
       }, { signal: canceler.signal });
       const otherExperimentsRequest = getExperiments({
         ...baseParams,
-        experimentFilter: { experimentIds: pinnedIds, restriction: 'RESTRICTION_EXCLUDE' },
+        experimentFilter: { notIn: pinnedIds.join(',') },
         limit: settings.tableLimit - pinnedIds.length,
         offset: settings.tableOffset -
             (settings.tableOffset / settings.tableLimit) * pinnedIds.length,

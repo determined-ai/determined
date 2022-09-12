@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/commonv1";
 
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 // Aggregate and batch metrics
 message Metrics {
@@ -15,4 +16,32 @@ message Metrics {
   google.protobuf.Struct avg_metrics = 1;
   // User-generated metrics for each batch
   repeated google.protobuf.Struct batch_metrics = 2;
+}
+
+message DoubleFieldFilter {
+  optional double lt = 2;
+  optional double lte = 3;
+  optional double gt = 4;
+  optional double gte = 5;
+}
+
+message Int32FieldFilter {
+  // TODO: support exact.
+  // optional int32 exact = 1;
+  optional int32 lt = 2;
+  optional int32 lte = 3;
+  optional int32 gt = 4;
+  optional int32 gte = 5;
+  // Comma-separated list of ints.
+  optional string in = 6;
+  // Comma-separated list of ints.
+  optional string not_in = 7;
+}
+
+message TimestampFieldFilter {
+  optional google.protobuf.Timestamp exact = 1;
+  optional google.protobuf.Timestamp lt = 2;
+  optional google.protobuf.Timestamp lte = 3;
+  optional google.protobuf.Timestamp gt = 4;
+  optional google.protobuf.Timestamp gte = 5;
 }

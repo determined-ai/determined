@@ -75,34 +75,6 @@ class ExpCompareTrialsSampleResponseExpTrial:
             "experimentId": self.experimentId,
         }
 
-class ExperimentFilterRestriction(enum.Enum):
-    RESTRICTION_UNSPECIFIED = "RESTRICTION_UNSPECIFIED"
-    RESTRICTION_INCLUDE = "RESTRICTION_INCLUDE"
-    RESTRICTION_EXCLUDE = "RESTRICTION_EXCLUDE"
-
-class GetExperimentsRequestExperimentFilter:
-    def __init__(
-        self,
-        *,
-        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
-        restriction: "typing.Optional[ExperimentFilterRestriction]" = None,
-    ):
-        self.restriction = restriction
-        self.experimentIds = experimentIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "GetExperimentsRequestExperimentFilter":
-        return cls(
-            restriction=ExperimentFilterRestriction(obj["restriction"]) if obj.get("restriction", None) is not None else None,
-            experimentIds=obj.get("experimentIds", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "restriction": self.restriction.value if self.restriction is not None else None,
-            "experimentIds": self.experimentIds if self.experimentIds is not None else None,
-        }
-
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -3069,6 +3041,45 @@ class v1IdleNotebookRequest:
         return {
             "notebookId": self.notebookId if self.notebookId is not None else None,
             "idle": self.idle if self.idle is not None else None,
+        }
+
+class v1Int32FieldFilter:
+    def __init__(
+        self,
+        *,
+        gt: "typing.Optional[int]" = None,
+        gte: "typing.Optional[int]" = None,
+        in: "typing.Optional[str]" = None,
+        lt: "typing.Optional[int]" = None,
+        lte: "typing.Optional[int]" = None,
+        notIn: "typing.Optional[str]" = None,
+    ):
+        self.lt = lt
+        self.lte = lte
+        self.gt = gt
+        self.gte = gte
+        self.in = in
+        self.notIn = notIn
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Int32FieldFilter":
+        return cls(
+            lt=obj.get("lt", None),
+            lte=obj.get("lte", None),
+            gt=obj.get("gt", None),
+            gte=obj.get("gte", None),
+            in=obj.get("in", None),
+            notIn=obj.get("notIn", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "lt": self.lt if self.lt is not None else None,
+            "lte": self.lte if self.lte is not None else None,
+            "gt": self.gt if self.gt is not None else None,
+            "gte": self.gte if self.gte is not None else None,
+            "in": self.in if self.in is not None else None,
+            "notIn": self.notIn if self.notIn is not None else None,
         }
 
 class v1Job:
@@ -7659,8 +7670,12 @@ def get_GetExperiments(
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
-    experimentFilter_experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
-    experimentFilter_restriction: "typing.Optional[ExperimentFilterRestriction]" = None,
+    experimentFilter_gt: "typing.Optional[int]" = None,
+    experimentFilter_gte: "typing.Optional[int]" = None,
+    experimentFilter_in: "typing.Optional[str]" = None,
+    experimentFilter_lt: "typing.Optional[int]" = None,
+    experimentFilter_lte: "typing.Optional[int]" = None,
+    experimentFilter_notIn: "typing.Optional[str]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
@@ -7675,8 +7690,12 @@ def get_GetExperiments(
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "description": description,
-        "experimentFilter.experimentIds": experimentFilter_experimentIds,
-        "experimentFilter.restriction": experimentFilter_restriction.value if experimentFilter_restriction is not None else None,
+        "experimentFilter.gt": experimentFilter_gt,
+        "experimentFilter.gte": experimentFilter_gte,
+        "experimentFilter.in": experimentFilter_in,
+        "experimentFilter.lt": experimentFilter_lt,
+        "experimentFilter.lte": experimentFilter_lte,
+        "experimentFilter.notIn": experimentFilter_notIn,
         "labels": labels,
         "limit": limit,
         "name": name,

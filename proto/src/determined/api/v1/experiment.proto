@@ -8,6 +8,7 @@ import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/pagination.proto";
+import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/job/v1/job.proto";
@@ -41,25 +42,9 @@ message GetExperimentResponse {
   determined.job.v1.JobSummary job_summary = 3;
 }
 
+
 // Get a list of experiments.
 message GetExperimentsRequest {
-  // filtering by experiment ids
-  message ExperimentFilter {
-    // Filter restriction
-    enum Restriction {
-      // Return all experiments
-      RESTRICTION_UNSPECIFIED = 0;
-      //  Return experiments with the ids
-      RESTRICTION_INCLUDE = 1;
-      //  Return experiments without the ids
-      RESTRICTION_EXCLUDE = 2;
-    }
-    // Filter restriction
-    Restriction restriction = 1;
-    // Experiment ids to include or exclude experiments
-    repeated int32 experiment_ids = 2;
-  }
-
   // Sorts experiments by the given field.
   enum SortBy {
     // Returns experiments in an unsorted list.
@@ -122,7 +107,7 @@ message GetExperimentsRequest {
   // projects.
   int32 project_id = 12;
   // filtering by experiment ids
-  ExperimentFilter experiment_filter = 13;
+  determined.common.v1.Int32FieldFilter experiment_filter = 13;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
