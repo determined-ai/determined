@@ -705,9 +705,6 @@ message GetSearcherEventsResponse {
   // TrialExitedEarly, TrialClosed appended with a counter id to represent
   // order.
   repeated determined.experiment.v1.SearcherEvent searcher_events = 1;
-  // The last event that triggered client which sent the appropriate events
-  // to master which sent them successfully to the experiment actor.
-  determined.experiment.v1.SearcherEvent last_triggering_event = 2;
 }
 
 // Request for sending operations from a custom user search method.
