@@ -322,7 +322,6 @@ const CodeViewer: React.FC<Props> = ({
     }
 
     if (isConfig(selectedKey)) {
-      handleSelectConfig(selectedKey);
       updateSettings({ fileName: String(info.node.title), filePath: String(info.node.key) });
       return;
     }
@@ -343,7 +342,6 @@ const CodeViewer: React.FC<Props> = ({
     }
   }, [
     activeFile?.key,
-    handleSelectConfig,
     treeData,
     switchTreeViewToEditor,
     updateSettings,
