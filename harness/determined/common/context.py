@@ -109,6 +109,7 @@ def read_v1_context(
     # however, the Python documentation claims a warning that rglob may be
     # inefficient on large directory trees, so we use the older os.walk().
     for parent, dirs, files in os.walk(str(root_path)):
+        keep_dirs = []
         for directory in dirs:
             dir_path = pathlib.Path(parent).joinpath(directory)
             dir_rel_path = dir_path.relative_to(root_path)
@@ -118,27 +119,25 @@ def read_v1_context(
                 continue
             if ignore_spec.match_file(str(dir_rel_path) + "/"):
                 continue
-
+            keep_dirs.append(directory)
             # Determined only supports POSIX-style file paths.  Use as_posix() in case this code
             # is executed in a non-POSIX environment.
             entry_path = dir_rel_path.as_posix()
 
             add_item(v1File_from_local_dir(entry_path, dir_path))
+        # We can modify dirs in-place so that ignored directories are not recused into
+        #  See https://docs.python.org/3/library/os.html#os.walk
+        dirs[:] = keep_dirs
 
         for file in files:
             file_path = pathlib.Path(parent).joinpath(file)
             file_rel_path = file_path.relative_to(root_path)
-            parent_rel_path = pathlib.Path(parent).relative_to(root_path)
 
             # If the file is the .detignore file, it matches one of the
             #  paths specified in .detignore, or if its parent directory does, then ignore it.
             if file_rel_path.name == ".detignore":
                 continue
             if ignore_spec.match_file(str(file_rel_path)):
-                continue
-            if ignore_spec.match_file(str(parent_rel_path)):
-                continue
-            if ignore_spec.match_file(str(parent_rel_path) + "/"):
                 continue
 
             # Determined only supports POSIX-style file paths.  Use as_posix() in case this code

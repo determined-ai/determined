@@ -229,6 +229,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
             "dir/file.py": "",
             "dir/subdir/A.py": "",
             "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
             ".detignore": "\ndir/sub*/\n",
         },
     ) as tree:
@@ -241,6 +242,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
             "dir/file.py": "",
             "dir/subdir/A.py": "",
             "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
             ".detignore": "\ndir/sub*\n",
         },
     ) as tree:
@@ -253,6 +255,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
             "dir/file.py": "",
             "dir/subdir/A.py": "",
             "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
             ".detignore": "\ndir/*/\n",
         },
     ) as tree:
@@ -265,6 +268,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
             "dir/file.py": "",
             "dir/subdir/A.py": "",
             "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
             ".detignore": "\ndir/*\n",
         },
     ) as tree:
