@@ -1001,9 +1001,9 @@ func (m *Master) Run(ctx context.Context) error {
 		cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
 
 		if cacheFileLongTerm.MatchString(requestedFile) {
-			c.Response().Header().Set("cache-control", "max-age=31536000")
+			c.Response().Header().Set("cache-control", "public, max-age=31536000")
 		} else if cacheFileShortTerm.MatchString(requestedFile) {
-			c.Response().Header().Set("cache-control", "max-age=600")
+			c.Response().Header().Set("cache-control", "public, max-age=600")
 		}
 
 		if hasMatchingFile {
