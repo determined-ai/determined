@@ -41,7 +41,8 @@ class CoreSearchRunner(SearchRunner):
             self.search_method.searcher_state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
-
+        
+        client._require_singleton(lambda: None)()
         assert client._determined is not None
         session = client._determined._session
         self.run_experiment(experiment_id, session, operations)
