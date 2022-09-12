@@ -133,8 +133,6 @@ class TextualInversionTrainer:
         self.optimizer = None
         self.train_noise_scheduler = None
 
-        self.pipeline = None
-
         self._build_models()
         self._add_new_tokens()
         self._freeze_layers()
@@ -142,7 +140,9 @@ class TextualInversionTrainer:
         self._build_optimizer()
         self._build_train_noise_scheduler()
         self._wrap_and_prepare()
-        # self._build_pipeline()
+
+        # Pipeline construction is deferred until the _save call
+        self.pipeline = None
 
     def train(self) -> None:
         """Run the full latent inversion training loop."""
@@ -199,13 +199,13 @@ class TextualInversionTrainer:
         latents = latents * scale_factor
 
         # Sample noise that we'll add to the latents
-        noise = torch.randn(latents.shape).to(latents.device)
+        noise = torch.randn(latents.shape).to(self.accelerator.device)
         # Sample a random timestep for each image
         timesteps = torch.randint(
             0,
             self.num_train_timesteps,
             (self.train_batch_size,),
-            device=latents.device,
+            device=self.accelerator.device,
         ).long()
 
         # Add noise to the latents according to the noise magnitude at each timestep
@@ -218,7 +218,7 @@ class TextualInversionTrainer:
         # Predict the noise residual
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
         loss = F.mse_loss(noise_pred, noise)
-        self.loss_history.append(loss)
+        self.loss_history.append(loss.detach())
         self.accelerator.backward(loss)
 
         # Get the gradients. An extra .module attr is needed due to the .prepare() call
@@ -228,6 +228,8 @@ class TextualInversionTrainer:
             torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
         )
         grads.data[index_grads_to_zero] = 0.0
+        print(grads.data[self.placeholder_token_ids[0]])
+        print(grads.data[self.placeholder_token_ids[0]].sum())
         self.optimizer.step()
         self.optimizer.zero_grad()
 
@@ -435,11 +437,13 @@ class TextualInversionTrainer:
             .get_input_embeddings()
             .weight[self.placeholder_token_ids]
         )
-        learned_embeds_dict = {self.placeholder_tokens: learned_embeds.detach().cpu()}
+        learned_embeds_dict = {tuple(self.placeholder_tokens): learned_embeds.detach().cpu()}
         self.accelerator.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
         # Generate a new image using the pipeline.
+        imgs_path = path.joinpath("imgs")
+        os.makedirs(imgs_path, exist_ok=True)
         for prompt in self.inference_prompts:
             # Fixed generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
@@ -452,18 +456,18 @@ class TextualInversionTrainer:
                 generator=generator,
             )["sample"][0]
             self.generated_imgs.append((self.steps_completed, generated_img))
-            prompt_path = path.joinpath("_".join(prompt.split()))
-            os.makedirs(prompt_path, exist_ok=True)
+            prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
+            os.makedirs(prompt_imgs_path, exist_ok=True)
             img_grid = Image.new(
                 "RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size)
             )
             for idx, (step, img) in enumerate(self.generated_imgs):
-                img.save(prompt_path.joinpath(f"{step}.png"))
+                img.save(prompt_imgs_path.joinpath(f"{step}.png"))
                 img_grid.paste(img, box=(idx * self.img_size, 0))
-            img_grid.save(prompt_path.joinpath("all_imgs.png"))
+            img_grid.save(prompt_imgs_path.joinpath("all_imgs.png"))
             img_0 = self.generated_imgs[0][1]
             img_0.save(
-                fp=prompt_path.joinpath("all_imgs.gif"),
+                fp=prompt_imgs_path.joinpath("all_imgs.gif"),
                 format="GIF",
                 append_images=(img for _, img in self.generated_imgs),
                 save_all=True,
@@ -473,10 +477,13 @@ class TextualInversionTrainer:
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
-        print(f"Reporting metrics at step {self.steps_completed}.")
         print(self.loss_history)
-        self.last_mean_loss = self.accelerator.reduce(self.loss_history, reduction="mean").item()
-        print(self.last_mean_loss)
+        local_mean_loss = torch.tensor(self.loss_history, device=self.accelerator.device).mean()
+        # reduction = 'mean' seems to return the sum rather than the mean:
+        self.last_mean_loss = (
+            self.accelerator.reduce(local_mean_loss, reduction="sum").item()
+            / self.accelerator.num_processes
+        )
         self.loss_history = []
         if self.accelerator.is_main_process:
             core_context.train.report_training_metrics(
