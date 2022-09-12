@@ -15,6 +15,8 @@ from determined.pytorch import TorchData
 from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
+    DDIMScheduler,
+    LMSDiscreteScheduler,
     PNDMScheduler,
     StableDiffusionPipeline,
     UNet2DConditionModel,
@@ -53,9 +55,11 @@ class TextualInversionTrainer:
         flip_p: float = 0.5,
         center_crop: bool = False,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
+        inference_noise_scheduler: Literal["ddim", "lms-discrete", "pndm"] = "ddim",
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
         generator_seed: int = 2147483647,
+        inference_noise_scheduler_kwargs: Optional[dict] = None,
         latest_checkpoint: Optional[str] = None,
     ) -> None:
         self.use_auth_token = use_auth_token
@@ -92,18 +96,29 @@ class TextualInversionTrainer:
         self.train_seed = train_seed
 
         # TODO: Fix inference_prompts default
+        inference_schedulers = {
+            "ddim": DDIMScheduler,
+            "lms-discrete": LMSDiscreteScheduler,
+            "pndm": PNDMScheduler,
+        }
+        assert inference_noise_scheduler in inference_schedulers, (
+            f"inference_noise_scheduler must be one {list(inference_schedulers.keys())},"
+            f" but got {inference_noise_scheduler}"
+        )
+        self.inference_noise_scheduler = inference_schedulers[inference_noise_scheduler]
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
         self.inference_prompts = inference_prompts or [f"a painting of a dog"]
         self.num_inference_steps = num_inference_steps
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
+        self.inference_noise_scheduler_kwargs = inference_noise_scheduler_kwargs or {}
 
         self.logger = accelerate.logging.get_logger(__name__)
         self.steps_completed = 0
         self.loss_history = []
         self.last_mean_loss = None
-        self.generated_imgs = []
+        self.generated_imgs = {prompt: [] for prompt in self.inference_prompts}
 
         self.accelerator = accelerate.Accelerator(
             gradient_accumulation_steps=self.gradient_accumulation_steps,
@@ -146,7 +161,7 @@ class TextualInversionTrainer:
 
     def train(self) -> None:
         """Run the full latent inversion training loop."""
-        self.logger.info("--------------- Starting training ---------------")
+        self.logger.info("--------------- Starting Training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
         self.logger.info(f"Learning rate: {self.learning_rate}")
         self.logger.info(f"Train dataset size: {len(self.train_dataset)}")
@@ -218,8 +233,8 @@ class TextualInversionTrainer:
         # Predict the noise residual
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
         loss = F.mse_loss(noise_pred, noise)
-        self.loss_history.append(loss.detach())
         self.accelerator.backward(loss)
+        self.loss_history.append(loss.detach())
 
         # Get the gradients. An extra .module attr is needed due to the .prepare() call
         grads = self.text_encoder.module.get_input_embeddings().weight.grad
@@ -227,13 +242,21 @@ class TextualInversionTrainer:
         index_grads_to_zero = torch.isin(
             torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
         )
-        print("full grad sum pre-zero", grads.data.sum())
+        print("grads.data.shape", grads.data.shape)
+        print("self.placeholder_token_ids", self.placeholder_token_ids)
+        print("index_grads_to_zero", index_grads_to_zero)
+        print("full grad abs sum pre-zero", grads.data.abs().sum())
         print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
-        print("specific grad sum pre-zero", grads.data[self.placeholder_token_ids[0]].sum())
+        print(
+            "specific grad abs sum pre-zero", grads.data[self.placeholder_token_ids[0]].abs().sum()
+        )
+        for idx, val in enumerate(index_grads_to_zero):
+            if not val:
+                print("not zeroing", idx)
         grads.data[index_grads_to_zero] = 0.0
-        print("full grad sum post zero", grads.data.sum())
+        print("full grad abs sum post zero", grads.data.abs().sum())
         print("specific grad", grads.data[self.placeholder_token_ids[0]])
-        print("specific grad sum", grads.data[self.placeholder_token_ids[0]].sum())
+        print("specific grad abs sum", grads.data[self.placeholder_token_ids[0]].abs().sum())
         self.optimizer.step()
         self.optimizer.zero_grad()
 
@@ -342,10 +365,12 @@ class TextualInversionTrainer:
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
         embedding_params = self.text_encoder.get_input_embeddings().parameters()
+        print("embedding_params", embedding_params)
         self.optimizer = torch.optim.AdamW(
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
         )
+        print("self.optimizer.param_groups", self.optimizer.param_groups)
 
     def _build_train_noise_scheduler(self) -> None:
         self.train_noise_scheduler = DDPMScheduler(
@@ -424,12 +449,11 @@ class TextualInversionTrainer:
                 vae=self.vae,
                 unet=self.unet,
                 tokenizer=self.tokenizer,
-                # Use faster PNDMScheduler for inference
-                scheduler=PNDMScheduler(
+                scheduler=self.inference_noise_scheduler(
                     beta_start=self.beta_start,
                     beta_end=self.beta_end,
                     beta_schedule=self.beta_schedule,
-                    skip_prk_steps=True,
+                    **self.inference_noise_scheduler_kwargs,
                 ),
                 safety_checker=self.safety_checker,
                 feature_extractor=self.feature_extractor,
@@ -448,6 +472,7 @@ class TextualInversionTrainer:
 
     def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
         # Generate a new image using the pipeline.
+        self.logger.info("Generating sample images")
         imgs_path = path.joinpath("imgs")
         os.makedirs(imgs_path, exist_ok=True)
         for prompt in self.inference_prompts:
@@ -461,21 +486,23 @@ class TextualInversionTrainer:
                 guidance_scale=self.guidance_scale,
                 generator=generator,
             )["sample"][0]
-            self.generated_imgs.append((self.steps_completed, generated_img))
+            prompt_img_dict = self.generated_imgs[prompt]
+            prompt_img_dict.append((self.steps_completed, generated_img))
             prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
             os.makedirs(prompt_imgs_path, exist_ok=True)
             img_grid = Image.new(
                 "RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size)
             )
-            for idx, (step, img) in enumerate(self.generated_imgs):
+            for idx, (step, img) in enumerate(prompt_img_dict):
                 img.save(prompt_imgs_path.joinpath(f"{step}.png"))
                 img_grid.paste(img, box=(idx * self.img_size, 0))
             img_grid.save(prompt_imgs_path.joinpath("all_imgs.png"))
-            img_0 = self.generated_imgs[0][1]
-            img_0.save(
+            # Create a gif
+            first_img = prompt_img_dict[0][1]
+            first_img.save(
                 fp=prompt_imgs_path.joinpath("all_imgs.gif"),
                 format="GIF",
-                append_images=(img for _, img in self.generated_imgs),
+                append_images=(img for _, img in prompt_img_dict),
                 save_all=True,
                 duration=200,
                 loop=1,
