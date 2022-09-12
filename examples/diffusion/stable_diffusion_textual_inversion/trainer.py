@@ -33,7 +33,6 @@ class TextualInversionTrainer:
         self,
         use_auth_token: str,
         train_img_dir: str,
-        output_dir: str,
         placeholder_token: str,
         initializer_token: int,
         latest_checkpoint: Optional[str] = None,
