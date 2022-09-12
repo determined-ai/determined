@@ -9,7 +9,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,

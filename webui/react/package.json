@@ -82,7 +82,6 @@
     "@craco/craco": "^6.4.5",
     "@storybook/addon-docs": "^6.5.10",
     "@storybook/addon-essentials": "^6.5.10",
-    "@storybook/addon-knobs": "^6.4.0",
     "@storybook/addon-links": "^6.5.10",
     "@storybook/addon-postcss": "^2.0.0",
     "@storybook/addons": "^6.5.10",

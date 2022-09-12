@@ -1,24 +1,24 @@
-import { boolean, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
 import StateSelectFilter from './StateSelectFilter';
 
 export default {
   component: StateSelectFilter,
-  decorators: [withKnobs],
   title: 'StateSelectFilter',
-};
+} as Meta<typeof StateSelectFilter>;
 
 export const Default = (): React.ReactNode => <StateSelectFilter />;
 
-export const Custom = (): React.ReactNode => {
-  const [currentValue, setCurrentValue] = useState('');
+export const Custom: ComponentStory<typeof StateSelectFilter> = (args) => {
+  const [ currentValue, setCurrentValue ] = useState('');
   return (
     <StateSelectFilter
-      showCommandStates={boolean('showCommandStates', true)}
-      showExperimentStates={boolean('showExperimentStates', true)}
+      {...args}
       value={currentValue}
       onChange={(newValue) => setCurrentValue(newValue as string)}
     />
   );
 };
+
+Custom.args = { showCommandStates: true, showExperimentStates: true };

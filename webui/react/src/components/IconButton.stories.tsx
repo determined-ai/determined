@@ -1,15 +1,19 @@
-import { text, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
 import IconButton from './IconButton';
 
 export default {
   component: IconButton,
-  decorators: [withKnobs],
   title: 'IconButton',
-};
+} as Meta<typeof IconButton>;
 
 export const Default = (): React.ReactNode => <IconButton icon="checkmark" label="Okay" />;
-export const Custom = (): React.ReactNode => (
-  <IconButton icon={text('Icon Name', 'experiment')} label={text('Label', 'Experiment)')} />
+export const Custom: ComponentStory<typeof IconButton> = (args) => (
+  <IconButton {...args} />
 );
+
+Custom.args = {
+  icon: 'experiment',
+  label: 'Experiment',
+};

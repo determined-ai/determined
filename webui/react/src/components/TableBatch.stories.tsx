@@ -1,14 +1,13 @@
-import { number, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
 import TableBatch from './TableBatch';
 
 export default {
   component: TableBatch,
-  decorators: [withKnobs],
   parameters: { layout: 'padded' },
   title: 'TableBatch',
-};
+} as Meta<typeof TableBatch>;
 
 const batchOptions = [
   { label: 'Batch Operation 1', value: 'Action1' },
@@ -16,10 +15,11 @@ const batchOptions = [
   { label: 'Batch Operation 3', value: 'Action3' },
 ];
 
-export const Default = (): React.ReactNode => (
-  <TableBatch actions={batchOptions} selectedRowCount={1} />
+export const Default: ComponentStory<typeof TableBatch> = (args) => (
+  <TableBatch
+    actions={batchOptions}
+    {...args}
+  />
 );
 
-export const Custom = (): React.ReactNode => (
-  <TableBatch actions={batchOptions} selectedRowCount={number('selectedRowCount', 1)} />
-);
+Default.args = { selectedRowCount: 1 };

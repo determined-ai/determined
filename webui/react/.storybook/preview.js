@@ -34,6 +34,7 @@ const ChildView = ({ context, children }) => {
 
   useEffect(() => {
     let currentTheme = ThemeOptions.system.className;
+    console.log(context.globals.theme)
 
     switch (context.globals.theme) {
       case ThemeOptions.system.displayName:
@@ -48,6 +49,7 @@ const ChildView = ({ context, children }) => {
       default:
         currentTheme = ThemeOptions.system.className;
     }
+    console.log(currentTheme)
     storeDispatch({ type: StoreAction.SetMode, value: currentTheme });
   }, [context.globals.theme]);
 

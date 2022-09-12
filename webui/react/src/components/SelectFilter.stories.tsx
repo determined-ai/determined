@@ -1,4 +1,4 @@
-import { number, text, withKnobs } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 import { Select } from 'antd';
 import React from 'react';
 
@@ -7,17 +7,16 @@ import SelectFilter from './SelectFilter';
 const { Option } = Select;
 
 export default {
+  argTypes: { count: { control: { max: 26, min: 0, step: 1, type: 'range' } } },
   component: SelectFilter,
-  decorators: [withKnobs],
   title: 'SelectFilter',
-};
+} as Meta<typeof SelectFilter>;
 
-export const Default = (): React.ReactNode => {
-  const count = number('Number of Options', 5, { max: 26, min: 0, range: true, step: 1 });
+type SelectFilterProps = React.ComponentProps<typeof SelectFilter>;
+
+export const Default: Story<SelectFilterProps & { count: number }> = ({ count, ...args }) => {
   return (
-    <SelectFilter
-      label={text('Label', 'Default Label')}
-      placeholder={text('Placeholder', 'Pick an option')}>
+    <SelectFilter {...args}>
       {new Array(count).fill(null).map((v, index) => (
         <Option key={index} value={String.fromCharCode(65 + index)}>
           {'Option ' + String.fromCharCode(65 + index)}
@@ -25,4 +24,10 @@ export const Default = (): React.ReactNode => {
       ))}
     </SelectFilter>
   );
+};
+
+Default.args = {
+  count: 5,
+  label: 'Default Label',
+  placeholder: 'Pick an option',
 };

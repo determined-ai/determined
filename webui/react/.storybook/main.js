@@ -1,6 +1,4 @@
-import type { StorybookConfig } from '@storybook/core-common';
-
-const config: StorybookConfig = {
+module.exports = {
   addons: [
     "storybook-preset-craco",
     {
@@ -10,7 +8,6 @@ const config: StorybookConfig = {
       },
     },
     '@storybook/addon-links',
-    '@storybook/addon-knobs',
     '@storybook/addon-postcss',
     '@storybook/addon-essentials'
   ],
@@ -19,6 +16,7 @@ const config: StorybookConfig = {
     buildStoriesJson: true,
     modernInlineRender: true 
   },
+  framework: '@storybook/react',
   staticDirs: [
     '../public',
     { from: '../src/shared/assets', to: '/assets' }
@@ -59,5 +57,3 @@ const config: StorybookConfig = {
     return config;
   },
 };
-
-export default config;

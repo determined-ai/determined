@@ -1,4 +1,4 @@
-import { number, select, withKnobs } from '@storybook/addon-knobs';
+import { number, select,  } from '@storybook/addon-knobs';
 import React from 'react';
 
 import { enumToOptions } from 'storybook/utils';
@@ -8,7 +8,7 @@ import ProgressBar, { Props as ProgressBarProps } from './ProgressBar';
 
 export default {
   component: ProgressBar,
-  decorators: [withKnobs],
+  decorators: [  ],
   title: 'ProgressBar',
 };
 

@@ -1,14 +1,13 @@
-import { number, text, withKnobs } from '@storybook/addon-knobs';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import HumanReadableNumber from './HumanReadableNumber';
 
 export default {
   component: HumanReadableNumber,
-  decorators: [withKnobs],
   parameters: { layout: 'centered' },
   title: 'HumanReadableNumber',
-};
+} as ComponentMeta<typeof HumanReadableNumber>;
 
 export const Default = (): React.ReactNode => <HumanReadableNumber num={1} />;
 
@@ -26,10 +25,11 @@ export const Undefined = (): React.ReactNode => <HumanReadableNumber num={undefi
 
 export const Null = (): React.ReactNode => <HumanReadableNumber num={null} />;
 
-export const Custom = (): React.ReactNode => (
-  <HumanReadableNumber
-    num={number('num', 5270)}
-    precision={number('precision', 3)}
-    tooltipPrefix={text('tooltipPrefix', '')}
-  />
+export const Custom: ComponentStory<typeof HumanReadableNumber> = (args) => (
+  <HumanReadableNumber {...args} />
 );
+
+Custom.args = {
+  num: 5270,
+  precision: 3,
+};
