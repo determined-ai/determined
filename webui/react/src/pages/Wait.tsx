@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, StoreActionSA, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';

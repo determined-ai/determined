@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, StoreActionSA, useStoreDispatch } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreActionSA, useStoreDispatch } from 'contexts/Store';
 
 interface DocumentHidden {
   hidden?: unknown;

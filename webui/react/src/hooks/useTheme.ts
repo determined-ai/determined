@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreActionSA, useStore, useStoreDispatch } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
