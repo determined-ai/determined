@@ -54,6 +54,7 @@
       username: samiam
       password: eggsnham
     slurm: []
+    pbs: []
     add_capabilities:
       - CAP_STRING
     drop_capabilities:

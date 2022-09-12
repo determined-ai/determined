@@ -91,7 +91,7 @@ export const paths = {
     return `/experiments/${experimentId}`;
   },
   experimentFileFromTree: (experimentId: number | string, filePath: string): string => {
-    return `/experiments/${experimentId}/file/download?path=${filePath}`;
+    return `/experiments/${experimentId}/file/download?path=${encodeURIComponent(filePath)}`;
   },
   experimentList: (): string => {
     return '/experiments';

@@ -120,6 +120,20 @@ Some constraints are due to differences in behavior between Docker and Singulari
       #. Ensure that the names and addresses of the login node, admin node, and all compute nodes
          are consistently available in ``/etc/hosts`` on all nodes.
 
+   -  Podman containers only inherit environment variables that have been explicitly specified.
+      Determined adds Podman arguments to provide any Determined-configured environment variables,
+      and the launcher enables inheritance of the following variables: ``SLURM_*``,
+      ``CUDA_VISIBLE_DEVICES``, ``NVIDIA_VISIBLE_DEVICES``, ``ROCR_VISIBLE_DEVICES``,
+      ``HIP_VISIBLE_DEVICES``. You may enable the inheritance of additional variables from the host
+      environment by specifying the variable name with an empty value in the
+      ``environment_variables`` of your experiment configuration or :ref:`task container defaults
+      <master-task-container-defaults>`.
+
+         .. code:: yaml
+
+            environment_variables:
+              - INHERITED_ENV_VAR=
+
 ***********************
  AMD/ROCm Known Issues
 ***********************

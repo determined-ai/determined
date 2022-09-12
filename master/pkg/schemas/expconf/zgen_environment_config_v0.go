@@ -74,6 +74,14 @@ func (e *EnvironmentConfigV0) SetSlurm(val []string) {
 	e.RawSlurm = val
 }
 
+func (e EnvironmentConfigV0) Pbs() []string {
+	return e.RawPbs
+}
+
+func (e *EnvironmentConfigV0) SetPbs(val []string) {
+	e.RawPbs = val
+}
+
 func (e EnvironmentConfigV0) AddCapabilities() []string {
 	return e.RawAddCapabilities
 }

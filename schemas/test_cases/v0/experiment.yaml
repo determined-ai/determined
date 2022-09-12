@@ -170,6 +170,7 @@
       ports: {}
       registry_auth: null
       slurm: []
+      pbs: []
       add_capabilities: []
       drop_capabilities: []
     hyperparameters: {}
