@@ -86,6 +86,10 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		"--delete",
 		g.ToDelete,
 	}
+	if g.ToDelete != "" {
+		res.Entrypoint = append(res.Entrypoint, "--delete")
+		res.Entrypoint = append(res.Entrypoint, g.ToDelete)
+	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
 	}
