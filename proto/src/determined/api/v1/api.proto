@@ -1670,6 +1670,7 @@ service Determined {
     };
   }
 
+  // Get a set of roles by id
   rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
     option (google.api.http) = {
       post: "/api/v1/roles/search/by-ids"
@@ -1681,6 +1682,7 @@ service Determined {
     };
   }
 
+  // Get the roles which are assigned to a user
   rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest)
       returns (GetRolesAssignedToUserResponse) {
     option (google.api.http) = {
@@ -1692,6 +1694,7 @@ service Determined {
     };
   }
 
+  // Get the roles which are assigned to a group
   rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest)
       returns (GetRolesAssignedToGroupResponse) {
     option (google.api.http) = {
@@ -1703,6 +1706,7 @@ service Determined {
     };
   }
 
+  // Search for roles assignable to a given scope
   rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest)
       returns (SearchRolesAssignableToScopeResponse) {
     option (google.api.http) = {

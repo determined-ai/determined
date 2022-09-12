@@ -15,6 +15,7 @@ message Role {
   repeated Permission permissions = 3;
 }
 
+// Permission represents an action a user can take in the system
 message Permission {
   // The id of the permission
   int32 id = 1;
