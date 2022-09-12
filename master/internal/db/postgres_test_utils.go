@@ -5,6 +5,7 @@ package db
 
 import (
 	"archive/tar"
+	"crypto/rand"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,6 +32,7 @@ const (
 	RootFromDB            = "../../static/srv"
 	MigrationsFromDB      = "file://../../static/migrations"
 	defaultSearcherMetric = "okness"
+	DefaultTestSrcPath    = "../../../examples/tutorials/mnist_pytorch"
 )
 
 // ResolveTestPostgres resolves a connection to a postgres database. To debug tests that use this
@@ -135,7 +137,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
 		Config:               cfg,
-		ModelDefinitionBytes: readTestModelDefiniton(t),
+		ModelDefinitionBytes: ReadTestModelDefiniton(t, DefaultTestSrcPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
@@ -146,8 +148,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 	return &exp
 }
 
-func readTestModelDefiniton(t *testing.T) []byte {
-	folderPath := "../../../examples/tutorials/mnist_pytorch"
+func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 	path, err := filepath.Abs(folderPath)
 	require.NoError(t, err)
 	files, err := ioutil.ReadDir(path)
@@ -165,4 +166,54 @@ func readTestModelDefiniton(t *testing.T) []byte {
 	targz, err := archive.ToTarGz(archive.Archive(arcs))
 	require.NoError(t, err)
 	return targz
+}
+
+func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+	task := RequireMockTask(t, db, exp.OwnerID)
+	rqID := model.NewRequestID(rand.Reader)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		RequestID:    &rqID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+		HParams:      model.JSONObj{"global_batch_size": 1},
+		JobID:        exp.JobID,
+	}
+	err := db.AddTrial(&tr)
+	require.NoError(t, err, "failed to add trial")
+	return &tr
+}
+
+func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allocation {
+	a := model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tID)),
+		TaskID:       tID,
+		StartTime:    ptrs.Ptr(time.Now().UTC()),
+		State:        ptrs.Ptr(model.AllocationStateTerminated),
+	}
+	err := db.AddAllocation(&a)
+	require.NoError(t, err, "failed to add allocation")
+	return &a
+}
+
+func MockModelCheckpoint(ckptUuid uuid.UUID, tr *model.Trial, a *model.Allocation) model.CheckpointV2 {
+	stepsCompleted := int32(10)
+	ckpt := model.CheckpointV2{
+		UUID:         ckptUuid,
+		TaskID:       tr.TaskID,
+		AllocationID: a.AllocationID,
+		ReportTime:   time.Now().UTC(),
+		State:        model.CompletedState,
+		Resources: map[string]int64{
+			"ok": 1.0,
+		},
+		Metadata: map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(stepsCompleted),
+		},
+	}
+
+	return ckpt
 }

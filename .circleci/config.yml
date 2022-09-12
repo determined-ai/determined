@@ -1417,6 +1417,25 @@ jobs:
           paths:
             - master/coverage.out
 
+  test-intg-master-checkpoint-download:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: large
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
+      - setup-go-intg-deps
+      - run: make -C master test-intg
+      - persist_to_workspace:
+          root: .
+          paths:
+            - master/coverage.out
+
   test-intg-agent:
     machine:
       image: <<pipeline.parameters.machine-image>>
