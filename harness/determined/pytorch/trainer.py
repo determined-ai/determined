@@ -1,8 +1,9 @@
 import contextlib
+import warnings
 from enum import Enum
 
 import determined as det
-from determined import core, horovod
+from determined import core, horovod, util
 from determined import pytorch
 from typing import Any, Callable, Dict, Iterator, List, Optional
 import torch
@@ -28,6 +29,14 @@ class Trainer:
         self.train_loader = None
         self.distributed_backend = det._DistributedBackend()
         self.is_chief = self.core_context.distributed.rank == 0
+        self.callbacks = self.trial.build_callbacks()
+        for callback in self.callbacks.values():
+            if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
+                warnings.warn(
+                    "The on_checkpoint_end callback is deprecated, please use "
+                    "on_checkpoint_write_end instead",
+                    FutureWarning,
+                )
 
     def _build_training_loader(self):
         train_data = self.trial.build_training_data_loader()
@@ -84,6 +93,9 @@ class Trainer:
         training_loader = self._build_training_loader()
         self.train_loader = training_loader
 
+        for callback in self.callbacks.values():
+            callback.on_training_start()
+
         # Set models to training mode
         for model in self.context.models:
             model.train()
@@ -103,6 +115,22 @@ class Trainer:
 
         return
 
+    def on_training_epoch_start(self, epoch_idx: int):
+        for callback in self.callbacks.values():
+            callback.on_training_epoch_start(epoch_idx)
+
+    def on_training_epoch_end(self, epoch_idx: int):
+        for callback in self.callbacks.values():
+            callback.on_training_epoch_end(epoch_idx)
+
+    def on_validation_epoch_start(self):
+        for callback in self.callbacks.values():
+            callback.on_validation_epoch_start()
+
+    def on_validation_epoch_end(self, metrics):
+        for callback in self.callbacks.values():
+            callback.on_validation_epoch_end(metrics)
+
     def report_training_metrics(self, steps_completed, metrics):
         metrics = self.context.distributed.broadcast(metrics)
         # Only report on the chief worker
@@ -113,9 +141,11 @@ class Trainer:
             )
 
     def validate_and_report_metrics(self, steps_completed):
+        self.on_validation_epoch_start()
         val_metrics = self.validate()
         if self.is_chief:
             self.core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics=val_metrics)
+        self.on_validation_epoch_end(val_metrics)
 
     def validate(self):
         val_loader = self._build_validation_loader()
@@ -196,10 +226,12 @@ class TrainLoop:
 
     def run(self):
         while self._steps_remaining() > 0:
+            self.trainer.on_training_epoch_start(self.epochs_trained)
             for batch_idx, batch in enumerate(self.trainer.train_loader):
                 self._train_batch(batch, self.epochs_trained, batch_idx)
                 if not self._steps_remaining() > 0:
                     return
+            self.trainer.on_training_epoch_end(self.epochs_trained)
             self._step_epoch()
 
     def _train_batch(self, batch, epochs, batch_idx):
@@ -223,6 +255,7 @@ class TrainLoop:
 
     def _step_epoch(self):
         self.epochs_trained += 1
+
         if self.step_type == TrainStepType.EPOCH:
             self._train_step()
 
