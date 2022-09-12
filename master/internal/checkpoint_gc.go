@@ -75,7 +75,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		if t.ToDelete == "" && !t.DeleteTensorboards {
 			// Early return as nothing to do
-			t.completeTask(ctx)
+			ctx.Self().Stop()
 			return nil
 		}
 		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
