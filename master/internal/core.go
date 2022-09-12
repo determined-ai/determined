@@ -1005,9 +1005,6 @@ func (m *Master) Run(ctx context.Context) error {
 		} else if cacheFileShortTerm.MatchString(requestedFile) {
 			c.Response().Header().Set("cache-control", "max-age=600")
 		}
-		
-
-		
 
 		if hasMatchingFile {
 			return c.File(requestedFile)
