@@ -32,6 +32,7 @@ const JupyterRenderer = lazy(() => import('./IpynbRenderer'));
 const { DirectoryTree } = Tree;
 
 import css from './CodeViewer.module.scss';
+import { IpynbInterface } from './IpynbRenderer';
 
 import './index.scss';
 
@@ -198,6 +199,7 @@ const CodeViewer: React.FC<Props> = ({
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | 'split'>(
     () => resize.width <= 1024 ? 'tree' : 'split',
   );
+  const [ editorMode, setEditorMode ] = useState<'monaco' | 'ipynb'>('monaco');
 
   const switchTreeViewToEditor = useCallback(
     () => setViewMode((view) => view === 'tree' ? 'editor' : view)
@@ -411,6 +413,19 @@ const CodeViewer: React.FC<Props> = ({
     ],
   );
 
+  // Set the code renderer to ipynb if needed
+  useEffect(() => {
+    const hasActiveFile = activeFile?.text;
+    const isSameFile = activeFile?.title === settings.fileName;
+    const isIpybnFile = settings.fileName.includes('.ipynb');
+
+    if (hasActiveFile && isSameFile && isIpybnFile) {
+      setEditorMode('ipynb');
+    } else {
+      setEditorMode('monaco');
+    }
+  }, [ settings, activeFile ]);
+
   useLayoutEffect(() => {
     if (
       configDownloadButton.current
@@ -522,21 +537,31 @@ const CodeViewer: React.FC<Props> = ({
               : !isFetchingFile && !activeFile?.text
                 ? <h5>Please, choose a file to preview.</h5>
                 : (
-                  <MonacoEditor
-                    height="100%"
-                    language={getSyntaxHighlight()}
-                    options={{
-                      minimap: {
-                        enabled: viewMode === 'split' && !!activeFile?.text?.length,
-                        showSlider: 'mouseover',
-                        size: 'fit',
-                      },
-                      occurrencesHighlight: false,
-                      readOnly: true,
-                      showFoldingControls: 'always',
-                    }}
-                    value={activeFile?.text}
-                  />
+                  editorMode === 'monaco'
+                    ? (
+                      <MonacoEditor
+                        height="100%"
+                        language={getSyntaxHighlight()}
+                        options={{
+                          minimap: {
+                            enabled: viewMode === 'split' && !!activeFile?.text?.length,
+                            showSlider: 'mouseover',
+                            size: 'fit',
+                          },
+                          occurrencesHighlight: false,
+                          readOnly: true,
+                          showFoldingControls: 'always',
+                        }}
+                        value={activeFile?.text}
+                      />
+                    )
+                    : (
+                      <Suspense fallback={<Spinner tip="Loading ipynd viewer..." />}>
+                        <JupyterRenderer
+                          file={JSON.parse(activeFile?.text || '') as IpynbInterface}
+                        />
+                      </Suspense>
+                    )
                 )
           }
         </Spinner>
