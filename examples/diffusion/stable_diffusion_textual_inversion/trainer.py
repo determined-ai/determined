@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 import shutil
 import tempfile
@@ -67,7 +68,6 @@ class TextualInversionTrainer:
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.learning_rate = learning_rate
-        self.output_dir = output_dir
         self.scale_lr = scale_lr
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
@@ -87,7 +87,7 @@ class TextualInversionTrainer:
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
 
-        self.logger = accelerate.logging.getLogger(__name__)
+        self.logger = accelerate.logging.get_logger(__name__)
         self.steps_completed = 0
         self.mean_loss_metric = torchmetrics.MeanMetric()
         self.mean_loss_metric.cuda()
@@ -384,19 +384,20 @@ class TextualInversionTrainer:
         temp dir and returns the corresponding path object."""
         # Have the chief create a temp dir
         if self.accelerator.is_main_process:
-            dirpath = tempfile.mkdtemp()
+            dir_path = tempfile.mkdtemp()
         else:
-            dirpath = None
+            dir_path = None
         # Broadcast to all workers
-        dirpath = core_context.distributed.broadcast(dirpath)
-        dirpath = pathlib.Path(dirpath)
-        print("saving to dirpath")
-        self.accelerator.save_state(dirpath)
+        dir_path = core_context.distributed.broadcast(dir_path)
+        dir_path = pathlib.Path(dir_path)
+        print("saving to dir_path")
+        self.accelerator.save_state(dir_path)
         self.accelerator.wait_for_everyone()
-        return dirpath
+        return dir_path
 
+    @accelerate.on_main_process
     def _build_pipeline(self) -> None:
-        """Build the pipeline."""
+        """Build the pipeline for the chief worker only."""
         self.pipeline = StableDiffusionPipeline(
             text_encoder=self.accelerator.unwrap_model(self.text_encoder),
             vae=self.vae,
@@ -435,11 +436,22 @@ class TextualInversionTrainer:
             generator=generator,
         )["sample"][0]
         self.generated_imgs.append((self.steps_completed, generated_img))
+        prompt_path = path.joinpath("_".join(self.inference_prompt.split()))
+        os.makedirs(prompt_path, exist_ok=True)
         img_grid = Image.new("RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size))
         for idx, (step, img) in enumerate(self.generated_imgs):
-            img.save(path.joinpath(f"img_step_{step}.png"))
+            img.save(prompt_path.joinpath(f"{step}.png"))
             img_grid.paste(img, box=(idx * self.img_size, 0))
-        img_grid.save(path.joinpath("all_imgs.png"))
+        img_grid.save(prompt_path.joinpath("all_imgs.png"))
+        img_0 = self.generated_imgs[0][1]
+        img_0.save(
+            fp=prompt_path.joinpath("all_imgs.gif"),
+            format="GIF",
+            append_images=(img for _, img in self.generated_imgs),
+            save_all=True,
+            duration=200,
+            loop=1,
+        )
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
