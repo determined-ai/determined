@@ -1,10 +1,8 @@
 import logging
 import tempfile
+import unittest
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
-
-import pytest
-from numpy import float64
 
 from determined.common.api import bindings
 from determined.experimental import client
@@ -29,8 +27,8 @@ def test_run_random_searcher_exp_mock_master() -> None:
     with tempfile.TemporaryDirectory() as searcher_dir:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
         mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
-        search_runner = MockMasterSearchRunner(search_method, Path(searcher_dir), mock_master_obj)
-        search_runner.run(exp_config=None, context_dir=None)
+        search_runner = MockMasterSearchRunner(search_method, mock_master_obj, Path(searcher_dir))
+        search_runner.run(exp_config={}, context_dir="")
 
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -47,8 +45,8 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
 
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
     mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
-    search_runner = MockMasterSearchRunner(search_method, tmp_path, mock_master_obj)
-    search_runner.run(exp_config=None, context_dir=None)
+    search_runner = MockMasterSearchRunner(search_method, mock_master_obj, tmp_path)
+    search_runner.run(exp_config={}, context_dir="")
 
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
@@ -58,33 +56,34 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
 
 
 class SimulateMaster:
-    def __init__(self, validation_fn):
-        self.events_queue = []  # store event and
+    def __init__(self, validation_fn: Any) -> None:
+        self.events_queue: List[bindings.v1SearcherEvent] = []  # store event and
         self.events_count = 0
         self.validation_fn = validation_fn
         self.overall_progress = 0.0
-        return
 
-    def handle_post_operations(self, event: bindings.v1SearcherEvent, operations: List[Operation]):
+    def handle_post_operations(
+        self, event: bindings.v1SearcherEvent, operations: List[Operation]
+    ) -> None:
         self._remove_upto(event)
         self._process_operations(operations)
 
-    def _remove_upto(self, event: bindings.v1SearcherEvent):
+    def _remove_upto(self, event: bindings.v1SearcherEvent) -> None:
         for i, e in enumerate(self.events_queue):
             if e.id == event.id:
                 self.events_queue = self.events_queue[i + 1 :]
                 return
 
-        pytest.raises(RuntimeError(f"event not found in events queue: {event}"))
+        raise (RuntimeError(f"event not found in events queue: {event}"))
 
-    def _process_operations(self, operations: List[Operation]):
+    def _process_operations(self, operations: List[Operation]) -> None:
         for op in operations:
             self._append_events_for_op(op)  # validate_after returns two events.
 
     def handle_get_events(self) -> Optional[Sequence[bindings.v1SearcherEvent]]:
         return self.events_queue
 
-    def _append_events_for_op(self, op: Operation):
+    def _append_events_for_op(self, op: Operation) -> None:
         if type(op) == ValidateAfter:
             metric = (
                 self.validation_fn()
@@ -127,10 +126,10 @@ class SimulateMaster:
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)
             self.events_queue.append(event)
 
-    def constant_validation() -> float64:
-        return 1
+    def constant_validation(_) -> float:
+        return 1.0
 
-    def random_validation() -> float64:
+    def random_validation(_) -> float:
         import random
 
         return random.random()
@@ -140,8 +139,8 @@ class MockMasterSearchRunner(LocalSearchRunner):
     def __init__(
         self,
         search_method: SearchMethod,
+        mock_master_object: SimulateMaster,
         searcher_dir: Optional[Path] = None,
-        mock_master_object: SimulateMaster = None,
     ):
         super(MockMasterSearchRunner, self).__init__(search_method, searcher_dir)
         if mock_master_object:
@@ -168,10 +167,10 @@ class MockMasterSearchRunner(LocalSearchRunner):
         logging.info("MockMasterSearchRunner.get_events")
         return self.mock_master_obj.handle_get_events()
 
-    def run(self, exp_config: Dict[str, Any], context_dir: Optional[str]) -> int:
+    def run(self, exp_config: Dict[str, Any], context_dir: Optional[str] = None) -> int:
         logging.info("MockMasterSearchRunner.run")
         experiment_id_file = self.searcher_dir.joinpath("experiment_id")
-        exp_id = "4"  # dummy exp
+        exp_id = 4  # dummy exp
         with experiment_id_file.open("w") as f:
             f.write(str(exp_id))
         state_path = self._get_state_path(exp_id)
@@ -182,7 +181,9 @@ class MockMasterSearchRunner(LocalSearchRunner):
         super(MockMasterSearchRunner, self).save_state(exp_id, [])
         experiment_id = exp_id
         operations: Optional[List[Operation]] = None
-        super(MockMasterSearchRunner, self).run_experiment(experiment_id, operations, None)
+        session: client.Session = unittest.mock.Mock()
+        super(MockMasterSearchRunner, self).run_experiment(experiment_id, session, operations)
+        return exp_id
 
     def _get_state_path(self, experiment_id: int) -> Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
