@@ -1,6 +1,6 @@
 import logging
 import tempfile
-import unittest
+from unittest.mock import Mock
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -26,7 +26,7 @@ def test_run_random_searcher_exp_mock_master() -> None:
 
     with tempfile.TemporaryDirectory() as searcher_dir:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
-        mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
+        mock_master_obj = SimulateMaster(metric=1.0)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, Path(searcher_dir))
         search_runner.run(exp_config={}, context_dir="")
 
@@ -44,7 +44,7 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     divisor = 4
 
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
-    mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
+    mock_master_obj = SimulateMaster(metric=1.0)
     search_runner = MockMasterSearchRunner(search_method, mock_master_obj, tmp_path)
     search_runner.run(exp_config={}, context_dir="")
 
@@ -56,10 +56,10 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
 
 
 class SimulateMaster:
-    def __init__(self, validation_fn: Any) -> None:
+    def __init__(self, metric: float) -> None:
         self.events_queue: List[bindings.v1SearcherEvent] = []  # store event and
         self.events_count = 0
-        self.validation_fn = validation_fn
+        self.metric = metric
         self.overall_progress = 0.0
 
     def handle_post_operations(
@@ -85,11 +85,8 @@ class SimulateMaster:
 
     def _append_events_for_op(self, op: Operation) -> None:
         if type(op) == ValidateAfter:
-            metric = (
-                self.validation_fn()
-            )  # is it useful to be able to use constant or random validation function?
             validation_completed = bindings.v1ValidationCompleted(
-                requestId=str(op.request_id), metric=metric, validateAfterLength=str(op.length)
+                requestId=str(op.request_id), metric=self.metric, validateAfterLength=str(op.length)
             )
             self.events_count += 1
             event = bindings.v1SearcherEvent(
@@ -125,14 +122,6 @@ class SimulateMaster:
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)
             self.events_queue.append(event)
-
-    def constant_validation(_) -> float:
-        return 1.0
-
-    def random_validation(_) -> float:
-        import random
-
-        return random.random()
 
 
 class MockMasterSearchRunner(LocalSearchRunner):
@@ -181,7 +170,7 @@ class MockMasterSearchRunner(LocalSearchRunner):
         super(MockMasterSearchRunner, self).save_state(exp_id, [])
         experiment_id = exp_id
         operations: Optional[List[Operation]] = None
-        session: client.Session = unittest.mock.Mock()
+        session: client.Session = Mock()
         super(MockMasterSearchRunner, self).run_experiment(experiment_id, session, operations)
         return exp_id
 
