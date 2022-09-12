@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
+from e2e_tests.tests.fixtures.custom_searcher.searchers import ASHASearchMethod, RandomSearchMethod
 from numpy import float64
 
 from determined.common.api import bindings
@@ -18,22 +19,9 @@ from determined.searcher.search_method import (
     ValidateAfter,
 )
 from determined.searcher.search_runner import LocalSearchRunner
-from e2e_tests.tests.fixtures.custom_searcher.searchers import (
-    ASHASearchMethod,
-    RandomSearchMethod,
-)
+
 
 def test_run_random_searcher_exp_mock_master() -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "random"
-    config["description"] = "custom searcher"
-
     max_trials = 5
     max_concurrent_trials = 2
     max_length = 500
@@ -42,7 +30,7 @@ def test_run_random_searcher_exp_mock_master() -> None:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
         mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
         search_runner = MockMasterSearchRunner(search_method, Path(searcher_dir), mock_master_obj)
-        search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        search_runner.run(exp_config=None)
 
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -52,16 +40,6 @@ def test_run_random_searcher_exp_mock_master() -> None:
 
 
 def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
-    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
-    config["searcher"] = {
-        "name": "custom",
-        "metric": "validation_error",
-        "smaller_is_better": True,
-        "unit": "batches",
-    }
-    config["name"] = "asha"
-    config["description"] = "custom searcher"
-
     max_length = 3000
     max_trials = 16
     num_rungs = 3
@@ -70,14 +48,13 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
     mock_master_obj = SimulateMaster(validation_fn=SimulateMaster.constant_validation)
     search_runner = MockMasterSearchRunner(search_method, tmp_path, mock_master_obj)
-    search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    search_runner.run(exp_config=None)
 
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
     assert len(search_method.searcher_state.trials_closed) == len(
         search_method.asha_search_state.closed_trials
     )
-
 
 
 class SimulateMaster:
@@ -209,4 +186,3 @@ class MockMasterSearchRunner(LocalSearchRunner):
 
     def _get_state_path(self, experiment_id: int) -> Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
-
