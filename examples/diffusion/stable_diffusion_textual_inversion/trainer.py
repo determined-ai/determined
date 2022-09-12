@@ -6,12 +6,11 @@ from PIL import Image
 from typing import List, Literal, Optional, Union
 
 
+import accelerate
 import determined as det
 import torch
 import torch.nn.functional as F
 import torchmetrics
-from accelerate.logging import get_logger
-from accelerate import Accelerator
 from determined.pytorch import TorchData
 from diffusers import (
     AutoencoderKL,
@@ -33,11 +32,11 @@ class TextualInversionTrainer:
     def __init__(
         self,
         use_auth_token: str,
-        latest_checkpoint: Union[str, None],
         train_img_dir: str,
         output_dir: str,
         placeholder_token: str,
         initializer_token: int,
+        latest_checkpoint: Optional[str] = None,
         learnable_property: Literal["object", "style"] = "object",
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         train_batch_size: int = 1,
@@ -50,6 +49,7 @@ class TextualInversionTrainer:
         beta_end: float = 0.012,
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         num_train_timesteps: int = 1000,
+        train_seed: int = 2147483647,
         img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.5,
@@ -77,6 +77,7 @@ class TextualInversionTrainer:
         self.beta_schedule = beta_schedule
         self.num_train_timesteps = num_train_timesteps
         self.train_img_dir = train_img_dir
+        self.train_seed = train_seed
         self.img_size = img_size
         self.interpolation = interpolation
         self.flip_p = flip_p
@@ -87,16 +88,18 @@ class TextualInversionTrainer:
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
 
-        self.logger = get_logger(__name__)
-        self.accelerator = Accelerator(
-            gradient_accumulation_steps=self.gradient_accumulation_steps,
-        )
+        self.logger = accelerate.logging.getLogger(__name__)
         self.steps_completed = 0
         self.mean_loss_metric = torchmetrics.MeanMetric()
         self.mean_loss_metric.cuda()
         # Save the current mean loss as an attr.s
         self.mean_loss = 0.0
         self.generated_imgs = []
+
+        self.accelerator = accelerate.Accelerator(
+            gradient_accumulation_steps=self.gradient_accumulation_steps,
+        )
+        accelerate.utils.set_seed(self.train_seed)
 
         self.effective_global_batch_size = (
             self.gradient_accumulation_steps
