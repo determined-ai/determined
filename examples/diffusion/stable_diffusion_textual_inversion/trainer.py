@@ -43,8 +43,8 @@ class TextualInversionTrainer:
         gradient_accumulation_steps: int = 4,
         learning_rate: float = 5e-04,
         scale_lr: bool = True,
-        checkpoint_step_freq: int = 100,
-        metric_report_step_freq: int = 100,
+        checkpoint_freq: int = 100,
+        metric_report_freq: int = 100,
         beta_start: float = 0.00085,
         beta_end: float = 0.012,
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
@@ -70,8 +70,8 @@ class TextualInversionTrainer:
         self.learning_rate = learning_rate
         self.output_dir = output_dir
         self.scale_lr = scale_lr
-        self.checkpoint_step_freq = checkpoint_step_freq
-        self.metric_report_step_freq = metric_report_step_freq
+        self.checkpoint_freq = checkpoint_freq
+        self.metric_report_freq = metric_report_freq
         self.beta_start = beta_start
         self.beta_end = beta_end
         self.beta_schedule = beta_schedule
@@ -160,18 +160,19 @@ class TextualInversionTrainer:
                         if took_sgd_step:
                             self.steps_completed += 1
                             self.logger.info(f"Step {self.steps_completed} completed")
-                            # Report metrics, if appropriate.
-                            if self._should_report_metrics():
-                                self._report_train_metrics(core_context)
-                            # Save checkpoint and/or preempt, if appropriate.
+
                             is_end_of_training = self.steps_completed == op.length
-                            if (
-                                is_end_of_training
-                                or self.steps_completed % self.metric_report_step_freq == 0
-                            ):
+                            time_to_report = self.steps_completed % self.metric_report_freq == 0
+                            time_to_ckpt = self.steps_completed % self.checkpoint_freq == 0
+
+                            # Report metrics, checkpoint, and preempt as appropriate.
+                            if is_end_of_training or time_to_report or time_to_ckpt:
+                                self._report_train_metrics(core_context)
+                            if is_end_of_training or time_to_ckpt:
                                 self._save(core_context)
                                 if core_context.preempt.should_preempt():
                                     return
+
                             if is_end_of_training:
                                 break
                 if self.accelerator.is_main_process:
@@ -450,6 +451,3 @@ class TextualInversionTrainer:
                 metrics={"loss": self.mean_loss},
             )
         self.mean_loss_metric.reset()
-
-    def _should_report_metrics(self) -> bool:
-        return self.steps_completed % self.metric_report_step_freq == 0
