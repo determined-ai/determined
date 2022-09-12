@@ -474,8 +474,8 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
 	case config.ResourceManager.KubernetesRM != nil:
 		return config.ResourceManager.KubernetesRM.GetPreemption()
-	case config.ResourceManager.DispatcherRM != nil:
-		// TODO: Determine if this needs to be enabled for DispatcherRM
+	case config.ResourceManager.DispatcherRM != nil,
+		config.ResourceManager.PbsRM != nil:
 		return false
 	default:
 		panic("unexpected resource configuration")
