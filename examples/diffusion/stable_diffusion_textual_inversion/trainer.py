@@ -111,7 +111,7 @@ class TextualInversionTrainer:
             self.learning_rate *= self.effective_global_batch_size
             self.logger.info(f"Using scaled learning rate {self.learning_rate}")
 
-        # The below are instantiated in _setup
+        # The below are instantiated through the immediately folowing methods
         self.tokenizer = None
         self.text_encoder = None
         self.vae = None
@@ -124,10 +124,16 @@ class TextualInversionTrainer:
         self.optimizer = None
         self.train_noise_scheduler = None
 
-        # The StableDiffusionPipeline is instantiated upon checkpoing writing
         self.pipeline = None
 
-        self._setup()
+        self._build_models()
+        self._add_new_tokens()
+        self._freeze_layers()
+        self._build_dataset_and_dataloader()
+        self._build_optimizer()
+        self._build_train_noise_scheduler()
+        self._wrap_and_prepare()
+        self._build_pipeline()
 
     def train(self) -> None:
         """Run the full latent inversion training loop."""
@@ -218,16 +224,6 @@ class TextualInversionTrainer:
         self.optimizer.zero_grad()
 
         return loss
-
-    def _setup(self):
-        """Combined setup steps per HF Accelerator best practices."""
-        self._build_models()
-        self._add_new_tokens()
-        self._freeze_layers()
-        self._build_dataset_and_dataloader()
-        self._build_optimizer()
-        self._build_train_noise_scheduler()
-        self._wrap_and_prepare()
 
     def _build_models(self) -> None:
         """Download the relevant models using deferred execution:
@@ -378,7 +374,8 @@ class TextualInversionTrainer:
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
                 # TODO: Avoid this copy
                 shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
-                self._write_pipline_to_path(path)
+                self._build_pipeline()
+                self._write_pipeline_and_embeddings_to_path(path)
                 self._generate_and_write_imgs(path)
                 shutil.rmtree(train_checkpoint_path)
 
@@ -398,8 +395,8 @@ class TextualInversionTrainer:
         self.accelerator.wait_for_everyone()
         return dirpath
 
-    def _write_pipline_to_path(self, path: pathlib.Path) -> None:
-        # Construct and save pipeline
+    def _build_pipeline(self) -> None:
+        """Build the pipeline."""
         self.pipeline = StableDiffusionPipeline(
             text_encoder=self.accelerator.unwrap_model(self.text_encoder),
             vae=self.vae,
@@ -415,16 +412,17 @@ class TextualInversionTrainer:
             safety_checker=self.safety_checker,
             feature_extractor=self.feature_extractor,
         ).to(self.accelerator.device)
-        self.pipeline.save_pretrained(path)
 
-        # Also save the newly trained embeddings
+    def _write_pipeline_and_embeddings_to_path(self, path: pathlib.Path) -> None:
+        """Write the pipeline and learned embeddings to the given path."""
+        self.pipeline.save_pretrained(path)
         learned_embeds = (
             self.accelerator.unwrap_model(self.text_encoder)
             .get_input_embeddings()
             .weight[self.placeholder_token_id]
         )
         learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
-        torch.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
+        self.accelerator.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
         # Generate a new image using the pipeline.
