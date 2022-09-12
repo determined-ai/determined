@@ -667,7 +667,6 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    @pytest.mark.parallel
     def test_gradient_aggregation(self) -> None:
         AGG_FREQ = 2
         exp_config = utils.make_default_exp_config(
@@ -691,7 +690,7 @@ class TestPyTorchTrial:
             # Check the gradient update at every step.
             for idx, batch_metrics in enumerate(training_metrics):
                 if (idx + 1) % AGG_FREQ != 0:
-                    # Don't test mini-batches
+                    # Only test batches which land on aggregation_frequency boundaries.
                     continue
                 pytorch_onevar_model.OneVarTrial.check_batch_metrics(
                     batch_metrics,
@@ -761,7 +760,6 @@ class TestPyTorchTrial:
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
-    @pytest.mark.parallel
     @pytest.mark.parametrize(
         "trial_class",
         [
@@ -843,17 +841,12 @@ def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
     growth_countdown = GROWTH_INTERVAL
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
-    for idx, (metrics, next_metrics) in enumerate(
-        zip(
-            training_metrics[:-1],
-            training_metrics[1:],
-        )
-    ):
+    for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
         if (idx + 1) % agg_freq != 0:
-            # Don't test mini-batches
+            # Only test batches which land on aggregation_frequency boundaries.
             continue
         # Because the scaler is updated during the optimizer step, which occurs after training from
-        #  a (mini-)batch, the metrics dictionary may not have the updated scale, but we can get it
+        #  a batch, the metrics dictionary may not have the updated scale, but we can get it
         #  from the next step.
         scale = next_metrics["scale_before"]
         if "scale" in metrics:
