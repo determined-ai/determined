@@ -447,8 +447,8 @@ class TextualInversionTrainer:
 
     def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
         # Generate a new image using the pipeline.
-        # Fixed generator for reproducibility.
         for prompt in self.inference_prompts:
+            # Fixed generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
             )
