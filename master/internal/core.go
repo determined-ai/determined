@@ -74,7 +74,6 @@ const (
 	maxConcurrentRestores = 10
 	defaultAskTimeout     = 2 * time.Second
 	webuiBaseRoute        = "/det"
-	
 )
 
 // staticWebDirectoryPaths are the locations of static files that comprise the webui.
@@ -723,7 +722,6 @@ func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 	}
 }
 
-
 func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	var logs []*model.TaskLog
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
@@ -972,7 +970,6 @@ func (m *Master) Run(ctx context.Context) error {
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.File("/", reactIndex)
 	webuiGroup.GET("/*", func(c echo.Context) error {
-
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
@@ -1018,6 +1015,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 		return c.File(reactIndex)
 	})
+
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
