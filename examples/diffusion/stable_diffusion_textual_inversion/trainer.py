@@ -4,7 +4,7 @@ import pathlib
 import shutil
 import tempfile
 from PIL import Image
-from typing import List, Literal, Optional, Union
+from typing import Literal, Optional, Sequence, Union
 
 
 import accelerate
@@ -33,11 +33,11 @@ class TextualInversionTrainer:
     def __init__(
         self,
         use_auth_token: str,
-        train_img_dir: str,
-        placeholder_token: str,
-        initializer_token: int,
+        train_img_dirs: Union[str, Sequence[str]],
+        placeholder_tokens: Union[str, Sequence[str]],
+        initializer_tokens: Union[str, Sequence[str]],
         latest_checkpoint: Optional[str] = None,
-        learnable_property: Literal["object", "style"] = "object",
+        learnable_properties: Literal["object", "style"] = "object",
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
@@ -54,7 +54,7 @@ class TextualInversionTrainer:
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.5,
         center_crop: bool = False,
-        inference_prompt: Optional[str] = None,
+        inference_prompts: Optional[Union[str, Sequence[str]]] = None,
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
         generator_seed: int = 2147483647,
@@ -62,9 +62,21 @@ class TextualInversionTrainer:
         self.use_auth_token = use_auth_token
         self.latest_checkpoint = latest_checkpoint
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
-        self.learnable_property = learnable_property
-        self.placeholder_token = placeholder_token
-        self.initializer_token = initializer_token
+
+        if isinstance(learnable_properties, str):
+            learnable_properties = [learnable_properties]
+        self.learnable_properties = learnable_properties
+        if isinstance(placeholder_tokens, str):
+            placeholder_tokens = [placeholder_tokens]
+        self.placeholder_tokens = placeholder_tokens
+        if isinstance(initializer_tokens, str):
+            initializer_tokens = [initializer_tokens]
+        self.initializer_tokens = initializer_tokens
+        self.img_size = img_size
+        self.interpolation = interpolation
+        self.flip_p = flip_p
+        self.center_crop = center_crop
+
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.learning_rate = learning_rate
@@ -75,14 +87,15 @@ class TextualInversionTrainer:
         self.beta_end = beta_end
         self.beta_schedule = beta_schedule
         self.num_train_timesteps = num_train_timesteps
-        self.train_img_dir = train_img_dir
+        if isinstance(train_img_dirs, str):
+            train_img_dirs = [train_img_dirs]
+        self.train_img_dirs = train_img_dirs
         self.train_seed = train_seed
-        self.img_size = img_size
-        self.interpolation = interpolation
-        self.flip_p = flip_p
-        self.center_crop = center_crop
-        # TODO: Fix inference_prompt
-        self.inference_prompt = inference_prompt or f"a painting of a {self.placeholder_token}"
+
+        # TODO: Fix inference_prompts default
+        if isinstance(inference_prompts, str):
+            inference_prompts = [inference_prompts]
+        self.inference_prompts = inference_prompts or [f"a painting of a dog"]
         self.num_inference_steps = num_inference_steps
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
@@ -117,7 +130,7 @@ class TextualInversionTrainer:
         self.unet = None
         self.safety_checker = None
         self.feature_extractor = None
-        self.placeholder_token_id = None
+        self.placeholder_token_ids = None
         self.train_dataset = None
         self.train_dataloader = None
         self.optimizer = None
@@ -218,7 +231,9 @@ class TextualInversionTrainer:
         grads = self.text_encoder.module.get_input_embeddings().weight.grad
         # Zero out the gradients for all token embeddings except the newly added
         # embeddings for the concept, as we only want to train the concept embeddings
-        index_grads_to_zero = torch.arange(len(self.tokenizer)) != self.placeholder_token_id
+        index_grads_to_zero = torch.isin(
+            torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
+        )
         grads.data[index_grads_to_zero] = 0.0
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -264,29 +279,34 @@ class TextualInversionTrainer:
         Add new concept tokens to the tokenizer.
         """
         # Add the placeholder token in tokenizer
-        num_added_tokens = self.tokenizer.add_tokens(self.placeholder_token)
-        if num_added_tokens == 0:
-            raise ValueError(
-                f"The tokenizer already contains the token {self.placeholder_token}. "
-                f"Please pass a different `placeholder_token` that is not already in the tokenizer."
-            )
+        self.placeholder_token_ids = []
+        initializer_token_ids = []
+        for placeholder, initializer in zip(self.placeholder_tokens, self.initializer_tokens):
+            num_added_tokens = self.tokenizer.add_tokens(placeholder)
+            if num_added_tokens == 0:
+                raise ValueError(
+                    f"Tokenizer already contains the {placeholder}, please choose another token."
+                )
 
-        # Convert the initializer_token, placeholder_token to ids.
-        initializer_token_id_list = self.tokenizer.encode(
-            self.initializer_token, add_special_tokens=False
-        )
-        # Check if initializer_token is a single token or a sequence of tokens.
-        if len(initializer_token_id_list) > 1:
-            raise ValueError("The initializer token must be a single token.")
+            # Convert the initializer_tokens, placeholder_tokens to ids.
+            initializer_token_id_list = self.tokenizer.encode(initializer, add_special_tokens=False)
+            # Check if initializer_tokens is a single token or a sequence of tokens.
+            if len(initializer_token_id_list) > 1:
+                raise ValueError(
+                    "The initializer token must get mapped to a single id."
+                    f" {initializer} is mapped to {initializer_token_id_list}"
+                )
 
-        initializer_token_id = initializer_token_id_list[0]
-        self.placeholder_token_id = self.tokenizer.convert_tokens_to_ids(self.placeholder_token)
+            initializer_token_ids.append(initializer_token_id_list[0])
+            placeholder_token_id = self.tokenizer.convert_tokens_to_ids(placeholder)
+            self.placeholder_token_ids.append(placeholder_token_id)
 
-        # Extend the size of the self.text_encoder to account for the new placeholder_token.
+        # Extend the size of the self.text_encoder to account for the new placeholder_tokens.
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
-        # Initalize the placeholder_token vector to coincide with the initializer_token vector.
+        # Initialize the placeholder vectors to coincide with their initializer vectors.
         token_embeds = self.text_encoder.get_input_embeddings().weight.data
-        token_embeds[self.placeholder_token_id] = token_embeds[initializer_token_id]
+        for p_id, i_id in zip(self.placeholder_token_ids, initializer_token_ids):
+            token_embeds[p_id] = token_embeds[i_id]
 
     def _freeze_layers(self) -> None:
         """Freeze all not-to-be-trained layers."""
@@ -305,10 +325,10 @@ class TextualInversionTrainer:
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
         self.train_dataset = data.TextualInversionDataset(
-            train_img_dir=self.train_img_dir,
+            train_img_dirs=self.train_img_dirs,
             tokenizer=self.tokenizer,
-            placeholder_token=self.placeholder_token,
-            learnable_property=self.learnable_property,
+            placeholder_tokens=self.placeholder_tokens,
+            learnable_properties=self.learnable_properties,
             img_size=self.img_size,
             interpolation=self.interpolation,
             flip_p=self.flip_p,
@@ -369,7 +389,7 @@ class TextualInversionTrainer:
         if self.accelerator.is_main_process:
             checkpoint_metadata = {
                 "steps_completed": self.steps_completed,
-                "placeholder_tokens": self.placeholder_token,
+                "placeholder_tokens": self.placeholder_tokens,
             }
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
                 # TODO: Avoid this copy
@@ -395,24 +415,24 @@ class TextualInversionTrainer:
         self.accelerator.wait_for_everyone()
         return dir_path
 
-    @accelerate.on_main_process
     def _build_pipeline(self) -> None:
         """Build the pipeline for the chief worker only."""
-        self.pipeline = StableDiffusionPipeline(
-            text_encoder=self.accelerator.unwrap_model(self.text_encoder),
-            vae=self.vae,
-            unet=self.unet,
-            tokenizer=self.tokenizer,
-            # Use faster PNDMScheduler for inference
-            scheduler=PNDMScheduler(
-                beta_start=self.beta_start,
-                beta_end=self.beta_end,
-                beta_schedule=self.beta_schedule,
-                skip_prk_steps=True,
-            ),
-            safety_checker=self.safety_checker,
-            feature_extractor=self.feature_extractor,
-        ).to(self.accelerator.device)
+        if self.accelerator.is_main_process:
+            self.pipeline = StableDiffusionPipeline(
+                text_encoder=self.accelerator.unwrap_model(self.text_encoder),
+                vae=self.vae,
+                unet=self.unet,
+                tokenizer=self.tokenizer,
+                # Use faster PNDMScheduler for inference
+                scheduler=PNDMScheduler(
+                    beta_start=self.beta_start,
+                    beta_end=self.beta_end,
+                    beta_schedule=self.beta_schedule,
+                    skip_prk_steps=True,
+                ),
+                safety_checker=self.safety_checker,
+                feature_extractor=self.feature_extractor,
+            ).to(self.accelerator.device)
 
     def _write_pipeline_and_embeddings_to_path(self, path: pathlib.Path) -> None:
         """Write the pipeline and learned embeddings to the given path."""
@@ -420,38 +440,43 @@ class TextualInversionTrainer:
         learned_embeds = (
             self.accelerator.unwrap_model(self.text_encoder)
             .get_input_embeddings()
-            .weight[self.placeholder_token_id]
+            .weight[self.placeholder_token_ids]
         )
-        learned_embeds_dict = {self.placeholder_token: learned_embeds.detach().cpu()}
+        learned_embeds_dict = {self.placeholder_tokens: learned_embeds.detach().cpu()}
         self.accelerator.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
         # Generate a new image using the pipeline.
         # Fixed generator for reproducibility.
-        generator = torch.Generator(device=self.accelerator.device).manual_seed(self.generator_seed)
-        generated_img = self.pipeline(
-            prompt=self.inference_prompt,
-            num_inference_steps=self.num_inference_steps,
-            guidance_scale=self.guidance_scale,
-            generator=generator,
-        )["sample"][0]
-        self.generated_imgs.append((self.steps_completed, generated_img))
-        prompt_path = path.joinpath("_".join(self.inference_prompt.split()))
-        os.makedirs(prompt_path, exist_ok=True)
-        img_grid = Image.new("RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size))
-        for idx, (step, img) in enumerate(self.generated_imgs):
-            img.save(prompt_path.joinpath(f"{step}.png"))
-            img_grid.paste(img, box=(idx * self.img_size, 0))
-        img_grid.save(prompt_path.joinpath("all_imgs.png"))
-        img_0 = self.generated_imgs[0][1]
-        img_0.save(
-            fp=prompt_path.joinpath("all_imgs.gif"),
-            format="GIF",
-            append_images=(img for _, img in self.generated_imgs),
-            save_all=True,
-            duration=200,
-            loop=1,
-        )
+        for prompt in self.inference_prompts:
+            generator = torch.Generator(device=self.accelerator.device).manual_seed(
+                self.generator_seed
+            )
+            generated_img = self.pipeline(
+                prompt=prompt,
+                num_inference_steps=self.num_inference_steps,
+                guidance_scale=self.guidance_scale,
+                generator=generator,
+            )["sample"][0]
+            self.generated_imgs.append((self.steps_completed, generated_img))
+            prompt_path = path.joinpath("_".join(prompt.split()))
+            os.makedirs(prompt_path, exist_ok=True)
+            img_grid = Image.new(
+                "RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size)
+            )
+            for idx, (step, img) in enumerate(self.generated_imgs):
+                img.save(prompt_path.joinpath(f"{step}.png"))
+                img_grid.paste(img, box=(idx * self.img_size, 0))
+            img_grid.save(prompt_path.joinpath("all_imgs.png"))
+            img_0 = self.generated_imgs[0][1]
+            img_0.save(
+                fp=prompt_path.joinpath("all_imgs.gif"),
+                format="GIF",
+                append_images=(img for _, img in self.generated_imgs),
+                save_all=True,
+                duration=200,
+                loop=1,
+            )
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
