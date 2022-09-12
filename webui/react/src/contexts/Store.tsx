@@ -33,7 +33,24 @@ interface UI {
   theme: Theme;
 }
 
-export interface State {
+/** State Split A */
+interface StateSA {
+  // TODO we could move auth as well.
+  ui: UI;
+}
+
+enum StoreActionSA {
+  // UI
+  HideUIChrome = 'HideUIChrome',
+  HideUISpinner = 'HideUISpinner',
+  SetMode = 'SetMode',
+  SetPageVisibility = 'SetPageVisibility',
+  SetTheme = 'SetTheme',
+  ShowUIChrome = 'ShowUIChrome',
+  ShowUISpinner = 'ShowUISpinner',
+}
+
+interface State extends StateSA { // CHECK: avoid merging here.
   activeExperiments: number;
   activeTasks: {
     commands: number;
@@ -48,7 +65,6 @@ export interface State {
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
-  ui: UI;
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
   userSettings: V1UserWebSetting[];
@@ -70,15 +86,6 @@ export enum StoreAction {
   // Info
   SetInfo = 'SetInfo',
   SetInfoCheck = 'SetInfoCheck',
-
-  // UI
-  HideUIChrome = 'HideUIChrome',
-  HideUISpinner = 'HideUISpinner',
-  SetMode = 'SetMode',
-  SetPageVisibility = 'SetPageVisibility',
-  SetTheme = 'SetTheme',
-  ShowUIChrome = 'ShowUIChrome',
-  ShowUISpinner = 'ShowUISpinner',
 
   // Users
   SetUsers = 'SetUsers',
@@ -108,6 +115,15 @@ export enum StoreAction {
   SetUserRoles = 'SetUserRoles',
 }
 
+type ActionSA =
+| { type: StoreActionSA.HideUIChrome }
+| { type: StoreActionSA.HideUISpinner }
+| { type: StoreActionSA.SetMode; value: Mode }
+| { type: StoreActionSA.SetPageVisibility; value: boolean }
+| { type: StoreActionSA.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
+| { type: StoreActionSA.ShowUIChrome }
+| { type: StoreActionSA.ShowUISpinner }
+
 export type Action =
 | { type: StoreAction.Reset }
 | { type: StoreAction.SetAgents; value: Agent[] }
@@ -117,13 +133,6 @@ export type Action =
 | { type: StoreAction.SetAuthCheck }
 | { type: StoreAction.SetInfo; value: DeterminedInfo }
 | { type: StoreAction.SetInfoCheck }
-| { type: StoreAction.HideUIChrome }
-| { type: StoreAction.HideUISpinner }
-| { type: StoreAction.SetMode; value: Mode }
-| { type: StoreAction.SetPageVisibility; value: boolean }
-| { type: StoreAction.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
-| { type: StoreAction.ShowUIChrome }
-| { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
 | { type: StoreAction.SetCurrentUser; value: DetailedUser }
 | { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
@@ -140,6 +149,7 @@ export type Action =
 | { type: StoreAction.SetActiveExperiments, value: number }
 | { type: StoreAction.SetUserRoles, value: UserRole[] }
 | { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
+| ActionSA;
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -174,6 +184,7 @@ const initUI = {
   showSpinner: false,
   theme: {} as Theme,
 };
+
 const initState: State = {
   activeExperiments: 0,
   activeTasks: {
@@ -265,6 +276,38 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
+const reducerSA = (state: State, action: ActionSA): State => {
+  switch (action.type) {
+    case StoreActionSA.HideUIChrome:
+      if (!state.ui.showChrome) return state;
+      return { ...state, ui: { ...state.ui, showChrome: false } };
+    case StoreActionSA.HideUISpinner:
+      if (!state.ui.showSpinner) return state;
+      return { ...state, ui: { ...state.ui, showSpinner: false } };
+    case StoreActionSA.SetMode:
+      return { ...state, ui: { ...state.ui, mode: action.value } };
+    case StoreActionSA.SetPageVisibility:
+      return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
+    case StoreActionSA.SetTheme:
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          darkLight: action.value.darkLight,
+          theme: action.value.theme,
+        },
+      };
+    case StoreActionSA.ShowUIChrome:
+      if (state.ui.showChrome) return state;
+      return { ...state, ui: { ...state.ui, showChrome: true } };
+    case StoreActionSA.ShowUISpinner:
+      if (state.ui.showSpinner) return state;
+      return { ...state, ui: { ...state.ui, showSpinner: true } };
+    default:
+      return state;
+  }
+};
+
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
@@ -295,31 +338,6 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, info: action.value };
     case StoreAction.SetInfoCheck:
       return { ...state, info: { ...state.info, checked: true } };
-    case StoreAction.HideUIChrome:
-      if (!state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: false } };
-    case StoreAction.HideUISpinner:
-      if (!state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: false } };
-    case StoreAction.SetMode:
-      return { ...state, ui: { ...state.ui, mode: action.value } };
-    case StoreAction.SetPageVisibility:
-      return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
-    case StoreAction.SetTheme:
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          darkLight: action.value.darkLight,
-          theme: action.value.theme,
-        },
-      };
-    case StoreAction.ShowUIChrome:
-      if (state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: true } };
-    case StoreAction.ShowUISpinner:
-      if (state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: true } };
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
@@ -358,7 +376,7 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.userAssignments, action.value)) return state;
       return { ...state, userAssignments: action.value };
     default:
-      return state;
+      return reducerSA(state, action);
   }
 };
 
