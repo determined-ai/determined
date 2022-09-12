@@ -554,7 +554,7 @@ const CodeViewer: React.FC<Props> = ({
                       />
                     )
                     : (
-                      <Suspense fallback={<Spinner tip="Loading ipynd viewer..." />}>
+                      <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
                         <JupyterRenderer
                           file={JSON.parse(activeFile?.text || '') as IpynbInterface}
                         />
