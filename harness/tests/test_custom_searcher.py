@@ -18,7 +18,7 @@ from determined.searcher.search_method import (
     ValidateAfter,
 )
 from determined.searcher.search_runner import LocalSearchRunner
-from .e2e_tests.tests.fixtures.custom_searcher.searchers import (
+from e2e_tests.tests.fixtures.custom_searcher.searchers import (
     ASHASearchMethod,
     RandomSearchMethod,
 )
