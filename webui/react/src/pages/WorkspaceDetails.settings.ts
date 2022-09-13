@@ -3,6 +3,7 @@ import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 
+export type MembersColumnName = | 'name' | 'role' | 'action';
 export type ProjectColumnName =
   | 'action'
   | 'archived'
@@ -20,6 +21,15 @@ export const DEFAULT_COLUMNS: ProjectColumnName[] = [
   'lastUpdated',
   'userId',
 ];
+
+export const MEMBERS_DEFAULT_COLUMNS: MembersColumnName[] = 
+['name', 'role']
+
+export const MEMBERS_DEFAULT_COLUMN_WIDTHS: Record<MembersColumnName, number> = {
+  name: 150,
+  role: 20,
+  action: 100,
+}
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   action: 46,
