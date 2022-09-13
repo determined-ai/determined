@@ -181,7 +181,7 @@ def test_run_random_searcher_exp_core_api(
 @pytest.mark.e2e_cpu_2a
 def test_pause_random_searcher_core_api() -> None:
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
-    exp_name = f"random-pause-{TIMESTAMP}"
+    exp_name = f"random-pause1-{TIMESTAMP}"
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name noop.yaml"
 
@@ -256,7 +256,7 @@ def test_pause_random_searcher_core_api() -> None:
 @pytest.mark.e2e_cpu_2a
 def test_pause_multi_trial_random_searcher_core_api() -> None:
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
-    exp_name = f"random-pause-{TIMESTAMP}"
+    exp_name = f"random-pause2-{TIMESTAMP}"
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name noop.yaml"
 
@@ -274,7 +274,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
-    multi_trial_exp_id = exp.wait_for_experiment_by_name_is_active(exp_name, 0)
+    multi_trial_exp_id = exp.wait_for_experiment_by_name_is_active(exp_name, 1)
 
     # pause multi-trial experiment
     exp.pause_experiment(multi_trial_exp_id)

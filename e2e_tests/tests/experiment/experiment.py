@@ -114,7 +114,7 @@ def wait_for_experiment_by_name_is_active(
         if experiment.state == determinedexperimentv1State.STATE_ACTIVE:
             if experiment.numTrials > min_trials:
                 return experiment_id
-            time.sleep(1)
+            time.sleep(0.25)
             continue
 
         if is_terminal_state(experiment.state):
