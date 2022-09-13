@@ -187,6 +187,7 @@ class determinedtaskv1State(enum.Enum):
     STATE_RUNNING = "STATE_RUNNING"
     STATE_TERMINATED = "STATE_TERMINATED"
     STATE_TERMINATING = "STATE_TERMINATING"
+    STATE_WAITING = "STATE_WAITING"
 
 class protobufAny:
     def __init__(
@@ -5890,20 +5891,24 @@ class v1Task:
         *,
         allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None,
         taskId: "typing.Optional[str]" = None,
+        taskType: "typing.Optional[str]" = None,
     ):
         self.taskId = taskId
+        self.taskType = taskType
         self.allocations = allocations
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
         return cls(
             taskId=obj.get("taskId", None),
+            taskType=obj.get("taskType", None),
             allocations=[v1Allocation.from_json(x) for x in obj["allocations"]] if obj.get("allocations", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "taskId": self.taskId if self.taskId is not None else None,
+            "taskType": self.taskType if self.taskType is not None else None,
             "allocations": [x.to_json() for x in self.allocations] if self.allocations is not None else None,
         }
 

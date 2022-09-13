@@ -166,7 +166,7 @@ export enum Determinedjobv1Type {
 }
 
 /**
- * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.
+ * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.
  * @export
  * @enum {string}
  */
@@ -178,7 +178,8 @@ export enum Determinedtaskv1State {
     STARTING = <any> 'STATE_STARTING',
     RUNNING = <any> 'STATE_RUNNING',
     TERMINATED = <any> 'STATE_TERMINATED',
-    TERMINATING = <any> 'STATE_TERMINATING'
+    TERMINATING = <any> 'STATE_TERMINATING',
+    WAITING = <any> 'STATE_WAITING'
 }
 
 /**
@@ -6589,6 +6590,12 @@ export interface V1Task {
      * @memberof V1Task
      */
     taskId?: string;
+    /**
+     * Type of Task.
+     * @type {string}
+     * @memberof V1Task
+     */
+    taskType?: string;
     /**
      * List of Allocations.
      * @type {Array<V1Allocation>}
