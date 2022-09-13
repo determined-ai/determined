@@ -6,20 +6,8 @@ import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
-import {
-  Agent,
-  Auth,
-  ClusterOverview,
-  ClusterOverviewResource,
-  DetailedUser,
-  DeterminedInfo,
-  PoolOverview,
-  ResourcePool,
-  ResourceType,
-  UserAssignment,
-  UserRole,
-  Workspace,
-} from 'types';
+import { Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo,
+  PoolOverview, ResourcePool, ResourceType, UserAssignment, UserRole, Workspace } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -31,7 +19,7 @@ interface OmnibarState {
   isShowing: boolean;
 }
 
-interface State { // CHECK: avoid merging here.
+interface State {
   activeExperiments: number;
   activeTasks: {
     commands: number;
@@ -47,7 +35,7 @@ interface State { // CHECK: avoid merging here.
   pool: PoolOverview;
   resourcePools: ResourcePool[];
   ui: StateUI & {
-    omnibar: OmnibarState; // TODO: move it out of ui
+    omnibar: OmnibarState; // TODO: this should probably be out of ui
   };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
