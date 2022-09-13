@@ -24,7 +24,7 @@ const ModalTrigger: React.FC = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   return (
     <CheckpointModalTrigger
@@ -39,7 +39,7 @@ const setup = async () => {
   render(
     <StoreProvider>
       <ModalTrigger />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   await user.click(screen.getByRole('button'));

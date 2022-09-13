@@ -6,14 +6,8 @@ import {
   terminalRunStates,
 } from 'constants/states';
 import { RawJson } from 'shared/types';
-import {
-  clone,
-  deletePathList,
-  getPathList,
-  isNumber,
-  setPathList,
-  unflattenObject,
-} from 'shared/utils/data';
+import { clone, deletePathList, getPathList, isNumber, setPathList,
+  unflattenObject } from 'shared/utils/data';
 import {
   AnyTask,
   ExperimentAction,
@@ -31,7 +25,9 @@ import {
   TrialHyperparameters,
 } from 'types';
 
-type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) => boolean;
+type ExperimentChecker = (
+  experiment: ProjectExperiment, trial?: TrialDetails,
+) => boolean
 
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
@@ -46,7 +42,7 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 };
 
 export const trialHParamsToExperimentHParams = (
-  trialHParams: TrialHyperparameters
+  trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
   const hParams = Object.keys(trialHParams).reduce((acc, key) => {
     return {
@@ -71,11 +67,14 @@ const stepRemovalTranslations = [
   { newName: 'searcher.max_length', oldName: 'searcher.target_trial_steps' },
 ];
 
-const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, number] => {
+const getLengthFromStepCount = (
+  config: RawJson,
+  stepCount: number,
+): [string, number] => {
   const DEFAULT_BATCHES_PER_STEP = 100;
   // provide backward compat for step count
   const batchesPerStep = config.batches_per_step || DEFAULT_BATCHES_PER_STEP;
-  return ['batches', stepCount * batchesPerStep];
+  return [ 'batches', stepCount * batchesPerStep ];
 };
 
 // Add opportunistic backward compatibility to old configs.
@@ -88,7 +87,7 @@ export const upgradeConfig = (config: RawJson): RawJson => {
     if (curValue === undefined) return;
     if (curValue === null) deletePathList(newConfig, oldPath);
     if (isNumber(curValue)) {
-      const [key, count] = getLengthFromStepCount(newConfig, curValue);
+      const [ key, count ] = getLengthFromStepCount(newConfig, curValue);
       const newPath = (translation.newName || translation.oldName).split('.');
       setPathList(newConfig, newPath, { [key]: count });
 
@@ -102,21 +101,25 @@ export const upgradeConfig = (config: RawJson): RawJson => {
 };
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-export const isExperimentModifiable = (experiment: ProjectExperiment): boolean =>
-  !experiment.archived && !experiment.parentArchived;
+export const isExperimentModifiable = (
+  experiment: ProjectExperiment,
+): boolean => !experiment.archived && !experiment.parentArchived;
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-export const isExperimentForkable = (experiment: ProjectExperiment): boolean =>
-  !experiment.parentArchived;
+export const isExperimentForkable = (
+  experiment: ProjectExperiment,
+): boolean => !experiment.parentArchived;
 
-export const alwaysTrueExperimentChecker = (experiment: ProjectExperiment): boolean => true;
+export const alwaysTrueExperimentChecker = (
+  experiment: ProjectExperiment,
+): boolean => true;
 
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
-  trial?: TrialDetails
-): boolean =>
-  !experiment.archived && !experiment.parentArchived && (!!trial || experiment?.numTrials === 1);
+  trial?: TrialDetails,
+): boolean => !experiment.archived && !experiment.parentArchived
+  && (!!trial || experiment?.numTrials === 1);
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
@@ -129,13 +132,15 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.Archive]: (experiment) =>
     !experiment.parentArchived && !experiment.archived && terminalRunStates.has(experiment.state),
 
-  [ExperimentAction.Cancel]: (experiment) => cancellableRunStates.has(experiment.state),
+  [ExperimentAction.Cancel]: (experiment) =>
+    cancellableRunStates.has(experiment.state),
 
   [ExperimentAction.CompareTrials]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.ContinueTrial]: canExperimentContinueTrial,
 
-  [ExperimentAction.Delete]: (experiment) => deletableRunStates.has(experiment.state),
+  [ExperimentAction.Delete]: (experiment) =>
+    deletableRunStates.has(experiment.state),
 
   [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
 
@@ -143,9 +148,12 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Fork]: isExperimentForkable,
 
-  [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
+  [ExperimentAction.Kill]: (experiment) =>
+    killableRunStates.includes(experiment.state),
 
-  [ExperimentAction.Move]: (experiment) => !experiment?.parentArchived && !experiment.archived,
+  [ExperimentAction.Move]: (experiment) =>
+    !experiment?.parentArchived &&
+    !experiment.archived,
 
   [ExperimentAction.Pause]: (experiment) => pausableRunStates.has(experiment.state),
 
@@ -164,53 +172,59 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 export const canActionExperiment = (
   action: ExperimentAction,
   experiment: ProjectExperiment,
-  trial?: TrialDetails
+  trial?: TrialDetails,
 ): boolean => {
-  return !!experiment && experimentCheckers[action](experiment, trial);
+  return !!experiment && experimentCheckers[action](
+    experiment,
+    trial,
+  );
 };
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
-  targets: ExperimentAction[]
+  targets: ExperimentAction[],
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
-  return targets.filter((action) => canActionExperiment(action, experiment));
+  return targets.filter((action) => canActionExperiment(
+    action,
+    experiment,
+  ));
 };
 
 export const getActionsForExperimentsUnion = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
-  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean
+  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
 ): ExperimentAction[] => {
   if (!experiments.length) return []; // redundant, for clarity
-  const actionsForExperiments = experiments.map((e) =>
-    getActionsForExperiment(e, targets).filter((action) =>
-      [ExperimentAction.Delete, ExperimentAction.Move].includes(action)
-        ? (action === ExperimentAction.Delete && canDeleteExperiment({ experiment: e })) ||
-          (action === ExperimentAction.Move && canMoveExperiment({ experiment: e }))
-        : true
-    )
-  );
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(
+    e,
+    targets,
+  ).filter((action) => [ ExperimentAction.Delete, ExperimentAction.Move ].includes(action)
+    ? (action === ExperimentAction.Delete && canDeleteExperiment({ experiment: e })) ||
+      (action === ExperimentAction.Move && canMoveExperiment({ experiment: e }))
+    : true));
   return targets.filter((action) =>
-    actionsForExperiments.some((experimentActions) => experimentActions.includes(action))
-  );
+    actionsForExperiments.some((experimentActions) => experimentActions.includes(action)));
 };
 
 export const getActionsForExperimentsIntersection = (
   experiments: ProjectExperiment[],
-  targets: ExperimentAction[]
+  targets: ExperimentAction[],
 ): ExperimentAction[] => {
   if (!experiments.length) [];
-  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(
+    e,
+    targets,
+  ));
   return targets.filter((action) =>
-    actionsForExperiments.every((experimentActions) => experimentActions.includes(action))
-  );
+    actionsForExperiments.every((experimentActions) => experimentActions.includes(action)));
 };
 
 export const getProjectExperimentForExperimentItem = (
   experiment: ExperimentItem,
-  project?: Project
+  project?: Project,
 ): ProjectExperiment =>
   ({
     ...experiment,

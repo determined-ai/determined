@@ -23,13 +23,16 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const InteractiveTaskPageContainer: React.FC = () => {
+
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
-  return <InteractiveTask />;
+  return (
+    <InteractiveTask />
+  );
 };
 
 const InteractiveTaskContainer: React.FC = () => {
@@ -62,4 +65,5 @@ describe('InteractiveTask', () => {
     await setup();
     expect(document.title).toEqual(TASK_NAME);
   });
+
 });

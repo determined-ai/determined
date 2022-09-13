@@ -28,13 +28,14 @@ const createStylesheetLink = () => {
 };
 
 const getDarkLight = (mode: Mode, systemMode: Mode): DarkLight => {
-  const resolvedMode =
-    mode === Mode.System ? (systemMode === Mode.System ? Mode.Light : systemMode) : mode;
+  const resolvedMode = mode === Mode.System
+    ? (systemMode === Mode.System ? Mode.Light : systemMode)
+    : mode;
   return resolvedMode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
 };
 
 const getStylesheetLink = () => {
-  return (document.getElementById(STYLESHEET_ID) as HTMLLinkElement) || createStylesheetLink();
+  return document.getElementById(STYLESHEET_ID) as HTMLLinkElement || createStylesheetLink();
 };
 
 const getSystemMode = (): Mode => {
@@ -58,12 +59,12 @@ const updateAntDesignTheme = (path: string) => {
  * in the `themeId`, the hook dynamically updates the CSS variables once again.
  * `useTheme` hook is meant to be used only once in the top level component such as App
  * and storybook Theme decorators and not individual components.
- */
+*/
 export const useTheme = (): void => {
   const { info, ui } = useStore();
   const storeDispatch = useStoreDispatch();
-  const [systemMode, setSystemMode] = useState<Mode>(getSystemMode());
-  const [isSettingsReady, setIsSettingsReady] = useState(false);
+  const [ systemMode, setSystemMode ] = useState<Mode>(getSystemMode());
+  const [ isSettingsReady, setIsSettingsReady ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
@@ -82,7 +83,7 @@ export const useTheme = (): void => {
       const value = (ui.theme as Record<RecordKey, string>)[key];
       document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
     });
-  }, [ui.theme]);
+  }, [ ui.theme ]);
 
   // Detect browser/OS level dark/light mode changes.
   useEffect(() => {
@@ -93,7 +94,7 @@ export const useTheme = (): void => {
       matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
       matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
     };
-  }, [handleSchemeChange]);
+  }, [ handleSchemeChange ]);
 
   // Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
@@ -104,10 +105,10 @@ export const useTheme = (): void => {
       type: StoreAction.SetTheme,
       value: { darkLight, theme: themes[info.branding][darkLight] },
     });
-  }, [info.branding, storeDispatch, systemMode, ui.mode]);
+  }, [ info.branding, storeDispatch, systemMode, ui.mode ]);
 
   // Update Ant Design theme when darkLight changes.
-  useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ui.darkLight]);
+  useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ ui.darkLight ]);
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
@@ -119,7 +120,7 @@ export const useTheme = (): void => {
       storeDispatch({ type: StoreAction.SetMode, value: settings.mode });
       setIsSettingsReady(true);
     }
-  }, [isSettingsReady, settings, storeDispatch, ui.mode, updateSettings]);
+  }, [ isSettingsReady, settings, storeDispatch, ui.mode, updateSettings ]);
 };
 
 export default useTheme;

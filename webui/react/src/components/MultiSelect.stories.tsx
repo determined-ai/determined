@@ -9,12 +9,12 @@ const { Option } = Select;
 
 export default {
   component: MultiSelect,
-  decorators: [withKnobs],
+  decorators: [ withKnobs ],
   title: 'MultiSelect',
 };
 
 export const Default = (): React.ReactNode => {
-  const [value, setValue] = useState<string[]>([]);
+  const [ value, setValue ] = useState<string[]>([]);
   const count = number('Number of Options', 5, { max: 26, min: 0, range: true, step: 1 });
   const onChange = useCallback((value: SelectValue) => {
     setValue(value as string[]);

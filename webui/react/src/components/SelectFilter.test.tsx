@@ -25,7 +25,7 @@ const setup = () => {
           {'Option ' + String.fromCharCode(65 + index)}
         </Option>
       ))}
-    </SelectFilter>
+    </SelectFilter>,
   );
   return { handleOpen, user, view };
 };

@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import {
-  useFetchAgents,
-  useFetchPinnedWorkspaces,
-  useFetchResourcePools,
-  useFetchUserSettings,
-} from 'hooks/useFetch';
+import { useFetchAgents, useFetchPinnedWorkspaces,
+  useFetchResourcePools, useFetchUserSettings } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import Spinner from 'shared/components/Spinner/Spinner';
 
@@ -20,7 +16,7 @@ interface Props {
 
 const Navigation: React.FC<Props> = ({ children }) => {
   const { ui } = useStore();
-  const [canceler] = useState(new AbortController());
+  const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
@@ -35,7 +31,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
     fetchResourcePools();
 
     return () => canceler.abort();
-  }, [canceler, fetchResourcePools]);
+  }, [ canceler, fetchResourcePools ]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

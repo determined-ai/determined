@@ -2,10 +2,14 @@ import React, { useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
-import logoDeterminedOnDarkHorizontal from 'shared/assets/images/logo-determined-on-dark-horizontal.svg';
-import logoDeterminedOnDarkVertical from 'shared/assets/images/logo-determined-on-dark-vertical.svg';
-import logoDeterminedOnLightHorizontal from 'shared/assets/images/logo-determined-on-light-horizontal.svg';
-import logoDeterminedOnLightVertical from 'shared/assets/images/logo-determined-on-light-vertical.svg';
+import logoDeterminedOnDarkHorizontal from
+  'shared/assets/images/logo-determined-on-dark-horizontal.svg';
+import logoDeterminedOnDarkVertical from
+  'shared/assets/images/logo-determined-on-dark-vertical.svg';
+import logoDeterminedOnLightHorizontal from
+  'shared/assets/images/logo-determined-on-light-horizontal.svg';
+import logoDeterminedOnLightVertical from
+  'shared/assets/images/logo-determined-on-light-vertical.svg';
 import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
 import { DarkLight } from 'shared/themes';
@@ -49,7 +53,7 @@ const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>
 
 const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
   const { ui } = useStore();
-  const classes = [css[branding], css[orientation]];
+  const classes = [ css[branding], css[orientation] ];
 
   const alt = useMemo(() => {
     const isDetermined = branding === BrandingType.Determined;
@@ -59,10 +63,14 @@ const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
       isDetermined ? 'Determined AI Logo' : 'HPE Machine Learning Development Logo',
       isSameServer ? '' : ` (Server: ${server})`,
     ].join();
-  }, [branding]);
+  }, [ branding ]);
 
   return (
-    <img alt={alt} className={classes.join(' ')} src={logos[branding][orientation][ui.darkLight]} />
+    <img
+      alt={alt}
+      className={classes.join(' ')}
+      src={logos[branding][orientation][ui.darkLight]}
+    />
   );
 };
 

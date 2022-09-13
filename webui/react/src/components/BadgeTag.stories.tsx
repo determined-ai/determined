@@ -9,7 +9,7 @@ import BadgeTag from './BadgeTag';
 
 export default {
   component: BadgeTag,
-  decorators: [withKnobs],
+  decorators: [ withKnobs ],
   title: 'BadgeTag',
 };
 

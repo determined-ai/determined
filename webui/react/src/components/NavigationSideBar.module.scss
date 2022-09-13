@@ -107,9 +107,7 @@
   }
   .launchBlock:hover {
     .launchButton,
-    .launchIcon {
-      border-color: var(--theme-stage-border-strong);
-    }
+    .launchIcon { border-color: var(--theme-stage-border-strong); }
   }
   .navItemContainer {
     align-items: center;
@@ -206,16 +204,12 @@
   section.launch {
     width: var(--nav-side-bar-width-max);
   }
-  .noWorkspaces {
-    opacity: 1;
-  }
+  .noWorkspaces { opacity: 1; }
   .navItemContainer {
     width: var(--nav-side-bar-width-max);
 
     .action,
-    .label {
-      opacity: 1;
-    }
+    .label { opacity: 1; }
   }
   .navItemContainer.hasStatus {
     height: 48px;
@@ -223,9 +217,7 @@
   .user {
     width: var(--nav-side-bar-width-max);
 
-    span {
-      opacity: 1;
-    }
+    span { opacity: 1; }
   }
 }
 .collapsedEnterActive {
@@ -240,20 +232,27 @@
     height: 24px;
     left: 12px;
     top: 16px;
-    transition: height var(--animation-curve), left var(--animation-curve),
-      top var(--animation-curve), width var(--animation-curve);
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 32px;
   }
   .logoIcon {
     height: 24px;
     left: 0;
-    transition: height var(--animation-curve), left var(--animation-curve),
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
       width var(--animation-curve);
     width: 32px;
   }
   .logoLabel {
     opacity: 0;
-    transition: opacity var(--animation-curve), width var(--animation-curve);
+    transition:
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 0;
   }
   .launchBlock {
@@ -263,7 +262,9 @@
     .launchButton {
       opacity: 0;
       padding: 0;
-      transition: opacity var(--animation-curve), padding var(--animation-curve),
+      transition:
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
         width var(--animation-curve);
       width: 0;
     }
@@ -341,21 +342,15 @@
       padding: 0;
       width: 0;
     }
-    .launchIcon {
-      border-radius: 100%;
-    }
+    .launchIcon { border-radius: 100%; }
   }
-  .noWorkspaces {
-    opacity: 0;
-  }
+  .noWorkspaces { opacity: 0; }
   .navItemContainer {
     flex-direction: column;
     width: var(--nav-side-bar-width-min);
 
     .action,
-    .label {
-      opacity: 0;
-    }
+    .label { opacity: 0; }
     .navItemExtra {
       & * {
         justify-content: center;
@@ -371,32 +366,22 @@
   .user {
     width: var(--nav-side-bar-width-min);
 
-    span {
-      opacity: 0;
-    }
+    span { opacity: 0; }
   }
 }
 .collapsedExit {
-  .noWorkspaces {
-    display: block;
-  }
+  .noWorkspaces { display: block; }
   .navItemContainer {
     .action,
-    .label {
-      display: block;
-    }
+    .label { display: block; }
   }
 }
 .collapsedEnterDone {
   .navItemContainer {
     .action,
-    .label {
-      display: none;
-    }
+    .label { display: none; }
   }
-  .noWorkspaces {
-    display: none;
-  }
+  .noWorkspaces { display: none; }
 }
 .collapsedExitActive {
   flex-basis: var(--nav-side-bar-width-max);
@@ -410,20 +395,27 @@
     height: 64.94px;
     left: 60px;
     top: 24px;
-    transition: height var(--animation-curve), left var(--animation-curve),
-      top var(--animation-curve), width var(--animation-curve);
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 128px;
   }
   .logoIcon {
     height: 40px;
     left: 32px;
-    transition: height var(--animation-curve), left var(--animation-curve),
+    transition:
+      height var(--animation-curve),
+      left var(--animation-curve),
       width var(--animation-curve);
     width: 52px;
   }
   .logoLabel {
     opacity: 1;
-    transition: opacity var(--animation-curve), width var(--animation-curve);
+    transition:
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 120px;
   }
   .launchBlock {
@@ -433,7 +425,9 @@
     .launchButton {
       opacity: 1;
       padding: 0 16px;
-      transition: opacity var(--animation-curve), padding var(--animation-curve),
+      transition:
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
         width var(--animation-curve);
       width: 100%;
     }

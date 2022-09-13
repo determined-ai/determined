@@ -20,25 +20,24 @@ interface DroppableItemProps {
 
 const DraggableTypes = { COLUMN: 'COLUMN' };
 
-// prettier-ignore
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-const withDragAndDropProvider = <T extends {}>(Component: React.FunctionComponent<T>) =>
-  (props: T) =>
-    (
-      <DndProvider backend={HTML5Backend}>
-        <Component {...props} />
-      </DndProvider>
-    );
+const withDragAndDropProvider = <T extends {}>
+(Component: React.FunctionComponent<T>) =>
+  (props: T) => (
+    <DndProvider backend={HTML5Backend}>
+      <Component {...props} />
+    </DndProvider>
+  );
 
 const DraggableListItem: React.FC<Props> = ({
   columnName,
   index,
   style,
   onClick,
-  children,
-  onDrop,
+  children, onDrop,
 }: Props) => {
-  const [{ isOver, dropDirection }, drop] = useDrop(
+
+  const [ { isOver, dropDirection }, drop ] = useDrop(
     () => ({
       accept: DraggableTypes.COLUMN,
       collect: (monitor) => ({
@@ -50,10 +49,10 @@ const DraggableListItem: React.FC<Props> = ({
         onDrop(item.columnName, columnName);
       },
     }),
-    []
+    [],
   );
 
-  const [, drag] = useDrag(() => ({
+  const [ , drag ] = useDrag(() => ({
     item: { columnName, index },
     type: DraggableTypes.COLUMN,
   }));
@@ -61,15 +60,10 @@ const DraggableListItem: React.FC<Props> = ({
   return (
     <span ref={drop}>
       <li
-        className={
-          isOver
-            ? dropDirection === 'above'
-              ? css.aboveDropTarget
-              : dropDirection === 'below'
-              ? css.belowDropTarget
-              : undefined
-            : undefined
-        }
+        className={isOver ? (dropDirection === 'above' ?
+          css.aboveDropTarget : (dropDirection === 'below' ?
+            css.belowDropTarget : undefined))
+          : undefined}
         ref={drag}
         style={style}
         onClick={onClick}>

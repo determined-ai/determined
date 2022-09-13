@@ -31,7 +31,7 @@ jest.mock('antd', () => {
 const FIRST_ID = 6;
 const MIDDLE_ID = 66;
 const LAST_ID = 666;
-const IDS_ARRAY = [FIRST_ID, MIDDLE_ID, LAST_ID];
+const IDS_ARRAY = [ FIRST_ID, MIDDLE_ID, LAST_ID ];
 const TOOLTIP_LABEL = 'unique label name';
 const TITLE_PREV = 'Previous Page';
 const TITLE_NEXT = 'Next Page';
@@ -51,7 +51,7 @@ const setup = (initialId: number) => {
       ids={IDS_ARRAY}
       tooltipLabel={TOOLTIP_LABEL}
       onSelectId={navigateToId}
-    />
+    />,
   );
 
   return navigateToId;

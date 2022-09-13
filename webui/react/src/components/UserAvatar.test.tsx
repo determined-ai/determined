@@ -47,7 +47,7 @@ const Component = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetUsers, value: testUsers });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   return <UserAvatar hideTooltip={hideTooltip} userId={userId} {...props} />;
 };
@@ -58,7 +58,7 @@ const setup = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {}) =
   const view = render(
     <StoreProvider>
       <Component hideTooltip={hideTooltip} userId={userId} {...props} />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   return { user, view };

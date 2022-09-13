@@ -44,14 +44,14 @@ interface Params {
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const TrialDetailsComp: React.FC = () => {
-  const [canceler] = useState(new AbortController());
-  const [experiment, setExperiment] = useState<ExperimentBase>();
-  const [isFetching, setIsFetching] = useState(false);
+  const [ canceler ] = useState(new AbortController());
+  const [ experiment, setExperiment ] = useState<ExperimentBase>();
+  const [ isFetching, setIsFetching ] = useState(false);
   const history = useHistory();
   const routeParams = useParams<Params>();
-  const [tabKey, setTabKey] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
-  const [trialId, setTrialId] = useState<number>(parseInt(routeParams.trialId));
-  const [trialDetails, setTrialDetails] = useState<ApiState<TrialDetails>>({
+  const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
+  const [ trialId, setTrialId ] = useState<number>(parseInt(routeParams.trialId));
+  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
   });
@@ -67,7 +67,7 @@ const TrialDetailsComp: React.FC = () => {
     try {
       const response = await getExperimentDetails(
         { id: trial.experimentId },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
 
       setIsFetching(false);
@@ -88,7 +88,12 @@ const TrialDetailsComp: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [canceler, history, routeParams.experimentId, trial]);
+  }, [
+    canceler,
+    history,
+    routeParams.experimentId,
+    trial,
+  ]);
 
   const fetchTrialDetails = useCallback(async () => {
     try {
@@ -99,46 +104,43 @@ const TrialDetailsComp: React.FC = () => {
         setTrialDetails((prev) => ({ ...prev, error: e as Error }));
       }
     }
-  }, [canceler, trialDetails.error, trialId]);
+  }, [ canceler, trialDetails.error, trialId ]);
 
-  const handleTabChange = useCallback(
-    (key) => {
-      setIsFetching(true);
-      setTabKey(key);
-      history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-      setIsFetching(false);
-    },
-    [basePath, history]
-  );
+  const handleTabChange = useCallback((key) => {
+    setIsFetching(true);
+    setTabKey(key);
+    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+    setIsFetching(false);
+  }, [ basePath, history ]);
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
     history.replace(`${basePath}/${TabType.Logs}?tail`);
-  }, [basePath, history]);
+  }, [ basePath, history ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
   useEffect(() => {
     setTrialId(parseInt(routeParams.trialId));
-  }, [routeParams.trialId]);
+  }, [ routeParams.trialId ]);
 
   useEffect(() => {
     fetchTrialDetails();
-  }, [fetchTrialDetails, trialId]);
+  }, [ fetchTrialDetails, trialId ]);
 
   useEffect(() => {
     fetchExperimentDetails();
-  }, [fetchExperimentDetails]);
+  }, [ fetchExperimentDetails ]);
 
   useEffect(() => {
     if (trialDetails.data && terminalRunStates.has(trialDetails.data.state)) {
       stopPolling();
     }
-  }, [trialDetails.data, stopPolling]);
+  }, [ trialDetails.data, stopPolling ]);
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [canceler]);
+  }, [ canceler ]);
 
   if (isNaN(trialId)) {
     return <Message title={`Invalid Trial ID ${routeParams.trialId}`} />;
@@ -148,7 +150,11 @@ const TrialDetailsComp: React.FC = () => {
     if (isNotFound(trialDetails.error)) return <PageNotFound />;
     const message = `Unable to fetch Trial ${trialId}`;
     return (
-      <Message message={trialDetails.error.message} title={message} type={MessageType.Warning} />
+      <Message
+        message={trialDetails.error.message}
+        title={message}
+        type={MessageType.Warning}
+      />
     );
   }
 
@@ -160,13 +166,13 @@ const TrialDetailsComp: React.FC = () => {
     <Page
       bodyNoPadding
       containerRef={pageRef}
-      headerComponent={
+      headerComponent={(
         <TrialDetailsHeader
           experiment={experiment}
           fetchTrialDetails={fetchTrialDetails}
           trial={trial}
         />
-      }
+      )}
       stickyHeader
       title={`Trial ${trialId}`}>
       <TrialLogPreview
@@ -177,7 +183,7 @@ const TrialDetailsComp: React.FC = () => {
           <Tabs
             activeKey={tabKey}
             className="no-padding"
-            tabBarExtraContent={
+            tabBarExtraContent={(
               <RoutePagination
                 currentId={trialId}
                 ids={experiment.trialIds ?? []}
@@ -186,17 +192,16 @@ const TrialDetailsComp: React.FC = () => {
                   history.push(paths.trialDetails(selectedTrialId, experiment?.id));
                 }}
               />
-            }
+            )}
             onChange={handleTabChange}>
             <TabPane key={TabType.Overview} tab="Overview">
               <TrialDetailsOverview experiment={experiment} trial={trial} />
             </TabPane>
             <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-              {isSingleTrialExperiment(experiment) ? (
-                <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
-              ) : (
+              {isSingleTrialExperiment(experiment) ?
+                <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} /> :
                 <TrialRangeHyperparameters experiment={experiment} trial={trial} />
-              )}
+              }
             </TabPane>
             <TabPane key={TabType.Profiler} tab="Profiler">
               <TrialDetailsProfiles experiment={experiment} trial={trial} />

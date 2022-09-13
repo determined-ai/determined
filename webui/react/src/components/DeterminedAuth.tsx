@@ -28,46 +28,43 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const storeDispatch = useStoreDispatch();
-  const [isBadCredentials, setIsBadCredentials] = useState(false);
-  const [canSubmit, setCanSubmit] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
+  const [ isBadCredentials, setIsBadCredentials ] = useState(false);
+  const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
-  const onFinish = useCallback(
-    async (creds: FromValues): Promise<void> => {
-      storeDispatch({ type: StoreAction.ShowUISpinner });
-      setCanSubmit(false);
-      try {
-        const { token, user } = await login(
-          {
-            password: creds.password || '',
-            username: creds.username || '',
-          },
-          { signal: canceler.signal }
-        );
-        updateDetApi({ apiKey: `Bearer ${token}` });
-        storeDispatch({
-          type: StoreAction.SetAuth,
-          value: { isAuthenticated: true, token, user },
-        });
-        storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
-      } catch (e) {
-        const isBadCredentialsSync = isLoginFailure(e);
-        setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
-        storeDispatch({ type: StoreAction.HideUISpinner });
-        const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
-        if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
-        handleError(e, {
-          isUserTriggered: true,
-          publicMessage: `Failed to login. Please ${actionMsg}`,
-          publicSubject: 'Login failed',
-          silent: false,
-          type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
-        });
-      } finally {
-        setCanSubmit(true);
-      }
-    },
-    [canceler, storeDispatch]
-  );
+  const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
+    storeDispatch({ type: StoreAction.ShowUISpinner });
+    setCanSubmit(false);
+    try {
+      const { token, user } = await login(
+        {
+          password: creds.password || '',
+          username: creds.username || '',
+        }
+        , { signal: canceler.signal },
+      );
+      updateDetApi({ apiKey: `Bearer ${token}` });
+      storeDispatch({
+        type: StoreAction.SetAuth,
+        value: { isAuthenticated: true, token, user },
+      });
+      storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
+    } catch (e) {
+      const isBadCredentialsSync = isLoginFailure(e);
+      setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
+      storeDispatch({ type: StoreAction.HideUISpinner });
+      const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
+      if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
+      handleError(e, {
+        isUserTriggered: true,
+        publicMessage: `Failed to login. Please ${actionMsg}`,
+        publicSubject: 'Login failed',
+        silent: false,
+        type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
+      });
+    } finally {
+      setCanSubmit(true);
+    }
+  }, [ canceler, storeDispatch ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;
@@ -96,10 +93,16 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
       </Form.Item>
       {isBadCredentials && (
-        <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
+        <p className={[ css.errorMessage, css.message ].join(' ')}>
+          Incorrect username or password.
+        </p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" loading={!canSubmit} type="primary">
+        <Button
+          disabled={!canSubmit}
+          htmlType="submit"
+          loading={!canSubmit}
+          type="primary">
           Sign In
         </Button>
       </Form.Item>
@@ -111,9 +114,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <Link external path={paths.docs('/sysadmin-basics/users.html')} popout>
-          docs
-        </Link>
+        <Link external path={paths.docs('/sysadmin-basics/users.html')} popout>docs</Link>
       </p>
     </div>
   );

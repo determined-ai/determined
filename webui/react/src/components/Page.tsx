@@ -6,14 +6,14 @@ import { useStore } from 'contexts/Store';
 import BasePage, { Props as BasePageProps } from 'shared/components/Page';
 import { BrandingType } from 'types';
 
-export interface Props extends Omit<BasePageProps, 'pageHeader'> {
+export interface Props extends Omit<BasePageProps, 'pageHeader'>{
   docTitle?: string;
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
-  const brand =
-    branding === BrandingType.HPE ? 'HPE Machine Learning Development Environment' : 'Determined';
-  const segmentList = [brand];
+  const brand = branding === BrandingType.HPE ?
+    'HPE Machine Learning Development Environment' : 'Determined';
+  const segmentList = [ brand ];
 
   if (clusterName) segmentList.unshift(clusterName);
   if (title) segmentList.unshift(title);
@@ -26,7 +26,11 @@ const Page: React.FC<Props> = (props: Props) => {
   const branding = info.branding || BrandingType.Determined;
   const brandingPath = `${process.env.PUBLIC_URL}/${branding}`;
 
-  const docTitle = getFullDocTitle(branding, props.docTitle || props.title, info.clusterName);
+  const docTitle = getFullDocTitle(
+    branding,
+    props.docTitle || props.title,
+    info.clusterName,
+  );
 
   return (
     <>
@@ -34,7 +38,11 @@ const Page: React.FC<Props> = (props: Props) => {
         <title>{docTitle}</title>
         {info.checked && (
           <>
-            <link href={`${brandingPath}/favicon.ico`} rel="shortcut icon" type="image/x-icon" />
+            <link
+              href={`${brandingPath}/favicon.ico`}
+              rel="shortcut icon"
+              type="image/x-icon"
+            />
             <link href={`${brandingPath}/apple-touch-icon.png`} rel="apple-touch-icon" />
             <link href={`${brandingPath}/manifest.json`} rel="manifest" />
           </>
@@ -42,7 +50,7 @@ const Page: React.FC<Props> = (props: Props) => {
       </Helmet>
       <BasePage
         {...props}
-        pageHeader={
+        pageHeader={(
           <PageHeader
             breadcrumb={props.breadcrumb}
             options={props.options}
@@ -50,7 +58,7 @@ const Page: React.FC<Props> = (props: Props) => {
             subTitle={props.subTitle}
             title={props.title}
           />
-        }
+        )}
       />
     </>
   );

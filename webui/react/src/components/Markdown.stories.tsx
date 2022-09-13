@@ -138,7 +138,7 @@ export const Default = (): React.ReactNode => (
 );
 
 export const Editing = (): React.ReactNode => {
-  const [editedMarkdown, setEditedMarkdown] = useState(markdown);
+  const [ editedMarkdown, setEditedMarkdown ] = useState(markdown);
 
   return (
     <div style={{ height: '80vh', width: '600px' }}>

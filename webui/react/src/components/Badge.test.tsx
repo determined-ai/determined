@@ -22,10 +22,8 @@ const setup = ({
 }: BadgeProps = {}) => {
   return render(
     <StoreProvider>
-      <Badge tooltip={tooltip} type={type} {...props}>
-        {children}
-      </Badge>
-    </StoreProvider>
+      <Badge tooltip={tooltip} type={type} {...props}>{children}</Badge>
+    </StoreProvider>,
   );
 };
 
@@ -37,7 +35,7 @@ describe('Badge', () => {
 
   it('should display dynamic content from state prop', async () => {
     const TestComponent = () => {
-      const [value, setValue] = useState(SlotState.Free);
+      const [ value, setValue ] = useState(SlotState.Free);
       return (
         <StoreProvider>
           <button role="button" onClick={() => setValue(SlotState.Running)} />
