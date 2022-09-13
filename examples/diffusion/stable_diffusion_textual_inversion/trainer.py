@@ -176,7 +176,6 @@ class TextualInversionTrainer:
             for op in core_context.searcher.operations():
                 while self.steps_completed < op.length:
                     for batch in self.train_dataloader:
-                        print("BATCH", batch)
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
                             self._train_one_batch(batch)
@@ -243,21 +242,7 @@ class TextualInversionTrainer:
         index_grads_to_zero = torch.isin(
             torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
         )
-        print("grads.data.shape", grads.data.shape)
-        print("self.placeholder_token_ids", self.placeholder_token_ids)
-        print("index_grads_to_zero", index_grads_to_zero)
-        print("full grad abs sum pre-zero", grads.data.abs().sum())
-        print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
-        print(
-            "specific grad abs sum pre-zero", grads.data[self.placeholder_token_ids[0]].abs().sum()
-        )
-        for idx, val in enumerate(index_grads_to_zero):
-            if not val:
-                print("not zeroing", idx)
         grads.data[index_grads_to_zero] = 0.0
-        print("full grad abs sum post zero", grads.data.abs().sum())
-        # print("specific grad", grads.data[self.placeholder_token_ids[0]])
-        print("specific grad abs sum", grads.data[self.placeholder_token_ids[0]].abs().sum())
         self.optimizer.step()
         self.optimizer.zero_grad()
 
@@ -304,7 +289,6 @@ class TextualInversionTrainer:
         # Add the placeholder token in tokenizer
         self.placeholder_token_ids = []
         initializer_token_ids = []
-        print("TOKENIZER LEN INIT", len(self.tokenizer))
         for placeholder, initializer in zip(self.placeholder_tokens, self.initializer_tokens):
             num_added_tokens = self.tokenizer.add_tokens(placeholder)
             if num_added_tokens == 0:
@@ -324,7 +308,6 @@ class TextualInversionTrainer:
             initializer_token_ids.append(initializer_token_id_list[0])
             placeholder_token_id = self.tokenizer.convert_tokens_to_ids(placeholder)
             self.placeholder_token_ids.append(placeholder_token_id)
-            print("TOKENIZER LEN", len(self.tokenizer))
 
         # Extend the size of the self.text_encoder to account for the new placeholder_tokens.
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
@@ -366,12 +349,10 @@ class TextualInversionTrainer:
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
         embedding_params = self.text_encoder.get_input_embeddings().parameters()
-        print("embedding_params", embedding_params)
         self.optimizer = torch.optim.AdamW(
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
         )
-        print("self.optimizer.param_groups", self.optimizer.param_groups)
 
     def _build_train_noise_scheduler(self) -> None:
         self.train_noise_scheduler = DDPMScheduler(
@@ -440,6 +421,7 @@ class TextualInversionTrainer:
         print(f"saving to {dir_path}")
         self.accelerator.save_state(dir_path)
         self.accelerator.wait_for_everyone()
+        print(f"files in {dir_path}: {os.listdir(dir_path)}")
         return dir_path
 
     def _build_pipeline(self) -> None:
@@ -492,7 +474,6 @@ class TextualInversionTrainer:
             prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
             os.makedirs(prompt_imgs_path, exist_ok=True)
             img_grid = Image.new("RGB", size=(len(prompt_img_dict) * self.img_size, self.img_size))
-            print("NUM PROMPT IMAGES", len(prompt_img_dict))
             for idx, (step, img) in enumerate(prompt_img_dict):
                 img.save(prompt_imgs_path.joinpath(f"{step}.png"))
                 img_grid.paste(img, box=(idx * self.img_size, 0))
