@@ -270,33 +270,30 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
-const reducerUI = (state: State, action: ActionUI): State => {
+const reducerUI = (state: StateUI, action: ActionUI): StateUI => {
   switch (action.type) {
     case StoreActionUI.HideUIChrome:
-      if (!state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: false } };
+      if (!state.showChrome) return state;
+      return { ...state, showChrome: false };
     case StoreActionUI.HideUISpinner:
-      if (!state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: false } };
+      if (!state.showSpinner) return state;
+      return { ...state, showSpinner: false };
     case StoreActionUI.SetMode:
-      return { ...state, ui: { ...state.ui, mode: action.value } };
+      return { ...state, mode: action.value };
     case StoreActionUI.SetPageVisibility:
-      return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
+      return { ...state, isPageHidden: action.value };
     case StoreActionUI.SetTheme:
       return {
         ...state,
-        ui: {
-          ...state.ui,
-          darkLight: action.value.darkLight,
-          theme: action.value.theme,
-        },
+        darkLight: action.value.darkLight,
+        theme: action.value.theme,
       };
     case StoreActionUI.ShowUIChrome:
-      if (state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: true } };
+      if (state.showChrome) return state;
+      return { ...state, showChrome: true };
     case StoreActionUI.ShowUISpinner:
-      if (state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: true } };
+      if (state.showSpinner) return state;
+      return { ...state, showSpinner: true };
     default:
       return state;
   }
@@ -370,7 +367,7 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.userAssignments, action.value)) return state;
       return { ...state, userAssignments: action.value };
     default:
-      return reducerUI(state, action);
+      return { ...state, ui: { ...state.ui, ...reducerUI(state.ui, action) } };
   }
 };
 
