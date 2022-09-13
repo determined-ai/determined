@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import pytest
 
@@ -8,43 +8,55 @@ from determined.common.experimental import session
 from tests import config as conf
 from tests import experiment as exp
 
+if TYPE_CHECKING:
+    from _typeshed import SupportsLessThanT
 
-def gen_string():
+    from determined.common.api import Session
+
+
+def gen_string() -> str:
     return str(uuid.uuid4())
 
 
-def queryTrials(sess, filters: Dict[str, Any]) -> List[Dict[str, Any]]:
+def queryTrials(sess: Session, filters: Dict[str, Any]) -> List[bindings.v1AugmentedTrial]:
     body = bindings.v1QueryTrialsRequest.from_json({"filters": filters, "limit": 1000})
     res = bindings.post_QueryTrials(sess, body=body)
-    return res.to_json()["trials"]
+    return [bindings.v1AugmentedTrial.from_json(d) for d in res.to_json()["trials"]]
 
 
-def queryTrialsIds(sess, filters) -> List[int]:
-    return [t["trialId"] for t in queryTrials(sess, filters)]
+def queryTrialsIds(sess: Session, filters: Dict[str, Any]) -> List[int]:
+    return [t.trialId for t in queryTrials(sess, filters)]
 
 
-def tagPayload(tags) -> List[Dict[str, Any]]:
+def tagPayload(tags: List[Any]) -> List[Dict[str, Any]]:
     return [{"key": tag} for tag in tags]
 
 
-def patchTrials(sess, trials, addTags=None, removeTags=None):
-    target = {"trial": {"ids": trials}} if isinstance(trials, list) else {"filters": trials}
+def patchTrials(
+    sess: Session,
+    trials: Union[List[int], Dict[str, List[Dict[str, str]]]],
+    addTags: Optional[List[Dict[str, str]]] = None,
+    removeTags: Optional[List[Dict[str, str]]] = None,
+) -> None:
+    target: Dict[str, Any] = (
+        {"trial": {"ids": trials}} if isinstance(trials, list) else {"filters": trials}
+    )
     patch = {"patch": {"addTag": addTags, "removeTag": removeTags}}
     body = bindings.v1PatchTrialsRequest.from_json({**target, **patch})
     bindings.patch_PatchTrials(sess, body=body)
 
 
-def assert_same_ids(a, b):
+def assert_same_ids(a: List[SupportsLessThanT], b: List[SupportsLessThanT]) -> None:
     assert sorted(a) == sorted(b)
 
 
 def create_collection(
-    sess,
-    name,
-    filters,
-    sorter=None,
-    project_id=1,
-):
+    sess: Session,
+    name: str,
+    filters: Dict[str, List[int]],
+    sorter: Optional[Dict[str, str]] = None,
+    project_id: int = 1,
+) -> bindings.v1TrialsCollection:
     if sorter is None:
         sorter = {
             "field": "trial_id",
@@ -54,33 +66,48 @@ def create_collection(
     body = bindings.v1CreateTrialsCollectionRequest.from_json(
         {"name": name, "filters": filters, "sorter": sorter, "projectId": project_id}
     )
-    return bindings.post_CreateTrialsCollection(sess, body=body).to_json()["collection"]
+    return bindings.v1TrialsCollection.from_json(
+        bindings.post_CreateTrialsCollection(sess, body=body).to_json()["collection"]
+    )
 
 
-def patch_collection(sess, collection_id, name="", filters=None, sorter=None):
+def patch_collection(
+    sess: Session,
+    collection_id: int,
+    name: str = "",
+    filters: Optional[Dict[str, List[int]]] = None,
+    sorter: Optional[Dict[str, str]] = None,
+) -> bindings.v1TrialsCollection:
     body = bindings.v1PatchTrialsCollectionRequest.from_json(
         {"id": collection_id, "name": name, "filters": filters, "sorter": sorter}
     )
-    return bindings.patch_PatchTrialsCollection(sess, body=body).to_json()["collection"]
+    return bindings.v1TrialsCollection.from_json(
+        bindings.patch_PatchTrialsCollection(sess, body=body).to_json()["collection"]
+    )
 
 
-def get_collections(sess, project_id=1):
-    return bindings.get_GetTrialsCollections(sess, projectId=project_id).to_json()["collections"]
+def get_collections(sess: Session, project_id: int = 1) -> List[bindings.v1TrialsCollection]:
+    return [
+        bindings.v1TrialsCollection.from_json(json)
+        for json in bindings.get_GetTrialsCollections(sess, projectId=project_id).to_json()[
+            "collections"
+        ]
+    ]
 
 
-def get_collection_names(sess, project_id=1):
-    return [c["name"] for c in get_collections(sess, project_id)]
+def get_collection_names(sess: Session, project_id: int = 1) -> List[str]:
+    return [c.name for c in get_collections(sess, project_id)]
 
 
-def sorted_filter_items(filters):
+def sorted_filter_items(filters: Dict[str, Any]) -> List[Tuple[str, Any]]:
     return [(k, v) for k, v in sorted(filters.items(), key=lambda kv: kv[0]) if v]
 
 
-def assert_same_filters(f1, f2):
-    assert sorted_filter_items(f1) == sorted_filter_items(f2)
+def assert_same_filters(f1: bindings.v1TrialFilters, f2: Dict[str, Any]) -> None:
+    assert sorted_filter_items(f1.to_json()) == sorted_filter_items(f2)
 
 
-def empty_range_filters():
+def empty_range_filters() -> Dict[str, List[Dict[str, Any]]]:
     return {
         "trainingMetrics": [],
         "validationMetrics": [],
@@ -88,9 +115,11 @@ def empty_range_filters():
     }
 
 
-def assert_collection_is_uniquely_represented_in_collections(sess, collection):
-    collections = get_collections(sess, project_id=collection["projectId"])
-    matching_collections = [c for c in collections if c["id"] == collection["id"]]
+def assert_collection_is_uniquely_represented_in_collections(
+    sess: Session, collection: bindings.v1TrialsCollection
+) -> None:
+    collections = get_collections(sess, project_id=collection.projectId)
+    matching_collections = [c for c in collections if c.id == collection.id]
     assert len(matching_collections) == 1
     assert matching_collections[0] == collection
 
@@ -132,7 +161,7 @@ def test_trial_collections() -> None:
     # and they have the relevant tags
     trials_resp = queryTrials(sess, {"tags": tags})
     tags_as_strings = [t["key"] for t in tags]
-    assert all(sorted(tags_as_strings) == sorted(t["tags"].keys()) for t in trials_resp)
+    assert all(sorted(tags_as_strings) == sorted(t.tags.keys()) for t in trials_resp)
 
     # querying for list of tags returns partial matches
     patchTrials(sess, t_ids, removeTags=tags[:1])
@@ -145,11 +174,11 @@ def test_trial_collections() -> None:
 
     # and the trials themselves have the tags removed
     trials_resp = queryTrials(sess, {"experimentIds": [experiment_id]})
-    assert all(not t["tags"] for t in trials_resp)
+    assert all(not t.tags for t in trials_resp)
 
     resp_trials = queryTrials(sess, {"experimentIds": [experiment_id]})
-    sorted_by_searcher_metric = sorted(resp_trials, key=lambda x: x["searcherMetricLoss"])
-    top_three_ids = [t["trialId"] for t in sorted_by_searcher_metric[:3]]
+    sorted_by_searcher_metric = sorted(resp_trials, key=lambda x: x.searcherMetricLoss or 0.0)
+    top_three_ids = [t.trialId for t in sorted_by_searcher_metric[:3]]
     assert_same_ids(
         top_three_ids,
         queryTrialsIds(
@@ -171,15 +200,15 @@ def test_trial_collections() -> None:
     exp_trials = exp.experiment_trials(experiment_id)
     t_ids = [t.trial.id for t in exp_trials]
 
-    trials = queryTrials(sess, {"trialIds": t_ids})
+    aug_trials = queryTrials(sess, {"trialIds": t_ids})
 
-    for trial in trials:
-        t_id = trial["trialId"]
+    for trial in aug_trials:
+        t_id = trial.trialId
         good_range_filters = empty_range_filters()
         bad_range_filters = empty_range_filters()
 
         for namespace in ["trainingMetrics", "validationMetrics", "hparams"]:
-            for name, val in trial[namespace].items():
+            for name, val in trial.to_json()[namespace].items():
                 try:
                     val = float(val)
                 except Exception:
@@ -215,33 +244,33 @@ def test_trial_collections() -> None:
         sess, original_name_for_collection, original_filters_for_collection
     )
     assert_collection_is_uniquely_represented_in_collections(sess, collection)
-    assert_same_filters(original_filters_for_collection, collection["filters"])
-    assert collection["name"] == original_name_for_collection
+    assert_same_filters(collection.filters, original_filters_for_collection)
+    assert collection.name == original_name_for_collection
 
     # patch the filters for the collection
-    collection_id = collection["id"]
+    collection_id = collection.id
     new_filters_for_collection = {"trialIds": t_ids}
     patched_collection = patch_collection(sess, collection_id, filters=new_filters_for_collection)
     assert_collection_is_uniquely_represented_in_collections(sess, patched_collection)
 
     # unpatched fields remain unchanged
-    assert patched_collection["name"] == original_name_for_collection
+    assert patched_collection.name == original_name_for_collection
 
     # patched fields are updated
-    assert_same_filters(new_filters_for_collection, patched_collection["filters"])
+    assert_same_filters(patched_collection.filters, new_filters_for_collection)
 
     # patch a different field
     new_name_for_collection = gen_string()
     twice_patched_collection = patch_collection(sess, collection_id, name=new_name_for_collection)
     assert_collection_is_uniquely_represented_in_collections(sess, twice_patched_collection)
-    assert twice_patched_collection["name"] == new_name_for_collection
-    assert twice_patched_collection["name"] != original_name_for_collection
+    assert twice_patched_collection.name == new_name_for_collection
+    assert twice_patched_collection.name != original_name_for_collection
 
     # unpatched fields remain unchanged
-    assert_same_filters(twice_patched_collection["filters"], new_filters_for_collection)
+    assert_same_filters(twice_patched_collection.filters, new_filters_for_collection)
 
     with pytest.raises(AssertionError):
-        assert_same_filters(twice_patched_collection["filters"], original_filters_for_collection)
+        assert_same_filters(twice_patched_collection.filters, original_filters_for_collection)
 
     with pytest.raises(errors.APIException):
         create_collection(sess, new_name_for_collection, original_filters_for_collection)
@@ -249,4 +278,4 @@ def test_trial_collections() -> None:
         sess, original_name_for_collection, original_filters_for_collection
     )
     with pytest.raises(errors.APIException):
-        patch_collection(sess, other_collection["id"], name=new_name_for_collection)
+        patch_collection(sess, other_collection.id, name=new_name_for_collection)
