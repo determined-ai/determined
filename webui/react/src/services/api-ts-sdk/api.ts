@@ -1125,6 +1125,34 @@ export interface V1ArchiveWorkspaceResponse {
 }
 
 /**
+ * AssignRolesRequest is the body of the request for the call to grant a user or group a role. It requires group_id, role_id, and either scope_workspace_id or scope_project_id.
+ * @export
+ * @interface V1AssignRolesRequest
+ */
+export interface V1AssignRolesRequest {
+    /**
+     * the set of groups being assigned to a role.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1AssignRolesRequest
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * the set of users being assigned to a role.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1AssignRolesRequest
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+
+/**
+ * AssignRolesResponse is the body of the request for the call to grant a user or group a role.
+ * @export
+ * @interface V1AssignRolesResponse
+ */
+export interface V1AssignRolesResponse {
+}
+
+/**
  * 
  * @export
  * @interface V1AwsCustomTag
@@ -2967,6 +2995,62 @@ export interface V1GetResourcePoolsResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1GetRolesAssignedToGroupResponse
+ */
+export interface V1GetRolesAssignedToGroupResponse {
+    /**
+     * 
+     * @type {Array<V1Role>}
+     * @memberof V1GetRolesAssignedToGroupResponse
+     */
+    roles?: Array<V1Role>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesAssignedToUserResponse
+ */
+export interface V1GetRolesAssignedToUserResponse {
+    /**
+     * 
+     * @type {Array<V1Role>}
+     * @memberof V1GetRolesAssignedToUserResponse
+     */
+    roles?: Array<V1Role>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesByIDRequest
+ */
+export interface V1GetRolesByIDRequest {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1GetRolesByIDRequest
+     */
+    roleIds?: Array<number>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesByIDResponse
+ */
+export interface V1GetRolesByIDResponse {
+    /**
+     * 
+     * @type {Array<V1RoleWithAssignments>}
+     * @memberof V1GetRolesByIDResponse
+     */
+    roles?: Array<V1RoleWithAssignments>;
+}
+
+/**
  * Response to GetShellRequest.
  * @export
  * @interface V1GetShellResponse
@@ -3456,6 +3540,26 @@ export interface V1GroupDetails {
      * @memberof V1GroupDetails
      */
     users?: Array<V1User>;
+}
+
+/**
+ * GroupRoleAssignment contains information about the groups belonging to a role.
+ * @export
+ * @interface V1GroupRoleAssignment
+ */
+export interface V1GroupRoleAssignment {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GroupRoleAssignment
+     */
+    groupId: number;
+    /**
+     * The role and scope of the assignment.
+     * @type {V1RoleAssignment}
+     * @memberof V1GroupRoleAssignment
+     */
+    roleAssignment: V1RoleAssignment;
 }
 
 /**
@@ -3972,6 +4076,46 @@ export interface V1LaunchTensorboardResponse {
      * @memberof V1LaunchTensorboardResponse
      */
     config: any;
+}
+
+/**
+ * ListRolesRequest is the body of the request for the call to search for a role.
+ * @export
+ * @interface V1ListRolesRequest
+ */
+export interface V1ListRolesRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ListRolesRequest
+     */
+    offset?: number;
+    /**
+     * the limit for pagination.
+     * @type {number}
+     * @memberof V1ListRolesRequest
+     */
+    limit: number;
+}
+
+/**
+ * ListRolesResponse is the body of the response for the call to search for a role.
+ * @export
+ * @interface V1ListRolesResponse
+ */
+export interface V1ListRolesResponse {
+    /**
+     * a set of roles and all assignments belonging to it.
+     * @type {Array<V1Role>}
+     * @memberof V1ListRolesResponse
+     */
+    roles: Array<V1Role>;
+    /**
+     * pagination information.
+     * @type {V1Pagination}
+     * @memberof V1ListRolesResponse
+     */
+    pagination: V1Pagination;
 }
 
 /**
@@ -4876,6 +5020,32 @@ export interface V1PauseExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1Permission
+ */
+export interface V1Permission {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Permission
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Permission
+     */
+    name?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1Permission
+     */
+    isGlobal?: boolean;
+}
+
+/**
  * Response to PinWorkspaceRequest.
  * @export
  * @interface V1PinWorkspaceResponse
@@ -5483,6 +5653,34 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+
+/**
+ * RemoveAssignmentsRequest is the body of the request for the call to remove a user or group from a role.
+ * @export
+ * @interface V1RemoveAssignmentsRequest
+ */
+export interface V1RemoveAssignmentsRequest {
+    /**
+     * the set of groups being removed from a role.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1RemoveAssignmentsRequest
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * the set of users being removed from a role.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1RemoveAssignmentsRequest
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+
+/**
+ * RemoveAssignmentsResponse is the body of the response for teh call to remove a user or group from a role.
+ * @export
+ * @interface V1RemoveAssignmentsResponse
+ */
+export interface V1RemoveAssignmentsResponse {
 }
 
 /**
@@ -6208,6 +6406,78 @@ export enum V1ResourcePoolType {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1Role
+ */
+export interface V1Role {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Role
+     */
+    roleId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Role
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<V1Permission>}
+     * @memberof V1Role
+     */
+    permissions?: Array<V1Permission>;
+}
+
+/**
+ * RoleAssignment contains information about the scope of the role.
+ * @export
+ * @interface V1RoleAssignment
+ */
+export interface V1RoleAssignment {
+    /**
+     * The role of the assignment.
+     * @type {V1Role}
+     * @memberof V1RoleAssignment
+     */
+    role: V1Role;
+    /**
+     * The id of the workspace the role belongs to. Omit for a global scope.
+     * @type {number}
+     * @memberof V1RoleAssignment
+     */
+    scopeWorkspaceId?: number;
+}
+
+/**
+ * RoleWithAssignments contains a detailed description of a role and the groups and users belonging to it.
+ * @export
+ * @interface V1RoleWithAssignments
+ */
+export interface V1RoleWithAssignments {
+    /**
+     * The embedded Role.
+     * @type {V1Role}
+     * @memberof V1RoleWithAssignments
+     */
+    role?: V1Role;
+    /**
+     * The embedded GroupRoleAssignment.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1RoleWithAssignments
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * The embedded UserRoleAssignment.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1RoleWithAssignments
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+
+/**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
  * @export
  * @interface V1RunnableOperation
@@ -6282,6 +6552,52 @@ export enum V1SchedulerType {
     KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
     SLURM = <any> 'SCHEDULER_TYPE_SLURM',
     PBS = <any> 'SCHEDULER_TYPE_PBS'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1SearchRolesAssignableToScopeRequest
+ */
+export interface V1SearchRolesAssignableToScopeRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchRolesAssignableToScopeRequest
+     */
+    limit: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchRolesAssignableToScopeRequest
+     */
+    offset?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchRolesAssignableToScopeRequest
+     */
+    workspaceId?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1SearchRolesAssignableToScopeResponse
+ */
+export interface V1SearchRolesAssignableToScopeResponse {
+    /**
+     * pagination information.
+     * @type {V1Pagination}
+     * @memberof V1SearchRolesAssignableToScopeResponse
+     */
+    pagination?: V1Pagination;
+    /**
+     * the set of roles and all assignments belonging to it.
+     * @type {Array<V1Role>}
+     * @memberof V1SearchRolesAssignableToScopeResponse
+     */
+    roles?: Array<V1Role>;
 }
 
 /**
@@ -7312,6 +7628,26 @@ export interface V1User {
      * @memberof V1User
      */
     modifiedAt?: Date;
+}
+
+/**
+ * UserRoleAssignment contains information about the users belonging to a role.
+ * @export
+ * @interface V1UserRoleAssignment
+ */
+export interface V1UserRoleAssignment {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1UserRoleAssignment
+     */
+    userId: number;
+    /**
+     * 
+     * @type {V1RoleAssignment}
+     * @memberof V1UserRoleAssignment
+     */
+    roleAssignment: V1RoleAssignment;
 }
 
 /**
@@ -12880,7 +13216,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Create a group with optional members on creation
+         * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12920,7 +13256,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Remove a group
+         * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13159,7 +13495,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get a group by id
+         * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13196,7 +13532,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Search for groups with optional filters
+         * @summary Search for groups with optional filters.
          * @param {V1GetGroupsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14211,7 +14547,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Update group info
+         * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body 
          * @param {*} [options] Override http request option.
@@ -14484,7 +14820,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Create a group with optional members on creation
+         * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14503,7 +14839,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Remove a group
+         * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14606,7 +14942,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a group by id
+         * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14625,7 +14961,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Search for groups with optional filters
+         * @summary Search for groups with optional filters.
          * @param {V1GetGroupsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15060,7 +15396,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update group info
+         * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body 
          * @param {*} [options] Override http request option.
@@ -15205,7 +15541,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Create a group with optional members on creation
+         * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15215,7 +15551,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Remove a group
+         * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15273,7 +15609,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get a group by id
+         * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15283,7 +15619,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Search for groups with optional filters
+         * @summary Search for groups with optional filters.
          * @param {V1GetGroupsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15529,7 +15865,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Update group info
+         * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body 
          * @param {*} [options] Override http request option.
@@ -15675,7 +16011,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Create a group with optional members on creation
+     * @summary Create a group with optional members on creation.
      * @param {V1CreateGroupRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15687,7 +16023,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Remove a group
+     * @summary Remove a group.
      * @param {number} groupId The id of the group that should be deleted.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15755,7 +16091,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get a group by id
+     * @summary Get a group by id.
      * @param {number} groupId The id of the group to return.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15767,7 +16103,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Search for groups with optional filters
+     * @summary Search for groups with optional filters.
      * @param {V1GetGroupsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -16055,7 +16391,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Update group info
+     * @summary Update group info.
      * @param {number} groupId The id of the group
      * @param {V1UpdateGroupRequest} body 
      * @param {*} [options] Override http request option.
@@ -19116,6 +19452,603 @@ export class ProjectsApi extends BaseAPI {
      */
     public unarchiveProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).unarchiveProject(id, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * RBACApi - fetch parameter creator
+ * @export
+ */
+export const RBACApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary AssignRoles adds a set of role assignments to the system.
+         * @param {V1AssignRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignRoles(body: V1AssignRolesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling assignRoles.');
+            }
+            const localVarPath = `/api/v1/roles/add-assignments`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AssignRolesRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a group.
+         * @param {number} groupId The id of the group to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToGroup(groupId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getRolesAssignedToGroup.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-group/{groupId}`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a user.
+         * @param {number} userId The id of the user to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToUser(userId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getRolesAssignedToUser.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-user/{userId}`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a set of roles with the corresponding IDs.
+         * @param {V1GetRolesByIDRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesByID(body: V1GetRolesByIDRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getRolesByID.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-ids`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1GetRolesByIDRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary ListRoles returns roles and groups/users granted that role.
+         * @param {V1ListRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRoles(body: V1ListRolesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling listRoles.');
+            }
+            const localVarPath = `/api/v1/roles/search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1ListRolesRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary RemoveAssignments removes a set of role assignments from the system.
+         * @param {V1RemoveAssignmentsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeAssignments(body: V1RemoveAssignmentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling removeAssignments.');
+            }
+            const localVarPath = `/api/v1/roles/remove-assignments`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1RemoveAssignmentsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Search for roles assignable to a given scope.
+         * @param {V1SearchRolesAssignableToScopeRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling searchRolesAssignableToScope.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-assignability`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1SearchRolesAssignableToScopeRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * RBACApi - functional programming interface
+ * @export
+ */
+export const RBACApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary AssignRoles adds a set of role assignments to the system.
+         * @param {V1AssignRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignRoles(body: V1AssignRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignRoles(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a group.
+         * @param {number} groupId The id of the group to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToGroup(groupId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a user.
+         * @param {number} userId The id of the user to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToUser(userId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a set of roles with the corresponding IDs.
+         * @param {V1GetRolesByIDRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesByID(body: V1GetRolesByIDRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesByID(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary ListRoles returns roles and groups/users granted that role.
+         * @param {V1ListRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRoles(body: V1ListRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).listRoles(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary RemoveAssignments removes a set of role assignments from the system.
+         * @param {V1RemoveAssignmentsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).removeAssignments(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Search for roles assignable to a given scope.
+         * @param {V1SearchRolesAssignableToScopeRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).searchRolesAssignableToScope(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * RBACApi - factory interface
+ * @export
+ */
+export const RBACApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary AssignRoles adds a set of role assignments to the system.
+         * @param {V1AssignRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignRoles(body: V1AssignRolesRequest, options?: any) {
+            return RBACApiFp(configuration).assignRoles(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a group.
+         * @param {number} groupId The id of the group to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToGroup(groupId: number, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToGroup(groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a user.
+         * @param {number} userId The id of the user to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToUser(userId: number, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToUser(userId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a set of roles with the corresponding IDs.
+         * @param {V1GetRolesByIDRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
+            return RBACApiFp(configuration).getRolesByID(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary ListRoles returns roles and groups/users granted that role.
+         * @param {V1ListRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRoles(body: V1ListRolesRequest, options?: any) {
+            return RBACApiFp(configuration).listRoles(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary RemoveAssignments removes a set of role assignments from the system.
+         * @param {V1RemoveAssignmentsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
+            return RBACApiFp(configuration).removeAssignments(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Search for roles assignable to a given scope.
+         * @param {V1SearchRolesAssignableToScopeRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
+            return RBACApiFp(configuration).searchRolesAssignableToScope(body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * RBACApi - object-oriented interface
+ * @export
+ * @class RBACApi
+ * @extends {BaseAPI}
+ */
+export class RBACApi extends BaseAPI {
+    /**
+     * 
+     * @summary AssignRoles adds a set of role assignments to the system.
+     * @param {V1AssignRolesRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public assignRoles(body: V1AssignRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).assignRoles(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the roles which are assigned to a group.
+     * @param {number} groupId The id of the group to search for role assignments for
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getRolesAssignedToGroup(groupId: number, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToGroup(groupId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the roles which are assigned to a user.
+     * @param {number} userId The id of the user to search for role assignments for
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getRolesAssignedToUser(userId: number, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToUser(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a set of roles with the corresponding IDs.
+     * @param {V1GetRolesByIDRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
+        return RBACApiFp(this.configuration).getRolesByID(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary ListRoles returns roles and groups/users granted that role.
+     * @param {V1ListRolesRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public listRoles(body: V1ListRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).listRoles(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary RemoveAssignments removes a set of role assignments from the system.
+     * @param {V1RemoveAssignmentsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
+        return RBACApiFp(this.configuration).removeAssignments(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Search for roles assignable to a given scope.
+     * @param {V1SearchRolesAssignableToScopeRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
+        return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath);
     }
 
 }
