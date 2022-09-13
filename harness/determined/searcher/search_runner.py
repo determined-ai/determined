@@ -30,7 +30,6 @@ class SearchRunner:
         search_method: SearchMethod,
     ) -> None:
         self.search_method = search_method
-        client._require_singleton(lambda: None)()
 
     def _get_operations(self, event: bindings.v1SearcherEvent) -> List[Operation]:
         if event.initialOperations:
@@ -113,11 +112,11 @@ class SearchRunner:
         return operations
 
     def run_experiment(
-        self, experiment_id: int, prior_operations: Optional[List[Operation]]
+        self,
+        experiment_id: int,
+        session: client.Session,
+        prior_operations: Optional[List[Operation]],
     ) -> None:
-        assert client._determined is not None
-        session = client._determined._session
-
         experiment_is_active = True
 
         try:
@@ -258,7 +257,9 @@ class LocalSearchRunner(SearchRunner):
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
-        self.run_experiment(experiment_id, operations)
+        assert client._determined is not None
+        session = client._determined._session
+        self.run_experiment(experiment_id, session, operations)
         return experiment_id
 
     def load_state(self, experiment_id: int) -> Tuple[int, List[Operation]]:
