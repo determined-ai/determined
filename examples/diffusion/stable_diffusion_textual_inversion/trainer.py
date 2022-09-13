@@ -491,9 +491,7 @@ class TextualInversionTrainer:
             prompt_img_dict.append((self.steps_completed, generated_img))
             prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
             os.makedirs(prompt_imgs_path, exist_ok=True)
-            img_grid = Image.new(
-                "RGB", size=(len(self.prompt_img_dict) * self.img_size, self.img_size)
-            )
+            img_grid = Image.new("RGB", size=(len(prompt_img_dict) * self.img_size, self.img_size))
             print("NUM PROMPT IMAGES", len(prompt_img_dict))
             for idx, (step, img) in enumerate(prompt_img_dict):
                 img.save(prompt_imgs_path.joinpath(f"{step}.png"))
