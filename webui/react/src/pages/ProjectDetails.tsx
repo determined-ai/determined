@@ -60,6 +60,7 @@ import {
   ExperimentAction as Action,
   CommandTask,
   ExperimentItem,
+  ExperimentPagination,
   Note,
   Project,
   ProjectExperiment,
@@ -179,21 +180,22 @@ const ProjectDetails: React.FC = () => {
         users: settings.user,
       };
       const pinnedIds = (settings.pinned[id] ?? []);
-      const pinnedExperimentsRequest = getExperiments({
-        ...baseParams,
-        experimentIdFilter: { incl: pinnedIds },
-        limit: settings.tableLimit,
-        offset: 0,
-      }, { signal: canceler.signal });
-      const otherExperimentsRequest = getExperiments({
+      let pinnedExpResponse: ExperimentPagination = { experiments: [], pagination: {} };
+      if (pinnedIds.length > 0) {
+        pinnedExpResponse = await getExperiments({
+          ...baseParams,
+          experimentIdFilter: { incl: pinnedIds },
+          limit: settings.tableLimit,
+          offset: 0,
+        }, { signal: canceler.signal });
+      }
+      const otherExpResponse = await getExperiments({
         ...baseParams,
         experimentIdFilter: { notIn: pinnedIds },
         limit: settings.tableLimit - pinnedIds.length,
         offset: settings.tableOffset -
             (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
       }, { signal: canceler.signal });
-      const allRequests = [ pinnedExperimentsRequest, otherExperimentsRequest ];
-      const [ pinnedExpResponse, otherExpResponse ] = await Promise.all(allRequests);
 
       // Due to showing pinned items in all pages, we need to adjust the number of total items
       const totalItems = (
