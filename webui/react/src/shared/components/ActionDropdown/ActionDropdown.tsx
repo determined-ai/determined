@@ -4,10 +4,10 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
+import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 
 import { Eventually } from '../../types';
-import { wrapPublicMessage, DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './ActionDropdown.module.scss';
 

@@ -16,13 +16,12 @@ import { defaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { RecordKey } from 'shared/types';
 import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { BrandingType } from 'types';
-
-import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './SignIn.module.scss';
 

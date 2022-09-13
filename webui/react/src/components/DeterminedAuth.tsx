@@ -8,11 +8,10 @@ import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { ErrorType } from 'shared/utils/error';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
-
-import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './DeterminedAuth.module.scss';
 

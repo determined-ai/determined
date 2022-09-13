@@ -5,10 +5,9 @@ import { CompatRoute } from 'react-router-dom-v5-compat';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { paths } from 'routes/utils';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-
-import { StoreActionUI } from 'shared/contexts/UIStore';
 
 interface Props {
   routes: RouteConfig[];

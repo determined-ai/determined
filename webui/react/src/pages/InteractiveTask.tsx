@@ -5,10 +5,9 @@ import { useParams } from 'react-router-dom';
 import TaskBar from 'components/TaskBar';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
-
-import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
