@@ -35,7 +35,7 @@ interface State {
   pool: PoolOverview;
   resourcePools: ResourcePool[];
   ui: StateUI & {
-    omnibar: OmnibarState; // TODO: this should probably be out of ui
+    omnibar: OmnibarState;
   };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
