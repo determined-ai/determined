@@ -176,6 +176,10 @@ class determinedexperimentv1State(enum.Enum):
     STATE_DELETING = "STATE_DELETING"
     STATE_DELETE_FAILED = "STATE_DELETE_FAILED"
     STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STATE_QUEUED = "STATE_QUEUED"
+    STATE_PULLING = "STATE_PULLING"
+    STATE_STARTING = "STATE_STARTING"
+    STATE_RUNNING = "STATE_RUNNING"
 
 class determinedjobv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -194,13 +198,12 @@ class determinedjobv1Type(enum.Enum):
 
 class determinedtaskv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_PENDING = "STATE_PENDING"
-    STATE_ASSIGNED = "STATE_ASSIGNED"
     STATE_PULLING = "STATE_PULLING"
     STATE_STARTING = "STATE_STARTING"
     STATE_RUNNING = "STATE_RUNNING"
     STATE_TERMINATED = "STATE_TERMINATED"
     STATE_TERMINATING = "STATE_TERMINATING"
+    STATE_QUEUED = "STATE_QUEUED"
 
 class protobufAny:
     def __init__(
@@ -679,6 +682,29 @@ class v1AllocationRendezvousInfoResponse:
     def to_json(self) -> typing.Any:
         return {
             "rendezvousInfo": self.rendezvousInfo.to_json(),
+        }
+
+class v1AssignRolesRequest:
+    def __init__(
+        self,
+        *,
+        groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None,
+        userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None,
+    ):
+        self.groupRoleAssignments = groupRoleAssignments
+        self.userRoleAssignments = userRoleAssignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AssignRolesRequest":
+        return cls(
+            groupRoleAssignments=[v1GroupRoleAssignment.from_json(x) for x in obj["groupRoleAssignments"]] if obj.get("groupRoleAssignments", None) is not None else None,
+            userRoleAssignments=[v1UserRoleAssignment.from_json(x) for x in obj["userRoleAssignments"]] if obj.get("userRoleAssignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupRoleAssignments": [x.to_json() for x in self.groupRoleAssignments] if self.groupRoleAssignments is not None else None,
+            "userRoleAssignments": [x.to_json() for x in self.userRoleAssignments] if self.userRoleAssignments is not None else None,
         }
 
 class v1AwsCustomTag:
@@ -2478,6 +2504,82 @@ class v1GetResourcePoolsResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetRolesAssignedToGroupResponse:
+    def __init__(
+        self,
+        *,
+        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+    ):
+        self.roles = roles
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRolesAssignedToGroupResponse":
+        return cls(
+            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+        }
+
+class v1GetRolesAssignedToUserResponse:
+    def __init__(
+        self,
+        *,
+        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+    ):
+        self.roles = roles
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRolesAssignedToUserResponse":
+        return cls(
+            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+        }
+
+class v1GetRolesByIDRequest:
+    def __init__(
+        self,
+        *,
+        roleIds: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.roleIds = roleIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRolesByIDRequest":
+        return cls(
+            roleIds=obj.get("roleIds", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roleIds": self.roleIds if self.roleIds is not None else None,
+        }
+
+class v1GetRolesByIDResponse:
+    def __init__(
+        self,
+        *,
+        roles: "typing.Optional[typing.Sequence[v1RoleWithAssignments]]" = None,
+    ):
+        self.roles = roles
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRolesByIDResponse":
+        return cls(
+            roles=[v1RoleWithAssignments.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+        }
+
 class v1GetShellResponse:
     def __init__(
         self,
@@ -3015,6 +3117,29 @@ class v1GroupDetails:
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
         }
 
+class v1GroupRoleAssignment:
+    def __init__(
+        self,
+        *,
+        groupId: int,
+        roleAssignment: "v1RoleAssignment",
+    ):
+        self.groupId = groupId
+        self.roleAssignment = roleAssignment
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GroupRoleAssignment":
+        return cls(
+            groupId=obj["groupId"],
+            roleAssignment=v1RoleAssignment.from_json(obj["roleAssignment"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId,
+            "roleAssignment": self.roleAssignment.to_json(),
+        }
+
 class v1GroupSearchResult:
     def __init__(
         self,
@@ -3515,6 +3640,52 @@ class v1LaunchTensorboardResponse:
         return {
             "tensorboard": self.tensorboard.to_json(),
             "config": self.config,
+        }
+
+class v1ListRolesRequest:
+    def __init__(
+        self,
+        *,
+        limit: int,
+        offset: "typing.Optional[int]" = None,
+    ):
+        self.offset = offset
+        self.limit = limit
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListRolesRequest":
+        return cls(
+            offset=obj.get("offset", None),
+            limit=obj["limit"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "offset": self.offset if self.offset is not None else None,
+            "limit": self.limit,
+        }
+
+class v1ListRolesResponse:
+    def __init__(
+        self,
+        *,
+        pagination: "v1Pagination",
+        roles: "typing.Sequence[v1Role]",
+    ):
+        self.roles = roles
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ListRolesResponse":
+        return cls(
+            roles=[v1Role.from_json(x) for x in obj["roles"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roles": [x.to_json() for x in self.roles],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1LogEntry:
@@ -4356,6 +4527,33 @@ class v1PatchWorkspaceResponse:
             "workspace": self.workspace.to_json(),
         }
 
+class v1Permission:
+    def __init__(
+        self,
+        *,
+        id: "typing.Optional[int]" = None,
+        isGlobal: "typing.Optional[bool]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.name = name
+        self.isGlobal = isGlobal
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Permission":
+        return cls(
+            id=obj.get("id", None),
+            name=obj.get("name", None),
+            isGlobal=obj.get("isGlobal", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "name": self.name if self.name is not None else None,
+            "isGlobal": self.isGlobal if self.isGlobal is not None else None,
+        }
+
 class v1PostAllocationProxyAddressRequest:
     def __init__(
         self,
@@ -4968,6 +5166,29 @@ class v1RPQueueStat:
             "aggregates": [x.to_json() for x in self.aggregates] if self.aggregates is not None else None,
         }
 
+class v1RemoveAssignmentsRequest:
+    def __init__(
+        self,
+        *,
+        groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None,
+        userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None,
+    ):
+        self.groupRoleAssignments = groupRoleAssignments
+        self.userRoleAssignments = userRoleAssignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RemoveAssignmentsRequest":
+        return cls(
+            groupRoleAssignments=[v1GroupRoleAssignment.from_json(x) for x in obj["groupRoleAssignments"]] if obj.get("groupRoleAssignments", None) is not None else None,
+            userRoleAssignments=[v1UserRoleAssignment.from_json(x) for x in obj["userRoleAssignments"]] if obj.get("userRoleAssignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupRoleAssignments": [x.to_json() for x in self.groupRoleAssignments] if self.groupRoleAssignments is not None else None,
+            "userRoleAssignments": [x.to_json() for x in self.userRoleAssignments] if self.userRoleAssignments is not None else None,
+        }
+
 class v1RendezvousInfo:
     def __init__(
         self,
@@ -5510,6 +5731,83 @@ class v1ResourcePoolType(enum.Enum):
     RESOURCE_POOL_TYPE_STATIC = "RESOURCE_POOL_TYPE_STATIC"
     RESOURCE_POOL_TYPE_K8S = "RESOURCE_POOL_TYPE_K8S"
 
+class v1Role:
+    def __init__(
+        self,
+        *,
+        name: "typing.Optional[str]" = None,
+        permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None,
+        roleId: "typing.Optional[int]" = None,
+    ):
+        self.roleId = roleId
+        self.name = name
+        self.permissions = permissions
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Role":
+        return cls(
+            roleId=obj.get("roleId", None),
+            name=obj.get("name", None),
+            permissions=[v1Permission.from_json(x) for x in obj["permissions"]] if obj.get("permissions", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roleId": self.roleId if self.roleId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "permissions": [x.to_json() for x in self.permissions] if self.permissions is not None else None,
+        }
+
+class v1RoleAssignment:
+    def __init__(
+        self,
+        *,
+        role: "v1Role",
+        scopeWorkspaceId: "typing.Optional[int]" = None,
+    ):
+        self.role = role
+        self.scopeWorkspaceId = scopeWorkspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RoleAssignment":
+        return cls(
+            role=v1Role.from_json(obj["role"]),
+            scopeWorkspaceId=obj.get("scopeWorkspaceId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "role": self.role.to_json(),
+            "scopeWorkspaceId": self.scopeWorkspaceId if self.scopeWorkspaceId is not None else None,
+        }
+
+class v1RoleWithAssignments:
+    def __init__(
+        self,
+        *,
+        groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None,
+        role: "typing.Optional[v1Role]" = None,
+        userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None,
+    ):
+        self.role = role
+        self.groupRoleAssignments = groupRoleAssignments
+        self.userRoleAssignments = userRoleAssignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RoleWithAssignments":
+        return cls(
+            role=v1Role.from_json(obj["role"]) if obj.get("role", None) is not None else None,
+            groupRoleAssignments=[v1GroupRoleAssignment.from_json(x) for x in obj["groupRoleAssignments"]] if obj.get("groupRoleAssignments", None) is not None else None,
+            userRoleAssignments=[v1UserRoleAssignment.from_json(x) for x in obj["userRoleAssignments"]] if obj.get("userRoleAssignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "role": self.role.to_json() if self.role is not None else None,
+            "groupRoleAssignments": [x.to_json() for x in self.groupRoleAssignments] if self.groupRoleAssignments is not None else None,
+            "userRoleAssignments": [x.to_json() for x in self.userRoleAssignments] if self.userRoleAssignments is not None else None,
+        }
+
 class v1RunnableOperation:
     def __init__(
         self,
@@ -5574,6 +5872,56 @@ class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
     SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
     SCHEDULER_TYPE_PBS = "SCHEDULER_TYPE_PBS"
+
+class v1SearchRolesAssignableToScopeRequest:
+    def __init__(
+        self,
+        *,
+        limit: int,
+        offset: "typing.Optional[int]" = None,
+        workspaceId: "typing.Optional[int]" = None,
+    ):
+        self.limit = limit
+        self.offset = offset
+        self.workspaceId = workspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRolesAssignableToScopeRequest":
+        return cls(
+            limit=obj["limit"],
+            offset=obj.get("offset", None),
+            workspaceId=obj.get("workspaceId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "limit": self.limit,
+            "offset": self.offset if self.offset is not None else None,
+            "workspaceId": self.workspaceId if self.workspaceId is not None else None,
+        }
+
+class v1SearchRolesAssignableToScopeResponse:
+    def __init__(
+        self,
+        *,
+        pagination: "typing.Optional[v1Pagination]" = None,
+        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+    ):
+        self.pagination = pagination
+        self.roles = roles
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRolesAssignableToScopeResponse":
+        return cls(
+            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+        }
 
 class v1SearcherOperation:
     def __init__(
@@ -6568,6 +6916,29 @@ class v1User:
             "modifiedAt": self.modifiedAt if self.modifiedAt is not None else None,
         }
 
+class v1UserRoleAssignment:
+    def __init__(
+        self,
+        *,
+        roleAssignment: "v1RoleAssignment",
+        userId: int,
+    ):
+        self.userId = userId
+        self.roleAssignment = roleAssignment
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserRoleAssignment":
+        return cls(
+            userId=obj["userId"],
+            roleAssignment=v1RoleAssignment.from_json(obj["roleAssignment"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "userId": self.userId,
+            "roleAssignment": self.roleAssignment.to_json(),
+        }
+
 class v1UserWebSetting:
     def __init__(
         self,
@@ -6981,6 +7352,26 @@ def post_ArchiveWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveWorkspace", _resp)
+
+def post_AssignRoles(
+    session: "api.Session",
+    *,
+    body: "v1AssignRolesRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/roles/add-assignments",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AssignRoles", _resp)
 
 def post_CancelExperiment(
     session: "api.Session",
@@ -8261,6 +8652,66 @@ def get_GetResourcePools(
         return v1GetResourcePoolsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetResourcePools", _resp)
 
+def get_GetRolesAssignedToGroup(
+    session: "api.Session",
+    *,
+    groupId: int,
+) -> "v1GetRolesAssignedToGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/roles/search/by-group/{groupId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRolesAssignedToGroupResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetRolesAssignedToGroup", _resp)
+
+def get_GetRolesAssignedToUser(
+    session: "api.Session",
+    *,
+    userId: int,
+) -> "v1GetRolesAssignedToUserResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/roles/search/by-user/{userId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRolesAssignedToUserResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetRolesAssignedToUser", _resp)
+
+def post_GetRolesByID(
+    session: "api.Session",
+    *,
+    body: "v1GetRolesByIDRequest",
+) -> "v1GetRolesByIDResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/roles/search/by-ids",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRolesByIDResponse.from_json(_resp.json())
+    raise APIHttpError("post_GetRolesByID", _resp)
+
 def get_GetShell(
     session: "api.Session",
     *,
@@ -9026,6 +9477,26 @@ def post_LaunchTensorboard(
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
+def post_ListRoles(
+    session: "api.Session",
+    *,
+    body: "v1ListRolesRequest",
+) -> "v1ListRolesResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/roles/search",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ListRolesResponse.from_json(_resp.json())
+    raise APIHttpError("post_ListRoles", _resp)
+
 def post_Login(
     session: "api.Session",
     *,
@@ -9662,6 +10133,26 @@ def put_PutTemplate(
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
 
+def post_RemoveAssignments(
+    session: "api.Session",
+    *,
+    body: "v1RemoveAssignmentsRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/roles/remove-assignments",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_RemoveAssignments", _resp)
+
 def post_ReportCheckpoint(
     session: "api.Session",
     *,
@@ -9833,6 +10324,26 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def post_SearchRolesAssignableToScope(
+    session: "api.Session",
+    *,
+    body: "v1SearchRolesAssignableToScopeRequest",
+) -> "v1SearchRolesAssignableToScopeResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/roles/search/by-assignability",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchRolesAssignableToScopeResponse.from_json(_resp.json())
+    raise APIHttpError("post_SearchRolesAssignableToScope", _resp)
 
 def post_SetCommandPriority(
     session: "api.Session",
@@ -10387,4 +10898,6 @@ Paginated = typing.Union[
     v1GetUsersResponse,
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
+    v1ListRolesResponse,
+    v1SearchRolesAssignableToScopeResponse,
 ]

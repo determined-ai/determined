@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useStoreDispatch } from 'contexts/Store';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 interface DocumentHidden {
   hidden?: unknown;
@@ -25,7 +26,7 @@ const usePageVisibility = (): void => {
   const handleVisibilityChange = useCallback(() => {
     if (!hidden) return;
     storeDispatch({
-      type: StoreAction.SetPageVisibility,
+      type: StoreActionUI.SetPageVisibility,
       value: !!(document as DocumentHidden)[hidden as keyof DocumentHidden],
     });
   }, [ hidden, storeDispatch ]);

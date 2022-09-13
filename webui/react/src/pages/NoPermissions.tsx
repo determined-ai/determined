@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 
 import Page from 'components/Page';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useStoreDispatch } from 'contexts/Store';
 import Icon from 'shared/components/Icon/Icon';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './NoPermissions.module.scss';
 
 const NoPermissions: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  useEffect(() => storeDispatch({ type: StoreAction.HideUIChrome }), [ storeDispatch ]);
+  useEffect(() => storeDispatch({ type: StoreActionUI.HideUIChrome }), [ storeDispatch ]);
 
   return (
     <Page

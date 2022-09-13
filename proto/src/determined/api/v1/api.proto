@@ -17,6 +17,7 @@ import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
 import "determined/api/v1/project.proto";
+import "determined/api/v1/rbac.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
@@ -1616,7 +1617,7 @@ service Determined {
     };
   }
 
-  // Get a group by id
+  // Get a group by id.
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {
       get: "/api/v1/groups/{group_id}"
@@ -1626,7 +1627,7 @@ service Determined {
     };
   }
 
-  // Search for groups with optional filters
+  // Search for groups with optional filters.
   rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups/search"
@@ -1637,7 +1638,7 @@ service Determined {
     };
   }
 
-  // Create a group with optional members on creation
+  // Create a group with optional members on creation.
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups"
@@ -1648,7 +1649,7 @@ service Determined {
     };
   }
 
-  // Update group info
+  // Update group info.
   rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
     option (google.api.http) = {
       put: "/api/v1/groups/{group_id}"
@@ -1659,13 +1660,95 @@ service Determined {
     };
   }
 
-  // Remove a group
+  // Remove a group.
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
     option (google.api.http) = {
       delete: "/api/v1/groups/{group_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
+    };
+  }
+
+  // Get a set of roles with the corresponding IDs.
+  rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search/by-ids"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Get the roles which are assigned to a user.
+  rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest)
+      returns (GetRolesAssignedToUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/search/by-user/{user_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Get the roles which are assigned to a group.
+  rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest)
+      returns (GetRolesAssignedToGroupResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/search/by-group/{group_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Search for roles assignable to a given scope.
+  rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest)
+      returns (SearchRolesAssignableToScopeResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search/by-assignability"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // ListRoles returns roles and groups/users granted that role.
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // AssignRoles adds a set of role assignments to the system.
+  rpc AssignRoles(AssignRolesRequest) returns (AssignRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/add-assignments"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // RemoveAssignments removes a set of role assignments from the system.
+  rpc RemoveAssignments(RemoveAssignmentsRequest)
+      returns (RemoveAssignmentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/remove-assignments"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
     };
   }
 }

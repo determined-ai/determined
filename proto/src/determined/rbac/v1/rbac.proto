@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package determined.rbac.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/rbacv1";
+
+import "google/protobuf/wrappers.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Role contains information about a specific Role
+message Role {
+  // The id of the role being detailed
+  int32 role_id = 1;
+  // The string of the role being detailed
+  string name = 2;
+  // The permissions granted to the role
+  repeated Permission permissions = 3;
+}
+
+// Permission represents an action a user can take in the system
+message Permission {
+  // The id of the permission
+  int32 id = 1;
+  // The name of the permission
+  string name = 2;
+  // Whether the permission is a globl-only permission
+  bool is_global = 3;
+}
+
+// RoleAssignment contains information about the scope
+// of the role.
+message RoleAssignment {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "role" ] }
+  };
+  // The role of the assignment.
+  Role role = 1;
+  // The id of the workspace the role belongs to.
+  // Omit for a global scope.
+  google.protobuf.Int32Value scope_workspace_id = 2;
+}
+
+// GroupRoleAssignment contains information about the groups
+// belonging to a role.
+message GroupRoleAssignment {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group_id", "role_assignment" ] }
+  };
+  // The group id of the role assignment
+  int32 group_id = 1;
+  // The role and scope of the assignment.
+  RoleAssignment role_assignment = 2;
+}
+
+// UserRoleAssignment contains information about the users
+// belonging to a role.
+message UserRoleAssignment {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user_id", "role_assignment" ] }
+  };
+  // the user id of the role assignment
+  int32 user_id = 1;
+  // the role and scope of the assignment
+  RoleAssignment role_assignment = 2;
+}
+
+// RoleWithAssignments contains a detailed description of
+// a role and the groups and users belonging to it.
+message RoleWithAssignments {
+  // The embedded Role.
+  Role role = 1;
+  // The embedded GroupRoleAssignment.
+  repeated GroupRoleAssignment group_role_assignments = 2;
+  // The embedded UserRoleAssignment.
+  repeated UserRoleAssignment user_role_assignments = 3;
+}

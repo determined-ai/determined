@@ -268,24 +268,31 @@ export const tensorBoardMatchesSource = (
 
   return false;
 };
-const commandStateSortValues: Record<CommandState, number> = {
-  [CommandState.Pending]: 0,
-  [CommandState.Assigned]: 1,
-  [CommandState.Pulling]: 2,
-  [CommandState.Starting]: 3,
-  [CommandState.Running]: 4,
-  [CommandState.Terminating]: 5,
-  [CommandState.Terminated]: 6,
-};
+
+const commandStateSortOrder: CommandState[] = [
+  CommandState.Pulling,
+  CommandState.Starting,
+  CommandState.Running,
+  CommandState.Terminating,
+  CommandState.Terminated,
+];
+
+const commandStateSortValues: Map<CommandState, number> = new Map(
+  commandStateSortOrder.map((state, idx) => [ state, idx ]),
+);
+
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
-  return commandStateSortValues[a] - commandStateSortValues[b];
+  return (commandStateSortValues.get(a) || 0) - (commandStateSortValues.get(b) || 0);
 };
+
 export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?
-  const aValue = Object.values(RunState).includes(a as RunState) ?
-    runStateSortValues[a as RunState] : commandStateSortValues[a as CommandState];
-  const bValue = Object.values(RunState).includes(b as RunState) ?
-    runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
+  const aValue = Object.values(RunState).includes(a as RunState)
+    ? (runStateSortValues.get(a as RunState) || 0)
+    : (commandStateSortValues.get(a as CommandState) || 0);
+  const bValue = Object.values(RunState).includes(b as RunState)
+    ? (runStateSortValues.get(b as RunState) || 0)
+    : (commandStateSortValues.get(b as CommandState) || 0);
   return aValue - bValue;
 };
