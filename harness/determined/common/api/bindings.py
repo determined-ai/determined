@@ -3061,6 +3061,45 @@ class v1IdleNotebookRequest:
             "idle": self.idle if self.idle is not None else None,
         }
 
+class v1Int32FieldFilter:
+    def __init__(
+        self,
+        *,
+        gt: "typing.Optional[int]" = None,
+        gte: "typing.Optional[int]" = None,
+        incl: "typing.Optional[typing.Sequence[int]]" = None,
+        lt: "typing.Optional[int]" = None,
+        lte: "typing.Optional[int]" = None,
+        notIn: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.lt = lt
+        self.lte = lte
+        self.gt = gt
+        self.gte = gte
+        self.incl = incl
+        self.notIn = notIn
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Int32FieldFilter":
+        return cls(
+            lt=obj.get("lt", None),
+            lte=obj.get("lte", None),
+            gt=obj.get("gt", None),
+            gte=obj.get("gte", None),
+            incl=obj.get("incl", None),
+            notIn=obj.get("notIn", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "lt": self.lt if self.lt is not None else None,
+            "lte": self.lte if self.lte is not None else None,
+            "gt": self.gt if self.gt is not None else None,
+            "gte": self.gte if self.gte is not None else None,
+            "incl": self.incl if self.incl is not None else None,
+            "notIn": self.notIn if self.notIn is not None else None,
+        }
+
 class v1Job:
     def __init__(
         self,
@@ -7725,6 +7764,12 @@ def get_GetExperiments(
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
+    experimentIdFilter_gt: "typing.Optional[int]" = None,
+    experimentIdFilter_gte: "typing.Optional[int]" = None,
+    experimentIdFilter_incl: "typing.Optional[typing.Sequence[int]]" = None,
+    experimentIdFilter_lt: "typing.Optional[int]" = None,
+    experimentIdFilter_lte: "typing.Optional[int]" = None,
+    experimentIdFilter_notIn: "typing.Optional[typing.Sequence[int]]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
@@ -7739,6 +7784,12 @@ def get_GetExperiments(
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "description": description,
+        "experimentIdFilter.gt": experimentIdFilter_gt,
+        "experimentIdFilter.gte": experimentIdFilter_gte,
+        "experimentIdFilter.incl": experimentIdFilter_incl,
+        "experimentIdFilter.lt": experimentIdFilter_lt,
+        "experimentIdFilter.lte": experimentIdFilter_lte,
+        "experimentIdFilter.notIn": experimentIdFilter_notIn,
         "labels": labels,
         "limit": limit,
         "name": name,

@@ -390,6 +390,14 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
+	if req.ExperimentIdFilter != nil {
+		var err error
+		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentIdFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)

@@ -366,6 +366,12 @@ export const getExperiments: DetApi<
       undefined,
       getUserIds(params.users),
       params.projectId ?? 0,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      params.experimentIdFilter?.incl,
+      params.experimentIdFilter?.notIn,
       options,
     );
   },

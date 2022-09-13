@@ -307,6 +307,7 @@ export enum ExperimentAction {
   Move = 'Move',
   Pause = 'Pause',
   OpenTensorBoard = 'View in TensorBoard',
+  SwitchPin = 'Switch Pin',
   Unarchive = 'Unarchive',
   ViewLogs = 'View Logs',
 }

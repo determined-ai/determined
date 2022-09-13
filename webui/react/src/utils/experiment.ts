@@ -165,6 +165,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.CompareExperiments]: alwaysTrueExperimentChecker,
+
+  [ExperimentAction.SwitchPin]: alwaysTrueExperimentChecker,
 };
 
 export const canActionExperiment = (

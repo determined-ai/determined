@@ -63,6 +63,10 @@ export interface GetTemplatesParams extends PaginationParams {
 export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
+  experimentIdFilter?: {
+    incl?: Array<number>,
+    notIn?: Array<number>,
+  }
   labels?: Array<string>;
   name?: string;
   options?: never;
