@@ -1733,6 +1733,7 @@ service Determined {
   rpc AssignRoles(AssignRolesRequest) returns (AssignRolesResponse) {
     option (google.api.http) = {
       post: "/api/v1/roles/add-assignments"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "RBAC"
