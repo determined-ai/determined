@@ -61,6 +61,7 @@ type experimentAllocation struct {
 	Starting bool
 }
 
+// Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
 func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experiment) error {
 	// filter allocations by JobIDs on this page of experiments
 	jobFilter := make([]string, 0, len(experiments))
@@ -110,6 +111,16 @@ func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experimen
 	return nil
 }
 
+// Return if experiment state is Active or any of its sub-states.
+func isActiveExperimentState(state experimentv1.State) bool {
+	return slices.Contains([]experimentv1.State{
+		experimentv1.State_STATE_ACTIVE,
+		experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
+		experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
+	}, state)
+}
+
+// Return a single experiment with enriched state, if the user can access it.
 func (a *apiServer) getExperiment(
 	curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, error) {
@@ -198,11 +209,8 @@ func (a *apiServer) GetExperiment(
 		Experiment: exp,
 	}
 
-	if !slices.Contains([]experimentv1.State{
-		experimentv1.State_STATE_ACTIVE,
-		experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
-		experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
-	}, exp.State) {
+	// Only continue to add a job summary if it's an active experiment.
+	if !isActiveExperimentState(exp.State) {
 		return &resp, nil
 	}
 
