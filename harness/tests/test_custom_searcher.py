@@ -132,11 +132,10 @@ class MockMasterSearchRunner(LocalSearchRunner):
         searcher_dir: Optional[Path] = None,
     ):
         super(MockMasterSearchRunner, self).__init__(search_method, searcher_dir)
-        if mock_master_object:
-            self.mock_master_obj = mock_master_object
-            initial_ops = bindings.v1InitialOperations()
-            event_obj = bindings.v1SearcherEvent(id=1, initialOperations=initial_ops)
-            mock_master_object.events_queue.append(event_obj)
+        self.mock_master_obj = mock_master_object
+        initial_ops = bindings.v1InitialOperations()
+        event_obj = bindings.v1SearcherEvent(id=1, initialOperations=initial_ops)
+        mock_master_object.events_queue.append(event_obj)
 
     def post_operations(
         self,
