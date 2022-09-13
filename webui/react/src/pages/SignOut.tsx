@@ -14,7 +14,7 @@ const SignOut: React.FC = () => {
   const location = useLocation();
   const { info } = useStore();
   const storeDispatch = useStoreDispatch();
-  const [ isSigningOut, setIsSigningOut ] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
@@ -42,8 +42,7 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-
-  }, [ history, info.externalLogoutUri, location.state, isSigningOut, storeDispatch ]);
+  }, [history, info.externalLogoutUri, location.state, isSigningOut, storeDispatch]);
 
   return null;
 };

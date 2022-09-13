@@ -33,7 +33,7 @@ const setup = (metric: MetricName) => {
   const view = render(
     <StoreProvider>
       <MetricBadgeTag metric={metric} />,
-    </StoreProvider>,
+    </StoreProvider>
   );
   return { handleOnChange, view };
 };

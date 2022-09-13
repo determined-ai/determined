@@ -3,14 +3,21 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InteractiveTable, { ColumnDef,
+import InteractiveTable, {
+  ColumnDef,
   InteractiveTableSettings,
-  onRightClickableCell } from 'components/InteractiveTable';
+  onRightClickableCell,
+} from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
-import { checkmarkRenderer, GenericRenderer,
-  getFullPaginationConfig, stateRenderer, userRenderer } from 'components/Table';
+import {
+  checkmarkRenderer,
+  GenericRenderer,
+  getFullPaginationConfig,
+  stateRenderer,
+  userRenderer,
+} from 'components/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
@@ -28,42 +35,49 @@ import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 
 import css from './WorkspaceList.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  WhoseWorkspaces, WorkspaceColumnName, WorkspaceListSettings } from './WorkspaceList.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  WhoseWorkspaces,
+  WorkspaceColumnName,
+  WorkspaceListSettings,
+} from './WorkspaceList.settings';
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
-  const { users, auth: { user } } = useStore();
-  const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
-  const [ total, setTotal ] = useState(0);
-  const [ pageError, setPageError ] = useState<Error>();
-  const [ isLoading, setIsLoading ] = useState(true);
+  const {
+    users,
+    auth: { user },
+  } = useStore();
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pageError, setPageError] = useState<Error>();
+  const [isLoading, setIsLoading] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
 
   const { contextHolder, modalOpen } = useModalWorkspaceCreate();
 
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<WorkspaceListSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
 
-  const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [ modalOpen ]);
+  const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [modalOpen]);
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const response = await getWorkspaces({
-        archived: settings.archived ? undefined : false,
-        limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
-        name: settings.name,
-        offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
-        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-        sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
-        users: settings.user,
-      }, { signal: canceler.signal });
+      const response = await getWorkspaces(
+        {
+          archived: settings.archived ? undefined : false,
+          limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
+          name: settings.name,
+          offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
+          users: settings.user,
+        },
+        { signal: canceler.signal }
+      );
       setTotal((response.pagination.total ?? 1) - 1); // -1 because we do not display immutable ws
       setWorkspaces((prev) => {
         const withoutDefault = response.workspaces.filter((w) => !w.immutable);
@@ -75,7 +89,8 @@ const WorkspaceList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal,
+  }, [
+    canceler.signal,
     pageError,
     settings.archived,
     settings.name,
@@ -84,25 +99,34 @@ const WorkspaceList: React.FC = () => {
     settings.tableLimit,
     settings.tableOffset,
     settings.user,
-    settings.view ]);
+    settings.view,
+  ]);
 
   usePolling(fetchWorkspaces);
 
-  const handleViewSelect = useCallback((value) => {
-    updateSettings({ whose: value });
+  const handleViewSelect = useCallback(
+    (value) => {
+      updateSettings({ whose: value });
+    },
+    [updateSettings]
+  );
 
-  }, [ updateSettings ]);
+  const handleSortSelect = useCallback(
+    (value) => {
+      updateSettings({
+        sortDesc: value === V1GetWorkspacesRequestSortBy.NAME ? false : true,
+        sortKey: value,
+      });
+    },
+    [updateSettings]
+  );
 
-  const handleSortSelect = useCallback((value) => {
-    updateSettings({
-      sortDesc: value === V1GetWorkspacesRequestSortBy.NAME ? false : true,
-      sortKey: value,
-    });
-  }, [ updateSettings ]);
-
-  const handleViewChange = useCallback((value: GridListView) => {
-    updateSettings({ view: value });
-  }, [ updateSettings ]);
+  const handleViewChange = useCallback(
+    (value: GridListView) => {
+      updateSettings({ view: value });
+    },
+    [updateSettings]
+  );
 
   useEffect(() => {
     switch (settings.whose) {
@@ -110,13 +134,13 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: user ? [ user.username ] : undefined });
+        updateSettings({ user: user ? [user.username] : undefined });
         break;
       case WhoseWorkspaces.Others:
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [ updateSettings, user, users, settings.whose ]);
+  }, [updateSettings, user, users, settings.whose]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
@@ -124,10 +148,7 @@ const WorkspaceList: React.FC = () => {
     );
 
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
-      <WorkspaceActionDropdown
-        workspace={record}
-        onComplete={fetchWorkspaces}
-      />
+      <WorkspaceActionDropdown workspace={record} onComplete={fetchWorkspaces} />
     );
 
     return [
@@ -177,40 +198,42 @@ const WorkspaceList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Workspace>[];
-  }, [ fetchWorkspaces ]);
+  }, [fetchWorkspaces]);
 
-  const switchShowArchived = useCallback((showArchived: boolean) => {
-    let newColumns: WorkspaceColumnName[];
-    let newColumnWidths: number[];
+  const switchShowArchived = useCallback(
+    (showArchived: boolean) => {
+      let newColumns: WorkspaceColumnName[];
+      let newColumnWidths: number[];
 
-    if (showArchived) {
-      if (settings.columns?.includes('archived')) {
-        // just some defensive coding: don't add archived twice
-        newColumns = settings.columns;
-        newColumnWidths = settings.columnWidths;
+      if (showArchived) {
+        if (settings.columns?.includes('archived')) {
+          // just some defensive coding: don't add archived twice
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
+        } else {
+          newColumns = [...settings.columns, 'archived'];
+          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
+        }
       } else {
-        newColumns = [ ...settings.columns, 'archived' ];
-        newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
+        const archivedIndex = settings.columns.indexOf('archived');
+        if (archivedIndex !== -1) {
+          newColumns = [...settings.columns];
+          newColumnWidths = [...settings.columnWidths];
+          newColumns.splice(archivedIndex, 1);
+          newColumnWidths.splice(archivedIndex, 1);
+        } else {
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
+        }
       }
-    } else {
-      const archivedIndex = settings.columns.indexOf('archived');
-      if (archivedIndex !== -1) {
-        newColumns = [ ...settings.columns ];
-        newColumnWidths = [ ...settings.columnWidths ];
-        newColumns.splice(archivedIndex, 1);
-        newColumnWidths.splice(archivedIndex, 1);
-      } else {
-        newColumns = settings.columns;
-        newColumnWidths = settings.columnWidths;
-      }
-    }
-    updateSettings({
-      archived: showArchived,
-      columns: newColumns,
-      columnWidths: newColumnWidths,
-    });
-
-  }, [ settings, updateSettings ]);
+      updateSettings({
+        archived: showArchived,
+        columns: newColumns,
+        columnWidths: newColumnWidths,
+      });
+    },
+    [settings, updateSettings]
+  );
 
   const actionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
@@ -221,17 +244,14 @@ const WorkspaceList: React.FC = () => {
         {children}
       </WorkspaceActionDropdown>
     ),
-    [ fetchWorkspaces ],
+    [fetchWorkspaces]
   );
 
   const workspacesList = useMemo(() => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid
-            gap={ShirtSize.medium}
-            minItemWidth={300}
-            mode={GridMode.AutoFill}>
+          <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}
@@ -249,10 +269,13 @@ const WorkspaceList: React.FC = () => {
             ContextMenu={actionDropdown}
             dataSource={workspaces}
             loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              },
+              total
+            )}
             rowKey="id"
             settings={settings}
             size="small"
@@ -274,11 +297,11 @@ const WorkspaceList: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchWorkspaces().then(() => setIsLoading(false));
-  }, [ fetchWorkspaces ]);
+  }, [fetchWorkspaces]);
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   if (pageError) {
     return <Message title="Unable to fetch workspaces" type={MessageType.Warning} />;
@@ -313,9 +336,7 @@ const WorkspaceList: React.FC = () => {
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspacesRequestSortBy.ID}>
-              Newest to Oldest
-            </Option>
+            <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
         </Space>
@@ -323,24 +344,19 @@ const WorkspaceList: React.FC = () => {
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList
-        ) :
-          (settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading) ?
-            (
-              <div className={css.emptyBase}>
-                <div className={css.icon}>
-                  <Icon name="workspaces" size="mega" />
-                </div>
-                <h4>No Workspaces</h4>
-                <p className={css.description}>
-                  Create a workspace to keep track of related projects and experiments.
-                </p>
-              </div>
-            ) : (
-              <Message
-                title="No workspaces matching the current filters"
-                type={MessageType.Empty}
-              />
-            )}
+        ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
+          <div className={css.emptyBase}>
+            <div className={css.icon}>
+              <Icon name="workspaces" size="mega" />
+            </div>
+            <h4>No Workspaces</h4>
+            <p className={css.description}>
+              Create a workspace to keep track of related projects and experiments.
+            </p>
+          </div>
+        ) : (
+          <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
+        )}
       </Spinner>
       {contextHolder}
     </Page>

@@ -29,7 +29,7 @@ const setup = () => {
           {'Option ' + String.fromCharCode(65 + index)}
         </Option>
       ))}
-    </MultiSelect>,
+    </MultiSelect>
   );
   return { handleOpen, view };
 };
@@ -42,7 +42,6 @@ describe('MultiSelect', () => {
       expect(screen.getByText(LABEL)).toBeInTheDocument();
       expect(screen.getByText(PLACEHOLDER)).toBeInTheDocument();
     });
-
   });
 
   it('should open select list', async () => {
@@ -54,7 +53,6 @@ describe('MultiSelect', () => {
 
       expect(screen.getAllByTitle(OPTION_TITLE)).toHaveLength(NUM_OPTIONS);
     });
-
   });
 
   it('should select option', async () => {

@@ -24,7 +24,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
 
   useEffect(() => {
     editorRef.current?.editor?.layout();
-  }, [ resize ]);
+  }, [resize]);
 
   return (
     <div className={css.base} ref={containerRef}>

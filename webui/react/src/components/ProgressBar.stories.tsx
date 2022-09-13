@@ -8,7 +8,7 @@ import ProgressBar, { Props as ProgressBarProps } from './ProgressBar';
 
 export default {
   component: ProgressBar,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'ProgressBar',
 };
 
@@ -31,7 +31,7 @@ export const Custom = (): React.ReactNode => (
     state={select<RunState | CommandState>(
       'State',
       { ...cmdStateOptions, ...runStateOptions },
-      RunState.Active,
+      RunState.Active
     )}
   />
 );

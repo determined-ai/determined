@@ -9,8 +9,12 @@ import { commandStateSorter, generateCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
 import {
-  defaultRowClassName, relativeTimeRenderer, stateRenderer,
-  taskIdRenderer, taskTypeRenderer, userRenderer,
+  defaultRowClassName,
+  relativeTimeRenderer,
+  stateRenderer,
+  taskIdRenderer,
+  taskTypeRenderer,
+  userRenderer,
 } from './Table';
 import css from './Table.module.scss';
 
@@ -65,12 +69,11 @@ const TaskTableWithUsers: React.FC = () => {
     {
       key: 'user',
       render: userRenderer,
-      sorter: (a: CommandTask, b: CommandTask): number => (
+      sorter: (a: CommandTask, b: CommandTask): number =>
         alphaNumericSorter(
           getDisplayName(users.find((u) => u.id === a.userId)),
-          getDisplayName(users.find((u) => u.id === b.userId)),
-        )
-      ),
+          getDisplayName(users.find((u) => u.id === b.userId))
+        ),
       title: 'User',
     },
     {
@@ -102,6 +105,4 @@ export const LoadingTable = (): React.ReactNode => <Table loading={true} />;
 
 export const EmptyTable = (): React.ReactNode => <Table dataSource={[]} />;
 
-export const TaskTable = (): React.ReactNode => (
-  <TaskTableWithUsers />
-);
+export const TaskTable = (): React.ReactNode => <TaskTableWithUsers />;

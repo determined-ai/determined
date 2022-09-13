@@ -6,7 +6,7 @@ import { isCommandTask } from 'utils/task';
 
 export interface WaitStatus {
   isReady: boolean;
-  state: CommandState
+  state: CommandState;
 }
 
 export const commandToEventUrl = (command: Command | CommandTask): string => {
@@ -28,7 +28,7 @@ export const openCommand = (command: CommandTask): void => {
   window.open(
     process.env.PUBLIC_URL + paths.interactive(command),
     '_blank',
-    windowOpenFeatures.join(','),
+    windowOpenFeatures.join(',')
   );
 };
 

@@ -17,14 +17,14 @@ import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
 
-export const useFetchActiveExperiments = (canceler: AbortController): () => Promise<void> => {
+export const useFetchActiveExperiments = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
 
   return useCallback(async (): Promise<void> => {
     try {
       const response = await getExperiments(
         { limit: -2, states: activeRunStates },
-        { signal: canceler.signal },
+        { signal: canceler.signal }
       );
       storeDispatch({
         type: StoreAction.SetActiveExperiments,
@@ -37,10 +37,10 @@ export const useFetchActiveExperiments = (canceler: AbortController): () => Prom
         type: ErrorType.Api,
       });
     }
-  }, [ canceler, storeDispatch ]);
+  }, [canceler, storeDispatch]);
 };
 
-export const useFetchAgents = (canceler: AbortController): () => Promise<void> => {
+export const useFetchAgents = (canceler: AbortController): (() => Promise<void>) => {
   const { info } = useStore();
   const storeDispatch = useStoreDispatch();
 
@@ -51,13 +51,15 @@ export const useFetchAgents = (canceler: AbortController): () => Promise<void> =
       storeDispatch({ type: StoreAction.SetAgents, value: response });
       updateFaviconType(
         cluster[ResourceType.ALL].allocation !== 0,
-        info.branding || BrandingType.Determined,
+        info.branding || BrandingType.Determined
       );
-    } catch (e) { handleError(e); }
-  }, [ canceler, info.branding, storeDispatch ]);
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, info.branding, storeDispatch]);
 };
 
-export const useFetchInfo = (canceler: AbortController): () => Promise<void> => {
+export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
 
   return useCallback(async (): Promise<void> => {
@@ -68,42 +70,48 @@ export const useFetchInfo = (canceler: AbortController): () => Promise<void> => 
       storeDispatch({ type: StoreAction.SetInfoCheck });
       handleError(e);
     }
-  }, [ canceler, storeDispatch ]);
+  }, [canceler, storeDispatch]);
 };
 
-export const useFetchUsers = (canceler: AbortController): () => Promise<void> => {
+export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
 
   return useCallback(async (): Promise<void> => {
     try {
       const usersResponse = await getUsers({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetUsers, value: usersResponse.users });
-    } catch (e) { handleError(e); }
-  }, [ canceler, storeDispatch ]);
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, storeDispatch]);
 };
 
-export const useFetchUserSettings = (canceler: AbortController): () => Promise<void> => {
+export const useFetchUserSettings = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
 
   return useCallback(async (): Promise<void> => {
     try {
       const userSettingResponse = await getUserSetting({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetUserSettings, value: userSettingResponse.settings });
-    } catch (e) { handleError(e); }
-  }, [ canceler, storeDispatch ]);
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, storeDispatch]);
 };
 
-export const useFetchResourcePools = (canceler?: AbortController): () => Promise<void> => {
+export const useFetchResourcePools = (canceler?: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
   return useCallback(async (): Promise<void> => {
     try {
       const resourcePools = await getResourcePools({}, { signal: canceler?.signal });
       storeDispatch({ type: StoreAction.SetResourcePools, value: resourcePools });
-    } catch (e) { handleError(e); }
-  }, [ canceler, storeDispatch ]);
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, storeDispatch]);
 };
 
-export const useFetchActiveTasks = (canceler: AbortController): () => Promise<void> => {
+export const useFetchActiveTasks = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
 
   return useCallback(async (): Promise<void> => {
@@ -113,18 +121,20 @@ export const useFetchActiveTasks = (canceler: AbortController): () => Promise<vo
     } catch (e) {
       handleError({ message: 'Unable to fetch task counts.', silent: true, type: ErrorType.Api });
     }
-  }, [ canceler, storeDispatch ]);
+  }, [canceler, storeDispatch]);
 };
 
-export const useFetchPinnedWorkspaces = (canceler: AbortController): () => Promise<void> => {
+export const useFetchPinnedWorkspaces = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
   return useCallback(async (): Promise<void> => {
     try {
       const pinnedWorkspaces = await getWorkspaces(
         { limit: 0, pinned: true },
-        { signal: canceler.signal },
+        { signal: canceler.signal }
       );
       storeDispatch({ type: StoreAction.SetPinnedWorkspaces, value: pinnedWorkspaces.workspaces });
-    } catch (e) { handleError(e); }
-  }, [ canceler, storeDispatch ]);
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, storeDispatch]);
 };

@@ -7,9 +7,7 @@ export default {
   title: 'Label',
 };
 
-export const Default = (): React.ReactNode => (
-  <Label>Default Label</Label>
-);
+export const Default = (): React.ReactNode => <Label>Default Label</Label>;
 
 export const TextOnly = (): React.ReactNode => (
   <Label type={LabelTypes.TextOnly}>TextOnly Label</Label>
