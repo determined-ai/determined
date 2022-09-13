@@ -207,7 +207,8 @@ class TextualInversionTrainer:
         """Train on a single batch, returning the loss and updating internal metrics."""
         # Convert images to latent space
         print(dir(self.vae.encode(batch["pixel_values"])))
-        latents = self.vae.encode(batch["pixel_values"])[0].detach()
+        latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
+        latents = latent_dist.sample().detach()
         # In 2112.10752, it was found that the latent space variance plays a large role in image
         # quality.  The following scale factor helps to maintain unit latent variance.  See
         # https://github.com/huggingface/diffusers/issues/437 for more details.
@@ -401,7 +402,8 @@ class TextualInversionTrainer:
                 "placeholder_tokens": self.placeholder_tokens,
             }
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
-                # TODO: Avoid this copy
+                # TODO: Avoid this copy. Use sharded checkpoints, once available.
+                # Can only restore from these checkpoints for single-node training.
                 shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
                 self._build_pipeline()
                 self._write_pipeline_and_embeddings_to_path(path)
