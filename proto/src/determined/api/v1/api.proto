@@ -1745,6 +1745,7 @@ service Determined {
       returns (RemoveAssignmentsResponse) {
     option (google.api.http) = {
       post: "/api/v1/roles/remove-assignments"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "RBAC"
