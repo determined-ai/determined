@@ -1,20 +1,28 @@
-import { ComponentStory, Meta } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
-import { DarkLight } from 'shared/themes';
+import { useStore } from 'contexts/Store';
 
-import Avatar from './Avatar';
+import Avatar, { Size } from './Avatar';
 
 export default {
+  argTypes: {
+    darkLight: { table: { disable: true } },
+    displayName: { table: { disable: true } },
+    nameLength: { control: { max: 3, min: 1, step: 1, type: 'range' } },
+    size: { control: { type: 'inline-radio' } },
+  },
   component: Avatar,
   title: 'Avatar',
 } as Meta<typeof Avatar>;
 
-export const Default: ComponentStory<typeof Avatar> = (args) => (
-  <Avatar {...args} />
-);
+type AvatarProps = React.ComponentProps<typeof Avatar>
 
-Default.args = {
-  darkLight: DarkLight.Light,
-  displayName: 'Anonymous',
+const names = [ 'Admin', 'Determined AI', 'Gold Experience Requiem' ];
+
+export const Default: Story<AvatarProps & {nameLength: number}> = ({ nameLength, ...args }) => {
+  const { ui } = useStore();
+  return <Avatar {...args} darkLight={ui.darkLight} displayName={names[nameLength - 1]} />;
 };
+
+Default.args = { nameLength: 1, noColor: false, size: Size.Medium, square: false };
