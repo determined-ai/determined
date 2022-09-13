@@ -24,6 +24,7 @@ class CoreSearchRunner(SearchRunner):
         context_dir: Optional[str] = None,
     ) -> int:
         logging.info("CoreSearchRunner.run")
+        client._require_singleton(lambda: None)()
 
         operations: Optional[List[Operation]] = None
 
@@ -41,7 +42,10 @@ class CoreSearchRunner(SearchRunner):
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
-        self.run_experiment(experiment_id, operations)
+        client._require_singleton(lambda: None)()
+        assert client._determined is not None
+        session = client._determined._session
+        self.run_experiment(experiment_id, session, operations)
 
         return experiment_id
 
