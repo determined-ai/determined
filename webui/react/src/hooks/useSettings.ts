@@ -75,6 +75,10 @@ export interface SettingsConfig {
  */
 export interface SettingsHookOptions {
   storagePath?: string;
+  /**
+   * @param store: If false, doesn't actually store settings. For Storybook use.
+   */
+  store?: boolean;
 }
 
 export type UpdateSettings<T> = (newSettings: Partial<T>, push?: boolean) => void;
@@ -358,7 +362,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       const isDefault = isEqual(config.defaultValue, jsonValue);
 
       // Store or clear setting if `storageKey` is available.
-      if (config.storageKey && isValid) {
+      if (config.storageKey && isValid && options?.store !== false) {
         if (jsonValue === undefined || isDefault) {
           storage.remove(config.storageKey, storagePath);
         } else {

@@ -6,6 +6,8 @@ import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';
 import { StoryContextForLoaders } from '@storybook/csf';
 import { ReactFramework, Story } from '@storybook/react';
 import React, { useEffect } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { BrowserRouter } from 'react-router-dom';
 
 import { ThemeOptions } from '../src/components/ThemeToggle';
@@ -88,9 +90,11 @@ export const decorators = [
     return (
       <StoreProvider>
         <BrowserRouter>
-          <ChildView context={context}>
-            <Story />
-          </ChildView>
+          <DndProvider backend={HTML5Backend}>
+            <ChildView context={context}>
+              <Story />
+            </ChildView>
+          </DndProvider>
         </BrowserRouter>
       </StoreProvider>
     );
