@@ -51,16 +51,18 @@ message SearchRolesAssignableToScopeRequest {
   };
 
   // The maximum number of results to return
-  int32 limit                 = 1;
+  int32 limit = 1;
   // The offset to use with pagination
-  int32 offset                = 2;
+  int32 offset = 2;
   // The id of the workspace to use if searching for a workspace-assignable role
   google.protobuf.Int32Value workspace_id = 3;
 }
 
 // Response object for SearchRolesAssignableToScope
 message SearchRolesAssignableToScopeResponse {
-  Pagination pagination                  = 1;
+  // pagination information.
+  Pagination pagination = 1;
+  // the set of roles and all assignments belonging to it.
   repeated determined.rbac.v1.Role roles = 2;
 }
 
@@ -70,7 +72,7 @@ message ListRolesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "limit" ] }
   };
-
+  // the offset for pagination
   int32 offset = 3;
   // the limit for pagination.
   int32 limit = 4;

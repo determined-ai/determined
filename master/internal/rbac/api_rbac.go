@@ -8,6 +8,7 @@ import (
 
 var rbacAPIServer RBACAPIServer = &rbacAPIServerStub{}
 
+// RBACAPIServer is the interface for all functions in RBAC.
 type RBACAPIServer interface {
 	GetRolesByID(context.Context, *apiv1.GetRolesByIDRequest) (
 		resp *apiv1.GetRolesByIDResponse, err error)
