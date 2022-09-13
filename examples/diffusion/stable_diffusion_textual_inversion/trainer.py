@@ -504,7 +504,7 @@ class TextualInversionTrainer:
                 format="GIF",
                 append_images=(img for _, img in prompt_img_dict),
                 save_all=True,
-                duration=500,
+                duration=1000,
                 loop=1,
             )
 
