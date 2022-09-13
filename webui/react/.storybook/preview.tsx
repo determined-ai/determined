@@ -2,22 +2,25 @@ import 'shared/styles/index.scss';
 import 'shared/styles/storybook.scss';
 import 'shared/prototypes';
 
-import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
-import { ThemeOptions } from 'components/ThemeToggle';
-import useTheme from 'hooks/useTheme';
-import { BrowserRouter } from 'react-router-dom';
-import React, { useEffect } from 'react';
+import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';
 import { StoryContextForLoaders } from '@storybook/csf';
 import { ReactFramework, Story } from '@storybook/react';
-import { BrandingType } from 'types';
+import React, { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+
+import { ThemeOptions } from '../src/components/ThemeToggle';
+import StoreProvider, { StoreAction, useStoreDispatch } from '../src/contexts/Store';
+import useTheme from '../src/hooks/useTheme';
+import { BrandingType } from '../src/types';
 
 export const globalTypes = {
   // https://storybook.js.org/addons/@storybook/addon-toolbars
   theme: {
-    name: 'Theme',
-    description: 'Global theme for components',
     defaultValue: ThemeOptions.system.displayName,
+    description: 'Global theme for components',
+    name: 'Theme',
     toolbar: {
+      dynamicTitle: true,
       icon: 'circlehollow',
       items: [
         ThemeOptions.system.displayName,
@@ -25,37 +28,38 @@ export const globalTypes = {
         ThemeOptions.dark.displayName,
       ],
       showName: true,
-      dynamicTitle: true,
     },
   },
 };
 
 // ChildView is for calling useTheme in the top level of component
-const ChildView = ({ context, children }: {context: StoryContextForLoaders<ReactFramework>, children: React.ReactElement}) => {
+const ChildView = (
+  { context, children }: {
+    children: React.ReactElement,
+    context: StoryContextForLoaders<ReactFramework>,
+  },
+) => {
   const storeDispatch = useStoreDispatch();
-  const { ui } = useStore();
-  console.log({ui});
   useTheme();
 
   useEffect(() => {
     // Have to set info.branding for useTheme to work
-    storeDispatch({ 
-      type: StoreAction.SetInfo, 
+    storeDispatch({
+      type: StoreAction.SetInfo,
       value: {
-        branding: BrandingType.Determined, 
-        checked: false, 
-        clusterId: '', 
-        clusterName: 'storybook', 
-        isTelemetryEnabled: false, 
-        masterId: '', 
-        version: ''
-      } 
+        branding: BrandingType.Determined,
+        checked: false,
+        clusterId: '',
+        clusterName: 'storybook',
+        isTelemetryEnabled: false,
+        masterId: '',
+        version: '',
+      },
     });
-  }, [])
+  }, [ storeDispatch ]);
 
   useEffect(() => {
     let currentTheme = ThemeOptions.system.className;
-    console.log(context.globals)
 
     switch (context.globals.theme) {
       case ThemeOptions.system.displayName:
@@ -70,15 +74,17 @@ const ChildView = ({ context, children }: {context: StoryContextForLoaders<React
       default:
         currentTheme = ThemeOptions.system.className;
     }
-    console.log(currentTheme)
     storeDispatch({ type: StoreAction.SetMode, value: currentTheme });
-  }, [context.globals.theme]);
+  }, [ context.globals.theme, storeDispatch ]);
 
   return <>{children}</>;
 };
 
 export const decorators = [
-  (Story: Story, context: StoryContextForLoaders<ReactFramework, typeof Story>) => {
+  (
+    Story: Story,
+    context: StoryContextForLoaders<ReactFramework, typeof Story>,
+  ): React.ReactElement => {
     return (
       <StoreProvider>
         <BrowserRouter>
@@ -90,4 +96,4 @@ export const decorators = [
     );
   },
 ];
-export const parameters = { layout: 'centered' };
+export const parameters = { layout: 'centered', viewport: { viewports: INITIAL_VIEWPORTS } };

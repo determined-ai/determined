@@ -1,33 +1,29 @@
 import type { StorybookConfig } from '@storybook/react/types';
 import { isString } from 'fp-ts/lib/string';
-import type { Configuration, RuleSetRule } from 'webpack'
+import type { Configuration, RuleSetRule } from 'webpack';
 
 const config: StorybookConfig = {
   addons: [
-    "storybook-preset-craco",
+    'storybook-preset-craco',
     {
       name: '@storybook/addon-docs',
-      options: {
-        configureJSX: true,
-      },
+      options: { configureJSX: true },
     },
     '@storybook/addon-links',
     '@storybook/addon-postcss',
-    '@storybook/addon-essentials'
+    '@storybook/addon-essentials',
   ],
-  features: { 
-    storyStoreV7: true, 
+  features: {
     buildStoriesJson: true,
-    modernInlineRender: true 
+    modernInlineRender: true,
+    storyStoreV7: true,
   },
   framework: '@storybook/react',
   staticDirs: [
     '../public',
-    { from: '../src/shared/assets', to: '/assets' }
+    { from: '../src/shared/assets', to: '/assets' },
   ],
-  stories: [ {
-    directory: '../src',
-  } ],
+  stories: [ { directory: '../src' } ],
   webpackFinal: (config: Configuration) => {
     if (process.env.NODE_ENV !== 'production') return config;
     /*
@@ -36,23 +32,25 @@ const config: StorybookConfig = {
      * looks for the fonts in `static/css/static/media` instead of the
      * proper location of `static/media`.
      */
-    const oneOfs = (config?.module?.rules?.find(rule => isString(rule) ? false : !!rule.oneOf) as RuleSetRule)?.oneOf;
+    const oneOfs = (config?.module?.rules
+      ?.find((rule) => isString(rule) ? false : !!rule.oneOf) as RuleSetRule)?.oneOf;
     const fontMatcher = /\.woff2?$/;
 
     // Exclude fonts from default file-loader.
-    const fileLoader = oneOfs?.find(oneOf => /file-loader/.test(oneOf?.loader?.toString() ?? '')) ?? {};
+    const fileLoader = oneOfs
+      ?.find((oneOf) => /file-loader/.test(oneOf?.loader?.toString() ?? '')) ?? {};
     if (Array.isArray(fileLoader.exclude)) fileLoader.exclude.push(fontMatcher);
-    else if (!!fileLoader.exclude) fileLoader.exclude = [fileLoader.exclude, fontMatcher];
-    else fileLoader.exclude = [fontMatcher];
+    else if (fileLoader.exclude) fileLoader.exclude = [ fileLoader.exclude, fontMatcher ];
+    else fileLoader.exclude = [ fontMatcher ];
 
     // Add a new file-loader to handle just fonts.
     const fileLoaderFont = {
       loader: fileLoader?.loader,
       options: {
-        publicPath: '../media',
-        outputPath: 'static/media',
+        esModule: false,
         name: '[name].[ext]',
-        esModule: false
+        outputPath: 'static/media',
+        publicPath: '../media',
       },
       test: fontMatcher,
     };
