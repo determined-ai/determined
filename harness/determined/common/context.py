@@ -125,7 +125,7 @@ def read_v1_context(
             entry_path = dir_rel_path.as_posix()
 
             add_item(v1File_from_local_dir(entry_path, dir_path))
-        # We can modify dirs in-place so that ignored directories are not recused into
+        # We can modify dirs in-place so that we do not recurse into ignored directories
         #  See https://docs.python.org/3/library/os.html#os.walk
         dirs[:] = keep_dirs
 
