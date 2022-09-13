@@ -2,7 +2,10 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { clone } from 'shared/utils/data';
 
-enum ActionType { Reset, Set }
+enum ActionType {
+  Reset,
+  Set,
+}
 
 interface Options<T, A> {
   initialState: T;
@@ -10,9 +13,7 @@ interface Options<T, A> {
   reducer?: (state: T, action: A) => T;
 }
 
-type Action<T> =
-| { type: ActionType.Reset; value: T }
-| { type: ActionType.Set; value: T }
+type Action<T> = { type: ActionType.Reset; value: T } | { type: ActionType.Set; value: T };
 
 type Export<T, A> = {
   ActionType: typeof ActionType;
@@ -24,7 +25,7 @@ type Export<T, A> = {
 const generateContextHook = <T>(
   contextName: string,
   hookName: string,
-  context: React.Context<T | null>,
+  context: React.Context<T | null>
 ) => {
   return (): T => {
     const ctx = useContext<T | null>(context);
@@ -51,20 +52,16 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
   const reducer = options.reducer || defaultReducer;
 
   interface Props {
-    children?: React.ReactNode
+    children?: React.ReactNode;
   }
 
   const Provider: React.FC<Props> = (props: Props) => {
-    const [ state, dispatch ] = useReducer(reducer, initialState);
+    const [state, dispatch] = useReducer(reducer, initialState);
 
     return React.createElement(
       StateContext.Provider,
       { value: state },
-      React.createElement(
-        ActionContext.Provider,
-        { value: dispatch },
-        props.children,
-      ),
+      React.createElement(ActionContext.Provider, { value: dispatch }, props.children)
     );
   };
 
@@ -74,12 +71,8 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
     useActionContext: generateContextHook<Dispatch<A>>(
       options.name,
       'useActionContext',
-      ActionContext,
+      ActionContext
     ),
-    useStateContext: generateContextHook<T>(
-      options.name,
-      'useStateContext',
-      StateContext,
-    ),
+    useStateContext: generateContextHook<T>(options.name, 'useStateContext', StateContext),
   };
 };

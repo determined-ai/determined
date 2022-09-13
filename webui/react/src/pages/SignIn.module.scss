@@ -11,8 +11,12 @@
     flex-direction: column;
     max-width: 220px;
 
-    & > * { margin-bottom: 24px; }
-    & > *:last-child { margin-bottom: 0; }
+    & > * {
+      margin-bottom: 24px;
+    }
+    & > *:last-child {
+      margin-bottom: 0;
+    }
   }
   .ssoButton {
     align-items: center;

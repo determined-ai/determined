@@ -8,7 +8,7 @@ import Badge, { BadgeType } from './Badge';
 
 export default {
   component: Badge,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'Badge',
 };
 

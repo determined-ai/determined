@@ -35,7 +35,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
 export enum WhoseProjects {
   All = 'ALL_PROJECTS',
   Mine = 'MY_PROJECTS',
-  Others = 'OTHERS_PROJECTS'
+  Others = 'OTHERS_PROJECTS',
 }
 
 export interface WorkspaceDetailsSettings extends InteractiveTableSettings {

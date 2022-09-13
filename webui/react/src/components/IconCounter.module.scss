@@ -11,9 +11,13 @@
     font-weight: bold;
   }
 }
-.active { color: var(--theme-colors-active); }
+.active {
+  color: var(--theme-colors-active);
+}
 .disabled {
   color: var(--theme-colors-monochrome-9);
 
-  &:hover { color: var(--theme-colors-monochrome-9); }
+  &:hover {
+    color: var(--theme-colors-monochrome-9);
+  }
 }

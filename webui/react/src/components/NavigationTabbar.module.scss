@@ -7,7 +7,9 @@
     display: flex;
     width: 100%;
   }
-  .toolbar > * { flex-grow: 1; }
+  .toolbar > * {
+    flex-grow: 1;
+  }
   .toolbarItem {
     align-items: center;
     color: var(--theme-stage-on);

@@ -20,11 +20,9 @@ const useMetricNames = (args: UseMetricNamesInterface): void => {
     const validationMetricsMap: Record<string, boolean> = {};
 
     readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(
-        args.experimentId,
-        undefined,
-        { signal: canceler.signal },
-      ),
+      detApi.StreamingInternal.metricNames(args.experimentId, undefined, {
+        signal: canceler.signal,
+      }),
       (event) => {
         if (!event) return;
         /*
@@ -32,8 +30,8 @@ const useMetricNames = (args: UseMetricNamesInterface): void => {
          * so we keep track of what we have seen on our end and
          * only add new metrics we have not seen to the list.
          */
-        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
+        (event.trainingMetrics || []).forEach((metric) => (trainingMetricsMap[metric] = true));
+        (event.validationMetrics || []).forEach((metric) => (validationMetricsMap[metric] = true));
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
@@ -43,10 +41,10 @@ const useMetricNames = (args: UseMetricNamesInterface): void => {
         if (newMetrics.length !== args.metricNames.length) {
           args.setMetricNames(newMetrics);
         }
-      },
+      }
     ).catch(args.errorHandler);
     return () => canceler.abort();
-  }, [ args ]);
+  }, [args]);
 };
 
 export default useMetricNames;

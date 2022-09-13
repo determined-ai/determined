@@ -13,9 +13,12 @@ interface Props {
 }
 
 const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
-  const handleChange = useCallback((id: string) => {
-    if (onChange) onChange(id as GridListView);
-  }, [ onChange ]);
+  const handleChange = useCallback(
+    (id: string) => {
+      if (onChange) onChange(id as GridListView);
+    },
+    [onChange]
+  );
 
   return (
     <RadioGroup

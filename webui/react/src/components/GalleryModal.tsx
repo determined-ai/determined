@@ -25,16 +25,16 @@ const GalleryModal: React.FC<Props> = ({
   ...props
 }: Props) => {
   const resize = useResize();
-  const [ width, setWidth ] = useState<number>();
-  const [ minHeight, setMinHeight ] = useState<number>();
+  const [width, setWidth] = useState<number>();
+  const [minHeight, setMinHeight] = useState<number>();
 
   const handlePrevious = useCallback(() => {
     if (onPrevious) onPrevious();
-  }, [ onPrevious ]);
+  }, [onPrevious]);
 
   const handleNext = useCallback(() => {
     if (onNext) onNext();
-  }, [ onNext ]);
+  }, [onNext]);
 
   useEffect(() => {
     setWidth(resize.width);
@@ -45,7 +45,7 @@ const GalleryModal: React.FC<Props> = ({
     } else if (isNumber(height) && height < resize.height) {
       setMinHeight(height);
     }
-  }, [ height, resize ]);
+  }, [height, resize]);
 
   useEffect(() => {
     const keyUpListener = (e: KeyboardEvent) => {
@@ -61,15 +61,10 @@ const GalleryModal: React.FC<Props> = ({
     return () => {
       keyEmitter.off(KeyEvent.KeyUp, keyUpListener);
     };
-  }, [ onNext, onPrevious ]);
+  }, [onNext, onPrevious]);
 
   return (
-    <Modal
-      centered
-      footer={null}
-      visible
-      width={width}
-      {...props}>
+    <Modal centered footer={null} visible width={width} {...props}>
       <div className={css.base} style={{ minHeight }}>
         {children}
         <IconButton

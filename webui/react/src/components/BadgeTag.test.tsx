@@ -23,9 +23,7 @@ jest.mock('antd', () => {
     state?: StateOfUnion | undefined;
     type?: BadgeType | undefined;
   }) => {
-    return (
-      <antd.Tooltip {...props} mouseEnterDelay={0} />
-    );
+    return <antd.Tooltip {...props} mouseEnterDelay={0} />;
   };
 
   return {
@@ -35,15 +33,13 @@ jest.mock('antd', () => {
   };
 });
 
-const setup = ({
-  children = CONTENT,
-  tooltip = CONTENT_TOOLTIP,
-  ...props
-}: Props = {}) => {
+const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
     <StoreProvider>
-      <BadgeTag tooltip={tooltip} {...props}>{children}</BadgeTag>
-    </StoreProvider>,
+      <BadgeTag tooltip={tooltip} {...props}>
+        {children}
+      </BadgeTag>
+    </StoreProvider>
   );
   return { view };
 };

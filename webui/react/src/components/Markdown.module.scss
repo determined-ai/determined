@@ -1,7 +1,8 @@
 //adapted from this repo: https://github.com/sindresorhus/github-markdown-css
 
 .base {
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji;
   font-size: 16px;
   height: 100%;
   line-height: 1.5;
@@ -10,7 +11,9 @@
   -webkit-text-size-adjust: 100%;
   word-wrap: break-word;
 
-  .noOverflow { overflow: hidden; }
+  .noOverflow {
+    overflow: hidden;
+  }
   .anchor {
     float: left;
     line-height: 1;
@@ -122,7 +125,7 @@
       margin: 0;
     }
   }
-  [type=checkbox] {
+  [type='checkbox'] {
     box-sizing: border-box;
     padding: 0;
   }
@@ -303,7 +306,7 @@
     padding: 16px;
     word-wrap: normal;
 
-    >code {
+    > code {
       background: transparent;
       border: 0;
       font-size: 100%;
@@ -509,7 +512,7 @@
   li {
     word-wrap: break-all;
 
-    >p {
+    > p {
       margin-top: 16px;
     }
     + {
@@ -535,10 +538,10 @@
       padding: 0 16px;
     }
   }
-  img[align=right] {
+  img[align='right'] {
     padding-left: 20px;
   }
-  img[align=left] {
+  img[align='left'] {
     padding-right: 20px;
   }
   .highlight {
@@ -762,7 +765,7 @@
   font-size: 14px;
   height: 100%;
   padding: 16px;
-  
+
   .placeholder {
     color: var(--theme-stage-on-weak);
     font-size: 14px;
