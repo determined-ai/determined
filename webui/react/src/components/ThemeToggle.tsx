@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { StoreAction, StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
 import { Mode } from 'shared/themes';
 
 import css from './ThemeToggle.module.scss';
