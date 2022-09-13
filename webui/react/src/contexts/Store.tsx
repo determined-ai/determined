@@ -32,6 +32,16 @@ interface StateUI {
   theme: Theme;
 }
 
+const initUI: StateUI = {
+  chromeCollapsed: false,
+  darkLight: DarkLight.Light,
+  isPageHidden: false,
+  mode: Mode.System,
+  showChrome: true,
+  showSpinner: false,
+  theme: {} as Theme,
+};
+
 export enum StoreActionUI {
   HideUIChrome = 'HideUIChrome',
   HideUISpinner = 'HideUISpinner',
@@ -50,6 +60,40 @@ type ActionUI =
 | { type: StoreActionUI.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
 | { type: StoreActionUI.ShowUIChrome }
 | { type: StoreActionUI.ShowUISpinner }
+
+/**
+ * return a part of the input state that should be updated.
+ * @param state ui state
+ * @param action
+ * @returns
+ */
+const reducerUI = (state: StateUI, action: ActionUI): Partial<StateUI> | void => {
+  switch (action.type) {
+    case StoreActionUI.HideUIChrome:
+      if (!state.showChrome) return;
+      return { showChrome: false };
+    case StoreActionUI.HideUISpinner:
+      if (!state.showSpinner) return;
+      return { showSpinner: false };
+    case StoreActionUI.SetMode:
+      return { mode: action.value };
+    case StoreActionUI.SetPageVisibility:
+      return { isPageHidden: action.value };
+    case StoreActionUI.SetTheme:
+      return {
+        darkLight: action.value.darkLight,
+        theme: action.value.theme,
+      };
+    case StoreActionUI.ShowUIChrome:
+      if (state.showChrome) return;
+      return { showChrome: true };
+    case StoreActionUI.ShowUISpinner:
+      if (state.showSpinner) return;
+      return { showSpinner: true };
+    default:
+      return;
+  }
+};
 
 interface State { // CHECK: avoid merging here.
   activeExperiments: number;
@@ -168,16 +212,6 @@ const initInfo: DeterminedInfo = {
   masterId: '',
   version: process.env.VERSION || '',
 };
-const initUI = {
-  chromeCollapsed: false,
-  darkLight: DarkLight.Light,
-  isPageHidden: false,
-  mode: Mode.System,
-  omnibar: { isShowing: false },
-  showChrome: true,
-  showSpinner: false,
-  theme: {} as Theme,
-};
 
 const initState: State = {
   activeExperiments: 0,
@@ -194,7 +228,7 @@ const initState: State = {
   pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
-  ui: initUI,
+  ui: { ...initUI, omnibar: { isShowing: false } },
   userAssignments: [ {
     cluster: true,
     name: 'OSS User',
@@ -270,40 +304,7 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
-/**
- * return a part of the input state that should be updated.
- * @param state ui state
- * @param action
- * @returns
- */
-const reducerUI = (state: StateUI, action: ActionUI): Partial<StateUI> | void => {
-  switch (action.type) {
-    case StoreActionUI.HideUIChrome:
-      if (!state.showChrome) return;
-      return { showChrome: false };
-    case StoreActionUI.HideUISpinner:
-      if (!state.showSpinner) return;
-      return { showSpinner: false };
-    case StoreActionUI.SetMode:
-      return { mode: action.value };
-    case StoreActionUI.SetPageVisibility:
-      return { isPageHidden: action.value };
-    case StoreActionUI.SetTheme:
-      return {
-        darkLight: action.value.darkLight,
-        theme: action.value.theme,
-      };
-    case StoreActionUI.ShowUIChrome:
-      if (state.showChrome) return;
-      return { showChrome: true };
-    case StoreActionUI.ShowUISpinner:
-      if (state.showSpinner) return;
-      return { showSpinner: true };
-    default:
-      return;
-  }
-};
-
+// TODO turn this into a partial reducer simliar to reducerUI.
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
