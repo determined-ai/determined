@@ -206,7 +206,8 @@ class TextualInversionTrainer:
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
         # Convert images to latent space
-        latents = self.vae.encode(batch["pixel_values"]).sample().detach()
+        print(dir(self.vae.encode(batch["pixel_values"])))
+        latents = self.vae.encode(batch["pixel_values"])[0].detach()
         # In 2112.10752, it was found that the latent space variance plays a large role in image
         # quality.  The following scale factor helps to maintain unit latent variance.  See
         # https://github.com/huggingface/diffusers/issues/437 for more details.
@@ -231,7 +232,7 @@ class TextualInversionTrainer:
         encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
 
         # Predict the noise residual
-        noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states)["sample"]
+        noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
         loss = F.mse_loss(noise_pred, noise)
         self.accelerator.backward(loss)
         self.loss_history.append(loss.detach())
@@ -468,7 +469,7 @@ class TextualInversionTrainer:
                 num_inference_steps=self.num_inference_steps,
                 guidance_scale=self.guidance_scale,
                 generator=generator,
-            )["sample"][0]
+            ).images[0]
             prompt_img_dict = self.generated_imgs[prompt]
             prompt_img_dict.append((self.steps_completed, generated_img))
             prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
