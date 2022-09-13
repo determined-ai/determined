@@ -16,7 +16,7 @@ from determined.searcher.search_method import (
     ValidateAfter,
 )
 from determined.searcher.search_runner import LocalSearchRunner
-from determined.searcher.searchers import ASHASearchMethod, RandomSearchMethod
+from tests.search_methods import ASHASearchMethod, RandomSearchMethod
 
 
 def test_run_random_searcher_exp_mock_master() -> None:
