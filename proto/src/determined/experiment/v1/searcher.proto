@@ -93,6 +93,17 @@ message ExperimentInactive {
   State experiment_state = 1;
 }
 
+// Starting is a searcher event triggered when an experiment is active 
+// but resources are not allocated to the experiment actor yet. 
+message ExperimentStarting {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_state" ] }
+  };
+  // experiment_state
+  State experiment_state = 1;
+}
+
+
 // SearcherEvent is a message from master to a client-driven
 // custom searcher informing it of relevant changes in the state
 // of an experiment
