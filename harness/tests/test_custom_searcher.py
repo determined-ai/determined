@@ -74,7 +74,7 @@ class SimulateMaster:
                 self.events_queue = self.events_queue[i + 1 :]
                 return
 
-        raise (RuntimeError(f"event not found in events queue: {event}"))
+        raise RuntimeError(f"event not found in events queue: {event}")
 
     def _process_operations(self, operations: List[Operation]) -> None:
         for op in operations:
