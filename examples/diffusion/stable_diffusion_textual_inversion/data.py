@@ -68,8 +68,9 @@ class TextualInversionDataset(Dataset):
             img_ts = self._convert_imgs_to_tensors(imgs)
             for img_t in img_ts:
                 for text in templates:
+                    text_with_token = text.format(token)
                     self.records.append(
-                        {"input_ids": self._tokenize_text(text), "pixel_values": img_t}
+                        {"input_ids": self._tokenize_text(text_with_token), "pixel_values": img_t}
                     )
 
     def _get_imgs_from_dir_path(self, dir_path: str) -> List[Image.Image]:
