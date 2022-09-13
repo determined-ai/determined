@@ -190,7 +190,7 @@ func (s *Searcher) GetCustomSearcherEventQueue() *SearcherEventQueue {
 	if sMethod, ok := s.method.(CustomSearchMethod); ok {
 		return sMethod.getSearcherEventQueue()
 	}
-	return nil
+	return nil, fmt.Errorf("GetCustomSearcherEventQueue is not supported for search method of type %T", s.method)
 }
 
 // SetCustomSearcherProgress sets the custom searcher progress.
