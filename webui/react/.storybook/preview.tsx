@@ -2,11 +2,14 @@ import 'shared/styles/index.scss';
 import 'shared/styles/storybook.scss';
 import 'shared/prototypes';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { ThemeOptions } from 'components/ThemeToggle';
 import useTheme from 'hooks/useTheme';
 import { BrowserRouter } from 'react-router-dom';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { StoryContextForLoaders } from '@storybook/csf';
+import { ReactFramework, Story } from '@storybook/react';
+import { BrandingType } from 'types';
 
 export const globalTypes = {
   // https://storybook.js.org/addons/@storybook/addon-toolbars
@@ -28,13 +31,31 @@ export const globalTypes = {
 };
 
 // ChildView is for calling useTheme in the top level of component
-const ChildView = ({ context, children }) => {
+const ChildView = ({ context, children }: {context: StoryContextForLoaders<ReactFramework>, children: React.ReactElement}) => {
   const storeDispatch = useStoreDispatch();
+  const { ui } = useStore();
+  console.log({ui});
   useTheme();
 
   useEffect(() => {
+    // Have to set info.branding for useTheme to work
+    storeDispatch({ 
+      type: StoreAction.SetInfo, 
+      value: {
+        branding: BrandingType.Determined, 
+        checked: false, 
+        clusterId: '', 
+        clusterName: 'storybook', 
+        isTelemetryEnabled: false, 
+        masterId: '', 
+        version: ''
+      } 
+    });
+  }, [])
+
+  useEffect(() => {
     let currentTheme = ThemeOptions.system.className;
-    console.log(context.globals.theme)
+    console.log(context.globals)
 
     switch (context.globals.theme) {
       case ThemeOptions.system.displayName:
@@ -57,7 +78,7 @@ const ChildView = ({ context, children }) => {
 };
 
 export const decorators = [
-  (Story, context) => {
+  (Story: Story, context: StoryContextForLoaders<ReactFramework, typeof Story>) => {
     return (
       <StoreProvider>
         <BrowserRouter>
