@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import { StoreActionUI, useStoreDispatch } from 'contexts/Store';
+import { useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -14,6 +14,7 @@ import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'utils/wait';
+import { StoreActionUI } from '../shared/contexts/UIStore';
 
 import css from './Wait.module.scss';
 

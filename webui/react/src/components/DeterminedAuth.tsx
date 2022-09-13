@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
-import { StoreAction, StoreActionUI, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
@@ -11,6 +11,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorType } from 'shared/utils/error';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
+import { StoreActionUI } from '../shared/contexts/UIStore';
 
 import css from './DeterminedAuth.module.scss';
 

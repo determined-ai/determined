@@ -8,7 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
-import { StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
@@ -21,6 +21,7 @@ import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { BrandingType } from 'types';
+import { StoreActionUI } from '../shared/contexts/UIStore';
 
 import css from './SignIn.module.scss';
 
