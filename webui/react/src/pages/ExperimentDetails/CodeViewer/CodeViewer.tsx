@@ -132,18 +132,12 @@ const CodeViewer: React.FC<Props> = ({
         storageKey: 'filePath',
         type: { baseType: BaseType.String },
       },
-      {
-        defaultValue: firstConfig,
-        key: 'fileName',
-        storageKey: 'fileName',
-        type: { baseType: BaseType.String },
-      },
     ],
     storagePath: `selected-file-${experimentId}`,
   });
 
   const { settings, updateSettings } =
-    useSettings < { fileName: string, filePath: string }>(configForExperiment(experimentId));
+    useSettings < { filePath: string }>(configForExperiment(experimentId));
 
   const submittedConfig = useMemo(() => {
     if (!_submittedConfig) return;
@@ -310,7 +304,7 @@ const CodeViewer: React.FC<Props> = ({
 
     if (isConfig(selectedKey)) {
       handleSelectConfig(selectedKey);
-      updateSettings({ fileName: String(info.node.title), filePath: String(info.node.key) });
+      updateSettings({ filePath: String(info.node.key) });
       return;
     }
 
@@ -326,7 +320,7 @@ const CodeViewer: React.FC<Props> = ({
     }
 
     if (targetNode.isLeaf) {
-      updateSettings({ fileName: String(info.node.title), filePath: String(info.node.key) });
+      updateSettings({ filePath: String(info.node.key) });
     }
   }, [
     activeFile?.key,
@@ -379,19 +373,21 @@ const CodeViewer: React.FC<Props> = ({
   // Set the selected node based on the active settings
   useEffect(
     () => {
-      if (settings.filePath && (activeFile?.title !== settings.fileName)) {
-        if (isConfig(settings.fileName)) {
-          handleSelectConfig(settings.fileName);
+      const path = settings.filePath.split('/');
+      const fileName = path[path.length - 1];
+
+      if (settings.filePath && (activeFile?.title !== fileName)) {
+        if (isConfig(fileName)) {
+          handleSelectConfig(fileName);
         } else {
           setIsFetchingFile(true);
-          fetchFile(settings.filePath, settings.fileName);
+          fetchFile(settings.filePath, fileName);
           switchTreeViewToEditor();
         }
       }
     },
     [
       treeData,
-      settings.fileName,
       settings.filePath,
       activeFile,
       fetchFile,
