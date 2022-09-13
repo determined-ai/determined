@@ -133,8 +133,8 @@ def read_v1_context(
             file_path = pathlib.Path(parent).joinpath(file)
             file_rel_path = file_path.relative_to(root_path)
 
-            # If the file is the .detignore file, it matches one of the
-            #  paths specified in .detignore, or if its parent directory does, then ignore it.
+            # If the file is the .detignore file or matches one of the
+            # paths specified in .detignore, then ignore it.
             if file_rel_path.name == ".detignore":
                 continue
             if ignore_spec.match_file(str(file_rel_path)):
