@@ -22,7 +22,7 @@ interface OmnibarState {
   isShowing: boolean;
 }
 
-interface UI {
+interface StateUI {
   chromeCollapsed: boolean;
   darkLight: DarkLight;
   isPageHidden: boolean;
@@ -66,8 +66,8 @@ interface State { // CHECK: avoid merging here.
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
-  ui: UI & {
-    omnibar: OmnibarState;
+  ui: StateUI & {
+    omnibar: OmnibarState; // TODO: move it out of ui
   };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
@@ -270,7 +270,7 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
-const reducerSA = (state: State, action: ActionUI): State => {
+const reducerUI = (state: State, action: ActionUI): State => {
   switch (action.type) {
     case StoreActionUI.HideUIChrome:
       if (!state.ui.showChrome) return state;
@@ -370,7 +370,7 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.userAssignments, action.value)) return state;
       return { ...state, userAssignments: action.value };
     default:
-      return reducerSA(state, action);
+      return reducerUI(state, action);
   }
 };
 
