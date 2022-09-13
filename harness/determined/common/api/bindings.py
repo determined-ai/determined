@@ -667,6 +667,29 @@ class v1AllocationRendezvousInfoResponse:
             "rendezvousInfo": self.rendezvousInfo.to_json(),
         }
 
+class v1AssignRolesRequest:
+    def __init__(
+        self,
+        *,
+        groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None,
+        userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None,
+    ):
+        self.groupRoleAssignments = groupRoleAssignments
+        self.userRoleAssignments = userRoleAssignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AssignRolesRequest":
+        return cls(
+            groupRoleAssignments=[v1GroupRoleAssignment.from_json(x) for x in obj["groupRoleAssignments"]] if obj.get("groupRoleAssignments", None) is not None else None,
+            userRoleAssignments=[v1UserRoleAssignment.from_json(x) for x in obj["userRoleAssignments"]] if obj.get("userRoleAssignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupRoleAssignments": [x.to_json() for x in self.groupRoleAssignments] if self.groupRoleAssignments is not None else None,
+            "userRoleAssignments": [x.to_json() for x in self.userRoleAssignments] if self.userRoleAssignments is not None else None,
+        }
+
 class v1AwsCustomTag:
     def __init__(
         self,
@@ -5083,6 +5106,29 @@ class v1RPQueueStat:
             "aggregates": [x.to_json() for x in self.aggregates] if self.aggregates is not None else None,
         }
 
+class v1RemoveAssignmentsRequest:
+    def __init__(
+        self,
+        *,
+        groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None,
+        userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None,
+    ):
+        self.groupRoleAssignments = groupRoleAssignments
+        self.userRoleAssignments = userRoleAssignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RemoveAssignmentsRequest":
+        return cls(
+            groupRoleAssignments=[v1GroupRoleAssignment.from_json(x) for x in obj["groupRoleAssignments"]] if obj.get("groupRoleAssignments", None) is not None else None,
+            userRoleAssignments=[v1UserRoleAssignment.from_json(x) for x in obj["userRoleAssignments"]] if obj.get("userRoleAssignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupRoleAssignments": [x.to_json() for x in self.groupRoleAssignments] if self.groupRoleAssignments is not None else None,
+            "userRoleAssignments": [x.to_json() for x in self.userRoleAssignments] if self.userRoleAssignments is not None else None,
+        }
+
 class v1RendezvousInfo:
     def __init__(
         self,
@@ -7249,13 +7295,15 @@ def post_ArchiveWorkspace(
 
 def post_AssignRoles(
     session: "api.Session",
+    *,
+    body: "v1AssignRolesRequest",
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
         path="/api/v1/roles/add-assignments",
         params=_params,
-        json=None,
+        json=body.to_json(),
         data=None,
         headers=None,
         timeout=None,
@@ -9738,13 +9786,15 @@ def put_PutTemplate(
 
 def post_RemoveAssignments(
     session: "api.Session",
+    *,
+    body: "v1RemoveAssignmentsRequest",
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
         path="/api/v1/roles/remove-assignments",
         params=_params,
-        json=None,
+        json=body.to_json(),
         data=None,
         headers=None,
         timeout=None,

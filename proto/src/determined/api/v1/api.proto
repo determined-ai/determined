@@ -1617,7 +1617,7 @@ service Determined {
     };
   }
 
-  // Get a group by id
+  // Get a group by id.
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {
       get: "/api/v1/groups/{group_id}"
@@ -1627,7 +1627,7 @@ service Determined {
     };
   }
 
-  // Search for groups with optional filters
+  // Search for groups with optional filters.
   rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups/search"
@@ -1638,7 +1638,7 @@ service Determined {
     };
   }
 
-  // Create a group with optional members on creation
+  // Create a group with optional members on creation.
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups"
@@ -1649,7 +1649,7 @@ service Determined {
     };
   }
 
-  // Update group info
+  // Update group info.
   rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
     option (google.api.http) = {
       put: "/api/v1/groups/{group_id}"
@@ -1660,7 +1660,7 @@ service Determined {
     };
   }
 
-  // Remove a group
+  // Remove a group.
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
     option (google.api.http) = {
       delete: "/api/v1/groups/{group_id}"
@@ -1670,7 +1670,7 @@ service Determined {
     };
   }
 
-  // Get a set of roles by id
+  // Get a set of roles with the corresponding IDs.
   rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
     option (google.api.http) = {
       post: "/api/v1/roles/search/by-ids"
@@ -1682,7 +1682,7 @@ service Determined {
     };
   }
 
-  // Get the roles which are assigned to a user
+  // Get the roles which are assigned to a user.
   rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest)
       returns (GetRolesAssignedToUserResponse) {
     option (google.api.http) = {
@@ -1694,7 +1694,7 @@ service Determined {
     };
   }
 
-  // Get the roles which are assigned to a group
+  // Get the roles which are assigned to a group.
   rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest)
       returns (GetRolesAssignedToGroupResponse) {
     option (google.api.http) = {
@@ -1706,7 +1706,7 @@ service Determined {
     };
   }
 
-  // Search for roles assignable to a given scope
+  // Search for roles assignable to a given scope.
   rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest)
       returns (SearchRolesAssignableToScopeResponse) {
     option (google.api.http) = {
