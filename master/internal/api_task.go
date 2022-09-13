@@ -25,12 +25,15 @@ func (a *apiServer) GetTask(
 	default:
 		// For tensor board task, put it in WAITING state if metrics is not ready.
 		// Use first allocation as an indicator.
-		if t.TaskType == "TENSORBOARD" && len(t.Allocations) > 0 && t.Allocations[0].State == taskv1.State_STATE_PENDING {
+		if t.TaskType == "TENSORBOARD" && len(t.Allocations) > 0 &&
+			t.Allocations[0].State == taskv1.State_STATE_PENDING {
 			var tb *tensorboardv1.Tensorboard
-			if err = a.ask(tensorboardsAddr.Child(req.TaskId), &tensorboardv1.Tensorboard{}, &tb); err == nil {
+			if err = a.ask(
+				tensorboardsAddr.Child(req.TaskId), &tensorboardv1.Tensorboard{}, &tb,
+			); err == nil {
 				if len(tb.ExperimentIds) > 0 {
-					metricExist, err := db.MetricsExist(tb.ExperimentIds)
-					if err == nil && !metricExist {
+					metricExist, errm := db.MetricsExist(tb.ExperimentIds)
+					if errm == nil && !metricExist {
 						t.Allocations[0].State = taskv1.State_STATE_WAITING
 					}
 				}

@@ -436,7 +436,11 @@ func (db *PgDB) MaxTerminationDelay() time.Duration {
 	return 5 * time.Second
 }
 
+// MetricsExist returns if validation or training metrics exist for given experiment ids.
 func MetricsExist(experimentIDs []int32) (bool, error) {
-	trialIDs := Bun().NewSelect().Table("trials").Column("id").Where("experiment_id IN (?)", bun.In(experimentIDs))
-	return Bun().NewSelect().Table("raw_steps", "raw_validations").Where("raw_steps.trial_id IN (?)", trialIDs).WhereOr("raw_validations.trial_id IN (?)", trialIDs).Exists(context.TODO())
+	trialIDs := Bun().NewSelect().Table("trials").Column("id").Where(
+		"experiment_id IN (?)", bun.In(experimentIDs))
+	return Bun().NewSelect().Table("raw_steps", "raw_validations").Where(
+		"raw_steps.trial_id IN (?)", trialIDs).WhereOr(
+		"raw_validations.trial_id IN (?)", trialIDs).Exists(context.TODO())
 }
