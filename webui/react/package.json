@@ -26,8 +26,8 @@
     "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "storybook": "NODE_PATH=src start-storybook -p 9009",
-    "storybook:build": "NODE_PATH=src build-storybook -o build-storybook"
+    "storybook": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_PATH=src start-storybook -p 9009",
+    "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
     "ansi-to-html": "^0.7.1",

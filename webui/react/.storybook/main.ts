@@ -1,4 +1,6 @@
-module.exports = {
+import type { StorybookConfig } from '@storybook/react/types';
+
+const config: StorybookConfig = {
   addons: [
     "storybook-preset-craco",
     {
@@ -57,3 +59,5 @@ module.exports = {
     return config;
   },
 };
+
+module.exports = config;
