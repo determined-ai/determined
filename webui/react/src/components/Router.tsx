@@ -8,7 +8,7 @@ import { paths } from 'routes/utils';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 interface Props {
   routes: RouteConfig[];

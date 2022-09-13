@@ -15,7 +15,7 @@ import { CommandState } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'utils/wait';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './Wait.module.scss';
 

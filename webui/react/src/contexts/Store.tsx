@@ -20,7 +20,7 @@ import {
   Workspace,
 } from 'types';
 
-import { ActionUI, initUI, reducerUI, StateUI } from '../shared/contexts/UIStore';
+import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 
 const logger = rootLogger.extend('store');
 

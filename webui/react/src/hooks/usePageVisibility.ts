@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useStoreDispatch } from 'contexts/Store';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 interface DocumentHidden {
   hidden?: unknown;

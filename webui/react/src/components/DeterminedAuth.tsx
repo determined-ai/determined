@@ -12,7 +12,7 @@ import { ErrorType } from 'shared/utils/error';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './DeterminedAuth.module.scss';
 

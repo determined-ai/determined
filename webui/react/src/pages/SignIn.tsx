@@ -22,7 +22,7 @@ import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { BrandingType } from 'types';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './SignIn.module.scss';
 

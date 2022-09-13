@@ -7,7 +7,7 @@ import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
 import themes from 'themes';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import { config, Settings } from './useTheme.settings';
 

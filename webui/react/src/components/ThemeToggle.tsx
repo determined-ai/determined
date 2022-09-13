@@ -3,7 +3,7 @@ import React from 'react';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { Mode } from 'shared/themes';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './ThemeToggle.module.scss';
 

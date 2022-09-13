@@ -8,7 +8,7 @@ import { getTask } from 'services/api';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
 
-import { StoreActionUI } from '../shared/contexts/UIStore';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
