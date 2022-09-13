@@ -176,6 +176,7 @@ class TextualInversionTrainer:
             for op in core_context.searcher.operations():
                 while self.steps_completed < op.length:
                     for batch in self.train_dataloader:
+                        print("BATCH", batch)
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
                             self._train_one_batch(batch)
@@ -246,7 +247,7 @@ class TextualInversionTrainer:
         print("self.placeholder_token_ids", self.placeholder_token_ids)
         print("index_grads_to_zero", index_grads_to_zero)
         print("full grad abs sum pre-zero", grads.data.abs().sum())
-        # print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
+        print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
         print(
             "specific grad abs sum pre-zero", grads.data[self.placeholder_token_ids[0]].abs().sum()
         )
