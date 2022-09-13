@@ -270,32 +270,37 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
-const reducerUI = (state: StateUI, action: ActionUI): StateUI => {
+/**
+ * return a part of the input state that should be updated.
+ * @param state ui state
+ * @param action
+ * @returns
+ */
+const reducerUI = (state: StateUI, action: ActionUI): Partial<StateUI> | void => {
   switch (action.type) {
     case StoreActionUI.HideUIChrome:
-      if (!state.showChrome) return state;
-      return { ...state, showChrome: false };
+      if (!state.showChrome) return;
+      return { showChrome: false };
     case StoreActionUI.HideUISpinner:
-      if (!state.showSpinner) return state;
-      return { ...state, showSpinner: false };
+      if (!state.showSpinner) return;
+      return { showSpinner: false };
     case StoreActionUI.SetMode:
-      return { ...state, mode: action.value };
+      return { mode: action.value };
     case StoreActionUI.SetPageVisibility:
-      return { ...state, isPageHidden: action.value };
+      return { isPageHidden: action.value };
     case StoreActionUI.SetTheme:
       return {
-        ...state,
         darkLight: action.value.darkLight,
         theme: action.value.theme,
       };
     case StoreActionUI.ShowUIChrome:
-      if (state.showChrome) return state;
-      return { ...state, showChrome: true };
+      if (state.showChrome) return;
+      return { showChrome: true };
     case StoreActionUI.ShowUISpinner:
-      if (state.showSpinner) return state;
-      return { ...state, showSpinner: true };
+      if (state.showSpinner) return;
+      return { showSpinner: true };
     default:
-      return state;
+      return;
   }
 };
 
