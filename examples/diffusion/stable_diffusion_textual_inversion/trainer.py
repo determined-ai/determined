@@ -477,7 +477,7 @@ class TextualInversionTrainer:
         imgs_path = path.joinpath("imgs")
         os.makedirs(imgs_path, exist_ok=True)
         for prompt in self.inference_prompts:
-            # Fixed generator for reproducibility.
+            # Fix generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
             )
@@ -492,7 +492,7 @@ class TextualInversionTrainer:
             prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
             os.makedirs(prompt_imgs_path, exist_ok=True)
             img_grid = Image.new(
-                "RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size)
+                "RGB", size=(len(self.prompt_img_dict) * self.img_size, self.img_size)
             )
             print("NUM PROMPT IMAGES", len(prompt_img_dict))
             for idx, (step, img) in enumerate(prompt_img_dict):
@@ -506,7 +506,7 @@ class TextualInversionTrainer:
                 format="GIF",
                 append_images=(img for _, img in prompt_img_dict),
                 save_all=True,
-                duration=200,
+                duration=500,
                 loop=1,
             )
 
