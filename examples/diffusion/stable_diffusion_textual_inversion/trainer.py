@@ -246,7 +246,7 @@ class TextualInversionTrainer:
         print("self.placeholder_token_ids", self.placeholder_token_ids)
         print("index_grads_to_zero", index_grads_to_zero)
         print("full grad abs sum pre-zero", grads.data.abs().sum())
-        print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
+        # print("specific grad pre-zero", grads.data[self.placeholder_token_ids[0]])
         print(
             "specific grad abs sum pre-zero", grads.data[self.placeholder_token_ids[0]].abs().sum()
         )
@@ -255,7 +255,7 @@ class TextualInversionTrainer:
                 print("not zeroing", idx)
         grads.data[index_grads_to_zero] = 0.0
         print("full grad abs sum post zero", grads.data.abs().sum())
-        print("specific grad", grads.data[self.placeholder_token_ids[0]])
+        # print("specific grad", grads.data[self.placeholder_token_ids[0]])
         print("specific grad abs sum", grads.data[self.placeholder_token_ids[0]].abs().sum())
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -493,6 +493,7 @@ class TextualInversionTrainer:
             img_grid = Image.new(
                 "RGB", size=(len(self.generated_imgs) * self.img_size, self.img_size)
             )
+            print("NUM PROMPT IMAGES", len(prompt_img_dict))
             for idx, (step, img) in enumerate(prompt_img_dict):
                 img.save(prompt_imgs_path.joinpath(f"{step}.png"))
                 img_grid.paste(img, box=(idx * self.img_size, 0))
