@@ -291,10 +291,10 @@ class TextualInversionTrainer:
         # Modules for StableDiffusionPipeline only required by chief worker.
         if self.accelerator.is_main_process:
             self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
-                "CompVis/stable-diffusion-safety-checker"
+                pretrained_model_name_or_path="CompVis/stable-diffusion-safety-checker"
             )
             self.feature_extractor = CLIPFeatureExtractor.from_pretrained(
-                "openai/clip-vit-base-patch32"
+                pretrained_model_name_or_path="openai/clip-vit-base-patch32"
             )
 
     def _add_new_tokens(self) -> None:
