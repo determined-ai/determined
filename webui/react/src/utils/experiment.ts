@@ -235,20 +235,30 @@ export const getProjectExperimentForExperimentItem = (
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);
-export const runStateSortValues: Record<RunState, number> = {
-  [RunState.Active]: 0,
-  [RunState.Paused]: 1,
-  [RunState.StoppingError]: 2,
-  [RunState.Errored]: 3,
-  [RunState.StoppingCompleted]: 4,
-  [RunState.Completed]: 5,
-  [RunState.StoppingCanceled]: 6,
-  [RunState.Canceled]: 7,
-  [RunState.Deleted]: 7,
-  [RunState.Deleting]: 7,
-  [RunState.DeleteFailed]: 7,
-  [RunState.Unspecified]: 8,
-};
+
+const runStateSortOrder: RunState[] = [
+  RunState.Active,
+  RunState.Running,
+  RunState.Paused,
+  RunState.Starting,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.StoppingError,
+  RunState.Errored,
+  RunState.StoppingCompleted,
+  RunState.Completed,
+  RunState.StoppingCanceled,
+  RunState.Canceled,
+  RunState.DeleteFailed,
+  RunState.Deleting,
+  RunState.Deleted,
+  RunState.Unspecified,
+];
+
+export const runStateSortValues: Map<RunState, number> = new Map(
+  runStateSortOrder.map((state, idx) => [ state, idx ]),
+);
+
 export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
   const aValue = hpImportance[a];
   const bValue = hpImportance[b];
@@ -256,6 +266,7 @@ export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImporta
   if (aValue > bValue) return -1;
   return 0;
 };
+
 export const runStateSorter = (a: RunState, b: RunState): number => {
-  return runStateSortValues[a] - runStateSortValues[b];
+  return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
 };

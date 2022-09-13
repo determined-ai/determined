@@ -348,7 +348,7 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == determinedexperimentv1State.STATE_ACTIVE else 0
+        1 if t.trial.state == determinedexperimentv1State.STATE_RUNNING else 0
         for t in experiment_trials(experiment_id)
     )
 
@@ -571,7 +571,7 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ACTIVE)
+    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_RUNNING)
     paused = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_PAUSED)
     stopping_completed = sum(
         1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_COMPLETED

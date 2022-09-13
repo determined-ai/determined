@@ -140,13 +140,12 @@ export interface StartEndTimes extends EndTimes {
 
 /* Command */
 export enum CommandState {
-  Pending = 'PENDING',
-  Assigned = 'ASSIGNED',
   Pulling = 'PULLING',
   Starting = 'STARTING',
   Running = 'RUNNING',
   Terminating = 'TERMINATING',
   Terminated = 'TERMINATED',
+  Queued = 'QUEUED',
 }
 
 export type State = CommandState | RunState;
@@ -329,6 +328,10 @@ export enum RunState {
   Deleting = 'DELETING',
   DeleteFailed = 'DELETE_FAILED',
   Unspecified = 'UNSPECIFIED',
+  Queued = 'QUEUED',
+  Pulling = 'PULLING',
+  Starting = 'STARTING',
+  Running = 'RUNNING',
 }
 
 export interface ValidationHistory {
