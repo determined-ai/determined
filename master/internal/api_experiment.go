@@ -230,7 +230,6 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	if err != nil {
 		return err
 	}
-
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	jobSubmissionTime := exp.StartTime
 	taskID := model.NewTaskID()

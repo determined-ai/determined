@@ -73,6 +73,11 @@ func newCheckpointGCTask(
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		if t.ToDelete == "" && !t.DeleteTensorboards {
+			// Early return as nothing to do
+			ctx.Self().Stop()
+			return nil
+		}
 		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
 			"task-id":   t.taskID,
 			"task-type": model.TaskTypeCheckpointGC,
