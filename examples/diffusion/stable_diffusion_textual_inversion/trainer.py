@@ -29,7 +29,7 @@ import data
 
 
 class TextualInversionTrainer:
-    """Class for training a textual inversion model. Assumes GPU training."""
+    """Class for training a textual inversion model."""
 
     def __init__(
         self,
