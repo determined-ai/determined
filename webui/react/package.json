@@ -14,7 +14,7 @@
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:css": "stylelint --config .stylelintrc.js \"src/**/*.{css,less,scss}\"",
-    "prettier": "prettier",
+    "prettier": "prettier --write src/**/*.{js,jsx,ts,tsx,md,json}",
     "test": "craco test --config jest.config.js",
     "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
     "eject": "react-scripts eject",

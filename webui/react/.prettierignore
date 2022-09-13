@@ -1,2 +1,3 @@
 build
 .vscode
+./src/services/api-ts-sdk/api.ts

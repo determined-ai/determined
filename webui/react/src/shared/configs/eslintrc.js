@@ -35,14 +35,6 @@ module.exports = {
       'warn',
       { allowArgumentsExplicitlyTypedAsAny: true },
     ],
-    '@typescript-eslint/indent': [
-      'error',
-      2,
-      {
-        ignoredNodes: ['TSTypeParameterInstantiation'],
-        SwitchCase: 1,
-      },
-    ],
     '@typescript-eslint/member-ordering': [
       'error',
       {
@@ -127,18 +119,6 @@ module.exports = {
         beforeClosing: 'never',
         beforeSelfClosing: 'always',
         closingSlash: 'never',
-      },
-    ],
-    'react/jsx-wrap-multilines': [
-      'error',
-      {
-        arrow: 'parens-new-line',
-        assignment: 'parens-new-line',
-        condition: 'parens-new-line',
-        declaration: 'parens-new-line',
-        logical: 'parens-new-line',
-        prop: 'parens-new-line',
-        return: 'parens-new-line',
       },
     ],
     'react/prop-types': 'off',
