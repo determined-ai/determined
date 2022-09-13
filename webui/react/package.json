@@ -107,6 +107,7 @@
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@types/sprintf-js": "^1.1.2",
     "@types/throttle-debounce": "^2.1.0",
+    "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
     "antd-dayjs-webpack-plugin": "^1.0.1",

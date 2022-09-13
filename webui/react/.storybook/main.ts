@@ -1,4 +1,6 @@
 import type { StorybookConfig } from '@storybook/react/types';
+import { isString } from 'fp-ts/lib/string';
+import type { Configuration, RuleSetRule } from 'webpack'
 
 const config: StorybookConfig = {
   addons: [
@@ -26,7 +28,7 @@ const config: StorybookConfig = {
   stories: [ {
     directory: '../src',
   } ],
-  webpackFinal: config => {
+  webpackFinal: (config: Configuration) => {
     if (process.env.NODE_ENV !== 'production') return config;
     /*
      * Tweak `file-loader` to fix the css `url()` references for
@@ -34,7 +36,7 @@ const config: StorybookConfig = {
      * looks for the fonts in `static/css/static/media` instead of the
      * proper location of `static/media`.
      */
-    const oneOfs = config?.module?.rules?.find(rule => !!rule.oneOf)?.oneOf;
+    const oneOfs = (config?.module?.rules?.find(rule => isString(rule) ? false : !!rule.oneOf) as RuleSetRule)?.oneOf;
     const fontMatcher = /\.woff2?$/;
 
     // Exclude fonts from default file-loader.
