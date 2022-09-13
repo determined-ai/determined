@@ -17,6 +17,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -432,4 +434,9 @@ func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsRespon
 func (db *PgDB) MaxTerminationDelay() time.Duration {
 	// TODO: K8s logs can take a bit to get to us, so much so we should investigate.
 	return 5 * time.Second
+}
+
+func MetricsExist(experimentIDs []int32) (bool, error) {
+	trialIDs := Bun().NewSelect().Table("trials").Column("id").Where("experiment_id IN (?)", bun.In(experimentIDs))
+	return Bun().NewSelect().Table("raw_steps", "raw_validations").Where("raw_steps.trial_id IN (?)", trialIDs).WhereOr("raw_validations.trial_id IN (?)", trialIDs).Exists(context.TODO())
 }
