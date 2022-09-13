@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
-import { StoreActionSA, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
@@ -56,8 +56,8 @@ export const InteractiveTask: React.FC = () => {
   const { ui } = useStore();
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionSA.HideUIChrome });
-    return () => storeDispatch({ type: StoreActionSA.ShowUIChrome });
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [ storeDispatch ]);
 
   useEffect(() => {

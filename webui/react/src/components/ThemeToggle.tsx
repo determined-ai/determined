@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { StoreAction, StoreActionSA, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
 import { Mode } from 'shared/themes';
 
 import css from './ThemeToggle.module.scss';
@@ -40,7 +40,7 @@ const ThemeToggle: React.FC = () => {
   const newThemeMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    storeDispatch({ type: StoreActionSA.SetMode, value: currentThemeOption.next });
+    storeDispatch({ type: StoreActionUI.SetMode, value: currentThemeOption.next });
   };
 
   return (

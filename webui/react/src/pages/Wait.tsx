@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import { StoreAction, StoreActionSA, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, StoreActionUI, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -44,8 +44,8 @@ const Wait: React.FC = () => {
   }
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionSA.HideUIChrome });
-    return () => storeDispatch({ type: StoreActionSA.ShowUIChrome });
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [ storeDispatch ]);
 
   const handleTaskError = (err: Error) => {

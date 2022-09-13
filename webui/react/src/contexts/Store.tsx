@@ -27,20 +27,12 @@ interface UI {
   darkLight: DarkLight;
   isPageHidden: boolean;
   mode: Mode;
-  omnibar: OmnibarState;
   showChrome: boolean;
   showSpinner: boolean;
   theme: Theme;
 }
 
-/** State Split A */
-interface StateSA {
-  // TODO we could move auth as well.
-  ui: UI;
-}
-
-export enum StoreActionSA {
-  // UI
+export enum StoreActionUI {
   HideUIChrome = 'HideUIChrome',
   HideUISpinner = 'HideUISpinner',
   SetMode = 'SetMode',
@@ -50,7 +42,16 @@ export enum StoreActionSA {
   ShowUISpinner = 'ShowUISpinner',
 }
 
-interface State extends StateSA { // CHECK: avoid merging here.
+type ActionUI =
+| { type: StoreActionUI.HideUIChrome }
+| { type: StoreActionUI.HideUISpinner }
+| { type: StoreActionUI.SetMode; value: Mode }
+| { type: StoreActionUI.SetPageVisibility; value: boolean }
+| { type: StoreActionUI.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
+| { type: StoreActionUI.ShowUIChrome }
+| { type: StoreActionUI.ShowUISpinner }
+
+interface State { // CHECK: avoid merging here.
   activeExperiments: number;
   activeTasks: {
     commands: number;
@@ -65,6 +66,9 @@ interface State extends StateSA { // CHECK: avoid merging here.
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
+  ui: UI & {
+    omnibar: OmnibarState;
+  };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
   userSettings: V1UserWebSetting[];
@@ -114,15 +118,6 @@ export enum StoreAction {
   SetUserAssignments = 'SetUserAssignments',
   SetUserRoles = 'SetUserRoles',
 }
-type ActionSA =
-| { type: StoreActionSA.HideUIChrome }
-| { type: StoreActionSA.HideUISpinner }
-| { type: StoreActionSA.SetMode; value: Mode }
-| { type: StoreActionSA.SetPageVisibility; value: boolean }
-| { type: StoreActionSA.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
-| { type: StoreActionSA.ShowUIChrome }
-| { type: StoreActionSA.ShowUISpinner }
-
 type Action =
 | { type: StoreAction.Reset }
 | { type: StoreAction.SetAgents; value: Agent[] }
@@ -148,7 +143,7 @@ type Action =
 | { type: StoreAction.SetActiveExperiments, value: number }
 | { type: StoreAction.SetUserRoles, value: UserRole[] }
 | { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
-| ActionSA;
+| ActionUI;
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -275,19 +270,19 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
-const reducerSA = (state: State, action: ActionSA): State => {
+const reducerSA = (state: State, action: ActionUI): State => {
   switch (action.type) {
-    case StoreActionSA.HideUIChrome:
+    case StoreActionUI.HideUIChrome:
       if (!state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: false } };
-    case StoreActionSA.HideUISpinner:
+    case StoreActionUI.HideUISpinner:
       if (!state.ui.showSpinner) return state;
       return { ...state, ui: { ...state.ui, showSpinner: false } };
-    case StoreActionSA.SetMode:
+    case StoreActionUI.SetMode:
       return { ...state, ui: { ...state.ui, mode: action.value } };
-    case StoreActionSA.SetPageVisibility:
+    case StoreActionUI.SetPageVisibility:
       return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
-    case StoreActionSA.SetTheme:
+    case StoreActionUI.SetTheme:
       return {
         ...state,
         ui: {
@@ -296,10 +291,10 @@ const reducerSA = (state: State, action: ActionSA): State => {
           theme: action.value.theme,
         },
       };
-    case StoreActionSA.ShowUIChrome:
+    case StoreActionUI.ShowUIChrome:
       if (state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: true } };
-    case StoreActionSA.ShowUISpinner:
+    case StoreActionUI.ShowUISpinner:
       if (state.ui.showSpinner) return state;
       return { ...state, ui: { ...state.ui, showSpinner: true } };
     default:

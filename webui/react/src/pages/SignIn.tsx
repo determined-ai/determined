@@ -8,7 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
-import { StoreActionSA, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
@@ -65,7 +65,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      storeDispatch({ type: StoreActionSA.HideUISpinner });
+      storeDispatch({ type: StoreActionUI.HideUISpinner });
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -78,13 +78,13 @@ const SignIn: React.FC = () => {
         routeAll(queries.redirect);
       }
     } else if (auth.checked) {
-      storeDispatch({ type: StoreActionSA.HideUISpinner });
+      storeDispatch({ type: StoreActionUI.HideUISpinner });
     }
   }, [ auth, info, location, queries, storeDispatch ]);
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionSA.HideUIChrome });
-    return () => storeDispatch({ type: StoreActionSA.ShowUIChrome });
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [ storeDispatch ]);
 
   // Stop the polling upon a dismount of this page.

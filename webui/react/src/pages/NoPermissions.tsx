@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import Page from 'components/Page';
-import { StoreActionSA, useStoreDispatch } from 'contexts/Store';
+import { StoreActionUI, useStoreDispatch } from 'contexts/Store';
 import Icon from 'shared/components/Icon/Icon';
 
 import css from './NoPermissions.module.scss';
@@ -9,7 +9,7 @@ import css from './NoPermissions.module.scss';
 const NoPermissions: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  useEffect(() => storeDispatch({ type: StoreActionSA.HideUIChrome }), [ storeDispatch ]);
+  useEffect(() => storeDispatch({ type: StoreActionUI.HideUIChrome }), [ storeDispatch ]);
 
   return (
     <Page

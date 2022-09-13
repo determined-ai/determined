@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
-import { StoreActionSA, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreActionUI, useStore, useStoreDispatch } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
@@ -102,7 +102,7 @@ export const useTheme = (): void => {
 
     const darkLight = getDarkLight(ui.mode, systemMode);
     storeDispatch({
-      type: StoreActionSA.SetTheme,
+      type: StoreActionUI.SetTheme,
       value: { darkLight, theme: themes[info.branding][darkLight] },
     });
   }, [ info.branding, storeDispatch, systemMode, ui.mode ]);
@@ -117,7 +117,7 @@ export const useTheme = (): void => {
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
     } else {
       // Initially set the mode from settings.
-      storeDispatch({ type: StoreActionSA.SetMode, value: settings.mode });
+      storeDispatch({ type: StoreActionUI.SetMode, value: settings.mode });
       setIsSettingsReady(true);
     }
   }, [ isSettingsReady, settings, storeDispatch, ui.mode, updateSettings ]);
