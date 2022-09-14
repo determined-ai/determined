@@ -11,6 +11,9 @@ import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, DetailedUser, Permission } from 'types';
 import handleError from 'utils/error';
+import Button from 'antd/es/button';
+import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
+
 
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
@@ -43,8 +46,10 @@ interface FormValues {
 
 const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
   const [ permissions, setPermissions ] = useState<Permission[]>([]);
+  const [permissionTableColumn, setPermissionTableColumn] = useState<ColumnsType<Permission>>([])
 
   const canSeePermissions = usePermissions().canGetPermissions();
+  const canEditPermissions = usePermissions().canEditPermissions();
 
   const updatePermissions = useCallback(async () => {
     if (user && canSeePermissions) {
@@ -63,25 +68,40 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
     }
   }, [ form, updatePermissions, user ]);
 
-  const columns = [
-    {
-      dataIndex: 'name',
-      key: 'name',
-      title: 'Name',
-    },
-    {
-      dataIndex: 'globalOnly',
-      key: 'globalOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
-      title: 'Global?',
-    },
-    {
-      dataIndex: 'workspaceOnly',
-      key: 'workspaceOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
-      title: 'Workspaces?',
-    },
-  ];
+  
+
+  useEffect(() => {
+    const columns = [
+      {
+        dataIndex: 'name',
+        key: 'name',
+        title: 'Name',
+      },
+      {
+        dataIndex: 'globalOnly',
+        key: 'globalOnly',
+        render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+        title: 'Global?',
+      },
+      {
+        dataIndex: 'workspaceOnly',
+        key: 'workspaceOnly',
+        render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+        title: 'Workspaces?',
+      },
+    ];
+    if(canEditPermissions && columns.last().dataIndex !== 'action') {
+      columns.push({
+        title: '',
+        dataIndex: 'action',
+        key: 'name',
+        render: () => <Button danger>Delete</Button>
+      })
+    } 
+    setPermissionTableColumn(columns)
+  }, [canEditPermissions])
+
+  
 
   return (
     <Form<FormValues>
@@ -135,8 +155,9 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       )}
       {!!user && canSeePermissions && (
         <Table
-          columns={columns}
+          columns={permissionTableColumn}
           dataSource={permissions}
+          rowKey='name'
           pagination={{ hideOnSinglePage: true, size: 'small' }}
         />
       )}
