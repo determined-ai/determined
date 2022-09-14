@@ -2,7 +2,8 @@ import logging
 import os
 import pickle
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 
 import determined as det
 from determined.common.api.bindings import (
@@ -26,7 +27,7 @@ class CoreSearchRunner(SearchRunner):
 
     def run(
         self,
-        exp_config: Dict[str, Any],
+        exp_config: Union[Dict[str, Any], str],
         context_dir: Optional[str] = None,
     ) -> int:
         logging.info("CoreSearchRunner.run")
