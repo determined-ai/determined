@@ -2,7 +2,16 @@ import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons'
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -18,9 +27,12 @@ import { RawJson } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
+const JupyterRenderer = lazy(() => import('./IpynbRenderer'));
+
 const { DirectoryTree } = Tree;
 
 import css from './CodeViewer.module.scss';
+import { IpynbInterface } from './IpynbRenderer';
 
 import './index.scss';
 
@@ -42,7 +54,7 @@ interface TreeNode extends DataNode {
   text?: string;
 }
 
-const sortTree = (a:TreeNode, b: TreeNode) => {
+const sortTree = (a: TreeNode, b: TreeNode) => {
   if (a.children) a.children.sort(sortTree);
 
   if (b.children) b.children.sort(sortTree);
@@ -148,7 +160,7 @@ const CodeViewer: React.FC<Props> = ({
     return yaml.dump({ ...restConfig, hyperparameters });
   }, [ _submittedConfig ]);
 
-  const runtimeConfig:string = useMemo(() => {
+  const runtimeConfig: string = useMemo(() => {
     /**
    * strip registry_auth from config for display
    * as well as workspace/project names
@@ -181,6 +193,7 @@ const CodeViewer: React.FC<Props> = ({
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | 'split'>(
     () => resize.width <= 1024 ? 'tree' : 'split',
   );
+  const [ editorMode, setEditorMode ] = useState<'monaco' | 'ipynb'>('monaco');
 
   const switchTreeViewToEditor = useCallback(
     () => setViewMode((view) => view === 'tree' ? 'editor' : view)
@@ -303,7 +316,6 @@ const CodeViewer: React.FC<Props> = ({
     }
 
     if (isConfig(selectedKey)) {
-      handleSelectConfig(selectedKey);
       updateSettings({ filePath: String(info.node.key) });
       return;
     }
@@ -324,7 +336,6 @@ const CodeViewer: React.FC<Props> = ({
     }
   }, [
     activeFile?.key,
-    handleSelectConfig,
     treeData,
     switchTreeViewToEditor,
     updateSettings,
@@ -373,13 +384,13 @@ const CodeViewer: React.FC<Props> = ({
   // Set the selected node based on the active settings
   useEffect(
     () => {
-      const path = settings.filePath.split('/');
-      const fileName = path[path.length - 1];
-
-      if (settings.filePath && (activeFile?.title !== fileName)) {
-        if (isConfig(fileName)) {
-          handleSelectConfig(fileName);
+      if (settings.filePath && (activeFile?.key !== settings.filePath)) {
+        if (isConfig(settings.filePath)) {
+          handleSelectConfig(settings.filePath);
         } else {
+          const path = settings.filePath.split('/');
+          const fileName = path[path.length - 1];
+
           setIsFetchingFile(true);
           fetchFile(settings.filePath, fileName);
           switchTreeViewToEditor();
@@ -395,6 +406,19 @@ const CodeViewer: React.FC<Props> = ({
       switchTreeViewToEditor,
     ],
   );
+
+  // Set the code renderer to ipynb if needed
+  useEffect(() => {
+    const hasActiveFile = activeFile?.text;
+    const isSameFile = activeFile?.key === settings.filePath;
+    const isIpybnFile = settings.filePath.includes('.ipynb');
+
+    if (hasActiveFile && isSameFile && isIpybnFile) {
+      setEditorMode('ipynb');
+    } else {
+      setEditorMode('monaco');
+    }
+  }, [ settings, activeFile ]);
 
   useLayoutEffect(() => {
     if (
@@ -419,7 +443,7 @@ const CodeViewer: React.FC<Props> = ({
     };
   }, []);
 
-  const classes = [ css.base, pageError ? css.noEditor : '' ];
+  const classes = [ css.base, pageError || isFetchingFile ? css.noEditor : '' ];
 
   return (
     <section className={classes.join(' ')}>
@@ -430,7 +454,7 @@ const CodeViewer: React.FC<Props> = ({
             data-testid="fileTree"
             defaultExpandAll
             defaultSelectedKeys={viewMode
-            // this is to ensure that, at least, the most parent node gets highlighted...
+              // this is to ensure that, at least, the most parent node gets highlighted...
               ? [ settings.filePath.split('/')[0] ?? firstConfig ]
               : undefined
             }
@@ -462,10 +486,10 @@ const CodeViewer: React.FC<Props> = ({
               </div>
               <div className={css.buttonsContainer}>
                 {
-                /**
-                  * TODO: Add notebook integration
-                  * <Button className={css.noBorderButton}>Open in Notebook</Button>
-                  */
+                  /**
+                    * TODO: Add notebook integration
+                    * <Button className={css.noBorderButton}>Open in Notebook</Button>
+                    */
                   <Tooltip title="Download File">
                     <DownloadOutlined
                       className={css.noBorderButton}
@@ -507,21 +531,31 @@ const CodeViewer: React.FC<Props> = ({
               : !isFetchingFile && !activeFile?.text
                 ? <h5>Please, choose a file to preview.</h5>
                 : (
-                  <MonacoEditor
-                    height="100%"
-                    language={getSyntaxHighlight()}
-                    options={{
-                      minimap: {
-                        enabled: viewMode === 'split' && !!activeFile?.text?.length,
-                        showSlider: 'mouseover',
-                        size: 'fit',
-                      },
-                      occurrencesHighlight: false,
-                      readOnly: true,
-                      showFoldingControls: 'always',
-                    }}
-                    value={activeFile?.text}
-                  />
+                  editorMode === 'monaco'
+                    ? (
+                      <MonacoEditor
+                        height="100%"
+                        language={getSyntaxHighlight()}
+                        options={{
+                          minimap: {
+                            enabled: viewMode === 'split' && !!activeFile?.text?.length,
+                            showSlider: 'mouseover',
+                            size: 'fit',
+                          },
+                          occurrencesHighlight: false,
+                          readOnly: true,
+                          showFoldingControls: 'always',
+                        }}
+                        value={activeFile?.text}
+                      />
+                    )
+                    : (
+                      <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
+                        <JupyterRenderer
+                          file={JSON.parse(activeFile?.text || '') as IpynbInterface}
+                        />
+                      </Suspense>
+                    )
                 )
           }
         </Spinner>
