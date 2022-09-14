@@ -257,7 +257,6 @@ class TextualInversionTrainer:
         self.optimizer.step()
         # Only overwrite after the step has actually been taken:
         if self.accelerator.sync_gradients:
-            # An extra .module attr is needed due to the accelerator.prepare call.
             token_embeddings = self._get_token_embeddings()
             token_embeddings[
                 self.original_embedding_idxs
