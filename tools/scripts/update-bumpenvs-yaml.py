@@ -49,17 +49,16 @@ JOB_SUFFIXES = [
     "tf25-gpu",
     "tf26-gpu",
     "tf27-gpu",
-    "pytorch19-tf25-rocm",
-    "deepspeed-gpu",
-    "gpt-neox-deepspeed-gpu",
 ]
+
+JOB_SUFFIXES_WITHOUT_MPI = ["pytorch10-tf27-rocm50", "deepspeed-gpu", "gpt-neox-deepspeed-gpu"]
 
 PACKER_JOBS = {"publish-cloud-images"}
 
 DOCKER_JOBS = {
     f"build-and-publish-docker-{suffix}-{mpi}"
     for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
-}
+} | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI }
 
 PACKER_ARTIFACTS = {
     "packer-log",
@@ -68,7 +67,7 @@ PACKER_ARTIFACTS = {
 DOCKER_ARTIFACTS = {
     f"publish-{suffix}-{mpi}"
     for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
-}
+} | {f"publish-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
 
 
 class Build:
