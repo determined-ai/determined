@@ -61,6 +61,14 @@ module.exports = {
     'comma-spacing': ['error', { after: true, before: false }],
     'eol-last': ['error', 'always'],
     'eqeqeq': ['error', 'smart'],
+    'import/order': [
+      'error',
+      {
+        'alphabetize': { caseInsensitive: true, order: 'asc' },
+        'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        'newlines-between': 'always',
+      },
+    ],
     'indent': 'off',
     'jest/valid-title': 'off',
     'jsx-quotes': ['error', 'prefer-double'],
