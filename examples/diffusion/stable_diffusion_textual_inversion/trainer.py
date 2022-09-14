@@ -39,6 +39,7 @@ class TextualInversionTrainer:
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
+        optimizer_name: Literal["adam", "adamw" "sgd"] = "sgd",
         learning_rate: float = 5e-04,
         optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
@@ -81,6 +82,11 @@ class TextualInversionTrainer:
 
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
+        assert optimizer_name in (
+            "adam",
+            "adamw" "sgd",
+        ), "Optimizer must be one of 'adam', 'adamw' or 'sgd'."
+        self.optimizer_name = optimizer_name
         self.learning_rate = learning_rate
         self.optimizer_kwargs = optimizer_kwargs or {}
         self.scale_lr = scale_lr
@@ -238,13 +244,20 @@ class TextualInversionTrainer:
         self.loss_history.append(loss.detach())
 
         # Get the gradients. An extra .module attr is needed due to the .prepare() call
-        grads = self.text_encoder.module.get_input_embeddings().weight.grad
-        # Zero out all gradients apart from those corresponding to the placeholder tokens
-        index_grads_to_zero = torch.isin(
+        weights = self.text_encoder.module.get_input_embeddings().weight
+        grads = weights.grad
+        # Zero out all gradients apart from those corresponding to the placeholder tokens.  This is
+        # most safely implemented by copying the previous values over, rather than actually zeroing
+        # the gradients, as L2 regularization (for instance) will still modify weights whose
+        # gradient is zero. See link below for a discussion:
+        # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
+
+        indices_to_restore = torch.isin(
             torch.arange(len(self.tokenizer)), torch.tensor(self.placeholder_token_ids), invert=True
         )
-        grads.data[index_grads_to_zero] = 0.0
+        old_weights_to_restore = weights.data[indices_to_restore].detach().clone()
         self.optimizer.step()
+        weights.data[indices_to_restore] = old_weights_to_restore
         self.optimizer.zero_grad()
 
         return loss
@@ -350,7 +363,8 @@ class TextualInversionTrainer:
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
         embedding_params = self.text_encoder.get_input_embeddings().parameters()
-        self.optimizer = torch.optim.SGD(
+        optim_dict = {"adam": torch.optim.Adam, "adamw": torch.optim.AdamW, "sgd": torch.optim.SGD}
+        self.optimizer = optim_dict[self.optimizer_name](
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
             **self.optimizer_kwargs,
@@ -386,14 +400,18 @@ class TextualInversionTrainer:
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
                 with self.accelerator.local_main_process_first():
+                    print('Restoring checkpoint from path: "{}"'.format(path))
                     with open(path.joinpath("metadata.json"), "r") as f:
                         metadata_dict = json.load(f)
                     self.steps_completed = metadata_dict["steps_completed"]
+                    print("getting optimizer state")
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     self.optimizer.load_state_dict(optimizer_state_dict)
+                    print("getting learned embeds")
                     learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
                     token_embeds = self.text_encoder.get_input_embeddings().weight.data
                     for idx, tensor in learned_embeds_dict.items():
+                        print("loading embeds")
                         token_embeds[idx] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
