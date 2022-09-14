@@ -418,6 +418,7 @@ class TextualInversionTrainer:
                     with open(path.joinpath("metadata.json"), "r") as f:
                         checkpoint_metadata_dict = json.load(f)
                     self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+                    self.generated_imgs = torch.load(path.joinpath("generated_imgs.pt"))
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     self.optimizer.load_state_dict(optimizer_state_dict)
                     learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
@@ -523,6 +524,8 @@ class TextualInversionTrainer:
                 duration=1000,
                 loop=1,
             )
+        # Finally, write self.generated_imgs to path for use during a checkpoint restore.
+        self.accelerator.save(self.generated_imgs, path.joinpath("generated_imgs.pt"))
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
