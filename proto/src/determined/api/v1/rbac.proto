@@ -8,6 +8,21 @@ import "determined/api/v1/pagination.proto";
 import "determined/rbac/v1/rbac.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// List all permissions for the current user in all parts of the cluster.
+message GetPermissionsSummaryRequest {}
+
+// Response to GetPermissionsSummaryRequest.
+message GetPermissionsSummaryResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "assignments", "roles" ] }
+  };
+
+  // A group of roles in cluster and other scopes.
+  repeated determined.rbac.v1.Role roles = 1;
+  // Lists of assignments for the cluster and other scopes.
+  repeated determined.rbac.v1.RoleAssignmentSummary assignments = 2;
+}
+
 // Request object for GetRolesByID
 message GetRolesByIDRequest {
   // The ids of the roles to be returned

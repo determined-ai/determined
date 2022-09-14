@@ -10,8 +10,10 @@ var rbacAPIServer RBACAPIServer = &rbacAPIServerStub{}
 
 // RBACAPIServer is the interface for all functions in RBAC.
 type RBACAPIServer interface {
+	GetPermissionsSummary(context.Context, *apiv1.GetPermissionsSummaryRequest) (
+		*apiv1.GetPermissionsSummaryResponse, error)
 	GetRolesByID(context.Context, *apiv1.GetRolesByIDRequest) (
-		resp *apiv1.GetRolesByIDResponse, err error)
+		*apiv1.GetRolesByIDResponse, error)
 	GetRolesAssignedToUser(context.Context, *apiv1.GetRolesAssignedToUserRequest) (
 		*apiv1.GetRolesAssignedToUserResponse, error)
 	GetRolesAssignedToGroup(context.Context, *apiv1.GetRolesAssignedToGroupRequest) (
