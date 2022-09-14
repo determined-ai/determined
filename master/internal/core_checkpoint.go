@@ -22,6 +22,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+const (
+	MIMEApplicationGZip = "application/gzip"
+	MIMEApplicationZip  = "application/zip"
+)
+
 type archiveWriter interface {
 	WriteFileHeader(fname string, size int64) error
 	Write(b []byte) (int, error)
@@ -271,7 +276,7 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 	dw := newDelayWriter(w, 16*1024)
 	closers := []io.Closer{dw}
 	switch mimeType {
-	case "application/gzip":
+	case MIMEApplicationGZip:
 		gz := gzip.NewWriter(dw)
 		closers = append(closers, gz)
 
@@ -280,7 +285,7 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 
 		return &tarArchiveWriter{tw}, closers, nil
 
-	case "application/zip":
+	case MIMEApplicationZip:
 		zw := zip.NewWriter(dw)
 		closers = append(closers, zw)
 
@@ -288,7 +293,8 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 
 	default:
 		return nil, nil, fmt.Errorf(
-			"MIME type must be application/gzip or application/zip but got " + mimeType)
+			"MIME type must be %s or %s but got %s",
+			MIMEApplicationGZip, MIMEApplicationZip, mimeType)
 	}
 }
 
@@ -364,7 +370,7 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 //nolint:godot
 // @Router /checkpoints/{checkpoint_uuid}/tgz [get]
 func (m *Master) getCheckpointTgz(c echo.Context) error {
-	return m.getCheckpoint(c, "application/gzip")
+	return m.getCheckpoint(c, MIMEApplicationGZip)
 }
 
 // @Summary Get a zip of checkpoint contents.
@@ -377,5 +383,5 @@ func (m *Master) getCheckpointTgz(c echo.Context) error {
 //nolint:godot
 // @Router /checkpoints/{checkpoint_uuid}/zip [get]
 func (m *Master) getCheckpointZip(c echo.Context) error {
-	return m.getCheckpoint(c, "application/zip")
+	return m.getCheckpoint(c, MIMEApplicationZip)
 }
