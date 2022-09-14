@@ -56,6 +56,19 @@ const config: StorybookConfig = {
     };
     oneOfs?.push(fileLoaderFont);
 
+    const maxAssetSize = 1024 * 1024;
+
+    // split into more chunks
+    config.optimization = {
+      splitChunks: {
+        chunks: 'all',
+        // 30KB
+        maxSize: maxAssetSize,
+        minSize: 30 * 1024, // 1MB
+      },
+    };
+    config.performance = { maxAssetSize: maxAssetSize };
+
     return config;
   },
 };

@@ -27,7 +27,7 @@
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "storybook": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_PATH=src start-storybook -p 9009",
-    "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_PATH=src build-storybook -o build-storybook"
+    "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_OPTIONS='--max-old-space-size=2048' NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
     "ansi-to-html": "^0.7.1",
