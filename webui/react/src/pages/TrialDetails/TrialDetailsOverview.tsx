@@ -19,12 +19,9 @@ export interface Props {
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<Settings>(settingsConfig, { storagePath });
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, { storagePath });
 
-  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+  const [metricNames, setMetricNames] = useState<MetricName[]>([]);
   useMetricNames({
     errorHandler: () => {
       try {
@@ -44,24 +41,28 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
-    const defaultValidationMetric = metricNames.find((metricName) => (
-      metricName.name === validationMetric && metricName.type === MetricType.Validation
-    ));
+    const defaultValidationMetric = metricNames.find(
+      (metricName) =>
+        metricName.name === validationMetric && metricName.type === MetricType.Validation
+    );
     const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
-    const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
+    const defaultMetrics = defaultMetric ? [defaultMetric] : [];
     const settingMetrics: MetricName[] = (settings.metric || []).map((metric) => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metrics };
-  }, [ experiment?.config?.searcher, metricNames, settings.metric ]);
+  }, [experiment?.config?.searcher, metricNames, settings.metric]);
 
-  const handleMetricChange = useCallback((value: MetricName[]) => {
-    const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
-    updateSettings({ metric: newMetrics, tableOffset: 0 });
-  }, [ updateSettings ]);
+  const handleMetricChange = useCallback(
+    (value: MetricName[]) => {
+      const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
+      updateSettings({ metric: newMetrics, tableOffset: 0 });
+    },
+    [updateSettings]
+  );
 
   return (
     <div className={css.base}>
@@ -71,9 +72,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         metricNames={metricNames}
         metrics={metrics}
         trialId={trial?.id}
-        trialTerminated={trial ?
-          [ RunState.Completed, RunState.Errored ].includes(trial.state)
-          : false}
+        trialTerminated={
+          trial ? [RunState.Completed, RunState.Errored].includes(trial.state) : false
+        }
         onMetricChange={handleMetricChange}
       />
       <TrialDetailsWorkloads

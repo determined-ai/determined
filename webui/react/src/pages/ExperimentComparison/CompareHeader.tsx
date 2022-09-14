@@ -9,15 +9,12 @@ const ComparisonHeader: React.FC = () => {
   return (
     <>
       <PageHeaderFoldable
-
-        leftContent={(
+        leftContent={
           <Space align="center" className={css.base}>
-
             <div className={css.id}>Experiment Comparison</div>
             <div className={css.name} />
-
           </Space>
-        )}
+        }
       />
       {/* <ExperimentHeaderProgress experiment={experiment} /> */}
     </>

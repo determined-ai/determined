@@ -8,7 +8,7 @@ import { NullOrUndefined, Primitive, SemanticVersion } from 'shared/types';
  */
 export const alphaNumericSorter = (
   a: NullOrUndefined<string | number>,
-  b: NullOrUndefined<string | number>,
+  b: NullOrUndefined<string | number>
 ): number => {
   // Handle undefined and null cases.
   if (a == null || b == null) return nullSorter(a, b);
@@ -22,7 +22,7 @@ export const booleanSorter = (a: NullOrUndefined<boolean>, b: NullOrUndefined<bo
   if (a == null || b == null) return nullSorter(a, b);
 
   // True values first.
-  return (a === b) ? 0 : (a ? -1 : 1);
+  return a === b ? 0 : a ? -1 : 1;
 };
 
 /*
@@ -31,13 +31,13 @@ export const booleanSorter = (a: NullOrUndefined<boolean>, b: NullOrUndefined<bo
  */
 export const dateTimeStringSorter = (
   a: NullOrUndefined<string>,
-  b: NullOrUndefined<string>,
+  b: NullOrUndefined<string>
 ): number => {
   // Handle undefined and null cases.
   if (a == null || b == null) return nullSorter(a, b);
 
   // Compare as date objects.
-  const [ aTime, bTime ] = [ new Date(a).getTime(), new Date(b).getTime() ];
+  const [aTime, bTime] = [new Date(a).getTime(), new Date(b).getTime()];
   if (aTime === bTime) return 0;
   return aTime < bTime ? -1 : 1;
 };
@@ -63,7 +63,7 @@ export const numericSorter = (a: NullOrUndefined<number>, b: NullOrUndefined<num
 
 export const primitiveSorter = (
   a: NullOrUndefined<Primitive>,
-  b: NullOrUndefined<Primitive>,
+  b: NullOrUndefined<Primitive>
 ): number => {
   // Handle undefined and null cases.
   if (a == null || b == null) return nullSorter(a, b);
@@ -77,14 +77,14 @@ export const primitiveSorter = (
 
 /** return true if a semantic version a is older than b */
 export const semVerIsOlder = (a: SemanticVersion, b: SemanticVersion): boolean => {
-  return a.major < b.major ||
-        (a.major === b.major && a.minor < b.minor) ||
-        (a.major === b.major
-          && a.minor === b.minor && a.patch < b.patch);
+  return (
+    a.major < b.major ||
+    (a.major === b.major && a.minor < b.minor) ||
+    (a.major === b.major && a.minor === b.minor && a.patch < b.patch)
+  );
 };
 
 /** sort a list of versions from latest to oldest. */
 export const sortVersions = (versions: SemanticVersion[]): SemanticVersion[] => {
-  return versions
-    .sort((a, b) => semVerIsOlder(a, b) ? 1 : -1);
+  return versions.sort((a, b) => (semVerIsOlder(a, b) ? 1 : -1));
 };

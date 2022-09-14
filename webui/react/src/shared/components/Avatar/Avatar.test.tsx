@@ -47,7 +47,7 @@ const setup = ({
         hideTooltip={hideTooltip}
         {...props}
       />
-    </StoreProvider>,
+    </StoreProvider>
   );
 };
 

@@ -42,7 +42,7 @@ interface FormValues {
 }
 
 const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
-  const [ permissions, setPermissions ] = useState<Permission[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const canSeePermissions = usePermissions().canGetPermissions();
 
@@ -51,7 +51,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       const viewPermissions = await getUserPermissions({ userId: user.id });
       setPermissions(viewPermissions);
     }
-  }, [ canSeePermissions, user ]);
+  }, [canSeePermissions, user]);
 
   useEffect(() => {
     form.setFieldsValue({
@@ -61,7 +61,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
     if (user) {
       updatePermissions();
     }
-  }, [ form, updatePermissions, user ]);
+  }, [form, updatePermissions, user]);
 
   const columns = [
     {
@@ -72,22 +72,19 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
     {
       dataIndex: 'globalOnly',
       key: 'globalOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+      render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
       title: 'Global?',
     },
     {
       dataIndex: 'workspaceOnly',
       key: 'workspaceOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+      render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
       title: 'Workspaces?',
     },
   ];
 
   return (
-    <Form<FormValues>
-      form={form}
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 14 }}>
+    <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
       <Form.Item
         initialValue={user?.username}
         label={USER_NAME_LABEL}
@@ -99,37 +96,29 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
             required: true,
           },
         ]}
-        validateTrigger={[ 'onSubmit' ]}>
+        validateTrigger={['onSubmit']}>
         <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
       </Form.Item>
-      <Form.Item
-        label={DISPLAY_NAME_LABEL}
-        name={DISPLAY_NAME_NAME}>
+      <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
         <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
       {branding === BrandingType.Determined ? (
-        <Form.Item
-          label={ADMIN_LABEL}
-          name={ADMIN_NAME}
-          valuePropName="checked">
+        <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
           <Switch disabled={viewOnly} />
         </Form.Item>
-      ) : null }
+      ) : null}
       {!user && (
-        <Form.Item
-          label={GROUP_LABEL}
-          name={GROUP_NAME}>
+        <Form.Item label={GROUP_LABEL} name={GROUP_NAME}>
           <Select
             mode="multiple"
             optionFilterProp="children"
             placeholder="Select Groups"
-            showSearch>{
-              groups.map((u) => (
-                <Select.Option key={u.group.groupId} value={u.group.groupId}>
-                  {u.group.name}
-                </Select.Option>
-              ))
-            }
+            showSearch>
+            {groups.map((u) => (
+              <Select.Option key={u.group.groupId} value={u.group.groupId}>
+                {u.group.name}
+              </Select.Option>
+            ))}
           </Select>
         </Form.Item>
       )}
@@ -155,68 +144,75 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
-  const [ form ] = Form.useForm();
+  const [form] = Form.useForm();
   const { info } = useStore();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => {
     form.resetFields();
-  }, [ form ]);
+  }, [form]);
 
-  const handleOk = useCallback(async (viewOnly?: boolean) => {
-    if (viewOnly) {
-      handleCancel();
-      return;
-    }
-    await form.validateFields();
+  const handleOk = useCallback(
+    async (viewOnly?: boolean) => {
+      if (viewOnly) {
+        handleCancel();
+        return;
+      }
+      await form.validateFields();
 
-    const formData = form.getFieldsValue();
-    try {
-      if (user) {
-        await patchUser({ userId: user.id, userParams: formData });
-        message.success(API_SUCCESS_MESSAGE_EDIT);
-      } else {
-        const u = await postUser(formData);
-        const uid = u.user?.id;
-        if (uid && formData.groups) {
-          (formData.groups as number[]).forEach(async (gid) => {
-            await updateGroup({ addUsers: [ uid ], groupId: gid });
-          });
+      const formData = form.getFieldsValue();
+      try {
+        if (user) {
+          await patchUser({ userId: user.id, userParams: formData });
+          message.success(API_SUCCESS_MESSAGE_EDIT);
+        } else {
+          const u = await postUser(formData);
+          const uid = u.user?.id;
+          if (uid && formData.groups) {
+            (formData.groups as number[]).forEach(async (gid) => {
+              await updateGroup({ addUsers: [uid], groupId: gid });
+            });
+          }
+
+          message.success(API_SUCCESS_MESSAGE_CREATE);
         }
 
-        message.success(API_SUCCESS_MESSAGE_CREATE);
+        form.resetFields();
+        onClose?.();
+      } catch (e) {
+        message.error(user ? 'Error updating user' : 'Error creating new user');
+        handleError(e, { silent: true, type: ErrorType.Input });
+
+        // Re-throw error to prevent modal from getting dismissed.
+        throw e;
       }
+    },
+    [form, onClose, user, handleCancel]
+  );
 
-      form.resetFields();
-      onClose?.();
-    } catch (e) {
-      message.error(user ? 'Error updating user' : 'Error creating new user');
-      handleError(e, { silent: true, type: ErrorType.Input });
-
-      // Re-throw error to prevent modal from getting dismissed.
-      throw e;
-    }
-  }, [ form, onClose, user, handleCancel ]);
-
-  const modalOpen = useCallback((viewOnly?: boolean) => {
-    openOrUpdate({
-      closable: true,
-      // passing a default brandind due to changes on the initial state
-      content:
-  <ModalForm
-    branding={info.branding || BrandingType.Determined}
-    form={form}
-    groups={groups}
-    user={user}
-    viewOnly={viewOnly}
-  />,
-      icon: null,
-      okText: viewOnly ? 'Close' : (user ? 'Update' : 'Create User'),
-      onCancel: handleCancel,
-      onOk: () => handleOk(viewOnly),
-      title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
-    });
-  }, [ form, handleCancel, handleOk, openOrUpdate, info, user, groups ]);
+  const modalOpen = useCallback(
+    (viewOnly?: boolean) => {
+      openOrUpdate({
+        closable: true,
+        // passing a default brandind due to changes on the initial state
+        content: (
+          <ModalForm
+            branding={info.branding || BrandingType.Determined}
+            form={form}
+            groups={groups}
+            user={user}
+            viewOnly={viewOnly}
+          />
+        ),
+        icon: null,
+        okText: viewOnly ? 'Close' : user ? 'Update' : 'Create User',
+        onCancel: handleCancel,
+        onOk: () => handleOk(viewOnly),
+        title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
+      });
+    },
+    [form, handleCancel, handleOk, openOrUpdate, info, user, groups]
+  );
 
   return { modalOpen, ...modalHook };
 };

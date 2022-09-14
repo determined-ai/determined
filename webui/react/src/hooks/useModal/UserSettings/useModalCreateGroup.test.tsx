@@ -8,9 +8,14 @@ import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { DetailedUser } from 'types';
 
-import useModalCreateGroup, { API_SUCCESS_MESSAGE_CREATE, GROUP_NAME_LABEL,
-  MODAL_HEADER_LABEL_CREATE, MODAL_HEADER_LABEL_EDIT, USER_ADD_LABEL,
-  USER_LABEL } from './useModalCreateGroup';
+import useModalCreateGroup, {
+  API_SUCCESS_MESSAGE_CREATE,
+  GROUP_NAME_LABEL,
+  MODAL_HEADER_LABEL_CREATE,
+  MODAL_HEADER_LABEL_EDIT,
+  USER_ADD_LABEL,
+  USER_LABEL,
+} from './useModalCreateGroup';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';
@@ -19,17 +24,20 @@ const user = userEvent.setup();
 
 const mockCreateGroup = jest.fn();
 
-const users: Array<DetailedUser> = [ {
-  id: 1,
-  isActive: true,
-  isAdmin: false,
-  username: 'test_username0',
-}, {
-  id: 2,
-  isActive: true,
-  isAdmin: false,
-  username: 'test_username1',
-} ];
+const users: Array<DetailedUser> = [
+  {
+    id: 1,
+    isActive: true,
+    isAdmin: false,
+    username: 'test_username0',
+  },
+  {
+    id: 2,
+    isActive: true,
+    isAdmin: false,
+    username: 'test_username1',
+  },
+];
 
 jest.mock('services/api', () => ({
   createGroup: (params: CreateGroupsParams) => {
@@ -47,7 +55,7 @@ jest.mock('services/api', () => ({
 }));
 
 interface Props {
-  group?:V1GroupSearchResult
+  group?: V1GroupSearchResult;
 }
 
 const Container: React.FC<Props> = ({ group }) => {
@@ -61,18 +69,17 @@ const Container: React.FC<Props> = ({ group }) => {
   );
 };
 
-const setup = async (group?:V1GroupSearchResult) => {
+const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
     <StoreProvider>
       <Container group={group} />
-    </StoreProvider>,
+    </StoreProvider>
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
-  await view.findByRole(
-    'heading',
-    { name: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE },
-  );
+  await view.findByRole('heading', {
+    name: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
+  });
 
   return view;
 };
@@ -93,7 +100,7 @@ describe('useModalCreateGroup', () => {
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })
       ).not.toBeInTheDocument();
     });
   });
@@ -106,7 +113,7 @@ describe('useModalCreateGroup', () => {
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })
       ).not.toBeInTheDocument();
     });
   });
@@ -130,14 +137,14 @@ describe('useModalCreateGroup', () => {
     // Check for successful toast message.
     await waitFor(() => {
       expect(
-        screen.getByText(API_SUCCESS_MESSAGE_CREATE, { collapseWhitespace: false }),
+        screen.getByText(API_SUCCESS_MESSAGE_CREATE, { collapseWhitespace: false })
       ).toBeInTheDocument();
     });
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })
       ).not.toBeInTheDocument();
     });
 
@@ -157,6 +164,5 @@ describe('useModalCreateGroup', () => {
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
     expect(screen.getByLabelText(USER_ADD_LABEL)).toBeInTheDocument();
-
   });
 });

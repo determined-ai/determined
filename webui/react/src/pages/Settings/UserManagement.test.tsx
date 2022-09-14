@@ -27,22 +27,23 @@ jest.mock('services/api', () => ({
       isAdmin: false,
       username: USERNAME,
     };
-    const users: Array<DetailedUser> = [ currentUser ];
+    const users: Array<DetailedUser> = [currentUser];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
 }));
 
-const setup = () => render(
-  <StoreProvider>
-    <DndProvider backend={HTML5Backend}>
-      <HelmetProvider>
-        <Router history={history}>
-          <UserManagement />
-        </Router>
-      </HelmetProvider>
-    </DndProvider>
-  </StoreProvider>,
-);
+const setup = () =>
+  render(
+    <StoreProvider>
+      <DndProvider backend={HTML5Backend}>
+        <HelmetProvider>
+          <Router history={history}>
+            <UserManagement />
+          </Router>
+        </HelmetProvider>
+      </DndProvider>
+    </StoreProvider>
+  );
 
 describe('UserManagement', () => {
   it('should render table/button correct values', async () => {

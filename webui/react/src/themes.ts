@@ -7,8 +7,16 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'shared/themes';
-import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState, WorkspaceState } from 'types';
+import {
+  BrandingType,
+  CheckpointState,
+  CommandState,
+  JobState,
+  ResourceState,
+  RunState,
+  SlotState,
+  WorkspaceState,
+} from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -57,12 +65,18 @@ const stateColorMapping = {
   [JobState.QUEUED]: 'warning',
 };
 
-export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
-SlotState | JobState | WorkspaceState
+export type StateOfUnion =
+  | RunState
+  | CommandState
+  | ResourceState
+  | CheckpointState
+  | SlotState
+  | JobState
+  | WorkspaceState;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,
-  options: { isOn?: boolean, strongWeak?: 'strong' | 'weak' } = {},
+  options: { isOn?: boolean; strongWeak?: 'strong' | 'weak' } = {}
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
   const on = options.isOn ? '-on' : '';

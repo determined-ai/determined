@@ -2,7 +2,7 @@
 export const findInsertionIndex = (
   sortedArray: number[],
   value: number,
-  compareFn: (a: number, b: number) => number = (a, b) => a - b,
+  compareFn: (a: number, b: number) => number = (a, b) => a - b
 ): number => {
   // empty array
   if (sortedArray.length === 0) return 0;

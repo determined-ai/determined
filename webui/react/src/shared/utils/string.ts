@@ -14,9 +14,13 @@ export const snakeCaseToTitleCase = (text: string): string => {
 };
 
 export const camelCaseToKebab = (text: string): string => {
-  return text.trim().split('').map((char, index) => {
-    return char === char.toUpperCase() ? `${index !== 0 ? '-' : ''}${char.toLowerCase()}` : char;
-  }).join('');
+  return text
+    .trim()
+    .split('')
+    .map((char, index) => {
+      return char === char.toUpperCase() ? `${index !== 0 ? '-' : ''}${char.toLowerCase()}` : char;
+    })
+    .join('');
 };
 
 export const camelCaseToSentence = (text: string): string => {
@@ -25,21 +29,29 @@ export const camelCaseToSentence = (text: string): string => {
 };
 
 export const kebabToCamelCase = (text: string): string => {
-  return text.trim().split('-').map((word, index) => {
-    return index === 0 ? word.toLowerCase() : capitalizeWord(word);
-  }).join('');
+  return text
+    .trim()
+    .split('-')
+    .map((word, index) => {
+      return index === 0 ? word.toLowerCase() : capitalizeWord(word);
+    })
+    .join('');
 };
 
 export const sentenceToCamelCase = (text: string): string => {
-  const result = text.trim().split(' ').map((word, idx) => (
-    idx === 0 ? word.toLowerCase() : capitalizeWord(word)
-  ));
+  const result = text
+    .trim()
+    .split(' ')
+    .map((word, idx) => (idx === 0 ? word.toLowerCase() : capitalizeWord(word)));
   return result.join('');
 };
 
 /** titlecase a sentence */
 export const capitalize = (str: string): string => {
-  return str.split(/\s+/).map((part) => capitalizeWord(part)).join(' ');
+  return str
+    .split(/\s+/)
+    .map((part) => capitalizeWord(part))
+    .join(' ');
 };
 
 export const capitalizeWord = (str: string): string => {
@@ -55,11 +67,11 @@ export const floatToPercent = (num: number, precision = 2): string => {
 
 export const generateAlphaNumeric = (
   length = DEFAULT_ALPHA_NUMERIC_LENGTH,
-  chars = CHARACTERS,
+  chars = CHARACTERS
 ): string => {
   let result = '';
   for (let i = length; i > 0; --i) {
-    result += chars[ Math.floor(Math.random() * chars.length) ];
+    result += chars[Math.floor(Math.random() * chars.length)];
   }
   return result;
 };
@@ -109,7 +121,7 @@ export const versionToString = (version: SemanticVersion): string => {
 };
 /** parse the string representation of a semantic version */
 export const stringToVersion = (version: string): SemanticVersion => {
-  const [ major, minor, patch ] = version.split('.');
+  const [major, minor, patch] = version.split('.');
   return {
     major: parseInt(major),
     minor: parseInt(minor),

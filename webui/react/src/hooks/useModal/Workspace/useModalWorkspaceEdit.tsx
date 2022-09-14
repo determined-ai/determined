@@ -17,9 +17,9 @@ interface Props {
 }
 
 const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
-  const [ name, setName ] = useState(workspace.name);
+  const [name, setName] = useState(workspace.name);
 
-  const handleClose = useCallback(() => onClose?.(), [ onClose ]);
+  const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
@@ -30,11 +30,13 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <label className={css.label} htmlFor="name">Name</label>
+        <label className={css.label} htmlFor="name">
+          Name
+        </label>
         <Input id="name" value={name} onChange={handleNameInput} />
       </div>
     );
-  }, [ handleNameInput, name ]);
+  }, [handleNameInput, name]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -48,24 +50,30 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ name, workspace.id ]);
+  }, [name, workspace.id]);
 
-  const getModalProps = useCallback((name: string): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okButtonProps: { disabled: !validateLength(name) },
-      okText: 'Save changes',
-      onOk: handleOk,
-      title: 'Edit Workspace',
-    };
-  }, [ handleOk, modalContent ]);
+  const getModalProps = useCallback(
+    (name: string): ModalFuncProps => {
+      return {
+        closable: true,
+        content: modalContent,
+        icon: null,
+        okButtonProps: { disabled: !validateLength(name) },
+        okText: 'Save changes',
+        onOk: handleOk,
+        title: 'Edit Workspace',
+      };
+    },
+    [handleOk, modalContent]
+  );
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    setName(workspace.name);
-    openOrUpdate({ ...getModalProps(workspace.name), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate, workspace.name ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      setName(workspace.name);
+      openOrUpdate({ ...getModalProps(workspace.name), ...initialModalProps });
+    },
+    [getModalProps, openOrUpdate, workspace.name]
+  );
 
   /**
    * When modal props changes are detected, such as modal content
@@ -73,7 +81,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
-  }, [ getModalProps, modalRef, name, openOrUpdate ]);
+  }, [getModalProps, modalRef, name, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

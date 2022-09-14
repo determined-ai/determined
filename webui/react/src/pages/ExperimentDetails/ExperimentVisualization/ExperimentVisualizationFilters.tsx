@@ -43,7 +43,7 @@ interface Props {
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
   onReset?: () => void;
-  type: ExperimentVisualizationType,
+  type: ExperimentVisualizationType;
 }
 
 enum ActionType {
@@ -58,17 +58,17 @@ enum ActionType {
 }
 
 type Action =
-| { type: ActionType.Set; value: VisualizationFilters }
-| { type: ActionType.SetBatch; value: number }
-| { type: ActionType.SetBatchMargin; value: number }
-| { type: ActionType.SetHParams; value: string[] }
-| { type: ActionType.SetMaxTrial; value: number }
-| { type: ActionType.SetMetric; value: MetricName }
-| { type: ActionType.SetView; value: ViewType }
-| { type: ActionType.SetScale; value: Scale }
+  | { type: ActionType.Set; value: VisualizationFilters }
+  | { type: ActionType.SetBatch; value: number }
+  | { type: ActionType.SetBatchMargin; value: number }
+  | { type: ActionType.SetHParams; value: string[] }
+  | { type: ActionType.SetMaxTrial; value: number }
+  | { type: ActionType.SetMetric; value: MetricName }
+  | { type: ActionType.SetView; value: ViewType }
+  | { type: ActionType.SetScale; value: Scale };
 
-const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
-const BATCH_MARGIN_OPTIONS = [ 1, 5, 10, 20, 50 ];
+const TOP_TRIALS_OPTIONS = [1, 10, 20, 50, 100];
+const BATCH_MARGIN_OPTIONS = [1, 5, 10, 20, 50];
 
 export const MAX_HPARAM_COUNT = 10;
 
@@ -106,38 +106,37 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   onReset,
   type,
 }: Props) => {
-  const [ localFilters, dispatch ] = useReducer(reducer, filters);
+  const [localFilters, dispatch] = useReducer(reducer, filters);
 
-  const [
-    showMaxTrials, showBatches, showMetrics, showHParams, showViews, showScales,
-  ] = useMemo(() => {
-    return [
-      [ ExperimentVisualizationType.LearningCurve ].includes(type),
-      [
-        ExperimentVisualizationType.HpHeatMap,
-        ExperimentVisualizationType.HpParallelCoordinates,
-        ExperimentVisualizationType.HpScatterPlots,
-      ].includes(type),
-      [
-        ExperimentVisualizationType.HpHeatMap,
-        ExperimentVisualizationType.HpParallelCoordinates,
-        ExperimentVisualizationType.HpScatterPlots,
-        ExperimentVisualizationType.LearningCurve,
-      ].includes(type),
-      [
-        ExperimentVisualizationType.HpHeatMap,
-        ExperimentVisualizationType.HpParallelCoordinates,
-        ExperimentVisualizationType.HpScatterPlots,
-      ].includes(type),
-      [ ExperimentVisualizationType.HpHeatMap ].includes(type),
-      [
-        ExperimentVisualizationType.HpHeatMap,
-        ExperimentVisualizationType.HpScatterPlots,
-        ExperimentVisualizationType.LearningCurve,
-        ExperimentVisualizationType.HpParallelCoordinates,
-      ].includes(type),
-    ];
-  }, [ type ]);
+  const [showMaxTrials, showBatches, showMetrics, showHParams, showViews, showScales] =
+    useMemo(() => {
+      return [
+        [ExperimentVisualizationType.LearningCurve].includes(type),
+        [
+          ExperimentVisualizationType.HpHeatMap,
+          ExperimentVisualizationType.HpParallelCoordinates,
+          ExperimentVisualizationType.HpScatterPlots,
+        ].includes(type),
+        [
+          ExperimentVisualizationType.HpHeatMap,
+          ExperimentVisualizationType.HpParallelCoordinates,
+          ExperimentVisualizationType.HpScatterPlots,
+          ExperimentVisualizationType.LearningCurve,
+        ].includes(type),
+        [
+          ExperimentVisualizationType.HpHeatMap,
+          ExperimentVisualizationType.HpParallelCoordinates,
+          ExperimentVisualizationType.HpScatterPlots,
+        ].includes(type),
+        [ExperimentVisualizationType.HpHeatMap].includes(type),
+        [
+          ExperimentVisualizationType.HpHeatMap,
+          ExperimentVisualizationType.HpScatterPlots,
+          ExperimentVisualizationType.LearningCurve,
+          ExperimentVisualizationType.HpParallelCoordinates,
+        ].includes(type),
+      ];
+    }, [type]);
 
   const handleBatchChange = useCallback((batch: SelectValue) => {
     dispatch({ type: ActionType.SetBatch, value: batch as number });
@@ -147,22 +146,28 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     dispatch({ type: ActionType.SetBatchMargin, value: margin as number });
   }, []);
 
-  const handleHParamChange = useCallback((hParams?: SelectValue) => {
-    if (!hParams || (Array.isArray(hParams) && hParams.length === 0)) {
-      dispatch({ type: ActionType.SetHParams, value: fullHParams.slice(0, MAX_HPARAM_COUNT) });
-    } else {
-      dispatch({ type: ActionType.SetHParams, value: hParams as string[] });
-    }
-  }, [ fullHParams ]);
+  const handleHParamChange = useCallback(
+    (hParams?: SelectValue) => {
+      if (!hParams || (Array.isArray(hParams) && hParams.length === 0)) {
+        dispatch({ type: ActionType.SetHParams, value: fullHParams.slice(0, MAX_HPARAM_COUNT) });
+      } else {
+        dispatch({ type: ActionType.SetHParams, value: hParams as string[] });
+      }
+    },
+    [fullHParams]
+  );
 
   const handleMaxTrialsChange = useCallback((count: SelectValue) => {
     dispatch({ type: ActionType.SetMaxTrial, value: count as number });
   }, []);
 
-  const handleMetricChange = useCallback((metric: MetricName) => {
-    dispatch({ type: ActionType.SetMetric, value: metric });
-    if (onMetricChange) onMetricChange(metric);
-  }, [ onMetricChange ]);
+  const handleMetricChange = useCallback(
+    (metric: MetricName) => {
+      dispatch({ type: ActionType.SetMetric, value: metric });
+      if (onMetricChange) onMetricChange(metric);
+    },
+    [onMetricChange]
+  );
 
   const handleViewChange = useCallback((view: SelectValue) => {
     dispatch({ type: ActionType.SetView, value: view as ViewType });
@@ -174,18 +179,18 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   useEffect(() => {
     if (onChange) onChange(localFilters);
-  }, [ localFilters, onChange ]);
+  }, [localFilters, onChange]);
 
   const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
     if (onReset) onReset();
-  }, [ filters, onReset ]);
+  }, [filters, onReset]);
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
     if (batches.includes(localFilters.batch)) return;
     dispatch({ type: ActionType.SetBatch, value: batches.first() });
-  }, [ batches, localFilters.batch ]);
+  }, [batches, localFilters.batch]);
 
   return (
     <>
@@ -198,7 +203,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
           {TOP_TRIALS_OPTIONS.map((option) => (
-            <Option key={option} value={option}>{option}</Option>
+            <Option key={option} value={option}>
+              {option}
+            </Option>
           ))}
         </SelectFilter>
       )}
@@ -210,7 +217,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             showSearch={false}
             value={localFilters.batch}
             onChange={handleBatchChange}>
-            {batches.map((batch) => <Option key={batch} value={batch}>{batch}</Option>)}
+            {batches.map((batch) => (
+              <Option key={batch} value={batch}>
+                {batch}
+              </Option>
+            ))}
           </SelectFilter>
           <SelectFilter
             enableSearchFilter={false}
@@ -219,7 +230,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
             {BATCH_MARGIN_OPTIONS.map((option) => (
-              <Option key={option} value={option}>{option}</Option>
+              <Option key={option} value={option}>
+                {option}
+              </Option>
             ))}
           </SelectFilter>
         </>

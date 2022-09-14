@@ -13,7 +13,7 @@ const setup = (spinning: boolean) => {
   const { container, rerender } = render(
     <Spinner spinning={spinning} tip={spinnerTextContent}>
       <button onClick={handleButtonClick}>click</button>
-    </Spinner>,
+    </Spinner>
   );
   return { container, handleButtonClick, rerender };
 };
@@ -58,7 +58,7 @@ describe('Spinner', () => {
     rerender(
       <Spinner spinning={false} tip="Spinner text content">
         <button>click</button>
-      </Spinner>,
+      </Spinner>
     );
     expect(container.getElementsByClassName('ant-spin-spinning')?.[0]).toBeFalsy();
   });
@@ -69,7 +69,7 @@ describe('Spinner', () => {
     rerender(
       <Spinner spinning={true} tip="Spinner text content">
         <button>click</button>
-      </Spinner>,
+      </Spinner>
     );
     expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
   });

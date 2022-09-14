@@ -17,12 +17,12 @@ interface Props {
 }
 
 export interface Filters {
-  agentIds?: string[],
-  allocationIds?: string[],
-  containerIds?: string[],
-  levels?: LogLevelFromApi[],
-  rankIds?: number[],
-  searchText?: string,
+  agentIds?: string[];
+  allocationIds?: string[];
+  containerIds?: string[];
+  levels?: LogLevelFromApi[];
+  rankIds?: number[];
+  searchText?: string;
   // sources?: string[],
   // stdtypes?: string[],
 }
@@ -54,10 +54,10 @@ const LogViewerFilters: React.FC<Props> = ({
       containerIds: containerIds ? containerIds.sortAll(alphaNumericSorter) : undefined,
       levels: Object.entries(LogLevelFromApi)
         .filter((entry) => entry[1] !== LogLevelFromApi.Unspecified)
-        .map(([ key, value ]) => ({ label: key, value })),
+        .map(([key, value]) => ({ label: key, value })),
       rankIds: rankIds ? rankIds.sortAll(alphaNumericSorter) : undefined,
     };
-  }, [ options ]);
+  }, [options]);
 
   const moreThanOne = useMemo(() => {
     return Object.keys(selectOptions).reduce((acc, key) => {
@@ -69,7 +69,7 @@ const LogViewerFilters: React.FC<Props> = ({
 
       return acc;
     }, {} as Record<keyof Filters, boolean>);
-  }, [ selectOptions ]);
+  }, [selectOptions]);
 
   const isResetShown = useMemo(() => {
     const keys = Object.keys(selectOptions);
@@ -79,31 +79,27 @@ const LogViewerFilters: React.FC<Props> = ({
       if (value && value.length !== 0) return true;
     }
     return false;
-  }, [ selectOptions, values ]);
+  }, [selectOptions, values]);
 
-  const handleChange = useCallback((
-    key: keyof Filters,
-    caster: NumberConstructor | StringConstructor,
-  ) => (value: SelectValue) => {
-    onChange?.({ ...values, [key]: (value as Array<string>).map((item) => caster(item)) });
-  }, [ onChange, values ]);
-
-  const handleSearch = useCallback(
-    (e) => onChange?.({ ...values, searchText: e.target.value })
-    , [ onChange, values ],
+  const handleChange = useCallback(
+    (key: keyof Filters, caster: NumberConstructor | StringConstructor) => (value: SelectValue) => {
+      onChange?.({ ...values, [key]: (value as Array<string>).map((item) => caster(item)) });
+    },
+    [onChange, values]
   );
 
-  const handleReset = useCallback(() => onReset?.(), [ onReset ]);
+  const handleSearch = useCallback(
+    (e) => onChange?.({ ...values, searchText: e.target.value }),
+    [onChange, values]
+  );
+
+  const handleReset = useCallback(() => onReset?.(), [onReset]);
 
   return (
     <>
       <Space>
         {showSearch && (
-          <Input
-            placeholder="Search Logs..."
-            value={values.searchText}
-            onChange={handleSearch}
-          />
+          <Input placeholder="Search Logs..." value={values.searchText} onChange={handleSearch} />
         )}
         {moreThanOne.allocationIds && (
           <MultiSelect
@@ -111,7 +107,9 @@ const LogViewerFilters: React.FC<Props> = ({
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
-              <Option key={id || `no-id-${index}`} value={id}>{id || 'No Allocation ID'}</Option>
+              <Option key={id || `no-id-${index}`} value={id}>
+                {id || 'No Allocation ID'}
+              </Option>
             ))}
           </MultiSelect>
         )}
@@ -121,7 +119,9 @@ const LogViewerFilters: React.FC<Props> = ({
             value={values.agentIds}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
-              <Option key={id || `no-id-${index}`} value={id}>{id || 'No Agent ID'}</Option>
+              <Option key={id || `no-id-${index}`} value={id}>
+                {id || 'No Agent ID'}
+              </Option>
             ))}
           </MultiSelect>
         )}
@@ -132,7 +132,9 @@ const LogViewerFilters: React.FC<Props> = ({
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map((id, index) => (
-              <Option key={id || `no-id-${index}`} value={id}>{id || 'No Container ID'}</Option>
+              <Option key={id || `no-id-${index}`} value={id}>
+                {id || 'No Container ID'}
+              </Option>
             ))}
           </MultiSelect>
         )}
@@ -142,7 +144,9 @@ const LogViewerFilters: React.FC<Props> = ({
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
-              <Option key={id ?? `no-id-${index}`} value={id}>{id ?? 'No Rank'}</Option>
+              <Option key={id ?? `no-id-${index}`} value={id}>
+                {id ?? 'No Rank'}
+              </Option>
             ))}
           </MultiSelect>
         )}
@@ -151,7 +155,9 @@ const LogViewerFilters: React.FC<Props> = ({
           value={values.levels}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
-            <Option key={level.value} value={level.value}>{level.label}</Option>
+            <Option key={level.value} value={level.value}>
+              {level.label}
+            </Option>
           ))}
         </MultiSelect>
         {isResetShown && <Button onClick={handleReset}>{ARIA_LABEL_RESET}</Button>}

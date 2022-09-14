@@ -4,7 +4,7 @@ export const pointWithin = (
   rlft: number,
   rtop: number,
   rrgt: number,
-  rbtm: number,
+  rbtm: number
 ): boolean => {
   return px >= rlft && px <= rrgt && py >= rtop && py <= rbtm;
 };
@@ -32,7 +32,7 @@ class QuadTree {
     h: number,
     l?: number,
     seriesIndex?: number,
-    dataIndex?: number,
+    dataIndex?: number
   ) {
     this.x = x;
     this.y = y;

@@ -19,9 +19,7 @@ interface ModalProps<T> extends ModalFuncProps {
   context?: T;
 }
 
-export type ModalOpen<T = RecordUnknown> = (
-  modalProps?: ModalProps<T>
-) => void;
+export type ModalOpen<T = RecordUnknown> = (modalProps?: ModalProps<T>) => void;
 
 export interface ModalHooks<T = RecordUnknown> {
   contextHolder: React.ReactElement;
@@ -76,9 +74,9 @@ interface ModalConfig {
 function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const componentUnmounting = useRef(false);
-  const [ modalProps, setModalProps ] = useState<ModalFuncProps>();
+  const [modalProps, setModalProps] = useState<ModalFuncProps>();
   const prevModalProps = usePrevious(modalProps, undefined);
-  const [ modal, contextHolder ] = Modal.useModal();
+  const [modal, contextHolder] = Modal.useModal();
 
   /**
    * The code to close the antd modal is separated out from the code that
@@ -96,44 +94,51 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     setModalProps(props);
   }, []);
 
-  const modalClose = useCallback((reason?: ModalCloseReason) => {
-    internalClose();
-    if (reason) {
-      /**
-       * We need to unpack onClose from config in order to please lint.
-       * This is because eslint doesn't know whether it's an arrow function or not.
-       * If not, the function has a dependency on `this`, which means the whole config
-       * object has to be in the dependency array. We're not using that behavior, so we can
-       * unpack it.
-       */
-      const onClose = config.onClose;
-      onClose?.(reason);
-    }
-  }, [ config.onClose, internalClose ]);
+  const modalClose = useCallback(
+    (reason?: ModalCloseReason) => {
+      internalClose();
+      if (reason) {
+        /**
+         * We need to unpack onClose from config in order to please lint.
+         * This is because eslint doesn't know whether it's an arrow function or not.
+         * If not, the function has a dependency on `this`, which means the whole config
+         * object has to be in the dependency array. We're not using that behavior, so we can
+         * unpack it.
+         */
+        const onClose = config.onClose;
+        onClose?.(reason);
+      }
+    },
+    [config.onClose, internalClose]
+  );
 
   /**
    * Adds `modalClose` to event handlers `onOk` and `onCancel`.
    * Handles `undefined`, asynchronous and synchronous event handlers.
    */
-  const extendEventHandler = useCallback((fn: any, reason: ModalCloseReason): AntModalPromise => {
-    if (fn === undefined) {
-      return () => modalClose(reason);
-    } else if (isAsyncFunction(fn)) {
-      return (...args: any[]) => new Promise((resolve, reject) => {
-        return fn(...args)
-          .then((...thenArgs: any[]) => {
-            resolve(thenArgs);
-            modalClose(reason);
-          })
-          .catch((e: unknown) => reject(e));
-      }) as unknown as AntModalPromise;
-    } else {
-      return async (...args: any[]) => {
-        await fn(...args);
-        modalClose(reason);
-      };
-    }
-  }, [ modalClose ]);
+  const extendEventHandler = useCallback(
+    (fn: any, reason: ModalCloseReason): AntModalPromise => {
+      if (fn === undefined) {
+        return () => modalClose(reason);
+      } else if (isAsyncFunction(fn)) {
+        return (...args: any[]) =>
+          new Promise((resolve, reject) => {
+            return fn(...args)
+              .then((...thenArgs: any[]) => {
+                resolve(thenArgs);
+                modalClose(reason);
+              })
+              .catch((e: unknown) => reject(e));
+          }) as unknown as AntModalPromise;
+      } else {
+        return async (...args: any[]) => {
+          await fn(...args);
+          modalClose(reason);
+        };
+      }
+    },
+    [modalClose]
+  );
 
   useEffect(() => {
     // Only render/re-render when modal props have changed.
@@ -156,7 +161,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     } else {
       modalRef.current = modal.confirm(completeModalProps);
     }
-  }, [ config, extendEventHandler, modal, modalProps, prevModalProps ]);
+  }, [config, extendEventHandler, modal, modalProps, prevModalProps]);
 
   /**
    * Sets componentUnmounting to true only when the parent component is unmounting so that the next
@@ -174,7 +179,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     return () => {
       if (componentUnmounting.current) internalClose();
     };
-  }, [ internalClose ]);
+  }, [internalClose]);
 
   return { contextHolder, modalClose, modalOpen, modalRef };
 }

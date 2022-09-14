@@ -38,5 +38,5 @@ class GlobalStorage {
 }
 
 export const globalStorage = new GlobalStorage(
-  new Storage({ basePath: 'global', store: window.localStorage }),
+  new Storage({ basePath: 'global', store: window.localStorage })
 );

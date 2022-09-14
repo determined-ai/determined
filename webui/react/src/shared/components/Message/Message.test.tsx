@@ -11,7 +11,7 @@ const setup = (props: Props) => {
   const view = render(
     <StoreProvider>
       <Message {...props} />
-    </StoreProvider>,
+    </StoreProvider>
   );
   return { handleOnChange, view };
 };
