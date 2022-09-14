@@ -75,6 +75,7 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
+import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
@@ -110,7 +111,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
+  const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces } = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -878,6 +879,7 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
+    if (!canViewWorkspaces) return (<NoPermissions />);
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -901,11 +903,14 @@ const ProjectDetails: React.FC = () => {
         </div>
       </div>
     );
-  }, [ filterCount,
+  }, [
+    canViewWorkspaces,
+    filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
-    switchShowArchived ]);
+    switchShowArchived,
+  ]);
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {
