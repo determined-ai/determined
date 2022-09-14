@@ -2,7 +2,7 @@ import { Form, message, Select } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { getGroupRoles, updateGroup } from 'services/api';
+import { assignRolesToGroup, getGroupRoles } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
@@ -82,7 +82,10 @@ const useModalGroupRoles = ({ onClose, group, roles }: ModalProps): ModalHooks =
 
     try {
       const formData = form.getFieldsValue();
-      await updateGroup({ groupId: group.group.groupId, ...formData });
+      await assignRolesToGroup({
+        groupId: group.group.groupId,
+        ...formData,
+      });
       message.success('Updated group roles.');
       form.resetFields();
       onClose?.();

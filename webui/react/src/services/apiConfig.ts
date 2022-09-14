@@ -303,6 +303,20 @@ export const listRoles: DetApi<
   request: () => detApi.RBAC.listRoles({ limit: 0 }),
 };
 
+export const assignRolesToGroup: DetApi<
+  Service.AssignRolesToGroupParams,
+  Api.V1AssignRolesResponse, Api.V1AssignRolesResponse
+> = {
+  name: 'assignRolesToGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.RBAC.assignRoles({
+    groupRoleAssignments: params.roles.map((role) => ({
+      groupId: params.groupId,
+      roleAssignment: { role: { roleId: role.id } },
+    })),
+  }),
+};
+
 /* Info */
 
 export const getInfo: DetApi<

@@ -27,8 +27,8 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
 export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
   return {
     id: role.roleId,
-    name: role.name,
-    permissions: role.permissions.map(mapV1Permission),
+    name: role.name || '',
+    permissions: (role.permissions || []).map(mapV1Permission),
   };
 };
 

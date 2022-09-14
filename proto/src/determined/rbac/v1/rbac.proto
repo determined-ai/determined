@@ -9,7 +9,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Role contains information about a specific Role
 message Role {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "permissions", "role_id" ] }
+    json_schema: { required: [ "role_id" ] }
   };
   // The id of the role being detailed
   int32 role_id = 1;
