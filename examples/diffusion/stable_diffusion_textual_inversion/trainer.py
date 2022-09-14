@@ -103,13 +103,13 @@ class TextualInversionTrainer:
         self.train_seed = train_seed
 
         # TODO: Fix inference_prompts default
-        self.inference_schedulers = {
+        self.inference_noise_schedulers = {
             "ddim": DDIMScheduler,
             "lms-discrete": LMSDiscreteScheduler,
             "pndm": PNDMScheduler,
         }
-        assert inference_noise_scheduler_name in self.inference_schedulers, (
-            f"inference_noise_scheduler must be one {list(self.inference_schedulers.keys())},"
+        assert inference_noise_scheduler_name in self.inference_noise_schedulers, (
+            f"inference_noise_scheduler must be one {list(self.inference_noise_schedulers.keys())},"
             f" but got {inference_noise_scheduler_name}"
         )
 
@@ -253,6 +253,9 @@ class TextualInversionTrainer:
         # out their gradients, as L2 regularization (for instance) will still modify weights whose
         # gradient is zero. See link below for a discussion:
         # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
+        last_embedding = (
+            self.text_encoder.module.get_input_embeddings().weight.data[-1].detach().clone()
+        )
         self.optimizer.step()
         # Only overwrite after the step has actually been taken:
         if self.accelerator.sync_gradients:
@@ -261,7 +264,6 @@ class TextualInversionTrainer:
             token_embeds[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
-        print("GRAD TEST", self.text_encoder.module.get_input_embeddings().weight.grad.abs().sum())
         self.optimizer.zero_grad()
 
         return loss
@@ -436,7 +438,7 @@ class TextualInversionTrainer:
                 "steps_completed": self.steps_completed,
                 "initializer_tokens": self.initializer_tokens,
                 "placeholder_tokens": self.placeholder_tokens,
-                "placeholder_tokens_ids": self.placeholder_token_ids,
+                "placeholder_token_ids": self.placeholder_token_ids,
                 "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
                 "inference_noise_scheduler_name": self.inference_noise_scheduler_name,
                 "inference_noise_scheduler_kwargs": self.inference_noise_scheduler_kwargs,
@@ -470,7 +472,7 @@ class TextualInversionTrainer:
     def _build_pipeline(self) -> None:
         """Build the pipeline for the chief worker only."""
         if self.accelerator.is_main_process:
-            inference_noise_scheduler = self.inference_schedulers[
+            inference_noise_scheduler = self.inference_noise_schedulers[
                 self.inference_noise_scheduler_name
             ]
             self.inference_noise_scheduler_kwargs = {
