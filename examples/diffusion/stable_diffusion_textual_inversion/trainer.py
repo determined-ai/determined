@@ -261,6 +261,7 @@ class TextualInversionTrainer:
             token_embeds[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
+        print("GRAD TEST", self.text_encoder.module.get_input_embeddings().weight.grad.abs().sum())
         self.optimizer.zero_grad()
 
         return loss
