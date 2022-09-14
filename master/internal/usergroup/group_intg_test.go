@@ -270,6 +270,36 @@ func TestUserGroups(t *testing.T) {
 		index = usersContain(users, updateTestUser2.ID)
 		require.Equal(t, -1, index, "group users not removed properly")
 	})
+
+	t.Run("test personal group", func(t *testing.T) {
+		// Get personal group.
+		groups, _, _, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
+		require.NoError(t, err)
+		var personalGroup *Group
+		for _, g := range groups {
+			if g.OwnerID != 0 {
+				require.Nil(t, personalGroup, "only one personal group should be returned")
+				g := g
+				personalGroup = &g
+			}
+		}
+		require.NotNil(t, personalGroup, "no personal group returned")
+
+		_, err = GroupByIDTx(ctx, nil, personalGroup.ID)
+		require.ErrorIs(t, err, db.ErrNotFound)
+
+		require.ErrorIs(t, DeleteGroup(ctx, personalGroup.ID), db.ErrNotFound)
+		require.ErrorIs(t, UpdateGroupTx(ctx, nil, *personalGroup), db.ErrNotFound)
+		require.ErrorIs(t, AddUsersToGroupTx(ctx, nil, personalGroup.ID), db.ErrNotFound)
+		require.ErrorIs(t, RemoveUsersFromGroupTx(ctx, nil, personalGroup.ID), db.ErrNotFound)
+
+		_, _, err = UpdateGroupAndMembers(ctx, personalGroup.ID, "", nil, nil)
+		require.ErrorIs(t, err, db.ErrNotFound)
+
+		// Personal group still returns no error for UsersInGroupTx.
+		_, err = UsersInGroupTx(ctx, nil, personalGroup.ID)
+		require.NoError(t, err)
+	})
 }
 
 var (

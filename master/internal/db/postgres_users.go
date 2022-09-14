@@ -76,6 +76,7 @@ RETURNING id`)
 		}
 		return 0, errors.Wrapf(err, "error creating user %v", err)
 	}
+
 	return user.ID, nil
 }
 
@@ -148,6 +149,7 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserI
 	if err != nil {
 		return 0, err
 	}
+
 	if err := addUserPersonalGroup(tx, userID); err != nil {
 		return 0, err
 	}

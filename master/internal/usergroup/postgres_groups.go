@@ -247,11 +247,12 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 // returns ErrNotFound if the group or one of the users' membership rows
 // aren't found.
 func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
-	if len(uids) < 1 {
-		return nil
-	}
 	if _, err := GroupByIDTx(ctx, idb, gid); err != nil {
 		return err
+	}
+
+	if len(uids) < 1 {
+		return nil
 	}
 
 	if idb == nil {
