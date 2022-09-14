@@ -23,6 +23,6 @@ export const Default: ComponentStory<typeof BadgeTag> = (args) => (
 Default.args = {
   children: 'a4fdb98',
   label: 'Label',
-  state: CommandState.Assigned,
+  state: CommandState.Running,
   type: BadgeType.Default,
 };

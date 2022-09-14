@@ -19,4 +19,4 @@ export const Default: ComponentStory<typeof Badge> = (args) => (
   <Badge {...args} />
 );
 
-Default.args = { children: 'a4fdb98', state: CommandState.Assigned, type: BadgeType.Default };
+Default.args = { children: 'a4fdb98', state: CommandState.Running, type: BadgeType.Default };
