@@ -30,6 +30,8 @@ import { isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
+import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 
 import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
@@ -39,8 +41,8 @@ import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import Avatar from 'components/UserAvatar';
 import groupIcon from 'shared/assets/images/People.svg';
-import { size } from 'fp-ts/lib/ReadonlyRecord';
 import { Size } from 'shared/components/Avatar';
+import Icon from 'shared/components/Icon/Icon';
 
 const { Option } = Select;
 
@@ -137,6 +139,23 @@ const WorkspaceDetails: React.FC = () => {
   }, [ fetchWorkspace, fetchProjects, fetchUsers ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
+
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    updateSettings({ name: newSearch || undefined });
+  }, [ updateSettings ]);
+
+  const handleNameSearchReset = useCallback(() => {
+    updateSettings({ name: undefined });
+  }, [ updateSettings ]);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={settings.name || ''}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, settings.name ]);
 
   const handleViewSelect = useCallback((value) => {
     updateSettings({ whose: value });
@@ -280,8 +299,11 @@ const WorkspaceDetails: React.FC = () => {
     }
     members.push(group);
   })
+
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+
   const projectColumns = useMemo(() => {
-    
+
     const nameRenderer = (value: string, record: UserOrGroup) => {
       let member;
       if(hasDisplayName(record)){
@@ -366,8 +388,10 @@ const WorkspaceDetails: React.FC = () => {
         defaultWidth: MEMBERS_DEFAULT_COLUMN_WIDTHS['name'],
         key: 'username',
         width: 100,
+        filterDropdown: nameFilterSearch,
         render: nameRenderer,
         title: 'Name',
+        sorter: true,
       },
       {
         dataIndex: 'role',
@@ -649,6 +673,7 @@ const WorkspaceDetails: React.FC = () => {
       <Tabs.TabPane
           key={WorkspaceDetailsTab.Members}
           tab="Members">
+            <div className={css.membersContainer}>
             <InteractiveTable
             columns={projectColumns}
             containerRef={pageRef}
@@ -667,6 +692,7 @@ const WorkspaceDetails: React.FC = () => {
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
             //onChange={handleTableChange}
           />
+          </div>
       </Tabs.TabPane>
       </Tabs>
     </Page>
