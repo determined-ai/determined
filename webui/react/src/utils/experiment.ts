@@ -10,10 +10,10 @@ import { clone, deletePathList, getPathList, isNumber, setPathList,
   unflattenObject } from 'shared/utils/data';
 import {
   AnyTask,
-  DetailedUser,
   ExperimentAction,
   ExperimentBase,
   ExperimentItem,
+  ExperimentPermissionsArgs,
   ExperimentSearcherName,
   HpImportance,
   Hyperparameters,
@@ -26,7 +26,8 @@ import {
 } from 'types';
 
 type ExperimentChecker = (
-  experiment: ProjectExperiment, user?: DetailedUser, trial?: TrialDetails) => boolean
+  experiment: ProjectExperiment, trial?: TrialDetails,
+) => boolean
 
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
@@ -102,24 +103,20 @@ export const upgradeConfig = (config: RawJson): RawJson => {
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const isExperimentModifiable = (
   experiment: ProjectExperiment,
-  user?: DetailedUser,
 ): boolean => !experiment.archived && !experiment.parentArchived;
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const isExperimentForkable = (
   experiment: ProjectExperiment,
-  user?: DetailedUser,
 ): boolean => !experiment.parentArchived;
 
 export const alwaysTrueExperimentChecker = (
   experiment: ProjectExperiment,
-  user?: DetailedUser,
 ): boolean => true;
 
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
-  user?: DetailedUser,
   trial?: TrialDetails,
 ): boolean => !experiment.archived && !experiment.parentArchived
   && (!!trial || experiment?.numTrials === 1);
@@ -130,22 +127,20 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
    * are defined for every ExperimentAction
    * we expose the functions below as convenient wrappers
    */
-  [ExperimentAction.Activate]: (experiment, user) => experiment.state === RunState.Paused,
+  [ExperimentAction.Activate]: (experiment) => experiment.state === RunState.Paused,
 
-  [ExperimentAction.Archive]: (experiment, user) =>
+  [ExperimentAction.Archive]: (experiment) =>
     !experiment.parentArchived && !experiment.archived && terminalRunStates.has(experiment.state),
 
-  [ExperimentAction.Cancel]: (experiment, user) =>
+  [ExperimentAction.Cancel]: (experiment) =>
     cancellableRunStates.has(experiment.state),
 
   [ExperimentAction.CompareTrials]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.ContinueTrial]: canExperimentContinueTrial,
 
-  [ExperimentAction.Delete]: (experiment, user) =>
-    !!user && (user.isAdmin || user.id === experiment.userId)
-      ? deletableRunStates.has(experiment.state)
-      : false,
+  [ExperimentAction.Delete]: (experiment) =>
+    deletableRunStates.has(experiment.state),
 
   [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
 
@@ -153,50 +148,63 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Fork]: isExperimentForkable,
 
-  [ExperimentAction.Kill]: (experiment, user) =>
+  [ExperimentAction.Kill]: (experiment) =>
     killableRunStates.includes(experiment.state),
 
-  [ExperimentAction.Move]: (experiment, user) =>
-    !!user &&
-    (user.isAdmin || user.id === experiment.userId) &&
+  [ExperimentAction.Move]: (experiment) =>
     !experiment?.parentArchived &&
     !experiment.archived,
 
-  [ExperimentAction.Pause]: (experiment, user) => pausableRunStates.has(experiment.state),
+  [ExperimentAction.Pause]: (experiment) => pausableRunStates.has(experiment.state),
 
   [ExperimentAction.OpenTensorBoard]: alwaysTrueExperimentChecker,
 
-  [ExperimentAction.Unarchive]: (experiment, user) =>
+  [ExperimentAction.Unarchive]: (experiment) =>
     terminalRunStates.has(experiment.state) && experiment.archived,
 
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.CompareExperiments]: alwaysTrueExperimentChecker,
+
+  [ExperimentAction.SwitchPin]: alwaysTrueExperimentChecker,
 };
 
-export const canUserActionExperiment = (
-  user: DetailedUser | undefined,
+export const canActionExperiment = (
   action: ExperimentAction,
   experiment: ProjectExperiment,
   trial?: TrialDetails,
-): boolean => !!experiment && experimentCheckers[action](experiment, user, trial);
+): boolean => {
+  return !!experiment && experimentCheckers[action](
+    experiment,
+    trial,
+  );
+};
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
   targets: ExperimentAction[],
-  user?: DetailedUser,
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
-  return targets.filter((action) => canUserActionExperiment(user, action, experiment));
+  return targets.filter((action) => canActionExperiment(
+    action,
+    experiment,
+  ));
 };
 
 export const getActionsForExperimentsUnion = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
-  user?: DetailedUser,
+  canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
+  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
 ): ExperimentAction[] => {
   if (!experiments.length) return []; // redundant, for clarity
-  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets, user));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(
+    e,
+    targets,
+  ).filter((action) => [ ExperimentAction.Delete, ExperimentAction.Move ].includes(action)
+    ? (action === ExperimentAction.Delete && canDeleteExperiment({ experiment: e })) ||
+      (action === ExperimentAction.Move && canMoveExperiment({ experiment: e }))
+    : true));
   return targets.filter((action) =>
     actionsForExperiments.some((experimentActions) => experimentActions.includes(action)));
 };
@@ -204,10 +212,12 @@ export const getActionsForExperimentsUnion = (
 export const getActionsForExperimentsIntersection = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
-  user?: DetailedUser,
 ): ExperimentAction[] => {
   if (!experiments.length) [];
-  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets, user));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(
+    e,
+    targets,
+  ));
   return targets.filter((action) =>
     actionsForExperiments.every((experimentActions) => experimentActions.includes(action)));
 };
@@ -225,20 +235,30 @@ export const getProjectExperimentForExperimentItem = (
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);
-export const runStateSortValues: Record<RunState, number> = {
-  [RunState.Active]: 0,
-  [RunState.Paused]: 1,
-  [RunState.StoppingError]: 2,
-  [RunState.Errored]: 3,
-  [RunState.StoppingCompleted]: 4,
-  [RunState.Completed]: 5,
-  [RunState.StoppingCanceled]: 6,
-  [RunState.Canceled]: 7,
-  [RunState.Deleted]: 7,
-  [RunState.Deleting]: 7,
-  [RunState.DeleteFailed]: 7,
-  [RunState.Unspecified]: 8,
-};
+
+const runStateSortOrder: RunState[] = [
+  RunState.Active,
+  RunState.Running,
+  RunState.Paused,
+  RunState.Starting,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.StoppingError,
+  RunState.Errored,
+  RunState.StoppingCompleted,
+  RunState.Completed,
+  RunState.StoppingCanceled,
+  RunState.Canceled,
+  RunState.DeleteFailed,
+  RunState.Deleting,
+  RunState.Deleted,
+  RunState.Unspecified,
+];
+
+export const runStateSortValues: Map<RunState, number> = new Map(
+  runStateSortOrder.map((state, idx) => [ state, idx ]),
+);
+
 export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
   const aValue = hpImportance[a];
   const bValue = hpImportance[b];
@@ -246,6 +266,7 @@ export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImporta
   if (aValue > bValue) return -1;
   return 0;
 };
+
 export const runStateSorter = (a: RunState, b: RunState): number => {
-  return runStateSortValues[a] - runStateSortValues[b];
+  return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
 };

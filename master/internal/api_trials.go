@@ -56,7 +56,7 @@ var (
 func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
 	trialID int, actionFunc func(model.User, *model.Experiment) error,
 ) error {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -91,6 +91,60 @@ type TrialLogBackend interface {
 	TrialLogsCount(trialID int, filters []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 	DeleteTrialLogs(trialIDs []int) error
+}
+
+// Catches information on active running trials.
+type trialAllocation struct {
+	Pulling  bool
+	Running  bool
+	Starting bool
+	Task     model.TaskID
+}
+
+func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
+	// filter allocations by TaskIDs on this page of trials
+	taskFilter := make([]string, 0, len(trials))
+	for _, trial := range trials {
+		taskFilter = append(taskFilter, trial.TaskId)
+	}
+
+	// get active trials by TaskId
+	tasks := []trialAllocation{}
+	err := a.m.db.Query(
+		"aggregate_allocation_state_by_task",
+		&tasks,
+		strings.Join(taskFilter, ","),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Collect state information by TaskID
+	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
+	for _, task := range tasks {
+		switch {
+		case task.Running:
+			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+		case task.Starting:
+			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
+		case task.Pulling:
+			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
+		default:
+			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
+		}
+	}
+
+	// Active trials converted to Queued, Pulling, Starting, or Running
+	for _, trial := range trials {
+		if trial.State == experimentv1.State_STATE_ACTIVE {
+			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
+				trial.State = setState
+			} else {
+				trial.State = experimentv1.State_STATE_QUEUED
+			}
+		}
+	}
+	return nil
 }
 
 func (a *apiServer) TrialLogs(
@@ -456,8 +510,8 @@ func (a *apiServer) KillTrial(
 
 func (a *apiServer) GetExperimentTrials(
 	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
-) (*apiv1.GetExperimentTrialsResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+) (resp *apiv1.GetExperimentTrialsResponse, err error) {
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -500,8 +554,8 @@ func (a *apiServer) GetExperimentTrials(
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 
-	resp := &apiv1.GetExperimentTrialsResponse{}
-	if err := a.m.db.QueryProtof(
+	resp = &apiv1.GetExperimentTrialsResponse{}
+	if err = a.m.db.QueryProtof(
 		"proto_get_trial_ids_for_experiment",
 		[]interface{}{orderExpr},
 		resp,
@@ -525,7 +579,7 @@ func (a *apiServer) GetExperimentTrials(
 		trialIDs = append(trialIDs, trial.Id)
 	}
 
-	switch err := a.m.db.QueryProtof(
+	switch err = a.m.db.QueryProtof(
 		"proto_get_trials_plus",
 		[]any{strings.Join(valuesExpr, ", ")},
 		&resp.Trials,
@@ -535,6 +589,10 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+	}
+
+	if err = a.enrichTrialState(resp.Trials...); err != nil {
+		return nil, err
 	}
 
 	return resp, nil
@@ -558,6 +616,13 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	); err != nil {
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
+
+	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+		if err := a.enrichTrialState(resp.Trial); err != nil {
+			return nil, err
+		}
+	}
+
 	return resp, nil
 }
 

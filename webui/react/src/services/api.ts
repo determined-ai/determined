@@ -67,6 +67,10 @@ export const resetUserSetting = generateDetApi<
   EmptyParams, Api.V1ResetUserSettingResponse, void
 >(Config.resetUserSetting);
 
+export const getUserPermissions = generateDetApi<
+  Service.GetUserParams, number, Type.Permission[]
+>(Config.getUserPermissions);
+
 /* Groups */
 
 export const createGroup = generateDetApi<

@@ -3,8 +3,9 @@ import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
 
@@ -26,15 +27,14 @@ enum PageView {
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 
-const getTitleState = (commandState?: CommandState): string => {
+const getTitleState = (commandState?: CommandState, taskName?: string): string => {
   if (!commandState){
     return DEFAULT_PAGE_TITLE;
   }
   const commandStateTitleMap = {
-    [CommandState.Pending]: 'Pending',
-    [CommandState.Assigned]: 'Assigned',
     [CommandState.Pulling]: 'Pulling',
-    [CommandState.Running]: DEFAULT_PAGE_TITLE,
+    [CommandState.Queued]: 'Queued',
+    [CommandState.Running]: taskName || DEFAULT_PAGE_TITLE,
     [CommandState.Terminating]: 'Terminating',
     [CommandState.Terminated]: 'Terminated',
     [CommandState.Starting]: 'Starting',
@@ -56,8 +56,8 @@ export const InteractiveTask: React.FC = () => {
   const { ui } = useStore();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [ storeDispatch ]);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export const InteractiveTask: React.FC = () => {
     return () => clearInterval(queryTask);
   }, [ taskId ]);
 
-  const title = ui.isPageHidden ? getTitleState(taskState) : DEFAULT_PAGE_TITLE;
+  const title = ui.isPageHidden ? getTitleState(taskState, taskName) : taskName;
 
   return (
     <>

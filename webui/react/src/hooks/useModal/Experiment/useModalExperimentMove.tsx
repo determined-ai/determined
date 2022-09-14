@@ -7,6 +7,7 @@ import { FixedSizeList as List } from 'react-window';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import projectDetailConfigSettings, { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -78,6 +79,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     settings: destSettings,
     updateSettings: updateDestSettings,
   } = useSettings<Settings>(settingsConfig);
+
+  const {
+    settings: projectSettings,
+    updateSettings: updateProjectSettings,
+  } = useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
   const [ sourceProjectId, setSourceProjectId ] = useState<number|undefined>();
   const [ experimentIds, setExperimentIds ] = useState<number[]>();
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
@@ -260,6 +266,15 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ),
         message: 'Move Success',
       });
+      if (sourceProjectId) {
+        const newPinned = { ...projectSettings.pinned };
+        const pinSet = new Set(newPinned[sourceProjectId]);
+        for (const experimentId of experimentIds) {
+          pinSet.delete(experimentId);
+        }
+        newPinned[sourceProjectId] = Array.from(pinSet);
+        updateProjectSettings({ pinned: newPinned });
+      }
     } else if (numFailures === experimentIds.length) {
       notification.warn({
         description: `Unable to move ${experimentText}`,
@@ -280,7 +295,15 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         message: 'Partial Move Failure',
       });
     }
-  }, [ closeNotification, destSettings.projectId, experimentIds, projects ]);
+  }, [
+    closeNotification,
+    destSettings.projectId,
+    experimentIds,
+    projectSettings.pinned,
+    projects,
+    sourceProjectId,
+    updateProjectSettings,
+  ]);
 
   const getModalProps = useCallback((experimentIds, destinationProjectId): ModalFuncProps => {
     const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';

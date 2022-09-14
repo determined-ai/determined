@@ -20,8 +20,9 @@ const BasicAuthZType = "basic"
 
 // AuthZConfig is a authz-related section of master config.
 type AuthZConfig struct {
-	Type         string  `json:"type"`
-	FallbackType *string `json:"fallback"`
+	Type          string  `json:"type"`
+	FallbackType  *string `json:"fallback"`
+	RBACUIEnabled *bool   `json:"rbac_ui_enabled"`
 }
 
 // DefaultAuthZConfig returns default authz config.
@@ -50,6 +51,14 @@ func (c *AuthZConfig) Validate() []error {
 	}
 
 	return errs
+}
+
+// IsRBACUIEnabled returns if the feature flag RBAC should be enabled.
+func (c AuthZConfig) IsRBACUIEnabled() bool {
+	if c.RBACUIEnabled != nil {
+		return *c.RBACUIEnabled
+	}
+	return c.Type != BasicAuthZType
 }
 
 func initAuthZTypes() {

@@ -63,6 +63,7 @@ fulfilled and configured, install and configure the Determined master:
           job_storage_root:
           path:
           tres_supported: true
+          slot_type: cuda
 
 #. The installer provides default values, however, you should explicitly configure the following
    cluster options:
@@ -175,8 +176,12 @@ recommended to optimize how Determined interacts with Slurm:
    Determined maps Slurm partitions to Determined resource pools. It is recommended that the nodes
    within a partition are homogeneous for Determined to effectively schedule GPU jobs.
 
-   -  A Slurm partition with GPUs is identified as a CUDA resource pool.
+   -  A Slurm partition with GPUs is identified as a CUDA/ROCM resource pool. The type is inherited
+      from the ``resource_manager.slot_type`` configuration. It can be also be specified-per
+      partition using ``resource_manager.partition_overrides``
+
    -  A Slurm partition with no GPUs is identified as an AUX resource pool.
+
    -  The Determined default resource pool is set to the Slurm default partition.
 
 -  Tune the Slurm configuration for Determined job preemption.

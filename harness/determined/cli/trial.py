@@ -185,8 +185,8 @@ def kill_trial(args: Namespace) -> None:
 
 @authentication.required
 def trial_logs(args: Namespace) -> None:
-    api.pprint_trial_logs(
-        args.master,
+    logs = api.trial_logs(
+        cli.setup_session(args),
         args.trial_id,
         head=args.head,
         tail=args.tail,
@@ -196,10 +196,11 @@ def trial_logs(args: Namespace) -> None:
         rank_ids=args.rank_ids,
         sources=args.sources,
         stdtypes=args.stdtypes,
-        level_above=args.level,
+        min_level=args.level,
         timestamp_before=args.timestamp_before,
         timestamp_after=args.timestamp_after,
     )
+    api.pprint_trial_logs(args.trial_id, logs)
 
 
 @authentication.required
@@ -242,11 +243,12 @@ def generate_support_bundle(args: Namespace) -> None:
 
 
 def write_trial_logs(args: Namespace, temp_dir: str) -> str:
-    trial_logs = api.trial_logs(args.master, args.trial_id)
+    session = cli.setup_session(args)
+    trial_logs = api.trial_logs(session, args.trial_id)
     file_path = os.path.join(temp_dir, "trial_logs.txt")
     with open(file_path, "w") as f:
         for log in trial_logs:
-            f.write(log["message"])
+            f.write(log.message)
 
     return file_path
 
@@ -295,7 +297,7 @@ logs_args_description = [
         Arg(
             "--tail",
             type=int,
-            help="number of lines to show, counting from the end " "of the log (default is all)",
+            help="number of lines to show, counting from the end of the log (default is all)",
         ),
     ),
     Arg(
@@ -319,11 +321,11 @@ logs_args_description = [
     ),
     Arg(
         "--timestamp-before",
-        help="show logs only from before (RFC 3339 format)," " e.g. '2021-10-26T23:17:12Z'",
+        help="show logs only from before (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
     Arg(
         "--timestamp-after",
-        help="show logs only from after (RFC 3339 format)," " e.g. '2021-10-26T23:17:12Z'",
+        help="show logs only from after (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
     Arg(
         "--level",

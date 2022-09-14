@@ -250,9 +250,19 @@ The master supports the following configuration settings:
          is started.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Available values are ``cuda`` and ``cpu``, where 1 ``cuda`` slot is
-         1 GPU and 1 ``cpu`` slot is 1 node. Defaults per partition to ``cuda`` if GPU resources are
-         found within the partition, else ``cpu``.
+         in terms of ``slots``. Defaults to ``cuda``.
+
+         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Any partitions
+            with GPUs will be represented as a resource pool with slot type ``cuda`` which can be
+            overridden using ``partition_overrides``.
+
+         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Any partitions with
+            GPUs will be represented as a resource pool with slot type ``rocm`` which can be
+            overridden using ``partition_overrides``.
+
+         -  ``slot_type: cpu``: CPU resources will be requested for each compute slot. Partitions
+            that contain no GPUs will default to a resource pool with slot type ``cpu``. One node
+            will be allocated per slot.
 
       -  ``rendezvous_network_interface``: The interface used to bootstrap communication between
          distributed jobs. For example, when using horovod the IP address for the host on this

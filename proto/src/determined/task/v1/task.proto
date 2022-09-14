@@ -7,10 +7,6 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/taskv1";
 enum State {
   // The task state is unknown.
   STATE_UNSPECIFIED = 0;
-  // The task is pending assignment.
-  STATE_PENDING = 1;
-  // The task has been assigned to an agent but has not started yet.
-  STATE_ASSIGNED = 2;
   // The task's base image is being pulled from the Docker registry.
   STATE_PULLING = 3;
   // The image has been pulled and the task is being started, but the task is
@@ -22,6 +18,8 @@ enum State {
   STATE_TERMINATED = 6;
   // The task has begun to exit.
   STATE_TERMINATING = 7;
+  // Additional state to cover queueing operations.
+  STATE_QUEUED = 8;
 }
 
 // Allocation tracks a specific instance of a Task.

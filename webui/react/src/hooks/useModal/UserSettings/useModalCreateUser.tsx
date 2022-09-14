@@ -1,13 +1,15 @@
-import { Form, Input, message, Select, Switch } from 'antd';
+import { Form, Input, message, Select, Switch, Table } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { patchUser, postUser, updateGroup } from 'services/api';
+import usePermissions from 'hooks/usePermissions';
+import { getUserPermissions, patchUser, postUser, updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import Icon from 'shared/components/Icon/Icon';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, DetailedUser } from 'types';
+import { BrandingType, DetailedUser, Permission } from 'types';
 import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
@@ -29,6 +31,7 @@ interface Props {
   form: FormInstance;
   groups: V1GroupSearchResult[];
   user?: DetailedUser;
+  viewOnly?: boolean;
 }
 
 interface FormValues {
@@ -38,13 +41,48 @@ interface FormValues {
   USER_NAME_NAME: string;
 }
 
-const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
+const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
+  const [ permissions, setPermissions ] = useState<Permission[]>([]);
+
+  const canSeePermissions = usePermissions().canGetPermissions();
+
+  const updatePermissions = useCallback(async () => {
+    if (user && canSeePermissions) {
+      const viewPermissions = await getUserPermissions({ userId: user.id });
+      setPermissions(viewPermissions);
+    }
+  }, [ canSeePermissions, user ]);
+
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
     });
-  }, [ user, form ]);
+    if (user) {
+      updatePermissions();
+    }
+  }, [ form, updatePermissions, user ]);
+
+  const columns = [
+    {
+      dataIndex: 'name',
+      key: 'name',
+      title: 'Name',
+    },
+    {
+      dataIndex: 'globalOnly',
+      key: 'globalOnly',
+      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+      title: 'Global?',
+    },
+    {
+      dataIndex: 'workspaceOnly',
+      key: 'workspaceOnly',
+      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+      title: 'Workspaces?',
+    },
+  ];
+
   return (
     <Form<FormValues>
       form={form}
@@ -67,14 +105,14 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
       <Form.Item
         label={DISPLAY_NAME_LABEL}
         name={DISPLAY_NAME_NAME}>
-        <Input maxLength={128} placeholder="Display Name" />
+        <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
       {branding === BrandingType.Determined ? (
         <Form.Item
           label={ADMIN_LABEL}
           name={ADMIN_NAME}
           valuePropName="checked">
-          <Switch />
+          <Switch disabled={viewOnly} />
         </Form.Item>
       ) : null }
       {!user && (
@@ -95,6 +133,13 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups }) => {
           </Select>
         </Form.Item>
       )}
+      {!!user && canSeePermissions && (
+        <Table
+          columns={columns}
+          dataSource={permissions}
+          pagination={{ hideOnSinglePage: true, size: 'small' }}
+        />
+      )}
     </Form>
   );
 };
@@ -103,6 +148,10 @@ interface ModalProps {
   groups: V1GroupSearchResult[];
   onClose?: () => void;
   user?: DetailedUser;
+}
+
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (viewOnly?: boolean) => void;
 }
 
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
@@ -114,7 +163,11 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     form.resetFields();
   }, [ form ]);
 
-  const handleOk = useCallback(async () => {
+  const handleOk = useCallback(async (viewOnly?: boolean) => {
+    if (viewOnly) {
+      handleCancel();
+      return;
+    }
     await form.validateFields();
 
     const formData = form.getFieldsValue();
@@ -143,9 +196,9 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [ form, onClose, user ]);
+  }, [ form, onClose, user, handleCancel ]);
 
-  const modalOpen = useCallback(() => {
+  const modalOpen = useCallback((viewOnly?: boolean) => {
     openOrUpdate({
       closable: true,
       // passing a default brandind due to changes on the initial state
@@ -155,11 +208,12 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     form={form}
     groups={groups}
     user={user}
+    viewOnly={viewOnly}
   />,
       icon: null,
-      okText: user ? 'Update' : 'Create User',
+      okText: viewOnly ? 'Close' : (user ? 'Update' : 'Create User'),
       onCancel: handleCancel,
-      onOk: handleOk,
+      onOk: () => handleOk(viewOnly),
       title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
   }, [ form, handleCancel, handleOk, openOrUpdate, info, user, groups ]);

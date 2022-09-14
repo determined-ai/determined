@@ -10,6 +10,23 @@
  Version 0.19
 **************
 
+Version 0.19.3
+==============
+
+**Release Date:** September 09, 2022
+
+**Improvements**
+
+-  Slurm: Singularity containers may now use AMD ROCm GPUs.
+-  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler.
+-  Kubernetes: The UID and GID of Fluent Bit logging sidecars may now be configured on a
+   cluster-wide basis.
+
+**New Features**
+
+-  Example: Allow training of models that do not fit into GPU memory using DeepSpeed ZeRO Stage 3
+   with CPU offloading.
+
 Version 0.19.2
 ==============
 

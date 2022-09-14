@@ -358,12 +358,14 @@ class Function:
         path: str,
         params: typing.Dict[str, Parameter],
         responses: typing.Dict[str, dict],
+        streaming: bool,
     ):
         self.name = name
         self.method = method
         self.path = path
         self.params = params
         self.responses = responses
+        self.streaming = streaming
 
     def __repr__(self) -> str:
         out = (
@@ -392,21 +394,16 @@ class Function:
             out += [self.params[name].gen_function_param()]
 
         # Function return type.
-        # (simplifying assumptions; if broken we need more logic)
-        responses = {**self.responses}
-        default = responses.pop("default")
-        assert isinstance(default, Ref) and default.name == "runtimeError", (
-            self.name,
-            default,
-        )
-
-        if len(responses) == 1:
-            returntype = next(iter(responses.values()))
-            returntypestr = returntype.annotation()
-        else:
-            returntypes = set(r.annotation(prequoted=True) for r in responses.values())
-            returntypestr = '"Union[' + ", ".join(sorted(returntypes)) + ']"'
-        assert len(responses) == 1, (self.name, responses)
+        # We wrap the return type annotation for streaming or union responses.
+        need_quotes = self.streaming or len(self.responses) > 1
+        returntypes = set(r.annotation(prequoted=need_quotes) for r in self.responses.values())
+        returntypestr = ",".join(sorted(returntypes))
+        if len(returntypes) > 1:
+            returntypestr = f"typing.Union[{returntypestr}]"
+        if self.streaming:
+            returntypestr = f"typing.Iterable[{returntypestr}]"
+        if need_quotes:
+            returntypestr = f'"{returntypestr}"'
 
         out += [f") -> {returntypestr}:"]
 
@@ -447,14 +444,30 @@ class Function:
         out += ["        data=None,"]
         out += ["        headers=None,"]
         out += ["        timeout=None,"]
-        out += ["        stream=False,"]
+        out += [f"        stream={self.streaming},"]
         out += ["    )"]
-        for expect, returntype in responses.items():
+        for expect, returntype in self.responses.items():
             out += [f"    if _resp.status_code == {expect}:"]
-            if returntype.isnone():
-                out += ["        return"]
+            if not self.streaming:
+                if returntype.isnone():
+                    out += ["        return"]
+                else:
+                    out += [f'        return {returntype.load("_resp.json()")}']
             else:
-                out += [f'        return {returntype.load("_resp.json()")}']
+                assert not returntype.isnone(), "unable to stream empty result class: {self}"
+                # Too many quotes to do bit inline:
+                yieldable = returntype.load('_j["result"]')
+                out += [
+                    f"        for _line in _resp.iter_lines():",
+                    f"            _j = json.loads(_line)",
+                    f'            if "error" in _j:',
+                    f"                raise APIHttpStreamError(",
+                    f'                    "{self.method}_{self.name}",',
+                    f'                    runtimeStreamError.from_json(_j["error"])',
+                    f"            )",
+                    f'            yield {yieldable}',
+                    f'        return',
+                ]
         out += [f'    raise APIHttpError("{self.method}_{self.name}", _resp)']
 
         return "\n".join(out)
@@ -578,25 +591,58 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
             name = spec["operationId"]
             # Figure out response types.
             responses = {}
+            streaming = None
             bad_op = False
             for code, rspec in spec["responses"].items():
-                if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
-                    # TODO(gh-3382): support streaming endpoints.
-                    print(
-                        f'skipped generating streaming operation: "{name}"',
-                        file=sys.stderr,
-                    )
-                    bad_op = True
-                    break
-                if rspec["schema"].get("type") == "":
+                rschema = rspec["schema"]
+                if code == "default":
+                    # We expect all "default" responses to be runtimeErrors, and we ignore them.
+                    default_type = classify_type(enums, f"{name}.responses.default", rschema)
+                    assert isinstance(default_type, Ref), rschema
+                    assert default_type.name == "runtimeError", rschema
+                    # Safe to ignore this return type.
+                    continue
+
+                if rschema.get("type") == "":
                     # not a valid response schema, skipping
                     bad_op = True
                     break
-                responses[code] = classify_type(
-                    enums, f"{name}.responses.{code}", rspec["schema"]
-                )
+
+                if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
+                    # We expect a specific structure to streaming endpoints.
+                    assert rschema["type"] == "object", rschema
+                    assert "additionalProperties" not in rschema, rschema
+                    rprops = rschema["properties"]
+                    assert set(rprops.keys()) == set(("result", "error")), rschema
+                    result_type = classify_type(
+                        enums, f"{name}.responses.{code}.properties.result", rprops["result"]
+                    )
+                    error_type = classify_type(
+                        enums, f"{name}.responses.{code}.properties.error", rprops["error"]
+                    )
+                    # We expect all "error" results to be runtimeStreamError.  They are parsed in
+                    # code generated by Function.gen_def().
+                    assert isinstance(error_type, Ref), rschema
+                    assert error_type.name == "runtimeStreamError", rschema
+                    if streaming is False:
+                        raise ValueError(
+                            f"a method must be either all-streaming or all-nonstreaming: {rspec}"
+                        )
+                    streaming = True
+                    responses[code] = result_type
+                    continue
+
+                responses[code] = classify_type(enums, f"{name}.responses.{code}", rschema)
+                if streaming is True:
+                    raise ValueError(
+                        f"a method must be either all-streaming or all-nonstreaming: {rspec}"
+                    )
+                streaming = False
+
             if bad_op:
                 continue
+
+            assert streaming is not None
 
             # Figure out parameters.
             params = {}
@@ -620,7 +666,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
 
             assert is_expected_path(path), (path, name)
             path = path.replace(".", "_")
-            op = Function(name, method, path, params, responses)
+            op = Function(name, method, path, params, responses, streaming)
             ops[name] = op
     return ops
 
@@ -660,6 +706,7 @@ def pybindings(swagger: dict) -> str:
     prefix = """
 # The contents of this file are programmatically generated.
 import enum
+import json
 import math
 import typing
 
@@ -697,7 +744,20 @@ class APIHttpError(Exception):
         self.response = response
         self.operation_name = operation_name
         self.message = (
-            f"API Error: {operation_name} failed."
+            f"API Error: {operation_name} failed: {response.reason}."
+        )
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class APIHttpStreamError(APIHttpError):
+    # APIHttpStreamError is used if an streaming API request fails mid-stream.
+    def __init__(self, operation_name: str, error: "runtimeStreamError") -> None:
+        self.operation_name = operation_name
+        self.error = error
+        self.message = (
+            f"Stream Error during {operation_name}: {error.message}"
         )
 
     def __str__(self) -> str:

@@ -6,9 +6,8 @@ import {
 } from 'types';
 
 export const activeCommandStates = [
-  CommandState.Assigned,
-  CommandState.Pending,
   CommandState.Pulling,
+  CommandState.Queued,
   CommandState.Running,
   CommandState.Starting,
   CommandState.Terminating,
@@ -42,9 +41,8 @@ export const cancellableRunStates: Set<CompoundRunState> = new Set([
 ]);
 
 export const killableCommandStates = [
-  CommandState.Assigned,
-  CommandState.Pending,
   CommandState.Pulling,
+  CommandState.Queued,
   CommandState.Running,
   CommandState.Starting,
 ];
@@ -68,6 +66,7 @@ export const terminalRunStates: Set<CompoundRunState> = new Set([
 
 export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.Active]: 'Active',
+  [RunState.Running]: 'Running',
   [RunState.Canceled]: 'Canceled',
   [RunState.Completed]: 'Completed',
   [RunState.Deleted]: 'Deleted',
@@ -79,6 +78,9 @@ export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
   [RunState.Unspecified]: 'Unspecified',
+  [RunState.Queued]: 'Queued',
+  [RunState.Pulling]: 'Pulling Image',
+  [RunState.Starting]: 'Running (preparing env)',
 };
 
 export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } = {
@@ -100,9 +102,8 @@ export const V1SchedulerTypeToLabel : { [key in V1SchedulerType]: string } = {
 };
 
 export const commandStateToLabel: { [key in CommandState]: string } = {
-  [CommandState.Pending]: 'Pending',
-  [CommandState.Assigned]: 'Assigned',
   [CommandState.Pulling]: 'Pulling',
+  [CommandState.Queued]: 'Queued',
   [CommandState.Starting]: 'Starting',
   [CommandState.Running]: 'Running',
   [CommandState.Terminating]: 'Terminating',

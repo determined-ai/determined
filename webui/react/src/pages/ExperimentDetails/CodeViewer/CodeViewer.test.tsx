@@ -76,7 +76,7 @@ jest.mock('components/MonacoEditor', () => ({
 jest.mock('hooks/useSettings', () => {
   const actualModule = jest.requireActual('hooks/useSettings');
   const useSettings = jest.fn(() => {
-    const settings = { fileName: 'single-in-records.yaml', filePath: 'single-in-records.yaml' };
+    const settings = { filePath: 'single-in-records.yaml' };
     const updateSettings = jest.fn();
 
     return { settings, updateSettings };

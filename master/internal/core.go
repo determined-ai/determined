@@ -994,6 +994,18 @@ func (m *Master) Run(ctx context.Context) error {
 		default:
 			hasMatchingFile = !stat.IsDir()
 		}
+
+		// Files that receive a unique hash when bundled and deployed can be cached forever
+		// Other static files should only be cached for a short period of time
+		cacheFileLongTerm := regexp.MustCompile(`.(chunk\.(css|js)|woff2|woff)$`)
+		cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
+
+		if cacheFileLongTerm.MatchString(requestedFile) {
+			c.Response().Header().Set("cache-control", "public, max-age=31536000")
+		} else if cacheFileShortTerm.MatchString(requestedFile) {
+			c.Response().Header().Set("cache-control", "public, max-age=600")
+		}
+
 		if hasMatchingFile {
 			return c.File(requestedFile)
 		}

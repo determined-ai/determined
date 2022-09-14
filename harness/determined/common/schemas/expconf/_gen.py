@@ -991,6 +991,16 @@ schemas = {
             "items": {
                 "type": "string"
             }
+        },
+        "pbs": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }

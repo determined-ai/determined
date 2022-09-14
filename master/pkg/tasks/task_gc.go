@@ -83,8 +83,10 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		strconv.Itoa(g.ExperimentID),
 		"--storage-config",
 		"/run/determined/checkpoint_gc/storage_config.json",
-		"--delete",
-		g.ToDelete,
+	}
+	if g.ToDelete != "" {
+		res.Entrypoint = append(res.Entrypoint, "--delete")
+		res.Entrypoint = append(res.Entrypoint, g.ToDelete)
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")

@@ -140,13 +140,12 @@ export interface StartEndTimes extends EndTimes {
 
 /* Command */
 export enum CommandState {
-  Pending = 'PENDING',
-  Assigned = 'ASSIGNED',
   Pulling = 'PULLING',
   Starting = 'STARTING',
   Running = 'RUNNING',
   Terminating = 'TERMINATING',
   Terminated = 'TERMINATED',
+  Queued = 'QUEUED',
 }
 
 export type State = CommandState | RunState;
@@ -307,6 +306,7 @@ export enum ExperimentAction {
   Move = 'Move',
   Pause = 'Pause',
   OpenTensorBoard = 'View in TensorBoard',
+  SwitchPin = 'Switch Pin',
   Unarchive = 'Unarchive',
   ViewLogs = 'View Logs',
 }
@@ -328,6 +328,10 @@ export enum RunState {
   Deleting = 'DELETING',
   DeleteFailed = 'DELETE_FAILED',
   Unspecified = 'UNSPECIFIED',
+  Queued = 'QUEUED',
+  Pulling = 'PULLING',
+  Starting = 'STARTING',
+  Running = 'RUNNING',
 }
 
 export interface ValidationHistory {
@@ -793,4 +797,27 @@ export interface Project {
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
+}
+
+export interface UserAssignment {
+  cluster: boolean;
+  name: string;
+  workspaces?: number[];
+}
+
+export interface Permission {
+  globalOnly: boolean;
+  id: number;
+  name: string;
+  workspaceOnly: boolean;
+}
+
+export interface UserRole {
+  id: number;
+  name: string;
+  permissions: Permission[];
+}
+
+export interface ExperimentPermissionsArgs {
+  experiment: ProjectExperiment;
 }

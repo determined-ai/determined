@@ -120,6 +120,20 @@ Some constraints are due to differences in behavior between Docker and Singulari
       #. Ensure that the names and addresses of the login node, admin node, and all compute nodes
          are consistently available in ``/etc/hosts`` on all nodes.
 
+   -  Podman containers only inherit environment variables that have been explicitly specified.
+      Determined adds Podman arguments to provide any Determined-configured environment variables,
+      and the launcher enables inheritance of the following variables: ``SLURM_*``,
+      ``CUDA_VISIBLE_DEVICES``, ``NVIDIA_VISIBLE_DEVICES``, ``ROCR_VISIBLE_DEVICES``,
+      ``HIP_VISIBLE_DEVICES``. You may enable the inheritance of additional variables from the host
+      environment by specifying the variable name with an empty value in the
+      ``environment_variables`` of your experiment configuration or :ref:`task container defaults
+      <master-task-container-defaults>`.
+
+         .. code:: yaml
+
+            environment_variables:
+              - INHERITED_ENV_VAR=
+
 ***********************
  AMD/ROCm Known Issues
 ***********************
@@ -281,3 +295,19 @@ the GPUs used for the experiment to be evenly distributed among the compute node
 
    For more information on MPS, refer to the `NVIDIA Multi-Process Service (MPS) Documentation
    <https://docs.nvidia.com/deploy/mps>`__.
+
+-  Experiments on CPU-only clusters will fail when the requested slot count exceeds the maximum
+   number of CPUs on any single node. This behavior is due to a limitation of the Slurm workload
+   manager. Slurm does not provide an option to request a certain number of CPUs without specifying
+   the number of nodes/tasks. To overcome this limitation of Slurm, Determined will set a default
+   value of 1 for the number of nodes. With this workaround, when the users launch an experiment on
+   a CPU-only cluster, Slurm tries to identify a single node that can completely satisfy the
+   requested number of slots (CPUs). If such a node is available, Slurm will allocate the resources
+   and continue the execution of the experiment. Otherwise, Slurm will error stating the resource
+   request could not be satisfied, as shown in the below example.
+
+   .. code:: bash
+
+      ERROR: task failed without an associated exit code: sbatch: error: CPU count per node can not
+      be satisfied sbatch: error: Batch job submission failed: Requested node configuration is not
+      available.
