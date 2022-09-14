@@ -2,10 +2,11 @@ import { Select, Button } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import InteractiveTable, { ColumnDef,
-  InteractiveTableSettings,} from 'components/InteractiveTable';
+  InteractiveTableSettings} from 'components/InteractiveTable';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { DetailedUser, Workspace } from 'types';
 import TableFilterSearch from 'components/TableFilterSearch';
+import { getFullPaginationConfig} from 'components/Table';
 import {
   alphaNumericSorter
 } from 'shared/utils/sort';
@@ -21,15 +22,15 @@ export interface Member extends DetailedUser {
   role?: string;
 }
 
-const hasDisplayName = (object: UserOrGroup) => object.hasOwnProperty('displayName');
-const hasUserName = (object: UserOrGroup) => object.hasOwnProperty('username');
+const hasDisplayName = (object: MemberOrGroup) => object.hasOwnProperty('displayName');
+const hasUserName = (object: MemberOrGroup) => object.hasOwnProperty('username');
 
-const isUser = (u: UserOrGroup) => {
+const isUser = (u: MemberOrGroup) => {
   const b = u as Member;
   return !!b.username;
 }
 
-const getName = (u: UserOrGroup): string => {
+const getName = (u: MemberOrGroup): string => {
   const m= u as Member;
   const g=u as Group;
   return isUser(u) ? getDisplayName(m) : g.name;
@@ -39,7 +40,7 @@ export interface Group {
   name: string
 }
 
-type UserOrGroup = Member | Group;
+type MemberOrGroup = Member | Group;
 
 export enum WorkspaceDetailsTab {
   Projects = 'projects',
@@ -51,11 +52,12 @@ interface Props {
   workspace: Workspace;
 }
 
+const roles = ["Admin", "Editor", "Viewer"]
+
 const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
   const pageRef = useRef<HTMLElement>(null);
 
-  const roles = ["Admin", "Editor", "Viewer"]
-  const members: UserOrGroup[] = [];
+  const members: MemberOrGroup[] = [];
 
   const {
     settings,
@@ -85,7 +87,7 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
 
   const projectColumns = useMemo(() => {
 
-    const nameRenderer = (value: string, record: UserOrGroup) => {
+    const nameRenderer = (value: string, record: MemberOrGroup) => {
       let member;
       if(hasDisplayName(record)){
         member = record as Member
@@ -152,14 +154,14 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
         key: 'username',
         width: 100,
         filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
         render: nameRenderer,
         title: 'Name',
-        sorter: (a: UserOrGroup, b: UserOrGroup) => alphaNumericSorter(getName(a), getName(b))
+        sorter: (a: MemberOrGroup, b: MemberOrGroup) => alphaNumericSorter(getName(a), getName(b))
       },
       {
         dataIndex: 'role',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['role'],
-        key: 'role',
         width: 75,
         render: roleRenderer,
         title: 'Role',
@@ -167,66 +169,12 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       {
       dataIndex: 'action',
       defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-      key: 'action',
       render: actionRenderer,
       title: '',
       align: 'right',
       fixed: 'right',
-      width: 100,
       }
-      // {
-      //   dataIndex: 'description',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
-      //   key: V1GetWorkspaceProjectsRequestSortBy.DESCRIPTION,
-      //   onCell: onRightClickableCell,
-      //   render: descriptionRenderer,
-      //   title: 'Description',
-      // },
-      // {
-      //   dataIndex: 'numExperiments',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['numExperiments'],
-      //   title: 'Experiments',
-      // },
-      // {
-      //   dataIndex: 'lastUpdated',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdated'],
-      //   render: (_: number, record: Project): React.ReactNode =>
-      //     record.lastExperimentStartedAt ?
-      //       relativeTimeRenderer(new Date(record.lastExperimentStartedAt)) :
-      //       null,
-      //   title: 'Last Experiment Started',
-      // },
-      // {
-      //   dataIndex: 'userId',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-      //   render: userRenderer,
-      //   title: 'User',
-      // },
-      // {
-      //   dataIndex: 'archived',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
-      //   key: 'archived',
-      //   render: checkmarkRenderer,
-      //   title: 'Archived',
-      // },
-      // {
-      //   dataIndex: 'state',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
-      //   key: 'state',
-      //   render: stateRenderer,
-      //   title: 'State',
-      // },
-      // {
-      //   align: 'right',
-      //   dataIndex: 'action',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-      //   fixed: 'right',
-      //   key: 'action',
-      //   onCell: onRightClickableCell,
-      //   render: actionRenderer,
-      //   title: '',
-      // },
-    ] as ColumnDef<UserOrGroup>[];
+    ] as ColumnDef<MemberOrGroup>[];
   }, [ users, workspace ]);
 
   console.log(projectColumns);
@@ -256,12 +204,11 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
             <InteractiveTable
             columns={projectColumns}
             containerRef={pageRef}
-            //ContextMenu={actionDropdown}
-            dataSource={members}        // pagination={getFullPaginationConfig({
-            //   limit: settings.tableLimit,
-            //   offset: settings.tableOffset,
-            // }, total)}
-            //rowClassName={defaultRowClassName({ clickable: false })}
+            dataSource={members}        
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, users.length)}
             rowKey="username"
             settings={membersSettings}
             showSorterTooltip={false}

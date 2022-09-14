@@ -120,23 +120,6 @@ const WorkspaceDetails: React.FC = () => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  const handleNameSearchApply = useCallback((newSearch: string) => {
-    updateSettings({ name: newSearch || undefined });
-  }, [ updateSettings ]);
-
-  const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined });
-  }, [ updateSettings ]);
-
-  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterSearch
-      {...filterProps}
-      value={settings.name || ''}
-      onReset={handleNameSearchReset}
-      onSearch={handleNameSearchApply}
-    />
-  ), [ handleNameSearchApply, handleNameSearchReset, settings.name ]);
-
   const handleViewSelect = useCallback((value) => {
     updateSettings({ whose: value });
   }, [ updateSettings ]);

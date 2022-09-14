@@ -18,7 +18,6 @@ export interface WorkspaceMembersSettings extends InteractiveTableSettings {
   columns: MembersColumnName[];
   name?: string;
   sortKey: V1GetWorkspaceProjectsRequestSortBy;
-  user?: string[];
 }
 
 const config: SettingsConfig = {
@@ -70,7 +69,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Integer },
     },
   ],
-  storagePath: 'workspace-details',
+  storagePath: 'workspace-members',
 };
 
 export default config;
