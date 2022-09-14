@@ -1,6 +1,6 @@
 import { Select, Button } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { FilterDropdownProps } from 'antd/lib/table/interface';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings} from 'components/InteractiveTable';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -22,18 +22,15 @@ export interface Member extends DetailedUser {
   role?: string;
 }
 
-const hasDisplayName = (object: MemberOrGroup) => object.hasOwnProperty('displayName');
-const hasUserName = (object: MemberOrGroup) => object.hasOwnProperty('username');
-
-const isUser = (u: MemberOrGroup) => {
-  const b = u as Member;
-  return !!b.username;
+const isMember = (obj: MemberOrGroup) => {
+  const member = obj as Member;
+  return !!member.username;
 }
 
-const getName = (u: MemberOrGroup): string => {
-  const m= u as Member;
-  const g=u as Group;
-  return isUser(u) ? getDisplayName(m) : g.name;
+const getName = (obj: MemberOrGroup): string => {
+  const member = obj as Member;
+  const group = obj as Group;
+  return isMember(obj) ? getDisplayName(member) : group.name;
 }
 export interface Group {
   role: string
@@ -41,11 +38,6 @@ export interface Group {
 }
 
 type MemberOrGroup = Member | Group;
-
-export enum WorkspaceDetailsTab {
-  Projects = 'projects',
-  Members = 'members'
-}
 
 interface Props {
   users: DetailedUser[];
@@ -58,13 +50,21 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
   const pageRef = useRef<HTMLElement>(null);
 
   const members: MemberOrGroup[] = [];
+  users.forEach( u => {
+    const m: Member = u;
+    m.role = "Editor";
+    members.push(m);
+    const group = {
+      role: "Admin",
+      name: "group name"
+    }
+    members.push(group);
+  })
 
   const {
     settings,
     updateSettings,
   } = useSettings<WorkspaceMembersSettings>(settingsConfig);
-
-  console.log(settings);
 
   const handleNameSearchApply = useCallback((newSearch: string) => {
     updateSettings({ name: newSearch || undefined });
@@ -88,11 +88,11 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
   const projectColumns = useMemo(() => {
 
     const nameRenderer = (value: string, record: MemberOrGroup) => {
-      let member;
-      if(hasDisplayName(record)){
-        member = record as Member
-        return (
-          <>
+      if(isMember(record)){
+        const member = record as Member;
+        if(member?.displayName){
+         return ( 
+         <>
           <div className={css.userAvatarRowItem}> 
           <Avatar size={Size.Medium} userId={member.id} />
           </div>
@@ -102,18 +102,19 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
           </div>
           </>
         )
-      } else if(hasUserName(record)){
-        member = record as Member
-        return (
-          <>
-          <div className={css.userRowItem}> 
-          <Avatar userId={member.id} />
-          </div>
-          <div className={css.userRowItem}> 
-          <div>{member.username}</div>
-          </div>
-          </>
-        )
+        } else {
+          return (
+            <>
+            <div className={css.userRowItem}> 
+            <Avatar userId={member.id} />
+            </div>
+            <div className={css.userRowItem}> 
+            <div>{member.username}</div>
+            </div>
+            </>
+          )
+        }
+
       }
       const group = record as Group
       return (
@@ -133,9 +134,9 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       <Select
             value={record.role}
             >{
-              roles.map((r) => (
-                <Select.Option key={r} value={r}>
-                  {r}
+              roles.map((role) => (
+                <Select.Option key={role} value={role}>
+                  {role}
                 </Select.Option>
               ))
             }
@@ -176,8 +177,6 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       }
     ] as ColumnDef<MemberOrGroup>[];
   }, [ users, workspace ]);
-
-  console.log(projectColumns);
  
   const membersSettings = {
     columns: ['username', 'role'],
@@ -187,18 +186,6 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
     sortDesc: true
   }
 
-  users.forEach( u => {
-    const m: Member = u;
-    m.role = "Editor";
-    members.push(m);
-    const group = {
-      role: "Admin",
-      name: "group name"
-    }
-    members.push(group);
-  })
-
-  console.log("MEMBERS", members);
   return (
             <div className={css.membersContainer}>
             <InteractiveTable
@@ -214,7 +201,6 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
             showSorterTooltip={false}
             size="small"
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-            //onChange={handleTableChange}
           />
           </div>
   );
