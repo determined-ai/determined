@@ -221,9 +221,6 @@ func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearche
 		return resp, nil
 	}
 
-	// if exp.state is ACTIVE but the actor resources are not allocated yet. How to know if exp actor has not been fully allocated?
-	// one way is to tell from the fact that the searcher event queue is not available? But is that fullproof.
-
 	addr := experimentsAddr.Child(req.ExperimentId)
 	switch err = a.ask(addr, req, &resp); {
 	case err != nil:
