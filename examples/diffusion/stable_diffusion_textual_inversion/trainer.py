@@ -40,6 +40,7 @@ class TextualInversionTrainer:
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
         learning_rate: float = 5e-04,
+        optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
         checkpoint_freq: int = 100,
         metric_report_freq: int = 100,
@@ -81,6 +82,7 @@ class TextualInversionTrainer:
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.learning_rate = learning_rate
+        self.optimizer_kwargs = optimizer_kwargs or {}
         self.scale_lr = scale_lr
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
@@ -348,9 +350,10 @@ class TextualInversionTrainer:
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
         embedding_params = self.text_encoder.get_input_embeddings().parameters()
-        self.optimizer = torch.optim.AdamW(
+        self.optimizer = torch.optim.SGD(
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
+            **self.optimizer_kwargs,
         )
 
     def _build_train_noise_scheduler(self) -> None:
@@ -416,10 +419,14 @@ class TextualInversionTrainer:
 
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeds = (
-            self.accelerator.unwrap_model(self.text_encoder)
-            .get_input_embeddings()
-            .weight[self.placeholder_token_ids]
-        ).detach.cpu()
+            (
+                self.accelerator.unwrap_model(self.text_encoder)
+                .get_input_embeddings()
+                .weight[self.placeholder_token_ids]
+            )
+            .detach()
+            .cpu()
+        )
         learned_embeds_dict = {
             idx: tensor for idx, tensor in zip(self.placeholder_token_ids, learned_embeds)
         }
