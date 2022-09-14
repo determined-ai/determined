@@ -59,7 +59,7 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 	}
 }
 
-func NonCustomSearchMethodError(method SearchMethod, unsupportedOp string) error {
+func nonCustomSearchMethodError(method SearchMethod, unsupportedOp string) error {
 	return fmt.Errorf("%s is not supported for search method of type %T", unsupportedOp, method)
 }
 
@@ -194,7 +194,7 @@ func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
 	if sMethod, ok := s.method.(CustomSearchMethod); ok {
 		return sMethod.getSearcherEventQueue(), nil
 	}
-	return nil, NonCustomSearchMethodError(s.method, "GetCustomSearcherEventQueue")
+	return nil, nonCustomSearchMethodError(s.method, "GetCustomSearcherEventQueue")
 }
 
 // SetCustomSearcherProgress sets the custom searcher progress.
@@ -204,7 +204,7 @@ func (s *Searcher) SetCustomSearcherProgress(progress float64) error {
 		return nil
 	}
 
-	return NonCustomSearchMethodError(s.method, "SetCustomSearcherProgress")
+	return nonCustomSearchMethodError(s.method, "SetCustomSearcherProgress")
 }
 
 // Record records operations that were requested by the searcher for a specific trial.
