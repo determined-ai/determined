@@ -18,13 +18,13 @@ def gen_string() -> str:
     return str(uuid.uuid4())
 
 
-def queryTrials(sess: Session, filters: Dict[str, Any]) -> List[bindings.v1AugmentedTrial]:
+def queryTrials(sess: "Session", filters: Dict[str, Any]) -> List[bindings.v1AugmentedTrial]:
     body = bindings.v1QueryTrialsRequest.from_json({"filters": filters, "limit": 1000})
     res = bindings.post_QueryTrials(sess, body=body)
     return [bindings.v1AugmentedTrial.from_json(d) for d in res.to_json()["trials"]]
 
 
-def queryTrialsIds(sess: Session, filters: Dict[str, Any]) -> List[int]:
+def queryTrialsIds(sess: "Session", filters: Dict[str, Any]) -> List[int]:
     return [t.trialId for t in queryTrials(sess, filters)]
 
 
@@ -33,7 +33,7 @@ def tagPayload(tags: List[Any]) -> List[Dict[str, Any]]:
 
 
 def patchTrials(
-    sess: Session,
+    sess: "Session",
     trials: Union[List[int], Dict[str, List[Dict[str, str]]]],
     addTags: Optional[List[Dict[str, str]]] = None,
     removeTags: Optional[List[Dict[str, str]]] = None,
@@ -46,12 +46,12 @@ def patchTrials(
     bindings.patch_PatchTrials(sess, body=body)
 
 
-def assert_same_ids(a: List[SupportsLessThanT], b: List[SupportsLessThanT]) -> None:
+def assert_same_ids(a: List["SupportsLessThanT"], b: List["SupportsLessThanT"]) -> None:
     assert sorted(a) == sorted(b)
 
 
 def create_collection(
-    sess: Session,
+    sess: "Session",
     name: str,
     filters: Dict[str, List[int]],
     sorter: Optional[Dict[str, str]] = None,
@@ -72,7 +72,7 @@ def create_collection(
 
 
 def patch_collection(
-    sess: Session,
+    sess: "Session",
     collection_id: int,
     name: str = "",
     filters: Optional[Dict[str, List[int]]] = None,
@@ -86,7 +86,7 @@ def patch_collection(
     )
 
 
-def get_collections(sess: Session, project_id: int = 1) -> List[bindings.v1TrialsCollection]:
+def get_collections(sess: "Session", project_id: int = 1) -> List[bindings.v1TrialsCollection]:
     return [
         bindings.v1TrialsCollection.from_json(json)
         for json in bindings.get_GetTrialsCollections(sess, projectId=project_id).to_json()[
@@ -95,7 +95,7 @@ def get_collections(sess: Session, project_id: int = 1) -> List[bindings.v1Trial
     ]
 
 
-def get_collection_names(sess: Session, project_id: int = 1) -> List[str]:
+def get_collection_names(sess: "Session", project_id: int = 1) -> List[str]:
     return [c.name for c in get_collections(sess, project_id)]
 
 
@@ -116,7 +116,7 @@ def empty_range_filters() -> Dict[str, List[Dict[str, Any]]]:
 
 
 def assert_collection_is_uniquely_represented_in_collections(
-    sess: Session, collection: bindings.v1TrialsCollection
+    sess: "Session", collection: bindings.v1TrialsCollection
 ) -> None:
     collections = get_collections(sess, project_id=collection.projectId)
     matching_collections = [c for c in collections if c.id == collection.id]
