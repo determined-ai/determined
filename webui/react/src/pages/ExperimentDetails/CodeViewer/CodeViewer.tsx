@@ -410,8 +410,8 @@ const CodeViewer: React.FC<Props> = ({
   // Set the code renderer to ipynb if needed
   useEffect(() => {
     const hasActiveFile = activeFile?.text;
-    const isSameFile = activeFile?.title === settings.fileName;
-    const isIpybnFile = settings.fileName.includes('.ipynb');
+    const isSameFile = activeFile?.key === settings.filePath;
+    const isIpybnFile = settings.filePath.includes('.ipynb');
 
     if (hasActiveFile && isSameFile && isIpybnFile) {
       setEditorMode('ipynb');
