@@ -83,11 +83,11 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
-		groups, _, count, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
+		groups, _, count, err := SearchGroupsWithoutPersonalGroups(ctx, "", testUser.ID, 0, 0)
 		require.NoError(t, err, "failed to search for groups that user blongs to")
 
 		index := groupsContain(groups, testGroup.ID)
-		require.Equal(t, 3, count, "group search returned wrong count")
+		require.Equal(t, 2, count, "group search returned wrong count")
 		require.NotEqual(t, -1, index, "Group user was added to not found when searching by user membership")
 	})
 

@@ -51,7 +51,7 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 		return nil, apiutils.ErrInvalidLimit
 	}
 
-	groups, memberCounts, tableCount, err := SearchGroups(ctx,
+	groups, memberCounts, tableCount, err := SearchGroupsWithoutPersonalGroups(ctx,
 		req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
