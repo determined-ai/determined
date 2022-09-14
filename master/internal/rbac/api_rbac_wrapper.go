@@ -9,6 +9,13 @@ import (
 // RBACAPIServerWrapper is a struct that implements RBACAPIServer.
 type RBACAPIServerWrapper struct{}
 
+// GetPermissionsSummary is a wrapper the same function the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) GetPermissionsSummary(
+	ctx context.Context, req *apiv1.GetPermissionsSummaryRequest,
+) (*apiv1.GetPermissionsSummaryResponse, error) {
+	return rbacAPIServer.GetPermissionsSummary(ctx, req)
+}
+
 // GetRolesByID is a wrapper the same function the RBACAPIServer interface.
 func (s *RBACAPIServerWrapper) GetRolesByID(ctx context.Context, req *apiv1.GetRolesByIDRequest) (
 	resp *apiv1.GetRolesByIDResponse, err error,
