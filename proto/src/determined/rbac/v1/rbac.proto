@@ -27,6 +27,9 @@ message Permission {
 }
 
 // List of permissions types.
+// Value of the enum has 9xxxx for global only permissions.
+// Permissions on the same object share the thousands place
+// value like 2001 and 2002.
 enum PermissionType {
   // The permission type is unknown.
   PERMISSION_TYPE_UNSPECIFIED = 0;
