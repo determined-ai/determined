@@ -35,6 +35,14 @@ module.exports = {
       'warn',
       { allowArgumentsExplicitlyTypedAsAny: true },
     ],
+    '@typescript-eslint/indent': [
+      'error',
+      2,
+      {
+        ignoredNodes: ['TSTypeParameterInstantiation'],
+        SwitchCase: 1,
+      },
+    ],
     '@typescript-eslint/member-ordering': [
       'error',
       {
@@ -47,6 +55,7 @@ module.exports = {
       { args: 'after-used', ignoreRestSiblings: true },
     ],
     '@typescript-eslint/prefer-optional-chain': ['error'],
+    'array-bracket-spacing': ['error', 'always'],
     'array-element-newline': [
       'error',
       {
@@ -58,9 +67,19 @@ module.exports = {
     'arrow-spacing': ['error', { after: true, before: true }],
     'block-spacing': ['error', 'always'],
     'brace-style': ['error', '1tbs', { allowSingleLine: true }],
+    'comma-dangle': ['error', 'always-multiline'],
     'comma-spacing': ['error', { after: true, before: false }],
     'eol-last': ['error', 'always'],
     'eqeqeq': ['error', 'smart'],
+    'function-paren-newline': ['error', 'multiline-arguments'],
+    'import/order': [
+      'error',
+      {
+        'alphabetize': { caseInsensitive: true, order: 'asc' },
+        'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        'newlines-between': 'always',
+      },
+    ],
     'indent': 'off',
     'jest/valid-title': 'off',
     'jsx-quotes': ['error', 'prefer-double'],
@@ -79,6 +98,7 @@ module.exports = {
       },
     ],
     'keyword-spacing': ['error'],
+    'max-len': ['error', 100, { tabWidth: 2 }],
     'no-console': ['error', { allow: ['warn'] }],
     'no-empty': ['error', { allowEmptyCatch: false }],
     'no-multi-spaces': ['error', { ignoreEOLComments: true }],
@@ -86,6 +106,15 @@ module.exports = {
     'no-throw-literal': 'error',
     'no-trailing-spaces': ['error', {}],
     'no-unused-vars': 'off',
+    'object-curly-newline': [
+      'error',
+      {
+        ExportDeclaration: { consistent: true },
+        ImportDeclaration: { consistent: true },
+        ObjectExpression: { multiline: true },
+        ObjectPattern: { multiline: true },
+      },
+    ],
     'object-curly-spacing': ['error', 'always'],
     'object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
     'quote-props': ['error', 'consistent-as-needed'],
@@ -119,6 +148,18 @@ module.exports = {
         beforeClosing: 'never',
         beforeSelfClosing: 'always',
         closingSlash: 'never',
+      },
+    ],
+    'react/jsx-wrap-multilines': [
+      'error',
+      {
+        arrow: 'parens-new-line',
+        assignment: 'parens-new-line',
+        condition: 'parens-new-line',
+        declaration: 'parens-new-line',
+        logical: 'parens-new-line',
+        prop: 'parens-new-line',
+        return: 'parens-new-line',
       },
     ],
     'react/prop-types': 'off',
