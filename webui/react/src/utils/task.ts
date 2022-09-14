@@ -269,8 +269,8 @@ export const tensorBoardMatchesSource = (
   return false;
 };
 const commandStateSortValues: Record<CommandState, number> = {
-  [CommandState.Waiting]: 0,
-  [CommandState.Pending]: 1,
+  [CommandState.Pending]: 0,
+  [CommandState.Waiting]: 1,
   [CommandState.Assigned]: 2,
   [CommandState.Pulling]: 3,
   [CommandState.Starting]: 4,

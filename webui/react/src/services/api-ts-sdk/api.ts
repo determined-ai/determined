@@ -1069,7 +1069,7 @@ export interface V1AllocationReadyRequest {
 }
 
 /**
- * Response to IdleNotebookRequest.
+ * Response to AllocationReadyRequest.
  * @export
  * @interface V1AllocationReadyResponse
  */
@@ -1088,6 +1088,28 @@ export interface V1AllocationRendezvousInfoResponse {
      * @memberof V1AllocationRendezvousInfoResponse
      */
     rendezvousInfo: V1RendezvousInfo;
+}
+
+/**
+ * Mark the given task as waiting.
+ * @export
+ * @interface V1AllocationWaitingRequest
+ */
+export interface V1AllocationWaitingRequest {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1AllocationWaitingRequest
+     */
+    allocationId?: string;
+}
+
+/**
+ * Response to AllocationWaitingRequest.
+ * @export
+ * @interface V1AllocationWaitingResponse
+ */
+export interface V1AllocationWaitingResponse {
 }
 
 /**
@@ -12663,6 +12685,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Set allocation to waiting state.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1AllocationWaitingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationWaiting.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationWaiting.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/waiting`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AllocationWaitingRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -14332,6 +14400,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Set allocation to waiting state.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1AllocationWaitingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -15080,6 +15168,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Set allocation to waiting state.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1AllocationWaitingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
+            return InternalApiFp(configuration).allocationWaiting(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -15540,6 +15639,19 @@ export class InternalApi extends BaseAPI {
      */
     public allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
         return InternalApiFp(this.configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set allocation to waiting state.
+     * @param {string} allocationId The id of the allocation.
+     * @param {V1AllocationWaitingRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**

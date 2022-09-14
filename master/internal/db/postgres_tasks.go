@@ -15,10 +15,6 @@ import (
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/uptrace/bun"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -167,7 +163,7 @@ func (db *PgDB) StartAllocationSession(
 	}
 
 	query := `
-INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES 
+INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
 	(:allocation_id, :owner_id) RETURNING id`
 	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
 		return "", err
@@ -179,30 +175,6 @@ INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
 		return "", errors.Wrap(err, "failed to generate task authentication token")
 	}
 	return token, nil
-}
-
-// AllocationSessionByToken returns a task session given an authentication token.
-func (db *PgDB) AllocationSessionByToken(token string) (*model.AllocationSession, error) {
-	v2 := paseto.NewV2()
-
-	var session model.AllocationSession
-	err := v2.Verify(token, db.tokenKeys.PublicKey, &session, nil)
-	if err != nil {
-		log.WithError(err).Debug("failed to verify allocation_session token")
-		return nil, ErrNotFound
-	}
-
-	query := `SELECT * FROM allocation_sessions WHERE id=$1`
-	if err := db.query(query, &session, session.ID); errors.Cause(err) == ErrNotFound {
-		log.WithField("allocation_sessions.id", session.ID).Debug("allocation_session not found")
-		return nil, ErrNotFound
-	} else if err != nil {
-		log.WithError(err).WithField("allocation_sessions.id", session.ID).
-			Debug("failed to lookup allocation_session")
-		return nil, err
-	}
-
-	return &session, nil
 }
 
 // DeleteAllocationSession deletes the task session with the given AllocationID.
@@ -434,13 +406,4 @@ func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsRespon
 func (db *PgDB) MaxTerminationDelay() time.Duration {
 	// TODO: K8s logs can take a bit to get to us, so much so we should investigate.
 	return 5 * time.Second
-}
-
-// MetricsExist returns if validation or training metrics exist for given experiment ids.
-func MetricsExist(experimentIDs []int32) (bool, error) {
-	trialIDs := Bun().NewSelect().Table("trials").Column("id").Where(
-		"experiment_id IN (?)", bun.In(experimentIDs))
-	return Bun().NewSelect().Table("raw_steps", "raw_validations").Where(
-		"raw_steps.trial_id IN (?)", trialIDs).WhereOr(
-		"raw_validations.trial_id IN (?)", trialIDs).Exists(context.TODO())
 }

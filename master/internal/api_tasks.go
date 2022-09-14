@@ -52,6 +52,23 @@ func (a *apiServer) AllocationReady(
 	return &apiv1.AllocationReadyResponse{}, nil
 }
 
+func (a *apiServer) AllocationWaiting(
+	ctx context.Context, req *apiv1.AllocationWaitingRequest,
+) (*apiv1.AllocationWaitingResponse, error) {
+	resp, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(resp.Address(), task.AllocationWaiting{}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.AllocationWaitingResponse{}, nil
+}
+
 func (a *apiServer) AllocationAllGather(
 	ctx context.Context, req *apiv1.AllocationAllGatherRequest,
 ) (*apiv1.AllocationAllGatherResponse, error) {

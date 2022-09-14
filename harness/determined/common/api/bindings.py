@@ -668,6 +668,25 @@ class v1AllocationRendezvousInfoResponse:
             "rendezvousInfo": self.rendezvousInfo.to_json(),
         }
 
+class v1AllocationWaitingRequest:
+    def __init__(
+        self,
+        *,
+        allocationId: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationWaitingRequest":
+        return cls(
+            allocationId=obj.get("allocationId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId if self.allocationId is not None else None,
+        }
+
 class v1AwsCustomTag:
     def __init__(
         self,
@@ -6849,6 +6868,27 @@ def get_AllocationRendezvousInfo(
     if _resp.status_code == 200:
         return v1AllocationRendezvousInfoResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationRendezvousInfo", _resp)
+
+def post_AllocationWaiting(
+    session: "api.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationWaitingRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/waiting",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AllocationWaiting", _resp)
 
 def post_ArchiveExperiment(
     session: "api.Session",
