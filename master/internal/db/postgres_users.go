@@ -76,8 +76,28 @@ RETURNING id`)
 		}
 		return 0, errors.Wrapf(err, "error creating user %v", err)
 	}
-
 	return user.ID, nil
+}
+
+func addUserPersonalGroup(tx *sqlx.Tx, userID model.UserID) error {
+	query := `
+INSERT INTO groups(group_name, user_id) 
+SELECT username || 'DeterminedPersonalGroup' AS group_name, id AS user_id FROM users 
+WHERE id = $1`
+	if _, err := tx.Exec(query, userID); err != nil {
+		return errors.WithStack(err)
+	}
+
+	query = `
+INSERT INTO user_group_membership(user_id, group_id)
+SELECT id AS user_id, id AS group_id FROM groups 
+WHERE id = $1`
+	if _, err := tx.Exec(query, userID); err != nil {
+		return errors.WithStack(err)
+	}
+
+	fmt.Println("ADDED GROUP", userID)
+	return nil
 }
 
 func addAgentUserGroup(tx *sqlx.Tx, userID model.UserID, ug *model.AgentUserGroup) error {
@@ -110,6 +130,7 @@ func deleteAgentUserGroup(tx *sqlx.Tx, userID model.UserID) error {
 
 // AddUser creates a new user.
 func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error) {
+	fmt.Println("ADDING USER?!")
 	tx, err := db.sql.Beginx()
 	if err != nil {
 		return 0, errors.WithStack(err)
@@ -127,6 +148,9 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserI
 
 	userID, err := addUser(tx, user)
 	if err != nil {
+		return 0, err
+	}
+	if err := addUserPersonalGroup(tx, userID); err != nil {
 		return 0, err
 	}
 

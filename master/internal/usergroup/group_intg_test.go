@@ -87,7 +87,7 @@ func TestUserGroups(t *testing.T) {
 		require.NoError(t, err, "failed to search for groups that user blongs to")
 
 		index := groupsContain(groups, testGroup.ID)
-		require.Equal(t, 2, count, "group search returned wrong count")
+		require.Equal(t, 3, count, "group search returned wrong count")
 		require.NotEqual(t, -1, index, "Group user was added to not found when searching by user membership")
 	})
 
@@ -297,6 +297,8 @@ const (
 func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	_, err := pgDB.AddUser(&testUser, nil)
 	require.NoError(t, err, "failure creating user in setup")
+
+	// User personal group was created?
 
 	_, _, err = AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
 	require.NoError(t, err, "failure creating static test group")
