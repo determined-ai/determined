@@ -599,7 +599,7 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
 		case searcher.SearcherProgress:
-			err = e.searcher.SetCustomSearcherProgress(op.Progress)
+			err := e.searcher.SetCustomSearcherProgress(op.Progress)
 			if err != nil {
 				ctx.Respond(status.Error(codes.Internal, err.Error()))
 			}
