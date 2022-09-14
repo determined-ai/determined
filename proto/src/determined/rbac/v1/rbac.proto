@@ -22,7 +22,7 @@ message Role {
 // Permission represents an action a user can take in the system
 message Permission {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "is_global", "name" ] }
+    json_schema: { required: [ "id" ] }
   };
   // The id of the permission
   PermissionType id = 1;

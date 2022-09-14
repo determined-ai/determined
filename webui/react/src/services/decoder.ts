@@ -34,9 +34,9 @@ export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
 
 export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
   return {
-    globalOnly: permission.isGlobal,
+    globalOnly: !!permission.isGlobal,
     id: permission.id,
-    name: permission.name,
+    name: permission.name || '',
     workspaceOnly: !permission.isGlobal,
   };
 };
