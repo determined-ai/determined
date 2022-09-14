@@ -41,7 +41,7 @@ class TextualInversionTrainer:
         gradient_accumulation_steps: int = 4,
         optimizer_name: Literal["adam", "adamw", "sgd"] = "sgd",
         learning_rate: float = 5e-04,
-        optimizer_kwargs: Optional[dict] = None,
+        other_optimzer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
         checkpoint_freq: int = 100,
         metric_report_freq: int = 100,
@@ -55,11 +55,11 @@ class TextualInversionTrainer:
         flip_p: float = 0.5,
         center_crop: bool = False,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
-        inference_noise_scheduler: Literal["ddim", "lms-discrete", "pndm"] = "ddim",
+        inference_noise_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "ddim",
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
         generator_seed: int = 2147483647,
-        inference_noise_scheduler_kwargs: Optional[dict] = None,
+        other_inference_noise_scheduler_kwargs: Optional[dict] = None,
         latest_checkpoint: Optional[str] = None,
     ) -> None:
         self.use_auth_token = use_auth_token
@@ -89,7 +89,7 @@ class TextualInversionTrainer:
         ), "Optimizer must be one of 'adam', 'adamw' or 'sgd'."
         self.optimizer_name = optimizer_name
         self.learning_rate = learning_rate
-        self.optimizer_kwargs = optimizer_kwargs or {}
+        self.other_optimzer_kwargs = other_optimzer_kwargs or {}
         self.scale_lr = scale_lr
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
@@ -103,23 +103,24 @@ class TextualInversionTrainer:
         self.train_seed = train_seed
 
         # TODO: Fix inference_prompts default
-        inference_schedulers = {
+        self.inference_schedulers = {
             "ddim": DDIMScheduler,
             "lms-discrete": LMSDiscreteScheduler,
             "pndm": PNDMScheduler,
         }
-        assert inference_noise_scheduler in inference_schedulers, (
-            f"inference_noise_scheduler must be one {list(inference_schedulers.keys())},"
-            f" but got {inference_noise_scheduler}"
+        assert inference_noise_scheduler_name in self.inference_schedulers, (
+            f"inference_noise_scheduler must be one {list(self.inference_schedulers.keys())},"
+            f" but got {inference_noise_scheduler_name}"
         )
-        self.inference_noise_scheduler = inference_schedulers[inference_noise_scheduler]
+
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
+        self.inference_noise_scheduler_name = inference_noise_scheduler_name
         self.inference_prompts = inference_prompts or [f"a painting of a dog"]
         self.num_inference_steps = num_inference_steps
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
-        self.inference_noise_scheduler_kwargs = inference_noise_scheduler_kwargs or {}
+        self.other_inference_noise_scheduler_kwargs = other_inference_noise_scheduler_kwargs or {}
 
         self.logger = accelerate.logging.get_logger(__name__)
         self.steps_completed = 0
@@ -166,6 +167,7 @@ class TextualInversionTrainer:
         self._wrap_and_prepare()
 
         # Pipeline construction is deferred until the _save call
+        self.inference_noise_scheduler_kwargs = None
         self.pipeline = None
 
     def train(self) -> None:
@@ -256,8 +258,6 @@ class TextualInversionTrainer:
         if self.accelerator.sync_gradients:
             # An extra .module attr is needed due to the accelerator.prepare call.
             token_embeds = self.text_encoder.module.get_input_embeddings().weight.data
-            print(token_embeds.device)
-            print(self.original_embedding_tensors.device)
             token_embeds[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
@@ -333,7 +333,7 @@ class TextualInversionTrainer:
         for p_id, i_id in zip(self.placeholder_token_ids, initializer_token_ids):
             token_embeds[p_id] = token_embeds[i_id]
 
-        # Take a snapshot of the original embedding weights.  Used i    n the update step to ensure that
+        # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
         self.original_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
@@ -381,7 +381,7 @@ class TextualInversionTrainer:
         self.optimizer = optim_dict[self.optimizer_name](
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
-            **self.optimizer_kwargs,
+            **self.other_optimzer_kwargs,
         )
 
     def _build_train_noise_scheduler(self) -> None:
@@ -414,20 +414,15 @@ class TextualInversionTrainer:
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
                 with self.accelerator.local_main_process_first():
-                    print('Restoring checkpoint from path: "{}"'.format(path))
                     with open(path.joinpath("metadata.json"), "r") as f:
-                        metadata_dict = json.load(f)
-                    self.steps_completed = metadata_dict["steps_completed"]
-                    print("getting optimizer state")
+                        checkpoint_metadata_dict = json.load(f)
+                    self.steps_completed = checkpoint_metadata_dict["steps_completed"]
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     self.optimizer.load_state_dict(optimizer_state_dict)
-                    print("getting learned embeds")
                     learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
-                    print("learned embeds loaded")
-                    token_embeds = self.text_encoder.get_input_embeddings().weight.data
-                    print("got token_embeds")
+                    # An extra .module attr is needed due to the accelerator.prepare call.
+                    token_embeds = self.text_encoder.module.get_input_embeddings().weight.data
                     for idx, tensor in learned_embeds_dict.items():
-                        print("loading embeds")
                         token_embeds[idx] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
@@ -435,13 +430,17 @@ class TextualInversionTrainer:
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
         if self.accelerator.is_main_process:
-            checkpoint_metadata = {
+            checkpoint_metadata_dict = {
                 "steps_completed": self.steps_completed,
                 "initializer_tokens": self.initializer_tokens,
                 "placeholder_tokens": self.placeholder_tokens,
                 "placeholder_tokens_ids": self.placeholder_token_ids,
+                "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
+                "inference_noise_scheduler_name": self.inference_noise_scheduler_name,
+                "inference_noise_scheduler_kwargs": self.inference_noise_scheduler_kwargs,
             }
-            with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
+
+            with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 self._build_pipeline()
                 self._generate_and_write_imgs(path)
                 self._write_optimizer_state_dict_to_path(path)
@@ -469,17 +468,21 @@ class TextualInversionTrainer:
     def _build_pipeline(self) -> None:
         """Build the pipeline for the chief worker only."""
         if self.accelerator.is_main_process:
+            inference_noise_scheduler = self.inference_schedulers[
+                self.inference_noise_scheduler_name
+            ]
+            self.inference_noise_scheduler_kwargs = {
+                "beta_start": self.beta_start,
+                "beta_end": self.beta_end,
+                "beta_schedule": self.beta_schedule,
+                **self.other_inference_noise_scheduler_kwargs,
+            }
             self.pipeline = StableDiffusionPipeline(
                 text_encoder=self.accelerator.unwrap_model(self.text_encoder),
                 vae=self.vae,
                 unet=self.unet,
                 tokenizer=self.tokenizer,
-                scheduler=self.inference_noise_scheduler(
-                    beta_start=self.beta_start,
-                    beta_end=self.beta_end,
-                    beta_schedule=self.beta_schedule,
-                    **self.inference_noise_scheduler_kwargs,
-                ),
+                scheduler=inference_noise_scheduler(**self.inference_noise_scheduler_kwargs),
                 safety_checker=self.safety_checker,
                 feature_extractor=self.feature_extractor,
             ).to(self.accelerator.device)
