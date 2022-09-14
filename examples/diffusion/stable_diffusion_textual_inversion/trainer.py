@@ -419,8 +419,10 @@ class TextualInversionTrainer:
                 with self.accelerator.local_main_process_first():
                     with open(path.joinpath("metadata.json"), "r") as f:
                         checkpoint_metadata_dict = json.load(f)
-                    self.steps_completed = checkpoint_metadata_dict["steps_completed"]
-                    self.generated_imgs = torch.load(path.joinpath("generated_imgs.pt"))
+                        self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+                    # Only the main process needs the generated_imgs history.
+                    if self.accelerator.is_main_process:
+                        self.generated_imgs = torch.load(path.joinpath("generated_imgs.pt"))
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     self.optimizer.load_state_dict(optimizer_state_dict)
                     learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
