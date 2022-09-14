@@ -5,7 +5,7 @@ import EditableMetadata from './EditableMetadata';
 export default {
   component: EditableMetadata,
   parameters: { layout: 'centered' },
-  title: 'EditableMetadata',
+  title: 'Determined/EditableMetadata',
 };
 
 const metadata = { key: 'value', lorem: 'ipsum', test: 'component' };

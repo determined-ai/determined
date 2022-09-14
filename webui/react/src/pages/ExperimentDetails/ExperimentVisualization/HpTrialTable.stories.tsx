@@ -7,7 +7,7 @@ import HpTrialTable from './HpTrialTable';
 export default {
   component: HpTrialTable,
   parameters: { layout: 'padded' },
-  title: 'HpTrialTable',
+  title: 'Determined/HpTrialTable',
 };
 
 export const Default = (): React.ReactNode => (

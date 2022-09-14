@@ -11,7 +11,7 @@ export default {
     orientation: { control: 'inline-radio', options: Orientation },
   },
   component: Logo,
-  title: 'Logo',
+  title: 'Determined/Logo',
 } as ComponentMeta<typeof Logo>;
 
 export const Default: ComponentStory<typeof Logo> = (args) => (

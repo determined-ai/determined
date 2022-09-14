@@ -6,7 +6,7 @@ import TableBatch from './TableBatch';
 export default {
   component: TableBatch,
   parameters: { layout: 'padded' },
-  title: 'TableBatch',
+  title: 'Determined/TableBatch',
 } as Meta<typeof TableBatch>;
 
 const batchOptions = [

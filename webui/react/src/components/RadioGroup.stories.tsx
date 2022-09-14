@@ -5,7 +5,7 @@ import RadioGroup from './RadioGroup';
 export default {
   component: RadioGroup,
   parameters: { layout: 'centered' },
-  title: 'RadioGroup',
+  title: 'Determined/RadioGroup',
 };
 
 const DEFAULT_OPTIONS = [

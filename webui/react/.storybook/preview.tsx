@@ -100,4 +100,8 @@ export const decorators = [
     );
   },
 ];
-export const parameters = { layout: 'centered', viewport: { viewports: INITIAL_VIEWPORTS } };
+export const parameters = {
+  layout: 'centered',
+  options: { storySort: { order: [ 'Ant Design', 'Shared', 'Determined' ] } },
+  viewport: { viewports: INITIAL_VIEWPORTS },
+};

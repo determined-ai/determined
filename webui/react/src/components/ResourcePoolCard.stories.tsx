@@ -11,7 +11,7 @@ const rps = resourcePools as unknown as ResourcePool[];
 export default {
   argTypes: { pool: { control: { max: rps.length - 1, min: 0, step: 1, type: 'range' } } },
   component: ResourcePoolCard,
-  title: 'ResourcePoolCard',
+  title: 'Determined/ResourcePoolCard',
 } as Meta<typeof ResourcePoolCard>;
 
 type ResourcePoolCardProps = React.ComponentProps<typeof ResourcePoolCard>;

@@ -8,7 +8,7 @@ import useModalColumnsCustomize from './useModalColumnsCustomize';
 
 export default {
   component: useModalColumnsCustomize,
-  title: 'CustomizeColumnModal',
+  title: 'Determined/CustomizeColumnModal',
 };
 
 export const Default = (): React.ReactNode => {
@@ -20,7 +20,7 @@ export const Default = (): React.ReactNode => {
     return arr;
   }, []);
 
-  const { modalOpen } = useModalColumnsCustomize({
+  const { modalOpen, contextHolder } = useModalColumnsCustomize({
     columns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
   });
@@ -29,7 +29,12 @@ export const Default = (): React.ReactNode => {
     modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
   }, [modalOpen]);
 
-  return <Button onClick={openModal}>Columns</Button>;
+  return (
+    <>
+      {contextHolder}
+      <Button onClick={openModal}>Columns</Button>
+    </>
+  );
 };
 
 export const LongList = (): React.ReactNode => {
@@ -41,7 +46,7 @@ export const LongList = (): React.ReactNode => {
     return arr;
   }, []);
 
-  const { modalOpen } = useModalColumnsCustomize({
+  const { modalOpen, contextHolder } = useModalColumnsCustomize({
     columns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
   });
@@ -50,5 +55,10 @@ export const LongList = (): React.ReactNode => {
     modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
   }, [modalOpen]);
 
-  return <Button onClick={openModal}>Columns</Button>;
+  return (
+    <>
+      {contextHolder}
+      <Button onClick={openModal}>Columns</Button>
+    </>
+  );
 };

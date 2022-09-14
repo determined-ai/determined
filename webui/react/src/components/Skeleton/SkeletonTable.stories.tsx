@@ -6,7 +6,7 @@ import SkeletonTable from './SkeletonTable';
 export default {
   component: SkeletonTable,
   parameters: { layout: 'fullscreen' },
-  title: 'Skeleton/SkeletonTable',
+  title: 'Determined/Skeleton/SkeletonTable',
 } as Meta<typeof SkeletonTable>;
 
 export const Default = (): React.ReactNode => <SkeletonTable />;

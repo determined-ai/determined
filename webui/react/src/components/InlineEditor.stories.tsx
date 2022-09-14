@@ -8,7 +8,7 @@ import InlineEditor from './InlineEditor';
 export default {
   argTypes: { allowNewline: { description: 'allow newline (use [shift] + [enter])' } },
   component: InlineEditor,
-  title: 'InlineEditor',
+  title: 'Determined/InlineEditor',
 } as Meta<typeof InlineEditor>;
 
 export const Default: ComponentStory<typeof InlineEditor> = (args) => {

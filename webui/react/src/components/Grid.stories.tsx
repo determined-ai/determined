@@ -13,7 +13,7 @@ export default {
   },
   component: Grid,
   parameters: { layout: 'padded' },
-  title: 'Grid',
+  title: 'Determined/Grid',
 } as Meta<typeof Grid>;
 
 const GridElement: React.FC = () => {

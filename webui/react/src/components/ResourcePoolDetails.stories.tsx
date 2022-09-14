@@ -17,7 +17,7 @@ export default {
     visible: { control: { type: null } },
   },
   component: ResourcePoolDetails,
-  title: 'ResourcePoolDetails',
+  title: 'Determined/ResourcePoolDetails',
 } as Meta<typeof ResourcePoolDetails>;
 
 export const Default: Story<ResourcePoolDetailsProps & { poolNumber: number }> = (

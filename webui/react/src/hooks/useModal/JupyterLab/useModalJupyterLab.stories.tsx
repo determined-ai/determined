@@ -6,7 +6,7 @@ import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 
 export default {
   component: useModalJupyterLab,
-  title: 'useModalJupyterLab',
+  title: 'Determined/useModalJupyterLab',
 };
 
 const Container = () => {

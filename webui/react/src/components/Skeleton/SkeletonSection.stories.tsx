@@ -11,7 +11,7 @@ export default {
   },
   component: SkeletonSection,
   parameters: { layout: 'fullscreen' },
-  title: 'Skeleton/SkeletonSection',
+  title: 'Determined/Skeleton/SkeletonSection',
 } as Meta<typeof SkeletonSection>;
 
 export const Default = (): React.ReactNode => <SkeletonSection />;

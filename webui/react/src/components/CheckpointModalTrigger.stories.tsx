@@ -6,7 +6,7 @@ import { generateTestExperimentData } from 'storybook/shared/generateTestExperim
 
 export default {
   component: CheckpointModalTrigger,
-  title: 'CheckpointModalTrigger',
+  title: 'Determined/CheckpointModalTrigger',
 };
 
 const CheckpointModalTriggerContainer = () => {

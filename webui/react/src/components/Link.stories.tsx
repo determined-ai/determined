@@ -4,7 +4,7 @@ import Link from './Link';
 
 export default {
   component: Link,
-  title: 'Link',
+  title: 'Determined/Link',
 };
 
 export const Default = (): React.ReactNode => <Link path="test">Plain Link</Link>;

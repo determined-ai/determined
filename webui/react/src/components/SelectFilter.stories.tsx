@@ -9,7 +9,7 @@ const { Option } = Select;
 export default {
   argTypes: { count: { control: { max: 26, min: 0, step: 1, type: 'range' } } },
   component: SelectFilter,
-  title: 'SelectFilter',
+  title: 'Determined/SelectFilter',
 } as Meta<typeof SelectFilter>;
 
 type SelectFilterProps = React.ComponentProps<typeof SelectFilter>;

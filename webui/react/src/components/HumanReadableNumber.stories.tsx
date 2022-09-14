@@ -6,7 +6,7 @@ import HumanReadableNumber from './HumanReadableNumber';
 export default {
   component: HumanReadableNumber,
   parameters: { layout: 'centered' },
-  title: 'HumanReadableNumber',
+  title: 'Determined/HumanReadableNumber',
 } as ComponentMeta<typeof HumanReadableNumber>;
 
 export const Default = (): React.ReactNode => <HumanReadableNumber num={1} />;

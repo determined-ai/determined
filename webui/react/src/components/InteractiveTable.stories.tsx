@@ -13,7 +13,7 @@ export default {
   },
   component: InteractiveTable,
   parameters: { layout: 'padded' },
-  title: 'InteractiveTable',
+  title: 'Determined/InteractiveTable',
 } as Meta<typeof InteractiveTable>;
 
 const DEFAULT_COLUMN_WIDTH = 150;

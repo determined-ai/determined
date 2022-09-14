@@ -5,7 +5,7 @@ import GridListRadioGroup, { GridListView } from './GridListRadioGroup';
 export default {
   component: GridListRadioGroup,
   parameters: { layout: 'centered' },
-  title: 'GridListRadioGroup',
+  title: 'Determined/GridListRadioGroup',
 };
 
 export const Default = (): React.ReactNode => {

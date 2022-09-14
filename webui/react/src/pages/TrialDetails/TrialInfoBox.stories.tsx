@@ -14,7 +14,7 @@ import TrialInfoBox from './TrialInfoBox';
 
 export default {
   component: TrialInfoBox,
-  title: 'TrialInfoBox',
+  title: 'Determined/TrialInfoBox',
 };
 
 const sampleExperiment: ExperimentOld = generateOldExperiment(3);
@@ -72,6 +72,6 @@ const experimentDetails: ExperimentBase = {
   userId: 345,
 };
 
-export const state = (): React.ReactNode => (
+export const Default = (): React.ReactNode => (
   <TrialInfoBox experiment={experimentDetails} trial={trialDetails} />
 );

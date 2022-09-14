@@ -5,7 +5,7 @@ import Message, { MessageType } from './Message';
 
 export default {
   component: Message,
-  title: 'Message',
+  title: 'Shared/Message',
 } as Meta<typeof Message>;
 
 export const Default: ComponentStory<typeof Message> = (args) => (

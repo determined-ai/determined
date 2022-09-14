@@ -6,7 +6,7 @@ import MetricBadgeTag from './MetricBadgeTag';
 
 export default {
   component: MetricBadgeTag,
-  title: 'MetricBadgeTag',
+  title: 'Determined/MetricBadgeTag',
 };
 
 const trainingMetric: MetricName = {

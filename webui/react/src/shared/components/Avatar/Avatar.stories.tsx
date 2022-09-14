@@ -13,7 +13,7 @@ export default {
     size: { control: { type: 'inline-radio' } },
   },
   component: Avatar,
-  title: 'Avatar',
+  title: 'Shared/Avatar',
 } as Meta<typeof Avatar>;
 
 type AvatarProps = React.ComponentProps<typeof Avatar>

@@ -5,7 +5,7 @@ import StateSelectFilter from './StateSelectFilter';
 
 export default {
   component: StateSelectFilter,
-  title: 'StateSelectFilter',
+  title: 'Determined/StateSelectFilter',
 } as Meta<typeof StateSelectFilter>;
 
 export const Default = (): React.ReactNode => <StateSelectFilter />;

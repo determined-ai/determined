@@ -13,7 +13,7 @@ export default {
     type: { control: 'inline-radio', options: BadgeType },
   },
   component: BadgeTag,
-  title: 'BadgeTag',
+  title: 'Determined/BadgeTag',
 } as Meta<typeof BadgeTag>;
 
 export const Default: ComponentStory<typeof BadgeTag> = (args) => (

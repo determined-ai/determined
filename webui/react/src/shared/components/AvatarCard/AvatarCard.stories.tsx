@@ -15,7 +15,7 @@ export default {
     size: { control: { type: 'inline-radio' } },
   },
   component: AvatarCard,
-  title: 'Avatar Card',
+  title: 'Shared/Avatar Card',
 } as Meta<typeof AvatarCard>;
 
 type AvatarCardProps = React.ComponentProps<typeof AvatarCard>

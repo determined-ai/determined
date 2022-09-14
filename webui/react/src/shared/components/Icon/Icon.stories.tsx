@@ -49,7 +49,7 @@ export default {
     },
   },
   component: Icon,
-  title: 'Icon',
+  title: 'Shared/Icon',
 } as Meta<typeof Icon>;
 
 export const Default: ComponentStory<typeof Icon> = (args) => <Icon {...args} />;

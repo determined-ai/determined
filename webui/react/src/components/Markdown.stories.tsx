@@ -4,7 +4,7 @@ import Markdown from './Markdown';
 
 export default {
   component: Markdown,
-  title: 'Markdown',
+  title: 'Determined/Markdown',
 };
 
 const markdown = `# h1 Heading 8-)

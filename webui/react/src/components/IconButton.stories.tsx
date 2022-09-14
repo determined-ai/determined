@@ -4,16 +4,44 @@ import React from 'react';
 import IconButton from './IconButton';
 
 export default {
+  argTypes: {
+    icon: {
+      control: {
+        options: [ 'arrow-down',
+          'arrow-up',
+          'dai-logo',
+          'cluster',
+          'collapse',
+          'command',
+          'expand',
+          'experiment',
+          'grid',
+          'jupyter-lab',
+          'list',
+          'lock',
+          'notebook',
+          'overflow-horizontal',
+          'overflow-vertical',
+          'shell',
+          'star',
+          'tensor-board',
+          'tensorflow',
+          'user',
+          'user-small' ],
+        type: 'select',
+      },
+    },
+  },
   component: IconButton,
-  title: 'IconButton',
+  title: 'Determined/IconButton',
 } as Meta<typeof IconButton>;
 
-export const Default = (): React.ReactNode => <IconButton icon="checkmark" label="Okay" />;
-export const Custom: ComponentStory<typeof IconButton> = (args) => (
+export const Default: ComponentStory<typeof IconButton> = (args) => (
   <IconButton {...args} />
 );
 
-Custom.args = {
+Default.args = {
   icon: 'experiment',
+  iconSize: 'medium',
   label: 'Experiment',
 };

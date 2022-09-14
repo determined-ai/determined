@@ -6,7 +6,7 @@ import TaskBar from './TaskBar';
 
 export default {
   component: TaskBar,
-  title: 'Task Bar',
+  title: 'Determined/Task Bar',
 };
 
 export const Default = (): React.ReactNode => (

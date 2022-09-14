@@ -6,7 +6,7 @@ import UserSelectFilter from './UserSelectFilter';
 
 export default {
   component: UserSelectFilter,
-  title: 'UserSelectFilter',
+  title: 'Determined/UserSelectFilter',
 };
 
 interface Props {

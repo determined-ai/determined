@@ -6,7 +6,7 @@ import NavigationSideBar from './NavigationSideBar';
 
 export default {
   component: NavigationSideBar,
-  title: 'NavigationSideBar',
+  title: 'Determined/NavigationSideBar',
 };
 
 const NavigationLoggedIn = () => {

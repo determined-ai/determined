@@ -7,7 +7,7 @@ import ActionSheet from './ActionSheet';
 export default {
   component: ActionSheet,
   parameters: { layout: 'fullscreen' },
-  title: 'ActionSheet',
+  title: 'Determined/ActionSheet',
 };
 
 const ActionSheetContainer = () => {

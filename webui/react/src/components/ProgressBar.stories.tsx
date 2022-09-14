@@ -8,10 +8,10 @@ import ProgressBar from './ProgressBar';
 export default {
   argTypes: {
     percent: { control: { max: 100, min: 0, step: 1, type: 'range' } },
-    state: { control: { options: { ...RunState, ...CommandState }, type: 'radio' } },
+    state: { control: { options: { ...RunState, ...CommandState }, type: 'select' } },
   },
   component: ProgressBar,
-  title: 'ProgressBar',
+  title: 'Determined/ProgressBar',
 } as Meta<typeof ProgressBar>;
 
 export const Default: ComponentStory<typeof ProgressBar> = (args) => (

@@ -12,7 +12,7 @@ export default {
     size: { control: { options: ShirtSize, type: 'select' } },
   },
   component: SlotAllocationBar,
-  title: 'SlotAllocationBar',
+  title: 'Determined/SlotAllocationBar',
 } as Meta<typeof SlotAllocationBar>;
 
 export const Default: ComponentStory<typeof SlotAllocationBar> = (args) => (

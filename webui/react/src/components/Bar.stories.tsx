@@ -4,7 +4,7 @@ import Bar, { Props } from './Bar';
 
 export default {
   component: Bar,
-  title: 'Bar',
+  title: 'Determined/Bar',
 };
 
 const Wrapper: React.FC<Props> = (props) => (

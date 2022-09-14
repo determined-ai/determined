@@ -7,7 +7,7 @@ import ResponsiveTable from './ResponsiveTable';
 export default {
   component: ResponsiveTable,
   parameters: { layout: 'padded' },
-  title: 'ResponsiveTable',
+  title: 'Determined/ResponsiveTable',
 };
 
 const columns = new Array(20).fill(null).map(() => {
