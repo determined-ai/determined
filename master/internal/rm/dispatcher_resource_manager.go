@@ -209,10 +209,7 @@ type dispatcherResourceManager struct {
 	hpcResourcesManifest     *launcher.Manifest
 	reqList                  *taskList
 	groups                   map[*actor.Ref]*group
-	addrToResourcesID        map[*actor.Ref]sproto.ResourcesID
-	resourcesIDtoAddr        map[sproto.ResourcesID]*actor.Ref
 	dispatchIDToAllocationID map[string]model.AllocationID
-	allocationIDToDispatchID map[model.AllocationID]string
 	slotsUsedPerGroup        map[*group]int
 	masterTLSConfig          model.TLSClientConfig
 	loggingConfig            model.LoggingConfig
@@ -260,10 +257,7 @@ func newDispatcherResourceManager(
 		hpcResourcesManifest:     hpcResourcesManifest,
 		reqList:                  newTaskList(),
 		groups:                   make(map[*actor.Ref]*group),
-		addrToResourcesID:        make(map[*actor.Ref]sproto.ResourcesID),
-		resourcesIDtoAddr:        make(map[sproto.ResourcesID]*actor.Ref),
 		dispatchIDToAllocationID: make(map[string]model.AllocationID),
-		allocationIDToDispatchID: make(map[model.AllocationID]string),
 		slotsUsedPerGroup:        make(map[*group]int),
 
 		masterTLSConfig: masterTLSConfig,
@@ -523,7 +517,6 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 		ctx.Log().Info(fmt.Sprintf("DispatchID is %s", dispatchID))
 		m.dispatchIDToAllocationID[dispatchID] = req.AllocationID
-		m.allocationIDToDispatchID[req.AllocationID] = dispatchID
 		if err := db.InsertDispatch(context.TODO(), &db.Dispatch{
 			DispatchID:       dispatchID,
 			ResourceID:       msg.ResourcesID,
@@ -691,11 +684,8 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			}
 		}
 
-		// Remove the dispatch from mapping tables and DB.
-		delete(m.addrToResourcesID, m.resourcesIDtoAddr[rID])
-		delete(m.resourcesIDtoAddr, rID)
+		// Remove the dispatch from mapping tables.
 		delete(m.dispatchIDToAllocationID, msg.DispatchID)
-		delete(m.allocationIDToDispatchID, allocationID)
 
 	case sproto.SetGroupMaxSlots:
 		m.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
@@ -1296,8 +1286,6 @@ func (m *dispatcherResourceManager) assignResources(
 			defaultProxyIface:      m.config.ResolveProxyNetworkInterface(req.ResourcePool),
 		},
 	}
-	m.addrToResourcesID[req.AllocationRef] = rID
-	m.resourcesIDtoAddr[rID] = req.AllocationRef
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
 	m.reqList.SetAllocationsRaw(req.AllocationRef, &assigned)
@@ -1312,9 +1300,6 @@ func (m *dispatcherResourceManager) assignResources(
 func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	m.reqList.RemoveTaskByHandler(handler)
-
-	delete(m.resourcesIDtoAddr, m.addrToResourcesID[handler])
-	delete(m.addrToResourcesID, handler)
 
 	if req, ok := m.reqList.GetAllocationByHandler(handler); ok {
 		if group := m.groups[handler]; group != nil {

@@ -8,7 +8,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -352,8 +351,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 		hpcResourcesManifest     *launcher.Manifest
 		reqList                  *taskList
 		groups                   map[*actor.Ref]*group
-		addrToResourcesID        map[*actor.Ref]sproto.ResourcesID
-		resourcesIDToAddr        map[sproto.ResourcesID]*actor.Ref
 		slotsUsedPerGroup        map[*group]int
 		dispatchIDToAllocationID map[string]model.AllocationID
 		masterTLSConfig          model.TLSClientConfig
@@ -451,8 +448,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 				hpcResourcesManifest:     tt.fields.hpcResourcesManifest,
 				reqList:                  tt.fields.reqList,
 				groups:                   tt.fields.groups,
-				addrToResourcesID:        tt.fields.addrToResourcesID,
-				resourcesIDtoAddr:        tt.fields.resourcesIDToAddr,
 				slotsUsedPerGroup:        tt.fields.slotsUsedPerGroup,
 				dispatchIDToAllocationID: tt.fields.dispatchIDToAllocationID,
 				masterTLSConfig:          tt.fields.masterTLSConfig,
