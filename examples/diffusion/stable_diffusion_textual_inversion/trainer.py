@@ -253,15 +253,13 @@ class TextualInversionTrainer:
         # out their gradients, as L2 regularization (for instance) will still modify weights whose
         # gradient is zero. See link below for a discussion:
         # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
-        last_embedding = (
-            self.text_encoder.module.get_input_embeddings().weight.data[-1].detach().clone()
-        )
+        # An extra .module attr may be needed due to the accelerator.prepare call.
         self.optimizer.step()
         # Only overwrite after the step has actually been taken:
         if self.accelerator.sync_gradients:
             # An extra .module attr is needed due to the accelerator.prepare call.
-            token_embeds = self.text_encoder.module.get_input_embeddings().weight.data
-            token_embeds[
+            token_embeddings = self._get_token_embeddings()
+            token_embeddings[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
         self.optimizer.zero_grad()
@@ -332,9 +330,9 @@ class TextualInversionTrainer:
         # Extend the size of the self.text_encoder to account for the new placeholder_tokens.
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
         # Initialize the placeholder vectors to coincide with their initializer vectors.
-        token_embeds = self.text_encoder.get_input_embeddings().weight.data
+        token_embeddings = self._get_token_embeddings()
         for p_id, i_id in zip(self.placeholder_token_ids, initializer_token_ids):
-            token_embeds[p_id] = token_embeds[i_id]
+            token_embeddings[p_id] = token_embeddings[i_id]
 
         # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
@@ -344,7 +342,10 @@ class TextualInversionTrainer:
             invert=True,
         )
         self.original_embedding_tensors = (
-            token_embeds[self.original_embedding_idxs].detach().clone().to(self.accelerator.device)
+            token_embeddings[self.original_embedding_idxs]
+            .detach()
+            .clone()
+            .to(self.accelerator.device)
         )
 
     def _freeze_layers(self) -> None:
@@ -426,10 +427,9 @@ class TextualInversionTrainer:
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     self.optimizer.load_state_dict(optimizer_state_dict)
                     learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
-                    # An extra .module attr is needed due to the accelerator.prepare call.
-                    token_embeds = self.text_encoder.module.get_input_embeddings().weight.data
+                    token_embeddings = self._get_token_embeddings()
                     for idx, tensor in learned_embeds_dict.items():
-                        token_embeds[idx] = tensor
+                        token_embeddings[idx] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
         """Checkpoints the training state and pipeline."""
@@ -545,3 +545,13 @@ class TextualInversionTrainer:
                 steps_completed=self.steps_completed,
                 metrics={"loss": self.last_mean_loss},
             )
+
+    def _get_token_embeddings(self) -> torch.Tensor:
+        """Returns the tensor of token embeddings, accounting for the possible insertion of a
+        .module attr insertion due to the .prepare() call.
+        """
+        try:
+            token_embeddings = self.text_encoder.module.get_input_embeddings().weight.data
+        except AttributeError:
+            token_embeddings = self.text_encoder.get_input_embeddings().weight.data
+        return token_embeddings
