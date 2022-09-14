@@ -1312,7 +1312,7 @@ jobs:
   build-storybook:
     docker:
       - image: cimg/node:16.14.2
-    resource_class: medium+
+    resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
