@@ -1,3 +1,7 @@
 build
 .vscode
-./src/services/api-ts-sdk/*
+src/serviceWorker.ts
+src/services/api-ts-sdk/
+!.eslintrc.js
+!.stylelintrc.js
+node_modules
