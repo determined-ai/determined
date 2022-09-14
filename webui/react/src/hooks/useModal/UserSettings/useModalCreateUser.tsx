@@ -187,7 +187,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel]
+    [form, onClose, user, handleCancel],
   );
 
   const modalOpen = useCallback(
@@ -211,7 +211,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
       });
     },
-    [form, handleCancel, handleOk, openOrUpdate, info, user, groups]
+    [form, handleCancel, handleOk, openOrUpdate, info, user, groups],
   );
 
   return { modalOpen, ...modalHook };

@@ -30,7 +30,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
       const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
       onChange(singleValue);
     },
-    [onChange]
+    [onChange],
   );
 
   const options = useMemo(() => {
@@ -45,7 +45,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
       list.push(
         <Option key={authUser.id} value={authUser.id}>
           {getDisplayName(authUser)}
-        </Option>
+        </Option>,
       );
     }
 

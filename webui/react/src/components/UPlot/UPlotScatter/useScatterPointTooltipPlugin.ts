@@ -128,7 +128,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
 
       uPlotRef.current.previousDataIndex = uPlotRef.current.dataIndex;
     },
-    [props.labels, props.offsetX, props.offsetY]
+    [props.labels, props.offsetX, props.offsetY],
   );
 
   const plugin = useMemo(
@@ -156,7 +156,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
         },
       },
     }),
-    [hideTooltip, setTooltip]
+    [hideTooltip, setTooltip],
   );
 
   return plugin;

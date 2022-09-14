@@ -193,7 +193,7 @@ const getNewQueryPath = (
   config: SettingsConfig,
   basePath: string,
   currentQuery: string,
-  newQuery: string
+  newQuery: string,
 ): string => {
   // Strip out existing config settings from the current query.
   const keyMap = getConfigKeyMap(config);
@@ -247,7 +247,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         return acc;
       }, [] as string[]);
     },
-    [config.settings, settings]
+    [config.settings, settings],
   );
 
   const updateSettings = useCallback(
@@ -304,7 +304,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
           internalSettings: {} as Partial<T>,
           querySettings: {} as Partial<T>,
           updates: [] as UserSettingUpdate[],
-        }
+        },
       );
 
       // Update user settings via API.
@@ -332,7 +332,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         type: push ? PathChangeType.Push : PathChangeType.Replace,
       });
     },
-    [location.pathname, config.applicableRoutespace, configMap, user?.id, storage]
+    [location.pathname, config.applicableRoutespace, configMap, user?.id, storage],
   );
 
   const resetSettings = useCallback(
@@ -345,7 +345,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
       await updateSettings(newSettings);
     },
-    [config.settings, updateSettings]
+    [config.settings, updateSettings],
   );
 
   const decodeUserSettings = useCallback(() => {

@@ -46,12 +46,12 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
     MetricType.System,
     settings.name,
     settings.agentId,
-    settings.gpuUuid
+    settings.gpuUuid,
   );
 
   const options = useMemo(
     () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
-    [getOptionsForMetrics, settings.name, systemMetrics.names]
+    [getOptionsForMetrics, settings.name, systemMetrics.names],
   );
 
   useEffect(() => {

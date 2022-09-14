@@ -141,7 +141,7 @@ describe('sort utility', () => {
     tests.forEach((t) => {
       it('should sort latest first', () => {
         expect(sorters.sortVersions(t.input.map(stringToVersion))).toStrictEqual(
-          t.output.map(stringToVersion)
+          t.output.map(stringToVersion),
         );
       });
     });

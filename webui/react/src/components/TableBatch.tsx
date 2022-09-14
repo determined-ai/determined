@@ -50,7 +50,7 @@ function TableBatch<T extends string>({
 
       if (action) onAction?.(action as T);
     },
-    [onAction]
+    [onAction],
   );
 
   const handleClear = useCallback(() => {

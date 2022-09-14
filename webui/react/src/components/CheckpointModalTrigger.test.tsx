@@ -39,7 +39,7 @@ const setup = async () => {
   render(
     <StoreProvider>
       <ModalTrigger />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   await user.click(screen.getByRole('button'));

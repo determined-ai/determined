@@ -38,7 +38,7 @@ export const ClusterOverallStats: React.FC = () => {
               {overview[resType].total - overview[resType].available}
               <small>/ {maxTotalSlots[resType]}</small>
             </OverviewStats>
-          ) : null
+          ) : null,
         )}
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">

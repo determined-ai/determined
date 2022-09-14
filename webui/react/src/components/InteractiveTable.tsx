@@ -331,7 +331,7 @@ const InteractiveTable: InteractiveTable = ({
       columns
         ?.map((col) => ({ [col.dataIndex as string]: col }))
         .reduce((a, b) => ({ ...a, ...b })),
-    [columns]
+    [columns],
   ) as ColumnDefs<string, UnknownRecord>;
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -364,7 +364,7 @@ const InteractiveTable: InteractiveTable = ({
       }
       return newWidths.map(Math.round);
     },
-    [pageWidth]
+    [pageWidth],
   );
 
   useLayoutEffect(() => {
@@ -400,7 +400,7 @@ const InteractiveTable: InteractiveTable = ({
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [settings, updateSettings, columnDefs]
+    [settings, updateSettings, columnDefs],
   );
 
   const moveColumn = useCallback(
@@ -413,7 +413,7 @@ const InteractiveTable: InteractiveTable = ({
       reorderedWidths.splice(toIndex, 0, width);
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
     },
-    [settings.columns, settings.columnWidths, updateSettings]
+    [settings.columns, settings.columnWidths, updateSettings],
   );
 
   const handleResize = useCallback(
@@ -425,12 +425,12 @@ const InteractiveTable: InteractiveTable = ({
           let targetWidths;
           if (x < minWidth) {
             targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              prevWidthIndex === resizeIndex ? minWidth : prevWidth
+              prevWidthIndex === resizeIndex ? minWidth : prevWidth,
             );
           } else {
             const newWidth = x;
             targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              prevWidthIndex === resizeIndex ? newWidth : prevWidth
+              prevWidthIndex === resizeIndex ? newWidth : prevWidth,
             );
           }
 
@@ -445,14 +445,14 @@ const InteractiveTable: InteractiveTable = ({
           if (shortage > 0) {
             const compensatingPortion = shortage / (prevWidths.length - 1);
             targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
-              targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion
+              targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion,
             );
           }
           return { widths: targetWidths, ...rest };
         });
       });
     },
-    [settings.columns, pageWidth, columnDefs]
+    [settings.columns, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
@@ -468,7 +468,7 @@ const InteractiveTable: InteractiveTable = ({
           return { minX, widths, ...rest };
         });
       },
-    [setWidthData, settings.columns, columnDefs]
+    [setWidthData, settings.columns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -505,7 +505,7 @@ const InteractiveTable: InteractiveTable = ({
       handleResizeStart,
       dragState,
       isResizing,
-    ]
+    ],
   );
 
   const renderColumns = useMemo(() => {

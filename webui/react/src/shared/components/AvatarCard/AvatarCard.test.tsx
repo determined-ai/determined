@@ -35,14 +35,14 @@ describe('AvatarCard', () => {
     it('should be light mode color', () => {
       const { view } = setup({ darkLight: DarkLight.Light, displayName: 'Admin' });
       expect(view.container.querySelector('#avatar')).toHaveStyle(
-        'background-color: hsl(290, 63%, 60%)'
+        'background-color: hsl(290, 63%, 60%)',
       );
     });
 
     it('should be dark mode color', () => {
       const { view } = setup({ darkLight: DarkLight.Dark, displayName: 'Admin' });
       expect(view.container.querySelector('#avatar')).toHaveStyle(
-        'background-color: hsl(290, 63%, 38%)'
+        'background-color: hsl(290, 63%, 38%)',
       );
     });
   });

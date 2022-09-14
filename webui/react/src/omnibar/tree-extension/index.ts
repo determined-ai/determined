@@ -80,7 +80,7 @@ export const extension = async (input: string): Promise<Children> => {
 export const onAction = async (
   inputEl: HTMLInputElement,
   item: TreeNode,
-  query: (inputEl: string) => void
+  query: (inputEl: string) => void,
 ): Promise<void> => {
   const { path } = await parseInput(inputEl.value, root);
   // update the omnibar text to reflect the current path

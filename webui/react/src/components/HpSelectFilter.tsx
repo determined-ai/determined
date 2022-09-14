@@ -51,7 +51,7 @@ const HpSelectFilter: React.FC<Props> = ({
         onChange(newValue as SelectValue, option);
       }
     },
-    [onChange, values]
+    [onChange, values],
   );
 
   const handleDeselect = useCallback(
@@ -63,7 +63,7 @@ const HpSelectFilter: React.FC<Props> = ({
 
       onChange(newValue as SelectValue, option);
     },
-    [onChange, values]
+    [onChange, values],
   );
 
   return (

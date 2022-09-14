@@ -43,7 +43,7 @@ export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
  */
 export const maxClusterSlotCapacity = (
   pools: ResourcePool[],
-  agents: Agent[]
+  agents: Agent[],
 ): { [key in ResourceType]: number } => {
   const allPoolsStatic = pools.reduce((acc, pool) => {
     return acc && pool.type === V1ResourcePoolType.STATIC;
@@ -59,7 +59,7 @@ export const maxClusterSlotCapacity = (
         });
         return acc;
       },
-      { ALL: 0 } as { [key in ResourceType]: number }
+      { ALL: 0 } as { [key in ResourceType]: number },
     );
   } else {
     return pools.reduce(
@@ -70,7 +70,7 @@ export const maxClusterSlotCapacity = (
         acc[ResourceType.ALL] += maxPoolSlots;
         return acc;
       },
-      { ALL: 0 } as { [key in ResourceType]: number }
+      { ALL: 0 } as { [key in ResourceType]: number },
     );
   }
 };
@@ -78,13 +78,13 @@ export const maxClusterSlotCapacity = (
 export const clusterStatusText = (
   overview: Overview,
   pools: ResourcePool[],
-  agents: Agent[]
+  agents: Agent[],
 ): string | undefined => {
   if (overview[ResourceType.ALL].allocation === 0) return undefined;
   const totalSlots = maxClusterSlotCapacity(pools, agents)[ResourceType.ALL];
   if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
   return `${percent(
-    (overview[ResourceType.ALL].total - overview[ResourceType.ALL].available) / totalSlots
+    (overview[ResourceType.ALL].total - overview[ResourceType.ALL].available) / totalSlots,
   )}%`;
 };
 

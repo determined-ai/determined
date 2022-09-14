@@ -73,7 +73,7 @@ export const flattenObject = <T = Primitive>(
     continueFn?: (value: unknown) => boolean;
     delimiter?: string;
     keys?: RecordKey[];
-  }
+  },
 ): Record<RecordKey, T> => {
   const continueFn = options?.continueFn ?? isObject;
   const delimiter = options?.delimiter ?? '.';
@@ -93,7 +93,7 @@ export const flattenObject = <T = Primitive>(
 
 export const unflattenObject = <T = unknown>(
   object: Record<RecordKey, T>,
-  delimiter = '.'
+  delimiter = '.',
 ): UnknownRecord => {
   const unflattened: UnknownRecord = {};
   const regexSafeDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

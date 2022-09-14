@@ -29,7 +29,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
       if (sheetRef.current?.contains(e.target as HTMLElement)) return;
       if (onCancel) onCancel();
     },
-    [onCancel]
+    [onCancel],
   );
 
   const handleCancelClick = useCallback(() => {

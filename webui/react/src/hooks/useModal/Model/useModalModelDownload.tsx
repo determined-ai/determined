@@ -46,14 +46,14 @@ const useModalModelDownload = ({ onClose }: Props = {}): ModalHooks => {
         title: 'Download',
       };
     },
-    [getModalContent]
+    [getModalContent],
   );
 
   const modalOpen = useCallback(
     (version: ModelVersion) => {
       openOrUpdate(getModalProps(version));
     },
-    [getModalProps, openOrUpdate]
+    [getModalProps, openOrUpdate],
   );
 
   return { modalOpen, ...modalHook };

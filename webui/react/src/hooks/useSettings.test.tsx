@@ -231,7 +231,7 @@ describe('useSettings', () => {
           'numberArray=0&numberArray=100&numberArray=-5280',
           'string=Hello%20World',
           'stringArray=abc&stringArray=def&stringArray=ghi',
-        ].join('&')
+        ].join('&'),
       );
     });
   });
@@ -263,7 +263,7 @@ describe('useSettings', () => {
     extraConfig.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof ExtraSettings;
       expect(extraResult.current.settings[settingsKey]).toStrictEqual(
-        newExtraSettings[settingsKey]
+        newExtraSettings[settingsKey],
       );
     });
 
@@ -275,7 +275,7 @@ describe('useSettings', () => {
         'numberArray=0&numberArray=100&numberArray=-5280',
         'string=Hello%20World',
         'stringArray=abc&stringArray=def&stringArray=ghi',
-      ].join('&')
+      ].join('&'),
     );
 
     expect(history.location.search).toContain('extra=fancy');
@@ -297,7 +297,7 @@ describe('useSettings', () => {
     expect(result.current.settings.boolean).toBe(newQueryParams.boolean);
     expect(result.current.settings.number).toBe(newQueryParams.number);
     expect(result.current.settings.string).toBe(
-      config.settings.find((setting) => setting.key === 'string')?.defaultValue
+      config.settings.find((setting) => setting.key === 'string')?.defaultValue,
     );
     expect(extraResult.current.settings.extra).toBe(newQueryParams.extra);
 

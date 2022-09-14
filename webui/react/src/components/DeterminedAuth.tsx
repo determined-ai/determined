@@ -42,7 +42,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
             password: creds.password || '',
             username: creds.username || '',
           },
-          { signal: canceler.signal }
+          { signal: canceler.signal },
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
         storeDispatch({
@@ -67,7 +67,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setCanSubmit(true);
       }
     },
-    [canceler, storeDispatch]
+    [canceler, storeDispatch],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

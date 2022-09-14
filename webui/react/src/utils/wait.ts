@@ -28,7 +28,7 @@ export const openCommand = (command: CommandTask): void => {
   window.open(
     process.env.PUBLIC_URL + paths.interactive(command),
     '_blank',
-    windowOpenFeatures.join(',')
+    windowOpenFeatures.join(','),
   );
 };
 

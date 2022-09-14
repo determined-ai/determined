@@ -188,7 +188,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       const filter = isValidFilter ? newFilter : undefined;
       updateSettings({ filter, tableOffset: 0 });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleTableChange = useCallback(
@@ -205,7 +205,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       });
     },
-    [columns, updateSettings]
+    [columns, updateSettings],
   );
 
   const options = (
@@ -236,7 +236,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             },
-            workloadCount
+            workloadCount,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="batchNum"

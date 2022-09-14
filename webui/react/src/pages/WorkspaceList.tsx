@@ -76,7 +76,7 @@ const WorkspaceList: React.FC = () => {
           sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
           users: settings.user,
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setTotal((response.pagination.total ?? 1) - 1); // -1 because we do not display immutable ws
       setWorkspaces((prev) => {
@@ -108,7 +108,7 @@ const WorkspaceList: React.FC = () => {
     (value) => {
       updateSettings({ whose: value });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleSortSelect = useCallback(
@@ -118,14 +118,14 @@ const WorkspaceList: React.FC = () => {
         sortKey: value,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleViewChange = useCallback(
     (value: GridListView) => {
       updateSettings({ view: value });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   useEffect(() => {
@@ -232,7 +232,7 @@ const WorkspaceList: React.FC = () => {
         columnWidths: newColumnWidths,
       });
     },
-    [settings, updateSettings]
+    [settings, updateSettings],
   );
 
   const actionDropdown = useCallback(
@@ -244,7 +244,7 @@ const WorkspaceList: React.FC = () => {
         {children}
       </WorkspaceActionDropdown>
     ),
-    [fetchWorkspaces]
+    [fetchWorkspaces],
   );
 
   const workspacesList = useMemo(() => {
@@ -274,7 +274,7 @@ const WorkspaceList: React.FC = () => {
                 limit: settings.tableLimit,
                 offset: settings.tableOffset,
               },
-              total
+              total,
             )}
             rowKey="id"
             settings={settings}

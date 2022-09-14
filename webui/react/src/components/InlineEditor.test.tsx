@@ -10,7 +10,7 @@ const setup = (
     onSaveReturnsError: false,
     pattern: new RegExp(''),
     value: 'before',
-  }
+  },
 ) => {
   const user = userEvent.setup();
   const onSave = onSaveReturnsError
@@ -24,7 +24,7 @@ const setup = (
       value={value}
       onCancel={onCancel}
       onSave={onSave}
-    />
+    />,
   );
 
   const waitForSpinnerToDisappear = async () => {

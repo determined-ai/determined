@@ -98,7 +98,7 @@ const useModalColumnsCustomize = ({
         </span>
       );
     },
-    [searchTerm]
+    [searchTerm],
   );
 
   const renderRow = useCallback(
@@ -109,7 +109,7 @@ const useModalColumnsCustomize = ({
         </li>
       );
     },
-    [renderColumnName]
+    [renderColumnName],
   );
 
   const switchRowOrder = useCallback(
@@ -118,7 +118,7 @@ const useModalColumnsCustomize = ({
         const updatedVisibleColumns = [...visibleColumns];
         const columnIndex = updatedVisibleColumns.findIndex((columnName) => columnName === column);
         const newNeighborColumnIndex = updatedVisibleColumns.findIndex(
-          (columnName) => columnName === newNeighborColumn
+          (columnName) => columnName === newNeighborColumn,
         );
         updatedVisibleColumns.splice(columnIndex, 1);
         updatedVisibleColumns.splice(newNeighborColumnIndex, 0, column);
@@ -126,7 +126,7 @@ const useModalColumnsCustomize = ({
       }
       return;
     },
-    [visibleColumns]
+    [visibleColumns],
   );
 
   const renderDraggableRow = useCallback(
@@ -142,7 +142,7 @@ const useModalColumnsCustomize = ({
         </DraggableListItem>
       );
     },
-    [renderColumnName]
+    [renderColumnName],
   );
 
   const renderHiddenRow = useCallback(
@@ -150,7 +150,7 @@ const useModalColumnsCustomize = ({
       const row = filteredHiddenColumns[index];
       return renderRow(row, style, () => makeVisible(row));
     },
-    [filteredHiddenColumns, makeVisible, renderRow]
+    [filteredHiddenColumns, makeVisible, renderRow],
   );
 
   const renderVisibleRow = useCallback(
@@ -158,7 +158,7 @@ const useModalColumnsCustomize = ({
       const row = filteredVisibleColumns[index];
       return renderDraggableRow(row, index, style, () => makeHidden(row), switchRowOrder);
     },
-    [filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder]
+    [filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder],
   );
 
   const modalContent = useMemo((): React.ReactNode => {
@@ -238,7 +238,7 @@ const useModalColumnsCustomize = ({
       setVisibleColumns(initialVisibleColumns ?? defaultVisibleColumns);
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
-    [defaultVisibleColumns, modalProps, openOrUpdate]
+    [defaultVisibleColumns, modalProps, openOrUpdate],
   );
 
   /**

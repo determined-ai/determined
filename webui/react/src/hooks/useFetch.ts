@@ -24,7 +24,7 @@ export const useFetchActiveExperiments = (canceler: AbortController): (() => Pro
     try {
       const response = await getExperiments(
         { limit: -2, states: activeRunStates },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       storeDispatch({
         type: StoreAction.SetActiveExperiments,
@@ -51,7 +51,7 @@ export const useFetchAgents = (canceler: AbortController): (() => Promise<void>)
       storeDispatch({ type: StoreAction.SetAgents, value: response });
       updateFaviconType(
         cluster[ResourceType.ALL].allocation !== 0,
-        info.branding || BrandingType.Determined
+        info.branding || BrandingType.Determined,
       );
     } catch (e) {
       handleError(e);
@@ -130,7 +130,7 @@ export const useFetchPinnedWorkspaces = (canceler: AbortController): (() => Prom
     try {
       const pinnedWorkspaces = await getWorkspaces(
         { limit: 0, pinned: true },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       storeDispatch({ type: StoreAction.SetPinnedWorkspaces, value: pinnedWorkspaces.workspaces });
     } catch (e) {

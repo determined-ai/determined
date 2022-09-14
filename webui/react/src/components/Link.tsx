@@ -37,7 +37,7 @@ const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) =
     (event: MouseEvent) => {
       handlePath(event, { external, onClick, path: props.path, popout });
     },
-    [onClick, popout, props.path, external]
+    [onClick, popout, props.path, external],
   );
 
   if (props.disabled) {

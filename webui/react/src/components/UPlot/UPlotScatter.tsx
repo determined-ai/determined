@@ -59,7 +59,7 @@ const UPlotScatter: React.FC<Props> = ({
             const seriesData = (fillData || []) as unknown as UPlotData[];
             return (
               seriesData.map((value) =>
-                getColor(value, minValue, maxValue, colorScaleDistribution)
+                getColor(value, minValue, maxValue, colorScaleDistribution),
               ) || []
             );
           },
@@ -88,7 +88,7 @@ const UPlotScatter: React.FC<Props> = ({
             const seriesData = (strokeData || []) as unknown as UPlotData[];
             return (
               seriesData.map((value) =>
-                getColor(value, minValue, maxValue, colorScaleDistribution)
+                getColor(value, minValue, maxValue, colorScaleDistribution),
               ) || []
             );
           },
@@ -102,7 +102,7 @@ const UPlotScatter: React.FC<Props> = ({
         left -= u.bbox.left;
         top -= u.bbox.top;
         quadtree.current?.add(
-          new QuadTree(left, top, width, height, undefined, seriesIndex, dataIndex)
+          new QuadTree(left, top, width, height, undefined, seriesIndex, dataIndex),
         );
       },
     });
@@ -215,7 +215,7 @@ const UPlotScatter: React.FC<Props> = ({
             stroke: seriesOptions.stroke,
           },
         ],
-      } as Partial<Options>
+      } as Partial<Options>,
     );
   }, [colorScaleDistribution, drawPoints, options, tooltipPlugin]);
 

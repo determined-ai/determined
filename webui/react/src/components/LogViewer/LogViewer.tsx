@@ -135,7 +135,7 @@ const LogViewer: React.FC<Props> = ({
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
     const maxCharPerLine = Math.floor(
-      (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width
+      (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
     );
     return { dateTimeWidth, maxCharPerLine };
   }, [charMeasures.width, containerSize.width]);
@@ -153,7 +153,7 @@ const LogViewer: React.FC<Props> = ({
 
       return index === 0 || index === logs.length - 1 ? itemHeight + PADDING : itemHeight;
     },
-    [charMeasures, maxCharPerLine, logs]
+    [charMeasures, maxCharPerLine, logs],
   );
 
   const resizeLogs = useCallback(() => listRef.current?.resetAfterIndex(0), []);
@@ -171,7 +171,7 @@ const LogViewer: React.FC<Props> = ({
         .map((log) => formatLogEntry(log))
         .sort(logSorter(sortKey));
     },
-    [sortKey]
+    [sortKey],
   );
 
   const addLogs = useCallback(
@@ -180,7 +180,7 @@ const LogViewer: React.FC<Props> = ({
       setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
       resizeLogs();
     },
-    [resizeLogs]
+    [resizeLogs],
   );
 
   const fetchLogs = useCallback(
@@ -202,7 +202,7 @@ const LogViewer: React.FC<Props> = ({
 
       return processLogs(buffer);
     },
-    [decoder, fetchDirection, onFetch, processLogs]
+    [decoder, fetchDirection, onFetch, processLogs],
   );
 
   const handleItemsRendered = useCallback(
@@ -228,7 +228,7 @@ const LogViewer: React.FC<Props> = ({
             fetchDirection,
             offsetLog: shouldFetchNewLogs ? logs.last() : logs.first(),
           },
-          shouldFetchNewLogs ? FetchType.Newer : FetchType.Older
+          shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
         );
 
         addLogs(newLogs, shouldFetchOldLogs);
@@ -253,7 +253,7 @@ const LogViewer: React.FC<Props> = ({
         }
       }
     },
-    [addLogs, canceler, fetchDirection, fetchLogs, logs]
+    [addLogs, canceler, fetchDirection, fetchLogs, logs],
   );
 
   /**
@@ -289,7 +289,7 @@ const LogViewer: React.FC<Props> = ({
       // Store last scrollOffset.
       local.current.scrollOffset = scrollOffset;
     },
-    []
+    [],
   );
 
   const handleScrollToOldest = useCallback(() => {
@@ -403,7 +403,7 @@ const LogViewer: React.FC<Props> = ({
         (event) => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
-        }
+        },
       );
     }
 
@@ -487,7 +487,7 @@ const LogViewer: React.FC<Props> = ({
               if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
               return acc;
             },
-            { even: 0, odd: 0 }
+            { even: 0, odd: 0 },
           );
         const isEven = oddOrEven.even > oddOrEven.odd;
         const content = lines.reduce((acc, line, index) => {
@@ -553,7 +553,7 @@ const LogViewer: React.FC<Props> = ({
         {...data[index]}
       />
     ),
-    [dateTimeWidth]
+    [dateTimeWidth],
   );
 
   return (

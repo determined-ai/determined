@@ -35,7 +35,7 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, .
         onChange(newValue as SelectValue, option);
       }
     },
-    [onChange, values]
+    [onChange, values],
   );
 
   const handleDeselect = useCallback(
@@ -47,7 +47,7 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, .
 
       onChange(newValue as SelectValue, option);
     },
-    [onChange, values]
+    [onChange, values],
   );
 
   return (

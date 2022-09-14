@@ -36,7 +36,7 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
             : [value.minval ?? 0, value.maxval ?? 1],
         type: value.type,
         val: JSON.stringify(
-          trial.hyperparameters[name] ?? unflattenObject(trial.hyperparameters)[name] ?? 0
+          trial.hyperparameters[name] ?? unflattenObject(trial.hyperparameters)[name] ?? 0,
         ),
         vals: value.vals?.map((val) => JSON.stringify(val)) ?? [
           JSON.stringify(value.minval ?? 0),
@@ -78,7 +78,7 @@ const HyperparameterRange: React.FC<RangeProps> = ({ hp }: RangeProps) => {
         return clamp(
           1 - Math.log(parseFloat(hp.val) / hp.range[0]) / Math.log(hp.range[1] / hp.range[0]),
           0,
-          1
+          1,
         );
       default:
         return clamp(1 - (parseFloat(hp.val) - hp.range[0]) / (hp.range[1] - hp.range[0]), 0, 1);

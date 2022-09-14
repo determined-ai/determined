@@ -97,7 +97,7 @@ const GroupManagement: React.FC = () => {
           limit: settings.tableLimit,
           offset: settings.tableOffset,
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
 
       setTotal(response.pagination?.total ?? 0);
@@ -119,7 +119,7 @@ const GroupManagement: React.FC = () => {
       i >= 0 ? (groupUsers[i] = response.group) : groupUsers.push(response.group);
       setGroupUsers(JSON.parse(JSON.stringify(groupUsers)));
     },
-    [groupUsers]
+    [groupUsers],
   );
 
   const fetchUsers = useCallback(async (): Promise<void> => {
@@ -154,7 +154,7 @@ const GroupManagement: React.FC = () => {
       if (!groupId || !expand) return;
       fetchGroup(groupId);
     },
-    [fetchGroup]
+    [fetchGroup],
   );
 
   const onExpandedRowsChange = (keys: readonly React.Key[]) => setExpandedKeys(keys);
@@ -175,7 +175,7 @@ const GroupManagement: React.FC = () => {
         handleError(e, { silent: true, type: ErrorType.Input });
       }
     },
-    [onExpand, fetchGroups]
+    [onExpand, fetchGroups],
   );
 
   const expandedUserRender = useCallback(
@@ -216,7 +216,7 @@ const GroupManagement: React.FC = () => {
         />
       );
     },
-    [onRemoveUser, groupUsers]
+    [onRemoveUser, groupUsers],
   );
 
   const columns = useMemo(() => {
@@ -275,7 +275,7 @@ const GroupManagement: React.FC = () => {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          total
+          total,
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey={(r) => r.group.groupId || 0}

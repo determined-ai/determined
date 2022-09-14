@@ -60,7 +60,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
       if (disabled) return;
       setDestinationWorkspaceId((prev) => (disabled ? prev : (selectedWorkspaceId as number)));
     },
-    [workspaces, project.workspaceId]
+    [workspaces, project.workspaceId],
   );
 
   const modalContent = useMemo(() => {
@@ -134,7 +134,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         title: 'Move Project',
       };
     },
-    [handleOk, modalContent]
+    [handleOk, modalContent],
   );
 
   const modalOpen = useCallback(
@@ -143,7 +143,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
       fetchWorkspaces();
       openOrUpdate({ ...getModalProps(), ...initialModalProps });
     },
-    [fetchWorkspaces, getModalProps, openOrUpdate]
+    [fetchWorkspaces, getModalProps, openOrUpdate],
   );
 
   /**

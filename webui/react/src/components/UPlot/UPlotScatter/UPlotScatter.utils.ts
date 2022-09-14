@@ -27,7 +27,7 @@ type BubbleFn<T = number | string> = (
   value: number | null | undefined,
   minValue: number,
   maxValue: number,
-  scale?: Scale
+  scale?: Scale,
 ) => T;
 
 export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn => {
@@ -44,7 +44,7 @@ export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn =>
     value: number | null | undefined,
     minValue: number,
     maxValue: number,
-    scale?: Scale
+    scale?: Scale,
   ): string => {
     if (value == null || minValue === maxValue || minValue == null) return minColor;
     let percent = 0;
@@ -83,7 +83,7 @@ export const getMinMax = (u: uPlot, dataIndex: number): [number, number] => {
 export const getSize = (
   value: number | null | undefined,
   minValue: number,
-  maxValue: number
+  maxValue: number,
 ): number => {
   if (value == null || minValue === maxValue || minValue == null) return 0;
   const percent = (value - minValue) / (maxValue - minValue);
@@ -95,7 +95,7 @@ export const range = (
   u: uPlot,
   min: UPlotData,
   max: UPlotData,
-  scaleKey: string
+  scaleKey: string,
 ): Range<number> => {
   // Return a standard range if there is not any valid data.
   if (min == null || max == null) return [0, 100];
@@ -142,7 +142,7 @@ export const offsetRange = (offsetPercent = 0.1) => {
 };
 
 export const makeDrawPoints = (
-  options: uPlot.Series.BarsPathBuilderOpts
+  options: uPlot.Series.BarsPathBuilderOpts,
 ): uPlot.Series.PathBuilder => {
   const { disp, each } = options;
 
@@ -207,13 +207,13 @@ export const makeDrawPoints = (
               cx - size / 2 - strokeWidth / 2,
               cy - size / 2 - strokeWidth / 2,
               size + strokeWidth,
-              size + strokeWidth
+              size + strokeWidth,
             );
           }
         }
 
         u.ctx.restore();
-      }
+      },
     );
 
     return null;

@@ -53,7 +53,7 @@ const BreadcrumbBar: React.FC<Props> = ({
     try {
       const response = await getProject(
         { id: type === 'project' ? id : experiment?.projectId ?? 1 },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setProject((prev) => {
         if (isEqual(prev, response)) return prev;
@@ -69,7 +69,7 @@ const BreadcrumbBar: React.FC<Props> = ({
     try {
       const response = await getExperimentDetails(
         { id: type === 'experiment' ? id : trial?.experimentId ?? 1 },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setExperiment((prev) => {
         if (isEqual(prev, response)) return prev;

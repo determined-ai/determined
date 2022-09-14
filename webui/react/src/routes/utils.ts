@@ -186,7 +186,7 @@ export const handlePath = (
     onClick?: AnyMouseEventHandler;
     path?: string;
     popout?: boolean;
-  } = {}
+  } = {},
 ): void => {
   // FIXME As of v17, e.persist() doesn’t do anything because the SyntheticEvent is no longer
   // pooled.

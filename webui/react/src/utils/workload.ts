@@ -10,7 +10,7 @@ export const checkpointSize = (checkpoint?: { resources?: Record<RecordKey, numb
 };
 
 export const getWorkload = (
-  workload: Type.WorkloadGroup
+  workload: Type.WorkloadGroup,
 ): Type.MetricsWorkload | Type.CheckpointWorkload => {
   return Object.values(workload).find((val) => !!val);
 };

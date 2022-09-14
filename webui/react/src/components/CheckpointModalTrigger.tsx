@@ -28,7 +28,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     (reason?: ModalCloseReason, checkpoints?: string[]) => {
       if (checkpoints) openModalCreateModel({ checkpoints });
     },
-    [openModalCreateModel]
+    [openModalCreateModel],
   );
 
   const {
@@ -42,7 +42,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
         openModalCheckpointRegister({ checkpoints: checkpoint.uuid });
       }
     },
-    [checkpoint, openModalCheckpointRegister]
+    [checkpoint, openModalCheckpointRegister],
   );
 
   const { contextHolder: modalCheckpointContextHolder, modalOpen: openModalCheckpoint } =

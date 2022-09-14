@@ -21,7 +21,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
     if (!poolStats || !poolStats.aggregates) return;
     const { aggregates } = poolStats;
     const agg = aggregates.filter(
-      (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY
+      (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
     );
     // If aggregates only has one record of today, then do not display.
     const aggd = agg.length > 1 ? agg : [];

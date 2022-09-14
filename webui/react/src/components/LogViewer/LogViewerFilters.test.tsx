@@ -25,7 +25,7 @@ const setup = (filterOptions: Filters, filterValues: Filters) => {
       values={filterValues}
       onChange={handleOnChange}
       onReset={handleOnReset}
-    />
+    />,
   );
   const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
   return { handleOnChange, handleOnReset, user, view };

@@ -80,7 +80,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         state: states.length !== 0 ? (states as RunState[]) : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
@@ -97,7 +97,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state]
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
   const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
@@ -108,14 +108,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     (trial: TrialItem) => {
       routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
     },
-    [experiment.id]
+    [experiment.id],
   );
 
   const handleHyperparameterSearch = useCallback(
     (trial: TrialItem) => {
       openModalHyperparameterSearch({ trial });
     },
-    [openModalHyperparameterSearch]
+    [openModalHyperparameterSearch],
   );
 
   const dropDownOnTrigger = useCallback(
@@ -126,7 +126,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs]
+    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
   );
 
   const columns = useMemo(() => {
@@ -204,7 +204,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           (value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
-          })
+          }),
         );
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
         column.render = autoRestartsRenderer;
@@ -237,13 +237,13 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings.tableOffset, updateSettings]
+    [columns, settings.tableOffset, updateSettings],
   );
 
   const fetchExperimentTrials = useCallback(async () => {
     try {
       const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState)
+        encodeExperimentState(state as RunState),
       );
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
@@ -254,7 +254,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, settings.sortKey),
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setTotal(responsePagination?.total || 0);
       setTrials(experimentTrials);
@@ -285,7 +285,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         return updateSettings({ compare: true });
       }
     },
-    [settings.row, updateSettings]
+    [settings.row, updateSettings],
   );
 
   const submitBatchAction = useCallback(
@@ -312,7 +312,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         });
       }
     },
-    [fetchExperimentTrials, sendBatchActions]
+    [fetchExperimentTrials, sendBatchActions],
   );
 
   const { stopPolling } = usePolling(fetchExperimentTrials, { rerunOnNewFn: true });
@@ -342,7 +342,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     (rowKeys) => {
       updateSettings({ row: rowKeys });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleTrialCompareCancel = useCallback(() => {
@@ -354,7 +354,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       const trialIds = settings.row ? settings.row.filter((id) => id !== trialId) : undefined;
       updateSettings({ row: trialIds });
     },
-    [settings.row, updateSettings]
+    [settings.row, updateSettings],
   );
 
   const TrialActionDropdown = useCallback(
@@ -396,7 +396,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         </Dropdown>
       );
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs]
+    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
   );
 
   return (
@@ -422,7 +422,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             },
-            total
+            total,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"

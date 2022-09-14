@@ -81,14 +81,14 @@ const NotesCard: React.FC<Props> = ({
       setEditedNotes(newNotes);
       onChange?.(newNotes);
     },
-    [onChange]
+    [onChange],
   );
 
   const handleNotesClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.detail > 1 || notes === '') editNotes();
     },
-    [editNotes, notes]
+    [editNotes, notes],
   );
 
   useEffect(() => {

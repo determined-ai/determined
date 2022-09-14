@@ -73,7 +73,7 @@ const ModelVersionDetails: React.FC = () => {
       setTabKey(key);
       history.replace(`${basePath}/${key}`);
     },
-    [basePath, history]
+    [basePath, history],
   );
 
   // Sets the default sub route.
@@ -100,7 +100,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [fetchModelVersion, modelId, versionId]
+    [fetchModelVersion, modelId, versionId],
   );
 
   const saveNotes = useCallback(
@@ -120,7 +120,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId]
+    [modelId, versionId],
   );
 
   const saveDescription = useCallback(
@@ -139,7 +139,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId]
+    [modelId, versionId],
   );
 
   const saveName = useCallback(
@@ -158,7 +158,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId]
+    [modelId, versionId],
   );
 
   const saveVersionTags = useCallback(
@@ -178,7 +178,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [fetchModelVersion, modelId, versionId]
+    [fetchModelVersion, modelId, versionId],
   );
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
@@ -212,7 +212,7 @@ const ModelVersionDetails: React.FC = () => {
                 <Link
                   path={paths.trialDetails(
                     modelVersion.checkpoint.trialId,
-                    modelVersion.checkpoint.experimentId
+                    modelVersion.checkpoint.experimentId,
                   )}>
                   Trial {modelVersion.checkpoint.trialId}
                 </Link>

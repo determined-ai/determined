@@ -64,7 +64,7 @@ const StateSelectFilter: React.FC<Props> = ({
       const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
       onChange(singleValue);
     },
-    [onChange]
+    [onChange],
   );
 
   return (

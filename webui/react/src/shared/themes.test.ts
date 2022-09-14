@@ -89,7 +89,7 @@ describe('themes', () => {
         ...customPairs,
         ...basePairs.map((name) => genPairs(name, false)).reduce((acc, cur) => acc.concat(cur), []),
       ],
-      TOLERANCE
+      TOLERANCE,
     );
     expect(violators).toEqual([]);
   });
@@ -102,7 +102,7 @@ describe('themes', () => {
         ...customPairs,
         ...basePairs.map((name) => genPairs(name, true)).reduce((acc, cur) => acc.concat(cur), []),
       ],
-      TOLERANCE
+      TOLERANCE,
     );
     expect(violators).toEqual([]);
   });

@@ -50,8 +50,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         ({
           resourcePool: rp.name,
           stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
-        } as RPStats)
-    )
+        } as RPStats),
+    ),
   );
   const [jobs, setJobs] = useState<Job[]>([]);
   const [topJob, setTopJob] = useState<Job>();
@@ -77,7 +77,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             resourcePool: selectedRp.name,
             states: jobState ? [jobState] : undefined,
           },
-          { signal: canceler.signal }
+          { signal: canceler.signal },
         ),
         getJobQStats({}, { signal: canceler.signal }),
       ]);
@@ -88,7 +88,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           offset: 0,
           resourcePool: selectedRp.name,
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       const firstJob = firstJobResp.jobs[0];
 
@@ -118,7 +118,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       const stats = rpStats.find((rp) => rp.resourcePool === rpName)?.stats;
       return stats ? stats.queuedCount + stats.scheduledCount : 0;
     },
-    [rpStats]
+    [rpStats],
   );
 
   const dropDownOnTrigger = useCallback(
@@ -171,7 +171,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       });
       return triggers;
     },
-    [selectedRp, isJobOrderAvailable, topJob, fetchAll]
+    [selectedRp, isJobOrderAvailable, topJob, fetchAll],
   );
 
   const onModalClose = useCallback(() => {
@@ -211,7 +211,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             break;
           case SCHEDULING_VAL_KEY: {
             const replaceIndex = settings.columns.findIndex((column) =>
-              ['priority', 'weight', 'resourcePool'].includes(column)
+              ['priority', 'weight', 'resourcePool'].includes(column),
             );
             const newColumns = clone(settings.columns);
             switch (selectedRp.schedulerType) {
@@ -334,7 +334,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             },
-            total
+            total,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="jobId"

@@ -25,7 +25,7 @@ export const isLoginFailure = (e: unknown): boolean => {
 
 export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
-  onEvent?: (event: T) => void
+  onEvent?: (event: T) => void,
 ): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};

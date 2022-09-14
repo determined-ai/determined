@@ -78,7 +78,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       const isTerminalExp = terminalRunStates.has(experiment.state);
       const expTrials = await getExpTrials(
         { id: experiment.id, limit: 2 },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       const firstTrial = expTrials.trials[0];
       if (firstTrial) {
@@ -123,7 +123,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       setTabKey(key);
       history.replace(`${basePath}/${key}`);
     },
-    [basePath, history]
+    [basePath, history],
   );
 
   const handleViewLogs = useCallback(() => {
@@ -179,7 +179,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         });
       }
     },
-    [experiment.id, fetchExperimentDetails]
+    [experiment.id, fetchExperimentDetails],
   );
 
   const handleHPSearch = useCallback(() => {

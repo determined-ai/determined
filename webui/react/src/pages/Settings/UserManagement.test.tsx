@@ -42,7 +42,7 @@ const setup = () =>
           </Router>
         </HelmetProvider>
       </DndProvider>
-    </StoreProvider>
+    </StoreProvider>,
   );
 
 describe('UserManagement', () => {

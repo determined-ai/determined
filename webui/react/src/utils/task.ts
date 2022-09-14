@@ -188,7 +188,7 @@ export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolea
 
 const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T,
-  search = ''
+  search = '',
 ): boolean => {
   if (!search) return true;
   return task.id.toString().indexOf(search) !== -1 || task.name.indexOf(search) !== -1;
@@ -196,7 +196,7 @@ const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
 
 const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T,
-  states: string[]
+  states: string[],
 ): boolean => {
   if (!Array.isArray(states) || states.length === 0 || states[0] === Type.ALL_VALUE) return true;
   return states.includes(task.state as string);
@@ -204,7 +204,7 @@ const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
 
 const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T,
-  users?: string[]
+  users?: string[],
 ): boolean => {
   if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
   return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
@@ -212,12 +212,12 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
 
 export const filterTasks = <
   T extends Type.CommandType | Type.TaskType = Type.TaskType,
-  A extends Type.CommandTask | Type.AnyTask = Type.AnyTask
+  A extends Type.CommandTask | Type.AnyTask = Type.AnyTask,
 >(
   tasks: A[],
   filters: Type.TaskFilters<T>,
   users: Type.User[],
-  search = ''
+  search = '',
 ): A[] => {
   return tasks
     .filter((task) => {
@@ -249,7 +249,7 @@ export const taskFromCommandTask = (command: Type.CommandTask): Type.RecentComma
 // Checks whether tensorboard source matches a given source list.
 export const tensorBoardMatchesSource = (
   tensorBoard: Type.CommandTask,
-  source: LaunchTensorBoardParams
+  source: LaunchTensorBoardParams,
 ): boolean => {
   if (source.experimentIds) {
     source.experimentIds?.sort();
@@ -281,7 +281,7 @@ const commandStateSortOrder: CommandState[] = [
 ];
 
 const commandStateSortValues: Map<CommandState, number> = new Map(
-  commandStateSortOrder.map((state, idx) => [state, idx])
+  commandStateSortOrder.map((state, idx) => [state, idx]),
 );
 
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {

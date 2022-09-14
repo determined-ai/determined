@@ -47,7 +47,7 @@ const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks =>
     (initialModalProps: ModalFuncProps = {}) => {
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
-    [modalProps, openOrUpdate]
+    [modalProps, openOrUpdate],
   );
 
   return { modalOpen, ...modalHook };

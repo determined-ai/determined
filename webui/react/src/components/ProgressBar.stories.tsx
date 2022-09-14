@@ -31,7 +31,7 @@ export const Custom = (): React.ReactNode => (
     state={select<RunState | CommandState>(
       'State',
       { ...cmdStateOptions, ...runStateOptions },
-      RunState.Active
+      RunState.Active,
     )}
   />
 );

@@ -43,7 +43,7 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
         });
 
         setAvailableSeries(newAvailableSeries);
-      }
+      },
     );
 
     return () => canceler.abort();

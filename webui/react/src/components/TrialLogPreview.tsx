@@ -55,7 +55,7 @@ const TrialLogPreview: React.FC<Props> = ({
         dayjs(time).toDate(),
         'ORDER_BY_ASC',
         undefined,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event) => {
         const entry = mapV1LogsResponse(event);
@@ -64,7 +64,7 @@ const TrialLogPreview: React.FC<Props> = ({
           level: entry.level || LogLevel.Info,
           message: entry.message,
         });
-      }
+      },
     );
   }, []);
 
@@ -85,7 +85,7 @@ const TrialLogPreview: React.FC<Props> = ({
           undefined,
           'ORDER_BY_DESC',
           undefined,
-          { signal: canceler.signal }
+          { signal: canceler.signal },
         ),
         (event) => {
           const entry = mapV1LogsResponse(event);
@@ -99,10 +99,10 @@ const TrialLogPreview: React.FC<Props> = ({
             nonEmptyLogFound.current = true;
             fetchTrialLogs(trialId, entry.time, canceler);
           }
-        }
+        },
       );
     },
-    [fetchTrialLogs]
+    [fetchTrialLogs],
   );
 
   const handleClick = useCallback(() => {

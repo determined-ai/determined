@@ -41,7 +41,7 @@ interface FormValues {
 
 const formValuesToUpdate = async (
   values: FormValues,
-  job: Job
+  job: Job,
 ): Promise<api.V1QueueControl | undefined> => {
   const { position, resourcePool } = {
     position: parseInt(values.position, 10),

@@ -135,7 +135,7 @@ const CompareVisualization: React.FC = () => {
         undefined,
         undefined,
         undefined,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event) => {
         if (!event || !event.trials) return;
@@ -144,7 +144,7 @@ const CompareVisualization: React.FC = () => {
         // (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
         setTrialIds((prevTrialIds) =>
-          isEqual(prevTrialIds, newTrialIds) ? prevTrialIds : newTrialIds
+          isEqual(prevTrialIds, newTrialIds) ? prevTrialIds : newTrialIds,
         );
 
         (event.trials || []).forEach((trial) => {
@@ -201,10 +201,10 @@ const CompareVisualization: React.FC = () => {
           newBatches.map((batch) => {
             const value = metricsMap[trialId][batch];
             return Number.isFinite(value) ? value : null;
-          })
+          }),
         );
         setChartData(newChartData);
-      }
+      },
     ).catch((e) => {
       setPageError(e);
     });
@@ -235,7 +235,7 @@ const CompareVisualization: React.FC = () => {
           ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
         ];
         setMetrics(newMetrics);
-      }
+      },
     ).catch(() => {
       setPageError(PageError.MetricNames);
     });

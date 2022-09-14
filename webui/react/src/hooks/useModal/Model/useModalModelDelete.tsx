@@ -61,14 +61,14 @@ const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
           }
         : clone(CANNOT_DELETE_MODAL_PROPS);
     },
-    [canDeleteModel]
+    [canDeleteModel],
   );
 
   const modalOpen = useCallback(
     (model: ModelItem) => {
       openOrUpdate(getModalProps(model));
     },
-    [getModalProps, openOrUpdate]
+    [getModalProps, openOrUpdate],
   );
 
   return { modalOpen, ...modalHook };

@@ -37,7 +37,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
   const [noteChangeSignal, setNoteChangeSignal] = useState(1);
   const fireNoteChangeSignal = useCallback(
     () => setNoteChangeSignal((prev) => (prev === 100 ? 1 : prev + 1)),
-    [setNoteChangeSignal]
+    [setNoteChangeSignal],
   );
 
   const previousNumberOfNotes = usePrevious(notes.length, undefined);
@@ -65,7 +65,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
         fireNoteChangeSignal();
       }
     },
-    [currentPage, editedContents, modal, notes, fireNoteChangeSignal]
+    [currentPage, editedContents, modal, notes, fireNoteChangeSignal],
   );
 
   useEffect(() => {
@@ -79,7 +79,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
     } else if (notes.length < previousNumberOfNotes) {
       // dont call handler here because page isn't actually switching
       setCurrentPage((prevPageNumber) =>
-        prevPageNumber > deleteTarget ? prevPageNumber - 1 : prevPageNumber
+        prevPageNumber > deleteTarget ? prevPageNumber - 1 : prevPageNumber,
       );
     }
   }, [previousNumberOfNotes, notes.length, deleteTarget, handleSwitchPage, fireNoteChangeSignal]);
@@ -99,10 +99,10 @@ const PaginatedNotesCard: React.FC<Props> = ({
             return { contents: editedNotes, name: editedName } as Note;
           }
           return note;
-        })
+        }),
       );
     },
-    [currentPage, editedName, notes, onSave]
+    [currentPage, editedName, notes, onSave],
   );
 
   const handleSaveTitle = useCallback(
@@ -114,10 +114,10 @@ const PaginatedNotesCard: React.FC<Props> = ({
             return { contents: editedContents ?? note?.contents, name: newName } as Note;
           }
           return note;
-        })
+        }),
       );
     },
-    [currentPage, notes, onSave, editedContents]
+    [currentPage, notes, onSave, editedContents],
   );
 
   const handleDeletePage = useCallback(
@@ -125,7 +125,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
       onDelete(deletePageNumber);
       setDeleteTarget(deletePageNumber);
     },
-    [onDelete, setDeleteTarget]
+    [onDelete, setDeleteTarget],
   );
 
   const handleEditedNotes = useCallback((newContents: string) => {
@@ -158,7 +158,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
       const menuItems: MenuProps['items'] = [{ danger: true, key: 'delete', label: 'Delete...' }];
       return <Menu items={menuItems} onClick={onItemClick} />;
     },
-    [handleDeletePage]
+    [handleDeletePage],
   );
 
   if (notes.length === 0) {

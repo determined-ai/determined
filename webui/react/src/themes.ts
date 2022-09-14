@@ -76,7 +76,7 @@ export type StateOfUnion =
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,
-  options: { isOn?: boolean; strongWeak?: 'strong' | 'weak' } = {}
+  options: { isOn?: boolean; strongWeak?: 'strong' | 'weak' } = {},
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
   const on = options.isOn ? '-on' : '';

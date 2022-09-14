@@ -41,7 +41,7 @@ const useMetricNames = (args: UseMetricNamesInterface): void => {
         if (newMetrics.length !== args.metricNames.length) {
           args.setMetricNames(newMetrics);
         }
-      }
+      },
     ).catch(args.errorHandler);
     return () => canceler.abort();
   }, [args]);

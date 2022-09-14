@@ -51,7 +51,7 @@ const setup = (initialId: number) => {
       ids={IDS_ARRAY}
       tooltipLabel={TOOLTIP_LABEL}
       onSelectId={navigateToId}
-    />
+    />,
   );
 
   return navigateToId;

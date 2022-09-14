@@ -139,7 +139,7 @@ const useModalJupyterLab = (): ModalHooks => {
       ) : (
         <JupyterLabForm fields={fields} updateFields={updateFields} />
       ),
-    [config, configError, fields, handleConfigChange, showFullConfig, updateFields]
+    [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
   );
 
   const content = useMemo(
@@ -156,7 +156,7 @@ const useModalJupyterLab = (): ModalHooks => {
         </div>
       </>
     ),
-    [formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig]
+    [formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig],
   );
 
   const modalProps: ModalFuncProps = useMemo(
@@ -168,7 +168,7 @@ const useModalJupyterLab = (): ModalHooks => {
       title: 'Launch JupyterLab',
       width: showFullConfig ? 1000 : undefined,
     }),
-    [content, showFullConfig]
+    [content, showFullConfig],
   );
 
   const modalOpen = useCallback(
@@ -176,7 +176,7 @@ const useModalJupyterLab = (): ModalHooks => {
       setVisible(true);
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
-    [modalProps, openOrUpdate]
+    [modalProps, openOrUpdate],
   );
 
   // Fetch full config when showing advanced mode.
@@ -229,7 +229,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
         handleError(e);
       }
     },
-    [onChange]
+    [onChange],
   );
 
   useEffect(() => {
@@ -263,8 +263,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
                   setButtonDisabled(true);
                   return Promise.reject(
                     new Error(
-                      `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line}.`
-                    )
+                      `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line}.`,
+                    ),
                   );
                 }
               },

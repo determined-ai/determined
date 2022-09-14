@@ -235,7 +235,7 @@ describe('String Utilities', () => {
       const suffix = '...';
       const size = 4;
       expect(utils.truncate(testStr, size, suffix)).toBe(
-        testStr.substring(0, size - suffix.length) + suffix
+        testStr.substring(0, size - suffix.length) + suffix,
       );
     });
 

@@ -154,7 +154,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         dispatch({ type: ActionType.SetHParams, value: hParams as string[] });
       }
     },
-    [fullHParams]
+    [fullHParams],
   );
 
   const handleMaxTrialsChange = useCallback((count: SelectValue) => {
@@ -166,7 +166,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       dispatch({ type: ActionType.SetMetric, value: metric });
       if (onMetricChange) onMetricChange(metric);
     },
-    [onMetricChange]
+    [onMetricChange],
   );
 
   const handleViewChange = useCallback((view: SelectValue) => {

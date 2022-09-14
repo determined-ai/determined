@@ -64,7 +64,7 @@ export const settingsConfig: SettingsConfig = {
 
 const moveExperimentWithHandler = async (
   experimentId: number,
-  destinationProjectId: number
+  destinationProjectId: number,
 ): Promise<number> => {
   try {
     await moveExperiment({ destinationProjectId, experimentId });
@@ -136,7 +136,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       });
       setProjects([]);
     },
-    [sourceProjectId, updateDestSettings]
+    [sourceProjectId, updateDestSettings],
   );
 
   const handleProjectSelect = useCallback(
@@ -144,7 +144,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       if (project.archived || project.id === sourceProjectId) return;
       updateDestSettings({ projectId: project.id });
     },
-    [sourceProjectId, updateDestSettings]
+    [sourceProjectId, updateDestSettings],
   );
 
   useEffect(() => {
@@ -168,7 +168,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         </li>
       );
     },
-    [destSettings.projectId, handleProjectSelect, projects, sourceProjectId]
+    [destSettings.projectId, handleProjectSelect, projects, sourceProjectId],
   );
 
   const modalContent = useMemo(() => {
@@ -237,11 +237,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
     const results = await Promise.allSettled(
       experimentIds.map((experimentId) =>
-        moveExperimentWithHandler(experimentId, destSettings.projectId as number)
-      )
+        moveExperimentWithHandler(experimentId, destSettings.projectId as number),
+      ),
     );
     const numFailures = results.filter(
-      (res) => res.status !== 'fulfilled' || res.value === 1
+      (res) => res.status !== 'fulfilled' || res.value === 1,
     ).length;
 
     const experimentText =
@@ -317,7 +317,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         title: `Move Experiment${pluralizer}`,
       };
     },
-    [handleOk, modalContent]
+    [handleOk, modalContent],
   );
 
   const modalOpen = useCallback(
@@ -346,7 +346,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       destSettings.projectId,
       destSettings.workspaceId,
       updateDestSettings,
-    ]
+    ],
   );
 
   /**

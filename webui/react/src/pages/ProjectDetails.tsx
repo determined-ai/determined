@@ -141,7 +141,7 @@ const ProjectDetails: React.FC = () => {
   const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces } = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
-    moveExperimentSettingsConfig
+    moveExperimentSettingsConfig,
   );
 
   useEffect(() => {
@@ -168,7 +168,7 @@ const ProjectDetails: React.FC = () => {
       experiments,
       batchActions,
       canDeleteExperiment,
-      canMoveExperiment
+      canMoveExperiment,
     );
   }, [canDeleteExperiment, canMoveExperiment, experimentMap, settings.row]);
 
@@ -188,7 +188,7 @@ const ProjectDetails: React.FC = () => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState)
+        encodeExperimentState(state as RunState),
       );
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
@@ -210,7 +210,7 @@ const ProjectDetails: React.FC = () => {
             limit: settings.tableLimit,
             offset: 0,
           },
-          { signal: canceler.signal }
+          { signal: canceler.signal },
         );
       }
       const otherExpResponse = await getExperiments(
@@ -221,7 +221,7 @@ const ProjectDetails: React.FC = () => {
           offset:
             settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
 
       // Due to showing pinned items in all pages, we need to adjust the number of total items
@@ -279,7 +279,7 @@ const ProjectDetails: React.FC = () => {
     (newSearch: string) => {
       updateSettings({ row: undefined, search: newSearch || undefined });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
@@ -295,7 +295,7 @@ const ProjectDetails: React.FC = () => {
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search]
+    [handleNameSearchApply, handleNameSearchReset, settings.search],
   );
 
   const handleLabelFilterApply = useCallback(
@@ -305,7 +305,7 @@ const ProjectDetails: React.FC = () => {
         row: undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleLabelFilterReset = useCallback(() => {
@@ -323,7 +323,7 @@ const ProjectDetails: React.FC = () => {
         onReset={handleLabelFilterReset}
       />
     ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings.label]
+    [handleLabelFilterApply, handleLabelFilterReset, settings.label],
   );
 
   const handleStateFilterApply = useCallback(
@@ -333,7 +333,7 @@ const ProjectDetails: React.FC = () => {
         state: states.length !== 0 ? (states as RunState[]) : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
@@ -350,7 +350,7 @@ const ProjectDetails: React.FC = () => {
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state]
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
   const handleUserFilterApply = useCallback(
@@ -360,7 +360,7 @@ const ProjectDetails: React.FC = () => {
         user: users.length !== 0 ? users : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleUserFilterReset = useCallback(() => {
@@ -378,7 +378,7 @@ const ProjectDetails: React.FC = () => {
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user]
+    [handleUserFilterApply, handleUserFilterReset, settings.user],
   );
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
@@ -517,7 +517,7 @@ const ProjectDetails: React.FC = () => {
               RunState.Canceled,
               RunState.Completed,
               RunState.Errored,
-            ].includes(value)
+            ].includes(value),
           )
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
@@ -623,7 +623,7 @@ const ProjectDetails: React.FC = () => {
   const transferColumns = useMemo(() => {
     return columns
       .filter(
-        (column) => column.title !== '' && column.title !== 'Action' && column.title !== 'Archived'
+        (column) => column.title !== '' && column.title !== 'Action' && column.title !== 'Archived',
       )
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [columns]);
@@ -642,7 +642,7 @@ const ProjectDetails: React.FC = () => {
           experimentIds: settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
-              canMoveExperiment({ experiment: experimentMap[id] })
+              canMoveExperiment({ experiment: experimentMap[id] }),
           ),
           sourceProjectId: project?.id,
           sourceWorkspaceId: project?.workspaceId,
@@ -651,7 +651,7 @@ const ProjectDetails: React.FC = () => {
       if (action === Action.CompareExperiments) {
         if (settings.row?.length)
           return routeToReactUrl(
-            paths.experimentComparison(settings.row.map((id) => id.toString()))
+            paths.experimentComparison(settings.row.map((id) => id.toString())),
           );
       }
 
@@ -675,7 +675,7 @@ const ProjectDetails: React.FC = () => {
             default:
               return Promise.resolve();
           }
-        })
+        }),
       );
     },
     [
@@ -685,7 +685,7 @@ const ProjectDetails: React.FC = () => {
       project?.workspaceId,
       project?.id,
       experimentMap,
-    ]
+    ],
   );
 
   const submitBatchAction = useCallback(
@@ -718,7 +718,7 @@ const ProjectDetails: React.FC = () => {
         });
       }
     },
-    [fetchExperiments, sendBatchActions, updateSettings]
+    [fetchExperiments, sendBatchActions, updateSettings],
   );
 
   const showConfirmation = useCallback(
@@ -734,7 +734,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Confirm Batch Action',
       });
     },
-    [submitBatchAction]
+    [submitBatchAction],
   );
 
   const handleBatchAction = useCallback(
@@ -745,14 +745,14 @@ const ProjectDetails: React.FC = () => {
         showConfirmation(action as Action);
       }
     },
-    [submitBatchAction, showConfirmation]
+    [submitBatchAction, showConfirmation],
   );
 
   const handleTableRowSelect = useCallback(
     (rowKeys) => {
       updateSettings({ row: rowKeys });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const clearSelected = useCallback(() => {
@@ -778,7 +778,7 @@ const ProjectDetails: React.FC = () => {
         });
       }
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
@@ -827,7 +827,7 @@ const ProjectDetails: React.FC = () => {
         row: undefined,
       });
     },
-    [settings, updateSettings]
+    [settings, updateSettings],
   );
 
   const handleNewNotesPage = useCallback(async () => {
@@ -850,7 +850,7 @@ const ProjectDetails: React.FC = () => {
         handleError(e);
       }
     },
-    [fetchProject, project?.id]
+    [fetchProject, project?.id],
   );
 
   const { contextHolder: modalProjectNodeDeleteContextHolder, modalOpen: openNoteDelete } =
@@ -865,7 +865,7 @@ const ProjectDetails: React.FC = () => {
         handleError(e);
       }
     },
-    [openNoteDelete, project?.id]
+    [openNoteDelete, project?.id],
   );
 
   useEffect(() => {
@@ -914,7 +914,7 @@ const ProjectDetails: React.FC = () => {
         </ExperimentActionDropdown>
       );
     },
-    [project, settings, updateSettings, handleActionComplete]
+    [project, settings, updateSettings, handleActionComplete],
   );
 
   const ExperimentTabOptions = useMemo(() => {
@@ -1015,7 +1015,7 @@ const ProjectDetails: React.FC = () => {
                   limit: settings.tableLimit,
                   offset: settings.tableOffset,
                 },
-                total
+                total,
               )}
               rowClassName={defaultRowClassName({ clickable: false })}
               rowKey="id"

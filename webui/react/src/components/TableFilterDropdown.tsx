@@ -84,7 +84,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         return prev[value] ? {} : { [value]: true };
       });
     },
-    [filters, multiple]
+    [filters, multiple],
   );
 
   const handleReset = useCallback(() => {
@@ -115,7 +115,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         </div>
       );
     },
-    [handleOptionClick, selectedMap]
+    [handleOptionClick, selectedMap],
   );
 
   /*
@@ -132,7 +132,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         valuesAsList.reduce((acc, value) => {
           acc[value] = true;
           return acc;
-        }, {} as Record<string, boolean>)
+        }, {} as Record<string, boolean>),
       );
 
       setTimeout(() => {

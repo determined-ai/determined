@@ -8,7 +8,7 @@ import { NullOrUndefined, Primitive, SemanticVersion } from 'shared/types';
  */
 export const alphaNumericSorter = (
   a: NullOrUndefined<string | number>,
-  b: NullOrUndefined<string | number>
+  b: NullOrUndefined<string | number>,
 ): number => {
   // Handle undefined and null cases.
   if (a == null || b == null) return nullSorter(a, b);
@@ -31,7 +31,7 @@ export const booleanSorter = (a: NullOrUndefined<boolean>, b: NullOrUndefined<bo
  */
 export const dateTimeStringSorter = (
   a: NullOrUndefined<string>,
-  b: NullOrUndefined<string>
+  b: NullOrUndefined<string>,
 ): number => {
   // Handle undefined and null cases.
   if (a == null || b == null) return nullSorter(a, b);
@@ -63,7 +63,7 @@ export const numericSorter = (a: NullOrUndefined<number>, b: NullOrUndefined<num
 
 export const primitiveSorter = (
   a: NullOrUndefined<Primitive>,
-  b: NullOrUndefined<Primitive>
+  b: NullOrUndefined<Primitive>,
 ): number => {
   // Handle undefined and null cases.
   if (a == null || b == null) return nullSorter(a, b);

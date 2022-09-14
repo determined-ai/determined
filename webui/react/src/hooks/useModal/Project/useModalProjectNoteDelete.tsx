@@ -75,7 +75,7 @@ const useModalProjectNoteDelete = ({ onClose, project }: Props = {}): ModalHooks
       setPageNumber(pageNumber);
       openOrUpdate({ ...getModalProps(), ...initialModalProps });
     },
-    [getModalProps, openOrUpdate]
+    [getModalProps, openOrUpdate],
   );
 
   /**

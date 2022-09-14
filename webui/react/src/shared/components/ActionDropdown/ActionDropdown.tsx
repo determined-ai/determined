@@ -89,10 +89,10 @@ const ActionDropdown = <T extends string>({
           publicSubject: `${capitalize(actionKey.toString())} failed.`,
           silent: false,
           type: ErrorType.Server,
-        })
+        }),
       );
     },
-    [onError]
+    [onError],
   );
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {

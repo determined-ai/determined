@@ -36,7 +36,7 @@ describe('Decoder', () => {
       experimentResps.map((r) => r.config),
       (config) => {
         ioTypes.decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
-      }
+      },
     );
     expect(fails).toHaveLength(0);
   });

@@ -109,7 +109,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
         onClose?.(reason);
       }
     },
-    [config.onClose, internalClose]
+    [config.onClose, internalClose],
   );
 
   /**
@@ -137,7 +137,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
         };
       }
     },
-    [modalClose]
+    [modalClose],
   );
 
   useEffect(() => {

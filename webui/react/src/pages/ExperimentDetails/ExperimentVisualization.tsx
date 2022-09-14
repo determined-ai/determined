@@ -96,7 +96,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
     Object.keys(experiment.hyperparameters || {}).filter((key) => {
       // Constant hyperparameters are not useful for visualizations.
       return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
-    })
+    }),
   );
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
@@ -109,7 +109,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
   };
   const initFilters = storage.getWithDefault<VisualizationFilters>(
     STORAGE_FILTERS_KEY,
-    defaultFilters
+    defaultFilters,
   );
   const [typeKey, setTypeKey] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
@@ -127,7 +127,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
       hasLoaded: batches && metricNames,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: ![ExperimentSearcherName.Single, ExperimentSearcherName.Pbt].includes(
-        experiment.config.searcher.name
+        experiment.config.searcher.name,
       ),
     };
   }, [batches, experiment, metricNames]);
@@ -142,7 +142,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
       setFilters(filters);
       storage.set(STORAGE_FILTERS_KEY, filters);
     },
-    [storage]
+    [storage],
   );
 
   const handleFiltersReset = useCallback(() => {
@@ -158,7 +158,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
       setTypeKey(type as ExperimentVisualizationType);
       history.replace(`${basePath}/${type}`);
     },
-    [basePath, history]
+    [basePath, history],
   );
 
   // Sets the default sub route.
@@ -194,7 +194,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
           [MetricType.Training]: getHpImportanceMap(event.trainingMetrics),
           [MetricType.Validation]: getHpImportanceMap(event.validationMetrics),
         });
-      }
+      },
     ).catch(() => {
       setPageError(PageError.MetricHpImportance);
     });
@@ -217,14 +217,14 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
         activeMetric.name,
         metricTypeParam,
         undefined,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event) => {
         if (!event) return;
         (event.batches || []).forEach((batch) => (batchesMap[batch] = batch));
         const newBatches = Object.values(batchesMap).sort(alphaNumericSorter);
         setBatches(newBatches);
-      }
+      },
     ).catch(() => {
       setPageError(PageError.MetricBatches);
     });

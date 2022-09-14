@@ -28,7 +28,7 @@ const config: SettingsConfig = {
     },
     {
       defaultValue: DEFAULT_COLUMNS.map(
-        (col: HyperparameterColumnName) => DEFAULT_COLUMN_WIDTHS[col]
+        (col: HyperparameterColumnName) => DEFAULT_COLUMN_WIDTHS[col],
       ),
       key: 'columnWidths',
       skipUrlEncoding: true,

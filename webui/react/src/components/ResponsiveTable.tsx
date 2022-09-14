@@ -26,7 +26,7 @@ type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
 export const handleTableChange = (
   columns: { key?: Comparable }[],
   settings: Settings,
-  updateSettings: (s: Settings, b: boolean) => void
+  updateSettings: (s: Settings, b: boolean) => void,
 ) => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   return (tablePagination: any, tableFilters: any, tableSorter: any): void => {

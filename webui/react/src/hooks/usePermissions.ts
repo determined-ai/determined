@@ -86,7 +86,7 @@ const usePermissions = (): PermissionsHook => {
 const relevantPermissions = (
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
-  workspaceId?: number
+  workspaceId?: number,
 ): Set<string> => {
   if (!userAssignments || !userRoles) {
     // console.error('missing UserAssignment or UserRole');
@@ -111,7 +111,7 @@ const canDeleteExperiment = (
   experiment: ProjectExperiment,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return (
@@ -127,7 +127,7 @@ const canMoveExperiment = (
   experiment: ProjectExperiment,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return (
@@ -143,7 +143,7 @@ const canMoveExperiment = (
 const canGetPermissions = (
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return !!user && (permitted.has('oss_user') ? user.isAdmin : permitted.has('view_permissions'));
@@ -154,7 +154,7 @@ const canDeleteModel = (
   model: ModelItem,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
@@ -170,7 +170,7 @@ const canDeleteModelVersion = (
   modelVersion?: ModelVersion,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
@@ -189,7 +189,7 @@ const canDeleteWorkspaceProjects = (
   project?: Project,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
@@ -207,7 +207,7 @@ const canModifyWorkspaceProjects = (
   project?: Project,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
@@ -225,7 +225,7 @@ const canMoveWorkspaceProjects = (
   project?: Project,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
@@ -243,7 +243,7 @@ const canDeleteWorkspace = (
   workspace?: PermissionWorkspace,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
@@ -259,7 +259,7 @@ const canModifyWorkspace = (
   workspace?: PermissionWorkspace,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
-  userRoles?: UserRole[]
+  userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (

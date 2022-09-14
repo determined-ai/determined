@@ -74,7 +74,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
           }
         : clone(CANNOT_DELETE_MODAL_PROPS);
     },
-    [canDeleteModelVersion, handleOk]
+    [canDeleteModelVersion, handleOk],
   );
 
   const modalOpen = useCallback((modelVersion: ModelVersion) => setModelVersion(modelVersion), []);

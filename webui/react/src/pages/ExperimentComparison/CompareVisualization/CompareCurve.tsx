@@ -72,7 +72,7 @@ const CompareCurve: React.FC<Props> = ({
         return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
       }
     },
-    [selectedRowKeys]
+    [selectedRowKeys],
   );
 
   const submitBatchAction = useCallback(
@@ -96,7 +96,7 @@ const CompareCurve: React.FC<Props> = ({
         });
       }
     },
-    [sendBatchActions]
+    [sendBatchActions],
   );
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);

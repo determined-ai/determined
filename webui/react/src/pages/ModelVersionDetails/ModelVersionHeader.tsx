@@ -70,7 +70,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: relativeTimeRenderer(
-          new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime)
+          new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime),
         ),
         label: 'Updated',
       },
@@ -127,7 +127,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         text: 'Deregister Version',
       },
     ],
-    [handleDelete, handleDownloadModel]
+    [handleDelete, handleDownloadModel],
   );
 
   const referenceText = useMemo(() => {

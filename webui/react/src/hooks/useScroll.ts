@@ -61,7 +61,7 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
         viewWidth: element.clientWidth,
       }));
     },
-    [element]
+    [element],
   );
 
   const handleScroll = useCallback(() => {

@@ -67,7 +67,7 @@ const TrialDetailsComp: React.FC = () => {
     try {
       const response = await getExperimentDetails(
         { id: trial.experimentId },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
 
       setIsFetching(false);
@@ -108,7 +108,7 @@ const TrialDetailsComp: React.FC = () => {
       history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
       setIsFetching(false);
     },
-    [basePath, history]
+    [basePath, history],
   );
 
   const handleViewLogs = useCallback(() => {

@@ -40,7 +40,7 @@ export const Custom = (): React.ReactNode => {
             [ContentType.Chart]: ContentType.Chart,
             [ContentType.Logs]: ContentType.Logs,
           },
-          undefined
+          undefined,
         )}
         filters={number('number of filters', 2)}
         size={select('size', ['small', 'medium', 'large', 'max'], 'medium')}

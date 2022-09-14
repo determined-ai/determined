@@ -74,7 +74,7 @@ const setup = async () => {
   const view = render(
     <StoreProvider>
       <Container />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

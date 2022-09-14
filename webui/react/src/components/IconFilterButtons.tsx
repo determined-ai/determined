@@ -21,7 +21,7 @@ const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
     (id: string) => {
       return (e: React.MouseEvent) => onClick?.(id, e);
     },
-    [onClick]
+    [onClick],
   );
 
   return (

@@ -87,7 +87,7 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     const hiddenList = within(hidden).getAllByRole('listitem');
@@ -97,7 +97,7 @@ describe('useModalCustomizeColumns', () => {
     expect(Array.isArray(visibleList)).toBeTruthy();
 
     expect(visibleList.map((item) => item.textContent)).toContain(
-      camelCaseToListItem(DEFAULT_COLUMNS[0])
+      camelCaseToListItem(DEFAULT_COLUMNS[0]),
     );
   });
 
@@ -112,7 +112,7 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     await user.type(view.getByRole('textbox'), searchTerm);
@@ -135,7 +135,7 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     const initialHiddenHeight = parseInt(lists[0].style.height);
@@ -160,7 +160,7 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     const initialHiddenHeight = parseInt(lists[0].style.height);
@@ -185,13 +185,13 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     expect(
       within(lists[1])
         .getAllByRole('listitem')
-        .map((item) => sentenceToCamelCase(item.textContent ?? ''))
+        .map((item) => sentenceToCamelCase(item.textContent ?? '')),
     ).toEqual(DEFAULT_COLUMNS);
 
     const transferredColumn = within(lists[1]).getAllByRole('listitem')[0];
@@ -201,7 +201,7 @@ describe('useModalCustomizeColumns', () => {
       expect(
         within(lists[1])
           .getAllByRole('listitem')
-          .map((item) => sentenceToCamelCase(item.textContent ?? ''))
+          .map((item) => sentenceToCamelCase(item.textContent ?? '')),
       ).not.toEqual(DEFAULT_COLUMNS);
     });
 
@@ -213,7 +213,7 @@ describe('useModalCustomizeColumns', () => {
       expect(
         within(lists[1])
           .getAllByRole('listitem')
-          .map((item) => sentenceToCamelCase(item.textContent ?? ''))
+          .map((item) => sentenceToCamelCase(item.textContent ?? '')),
       ).toEqual(DEFAULT_COLUMNS);
     });
 
@@ -230,7 +230,7 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     const lineHeight = parseInt(within(lists[0]).getAllByRole('listitem')[0].style.height);
@@ -240,7 +240,7 @@ describe('useModalCustomizeColumns', () => {
     await waitFor(() => {
       expect(parseInt(lists[0].style.height)).toEqual(0);
       expect(parseInt(lists[1].style.height)).toEqual(
-        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight
+        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight,
       );
     });
   });
@@ -255,7 +255,7 @@ describe('useModalCustomizeColumns', () => {
 
     // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
-      DEFAULT_COLUMNS.length
+      DEFAULT_COLUMNS.length,
     );
 
     const lineHeight = parseInt(within(lists[0]).getAllByRole('listitem')[0].style.height);
@@ -264,7 +264,7 @@ describe('useModalCustomizeColumns', () => {
 
     await waitFor(() => {
       expect(parseInt(lists[0].style.height)).toEqual(
-        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight
+        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight,
       );
       expect(parseInt(lists[1].style.height)).toEqual(0);
     });

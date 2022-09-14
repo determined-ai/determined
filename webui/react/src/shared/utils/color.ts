@@ -128,7 +128,7 @@ export const rgba2str = (rgba: RgbaColor): string => {
 export const rgbaFromGradient = (
   rgba0: RgbaColor,
   rgba1: RgbaColor,
-  percent: number
+  percent: number,
 ): RgbaColor => {
   const r = Math.round((rgba1.r - rgba0.r) * percent + rgba0.r);
   const g = Math.round((rgba1.g - rgba0.g) * percent + rgba0.g);
@@ -146,7 +146,7 @@ export const rgbaMix = (
   rgba0: RgbaColor,
   rgba1: RgbaColor,
   amount: number,
-  rounded = true
+  rounded = true,
 ): RgbaColor => {
   const dr = rgba1.r - rgba0.r;
   const dg = rgba1.g - rgba0.g;
@@ -229,7 +229,7 @@ export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => 
   return Math.max(
     Math.abs(rgba0.r - rgba1.r),
     Math.abs(rgba0.g - rgba1.g),
-    Math.abs(rgba0.b - rgba1.b)
+    Math.abs(rgba0.b - rgba1.b),
   );
 };
 

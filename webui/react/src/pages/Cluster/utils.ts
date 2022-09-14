@@ -19,7 +19,7 @@ export interface ResourceAllocationChartSeries {
 export const mapResourceAllocationApiToChartSeries = (
   apiRes: Array<V1ResourceAllocationAggregatedEntry>,
   grouping: GroupBy,
-  users: DetailedUser[]
+  users: DetailedUser[],
 ): ResourceAllocationChartSeries => {
   return {
     groupedBy: grouping,
@@ -29,7 +29,7 @@ export const mapResourceAllocationApiToChartSeries = (
     hoursByUsername: mapToChartSeries(
       apiRes.map((item) => {
         return mapPeriodToDisplayNames(item.byUsername, users);
-      })
+      }),
     ),
     hoursTotal: { total: apiRes.map((item) => secondToHour(item.seconds)) },
     time: apiRes.map((item) => item.periodStart),
@@ -38,7 +38,7 @@ export const mapResourceAllocationApiToChartSeries = (
 
 const mapPeriodToDisplayNames = (
   period: Record<string, number>,
-  users: DetailedUser[]
+  users: DetailedUser[],
 ): Record<string, number> => {
   const result: Record<string, number> = {};
   Object.keys(period).forEach((key) => {

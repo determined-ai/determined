@@ -65,7 +65,7 @@ const LoadingWrapper: React.FC<Props> = (props: Props) => {
       maxHeight: props.maxHeight,
       noPadding: props.noPadding,
     }),
-    [props.maxHeight, props.noPadding]
+    [props.maxHeight, props.noPadding],
   );
 
   const state = useMemo(() => {

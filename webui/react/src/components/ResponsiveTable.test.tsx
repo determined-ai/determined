@@ -147,7 +147,7 @@ const setup = (options?: { pagination?: Pagination }) => {
       dataSource={data}
       pagination={paginationConfig}
       onChange={onChange}
-    />
+    />,
   );
 
   const rerender = () =>
@@ -157,7 +157,7 @@ const setup = (options?: { pagination?: Pagination }) => {
         dataSource={data}
         pagination={paginationConfig}
         onChange={onChange}
-      />
+      />,
     );
 
   const user = userEvent.setup();
@@ -191,7 +191,7 @@ describe('ResponsiveTable', () => {
       expect.objectContaining({ current: (paginationConfig?.current ?? 0) + 1 }),
       expect.objectContaining({}),
       expect.objectContaining({}),
-      expect.objectContaining({})
+      expect.objectContaining({}),
     );
   });
 
@@ -205,7 +205,7 @@ describe('ResponsiveTable', () => {
       expect.objectContaining({ current: (paginationConfig?.current ?? 0) - 1 }),
       expect.objectContaining({}),
       expect.objectContaining({}),
-      expect.objectContaining({})
+      expect.objectContaining({}),
     );
   });
 
@@ -223,7 +223,7 @@ describe('ResponsiveTable', () => {
         expect.objectContaining({}),
         expect.objectContaining({}),
         expect.objectContaining({ columnKey: key, order: 'ascend' }),
-        expect.objectContaining({})
+        expect.objectContaining({}),
       );
 
       // Click on the column sorter again to get reverse order.
@@ -233,7 +233,7 @@ describe('ResponsiveTable', () => {
         expect.objectContaining({}),
         expect.objectContaining({}),
         expect.objectContaining({ columnKey: key, order: 'descend' }),
-        expect.objectContaining({})
+        expect.objectContaining({}),
       );
     }
   });

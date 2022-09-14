@@ -41,7 +41,7 @@ const SettingsAccount: React.FC = () => {
         handleError(e, { silent: true, type: ErrorType.Input });
       }
     },
-    [auth.user, storeDispatch]
+    [auth.user, storeDispatch],
   );
 
   return (

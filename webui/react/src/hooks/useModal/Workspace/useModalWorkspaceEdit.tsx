@@ -64,7 +64,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
         title: 'Edit Workspace',
       };
     },
-    [handleOk, modalContent]
+    [handleOk, modalContent],
   );
 
   const modalOpen = useCallback(
@@ -72,7 +72,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
       setName(workspace.name);
       openOrUpdate({ ...getModalProps(workspace.name), ...initialModalProps });
     },
-    [getModalProps, openOrUpdate, workspace.name]
+    [getModalProps, openOrUpdate, workspace.name],
   );
 
   /**

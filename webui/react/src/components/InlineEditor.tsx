@@ -75,7 +75,7 @@ const InlineEditor: React.FC<Props> = ({
       if (growWrapRef.current) growWrapRef.current.dataset.value = newValue || placeholder;
       setCurrentValue(newValue);
     },
-    [maxLength, placeholder]
+    [maxLength, placeholder],
   );
 
   const cancel = useCallback(() => {
@@ -99,7 +99,7 @@ const InlineEditor: React.FC<Props> = ({
         setIsSaving(false);
       }
     },
-    [onSave, pattern, updateEditorValue, value]
+    [onSave, pattern, updateEditorValue, value],
   );
 
   const handleWrapperClick = useCallback(() => {
@@ -130,7 +130,7 @@ const InlineEditor: React.FC<Props> = ({
       if (!allowNewline) newValue = newValue.replace(/(\r?\n|\r\n?)/g, '');
       updateEditorValue(newValue);
     },
-    [allowNewline, updateEditorValue]
+    [allowNewline, updateEditorValue],
   );
 
   const handleTextareaKeyPress = useCallback(
@@ -154,7 +154,7 @@ const InlineEditor: React.FC<Props> = ({
         setIsEditable(false);
       }
     },
-    [allowNewline, isEditable, updateEditorValue, value]
+    [allowNewline, isEditable, updateEditorValue, value],
   );
 
   useEffect(() => {

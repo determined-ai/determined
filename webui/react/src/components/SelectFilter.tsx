@@ -53,7 +53,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
     verticalLayout = false,
     ...props
   }: Props,
-  ref?: React.Ref<RefSelectProps>
+  ref?: React.Ref<RefSelectProps>,
 ) {
   const [isOpen, setIsOpen] = useState(false);
   const classes = [className, css.base];

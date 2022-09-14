@@ -41,7 +41,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       rankIds: settings.rankId,
       searchText: settings.searchText,
     }),
-    [settings]
+    [settings],
   );
 
   const handleFilterChange = useCallback(
@@ -54,7 +54,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         searchText: filters.searchText,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleFilterReset = useCallback(() => resetSettings(), [resetSettings]);
@@ -142,10 +142,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
         settings.searchText,
-        { signal: config.canceler.signal }
+        { signal: config.canceler.signal },
       );
     },
-    [settings, trial?.id]
+    [settings, trial?.id],
   );
 
   useEffect(() => {
@@ -156,7 +156,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
     readStream(
       detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: canceler.signal }),
-      (event) => setFilterOptions(event as Filters)
+      (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();

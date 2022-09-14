@@ -54,7 +54,7 @@ const setup = async () => {
       <StoreProvider>
         <ModalTrigger />
       </StoreProvider>
-    </BrowserRouter>
+    </BrowserRouter>,
   );
 
   await user.click(screen.getByRole('button'));

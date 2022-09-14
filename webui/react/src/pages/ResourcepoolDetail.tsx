@@ -71,7 +71,7 @@ const ResourcepoolDetail: React.FC = () => {
   const fetchStats = useCallback(async () => {
     try {
       const promises = [getJobQStats({}, { signal: canceler.signal })] as [
-        Promise<V1GetJobQueueStatsResponse>
+        Promise<V1GetJobQueueStatsResponse>,
       ];
       const [stats] = await Promise.all(promises);
       const pool = stats.results.find((p) => p.resourcePool === poolname);
@@ -105,7 +105,7 @@ const ResourcepoolDetail: React.FC = () => {
       const basePath = paths.resourcePool(pool.name);
       history.replace(`${basePath}/${key}`);
     },
-    [history, pool]
+    [history, pool],
   );
 
   const renderPoolConfig = useCallback(() => {

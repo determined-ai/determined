@@ -69,7 +69,7 @@ const trialContinueConfig = (
   trialHparams: TrialHyperparameters,
   trialId: number,
   workspaceName: string,
-  projectName: string
+  projectName: string,
 ): RawJson => {
   const newConfig = clone(experimentConfig);
   return {
@@ -184,7 +184,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     },
-    [modalClose]
+    [modalClose],
   );
 
   const getConfigFromForm = useCallback((config: RawJson) => {
@@ -239,7 +239,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
       }
     },
-    [modalState]
+    [modalState],
   );
 
   const handleOk = useCallback(async () => {
@@ -331,7 +331,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         </>
       );
     },
-    [handleEditorChange, handleFieldsChange]
+    [handleEditorChange, handleFieldsChange],
   );
 
   const getModalProps = useCallback(
@@ -365,7 +365,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
 
       return props;
     },
-    [getModalContent, handleCancel, handleOk]
+    [getModalContent, handleCancel, handleOk],
   );
 
   const modalOpen = useCallback(({ experiment, trial, type }: OpenProps) => {
@@ -378,7 +378,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         trial.hyperparameters,
         trial.id,
         experiment.workspaceName,
-        experiment.projectName
+        experiment.projectName,
       );
       config.description =
         `Continuation of trial ${trial.id}, experiment ${experiment.id}` +

@@ -145,7 +145,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
         {modalProjectMoveContextHolder}
       </>
     ),
-    [modalProjectDeleteContextHolder, modalProjectEditContextHolder, modalProjectMoveContextHolder]
+    [modalProjectDeleteContextHolder, modalProjectEditContextHolder, modalProjectMoveContextHolder],
   );
 
   if (menuProps.items?.length === 0 && !showChildrenIfEmpty) {

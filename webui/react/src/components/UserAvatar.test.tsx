@@ -58,7 +58,7 @@ const setup = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {}) =
   const view = render(
     <StoreProvider>
       <Component hideTooltip={hideTooltip} userId={userId} {...props} />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   return { user, view };

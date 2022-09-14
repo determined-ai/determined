@@ -139,7 +139,7 @@ const Dropdown: React.FC<Props> = ({
         setIsVisible(false);
       }
     },
-    [disableAutoDismiss]
+    [disableAutoDismiss],
   );
 
   useEffect(() => {

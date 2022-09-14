@@ -58,7 +58,7 @@ const setup = () => {
           <ExperimentDetails />
         </Router>
       </HelmetProvider>
-    </StoreProvider>
+    </StoreProvider>,
   );
   return { view };
 };
@@ -97,10 +97,10 @@ describe('Experment Details Page', () => {
     beforeAll(() => {
       (useParams as jest.Mock).mockReturnValue({ experimentId: 1241 });
       (getExperimentDetails as jest.Mock).mockResolvedValue(
-        RESPONSES.singleTrial.getExperimentsDetails
+        RESPONSES.singleTrial.getExperimentsDetails,
       );
       (getExpValidationHistory as jest.Mock).mockResolvedValue(
-        RESPONSES.singleTrial.getExpValidationHistory
+        RESPONSES.singleTrial.getExpValidationHistory,
       );
       (getExpTrials as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getExpTrials);
       (getProject as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getProject);
@@ -128,10 +128,10 @@ describe('Experment Details Page', () => {
     beforeAll(() => {
       (useParams as jest.Mock).mockReturnValue({ experimentId: 1249 });
       (getExperimentDetails as jest.Mock).mockResolvedValue(
-        RESPONSES.multiTrial.getExperimentsDetails
+        RESPONSES.multiTrial.getExperimentsDetails,
       );
       (getExpValidationHistory as jest.Mock).mockResolvedValue(
-        RESPONSES.multiTrial.getExpValidationHistory
+        RESPONSES.multiTrial.getExpValidationHistory,
       );
       (getExpTrials as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getExpTrials);
       (getProject as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getProject);

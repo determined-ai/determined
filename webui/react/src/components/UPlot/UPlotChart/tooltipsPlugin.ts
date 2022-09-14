@@ -128,7 +128,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
         if (idx !== displayedIdx) {
           const hasXValue = !!uPlot.series.find(
             (serie, serieId) =>
-              serie.scale !== 'x' && serie.show && uPlot.data[serieId][idx] != null
+              serie.scale !== 'x' && serie.show && uPlot.data[serieId][idx] != null,
           );
           if (hasXValue) {
             showIdx(uPlot, idx);

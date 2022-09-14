@@ -54,7 +54,7 @@ export const orderedSchedulers = new Set([
 export const moveJobToPositionUpdate = (
   jobs: Job[],
   jobId: string,
-  position: number
+  position: number,
 ): Api.V1QueueControl | undefined => {
   const errOpts: DetErrorOptions = {
     isUserTriggered: true,

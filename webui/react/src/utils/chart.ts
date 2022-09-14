@@ -9,7 +9,7 @@ import { primitiveSorter } from 'shared/utils/sort';
 export const getColorScale = (
   theme: Theme,
   range?: Range<number>,
-  smallerIsBetter?: boolean
+  smallerIsBetter?: boolean,
 ): ColorScale[] => {
   const defaultScale = [theme.statusCriticalWeak, theme.statusActive];
   const reverseScale = clone(defaultScale).reverse();
@@ -43,7 +43,7 @@ export const getNumericRange = (values: number[], forceRange = true): Range<numb
       acc[1] = Math.max(acc[1], value);
       return acc;
     },
-    [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as Range<number>
+    [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as Range<number>,
   );
 
   if (forceRange && range[0] === range[1]) {
@@ -56,7 +56,7 @@ export const getNumericRange = (values: number[], forceRange = true): Range<numb
 
 export const updateRange = <T extends Primitive>(
   range: Range<T> | undefined,
-  value: T
+  value: T,
 ): Range<T> => {
   if (!range) return [value, value];
   return [

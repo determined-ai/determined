@@ -33,7 +33,7 @@ const SCROLL_THROTTLE_TIME = 500;
 const shouldRecreate = (
   prev: Partial<Options> | undefined,
   next: Partial<Options> | undefined,
-  chart: uPlot | undefined
+  chart: uPlot | undefined,
 ): boolean => {
   if (!chart) return true;
   if (!next) return false;
@@ -111,7 +111,7 @@ const UPlotChart: React.FC<Props> = ({
         width: chartDivRef.current?.offsetWidth,
       },
       boundsOptions || {},
-      options || {}
+      options || {},
     );
 
     // Override chart support colors to match theme.

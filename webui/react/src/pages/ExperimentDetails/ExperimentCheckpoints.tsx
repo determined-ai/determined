@@ -64,7 +64,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
       if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
     },
-    [openModalCheckpointRegister]
+    [openModalCheckpointRegister],
   );
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
@@ -74,7 +74,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     (reason?: ModalCloseReason, checkpoints?: string[]) => {
       if (checkpoints) openModalCreateModel({ checkpoints });
     },
-    [openModalCreateModel]
+    [openModalCreateModel],
   );
 
   // Has to use var to hoist openModalCheckpointRegister for use above
@@ -100,7 +100,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         state: states.length !== 0 ? (states as CheckpointState[]) : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
@@ -117,21 +117,21 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state]
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
   const handleRegisterCheckpoint = useCallback(
     (checkpoints: string[]) => {
       openModalCheckpointRegister({ checkpoints });
     },
-    [openModalCheckpointRegister]
+    [openModalCheckpointRegister],
   );
 
   const handleDeleteCheckpoint = useCallback(
     (checkpoints: string[]) => {
       openModalCheckpointDelete({ checkpoints });
     },
-    [openModalCheckpointDelete]
+    [openModalCheckpointDelete],
   );
 
   const dropDownOnTrigger = useCallback(
@@ -142,7 +142,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
       };
     },
-    [handleDeleteCheckpoint, handleRegisterCheckpoint]
+    [handleDeleteCheckpoint, handleRegisterCheckpoint],
   );
 
   const CheckpointActionDropdown: React.FC<ContextMenuProps<CoreApiGenericCheckpoint>> =
@@ -166,7 +166,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           </ActionDropdown>
         );
       },
-      [dropDownOnTrigger]
+      [dropDownOnTrigger],
     );
 
   const columns = useMemo(() => {
@@ -235,7 +235,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           sortBy: validateDetApiEnum(V1GetExperimentCheckpointsRequestSortBy, settings.sortKey),
           states: validateDetApiEnumList(Determinedcheckpointv1State, states),
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setTotal(response.pagination.total ?? 0);
       setCheckpoints(response.checkpoints);
@@ -277,7 +277,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         });
       }
     },
-    [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row]
+    [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
   );
 
   usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
@@ -303,7 +303,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     (rowKeys) => {
       updateSettings({ row: rowKeys });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const checkpointMap = useMemo(() => {
@@ -342,7 +342,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             },
-            total
+            total,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="uuid"

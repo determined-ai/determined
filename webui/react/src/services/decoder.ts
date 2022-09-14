@@ -75,7 +75,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
           resourceContainerState =
             types.ResourceState[
               capitalize(
-                slot.container.state.toString().replace('STATE_', '')
+                slot.container.state.toString().replace('STATE_', ''),
               ) as keyof typeof types.ResourceState
             ];
         }
@@ -127,7 +127,7 @@ const mapV1TaskState = (containerState: Sdk.Determinedtaskv1State): types.Comman
 
 const mapCommonV1Task = (
   task: Sdk.V1Command | Sdk.V1Notebook | Sdk.V1Shell | Sdk.V1Tensorboard,
-  type: types.CommandType
+  type: types.CommandType,
 ): types.CommandTask => {
   return {
     displayName: task.displayName || '',
@@ -228,7 +228,7 @@ export const mapV1ModelVersion = (modelVersion: Sdk.V1ModelVersion): types.Model
 };
 
 export const mapV1ModelDetails = (
-  modelDetailsResponse: Sdk.V1GetModelVersionsResponse
+  modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
 ): types.ModelVersions | undefined => {
   if (
     !modelDetailsResponse.model ||
@@ -239,7 +239,7 @@ export const mapV1ModelDetails = (
   return {
     model: mapV1Model(modelDetailsResponse.model),
     modelVersions: modelDetailsResponse.modelVersions.map(
-      (version) => mapV1ModelVersion(version) as types.ModelVersion
+      (version) => mapV1ModelVersion(version) as types.ModelVersion,
     ),
     pagination: modelDetailsResponse.pagination,
   };
@@ -283,7 +283,7 @@ const ioToHyperparametereters = (io: ioTypes.ioTypeHyperparameters): types.Hyper
 };
 
 export const ioToExperimentConfig = (
-  io: ioTypes.ioTypeExperimentConfig
+  io: ioTypes.ioTypeExperimentConfig,
 ): types.ExperimentConfig => {
   const config: types.ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
@@ -350,16 +350,16 @@ const experimentStateMap = {
 };
 
 export const decodeCheckpointState = (
-  data: Sdk.Determinedcheckpointv1State
+  data: Sdk.Determinedcheckpointv1State,
 ): types.CheckpointState => {
   return checkpointStateMap[data];
 };
 
 export const encodeCheckpointState = (
-  state: types.CheckpointState
+  state: types.CheckpointState,
 ): Sdk.Determinedcheckpointv1State => {
   const stateKey = Object.keys(checkpointStateMap).find(
-    (key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state
+    (key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state,
   );
   if (stateKey) return stateKey as unknown as Sdk.Determinedcheckpointv1State;
   return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
@@ -371,7 +371,7 @@ export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): ty
 
 export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexperimentv1State => {
   const stateKey = Object.keys(experimentStateMap).find(
-    (key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state
+    (key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state,
   );
   if (stateKey) return stateKey as unknown as Sdk.Determinedexperimentv1State;
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
@@ -383,7 +383,7 @@ export const mapV1GetExperimentDetailsResponse = ({
 }: Sdk.V1GetExperimentResponse): types.ExperimentBase => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
-    exp.config
+    exp.config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
@@ -406,11 +406,11 @@ export const mapV1GetExperimentDetailsResponse = ({
 
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
-  jobSummary?: types.JobSummary
+  jobSummary?: types.JobSummary,
 ): types.ExperimentItem => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
-    data.config
+    data.config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
@@ -534,7 +534,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
 };
 
 export const decodeCheckpoints = (
-  data: Sdk.V1GetExperimentCheckpointsResponse
+  data: Sdk.V1GetExperimentCheckpointsResponse,
 ): types.CheckpointPagination => {
   return {
     checkpoints: data.checkpoints.map(decodeCheckpoint),
@@ -582,7 +582,7 @@ export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.Tr
 };
 
 export const decodeTrialWorkloads = (
-  data: Sdk.V1GetTrialWorkloadsResponse
+  data: Sdk.V1GetTrialWorkloadsResponse,
 ): types.TrialWorkloads => {
   const workloads = data.workloads.map((ww) => ({
     checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
@@ -596,7 +596,7 @@ export const decodeTrialWorkloads = (
 };
 
 export const decodeTrialResponseToTrialDetails = (
-  data: Sdk.V1GetTrialResponse
+  data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
   const EMPTY_STATES = new Set(['UNSPECIFIED', '', undefined]);
@@ -644,7 +644,7 @@ const messageRegex = new RegExp(
     '([\\s\\S]*)', // message
     '$',
   ].join(''),
-  'im'
+  'im',
 );
 
 const formatLogMessage = (message: string): string => {
@@ -668,7 +668,7 @@ const formatLogMessage = (message: string): string => {
 };
 
 export const mapV1LogsResponse = <T extends Sdk.V1TrialLogsResponse | Sdk.V1TaskLogsResponse>(
-  data: unknown
+  data: unknown,
 ): types.TrialLog => {
   const logData = data as T;
   return {
@@ -700,7 +700,7 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
 };
 
 export const mapDeletionStatus = (
-  response: Sdk.V1DeleteProjectResponse | Sdk.V1DeleteWorkspaceResponse
+  response: Sdk.V1DeleteProjectResponse | Sdk.V1DeleteWorkspaceResponse,
 ): types.DeletionStatus => {
   return { completed: response.completed };
 };
@@ -733,7 +733,7 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
 };
 
 export const decodeJobStates = (
-  states?: Sdk.Determinedjobv1State[]
+  states?: Sdk.Determinedjobv1State[],
 ): Array<
   'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
 > => {

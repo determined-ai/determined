@@ -43,7 +43,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const validationMetric = experiment?.config?.searcher.metric;
     const defaultValidationMetric = metricNames.find(
       (metricName) =>
-        metricName.name === validationMetric && metricName.type === MetricType.Validation
+        metricName.name === validationMetric && metricName.type === MetricType.Validation,
     );
     const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
@@ -61,7 +61,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
       updateSettings({ metric: newMetrics, tableOffset: 0 });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   return (

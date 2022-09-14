@@ -26,7 +26,7 @@ const setup = ({
       maxHeight={maxHeight}
       options={options}
       title={title}
-    />
+    />,
   );
   return { handleOnChange, view };
 };

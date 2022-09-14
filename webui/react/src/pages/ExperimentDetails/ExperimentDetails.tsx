@@ -44,10 +44,10 @@ const ExperimentDetails: React.FC = () => {
         getExpValidationHistory({ id }, { signal: canceler.current?.signal }),
       ]);
       setExperiment((prevExperiment) =>
-        isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment
+        isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
       );
       setValHistory((prevValHistory) =>
-        isEqual(prevValHistory, newValHistory) ? prevValHistory : newValHistory
+        isEqual(prevValHistory, newValHistory) ? prevValHistory : newValHistory,
       );
       setIsSingleTrial(isSingleTrialExperiment(newExperiment));
     } catch (e) {

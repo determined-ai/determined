@@ -18,7 +18,7 @@ const RoutePagination: React.FC<Props> = ({ currentId, ids, onSelectId, tooltipL
     (page: number) => {
       onSelectId(ids[page - 1]);
     },
-    [ids, onSelectId]
+    [ids, onSelectId],
   );
 
   useEffect(() => {

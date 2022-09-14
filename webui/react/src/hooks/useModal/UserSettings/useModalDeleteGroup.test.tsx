@@ -48,7 +48,7 @@ const setup = async () => {
   const view = render(
     <StoreProvider>
       <Container group={group} />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
@@ -62,7 +62,7 @@ describe('useModalCreateGroup', () => {
     await setup();
 
     expect(
-      screen.getByText(`Are you sure you want to delete group ${GROUPNAME} (ID: 1).`)
+      screen.getByText(`Are you sure you want to delete group ${GROUPNAME} (ID: 1).`),
     ).toBeInTheDocument();
   });
 
@@ -96,7 +96,7 @@ describe('useModalCreateGroup', () => {
     // Check for successful toast message.
     await waitFor(() => {
       expect(
-        screen.getByText(API_SUCCESS_MESSAGE, { collapseWhitespace: false })
+        screen.getByText(API_SUCCESS_MESSAGE, { collapseWhitespace: false }),
       ).toBeInTheDocument();
     });
 

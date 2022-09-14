@@ -89,7 +89,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
         handleError(e);
       }
     },
-    [canceler.signal]
+    [canceler.signal],
   );
 
   useEffect(() => {
@@ -114,9 +114,9 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
   const totalCheckpointsSizes: Record<string, string> = useMemo(
     () =>
       Object.fromEntries(
-        Object.values(trialsDetails).map((trial) => [trial.id, getCheckpointSize(trial)])
+        Object.values(trialsDetails).map((trial) => [trial.id, getCheckpointSize(trial)]),
       ),
-    [getCheckpointSize, trialsDetails]
+    [getCheckpointSize, trialsDetails],
   );
 
   const [metricNames, setMetricNames] = useState<MetricName[]>([]);
@@ -145,7 +145,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
     (
       metricsObj: Record<string, { [key: string]: MetricsWorkload }>,
       workload: MetricsWorkload,
-      trialId: number
+      trialId: number,
     ) => {
       for (const metricName of Object.keys(workload.metrics || {})) {
         if (metricsObj[trialId][metricName]) {
@@ -162,7 +162,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
       }
       return metricsObj;
     },
-    []
+    [],
   );
 
   const [latestMetrics, setLatestMetrics] = useState<Record<string, { [key: string]: number }>>({});
@@ -200,7 +200,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const hyperparameterNames = useMemo(
     () => Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
-    [trials, trialsDetails]
+    [trials, trialsDetails],
   );
 
   useEffect(() => {
@@ -213,7 +213,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const isLoaded = useMemo(
     () => trials.every((trialId) => trialsDetails[trialId]),
-    [trials, trialsDetails]
+    [trials, trialsDetails],
   );
 
   return (

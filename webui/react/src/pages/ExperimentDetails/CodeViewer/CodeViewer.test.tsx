@@ -95,7 +95,7 @@ const experimentIdMock = 123;
 const user = userEvent.setup();
 
 const setup = (
-  props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock }
+  props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
 ) => {
   render(<CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />);
 };

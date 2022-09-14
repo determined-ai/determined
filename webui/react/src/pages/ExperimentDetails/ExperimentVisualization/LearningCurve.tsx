@@ -80,7 +80,7 @@ const LearningCurve: React.FC<Props> = ({
       if (isNewTabClickEvent(event)) openBlank(href);
       else routeToReactUrl(href);
     },
-    [experiment.id]
+    [experiment.id],
   );
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
@@ -121,7 +121,7 @@ const LearningCurve: React.FC<Props> = ({
         undefined,
         undefined,
         undefined,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
@@ -174,13 +174,13 @@ const LearningCurve: React.FC<Props> = ({
              */
             const value = metricsMap[trialId][batch];
             return Number.isFinite(value) ? value : null;
-          })
+          }),
         );
         setChartData(newChartData);
 
         // One successful event as come through.
         setHasLoaded(true);
-      }
+      },
     ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
@@ -197,7 +197,7 @@ const LearningCurve: React.FC<Props> = ({
         return setShowCompareTrials(true);
       }
     },
-    [selectedRowKeys]
+    [selectedRowKeys],
   );
 
   const submitBatchAction = useCallback(
@@ -221,14 +221,14 @@ const LearningCurve: React.FC<Props> = ({
         });
       }
     },
-    [sendBatchActions]
+    [sendBatchActions],
   );
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
   const handleTrialUnselect = useCallback(
     (trialId: number) => setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId)),
-    []
+    [],
   );
 
   if (pageError) {

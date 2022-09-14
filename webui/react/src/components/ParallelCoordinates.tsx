@@ -77,7 +77,7 @@ const ParallelCoordinates: React.FC<Props> = ({
               },
             },
           },
-          config
+          config,
         );
         chartRef.current?.setConfig(newConfig, false);
       }

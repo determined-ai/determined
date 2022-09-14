@@ -35,7 +35,7 @@ const useModalCheckpointDelete = ({ onClose }: Props): ModalHooks => {
     readStream(
       detApi.Checkpoint.deleteCheckpoints({
         checkpointUuids: Array.isArray(checkpoints) ? checkpoints : [checkpoints],
-      })
+      }),
     );
     onClose?.(ModalCloseReason.Ok);
   }, [checkpoints, onClose]);
@@ -62,7 +62,7 @@ This action may complete or fail without further notification.`;
       setCheckpoints(checkpoints);
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
-    [modalProps, openOrUpdate]
+    [modalProps, openOrUpdate],
   );
 
   /**

@@ -38,7 +38,7 @@ export const closestPointPlugin = ({
   const findClosestPoint = (
     uPlot: uPlot,
     cursorLeft: number,
-    cursorTop: number
+    cursorTop: number,
   ): Point | undefined => {
     let closestDistance: number = Number.MAX_VALUE;
     let closestPoint: Point | undefined;

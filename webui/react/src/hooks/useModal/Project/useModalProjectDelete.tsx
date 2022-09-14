@@ -68,7 +68,7 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
         title: 'Delete Project',
       };
     },
-    [handleOk, modalContent, project.name]
+    [handleOk, modalContent, project.name],
   );
 
   const modalOpen = useCallback(
@@ -76,7 +76,7 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
       setName('');
       openOrUpdate({ ...getModalProps(), ...initialModalProps });
     },
-    [getModalProps, openOrUpdate]
+    [getModalProps, openOrUpdate],
   );
 
   /**

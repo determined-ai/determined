@@ -10,7 +10,7 @@ import { tensorBoardMatchesSource } from 'utils/task';
 /* Authentication */
 
 export const login = generateDetApi<Api.V1LoginRequest, Api.V1LoginResponse, Service.LoginResponse>(
-  Config.login
+  Config.login,
 );
 
 /*
@@ -77,11 +77,11 @@ export const updateUserSetting = generateDetApi<
 >(Config.updateUserSetting);
 
 export const resetUserSetting = generateDetApi<EmptyParams, Api.V1ResetUserSettingResponse, void>(
-  Config.resetUserSetting
+  Config.resetUserSetting,
 );
 
 export const getUserPermissions = generateDetApi<Service.GetUserParams, number, Type.Permission[]>(
-  Config.getUserPermissions
+  Config.getUserPermissions,
 );
 
 /* Groups */
@@ -119,17 +119,17 @@ export const deleteGroup = generateDetApi<
 /* Info */
 
 export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo>(
-  Config.getInfo
+  Config.getInfo,
 );
 
 export const getTelemetry = generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry>(
-  Config.getTelemetry
+  Config.getTelemetry,
 );
 
 /* Cluster */
 
 export const getAgents = generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]>(
-  Config.getAgents
+  Config.getAgents,
 );
 
 export const getResourcePools = generateDetApi<
@@ -387,7 +387,7 @@ export const postModelVersion = generateDetApi<
 >(Config.postModelVersion);
 
 export const getModelLabels = generateDetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]>(
-  Config.getModelLabels
+  Config.getModelLabels,
 );
 
 /* Workspaces */
@@ -535,7 +535,7 @@ export const getTensorBoards = generateDetApi<
 >(Config.getTensorBoards);
 
 export const killCommand = generateDetApi<Service.CommandIdParams, Api.V1KillCommandResponse, void>(
-  Config.killCommand
+  Config.killCommand,
 );
 
 export const killJupyterLab = generateDetApi<
@@ -545,7 +545,7 @@ export const killJupyterLab = generateDetApi<
 >(Config.killJupyterLab);
 
 export const killShell = generateDetApi<Service.CommandIdParams, Api.V1KillShellResponse, void>(
-  Config.killShell
+  Config.killShell,
 );
 
 export const killTensorBoard = generateDetApi<
@@ -579,12 +579,13 @@ export const launchTensorBoard = generateDetApi<
 >(Config.launchTensorBoard);
 
 export const openOrCreateTensorBoard = async (
-  params: Service.LaunchTensorBoardParams
+  params: Service.LaunchTensorBoardParams,
 ): Promise<Type.CommandTask> => {
   const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(
     (tensorboard) =>
-      !terminalCommandStates.has(tensorboard.state) && tensorBoardMatchesSource(tensorboard, params)
+      !terminalCommandStates.has(tensorboard.state) &&
+      tensorBoardMatchesSource(tensorboard, params),
   );
   if (match) return match;
   return launchTensorBoard(params);

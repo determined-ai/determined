@@ -90,7 +90,7 @@ const TaskList: React.FC = () => {
         users: settings.user,
       },
       users || [],
-      settings.search
+      settings.search,
     );
   }, [loadedTasks, settings, users]);
 
@@ -160,7 +160,7 @@ const TaskList: React.FC = () => {
     (newSearch: string) => {
       updateSettings({ row: undefined, search: newSearch || undefined });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
@@ -176,7 +176,7 @@ const TaskList: React.FC = () => {
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search]
+    [handleNameSearchApply, handleNameSearchReset, settings.search],
   );
 
   const handleTypeFilterApply = useCallback(
@@ -186,7 +186,7 @@ const TaskList: React.FC = () => {
         type: types.length !== 0 ? (types as CommandType[]) : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleTypeFilterReset = useCallback(() => {
@@ -204,7 +204,7 @@ const TaskList: React.FC = () => {
         onReset={handleTypeFilterReset}
       />
     ),
-    [handleTypeFilterApply, handleTypeFilterReset, settings.type]
+    [handleTypeFilterApply, handleTypeFilterReset, settings.type],
   );
 
   const handleStateFilterApply = useCallback(
@@ -214,7 +214,7 @@ const TaskList: React.FC = () => {
         state: states.length !== 0 ? (states as CommandState[]) : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
@@ -231,7 +231,7 @@ const TaskList: React.FC = () => {
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state]
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
   const handleUserFilterApply = useCallback(
@@ -241,7 +241,7 @@ const TaskList: React.FC = () => {
         user: users.length !== 0 ? users : undefined,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleUserFilterReset = useCallback(() => {
@@ -259,7 +259,7 @@ const TaskList: React.FC = () => {
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user]
+    [handleUserFilterApply, handleUserFilterReset, settings.user],
   );
 
   const columns = useMemo(() => {
@@ -391,7 +391,7 @@ const TaskList: React.FC = () => {
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
             getDisplayName(users.find((u) => u.id === a.userId)),
-            getDisplayName(users.find((u) => u.id === b.userId))
+            getDisplayName(users.find((u) => u.id === b.userId)),
           );
         },
         title: 'User',
@@ -461,7 +461,7 @@ const TaskList: React.FC = () => {
     (action?: string) => {
       if (action === Action.Kill) showConfirmation();
     },
-    [showConfirmation]
+    [showConfirmation],
   );
 
   const handleTableChange = useCallback(
@@ -481,14 +481,14 @@ const TaskList: React.FC = () => {
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings, updateSettings]
+    [columns, settings, updateSettings],
   );
 
   const handleTableRowSelect = useCallback(
     (rowKeys) => {
       updateSettings({ row: rowKeys });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   usePolling(fetchAll, { rerunOnNewFn: true });
@@ -507,7 +507,7 @@ const TaskList: React.FC = () => {
         {children}
       </TaskActionDropdown>
     ),
-    [user, handleActionComplete]
+    [user, handleActionComplete],
   );
 
   return (
@@ -540,7 +540,7 @@ const TaskList: React.FC = () => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             },
-            filteredTasks.length
+            filteredTasks.length,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"

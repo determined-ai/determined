@@ -128,7 +128,7 @@ describe('Routes Utilities', () => {
       expect(window.open).toHaveBeenCalledWith(
         'https://localhost:3000',
         '_blank',
-        'noopener,noreferrer'
+        'noopener,noreferrer',
       );
     });
 
@@ -139,7 +139,7 @@ describe('Routes Utilities', () => {
       expect(window.open).toHaveBeenCalledWith(
         'https://localhost:3000/det/projects/1?test=true',
         '_blank',
-        'noopener,noreferrer'
+        'noopener,noreferrer',
       );
     });
 

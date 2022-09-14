@@ -46,7 +46,7 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 };
 
 export const trialHParamsToExperimentHParams = (
-  trialHParams: TrialHyperparameters
+  trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
   const hParams = Object.keys(trialHParams).reduce((acc, key) => {
     return {
@@ -114,7 +114,7 @@ export const alwaysTrueExperimentChecker = (experiment: ProjectExperiment): bool
 // Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
-  trial?: TrialDetails
+  trial?: TrialDetails,
 ): boolean =>
   !experiment.archived && !experiment.parentArchived && (!!trial || experiment?.numTrials === 1);
 
@@ -164,14 +164,14 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 export const canActionExperiment = (
   action: ExperimentAction,
   experiment: ProjectExperiment,
-  trial?: TrialDetails
+  trial?: TrialDetails,
 ): boolean => {
   return !!experiment && experimentCheckers[action](experiment, trial);
 };
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
-  targets: ExperimentAction[]
+  targets: ExperimentAction[],
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
   return targets.filter((action) => canActionExperiment(action, experiment));
@@ -181,7 +181,7 @@ export const getActionsForExperimentsUnion = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
-  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean
+  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
 ): ExperimentAction[] => {
   if (!experiments.length) return []; // redundant, for clarity
   const actionsForExperiments = experiments.map((e) =>
@@ -189,28 +189,28 @@ export const getActionsForExperimentsUnion = (
       [ExperimentAction.Delete, ExperimentAction.Move].includes(action)
         ? (action === ExperimentAction.Delete && canDeleteExperiment({ experiment: e })) ||
           (action === ExperimentAction.Move && canMoveExperiment({ experiment: e }))
-        : true
-    )
+        : true,
+    ),
   );
   return targets.filter((action) =>
-    actionsForExperiments.some((experimentActions) => experimentActions.includes(action))
+    actionsForExperiments.some((experimentActions) => experimentActions.includes(action)),
   );
 };
 
 export const getActionsForExperimentsIntersection = (
   experiments: ProjectExperiment[],
-  targets: ExperimentAction[]
+  targets: ExperimentAction[],
 ): ExperimentAction[] => {
   if (!experiments.length) [];
   const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets));
   return targets.filter((action) =>
-    actionsForExperiments.every((experimentActions) => experimentActions.includes(action))
+    actionsForExperiments.every((experimentActions) => experimentActions.includes(action)),
   );
 };
 
 export const getProjectExperimentForExperimentItem = (
   experiment: ExperimentItem,
-  project?: Project
+  project?: Project,
 ): ProjectExperiment =>
   ({
     ...experiment,
@@ -242,7 +242,7 @@ const runStateSortOrder: RunState[] = [
 ];
 
 export const runStateSortValues: Map<RunState, number> = new Map(
-  runStateSortOrder.map((state, idx) => [state, idx])
+  runStateSortOrder.map((state, idx) => [state, idx]),
 );
 
 export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {

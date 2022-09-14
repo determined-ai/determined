@@ -90,7 +90,7 @@ const ModelRegistry: React.FC = () => {
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
           users: settings.users,
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setTotal(response.pagination.total || 0);
       setModels((prev) => {
@@ -151,7 +151,7 @@ const ModelRegistry: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [fetchModels]
+    [fetchModels],
   );
 
   const setModelTags = useCallback(
@@ -169,14 +169,14 @@ const ModelRegistry: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [fetchModels]
+    [fetchModels],
   );
 
   const handleUserFilterApply = useCallback(
     (users: string[]) => {
       updateSettings({ users: users.length !== 0 ? users : undefined });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleUserFilterReset = useCallback(() => {
@@ -194,7 +194,7 @@ const ModelRegistry: React.FC = () => {
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.users]
+    [handleUserFilterApply, handleUserFilterReset, settings.users],
   );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
@@ -203,7 +203,7 @@ const ModelRegistry: React.FC = () => {
     (newSearch: string) => {
       updateSettings({ name: newSearch || undefined });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
@@ -219,14 +219,14 @@ const ModelRegistry: React.FC = () => {
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.name]
+    [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
   const handleDescriptionSearchApply = useCallback(
     (newSearch: string) => {
       updateSettings({ description: newSearch || undefined });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleDescriptionSearchReset = useCallback(() => {
@@ -242,14 +242,14 @@ const ModelRegistry: React.FC = () => {
         onSearch={handleDescriptionSearchApply}
       />
     ),
-    [handleDescriptionSearchApply, handleDescriptionSearchReset, settings.description]
+    [handleDescriptionSearchApply, handleDescriptionSearchReset, settings.description],
   );
 
   const handleLabelFilterApply = useCallback(
     (tags: string[]) => {
       updateSettings({ tags: tags.length !== 0 ? tags : undefined });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleLabelFilterReset = useCallback(() => {
@@ -267,14 +267,14 @@ const ModelRegistry: React.FC = () => {
         onReset={handleLabelFilterReset}
       />
     ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings.tags]
+    [handleLabelFilterApply, handleLabelFilterReset, settings.tags],
   );
 
   const showConfirmDelete = useCallback(
     (model: ModelItem) => {
       openModelDelete(model);
     },
-    [openModelDelete]
+    [openModelDelete],
   );
 
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
@@ -327,7 +327,7 @@ const ModelRegistry: React.FC = () => {
 
       return <Menu items={menuItems} onClick={onItemClick} />;
     },
-    [showConfirmDelete, switchArchived, user?.id, user?.isAdmin]
+    [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
   );
 
   const columns = useMemo(() => {
@@ -466,7 +466,7 @@ const ModelRegistry: React.FC = () => {
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings.tableOffset, updateSettings]
+    [columns, settings.tableOffset, updateSettings],
   );
 
   useEffect(() => {
@@ -508,7 +508,7 @@ const ModelRegistry: React.FC = () => {
         row: undefined,
       });
     },
-    [settings, updateSettings]
+    [settings, updateSettings],
   );
 
   const ModelActionDropdown = useCallback(
@@ -520,7 +520,7 @@ const ModelRegistry: React.FC = () => {
         {children}
       </Dropdown>
     ),
-    [ModelActionMenu]
+    [ModelActionMenu],
   );
 
   return (
@@ -566,7 +566,7 @@ const ModelRegistry: React.FC = () => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             },
-            total
+            total,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="name"

@@ -60,7 +60,7 @@ const RadioGroup: React.FC<Props> = ({
     (e: RadioChangeEvent) => {
       if (onChange) onChange(e.target.value);
     },
-    [onChange]
+    [onChange],
   );
 
   /*

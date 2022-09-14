@@ -15,7 +15,7 @@ const useExperimentTags = (callbackFn?: () => void): UseExperimentTagsInterface 
           callbackFn();
         }
       },
-      [callbackFn]
+      [callbackFn],
     ),
   };
 };

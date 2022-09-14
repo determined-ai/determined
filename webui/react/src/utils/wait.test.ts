@@ -115,11 +115,11 @@ describe('Wait Page Utilities', () => {
 
     it('should convert task to wait page url', () => {
       expect(utils.waitPageUrl(COMMAND_TASK[CommandType.JupyterLab])).toMatch(
-        REGEX[CommandType.JupyterLab]
+        REGEX[CommandType.JupyterLab],
       );
 
       expect(utils.waitPageUrl(COMMAND_TASK[CommandType.TensorBoard])).toMatch(
-        REGEX[CommandType.TensorBoard]
+        REGEX[CommandType.TensorBoard],
       );
     });
 

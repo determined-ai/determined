@@ -60,7 +60,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       setTabKey(key);
       history.replace(`${basePath}/${key}`);
     },
-    [basePath, history]
+    [basePath, history],
   );
 
   // Sets the default sub route.
@@ -85,7 +85,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
         });
       }
     },
-    [experiment.id, fetchExperimentDetails]
+    [experiment.id, fetchExperimentDetails],
   );
 
   return (

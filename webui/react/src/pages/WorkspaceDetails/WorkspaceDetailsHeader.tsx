@@ -46,7 +46,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         return e as Error;
       }
     },
-    [workspace.id]
+    [workspace.id],
   );
 
   return (

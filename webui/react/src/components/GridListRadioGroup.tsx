@@ -17,7 +17,7 @@ const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
     (id: string) => {
       if (onChange) onChange(id as GridListView);
     },
-    [onChange]
+    [onChange],
   );
 
   return (

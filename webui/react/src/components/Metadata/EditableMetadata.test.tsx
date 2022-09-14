@@ -13,7 +13,7 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = (metadata: Metadata = {}, editing = false) => {
   const handleOnChange = jest.fn();
   const view = render(
-    <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />
+    <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />,
   );
   return { handleOnChange, view };
 };
@@ -55,7 +55,7 @@ describe('EditableMetadata', () => {
     const metadataArray = Object.entries(initMetadata);
     const removalIndex = Math.floor(Math.random() * metadataArray.length);
     const resultMetadata = Object.fromEntries(
-      metadataArray.filter((_metadata, idx) => idx !== removalIndex)
+      metadataArray.filter((_metadata, idx) => idx !== removalIndex),
     );
     const { handleOnChange, view } = setup(initMetadata, true);
 

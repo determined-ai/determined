@@ -45,7 +45,7 @@ const EditableTagList: React.FC<Props> = ({
     (removedTag) => {
       onChange?.(tags.filter((tag) => tag !== removedTag));
     },
-    [onChange, tags]
+    [onChange, tags],
   );
 
   const handleTagPlus = useCallback(() => {
@@ -67,7 +67,7 @@ const EditableTagList: React.FC<Props> = ({
   const handleInputConfirm = useCallback(
     (
       e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
-      previousValue?: string
+      previousValue?: string,
     ) => {
       const newTag = (e.target as HTMLInputElement).value.trim();
       const oldTag = previousValue?.trim();
@@ -80,7 +80,7 @@ const EditableTagList: React.FC<Props> = ({
       }
       setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
     },
-    [onChange, tags]
+    [onChange, tags],
   );
 
   const { editInputIndex, inputVisible, inputWidth } = state;

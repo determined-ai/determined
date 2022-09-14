@@ -18,7 +18,7 @@ describe('ConditionalWrapper', () => {
     render(
       <ConditionalWrapper condition={true} wrapper={wrapper}>
         {CONTENT}
-      </ConditionalWrapper>
+      </ConditionalWrapper>,
     );
     expect(screen.queryByTestId(WRAPPER_ID)).toBeInTheDocument();
   });
@@ -27,7 +27,7 @@ describe('ConditionalWrapper', () => {
     render(
       <ConditionalWrapper condition={false} wrapper={wrapper}>
         {CONTENT}
-      </ConditionalWrapper>
+      </ConditionalWrapper>,
     );
     expect(screen.queryByTestId(WRAPPER_ID)).not.toBeInTheDocument();
   });
@@ -36,7 +36,7 @@ describe('ConditionalWrapper', () => {
     render(
       <ConditionalWrapper condition={false} falseWrapper={falseWrapper} wrapper={wrapper}>
         {CONTENT}
-      </ConditionalWrapper>
+      </ConditionalWrapper>,
     );
     expect(screen.queryByTestId(WRAPPER_ID)).not.toBeInTheDocument();
     expect(screen.queryByTestId(FALSE_WRAPPER_ID)).toBeInTheDocument();

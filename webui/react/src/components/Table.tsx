@@ -46,13 +46,13 @@ export type Renderer<T = unknown> = (text: string, record: T, index: number) => 
 export type GenericRenderer<T extends TableRecord> = (
   text: string,
   record: T,
-  index: number
+  index: number,
 ) => React.ReactNode;
 
 export type ExperimentRenderer = (
   text: string,
   record: ExperimentItem,
-  index: number
+  index: number,
 ) => React.ReactNode;
 
 export type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
@@ -144,7 +144,7 @@ export const experimentDurationRenderer: ExperimentRenderer = (_, record) => (
 
 export const experimentNameRenderer = (
   value: string | number | undefined,
-  record: ExperimentItem
+  record: ExperimentItem,
 ): React.ReactNode => (
   <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
 );
@@ -174,7 +174,7 @@ export const modelVersionNameRenderer = (value: string, record: ModelVersion): R
 
 export const modelVersionNumberRenderer = (
   value: string,
-  record: ModelVersion
+  record: ModelVersion,
 ): React.ReactNode => (
   <Link
     className={css.versionBox}
@@ -216,7 +216,7 @@ export const defaultRowClassName = (options?: {
 
 export const getPaginationConfig = (
   count: number,
-  pageSize?: number
+  pageSize?: number,
 ): Partial<TablePaginationConfig> => {
   return {
     defaultPageSize: MINIMUM_PAGE_SIZE,
@@ -228,7 +228,7 @@ export const getPaginationConfig = (
 
 export const getFullPaginationConfig = (
   pagination: Pagination,
-  total: number
+  total: number,
 ): TablePaginationConfig => {
   return {
     current: Math.floor(pagination.offset / pagination.limit) + 1,

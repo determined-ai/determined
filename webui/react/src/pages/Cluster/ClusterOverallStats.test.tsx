@@ -9,7 +9,7 @@ const setup = () => {
   const view = render(
     <StoreProvider>
       <ClusterOverallStats />
-    </StoreProvider>
+    </StoreProvider>,
   );
   return { view };
 };

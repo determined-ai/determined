@@ -42,7 +42,7 @@ const Omnibar: React.FC = () => {
         }
       }
     },
-    [hideBar]
+    [hideBar],
   );
 
   useEffect(() => {

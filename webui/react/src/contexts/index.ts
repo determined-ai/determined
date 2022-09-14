@@ -25,7 +25,7 @@ type Export<T, A> = {
 const generateContextHook = <T>(
   contextName: string,
   hookName: string,
-  context: React.Context<T | null>
+  context: React.Context<T | null>,
 ) => {
   return (): T => {
     const ctx = useContext<T | null>(context);
@@ -61,7 +61,7 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
     return React.createElement(
       StateContext.Provider,
       { value: state },
-      React.createElement(ActionContext.Provider, { value: dispatch }, props.children)
+      React.createElement(ActionContext.Provider, { value: dispatch }, props.children),
     );
   };
 
@@ -71,7 +71,7 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
     useActionContext: generateContextHook<Dispatch<A>>(
       options.name,
       'useActionContext',
-      ActionContext
+      ActionContext,
     ),
     useStateContext: generateContextHook<T>(options.name, 'useStateContext', StateContext),
   };

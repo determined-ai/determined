@@ -184,7 +184,7 @@ const SlotAllocationBar: React.FC<Props> = ({
                 {resourceStateToLabel[state]}
               </Badge>
             </Legend>
-          ) : null
+          ) : null,
         )}
       </ul>
     );

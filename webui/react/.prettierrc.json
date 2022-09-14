@@ -2,5 +2,6 @@
   "printWidth": 100,
   "singleQuote": true,
   "quoteProps": "consistent",
-  "bracketSameLine": true
+  "bracketSameLine": true,
+  "trailingComma": "all"
 }

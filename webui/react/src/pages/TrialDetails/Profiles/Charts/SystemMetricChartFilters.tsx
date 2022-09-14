@@ -27,21 +27,21 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
     (newAgentId: SelectValue) => {
       updateSettings?.({ agentId: newAgentId as unknown as string });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleChangeGpuUuid = useCallback(
     (newGpuUuid: SelectValue) => {
       updateSettings?.({ gpuUuid: newGpuUuid as unknown as string });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleChangeName = useCallback(
     (newName: SelectValue) => {
       updateSettings?.({ name: newName as unknown as string });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const uuidOptions = useMemo(() => {

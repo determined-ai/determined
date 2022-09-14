@@ -47,7 +47,7 @@ export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => 
 
 export const extractMetricValue = (
   workload: WorkloadGroup,
-  metricName: MetricName
+  metricName: MetricName,
 ): number | undefined => {
   const source = workload[metricName.type]?.metrics ?? {};
   return source[metricName.name];
@@ -55,7 +55,7 @@ export const extractMetricValue = (
 
 export const getMetricValue = (
   workload?: { metrics?: Record<RecordKey, number> },
-  metricName?: string
+  metricName?: string,
 ): number | undefined => {
   if (!metricName || !workload?.metrics) return undefined;
   return workload?.metrics[metricName];

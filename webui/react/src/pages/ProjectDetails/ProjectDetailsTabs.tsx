@@ -45,7 +45,7 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
     (tabKey: string) => {
       setActiveTab(tabs.find((tab) => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
     },
-    [tabs]
+    [tabs],
   );
 
   /**
@@ -53,7 +53,7 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
    */
   useEffect(
     () => setActiveTab((curTab) => tabs.find((tab) => tab.title === curTab.title) ?? tabs[0]),
-    [tabs]
+    [tabs],
   );
 
   useEffect(() => {

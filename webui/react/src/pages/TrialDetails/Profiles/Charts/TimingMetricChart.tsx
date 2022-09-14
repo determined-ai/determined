@@ -12,7 +12,7 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial, getOptionsForMe
 
   const options = useMemo(
     () => getOptionsForMetrics('seconds', timingMetrics.names),
-    [getOptionsForMetrics, timingMetrics.names]
+    [getOptionsForMetrics, timingMetrics.names],
   );
 
   return (

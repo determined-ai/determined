@@ -190,7 +190,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       [Action.Delete, Action.Move].includes(action)
         ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
           (action === Action.Move && canMoveExperiment({ experiment }))
-        : true
+        : true,
     )
     .map((action) => {
       if (action === Action.SwitchPin) {

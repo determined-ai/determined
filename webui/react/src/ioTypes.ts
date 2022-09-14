@@ -86,7 +86,7 @@ export type ioTypeAgents = io.TypeOf<typeof ioAgents>;
 
 const runStates: Record<string, null> = Object.values(RunState).reduce(
   (acc, val) => ({ ...acc, [val]: null }),
-  {}
+  {},
 );
 const runStatesIoType = io.keyof(runStates);
 
@@ -100,7 +100,7 @@ export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
 const checkpointStorageTypes: Record<string, null> = Object.values(CheckpointStorageType).reduce(
   (acc, val) => ({ ...acc, [val]: null }),
-  {}
+  {},
 );
 const ioCheckpointStorageType = io.keyof(checkpointStorageTypes);
 
@@ -123,7 +123,7 @@ const ioExpResources = io.type({ max_slots: optional(io.number) });
 
 const hParamTypes: Record<string, null> = Object.values(HyperparameterType).reduce(
   (acc, val) => ({ ...acc, [val]: null }),
-  {}
+  {},
 );
 const ioHParamTypes = io.keyof(hParamTypes);
 const ioExpHParamVal = optional(io.unknown);
@@ -150,7 +150,7 @@ export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
 
 const experimentSearcherName: Record<string, null> = Object.values(ExperimentSearcherName).reduce(
   (acc, val) => ({ ...acc, [val]: null }),
-  {}
+  {},
 );
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
@@ -192,7 +192,7 @@ export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
 const ioLogLevels: Record<string, null> = Object.values(LogLevel).reduce(
   (acc, val) => ({ ...acc, [val]: null }),
-  {}
+  {},
 );
 const ioLogLevelType = io.keyof(ioLogLevels);
 export const ioLog = io.type({

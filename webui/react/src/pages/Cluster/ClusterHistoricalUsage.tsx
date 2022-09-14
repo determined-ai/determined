@@ -68,7 +68,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         groupBy: newFilter.groupBy,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   /**
@@ -101,7 +101,7 @@ const ClusterHistoricalUsage: React.FC = () => {
       });
 
       setChartSeries(
-        mapResourceAllocationApiToChartSeries(res.resourceEntries, filters.groupBy, users)
+        mapResourceAllocationApiToChartSeries(res.resourceEntries, filters.groupBy, users),
       );
     })();
   }, [filters, users]);

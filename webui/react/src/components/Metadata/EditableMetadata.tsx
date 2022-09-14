@@ -20,7 +20,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
         acc.list.push({ key, value });
         return acc;
       },
-      { list: [] as { key: string; value: string }[], rows: [] as InfoRow[] }
+      { list: [] as { key: string; value: string }[], rows: [] as InfoRow[] },
     );
     if (list.length === 0) list.push({ key: '', value: '' });
     return [rows, list];
@@ -35,7 +35,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
 
       updateMetadata?.(newMetadata);
     },
-    [updateMetadata]
+    [updateMetadata],
   );
 
   return (

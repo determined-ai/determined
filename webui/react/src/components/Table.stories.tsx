@@ -72,7 +72,7 @@ const TaskTableWithUsers: React.FC = () => {
       sorter: (a: CommandTask, b: CommandTask): number =>
         alphaNumericSorter(
           getDisplayName(users.find((u) => u.id === a.userId)),
-          getDisplayName(users.find((u) => u.id === b.userId))
+          getDisplayName(users.find((u) => u.id === b.userId)),
         ),
       title: 'User',
     },

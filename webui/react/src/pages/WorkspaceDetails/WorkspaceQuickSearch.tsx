@@ -78,7 +78,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       routeToReactUrl(paths.projectDetails(project.id));
       onHideModal();
     },
-    [onHideModal]
+    [onHideModal],
   );
 
   const onClickWorkspace = useCallback(
@@ -86,7 +86,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       routeToReactUrl(paths.workspaceDetails(workspaceId));
       onHideModal();
     },
-    [onHideModal]
+    [onHideModal],
   );
 
   const getNodesForProject = useCallback(
@@ -104,7 +104,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
         }));
       return treeChildren;
     },
-    [onClickProject]
+    [onClickProject],
   );
 
   const treeData: DefaultOptionType[] = useMemo(() => {

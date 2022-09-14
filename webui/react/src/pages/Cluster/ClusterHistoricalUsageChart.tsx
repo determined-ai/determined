@@ -97,7 +97,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   const hasData = useMemo(() => {
     return Object.keys(hoursByLabel).reduce(
       (agg, label) => agg || hoursByLabel[label].length > 0,
-      false
+      false,
     );
   }, [hoursByLabel]);
 

@@ -73,7 +73,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
   const [isRunningUnarchive, setIsRunningUnarchive] = useState<boolean>(false);
   const [isRunningDelete, setIsRunningDelete] = useState<boolean>(
-    experiment.state === RunState.Deleting
+    experiment.state === RunState.Deleting,
   );
   const classes = [css.state];
 
@@ -117,7 +117,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       backgroundColor: getStateColorCssVar(experiment.state),
       color: getStateColorCssVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
     }),
-    [experiment.state]
+    [experiment.state],
   );
   const disabled = experiment?.parentArchived || experiment?.archived;
 
@@ -168,7 +168,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         sourceProjectId: experiment.projectId,
         sourceWorkspaceId: experiment.workspaceId,
       }),
-    [openModalMove, experiment, isMovable]
+    [openModalMove, experiment, isMovable],
   );
 
   const handleContinueTrialClick = useCallback(() => {
@@ -212,7 +212,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         return e as Error;
       }
     },
-    [experiment.id, fetchExperimentDetails]
+    [experiment.id, fetchExperimentDetails],
   );
 
   const handleNameUpdate = useCallback(
@@ -231,7 +231,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         return e as Error;
       }
     },
-    [experiment.id, fetchExperimentDetails]
+    [experiment.id, fetchExperimentDetails],
   );
 
   const headerOptions = useMemo(() => {
@@ -322,7 +322,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       [Action.Delete, Action.Move].includes(action)
         ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
           (action === Action.Move && canMoveExperiment({ experiment }))
-        : true
+        : true,
     );
 
     return availableActions.map((action) => options[action]) as Option[];

@@ -61,7 +61,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
       onClose?.(reason, modalState.checkpoints, modalState.modelName || undefined);
       setModalState(DEFAULT_MODAL_STATE);
     },
-    [modalState, onClose]
+    [modalState, onClose],
   );
 
   const {
@@ -128,7 +128,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         form.resetFields();
       }
     },
-    [createModel, form]
+    [createModel, form],
   );
 
   const openDetails = useCallback(() => {
@@ -204,7 +204,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
       handleNameChange,
       handleTagsChange,
       openDetails,
-    ]
+    ],
   );
 
   const getModalProps = useCallback(
@@ -220,7 +220,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         title: 'Create Model',
       };
     },
-    [getModalContent, handleOk]
+    [getModalContent, handleOk],
   );
 
   /**

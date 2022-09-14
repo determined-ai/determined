@@ -75,7 +75,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
       isPolling.current = false;
       if (!options.terminateGracefully) clearTimer();
     },
-    [clearTimer]
+    [clearTimer],
   );
 
   // Update polling function if a new one is passed in.

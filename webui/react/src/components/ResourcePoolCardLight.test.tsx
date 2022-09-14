@@ -13,7 +13,7 @@ const setup = (pool: ResourcePool) => {
   const view = render(
     <StoreProvider>
       <RenderAllocationBarResourcePool resourcePool={pool} />
-    </StoreProvider>
+    </StoreProvider>,
   );
   return { view };
 };

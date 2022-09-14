@@ -100,7 +100,7 @@ const MetricSelectFilter: React.FC<Props> = ({
         (onChange as SingleHandler)(metricName);
       }
     },
-    [multiple, onChange, value, visibleMetrics, defaultMetricNames]
+    [multiple, onChange, value, visibleMetrics, defaultMetricNames],
   );
 
   const handleMetricDeselect = useCallback(
@@ -113,7 +113,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       if (index !== -1) newMetric.splice(index, 1);
       (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
     },
-    [multiple, onChange, value]
+    [multiple, onChange, value],
   );
 
   const handleFiltering = useCallback((search: string, option) => {

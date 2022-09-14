@@ -33,7 +33,7 @@ export interface Props {
 
 const getStorageLocation = (
   config: ExperimentConfig,
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint
+  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint,
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
@@ -143,7 +143,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
             )}
             <span className={css.sourceDivider} />
             <span>Batch {checkpoint.totalBatches}</span>
-          </div>
+          </div>,
         )}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
@@ -154,7 +154,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
             <>
               <HumanReadableNumber num={searcherMetric} />
               {`(${config.searcher.metric})`}
-            </>
+            </>,
           )}
         {'endTime' in checkpoint &&
           checkpoint?.endTime &&
@@ -168,14 +168,14 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
                 {'Request Checkpoint Deletion'}
               </Button>
             )}
-          </div>
+          </div>,
         )}
         {resources.length !== 0 &&
           renderRow(
             'Resources',
             <div className={css.resources}>
               {resources.map((resource) => renderResource(resource.name, resource.size))}
-            </div>
+            </div>,
           )}
       </div>
     );
@@ -191,14 +191,14 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
       title: title,
       width: 768,
     }),
-    [content, handleCancel, handleOk, title]
+    [content, handleCancel, handleOk, title],
   );
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
-    [modalProps, openOrUpdate]
+    [modalProps, openOrUpdate],
   );
 
   /**

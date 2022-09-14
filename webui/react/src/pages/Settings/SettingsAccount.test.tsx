@@ -55,7 +55,7 @@ const setup = () =>
   render(
     <StoreProvider>
       <Container />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
 describe('SettingsAccount', () => {

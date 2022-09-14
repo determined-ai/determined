@@ -42,7 +42,7 @@ const Clusters: React.FC = () => {
       setTabKey(key);
       history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
     },
-    [basePath, history]
+    [basePath, history],
   );
 
   return (

@@ -105,13 +105,13 @@ const useModalHyperparameterSearch = ({
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
-      SEARCH_METHODS.ASHA
+      SEARCH_METHODS.ASHA,
   );
   const { resourcePools } = useStore();
   const canceler = useRef<AbortController>();
   const fetchResourcePools = useFetchResourcePools(canceler.current);
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
-    resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0]
+    resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );
   const [form] = Form.useForm();
   const [currentPage, setCurrentPage] = useState(0);
@@ -237,7 +237,7 @@ const useModalHyperparameterSearch = ({
           parentId: experiment.id,
           projectId: experiment.projectId,
         },
-        { signal: canceler.current?.signal }
+        { signal: canceler.current?.signal },
       );
 
       // Route to reload path to forcibly remount experiment page.
@@ -276,12 +276,12 @@ const useModalHyperparameterSearch = ({
     (value: SelectValue) => {
       setResourcePool(resourcePools.find((pool) => pool.name === value) ?? resourcePools[0]);
     },
-    [resourcePools]
+    [resourcePools],
   );
 
   const maxSlots = useMemo(
     () => (resourcePool ? maxPoolSlotCapacity(resourcePool) : 0),
-    [resourcePool]
+    [resourcePool],
   );
 
   const [maxLengthUnit, maxLength] = useMemo(() => {
@@ -316,7 +316,7 @@ const useModalHyperparameterSearch = ({
                 (searcher !== SEARCH_METHODS.Grid || (hp.count != null && hp.count > 0))
               );
           }
-        })
+        }),
       );
     } else if (currentPage === 0) {
       // Validating searcher page
@@ -351,7 +351,7 @@ const useModalHyperparameterSearch = ({
           pool != null &&
           length_units != null &&
           (searcher !== SEARCH_METHODS.ASHA.name || (mode != null && isBoolean(stop_once)))
-        )
+        ),
       );
     }
   }, [currentPage, formValues, maxSlots, searcher]);
@@ -364,7 +364,7 @@ const useModalHyperparameterSearch = ({
     const value = e.target.value;
     setSearcher(
       Object.values(SEARCH_METHODS).find((searcher) => searcher.name === value) ??
-        SEARCH_METHODS.ASHA
+        SEARCH_METHODS.ASHA,
     );
   }, []);
 
@@ -429,7 +429,7 @@ const useModalHyperparameterSearch = ({
               <Link
                 external
                 path={paths.docs(
-                  '/training-hyperparameter/index.html#specifying-the-search-algorithm'
+                  '/training-hyperparameter/index.html#specifying-the-search-algorithm',
                 )}
                 popout>
                 Learn more
@@ -590,7 +590,7 @@ const useModalHyperparameterSearch = ({
 
   const pages = useMemo(
     () => [searcherPage, hyperparameterPage],
-    [hyperparameterPage, searcherPage]
+    [hyperparameterPage, searcherPage],
   );
 
   const footer = useMemo(() => {
@@ -632,7 +632,7 @@ const useModalHyperparameterSearch = ({
       if (props?.trial) setTrial(props?.trial);
       openOrUpdate({ ...modalProps, ...props?.initialModalProps });
     },
-    [form, modalProps, openOrUpdate]
+    [form, modalProps, openOrUpdate],
   );
 
   /*
@@ -687,7 +687,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
         setRangeError(undefined);
       }
     },
-    [max]
+    [max],
   );
 
   const validateMax = useCallback(
@@ -703,7 +703,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
         setRangeError(undefined);
       }
     },
-    [min]
+    [min],
   );
 
   const validateCount = useCallback((value: number | string | null) => {
@@ -740,7 +740,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
                 {type}
                 {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
               </Select.Option>
-            )
+            ),
           )}
         </Select>
       </Form.Item>

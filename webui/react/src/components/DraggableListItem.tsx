@@ -50,7 +50,7 @@ const DraggableListItem: React.FC<Props> = ({
         onDrop(item.columnName, columnName);
       },
     }),
-    []
+    [],
   );
 
   const [, drag] = useDrag(() => ({

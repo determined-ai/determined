@@ -237,18 +237,18 @@ const themeDark = {
 };
 
 export const themeLightDetermined: Theme = generateStrongWeak(
-  Object.assign({}, themeBase, themeLight)
+  Object.assign({}, themeBase, themeLight),
 );
 export const themeDarkDetermined: Theme = generateStrongWeak(
-  Object.assign({}, themeBase, themeDark)
+  Object.assign({}, themeBase, themeDark),
 );
 const themeHpe = { brand: 'rgba(1, 169, 130, 1.0)' };
 
 export const themeLightHpe: Theme = generateStrongWeak(
-  Object.assign({}, themeBase, themeLight, themeHpe)
+  Object.assign({}, themeBase, themeLight, themeHpe),
 );
 export const themeDarkHpe: Theme = generateStrongWeak(
-  Object.assign({}, themeBase, themeDark, themeHpe)
+  Object.assign({}, themeBase, themeDark, themeHpe),
 );
 
 export type Theme = Record<keyof typeof themeBase, string>;

@@ -75,14 +75,14 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
         title: 'Edit Project',
       };
     },
-    [handleOk, modalContent]
+    [handleOk, modalContent],
   );
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
       openOrUpdate({ ...getModalProps(project.name), ...initialModalProps });
     },
-    [getModalProps, openOrUpdate, project.name]
+    [getModalProps, openOrUpdate, project.name],
   );
 
   /**

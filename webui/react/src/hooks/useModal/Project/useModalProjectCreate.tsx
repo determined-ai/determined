@@ -88,7 +88,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
     (initialModalProps: ModalFuncProps = {}) => {
       openOrUpdate({ ...getModalProps(), ...initialModalProps });
     },
-    [getModalProps, openOrUpdate]
+    [getModalProps, openOrUpdate],
   );
 
   /**

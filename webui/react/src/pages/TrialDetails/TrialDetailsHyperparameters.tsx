@@ -43,7 +43,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
         title: 'Value',
       },
     ],
-    []
+    [],
   );
 
   const dataSource: HyperParameter[] = useMemo(() => {

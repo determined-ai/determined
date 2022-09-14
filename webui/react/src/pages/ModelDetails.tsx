@@ -93,14 +93,14 @@ const ModelDetails: React.FC = () => {
     (version: ModelVersion) => {
       openModelDownload(version);
     },
-    [openModelDownload]
+    [openModelDownload],
   );
 
   const deleteModelVersion = useCallback(
     (version: ModelVersion) => {
       openModelVersionDelete(version);
     },
-    [openModelVersionDelete]
+    [openModelVersionDelete],
   );
 
   const saveModelVersionTags = useCallback(
@@ -118,7 +118,7 @@ const ModelDetails: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [fetchModel]
+    [fetchModel],
   );
 
   const saveVersionDescription = useCallback(
@@ -140,7 +140,7 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [model?.model.name]
+    [model?.model.name],
   );
 
   const columns = useMemo(() => {
@@ -236,7 +236,7 @@ const ModelDetails: React.FC = () => {
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings.tableOffset, updateSettings]
+    [columns, settings.tableOffset, updateSettings],
   );
 
   const saveMetadata = useCallback(
@@ -258,7 +258,7 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [fetchModel, model?.model.name]
+    [fetchModel, model?.model.name],
   );
 
   const saveDescription = useCallback(
@@ -280,7 +280,7 @@ const ModelDetails: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [model?.model.name]
+    [model?.model.name],
   );
 
   const saveName = useCallback(
@@ -301,7 +301,7 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [model?.model.name]
+    [model?.model.name],
   );
 
   const saveNotes = useCallback(
@@ -323,7 +323,7 @@ const ModelDetails: React.FC = () => {
         });
       }
     },
-    [model?.model.name, fetchModel]
+    [model?.model.name, fetchModel],
   );
 
   const saveModelTags = useCallback(
@@ -346,7 +346,7 @@ const ModelDetails: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [fetchModel, model?.model.name]
+    [fetchModel, model?.model.name],
   );
 
   const switchArchive = useCallback(() => {
@@ -370,7 +370,7 @@ const ModelDetails: React.FC = () => {
         {children}
       </ModelVersionActionDropdown>
     ),
-    [deleteModelVersion, downloadModel]
+    [deleteModelVersion, downloadModel],
   );
 
   if (!modelId) {
@@ -417,7 +417,7 @@ const ModelDetails: React.FC = () => {
                 limit: settings.tableLimit,
                 offset: settings.tableOffset,
               },
-              total
+              total,
             )}
             rowClassName={defaultRowClassName({ clickable: false })}
             rowKey="version"

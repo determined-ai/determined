@@ -232,7 +232,7 @@ const HpHeatMaps: React.FC<Props> = ({
         selectedBatch,
         selectedBatchMargin,
         undefined,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
@@ -315,7 +315,7 @@ const HpHeatMaps: React.FC<Props> = ({
           trialIds,
         });
         setHasLoaded(true);
-      }
+      },
     ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
@@ -379,7 +379,7 @@ const HpHeatMaps: React.FC<Props> = ({
                           />
                         </div>
                       );
-                    })
+                    }),
                   )}
                 </Grid>
               </div>

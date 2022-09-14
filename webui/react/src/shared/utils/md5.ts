@@ -95,7 +95,7 @@ const ff = (
   d: number,
   x: number,
   s: number,
-  t: number
+  t: number,
 ): number => {
   return cmn((b & c) | (~b & d), a, b, x, s, t);
 };
@@ -107,7 +107,7 @@ const gg = (
   d: number,
   x: number,
   s: number,
-  t: number
+  t: number,
 ): number => {
   return cmn((b & d) | (c & ~d), a, b, x, s, t);
 };
@@ -119,7 +119,7 @@ const hh = (
   d: number,
   x: number,
   s: number,
-  t: number
+  t: number,
 ): number => {
   return cmn(b ^ c ^ d, a, b, x, s, t);
 };
@@ -131,7 +131,7 @@ const ii = (
   d: number,
   x: number,
   s: number,
-  t: number
+  t: number,
 ): number => {
   return cmn(c ^ (b | ~d), a, b, x, s, t);
 };

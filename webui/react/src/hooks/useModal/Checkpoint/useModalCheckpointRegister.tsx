@@ -63,7 +63,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
       setModalState(INITIAL_MODAL_STATE);
       onClose?.(reason);
     },
-    [onClose]
+    [onClose],
   );
 
   const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleClose });
@@ -148,14 +148,14 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     },
-    [modalClose, selectedModelNumVersions]
+    [modalClose, selectedModelNumVersions],
   );
 
   const handleOk = useCallback(
     async (state: ModalState) => {
       await registerModelVersion(state);
     },
-    [registerModelVersion]
+    [registerModelVersion],
   );
 
   const updateModel = useCallback((value) => {
@@ -187,7 +187,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
       modalClose(ModalCloseReason.Cancel);
       onClose?.(ModalCloseReason.Cancel, state.checkpoints);
     },
-    [modalClose, onClose]
+    [modalClose, onClose],
   );
 
   const fetchModels = useCallback(async () => {
@@ -199,10 +199,10 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           orderBy: 'ORDER_BY_DESC',
           sortBy: validateDetApiEnum(
             V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME
+            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
           ),
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setModalState((prev) => {
         if (isEqual(prev.models, response.models)) return prev;
@@ -230,7 +230,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         selectedModelName,
       }));
     },
-    [fetchModels]
+    [fetchModels],
   );
 
   const handleCancel = useCallback(() => modalClose(), [modalClose]);
@@ -326,7 +326,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
       updateTags,
       updateVersionDescription,
       updateVersionName,
-    ]
+    ],
   );
 
   const getModalProps = useCallback(
@@ -348,7 +348,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
 
       return modalProps;
     },
-    [getModalContent, handleCancel, handleOk]
+    [getModalContent, handleCancel, handleOk],
   );
 
   useEffect(() => {

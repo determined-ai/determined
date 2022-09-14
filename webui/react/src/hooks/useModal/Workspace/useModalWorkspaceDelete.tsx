@@ -71,7 +71,7 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
         title: 'Delete Workspace',
       };
     },
-    [handleOk, modalContent, workspace.name]
+    [handleOk, modalContent, workspace.name],
   );
 
   const modalOpen = useCallback(
@@ -79,7 +79,7 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
       setName('');
       openOrUpdate({ ...getModalProps(), ...initialModalProps });
     },
-    [getModalProps, openOrUpdate]
+    [getModalProps, openOrUpdate],
   );
 
   /**

@@ -50,7 +50,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       rankIds: settings.rankId,
       searchText: settings.searchText,
     }),
-    [settings]
+    [settings],
   );
 
   const handleFilterChange = useCallback(
@@ -64,7 +64,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         searchText: filters.searchText,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleFilterReset = useCallback(() => resetSettings(), [resetSettings]);
@@ -110,10 +110,10 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
         settings.searchText,
-        { signal: config.canceler.signal }
+        { signal: config.canceler.signal },
       );
     },
-    [settings, taskId]
+    [settings, taskId],
   );
 
   useEffect(() => {
@@ -121,7 +121,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
 
     readStream(
       detApi.StreamingJobs.taskLogsFields(taskId, true, { signal: canceler.signal }),
-      (event) => setFilterOptions(event as Filters)
+      (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();

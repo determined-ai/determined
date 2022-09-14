@@ -27,7 +27,7 @@ export const Default = (): React.ReactNode => {
     async (newValue: string) => {
       await save(newValue);
     },
-    [save]
+    [save],
   );
 
   return (

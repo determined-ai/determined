@@ -128,7 +128,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
       setFilteredTrialIdMap(newFilteredTrialIdMap);
     },
-    [chartData]
+    [chartData],
   );
 
   const colorScale = useMemo(() => {
@@ -150,7 +150,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorScale, handleFilterChange, selectedMetric]
+    [colorScale, handleFilterChange, selectedMetric],
   );
 
   const dimensions = useMemo(() => {
@@ -186,7 +186,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
               key,
               label: key,
               type: DimensionType.Linear,
-            }
+            },
       );
     }
 
@@ -213,7 +213,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         selectedBatch,
         selectedBatchMargin,
         undefined,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
@@ -270,7 +270,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           trialIds,
         });
         setHasLoaded(true);
-      }
+      },
     ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
@@ -294,7 +294,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         return setShowCompareTrials(true);
       }
     },
-    [selectedRowKeys]
+    [selectedRowKeys],
   );
 
   const submitBatchAction = useCallback(
@@ -318,7 +318,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
       }
     },
-    [sendBatchActions]
+    [sendBatchActions],
   );
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);

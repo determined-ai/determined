@@ -30,7 +30,7 @@ export const getNodeChildren = async (node: TreeNode): Promise<Children> => {
 */
 export const traverseTree = async (
   address: string[],
-  startNode: NonLeafNode
+  startNode: NonLeafNode,
 ): Promise<TreePath> => {
   let curNode: TreeNode = startNode;
   const path: TreePath = [curNode];
@@ -53,7 +53,7 @@ export const traverseTree = async (
 export const dfsStaticRoutes = (
   allRoutes: TreePath[],
   curPath: TreePath,
-  node: TreeNode
+  node: TreeNode,
 ): TreePath[] => {
   curPath.push(node);
   if (isLeafNode(node)) {

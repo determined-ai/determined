@@ -112,7 +112,7 @@ const UserManagement: React.FC = () => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setTotal(response.pagination.total ?? 0);
       setUsers((prev) => {
@@ -233,7 +233,7 @@ const UserManagement: React.FC = () => {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          total
+          total,
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"

@@ -136,7 +136,7 @@ const NavigationSideBar: React.FC = () => {
         { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
       ],
     }),
-    [info.branding]
+    [info.branding],
   );
 
   const handleCollapse = useCallback(() => {

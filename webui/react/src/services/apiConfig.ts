@@ -10,7 +10,7 @@ import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
 
 const updatedApiConfigParams = (
-  apiConfig?: Api.ConfigurationParameters
+  apiConfig?: Api.ConfigurationParameters,
 ): Api.ConfigurationParameters => {
   return {
     apiKey: `Bearer ${globalStorage.authToken}`,
@@ -80,7 +80,7 @@ export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, Service.Logi
   request: (params, options) =>
     detApi.Auth.login(
       { ...params, isHashed: true, password: saltAndHashPassword(params.password) },
-      options
+      options,
     ),
 };
 
@@ -320,7 +320,7 @@ export const getResourceAllocationAggregated: DetApi<
       params.startDate.format(dateFormat),
       params.endDate.format(dateFormat),
       params.period,
-      options
+      options,
     );
   },
 };
@@ -359,7 +359,7 @@ export const getExperiments: DetApi<
       undefined,
       params.experimentIdFilter?.incl,
       params.experimentIdFilter?.notIn,
-      options
+      options,
     );
   },
 };
@@ -397,7 +397,7 @@ export const createExperiment: DetApi<
         parentId: params.parentId,
         projectId: params.projectId,
       },
-      options
+      options,
     );
   },
 };
@@ -497,7 +497,7 @@ export const patchExperiment: DetApi<
     return detApi.Experiments.patchExperiment(
       params.experimentId,
       params.body as Api.V1Experiment,
-      options
+      options,
     );
   },
 };
@@ -527,7 +527,7 @@ export const getExperimentCheckpoints: DetApi<
       params.offset,
       params.limit,
       params.states,
-      options
+      options,
     ),
 };
 
@@ -570,7 +570,7 @@ export const getExpTrials: DetApi<
       params.offset,
       params.limit,
       params.states,
-      options
+      options,
     );
   },
 };
@@ -628,7 +628,7 @@ export const compareTrials: DetApi<
       params.startBatches,
       params.endBatches,
       params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
-      params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR'
+      params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
     ),
 };
 
@@ -655,7 +655,7 @@ export const getExperimentFileFromTree: DetApi<
     return detApi.Experiments.getModelDefFile(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       params.experimentId!,
-      { path: params.path }
+      { path: params.path },
     );
   },
 };
@@ -690,7 +690,7 @@ export const getTrialWorkloads: DetApi<
       params.limit,
       params.sortKey || 'batches',
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
-        'FILTER_OPTION_UNSPECIFIED'
+        'FILTER_OPTION_UNSPECIFIED',
     ),
 };
 
@@ -743,7 +743,7 @@ export const getModels: DetApi<
       params.labels,
       params.archived,
       undefined,
-      getUserIds(params.users)
+      getUserIds(params.users),
     ),
 };
 
@@ -776,7 +776,7 @@ export const getModelDetails: DetApi<
       params.sortBy,
       params.orderBy,
       params.offset,
-      params.limit
+      params.limit,
     ),
 };
 
@@ -910,7 +910,7 @@ export const getWorkspaces: DetApi<
       params.archived,
       params.users,
       params.pinned,
-      options
+      options,
     );
   },
 };
@@ -962,7 +962,7 @@ export const getWorkspaceProjects: DetApi<
       params.name,
       params.archived,
       params.users,
-      options
+      options,
     );
   },
 };
@@ -1162,7 +1162,7 @@ export const getCommands: DetApi<
       params.offset,
       params.limit ?? TASK_LIMIT,
       undefined,
-      getUserIds(params.users)
+      getUserIds(params.users),
     ),
 };
 
@@ -1181,7 +1181,7 @@ export const getJupyterLabs: DetApi<
       params.offset,
       params.limit ?? TASK_LIMIT,
       undefined,
-      getUserIds(params.users)
+      getUserIds(params.users),
     ),
 };
 
@@ -1199,7 +1199,7 @@ export const getShells: DetApi<
       params.offset,
       params.limit ?? TASK_LIMIT,
       undefined,
-      getUserIds(params.users)
+      getUserIds(params.users),
     ),
 };
 
@@ -1218,7 +1218,7 @@ export const getTensorBoards: DetApi<
       params.offset,
       params.limit ?? TASK_LIMIT,
       undefined,
-      getUserIds(params.users)
+      getUserIds(params.users),
     ),
 };
 
@@ -1262,7 +1262,7 @@ export const getTemplates: DetApi<
       params.orderBy,
       params.offset,
       params.limit,
-      params.name
+      params.name,
     ),
 };
 
@@ -1316,7 +1316,7 @@ export const getJobQueue: DetApi<
       params.limit,
       params.resourcePool,
       params.orderBy,
-      decoder.decodeJobStates(params.states)
+      decoder.decodeJobStates(params.states),
     ),
 };
 

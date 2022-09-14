@@ -39,7 +39,7 @@ const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Prop
       <BadgeTag tooltip={tooltip} {...props}>
         {children}
       </BadgeTag>
-    </StoreProvider>
+    </StoreProvider>,
   );
   return { view };
 };

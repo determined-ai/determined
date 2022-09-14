@@ -96,7 +96,7 @@ const WorkspaceDetails: React.FC = () => {
           sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
           users: settings.user,
         },
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       );
       setTotal(response.pagination.total ?? 0);
       setProjects((prev) => {
@@ -134,7 +134,7 @@ const WorkspaceDetails: React.FC = () => {
     (value) => {
       updateSettings({ whose: value });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleSortSelect = useCallback(
@@ -148,14 +148,14 @@ const WorkspaceDetails: React.FC = () => {
         sortKey: value,
       });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const handleViewChange = useCallback(
     (value: GridListView) => {
       updateSettings({ view: value });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   useEffect(() => {
@@ -305,7 +305,7 @@ const WorkspaceDetails: React.FC = () => {
         columnWidths: newColumnWidths,
       });
     },
-    [settings, updateSettings]
+    [settings, updateSettings],
   );
 
   const actionDropdown = useCallback(
@@ -320,7 +320,7 @@ const WorkspaceDetails: React.FC = () => {
         {children}
       </ProjectActionDropdown>
     ),
-    [fetchProjects, user, workspace?.archived]
+    [fetchProjects, user, workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
@@ -352,7 +352,7 @@ const WorkspaceDetails: React.FC = () => {
                 limit: settings.tableLimit,
                 offset: settings.tableOffset,
               },
-              total
+              total,
             )}
             rowKey="id"
             settings={settings}

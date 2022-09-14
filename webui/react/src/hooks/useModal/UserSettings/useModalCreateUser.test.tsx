@@ -43,7 +43,7 @@ const setup = async () => {
   const view = render(
     <StoreProvider>
       <Container />
-    </StoreProvider>
+    </StoreProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
@@ -69,7 +69,7 @@ describe('useModalCreateUser', () => {
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
       ).not.toBeInTheDocument();
     });
   });
@@ -82,7 +82,7 @@ describe('useModalCreateUser', () => {
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
       ).not.toBeInTheDocument();
     });
   });
@@ -106,14 +106,14 @@ describe('useModalCreateUser', () => {
     // Check for successful toast message.
     await waitFor(() => {
       expect(
-        screen.getByText(API_SUCCESS_MESSAGE_CREATE, { collapseWhitespace: false })
+        screen.getByText(API_SUCCESS_MESSAGE_CREATE, { collapseWhitespace: false }),
       ).toBeInTheDocument();
     });
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
       ).not.toBeInTheDocument();
     });
 

@@ -134,7 +134,7 @@ const CodeViewer: React.FC<Props> = ({
   const resize = useResize();
   const firstConfig = useMemo(
     () => (_submittedConfig ? Config.submitted : Config.runtime),
-    [_submittedConfig]
+    [_submittedConfig],
   );
   const configForExperiment = (experimentId: number): SettingsConfig => ({
     applicableRoutespace: '/experiments',
@@ -150,7 +150,7 @@ const CodeViewer: React.FC<Props> = ({
   });
 
   const { settings, updateSettings } = useSettings<{ filePath: string }>(
-    configForExperiment(experimentId)
+    configForExperiment(experimentId),
   );
 
   const submittedConfig = useMemo(() => {
@@ -193,21 +193,21 @@ const CodeViewer: React.FC<Props> = ({
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
   const [viewMode, setViewMode] = useState<'tree' | 'editor' | 'split'>(() =>
-    resize.width <= 1024 ? 'tree' : 'split'
+    resize.width <= 1024 ? 'tree' : 'split',
   );
   const [editorMode, setEditorMode] = useState<'monaco' | 'ipynb'>('monaco');
 
   const switchTreeViewToEditor = useCallback(
     () => setViewMode((view) => (view === 'tree' ? 'editor' : view)),
-    []
+    [],
   );
   const switchEditorViewToTree = useCallback(
     () => setViewMode((view) => (view === 'editor' ? 'tree' : view)),
-    []
+    [],
   );
   const switchSplitViewToTree = useCallback(
     () => setViewMode((view) => (view === 'split' ? 'tree' : view)),
-    []
+    [],
   );
 
   const handleSelectConfig = useCallback(
@@ -226,7 +226,7 @@ const CodeViewer: React.FC<Props> = ({
       });
       switchTreeViewToEditor();
     },
-    [submittedConfig, runtimeConfig, switchTreeViewToEditor]
+    [submittedConfig, runtimeConfig, switchTreeViewToEditor],
   );
 
   const downloadHandler = useCallback(() => {
@@ -306,7 +306,7 @@ const CodeViewer: React.FC<Props> = ({
         title,
       });
     },
-    [experimentId]
+    [experimentId],
   );
 
   const handleSelectFile = useCallback(
@@ -338,7 +338,7 @@ const CodeViewer: React.FC<Props> = ({
         updateSettings({ filePath: String(info.node.key) });
       }
     },
-    [activeFile?.key, treeData, switchTreeViewToEditor, updateSettings]
+    [activeFile?.key, treeData, switchTreeViewToEditor, updateSettings],
   );
 
   const getSyntaxHighlight = useCallback(() => {
@@ -373,7 +373,7 @@ const CodeViewer: React.FC<Props> = ({
         });
       }
     },
-    [activeFile, runtimeConfig, submittedConfig, experimentId]
+    [activeFile, runtimeConfig, submittedConfig, experimentId],
   );
 
   // map the file tree

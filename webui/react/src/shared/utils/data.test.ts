@@ -316,7 +316,7 @@ describe('Data Utilities', () => {
     it('should unflatten object', () => {
       tests.forEach((test) => {
         expect(
-          utils.unflattenObject(test.output as UnknownRecord, test.options?.delimiter)
+          utils.unflattenObject(test.output as UnknownRecord, test.options?.delimiter),
         ).toStrictEqual(test.input);
       });
     });

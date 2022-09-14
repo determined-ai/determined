@@ -42,7 +42,7 @@ const generateMessage = (
     maxWordLength?: number;
     minWordCount?: number;
     minWordLength?: number;
-  } = {}
+  } = {},
 ): string => {
   const minWordCount = options.minWordCount ?? DEFAULT_MIN_WORD_COUNT;
   const maxWordCount = options.maxWordCount ?? DEFAULT_MAX_WORD_COUNT;
@@ -59,7 +59,7 @@ const generateMessage = (
 const generateLogs = (
   count = 1,
   startIndex = 0,
-  nowIndex?: number // when undefined, assumed the last generated log is now
+  nowIndex?: number, // when undefined, assumed the last generated log is now
 ): TestLog[] => {
   const dateIndex = nowIndex != null ? nowIndex : count - 1;
   return new Array(count).fill(null).map((_, i) => {
@@ -79,7 +79,7 @@ const setup = (props: src.Props) => {
   return render(
     <StoreProvider>
       <src.default {...props} />
-    </StoreProvider>
+    </StoreProvider>,
   );
 };
 
@@ -97,7 +97,7 @@ const mockOnFetch =
       logsReference?: TestLog[];
       skipStreaming?: boolean;
       streamingRounds?: number;
-    } = {}
+    } = {},
   ) =>
   (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
     const options = {

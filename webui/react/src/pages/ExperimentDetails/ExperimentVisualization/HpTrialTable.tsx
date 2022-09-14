@@ -148,7 +148,7 @@ const HpTrialTable: React.FC<Props> = ({
         if (onMouseLeave) onMouseLeave(event, record);
       },
     }),
-    [onMouseEnter, onMouseLeave]
+    [onMouseEnter, onMouseLeave],
   );
 
   const rowClassName = useCallback(
@@ -158,7 +158,7 @@ const HpTrialTable: React.FC<Props> = ({
         highlighted: record.id === highlightedTrialId,
       });
     },
-    [highlightedTrialId]
+    [highlightedTrialId],
   );
 
   return (

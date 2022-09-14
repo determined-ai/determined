@@ -51,7 +51,7 @@ export const durationInEnglish = humanizeDuration.humanizer({
 
 export const formatDatetime = (
   datetime: string,
-  options: { format?: string; inputUTC?: boolean; outputUTC?: boolean } = {}
+  options: { format?: string; inputUTC?: boolean; outputUTC?: boolean } = {},
 ): string => {
   const config = {
     format: DEFAULT_DATETIME_FORMAT,

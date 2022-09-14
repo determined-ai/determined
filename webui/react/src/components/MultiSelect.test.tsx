@@ -29,7 +29,7 @@ const setup = () => {
           {'Option ' + String.fromCharCode(65 + index)}
         </Option>
       ))}
-    </MultiSelect>
+    </MultiSelect>,
   );
   return { handleOpen, view };
 };

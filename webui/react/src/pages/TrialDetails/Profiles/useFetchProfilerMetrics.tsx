@@ -34,7 +34,7 @@ export const useFetchProfilerMetrics = (
   labelsMetricType: MetricType,
   labelsName: string | undefined = undefined,
   labelsAgentId: string | undefined = undefined,
-  labelsGpuUuid: string | undefined = undefined
+  labelsGpuUuid: string | undefined = undefined,
 ): MetricsAggregateInterface => {
   const { ui } = useStore();
   const [data, setData] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
@@ -55,7 +55,7 @@ export const useFetchProfilerMetrics = (
         labelsGpuUuid,
         labelsMetricType,
         follow,
-        { signal: canceler.signal }
+        { signal: canceler.signal },
       ),
       (event: ProfilerMetricsResponse) => {
         setData((prev) => {
@@ -134,7 +134,7 @@ export const useFetchProfilerMetrics = (
           }
           return prev;
         });
-      }
+      },
     ).finally(() => {
       setData((prev) => ({ ...prev, isLoading: false }));
     });

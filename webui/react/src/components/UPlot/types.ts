@@ -9,15 +9,15 @@ export type FacetedData = [
     sizes: UPlotData[] | null,
     fills: UPlotData[] | null,
     strokes: UPlotData[] | null,
-    labels: (number | string)[] | null
-  ]
+    labels: (number | string)[] | null,
+  ],
 ];
 
 export type UPlotAxisSplits = (
   u: uPlot,
   axisIndex: number,
   min: UPlotData,
-  max: UPlotData
+  max: UPlotData,
 ) => number[];
 
 export interface UPlotScatterProps {

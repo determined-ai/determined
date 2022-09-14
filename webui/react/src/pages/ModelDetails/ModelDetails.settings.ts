@@ -50,7 +50,7 @@ const config: SettingsConfig = {
     },
     {
       defaultValue: DEFAULT_COLUMNS.map(
-        (col: ModelVersionColumnName) => DEFAULT_COLUMN_WIDTHS[col]
+        (col: ModelVersionColumnName) => DEFAULT_COLUMN_WIDTHS[col],
       ),
       key: 'columnWidths',
       skipUrlEncoding: true,

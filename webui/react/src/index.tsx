@@ -22,7 +22,7 @@ ReactDOM.render(
       </CompatRouter>
     </Router>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );
 
 /*

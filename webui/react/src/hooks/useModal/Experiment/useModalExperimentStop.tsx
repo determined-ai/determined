@@ -27,7 +27,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
     (reason) => {
       onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
     },
-    [onClose, type]
+    [onClose, type],
   );
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
@@ -85,7 +85,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
     (initialModalProps: ModalFuncProps = {}) => {
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
-    [modalProps, openOrUpdate]
+    [modalProps, openOrUpdate],
   );
 
   /**

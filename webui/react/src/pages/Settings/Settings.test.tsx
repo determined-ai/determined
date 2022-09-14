@@ -16,7 +16,7 @@ const setup = () => {
           <Settings />
         </Router>
       </HelmetProvider>
-    </StoreProvider>
+    </StoreProvider>,
   );
 };
 
