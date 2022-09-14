@@ -90,13 +90,12 @@ WHERE id = $1`
 
 	query = `
 INSERT INTO user_group_membership(user_id, group_id)
-SELECT id AS user_id, id AS group_id FROM groups 
-WHERE id = $1`
+SELECT user_id AS user_id, id AS group_id FROM groups 
+WHERE user_id = $1`
 	if _, err := tx.Exec(query, userID); err != nil {
 		return errors.WithStack(err)
 	}
 
-	fmt.Println("ADDED GROUP", userID)
 	return nil
 }
 
@@ -130,7 +129,6 @@ func deleteAgentUserGroup(tx *sqlx.Tx, userID model.UserID) error {
 
 // AddUser creates a new user.
 func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error) {
-	fmt.Println("ADDING USER?!")
 	tx, err := db.sql.Beginx()
 	if err != nil {
 		return 0, errors.WithStack(err)

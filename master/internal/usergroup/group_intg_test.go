@@ -298,8 +298,6 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	_, err := pgDB.AddUser(&testUser, nil)
 	require.NoError(t, err, "failure creating user in setup")
 
-	// User personal group was created?
-
 	_, _, err = AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
 	require.NoError(t, err, "failure creating static test group")
 }
