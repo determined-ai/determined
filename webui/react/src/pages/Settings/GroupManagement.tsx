@@ -7,14 +7,15 @@ import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
+import useModalGroupRoles from 'hooks/useModal/UserSettings/useModalGroupRoles';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
+import { getGroup, getGroups, getUsers, listRoles, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { DetailedUser } from 'types';
+import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
 
 import css from './GroupManagement.module.scss';
@@ -26,7 +27,8 @@ interface DropdownProps {
   fetchGroup: (groupId: number) => void;
   fetchGroups: () => void;
   group: V1GroupSearchResult;
-  users: DetailedUser[]
+  roles: UserRole[];
+  users: DetailedUser[];
 }
 
 const GroupActionDropdown = ({
@@ -34,6 +36,7 @@ const GroupActionDropdown = ({
   fetchGroups,
   fetchGroup,
   group,
+  roles,
   users,
 }: DropdownProps) => {
   const onFinishEdit = () => {
@@ -43,23 +46,25 @@ const GroupActionDropdown = ({
   const {
     modalOpen: openEditGroupModal,
     contextHolder: modalEditGroupContextHolder,
-  } = useModalCreateGroup({ group: group, onClose: onFinishEdit, users: users });
+  } = useModalCreateGroup({ group, onClose: onFinishEdit, users });
+  const {
+    modalOpen: openEditGroupRolesModal,
+    contextHolder: modalEditGroupRolesContextHolder,
+  } = useModalGroupRoles({ group, onClose: onFinishEdit, roles });
   const {
     modalOpen: openDeleteGroupModal,
     contextHolder: modalDeleteGroupContextHolder,
-  } = useModalDeleteGroup({ group: group, onClose: fetchGroups });
-  const onClickEditGroup = () => {
-    openEditGroupModal();
-  };
-  const onToggleDelete = () => {
-    openDeleteGroupModal();
-  };
+  } = useModalDeleteGroup({ group, onClose: fetchGroups });
+
   const menuItems = (
     <Menu>
-      <Menu.Item key="edit" onClick={onClickEditGroup}>
+      <Menu.Item key="edit" onClick={() => openEditGroupModal()}>
         Edit/Add Users
       </Menu.Item>
-      <Menu.Item danger key="delete" onClick={onToggleDelete}>
+      <Menu.Item key="roles" onClick={() => openEditGroupRolesModal()}>
+        Edit/Add Roles
+      </Menu.Item>
+      <Menu.Item danger key="delete" onClick={() => openDeleteGroupModal()}>
         Delete
       </Menu.Item>
     </Menu>
@@ -76,6 +81,7 @@ const GroupActionDropdown = ({
         </Button>
       </Dropdown>
       {modalEditGroupContextHolder}
+      {modalEditGroupRolesContextHolder}
       {modalDeleteGroupContextHolder}
     </div>
   );
@@ -84,6 +90,7 @@ const GroupActionDropdown = ({
 const GroupManagement: React.FC = () => {
   const [ groups, setGroups ] = useState<V1GroupSearchResult[]>([]);
   const [ groupUsers, setGroupUsers ] = useState<V1GroupDetails[]>([]);
+  const [ roles, setRoles ] = useState<UserRole[]>([]);
   const [ users, setUsers ] = useState<DetailedUser[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
@@ -125,8 +132,13 @@ const GroupManagement: React.FC = () => {
     const response = await getGroup({ groupId });
     const i = groupUsers.findIndex((gr) => gr.groupId === groupId);
     i >= 0 ? groupUsers[i] = response.group : groupUsers.push(response.group);
-    setGroupUsers(JSON.parse(JSON.stringify(groupUsers)));
+    setGroupUsers(groupUsers);
   }, [ groupUsers ]);
+
+  const fetchRoles = useCallback(async (): Promise<void> => {
+    const response = await listRoles({});
+    setRoles(response);
+  }, [ ]);
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
@@ -146,10 +158,12 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
+    fetchRoles();
   }, [
     settings.tableLimit,
     settings.tableOffset,
     fetchGroups,
+    fetchRoles,
     fetchUsers ]);
 
   const {
@@ -222,6 +236,7 @@ const GroupManagement: React.FC = () => {
           fetchGroup={fetchGroup}
           fetchGroups={fetchGroups}
           group={record}
+          roles={roles}
           users={users}
         />
       );
@@ -255,7 +270,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [ users, fetchGroups, expandedKeys, fetchGroup ]);
+  }, [ roles, users, fetchGroups, expandedKeys, fetchGroup ]);
 
   const table = useMemo(() => {
     return (
