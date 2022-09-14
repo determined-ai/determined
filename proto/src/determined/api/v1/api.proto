@@ -1670,6 +1670,17 @@ service Determined {
     };
   }
 
+  // List all permissions for the logged in user in all scopes.
+  rpc GetPermissionsSummary(GetPermissionsSummaryRequest)
+      returns (GetPermissionsSummaryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/permissions/summary"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
   // Get a set of roles with the corresponding IDs.
   rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
     option (google.api.http) = {

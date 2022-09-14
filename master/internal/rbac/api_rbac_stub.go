@@ -16,6 +16,12 @@ const stubUnimplementedMessage = "Determined Enterprise Edition is required for 
 // UnimplementedError is the error returned for unimplemented functions.
 var UnimplementedError = status.Error(codes.Unimplemented, stubUnimplementedMessage)
 
+func (s *rbacAPIServerStub) GetPermissionsSummary(
+	ctx context.Context, req *apiv1.GetPermissionsSummaryRequest,
+) (*apiv1.GetPermissionsSummaryResponse, error) {
+	return nil, UnimplementedError
+}
+
 func (s *rbacAPIServerStub) GetRolesByID(ctx context.Context, req *apiv1.GetRolesByIDRequest) (
 	resp *apiv1.GetRolesByIDResponse, err error,
 ) {
