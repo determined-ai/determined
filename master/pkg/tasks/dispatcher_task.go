@@ -173,8 +173,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 		return nil, "", "", errList[0]
 	}
 
-	// TODO FOUNDENG-207: Add support for custom PBS job arguments
-	// customParams["pbsArgs"] = pbsArgs
+	var pbsArgs []string
+	pbsArgs = append(pbsArgs, t.TaskContainerDefaults.Pbs...)
+	pbsArgs = append(pbsArgs, t.Environment.Pbs()...)
+	logrus.Debugf("Custom pbs arguments: %s", pbsArgs)
+	customParams["pbsArgs"] = pbsArgs
 
 	if containerRunType == podman {
 		var portMappings []string = *getPortMappings(t)

@@ -87,6 +87,7 @@ func Test_getPortMappings(t *testing.T) {
 				RawForcePullImage:       &disableImageCache,
 				RawPodSpec:              &expconf.PodSpec{},
 				RawSlurm:                []string{},
+				RawPbs:                  []string{},
 				RawAddCapabilities:      []string{},
 				RawDropCapabilities:     []string{},
 				RawPorts:                tt.args.ports,
@@ -227,6 +228,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				RawForcePullImage:       &tt.args.disableImageCache,
 				RawPodSpec:              &expconf.PodSpec{},
 				RawSlurm:                []string{},
+				RawPbs:                  []string{},
 				RawAddCapabilities:      tt.args.addCaps,
 				RawDropCapabilities:     tt.args.dropCaps,
 			}
@@ -468,10 +470,13 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		tresSupported          bool
 		gresSupported          bool
 		Slurm                  []string
+		Pbs                    []string
 		wantCarrier0           string
 		wantCarrier1           string
 		wantResourcesInstances *map[string]int32
 		wantResourcesGpus      *map[string]int32
+		wantSlurmArgs          []string
+		wantPbsArgs            []string
 		wantErr                bool
 		errorContains          string
 	}{
@@ -480,7 +485,6 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			containerRunType: "singularity",
 			slotType:         device.CUDA,
 			tresSupported:    true,
-			Slurm:            []string{},
 			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
 		},
@@ -489,7 +493,6 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			containerRunType: "podman",
 			slotType:         device.CPU,
 			tresSupported:    false,
-			Slurm:            []string{},
 			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
 			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs",
 		},
@@ -499,7 +502,6 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CUDA,
 			tresSupported:    true,
 			gresSupported:    true,
-			Slurm:            []string{},
 			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
 			wantResourcesInstances: &map[string]int32{
@@ -515,7 +517,6 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CUDA,
 			tresSupported:    false,
 			gresSupported:    true,
-			Slurm:            []string{},
 			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
 			wantResourcesInstances: &map[string]int32{
@@ -532,19 +533,31 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CUDA,
 			tresSupported:    false,
 			gresSupported:    false,
-			Slurm:            []string{},
-			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
-			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
 			wantResourcesInstances: &map[string]int32{
 				"nodes": 16,
 				"total": 16,
 			},
 		},
 		{
+			name:             "Test custom slurmArgs",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Slurm:            []string{"--want=slurmArgs", "--X=Y"},
+			wantSlurmArgs:    []string{"--want=slurmArgs", "--X=Y"},
+		},
+		{
+			name:             "Test custom pbsArgs",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Pbs:              []string{"--want=pbsArgs", "--AB"},
+			wantPbsArgs:      []string{"--want=pbsArgs", "--AB"},
+		},
+		{
 			name:             "Test error case",
 			containerRunType: "singularity",
 			slotType:         device.CUDA,
 			Slurm:            []string{"--gpus=2"},
+			Pbs:              []string{},
 			wantErr:          true,
 			errorContains:    "is not configurable",
 		},
@@ -565,6 +578,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				RawRegistryAuth:         &types.AuthConfig{},
 				RawForcePullImage:       &disableImageCache,
 				RawSlurm:                tt.Slurm,
+				RawPbs:                  tt.Pbs,
 				RawPodSpec:              &expconf.PodSpec{},
 				RawAddCapabilities:      []string{},
 				RawDropCapabilities:     []string{},
@@ -599,8 +613,12 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				assert.Equal(t, *payload.Version, "latest")
 
 				assert.Equal(t, len(*payload.Carriers), 2)
-				assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier0)
-				assert.Equal(t, (*payload.Carriers)[1], tt.wantCarrier1)
+				if len(tt.wantCarrier0) > 0 {
+					assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier0)
+				}
+				if len(tt.wantCarrier1) > 0 {
+					assert.Equal(t, (*payload.Carriers)[1], tt.wantCarrier1)
+				}
 
 				launchParameters := payload.LaunchParameters
 				assert.Assert(t, launchParameters != nil)
@@ -608,7 +626,18 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				customs := launchParameters.GetCustom()
 				assert.Assert(t, customs != nil)
 				assert.Assert(t, customs["Archives"] != nil)
-				assert.Assert(t, customs["slurmArgs"] == nil)
+
+				if len(tt.wantSlurmArgs) > 0 {
+					assert.DeepEqual(t, customs["slurmArgs"], tt.wantSlurmArgs)
+				} else {
+					assert.Assert(t, customs["slurmArgs"] == nil)
+				}
+
+				if len(tt.wantPbsArgs) > 0 {
+					assert.DeepEqual(t, customs["pbsArgs"], tt.wantPbsArgs)
+				} else {
+					assert.Assert(t, customs["pbsArgs"] == nil)
+				}
 
 				if tt.containerRunType == "podman" {
 					assert.Assert(t, customs["ports"] != nil)
@@ -665,6 +694,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 		RawImage:            &expconf.EnvironmentImageMapV0{},
 		RawPodSpec:          &expconf.PodSpec{},
 		RawSlurm:            []string{},
+		RawPbs:              []string{},
 		RawPorts:            map[string]int{},
 	}
 
@@ -720,6 +750,7 @@ func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
 		RawForcePullImage:   &disableImageCache,
 		RawPodSpec:          &expconf.PodSpec{},
 		RawSlurm:            []string{},
+		RawPbs:              []string{},
 		RawAddCapabilities:  []string{},
 		RawDropCapabilities: []string{},
 		RawPorts:            map[string]int{},
