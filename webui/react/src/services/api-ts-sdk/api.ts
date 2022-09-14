@@ -2961,6 +2961,26 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
+ * Response to GetPermissionsSummaryRequest.
+ * @export
+ * @interface V1GetPermissionsSummaryResponse
+ */
+export interface V1GetPermissionsSummaryResponse {
+    /**
+     * A group of roles in cluster and other scopes.
+     * @type {Array<V1Role>}
+     * @memberof V1GetPermissionsSummaryResponse
+     */
+    roles: Array<V1Role>;
+    /**
+     * Lists of assignments for the cluster and other scopes.
+     * @type {Array<V1RoleAssignmentSummary>}
+     * @memberof V1GetPermissionsSummaryResponse
+     */
+    assignments: Array<V1RoleAssignmentSummary>;
+}
+
+/**
  * Response to GetProjectRequest.
  * @export
  * @interface V1GetProjectResponse
@@ -6476,6 +6496,32 @@ export interface V1RoleAssignment {
      * @memberof V1RoleAssignment
      */
     scopeWorkspaceId?: number;
+}
+
+/**
+ * RoleAssignmentSummary is used to describe permissions a user has.
+ * @export
+ * @interface V1RoleAssignmentSummary
+ */
+export interface V1RoleAssignmentSummary {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1RoleAssignmentSummary
+     */
+    roleId?: number;
+    /**
+     * List of workspace IDs to apply the role.
+     * @type {Array<number>}
+     * @memberof V1RoleAssignmentSummary
+     */
+    scopeWorkspaceIds?: Array<number>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1RoleAssignmentSummary
+     */
+    isGlobal?: boolean;
 }
 
 /**
@@ -19531,6 +19577,37 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @summary List all permissions for the logged in user in all scopes.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/permissions/summary`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the roles which are assigned to a group.
          * @param {number} groupId The id of the group to search for role assignments for
          * @param {*} [options] Override http request option.
@@ -19793,6 +19870,24 @@ export const RBACApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary List all permissions for the logged in user in all scopes.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getPermissionsSummary(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the roles which are assigned to a group.
          * @param {number} groupId The id of the group to search for role assignments for
          * @param {*} [options] Override http request option.
@@ -19926,6 +20021,15 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
         },
         /**
          * 
+         * @summary List all permissions for the logged in user in all scopes.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options?: any) {
+            return RBACApiFp(configuration).getPermissionsSummary(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the roles which are assigned to a group.
          * @param {number} groupId The id of the group to search for role assignments for
          * @param {*} [options] Override http request option.
@@ -20004,6 +20108,17 @@ export class RBACApi extends BaseAPI {
      */
     public assignRoles(body: V1AssignRolesRequest, options?: any) {
         return RBACApiFp(this.configuration).assignRoles(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary List all permissions for the logged in user in all scopes.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getPermissionsSummary(options?: any) {
+        return RBACApiFp(this.configuration).getPermissionsSummary(options)(this.fetch, this.basePath);
     }
 
     /**
