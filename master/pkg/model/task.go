@@ -124,7 +124,7 @@ type ResourceAggregates struct {
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
 	AllocationStatePending AllocationState = "PENDING"
-	// AllocationStatePending state denotes that the command is waiting on data.
+	// AllocationStateWaiting state denotes that the command is waiting on data.
 	AllocationStateWaiting AllocationState = "WAITING"
 	// AllocationStateAssigned state denotes that the command has been assigned to an agent but has
 	// not started yet.
