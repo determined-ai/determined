@@ -5027,10 +5027,10 @@ export interface V1PauseExperimentResponse {
 export interface V1Permission {
     /**
      * 
-     * @type {number}
+     * @type {V1PermissionType}
      * @memberof V1Permission
      */
-    id?: number;
+    id?: V1PermissionType;
     /**
      * 
      * @type {string}
@@ -5043,6 +5043,33 @@ export interface V1Permission {
      * @memberof V1Permission
      */
     isGlobal?: boolean;
+}
+
+/**
+ * List of permissions types.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata like experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.
+ * @export
+ * @enum {string}
+ */
+export enum V1PermissionType {
+    UNSPECIFIED = <any> 'PERMISSION_TYPE_UNSPECIFIED',
+    ADMINISTRATEUSER = <any> 'PERMISSION_TYPE_ADMINISTRATE_USER',
+    CREATEEXPERIMENT = <any> 'PERMISSION_TYPE_CREATE_EXPERIMENT',
+    VIEWEXPERIMENTARTIFACTS = <any> 'PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS',
+    VIEWEXPERIMENTMETADATA = <any> 'PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA',
+    UPDATEEXPERIMENT = <any> 'PERMISSION_TYPE_UPDATE_EXPERIMENT',
+    UPDATEEXPERIMENTMETADATA = <any> 'PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA',
+    DELETEEXPERIMENT = <any> 'PERMISSION_TYPE_DELETE_EXPERIMENT',
+    UPDATEGROUP = <any> 'PERMISSION_TYPE_UPDATE_GROUP',
+    CREATEWORKSPACE = <any> 'PERMISSION_TYPE_CREATE_WORKSPACE',
+    VIEWWORKSPACE = <any> 'PERMISSION_TYPE_VIEW_WORKSPACE',
+    UPDATEWORKSPACE = <any> 'PERMISSION_TYPE_UPDATE_WORKSPACE',
+    DELETEWORKSPACE = <any> 'PERMISSION_TYPE_DELETE_WORKSPACE',
+    CREATEPROJECT = <any> 'PERMISSION_TYPE_CREATE_PROJECT',
+    VIEWPROJECT = <any> 'PERMISSION_TYPE_VIEW_PROJECT',
+    UPDATEPROJECT = <any> 'PERMISSION_TYPE_UPDATE_PROJECT',
+    DELETEPROJECT = <any> 'PERMISSION_TYPE_DELETE_PROJECT',
+    UPDATEROLES = <any> 'PERMISSION_TYPE_UPDATE_ROLES',
+    ASSIGNROLES = <any> 'PERMISSION_TYPE_ASSIGN_ROLES'
 }
 
 /**

@@ -4531,7 +4531,7 @@ class v1Permission:
     def __init__(
         self,
         *,
-        id: "typing.Optional[int]" = None,
+        id: "typing.Optional[v1PermissionType]" = None,
         isGlobal: "typing.Optional[bool]" = None,
         name: "typing.Optional[str]" = None,
     ):
@@ -4542,17 +4542,38 @@ class v1Permission:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Permission":
         return cls(
-            id=obj.get("id", None),
+            id=v1PermissionType(obj["id"]) if obj.get("id", None) is not None else None,
             name=obj.get("name", None),
             isGlobal=obj.get("isGlobal", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
+            "id": self.id.value if self.id is not None else None,
             "name": self.name if self.name is not None else None,
             "isGlobal": self.isGlobal if self.isGlobal is not None else None,
         }
+
+class v1PermissionType(enum.Enum):
+    PERMISSION_TYPE_UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
+    PERMISSION_TYPE_ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
+    PERMISSION_TYPE_CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
+    PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS = "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS"
+    PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA = "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA"
+    PERMISSION_TYPE_UPDATE_EXPERIMENT = "PERMISSION_TYPE_UPDATE_EXPERIMENT"
+    PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA = "PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA"
+    PERMISSION_TYPE_DELETE_EXPERIMENT = "PERMISSION_TYPE_DELETE_EXPERIMENT"
+    PERMISSION_TYPE_UPDATE_GROUP = "PERMISSION_TYPE_UPDATE_GROUP"
+    PERMISSION_TYPE_CREATE_WORKSPACE = "PERMISSION_TYPE_CREATE_WORKSPACE"
+    PERMISSION_TYPE_VIEW_WORKSPACE = "PERMISSION_TYPE_VIEW_WORKSPACE"
+    PERMISSION_TYPE_UPDATE_WORKSPACE = "PERMISSION_TYPE_UPDATE_WORKSPACE"
+    PERMISSION_TYPE_DELETE_WORKSPACE = "PERMISSION_TYPE_DELETE_WORKSPACE"
+    PERMISSION_TYPE_CREATE_PROJECT = "PERMISSION_TYPE_CREATE_PROJECT"
+    PERMISSION_TYPE_VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
+    PERMISSION_TYPE_UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
+    PERMISSION_TYPE_DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
+    PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
+    PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
 
 class v1PostAllocationProxyAddressRequest:
     def __init__(
