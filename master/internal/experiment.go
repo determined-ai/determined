@@ -416,9 +416,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("experiment shut down successfully")
 
 	case *apiv1.PostSearcherOperationsRequest:
-		queue := e.searcher.GetCustomSearcherEventQueue()
-		if queue == nil {
-			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Events Queue not found"))
+		queue, err := e.searcher.GetCustomSearcherEventQueue()
+		if err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
 			return nil
 		}
 		ops := make([]searcher.Operation, 0)
@@ -451,9 +451,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case *apiv1.GetSearcherEventsRequest:
-		queue := e.searcher.GetCustomSearcherEventQueue()
-		if queue == nil {
-			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Event Queue not found"))
+		queue, err := e.searcher.GetCustomSearcherEventQueue()
+		if err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
 		} else {
 			resp := &apiv1.GetSearcherEventsResponse{
 				SearcherEvents: queue.GetEvents(),
@@ -599,7 +599,11 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
 		case searcher.SearcherProgress:
-			e.searcher.SetCustomSearcherProgress(op.Progress)
+			err = e.searcher.SetCustomSearcherProgress(op.Progress)
+			if err != nil {
+				ctx.Respond(status.Error(codes.Internal, err.Error()))
+			}
+
 		case searcher.Close:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Closed = true
