@@ -3,11 +3,16 @@ import contextlib
 import faulthandler
 import logging
 import sys
-from typing import Iterator
+from typing import Iterator, Type
 
 import determined as det
 from determined import core, horovod, load
 from determined.common.api import analytics, certs
+
+try:
+    from determined import pytorch
+except ImportError:  # pragma: no cover
+    pass
 
 
 @contextlib.contextmanager
@@ -29,6 +34,8 @@ def main(train_entrypoint: str) -> int:
     # TODO: refactor data_layer, and profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)
 
+    trial_class = load.trial_class_from_entrypoint(train_entrypoint)
+
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.
     # It was natural to create this big-blob-of-config object, but it was a mistake to pass it into
     # the lowest layers of the harness code; it's too large of an object to be easily mockable,
@@ -38,6 +45,9 @@ def main(train_entrypoint: str) -> int:
     # will use that pattern for the future high-level APIs, but it's not worth refactoring e.g. the
     # TFKerasTrialController or EstimatorTrialController to add that functionality, so for now we
     # continue with the legacy strategy.
+
+    if pytorch and issubclass(trial_class, pytorch.PyTorchTrial):
+        return _run_pytorch_trial(trial_class, info)
 
     env = det.EnvContext(
         master_url=info.master_url,
@@ -72,7 +82,6 @@ def main(train_entrypoint: str) -> int:
         # We can't build a core.Context without rank information, and we can't gather rank
         # information until the distributed backend is initialized, and we can't initialize the
         # correct distributed backend until we know which Trial class the user implemented.
-        trial_class = load.trial_class_from_entrypoint(train_entrypoint)
         controller_class = load.get_trial_controller_class(trial_class)
         if info.container_rank == 0:
             try:
@@ -121,6 +130,54 @@ def main(train_entrypoint: str) -> int:
             )
 
             controller.run()
+
+    return 0
+
+
+def _run_pytorch_trial(
+    trial_class: Type[pytorch.PyTorchTrial],
+    info: det.ClusterInfo,
+) -> int:
+    det.common.set_logger(info.trial._debug)
+
+    logging.debug("Starting harness.")
+
+    with maybe_periodic_stacktraces(info.trial._debug):
+        with pytorch.init() as train_context:  # type: pytorch.PyTorchTrialContext
+            trial_inst = trial_class(train_context)
+
+            if train_context.distributed.size > 1 and not train_context.distributed.rank == 0:
+                log_level = logging.DEBUG if info.trial._debug else logging.WARNING
+                logging.getLogger().setLevel(log_level)
+
+            logging.info(
+                f"Creating {pytorch._PyTorchTrialController.__name__} with {trial_class.__name__}."
+            )
+
+            trainer = pytorch.Trainer(trial_inst, train_context)
+
+            trainer.configure_profiler(
+                sync_timings=bool(info.trial._config["profiling"]["sync_timings"]),
+                enabled=bool(info.trial._config["profiling"]["enabled"]),
+                begin_on_batch=info.trial._config["profiling"]["begin_on_batch"],
+                end_after_batch=info.trial._config["profiling"]["end_after_batch"],
+            )
+
+            trainer.fit(
+                checkpoint_period=pytorch.TrainUnit._from_values(
+                    **info.trial._config["min_checkpoint_period"]
+                ),
+                validation_period=pytorch.TrainUnit._from_values(
+                    **info.trial._config["min_validation_period"]
+                ),
+                reporting_period=pytorch.Batch(info.trial._config["scheduling_unit"]),
+                checkpoint_policy=info.trial._config["checkpoint_policy"],
+                average_aggregated_gradients=bool(
+                    info.trial._config["optimizations"]["average_aggregated_gradients"]
+                ),
+                test_mode=False,
+                aggregation_frequency=info.trial._config["optimizations"]["aggregation_frequency"],
+            )
 
     return 0
 

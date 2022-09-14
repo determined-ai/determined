@@ -1,0 +1,20 @@
+name: mnist_pytorch_const
+hyperparameters:
+  global_batch_size: 32
+searcher:
+  name: single
+  metric: validation_loss
+  max_length:
+    batches: 937 #60,000 training images with batch size 64
+max_restarts: 0
+resources:
+  slots_per_trial: 8
+entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
+bind_mounts:
+- host_path: /tmp
+  container_path: /tmp
+profiling:
+  begin_on_batch: 0
+  enabled: true
+  end_after_batch: null
+  sync_timings: true

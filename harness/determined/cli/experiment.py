@@ -194,6 +194,17 @@ def local_experiment(args: Namespace) -> None:
 
     with det._local_execution_manager(args.model_def.resolve()):
         trial_class = determined.load.trial_class_from_entrypoint(entrypoint)
+        try:
+            from determined import pytorch
+
+            if issubclass(trial_class, pytorch.PyTorchTrial):
+                determined.experimental.test_one_batch_pytorch(
+                    trial_class=trial_class, config=experiment_config
+                )
+                return
+        except ImportError:
+            pass
+
         determined.experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 
