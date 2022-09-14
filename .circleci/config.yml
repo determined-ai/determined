@@ -1398,6 +1398,10 @@ jobs:
           xtra_args: "-v"
 
   test-intg-master:
+    parameters:
+      make_target:
+        type: string
+        default: "test-intg"
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -1411,26 +1415,7 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
-      - run: make -C master test-intg
-      - persist_to_workspace:
-          root: .
-          paths:
-            - master/coverage.out
-
-  test-intg-master-checkpoint-download:
-    machine:
-      image: <<pipeline.parameters.machine-image>>
-    resource_class: large
-    steps:
-      - checkout
-      - skip-if-docs-only
-      - attach_workspace:
-          at: .
-      - reinstall-go
-      - setup-python-venv:
-          executor: <<pipeline.parameters.machine-image>>
-      - setup-go-intg-deps
-      - run: make -C master test-intg
+      - run: make -C master <<parameters.make_target>>
       - persist_to_workspace:
           root: .
           paths:
@@ -2200,7 +2185,13 @@ workflows:
   test-intg:
     jobs:
       - test-intg-downstream
-      - test-intg-master
+      - test-intg-master:
+          name: test-intg-master
+      - test-intg-master:
+          name: test-intg-master-upstream-only
+          make_target: "test-intg-upstream"
+          context: storage-unit-tests
+          filters: *any-upstream
       - test-intg-agent
       - go-coverage:
           requires:

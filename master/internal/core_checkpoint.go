@@ -4,13 +4,8 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -18,6 +13,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"io"
+	"net/http"
+	"strings"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -192,47 +190,33 @@ func newBatchDownloadIterator(aw archiveWriter,
 	}
 }
 
-func getAwsRegion() string {
-	defaultRegion := "us-west-2"
-	client := http.Client{
-		Timeout: 100 * time.Millisecond,
-	}
-
-	// Per AWS: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-identity-documents.html
-	resp, err := client.Get("http://169.254.169.254/latest/dynamic/instance-identity/document")
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return defaultRegion
-	}
-
-	bytes, err := io.ReadAll(resp.Body)
+func getS3BucketRegion(ctx context.Context, bucket string) (string, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2"),
+	})
 	if err != nil {
-		return defaultRegion
+		return "", nil
 	}
-	_ = resp.Body.Close()
 
-	var jsonObj map[string]interface{}
-	err = json.Unmarshal(bytes, &jsonObj)
+	out, err := s3.New(sess).GetBucketLocationWithContext(ctx, &s3.GetBucketLocationInput{
+		Bucket: &bucket,
+	})
 	if err != nil {
-		return defaultRegion
+		return "", err
 	}
 
-	if _, ok := jsonObj["region"]; !ok {
-		return defaultRegion
-	}
-
-	region, ok := jsonObj["region"].(string)
-	if !ok {
-		return defaultRegion
-	}
-
-	return region
+	return *out.LocationConstraint, nil
 }
 
 func s3DownloadCheckpoint(
 	c echo.Context, aw archiveWriter, bucket string, prefix string,
 ) error {
+	region, err := getS3BucketRegion(c.Request().Context(), bucket)
+	if err != nil {
+		return err
+	}
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(getAwsRegion()),
+		Region: &region,
 	})
 	if err != nil {
 		return err
