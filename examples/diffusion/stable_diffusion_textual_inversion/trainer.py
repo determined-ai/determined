@@ -1,8 +1,6 @@
 import json
 import os
 import pathlib
-import shutil
-import tempfile
 from PIL import Image
 from typing import Literal, Optional, Sequence, Union
 
@@ -384,47 +382,48 @@ class TextualInversionTrainer:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
-                with open(path.joinpath("metadata.json"), "r") as f:
-                    metadata_dict = json.load(f)
-                self.steps_completed = metadata_dict["steps_completed"]
-                with self.accelerator.main_process_first():
-                    self.accelerator.load_state(path)
+                with self.accelerator.local_main_process_first():
+                    with open(path.joinpath("metadata.json"), "r") as f:
+                        metadata_dict = json.load(f)
+                    self.steps_completed = metadata_dict["steps_completed"]
+                    optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
+                    self.optimizer.load_state_dict(optimizer_state_dict)
+                    learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
+                    token_embeds = self.text_encoder.get_input_embeddings().weight.data
+                    for idx, tensor in learned_embeds_dict.items():
+                        token_embeds[idx] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
         """Checkpoints the training state and pipeline."""
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
-        train_checkpoint_path = self._write_train_checkpoint_and_get_dir(core_context)
         if self.accelerator.is_main_process:
             checkpoint_metadata = {
                 "steps_completed": self.steps_completed,
+                "initializer_tokens": self.initializer_tokens,
                 "placeholder_tokens": self.placeholder_tokens,
+                "placeholder_tokens_ids": self.placeholder_token_ids,
             }
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, storage_id):
-                # TODO: Avoid this copy. Use sharded checkpoints, once available.
-                # Can only restore from these checkpoints for single-node training.
-                shutil.copytree(train_checkpoint_path, path, dirs_exist_ok=True)
                 self._build_pipeline()
-                self._write_pipeline_and_embeddings_to_path(path)
                 self._generate_and_write_imgs(path)
-                shutil.rmtree(train_checkpoint_path)
+                self._write_optimizer_state_dict_to_path(path)
+                self._write_learned_embeddings_to_path(path)
 
-    def _write_train_checkpoint_and_get_dir(self, core_context: det.core.Context) -> pathlib.Path:
-        """Accelerator's save_state method requires all workers to write to disk. Writes to a
-        temp dir and returns the corresponding path object."""
-        # Have the chief create a temp dir
-        if self.accelerator.is_main_process:
-            dir_path = tempfile.mkdtemp()
-        else:
-            dir_path = None
-        # Broadcast to all workers
-        dir_path = core_context.distributed.broadcast(dir_path)
-        dir_path = pathlib.Path(dir_path)
-        print(f"saving to {dir_path}")
-        self.accelerator.save_state(dir_path)
-        self.accelerator.wait_for_everyone()
-        print(f"files in {dir_path}: {os.listdir(dir_path)}")
-        return dir_path
+    def _write_optimizer_state_dict_to_path(self, path: pathlib.Path) -> None:
+        optimizer_state_dict = self.optimizer.state_dict()
+        self.accelerator.save(optimizer_state_dict, path.joinpath("optimizer_state_dict.pt"))
+
+    def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
+        learned_embeds = (
+            self.accelerator.unwrap_model(self.text_encoder)
+            .get_input_embeddings()
+            .weight[self.placeholder_token_ids]
+        ).detach.cpu()
+        learned_embeds_dict = {
+            idx: tensor for idx, tensor in zip(self.placeholder_token_ids, learned_embeds)
+        }
+        self.accelerator.save(learned_embeds_dict, path.joinpath("learned_embeds.pt"))
 
     def _build_pipeline(self) -> None:
         """Build the pipeline for the chief worker only."""
@@ -443,17 +442,6 @@ class TextualInversionTrainer:
                 safety_checker=self.safety_checker,
                 feature_extractor=self.feature_extractor,
             ).to(self.accelerator.device)
-
-    def _write_pipeline_and_embeddings_to_path(self, path: pathlib.Path) -> None:
-        """Write the pipeline and learned embeddings to the given path."""
-        self.pipeline.save_pretrained(path)
-        learned_embeds = (
-            self.accelerator.unwrap_model(self.text_encoder)
-            .get_input_embeddings()
-            .weight[self.placeholder_token_ids]
-        )
-        learned_embeds_dict = {tuple(self.placeholder_tokens): learned_embeds.detach().cpu()}
-        self.accelerator.save(learned_embeds_dict, path.joinpath("learned_embeds.bin"))
 
     def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
         # Generate a new image using the pipeline.
