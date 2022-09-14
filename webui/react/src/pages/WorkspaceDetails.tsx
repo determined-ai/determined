@@ -1,7 +1,7 @@
-import { Select, Space, Tabs, Button } from 'antd';
+import { Select, Space, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
-
+import { FilterDropdownProps} from 'antd/lib/table/interface';
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import InlineEditor from 'components/InlineEditor';
@@ -28,40 +28,21 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
-import { DetailedUser, Project, Workspace } from 'types';
+import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
-import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
-
 import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings, MEMBERS_DEFAULT_COLUMN_WIDTHS } from './WorkspaceDetails.settings';
+  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
-import Avatar from 'components/UserAvatar';
-import groupIcon from 'shared/assets/images/People.svg';
-import { Size } from 'shared/components/Avatar';
-import Icon from 'shared/components/Icon/Icon';
-
+import WorkspaceMembers from './WorkspaceMembers';
 const { Option } = Select;
 
 interface Params {
   workspaceId: string;
 }
-
-export interface Member extends DetailedUser {
-  role?: string;
-}
-
-const hasDisplayName = (object: Member | Group) => object.hasOwnProperty('displayName');
-const hasUserName = (object: Member | Group) => object.hasOwnProperty('username');
-export interface Group {
-  role: string
-  name: string
-}
-
-type UserOrGroup = Member | Group;
 
 export enum WorkspaceDetailsTab {
   Projects = 'projects',
@@ -88,7 +69,6 @@ const WorkspaceDetails: React.FC = () => {
     updateSettings,
   } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
 
-  console.log(settings);
   const fetchWorkspace = useCallback(async () => {
     try {
       const response = await getWorkspace({ id }, { signal: canceler.signal });
@@ -287,186 +267,7 @@ const WorkspaceDetails: React.FC = () => {
       },
     ] as ColumnDef<Project>[];
   }, [ fetchProjects, saveProjectDescription, user, workspace?.archived ]);
-  const roles = ["Admin", "Editor", "Viewer"]
-  const members: UserOrGroup[] = [];
-  users.forEach( u => {
-    const m: Member = u;
-    m.role = "Editor";
-    members.push(m);
-    const group = {
-      role: "Admin",
-      name: "group name"
-    }
-    members.push(group);
-  })
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
-
-  const projectColumns = useMemo(() => {
-
-    const nameRenderer = (value: string, record: UserOrGroup) => {
-      let member;
-      if(hasDisplayName(record)){
-        member = record as Member
-        return (
-          <>
-          <div className={css.userAvatarRowItem}> 
-          <Avatar size={Size.Medium} userId={member.id} />
-          </div>
-          <div className={css.userRowItem}>
-          <div>{member.displayName}</div>
-          <div>{member.username}</div>
-          </div>
-          </>
-        )
-      } else if(hasUserName(record)){
-        member = record as Member
-        return (
-          <>
-          <div className={css.userRowItem}> 
-          <Avatar userId={member.id} />
-          </div>
-          <div className={css.userRowItem}> 
-          <div>{member.username}</div>
-          </div>
-          </>
-        )
-      }
-      const group = record as Group
-      return (
-        <>
-        <div className={css.userRowItem}> 
-        <img src={groupIcon} />
-        </div>
-        <div className={css.userRowItem}> 
-        <div>{group.name}</div>
-        </div>
-        </>
-      )
-    }
-
-    const roleRenderer = (value: string, record: Member) => {
-      return ( 
-      <Select
-            value={record.role}
-            >{
-              roles.map((r) => (
-                <Select.Option key={r} value={r}>
-                  {r}
-                </Select.Option>
-              ))
-            }
-          </Select>
-      )
-    }
-
-    const actionRenderer = () => (
-      <Button>Remove</Button>
-    );
-
-    // const actionRenderer: GenericRenderer<Project> = (_, record) => (
-    //   <ProjectActionDrkopdown
-    //     curUser={user}
-    //     project={record}
-    //     workspaceArchived={workspace?.archived}
-    //     onComplete={fetchProjects}
-    //   />
-    // );
-
-    // const descriptionRenderer = (value:string, record: Project) => (
-    //   <InlineEditor
-    //     disabled={record.archived}
-    //     placeholder={record.archived ? 'Archived' : 'Add description...'}
-    //     value={value}
-    //     onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
-    //   />
-    // );
-
-    return [
-      {
-        dataIndex: 'username',
-        defaultWidth: MEMBERS_DEFAULT_COLUMN_WIDTHS['name'],
-        key: 'username',
-        width: 100,
-        filterDropdown: nameFilterSearch,
-        render: nameRenderer,
-        title: 'Name',
-        sorter: true,
-      },
-      {
-        dataIndex: 'role',
-        defaultWidth: MEMBERS_DEFAULT_COLUMN_WIDTHS['role'],
-        key: 'role',
-        width: 75,
-        render: roleRenderer,
-        title: 'Role',
-      },
-      {
-      dataIndex: 'action',
-      defaultWidth: MEMBERS_DEFAULT_COLUMN_WIDTHS['action'],
-      key: 'action',
-      render: actionRenderer,
-      title: '',
-      align: 'right',
-      fixed: 'right',
-      width: 100,
-      }
-      // {
-      //   dataIndex: 'description',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
-      //   key: V1GetWorkspaceProjectsRequestSortBy.DESCRIPTION,
-      //   onCell: onRightClickableCell,
-      //   render: descriptionRenderer,
-      //   title: 'Description',
-      // },
-      // {
-      //   dataIndex: 'numExperiments',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['numExperiments'],
-      //   title: 'Experiments',
-      // },
-      // {
-      //   dataIndex: 'lastUpdated',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdated'],
-      //   render: (_: number, record: Project): React.ReactNode =>
-      //     record.lastExperimentStartedAt ?
-      //       relativeTimeRenderer(new Date(record.lastExperimentStartedAt)) :
-      //       null,
-      //   title: 'Last Experiment Started',
-      // },
-      // {
-      //   dataIndex: 'userId',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-      //   render: userRenderer,
-      //   title: 'User',
-      // },
-      // {
-      //   dataIndex: 'archived',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
-      //   key: 'archived',
-      //   render: checkmarkRenderer,
-      //   title: 'Archived',
-      // },
-      // {
-      //   dataIndex: 'state',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
-      //   key: 'state',
-      //   render: stateRenderer,
-      //   title: 'State',
-      // },
-      // {
-      //   align: 'right',
-      //   dataIndex: 'action',
-      //   defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-      //   fixed: 'right',
-      //   key: 'action',
-      //   onCell: onRightClickableCell,
-      //   render: actionRenderer,
-      //   title: '',
-      // },
-    ] as ColumnDef<UserOrGroup>[];
-  }, [ users, workspace ]);
-
-  console.log(projectColumns);
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
     let newColumnWidths: number[];
@@ -616,7 +417,8 @@ const WorkspaceDetails: React.FC = () => {
         >
         <Tabs.TabPane
           key={WorkspaceDetailsTab.Projects}
-          tab="Projects">
+          tab="Projects"
+          destroyInactiveTabPane>
       <div className={css.controls}>
         <SelectFilter
           dropdownMatchSelectWidth={140}
@@ -672,27 +474,9 @@ const WorkspaceDetails: React.FC = () => {
       </Tabs.TabPane>
       <Tabs.TabPane
           key={WorkspaceDetailsTab.Members}
-          tab="Members">
-            <div className={css.membersContainer}>
-            <InteractiveTable
-            columns={projectColumns}
-            containerRef={pageRef}
-            //ContextMenu={actionDropdown}
-            dataSource={members}
-            loading={isLoading}
-            // pagination={getFullPaginationConfig({
-            //   limit: settings.tableLimit,
-            //   offset: settings.tableOffset,
-            // }, total)}
-            //rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="username"
-            settings={membersSettings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-            //onChange={handleTableChange}
-          />
-          </div>
+          tab="Members"
+          >
+           <WorkspaceMembers users={users} workspace={workspace}/>
       </Tabs.TabPane>
       </Tabs>
     </Page>
