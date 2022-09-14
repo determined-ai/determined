@@ -5,10 +5,11 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
@@ -48,8 +49,8 @@ const Wait: React.FC = () => {
   }
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [ storeDispatch ]);
 
   const handleTaskError = (err: Error) => {

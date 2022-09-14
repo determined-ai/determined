@@ -56,7 +56,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	var err error
 
 	// Validate the user and get the agent user group.
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}

@@ -37,6 +37,7 @@ type Environment struct {
 	ForcePullImage bool              `json:"force_pull_image"`
 	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
 	Slurm          []string          `json:"slurm"`
+	Pbs            []string          `json:"pbs"`
 
 	AddCapabilities  []string `json:"add_capabilities"`
 	DropCapabilities []string `json:"drop_capabilities"`

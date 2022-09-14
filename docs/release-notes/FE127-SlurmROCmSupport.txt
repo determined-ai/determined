@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Slurm: Singularity containers may now use AMD ROCm GPUs. 
-

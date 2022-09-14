@@ -45,6 +45,7 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
+import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -59,6 +60,7 @@ import {
   ExperimentAction as Action,
   CommandTask,
   ExperimentItem,
+  ExperimentPagination,
   Note,
   Project,
   ProjectExperiment,
@@ -73,11 +75,11 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
+import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
-
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
 interface Params {
@@ -108,7 +110,7 @@ const ProjectDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
+  const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces } = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -167,42 +169,61 @@ const ProjectDetails: React.FC = () => {
       const states = (settings.state || []).map((state) => (
         encodeExperimentState(state as RunState)
       ));
-      const response = await getExperiments(
-        {
-          archived: settings.archived ? undefined : false,
-          labels: settings.label,
+      const baseParams: GetExperimentsParams = {
+        archived: settings.archived ? undefined : false,
+        labels: settings.label,
+        name: settings.search,
+        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+        projectId: id,
+        sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
+        states: validateDetApiEnumList(Determinedexperimentv1State, states),
+        users: settings.user,
+      };
+      const pinnedIds = (settings.pinned[id] ?? []);
+      let pinnedExpResponse: ExperimentPagination = { experiments: [], pagination: {} };
+      if (pinnedIds.length > 0) {
+        pinnedExpResponse = await getExperiments({
+          ...baseParams,
+          experimentIdFilter: { incl: pinnedIds },
           limit: settings.tableLimit,
-          name: settings.search,
-          offset: settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          projectId: id,
-          sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Determinedexperimentv1State, states),
-          users: settings.user,
-        },
-        { signal: canceler.signal },
+          offset: 0,
+        }, { signal: canceler.signal });
+      }
+      const otherExpResponse = await getExperiments({
+        ...baseParams,
+        experimentIdFilter: { notIn: pinnedIds },
+        limit: settings.tableLimit - pinnedIds.length,
+        offset: settings.tableOffset -
+            (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+      }, { signal: canceler.signal });
+
+      // Due to showing pinned items in all pages, we need to adjust the number of total items
+      const totalItems = (
+        (pinnedExpResponse.pagination.total ?? 0) + (otherExpResponse.pagination.total ?? 0)
       );
-      setTotal(response.pagination.total ?? 0);
-      setExperiments((prev) => {
-        if (isEqual(prev, response.experiments)) return prev;
-        return response.experiments;
-      });
+      const expectedNumPages = Math.ceil(totalItems / settings.tableLimit);
+      const imaginaryTotalItems = totalItems + pinnedIds.length * expectedNumPages;
+      setTotal(imaginaryTotalItems);
+      setExperiments([ ...pinnedExpResponse.experiments, ...otherExpResponse.experiments ]);
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal,
+  }, [
+    canceler.signal,
     id,
     settings.archived,
     settings.label,
+    settings.pinned,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
     settings.state,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user ]);
+    settings.user,
+  ]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -338,6 +359,8 @@ const ProjectDetails: React.FC = () => {
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
           onComplete={handleActionComplete}
         />
       );
@@ -512,18 +535,19 @@ const ProjectDetails: React.FC = () => {
     ] as ColumnDef<ExperimentItem>[];
 
   }, [
-    handleActionComplete,
-    experimentTags,
+    nameFilterSearch,
+    tableSearchIcon,
     labelFilterDropdown,
     labels,
-    nameFilterSearch,
-    saveExperimentDescription,
-    settings,
-    project,
     stateFilterDropdown,
-    tableSearchIcon,
     userFilterDropdown,
     users,
+    project,
+    experimentTags,
+    settings,
+    updateSettings,
+    handleActionComplete,
+    saveExperimentDescription,
   ]);
 
   useEffect(() => {
@@ -790,6 +814,7 @@ const ProjectDetails: React.FC = () => {
     settings.sortDesc,
     settings.sortKey,
     settings.state,
+    settings.pinned,
     settings.tableLimit,
     settings.tableOffset,
     settings.user,
@@ -804,13 +829,15 @@ const ProjectDetails: React.FC = () => {
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
           onComplete={handleActionComplete}
           onVisibleChange={onVisibleChange}>
           {children}
         </ExperimentActionDropdown>
       );
     },
-    [ handleActionComplete, project ],
+    [ project, settings, updateSettings, handleActionComplete ],
   );
 
   const ExperimentTabOptions = useMemo(() => {
@@ -844,6 +871,7 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
+    if (!canViewWorkspaces) return (<NoPermissions />);
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -867,7 +895,9 @@ const ProjectDetails: React.FC = () => {
         </div>
       </div>
     );
-  }, [ filterCount,
+  }, [
+    canViewWorkspaces,
+    filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
@@ -894,6 +924,7 @@ const ProjectDetails: React.FC = () => {
             ContextMenu={ContextMenu}
             dataSource={experiments}
             loading={isLoading}
+            numOfPinned={(settings.pinned[id] ?? []).length}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
@@ -930,23 +961,26 @@ const ProjectDetails: React.FC = () => {
         </div>),
       title: 'Notes',
     } ]);
-  }, [ ContextMenu,
-    ExperimentTabOptions,
+  }, [
+    settings,
+    handleBatchAction,
     clearSelected,
     columns,
+    ContextMenu,
     experiments,
-    handleBatchAction,
+    isLoading,
+    id,
+    total,
+    handleTableRowSelect,
+    availableBatchActions,
+    updateSettings,
+    ExperimentTabOptions,
+    project?.archived,
+    project?.notes,
     handleDeleteNote,
     handleNewNotesPage,
     handleSaveNotes,
-    handleTableRowSelect,
-    availableBatchActions,
-    isLoading,
-    project?.notes,
-    project?.archived,
-    settings,
-    total,
-    updateSettings ]);
+  ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;

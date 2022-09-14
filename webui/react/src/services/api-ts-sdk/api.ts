@@ -118,7 +118,7 @@ export enum Determineddevicev1Type {
 }
 
 /**
- * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+ * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
  * @export
  * @enum {string}
  */
@@ -135,7 +135,11 @@ export enum Determinedexperimentv1State {
     DELETED = <any> 'STATE_DELETED',
     DELETING = <any> 'STATE_DELETING',
     DELETEFAILED = <any> 'STATE_DELETE_FAILED',
-    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED'
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
+    QUEUED = <any> 'STATE_QUEUED',
+    PULLING = <any> 'STATE_PULLING',
+    STARTING = <any> 'STATE_STARTING',
+    RUNNING = <any> 'STATE_RUNNING'
 }
 
 /**
@@ -166,20 +170,19 @@ export enum Determinedjobv1Type {
 }
 
 /**
- * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.
+ * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.  - STATE_QUEUED: Additional state to cover queueing operations.
  * @export
  * @enum {string}
  */
 export enum Determinedtaskv1State {
     UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    PENDING = <any> 'STATE_PENDING',
-    ASSIGNED = <any> 'STATE_ASSIGNED',
     PULLING = <any> 'STATE_PULLING',
     STARTING = <any> 'STATE_STARTING',
     RUNNING = <any> 'STATE_RUNNING',
     TERMINATED = <any> 'STATE_TERMINATED',
     TERMINATING = <any> 'STATE_TERMINATING',
-    WAITING = <any> 'STATE_WAITING'
+    WAITING = <any> 'STATE_WAITING',
+    QUEUED = <any> 'STATE_QUEUED'
 }
 
 /**
@@ -1142,6 +1145,34 @@ export interface V1ArchiveProjectResponse {
  * @interface V1ArchiveWorkspaceResponse
  */
 export interface V1ArchiveWorkspaceResponse {
+}
+
+/**
+ * AssignRolesRequest is the body of the request for the call to grant a user or group a role. It requires group_id, role_id, and either scope_workspace_id or scope_project_id.
+ * @export
+ * @interface V1AssignRolesRequest
+ */
+export interface V1AssignRolesRequest {
+    /**
+     * the set of groups being assigned to a role.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1AssignRolesRequest
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * the set of users being assigned to a role.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1AssignRolesRequest
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+
+/**
+ * AssignRolesResponse is the body of the request for the call to grant a user or group a role.
+ * @export
+ * @interface V1AssignRolesResponse
+ */
+export interface V1AssignRolesResponse {
 }
 
 /**
@@ -2717,6 +2748,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     branding?: string;
+    /**
+     * Feature flag for RBAC and user groups.
+     * @type {boolean}
+     * @memberof V1GetMasterResponse
+     */
+    rbacEnabled?: boolean;
 }
 
 /**
@@ -2947,6 +2984,26 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
+ * Response to GetPermissionsSummaryRequest.
+ * @export
+ * @interface V1GetPermissionsSummaryResponse
+ */
+export interface V1GetPermissionsSummaryResponse {
+    /**
+     * A group of roles in cluster and other scopes.
+     * @type {Array<V1Role>}
+     * @memberof V1GetPermissionsSummaryResponse
+     */
+    roles: Array<V1Role>;
+    /**
+     * Lists of assignments for the cluster and other scopes.
+     * @type {Array<V1RoleAssignmentSummary>}
+     * @memberof V1GetPermissionsSummaryResponse
+     */
+    assignments: Array<V1RoleAssignmentSummary>;
+}
+
+/**
  * Response to GetProjectRequest.
  * @export
  * @interface V1GetProjectResponse
@@ -2978,6 +3035,62 @@ export interface V1GetResourcePoolsResponse {
      * @memberof V1GetResourcePoolsResponse
      */
     pagination?: V1Pagination;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesAssignedToGroupResponse
+ */
+export interface V1GetRolesAssignedToGroupResponse {
+    /**
+     * 
+     * @type {Array<V1Role>}
+     * @memberof V1GetRolesAssignedToGroupResponse
+     */
+    roles?: Array<V1Role>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesAssignedToUserResponse
+ */
+export interface V1GetRolesAssignedToUserResponse {
+    /**
+     * 
+     * @type {Array<V1Role>}
+     * @memberof V1GetRolesAssignedToUserResponse
+     */
+    roles?: Array<V1Role>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesByIDRequest
+ */
+export interface V1GetRolesByIDRequest {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1GetRolesByIDRequest
+     */
+    roleIds?: Array<number>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetRolesByIDResponse
+ */
+export interface V1GetRolesByIDResponse {
+    /**
+     * 
+     * @type {Array<V1RoleWithAssignments>}
+     * @memberof V1GetRolesByIDResponse
+     */
+    roles?: Array<V1RoleWithAssignments>;
 }
 
 /**
@@ -3473,6 +3586,26 @@ export interface V1GroupDetails {
 }
 
 /**
+ * GroupRoleAssignment contains information about the groups belonging to a role.
+ * @export
+ * @interface V1GroupRoleAssignment
+ */
+export interface V1GroupRoleAssignment {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GroupRoleAssignment
+     */
+    groupId: number;
+    /**
+     * The role and scope of the assignment.
+     * @type {V1RoleAssignment}
+     * @memberof V1GroupRoleAssignment
+     */
+    roleAssignment: V1RoleAssignment;
+}
+
+/**
  * GroupSearchResult is the representation of groups as they're returned by the search endpoint.
  * @export
  * @interface V1GroupSearchResult
@@ -3518,6 +3651,50 @@ export interface V1IdleNotebookRequest {
  * @interface V1IdleNotebookResponse
  */
 export interface V1IdleNotebookResponse {
+}
+
+/**
+ * Int32 filters.
+ * @export
+ * @interface V1Int32FieldFilter
+ */
+export interface V1Int32FieldFilter {
+    /**
+     * TODO(ilia): add `exact`. Less than.
+     * @type {number}
+     * @memberof V1Int32FieldFilter
+     */
+    lt?: number;
+    /**
+     * Less than or equal.
+     * @type {number}
+     * @memberof V1Int32FieldFilter
+     */
+    lte?: number;
+    /**
+     * Greater than.
+     * @type {number}
+     * @memberof V1Int32FieldFilter
+     */
+    gt?: number;
+    /**
+     * Greater than or equal.
+     * @type {number}
+     * @memberof V1Int32FieldFilter
+     */
+    gte?: number;
+    /**
+     * In a set. `in` is a reserved word in python.
+     * @type {Array<number>}
+     * @memberof V1Int32FieldFilter
+     */
+    incl?: Array<number>;
+    /**
+     * Not in a set.
+     * @type {Array<number>}
+     * @memberof V1Int32FieldFilter
+     */
+    notIn?: Array<number>;
 }
 
 /**
@@ -3942,6 +4119,46 @@ export interface V1LaunchTensorboardResponse {
      * @memberof V1LaunchTensorboardResponse
      */
     config: any;
+}
+
+/**
+ * ListRolesRequest is the body of the request for the call to search for a role.
+ * @export
+ * @interface V1ListRolesRequest
+ */
+export interface V1ListRolesRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ListRolesRequest
+     */
+    offset?: number;
+    /**
+     * the limit for pagination.
+     * @type {number}
+     * @memberof V1ListRolesRequest
+     */
+    limit: number;
+}
+
+/**
+ * ListRolesResponse is the body of the response for the call to search for a role.
+ * @export
+ * @interface V1ListRolesResponse
+ */
+export interface V1ListRolesResponse {
+    /**
+     * a set of roles and all assignments belonging to it.
+     * @type {Array<V1Role>}
+     * @memberof V1ListRolesResponse
+     */
+    roles: Array<V1Role>;
+    /**
+     * pagination information.
+     * @type {V1Pagination}
+     * @memberof V1ListRolesResponse
+     */
+    pagination: V1Pagination;
 }
 
 /**
@@ -4846,6 +5063,59 @@ export interface V1PauseExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1Permission
+ */
+export interface V1Permission {
+    /**
+     * 
+     * @type {V1PermissionType}
+     * @memberof V1Permission
+     */
+    id?: V1PermissionType;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Permission
+     */
+    name?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1Permission
+     */
+    isGlobal?: boolean;
+}
+
+/**
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata like experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.
+ * @export
+ * @enum {string}
+ */
+export enum V1PermissionType {
+    UNSPECIFIED = <any> 'PERMISSION_TYPE_UNSPECIFIED',
+    ADMINISTRATEUSER = <any> 'PERMISSION_TYPE_ADMINISTRATE_USER',
+    CREATEEXPERIMENT = <any> 'PERMISSION_TYPE_CREATE_EXPERIMENT',
+    VIEWEXPERIMENTARTIFACTS = <any> 'PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS',
+    VIEWEXPERIMENTMETADATA = <any> 'PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA',
+    UPDATEEXPERIMENT = <any> 'PERMISSION_TYPE_UPDATE_EXPERIMENT',
+    UPDATEEXPERIMENTMETADATA = <any> 'PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA',
+    DELETEEXPERIMENT = <any> 'PERMISSION_TYPE_DELETE_EXPERIMENT',
+    UPDATEGROUP = <any> 'PERMISSION_TYPE_UPDATE_GROUP',
+    CREATEWORKSPACE = <any> 'PERMISSION_TYPE_CREATE_WORKSPACE',
+    VIEWWORKSPACE = <any> 'PERMISSION_TYPE_VIEW_WORKSPACE',
+    UPDATEWORKSPACE = <any> 'PERMISSION_TYPE_UPDATE_WORKSPACE',
+    DELETEWORKSPACE = <any> 'PERMISSION_TYPE_DELETE_WORKSPACE',
+    CREATEPROJECT = <any> 'PERMISSION_TYPE_CREATE_PROJECT',
+    VIEWPROJECT = <any> 'PERMISSION_TYPE_VIEW_PROJECT',
+    UPDATEPROJECT = <any> 'PERMISSION_TYPE_UPDATE_PROJECT',
+    DELETEPROJECT = <any> 'PERMISSION_TYPE_DELETE_PROJECT',
+    UPDATEROLES = <any> 'PERMISSION_TYPE_UPDATE_ROLES',
+    ASSIGNROLES = <any> 'PERMISSION_TYPE_ASSIGN_ROLES'
+}
+
+/**
  * Response to PinWorkspaceRequest.
  * @export
  * @interface V1PinWorkspaceResponse
@@ -5453,6 +5723,34 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+
+/**
+ * RemoveAssignmentsRequest is the body of the request for the call to remove a user or group from a role.
+ * @export
+ * @interface V1RemoveAssignmentsRequest
+ */
+export interface V1RemoveAssignmentsRequest {
+    /**
+     * the set of groups being removed from a role.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1RemoveAssignmentsRequest
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * the set of users being removed from a role.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1RemoveAssignmentsRequest
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+
+/**
+ * RemoveAssignmentsResponse is the body of the response for teh call to remove a user or group from a role.
+ * @export
+ * @interface V1RemoveAssignmentsResponse
+ */
+export interface V1RemoveAssignmentsResponse {
 }
 
 /**
@@ -6178,6 +6476,104 @@ export enum V1ResourcePoolType {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1Role
+ */
+export interface V1Role {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Role
+     */
+    roleId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Role
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<V1Permission>}
+     * @memberof V1Role
+     */
+    permissions?: Array<V1Permission>;
+}
+
+/**
+ * RoleAssignment contains information about the scope of the role.
+ * @export
+ * @interface V1RoleAssignment
+ */
+export interface V1RoleAssignment {
+    /**
+     * The role of the assignment.
+     * @type {V1Role}
+     * @memberof V1RoleAssignment
+     */
+    role: V1Role;
+    /**
+     * The id of the workspace the role belongs to. Omit for a global scope.
+     * @type {number}
+     * @memberof V1RoleAssignment
+     */
+    scopeWorkspaceId?: number;
+}
+
+/**
+ * RoleAssignmentSummary is used to describe permissions a user has.
+ * @export
+ * @interface V1RoleAssignmentSummary
+ */
+export interface V1RoleAssignmentSummary {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1RoleAssignmentSummary
+     */
+    roleId?: number;
+    /**
+     * List of workspace IDs to apply the role.
+     * @type {Array<number>}
+     * @memberof V1RoleAssignmentSummary
+     */
+    scopeWorkspaceIds?: Array<number>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1RoleAssignmentSummary
+     */
+    isGlobal?: boolean;
+}
+
+/**
+ * RoleWithAssignments contains a detailed description of a role and the groups and users belonging to it.
+ * @export
+ * @interface V1RoleWithAssignments
+ */
+export interface V1RoleWithAssignments {
+    /**
+     * The embedded Role.
+     * @type {V1Role}
+     * @memberof V1RoleWithAssignments
+     */
+    role?: V1Role;
+    /**
+     * The embedded GroupRoleAssignment.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1RoleWithAssignments
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * The embedded UserRoleAssignment.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1RoleWithAssignments
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+
+/**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
  * @export
  * @interface V1RunnableOperation
@@ -6252,6 +6648,52 @@ export enum V1SchedulerType {
     KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
     SLURM = <any> 'SCHEDULER_TYPE_SLURM',
     PBS = <any> 'SCHEDULER_TYPE_PBS'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1SearchRolesAssignableToScopeRequest
+ */
+export interface V1SearchRolesAssignableToScopeRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchRolesAssignableToScopeRequest
+     */
+    limit: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchRolesAssignableToScopeRequest
+     */
+    offset?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchRolesAssignableToScopeRequest
+     */
+    workspaceId?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1SearchRolesAssignableToScopeResponse
+ */
+export interface V1SearchRolesAssignableToScopeResponse {
+    /**
+     * pagination information.
+     * @type {V1Pagination}
+     * @memberof V1SearchRolesAssignableToScopeResponse
+     */
+    pagination?: V1Pagination;
+    /**
+     * the set of roles and all assignments belonging to it.
+     * @type {Array<V1Role>}
+     * @memberof V1SearchRolesAssignableToScopeResponse
+     */
+    roles?: Array<V1Role>;
 }
 
 /**
@@ -7288,6 +7730,26 @@ export interface V1User {
      * @memberof V1User
      */
     modifiedAt?: Date;
+}
+
+/**
+ * UserRoleAssignment contains information about the users belonging to a role.
+ * @export
+ * @interface V1UserRoleAssignment
+ */
+export interface V1UserRoleAssignment {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1UserRoleAssignment
+     */
+    userId: number;
+    /**
+     * 
+     * @type {V1RoleAssignment}
+     * @memberof V1UserRoleAssignment
+     */
+    roleAssignment: V1RoleAssignment;
 }
 
 /**
@@ -10219,11 +10681,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options: any = {}): FetchArgs {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentTrials.');
@@ -10321,14 +10783,20 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {string} [name] Limit experiments to those that match the name.
          * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
          * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+         * @param {number} [experimentIdFilterLte] Less than or equal.
+         * @param {number} [experimentIdFilterGt] Greater than.
+         * @param {number} [experimentIdFilterGte] Greater than or equal.
+         * @param {Array<number>} [experimentIdFilterIncl] In a set. &#x60;in&#x60; is a reserved word in python.
+         * @param {Array<number>} [experimentIdFilterNotIn] Not in a set.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options: any = {}): FetchArgs {
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10389,6 +10857,30 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 
             if (projectId !== undefined) {
                 localVarQueryParameter['projectId'] = projectId;
+            }
+
+            if (experimentIdFilterLt !== undefined) {
+                localVarQueryParameter['experimentIdFilter.lt'] = experimentIdFilterLt;
+            }
+
+            if (experimentIdFilterLte !== undefined) {
+                localVarQueryParameter['experimentIdFilter.lte'] = experimentIdFilterLte;
+            }
+
+            if (experimentIdFilterGt !== undefined) {
+                localVarQueryParameter['experimentIdFilter.gt'] = experimentIdFilterGt;
+            }
+
+            if (experimentIdFilterGte !== undefined) {
+                localVarQueryParameter['experimentIdFilter.gte'] = experimentIdFilterGte;
+            }
+
+            if (experimentIdFilterIncl) {
+                localVarQueryParameter['experimentIdFilter.incl'] = experimentIdFilterIncl;
+            }
+
+            if (experimentIdFilterNotIn) {
+                localVarQueryParameter['experimentIdFilter.notIn'] = experimentIdFilterNotIn;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -11306,11 +11798,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -11352,15 +11844,21 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {string} [name] Limit experiments to those that match the name.
          * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
          * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+         * @param {number} [experimentIdFilterLte] Less than or equal.
+         * @param {number} [experimentIdFilterGt] Greater than.
+         * @param {number} [experimentIdFilterGte] Greater than or equal.
+         * @param {Array<number>} [experimentIdFilterIncl] In a set. &#x60;in&#x60; is a reserved word in python.
+         * @param {Array<number>} [experimentIdFilterNotIn] Not in a set.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, options);
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11802,11 +12300,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
             return ExperimentsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
@@ -11830,15 +12328,21 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {string} [name] Limit experiments to those that match the name.
          * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
          * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+         * @param {number} [experimentIdFilterLte] Less than or equal.
+         * @param {number} [experimentIdFilterGt] Greater than.
+         * @param {number} [experimentIdFilterGte] Greater than or equal.
+         * @param {Array<number>} [experimentIdFilterIncl] In a set. &#x60;in&#x60; is a reserved word in python.
+         * @param {Array<number>} [experimentIdFilterNotIn] Not in a set.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options?: any) {
-            return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, options)(fetch, basePath);
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options?: any) {
+            return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, options)(fetch, basePath);
         },
         /**
          * 
@@ -12155,12 +12659,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
+    public getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
         return ExperimentsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
@@ -12187,16 +12691,22 @@ export class ExperimentsApi extends BaseAPI {
      * @param {string} [name] Limit experiments to those that match the name.
      * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
      * @param {boolean} [archived] Limit experiments to those that are archived.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
      * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
      * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+     * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+     * @param {number} [experimentIdFilterLte] Less than or equal.
+     * @param {number} [experimentIdFilterGt] Greater than.
+     * @param {number} [experimentIdFilterGte] Greater than or equal.
+     * @param {Array<number>} [experimentIdFilterIncl] In a set. &#x60;in&#x60; is a reserved word in python.
+     * @param {Array<number>} [experimentIdFilterNotIn] Not in a set.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, options)(this.fetch, this.basePath);
+    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -12854,7 +13364,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Create a group with optional members on creation
+         * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12894,7 +13404,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Remove a group
+         * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13133,7 +13643,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get a group by id
+         * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13170,7 +13680,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Search for groups with optional filters
+         * @summary Search for groups with optional filters.
          * @param {V1GetGroupsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14185,7 +14695,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Update group info
+         * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body 
          * @param {*} [options] Override http request option.
@@ -14478,7 +14988,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Create a group with optional members on creation
+         * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14497,7 +15007,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Remove a group
+         * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14600,7 +15110,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a group by id
+         * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14619,7 +15129,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Search for groups with optional filters
+         * @summary Search for groups with optional filters.
          * @param {V1GetGroupsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15054,7 +15564,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update group info
+         * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body 
          * @param {*} [options] Override http request option.
@@ -15210,7 +15720,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Create a group with optional members on creation
+         * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15220,7 +15730,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Remove a group
+         * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15278,7 +15788,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get a group by id
+         * @summary Get a group by id.
          * @param {number} groupId The id of the group to return.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15288,7 +15798,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Search for groups with optional filters
+         * @summary Search for groups with optional filters.
          * @param {V1GetGroupsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15534,7 +16044,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Update group info
+         * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body 
          * @param {*} [options] Override http request option.
@@ -15693,7 +16203,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Create a group with optional members on creation
+     * @summary Create a group with optional members on creation.
      * @param {V1CreateGroupRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15705,7 +16215,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Remove a group
+     * @summary Remove a group.
      * @param {number} groupId The id of the group that should be deleted.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15773,7 +16283,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get a group by id
+     * @summary Get a group by id.
      * @param {number} groupId The id of the group to return.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15785,7 +16295,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Search for groups with optional filters
+     * @summary Search for groups with optional filters.
      * @param {V1GetGroupsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -16073,7 +16583,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Update group info
+     * @summary Update group info.
      * @param {number} groupId The id of the group
      * @param {V1UpdateGroupRequest} body 
      * @param {*} [options] Override http request option.
@@ -19139,6 +19649,672 @@ export class ProjectsApi extends BaseAPI {
 }
 
 /**
+ * RBACApi - fetch parameter creator
+ * @export
+ */
+export const RBACApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary AssignRoles adds a set of role assignments to the system.
+         * @param {V1AssignRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignRoles(body: V1AssignRolesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling assignRoles.');
+            }
+            const localVarPath = `/api/v1/roles/add-assignments`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AssignRolesRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary List all permissions for the logged in user in all scopes.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/permissions/summary`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a group.
+         * @param {number} groupId The id of the group to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToGroup(groupId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getRolesAssignedToGroup.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-group/{groupId}`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a user.
+         * @param {number} userId The id of the user to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToUser(userId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getRolesAssignedToUser.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-user/{userId}`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a set of roles with the corresponding IDs.
+         * @param {V1GetRolesByIDRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesByID(body: V1GetRolesByIDRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getRolesByID.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-ids`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1GetRolesByIDRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary ListRoles returns roles and groups/users granted that role.
+         * @param {V1ListRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRoles(body: V1ListRolesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling listRoles.');
+            }
+            const localVarPath = `/api/v1/roles/search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1ListRolesRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary RemoveAssignments removes a set of role assignments from the system.
+         * @param {V1RemoveAssignmentsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeAssignments(body: V1RemoveAssignmentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling removeAssignments.');
+            }
+            const localVarPath = `/api/v1/roles/remove-assignments`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1RemoveAssignmentsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Search for roles assignable to a given scope.
+         * @param {V1SearchRolesAssignableToScopeRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling searchRolesAssignableToScope.');
+            }
+            const localVarPath = `/api/v1/roles/search/by-assignability`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1SearchRolesAssignableToScopeRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * RBACApi - functional programming interface
+ * @export
+ */
+export const RBACApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary AssignRoles adds a set of role assignments to the system.
+         * @param {V1AssignRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignRoles(body: V1AssignRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignRoles(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary List all permissions for the logged in user in all scopes.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getPermissionsSummary(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a group.
+         * @param {number} groupId The id of the group to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToGroup(groupId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a user.
+         * @param {number} userId The id of the user to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToUser(userId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a set of roles with the corresponding IDs.
+         * @param {V1GetRolesByIDRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesByID(body: V1GetRolesByIDRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesByID(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary ListRoles returns roles and groups/users granted that role.
+         * @param {V1ListRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRoles(body: V1ListRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).listRoles(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary RemoveAssignments removes a set of role assignments from the system.
+         * @param {V1RemoveAssignmentsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).removeAssignments(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Search for roles assignable to a given scope.
+         * @param {V1SearchRolesAssignableToScopeRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).searchRolesAssignableToScope(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * RBACApi - factory interface
+ * @export
+ */
+export const RBACApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary AssignRoles adds a set of role assignments to the system.
+         * @param {V1AssignRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assignRoles(body: V1AssignRolesRequest, options?: any) {
+            return RBACApiFp(configuration).assignRoles(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary List all permissions for the logged in user in all scopes.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPermissionsSummary(options?: any) {
+            return RBACApiFp(configuration).getPermissionsSummary(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a group.
+         * @param {number} groupId The id of the group to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToGroup(groupId: number, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToGroup(groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the roles which are assigned to a user.
+         * @param {number} userId The id of the user to search for role assignments for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesAssignedToUser(userId: number, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToUser(userId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a set of roles with the corresponding IDs.
+         * @param {V1GetRolesByIDRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
+            return RBACApiFp(configuration).getRolesByID(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary ListRoles returns roles and groups/users granted that role.
+         * @param {V1ListRolesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRoles(body: V1ListRolesRequest, options?: any) {
+            return RBACApiFp(configuration).listRoles(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary RemoveAssignments removes a set of role assignments from the system.
+         * @param {V1RemoveAssignmentsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
+            return RBACApiFp(configuration).removeAssignments(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Search for roles assignable to a given scope.
+         * @param {V1SearchRolesAssignableToScopeRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
+            return RBACApiFp(configuration).searchRolesAssignableToScope(body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * RBACApi - object-oriented interface
+ * @export
+ * @class RBACApi
+ * @extends {BaseAPI}
+ */
+export class RBACApi extends BaseAPI {
+    /**
+     * 
+     * @summary AssignRoles adds a set of role assignments to the system.
+     * @param {V1AssignRolesRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public assignRoles(body: V1AssignRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).assignRoles(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary List all permissions for the logged in user in all scopes.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getPermissionsSummary(options?: any) {
+        return RBACApiFp(this.configuration).getPermissionsSummary(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the roles which are assigned to a group.
+     * @param {number} groupId The id of the group to search for role assignments for
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getRolesAssignedToGroup(groupId: number, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToGroup(groupId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the roles which are assigned to a user.
+     * @param {number} userId The id of the user to search for role assignments for
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getRolesAssignedToUser(userId: number, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToUser(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a set of roles with the corresponding IDs.
+     * @param {V1GetRolesByIDRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
+        return RBACApiFp(this.configuration).getRolesByID(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary ListRoles returns roles and groups/users granted that role.
+     * @param {V1ListRolesRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public listRoles(body: V1ListRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).listRoles(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary RemoveAssignments removes a set of role assignments from the system.
+     * @param {V1RemoveAssignmentsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
+        return RBACApiFp(this.configuration).removeAssignments(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Search for roles assignable to a given scope.
+     * @param {V1SearchRolesAssignableToScopeRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
+        return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
  * ShellsApi - fetch parameter creator
  * @export
  */
@@ -21020,11 +22196,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options: any = {}): FetchArgs {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentTrials.');
@@ -21463,11 +22639,11 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -21651,11 +22827,11 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
             return TrialsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
@@ -21779,12 +22955,12 @@ export class TrialsApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
+    public getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
         return TrialsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 

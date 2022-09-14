@@ -78,6 +78,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   areRowsSelected?: boolean;
   columns: ColumnDef<RecordType>[],
   containerRef: MutableRefObject<HTMLElement | null>,
+  numOfPinned?: number;
   settings: InteractiveTableSettings;
   updateSettings: UpdateSettings<InteractiveTableSettings>
 }
@@ -92,6 +93,8 @@ interface RowProps<RecordType> {
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
+  index: number;
+  numOfPinned?: number;
   record: RecordType;
 }
 
@@ -130,6 +133,8 @@ const Row: Row = ({
   record,
   ContextMenu,
   areRowsSelected,
+  index,
+  numOfPinned,
   ...props
 }) => {
   const classes = [ className, css.row ];
@@ -137,6 +142,7 @@ const Row: Row = ({
   const [ rowHovered, setRowHovered ] = useState(false);
   const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
   const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
+  const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
 
   if (areRowsSelected) {
     return <tr className={classes.join(' ')} {...props}>{children}</tr>;
@@ -154,6 +160,11 @@ const Row: Row = ({
   if (rowContextMenuTriggerableOrOpen) {
     classes.push('ant-table-row-selected');
   }
+
+  if (isPinned && numOfPinned === index + 1) {
+    classes.push(css.lastPinnedRow);
+  }
+
   return (record && ContextMenu) ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
@@ -161,7 +172,8 @@ const Row: Row = ({
           className={classes.join(' ')}
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
-          {...props}>
+          {...props}
+          style={isPinned ? { position: 'sticky', top: 60 * (index), zIndex: 10 } : undefined}>
           {children}
         </tr>
       </ContextMenu>
@@ -296,6 +308,7 @@ const InteractiveTable: InteractiveTable = ({
   dataSource,
   columns,
   containerRef,
+  numOfPinned,
   settings,
   updateSettings,
   ContextMenu,
@@ -538,6 +551,7 @@ const InteractiveTable: InteractiveTable = ({
                   areRowsSelected,
                   ContextMenu,
                   index,
+                  numOfPinned,
                   record,
                 } as React.HTMLAttributes<HTMLElement>)}
                 {...props}

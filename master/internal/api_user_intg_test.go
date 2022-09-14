@@ -67,14 +67,14 @@ func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 		},
 	}
 
-	user, err := pgDB.UserByUsername("admin")
+	userModel, err := user.UserByUsername("admin")
 	require.NoError(t, err, "Couldn't get admin user")
 	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
 	require.NoError(t, err, "Couldn't login")
 	ctx := metadata.NewIncomingContext(context.TODO(),
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
 
-	return api, *user, ctx
+	return api, *userModel, ctx
 }
 
 func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {

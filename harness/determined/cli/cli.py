@@ -35,6 +35,7 @@ from determined.cli.tensorboard import args_description as tensorboard_args_desc
 from determined.cli.top_arg_descriptions import deploy_cmd
 from determined.cli.trial import args_description as trial_args_description
 from determined.cli.user import args_description as user_args_description
+from determined.cli.user_groups import args_description as user_groups_args_description
 from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
 from determined.cli.workspace import args_description as workspace_args_description
@@ -49,7 +50,7 @@ from determined.common.util import (
     safe_load_yaml_with_exceptions,
 )
 
-from .errors import EnterpriseOnlyError
+from .errors import EnterpriseOnlyError, FeatureFlagDisabled
 
 
 @authentication.required
@@ -150,6 +151,7 @@ all_args_description = (
     + trial_args_description
     + remote_args_description
     + user_args_description
+    + user_groups_args_description
     + version_args_description
     + workspace_args_description
     + auth_args_description
@@ -270,6 +272,8 @@ def main(
             )
         except EnterpriseOnlyError as e:
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
+        except FeatureFlagDisabled as e:
+            die(f"Master does not support this operation: {e}")
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:

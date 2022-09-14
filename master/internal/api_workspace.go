@@ -50,7 +50,7 @@ func (a *apiServer) GetWorkspaceByID(
 func (a *apiServer) getWorkspaceAndCheckCanDoActions(ctx context.Context, workspaceID int32,
 	rejectImmutable bool, canDoActions ...func(model.User, *workspacev1.Workspace) error,
 ) (*workspacev1.Workspace, model.User, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, model.User{}, err
 	}
@@ -70,7 +70,7 @@ func (a *apiServer) getWorkspaceAndCheckCanDoActions(ctx context.Context, worksp
 func (a *apiServer) GetWorkspace(
 	ctx context.Context, req *apiv1.GetWorkspaceRequest,
 ) (*apiv1.GetWorkspaceResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (a *apiServer) GetWorkspace(
 func (a *apiServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (a *apiServer) GetWorkspaceProjects(
 func (a *apiServer) GetWorkspaces(
 	ctx context.Context, req *apiv1.GetWorkspacesRequest,
 ) (*apiv1.GetWorkspacesResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (a *apiServer) GetWorkspaces(
 func (a *apiServer) PostWorkspace(
 	ctx context.Context, req *apiv1.PostWorkspaceRequest,
 ) (*apiv1.PostWorkspaceResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -3,26 +3,21 @@ package usergroup
 import (
 	"context"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// APIServer is an embedded api server struct.
-type APIServer struct{}
+// UserGroupAPIServer is an embedded api server struct.
+type UserGroupAPIServer struct{}
 
 // CreateGroup creates a group and adds members to it, if any.
-func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
+func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.CreateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err)
 	}()
 
 	group := Group{
@@ -45,15 +40,15 @@ func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 }
 
 // GetGroups searches for groups that fulfills the criteria given by the user.
-func (a *APIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
+func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
 ) (resp *apiv1.GetGroupsResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err)
 	}()
 
-	if req.Limit > maxLimit || req.Limit == 0 {
-		return nil, errInvalidLimit
+	if req.Limit > apiutils.MaxLimit || req.Limit == 0 {
+		return nil, apiutils.ErrInvalidLimit
 	}
 
 	groups, memberCounts, tableCount, err := SearchGroups(ctx,
@@ -83,11 +78,11 @@ func (a *APIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
 }
 
 // GetGroup finds and returns details of the group specified.
-func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
+func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 ) (resp *apiv1.GetGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err)
 	}()
 
 	gid := int(req.GroupId)
@@ -113,11 +108,11 @@ func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 }
 
 // UpdateGroup updates the group and returns the newly updated group details.
-func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
+func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
 ) (resp *apiv1.UpdateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err)
 	}()
 
 	var addUsers []model.UserID
@@ -149,11 +144,11 @@ func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 }
 
 // DeleteGroup deletes the database entry for the group.
-func (a *APIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
+func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
 ) (resp *apiv1.DeleteGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err)
 	}()
 
 	err = DeleteGroup(ctx, int(req.GroupId))
@@ -171,43 +166,4 @@ func intsToUserIDs(ints []int32) []model.UserID {
 	}
 
 	return ids
-}
-
-const (
-	maxLimit = 500
-)
-
-var (
-	errBadRequest   = status.Error(codes.InvalidArgument, "bad request")
-	errInvalidLimit = status.Errorf(codes.InvalidArgument,
-		"Bad request: limit is required and must be <= %d", maxLimit)
-	errNotFound        = status.Error(codes.NotFound, "not found")
-	errDuplicateRecord = status.Error(codes.AlreadyExists, "duplicate record")
-	errInternal        = status.Error(codes.Internal, "internal server error")
-	errPassthroughMap  = map[error]bool{
-		nil:                true,
-		errBadRequest:      true,
-		errInvalidLimit:    true,
-		errNotFound:        true,
-		errDuplicateRecord: true,
-		errInternal:        true,
-	}
-)
-
-func mapAndFilterErrors(err error) error {
-	// FIXME: whitelist might not work.
-	if whitelisted := errPassthroughMap[err]; whitelisted {
-		return err
-	}
-
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, db.ErrDuplicateRecord):
-		return status.Error(codes.AlreadyExists, err.Error())
-	}
-
-	logrus.WithError(err).Debug("suppressing error at API boundary")
-
-	return errInternal // TODO: delete comment: deliberately don't wrap this error
 }

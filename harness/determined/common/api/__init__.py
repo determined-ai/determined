@@ -17,9 +17,7 @@ from determined.common.api.logs import (
     pprint_trial_logs,
     pprint_task_logs,
     trial_logs,
-    trial_log_fields,
     task_logs,
-    task_log_fields,
 )
 from determined.common.api.request import (
     WebSocket,

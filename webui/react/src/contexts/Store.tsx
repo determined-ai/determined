@@ -2,15 +2,12 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
-import { DarkLight, Mode, Theme } from 'shared/themes';
+import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
-import {
-  Agent, Auth, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
-  UserAssignment, UserRole, Workspace,
-} from 'types';
+import { Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo,
+  PoolOverview, ResourcePool, ResourceType, UserAssignment, UserRole, Workspace } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -22,18 +19,7 @@ interface OmnibarState {
   isShowing: boolean;
 }
 
-interface UI {
-  chromeCollapsed: boolean;
-  darkLight: DarkLight;
-  isPageHidden: boolean;
-  mode: Mode;
-  omnibar: OmnibarState;
-  showChrome: boolean;
-  showSpinner: boolean;
-  theme: Theme;
-}
-
-export interface State {
+interface State {
   activeExperiments: number;
   activeTasks: {
     commands: number;
@@ -48,7 +34,9 @@ export interface State {
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
-  ui: UI;
+  ui: StateUI & {
+    omnibar: OmnibarState;
+  };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
   userSettings: V1UserWebSetting[];
@@ -70,15 +58,6 @@ export enum StoreAction {
   // Info
   SetInfo = 'SetInfo',
   SetInfoCheck = 'SetInfoCheck',
-
-  // UI
-  HideUIChrome = 'HideUIChrome',
-  HideUISpinner = 'HideUISpinner',
-  SetMode = 'SetMode',
-  SetPageVisibility = 'SetPageVisibility',
-  SetTheme = 'SetTheme',
-  ShowUIChrome = 'ShowUIChrome',
-  ShowUISpinner = 'ShowUISpinner',
 
   // Users
   SetUsers = 'SetUsers',
@@ -107,8 +86,7 @@ export enum StoreAction {
   SetUserAssignments = 'SetUserAssignments',
   SetUserRoles = 'SetUserRoles',
 }
-
-export type Action =
+type Action =
 | { type: StoreAction.Reset }
 | { type: StoreAction.SetAgents; value: Agent[] }
 | { type: StoreAction.ResetAuth }
@@ -117,13 +95,6 @@ export type Action =
 | { type: StoreAction.SetAuthCheck }
 | { type: StoreAction.SetInfo; value: DeterminedInfo }
 | { type: StoreAction.SetInfoCheck }
-| { type: StoreAction.HideUIChrome }
-| { type: StoreAction.HideUISpinner }
-| { type: StoreAction.SetMode; value: Mode }
-| { type: StoreAction.SetPageVisibility; value: boolean }
-| { type: StoreAction.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
-| { type: StoreAction.ShowUIChrome }
-| { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
 | { type: StoreAction.SetCurrentUser; value: DetailedUser }
 | { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
@@ -140,6 +111,7 @@ export type Action =
 | { type: StoreAction.SetActiveExperiments, value: number }
 | { type: StoreAction.SetUserRoles, value: UserRole[] }
 | { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
+| ActionUI;
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -147,7 +119,7 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-export const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
+const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.CUDA]: clone(initResourceTally),
@@ -164,16 +136,7 @@ const initInfo: DeterminedInfo = {
   masterId: '',
   version: process.env.VERSION || '',
 };
-const initUI = {
-  chromeCollapsed: false,
-  darkLight: DarkLight.Light,
-  isPageHidden: false,
-  mode: Mode.System,
-  omnibar: { isShowing: false },
-  showChrome: true,
-  showSpinner: false,
-  theme: {} as Theme,
-};
+
 const initState: State = {
   activeExperiments: 0,
   activeTasks: {
@@ -189,7 +152,7 @@ const initState: State = {
   pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
-  ui: initUI,
+  ui: { ...initUI, omnibar: { isShowing: false } },
   userAssignments: [ {
     cluster: true,
     name: 'OSS User',
@@ -265,6 +228,7 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   return overview;
 };
 
+// TODO turn this into a partial reducer simliar to reducerUI.
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
@@ -295,31 +259,6 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, info: action.value };
     case StoreAction.SetInfoCheck:
       return { ...state, info: { ...state.info, checked: true } };
-    case StoreAction.HideUIChrome:
-      if (!state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: false } };
-    case StoreAction.HideUISpinner:
-      if (!state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: false } };
-    case StoreAction.SetMode:
-      return { ...state, ui: { ...state.ui, mode: action.value } };
-    case StoreAction.SetPageVisibility:
-      return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
-    case StoreAction.SetTheme:
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          darkLight: action.value.darkLight,
-          theme: action.value.theme,
-        },
-      };
-    case StoreAction.ShowUIChrome:
-      if (state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: true } };
-    case StoreAction.ShowUISpinner:
-      if (state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: true } };
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
@@ -358,7 +297,7 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.userAssignments, action.value)) return state;
       return { ...state, userAssignments: action.value };
     default:
-      return state;
+      return { ...state, ui: { ...state.ui, ...reducerUI(state.ui, action) } };
   }
 };
 
@@ -381,7 +320,7 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   const [ state, dispatch ] = useReducer((state: State, action: Action) => {
     const newState = reducer(state, action);
-    if (isEqual(state, newState)) return state; // CHECK: performance concerns?
+    if (isEqual(state, newState)) return state;
     logger.debug('store state updated', action.type);
     return newState;
   }, initState);

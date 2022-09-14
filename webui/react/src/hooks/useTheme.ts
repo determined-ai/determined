@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore, useStoreDispatch } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
@@ -102,7 +103,7 @@ export const useTheme = (): void => {
 
     const darkLight = getDarkLight(ui.mode, systemMode);
     storeDispatch({
-      type: StoreAction.SetTheme,
+      type: StoreActionUI.SetTheme,
       value: { darkLight, theme: themes[info.branding][darkLight] },
     });
   }, [ info.branding, storeDispatch, systemMode, ui.mode ]);
@@ -117,7 +118,7 @@ export const useTheme = (): void => {
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
     } else {
       // Initially set the mode from settings.
-      storeDispatch({ type: StoreAction.SetMode, value: settings.mode });
+      storeDispatch({ type: StoreActionUI.SetMode, value: settings.mode });
       setIsSettingsReady(true);
     }
   }, [ isSettingsReady, settings, storeDispatch, ui.mode, updateSettings ]);

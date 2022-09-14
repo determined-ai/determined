@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,7 +23,7 @@ func addGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
 	}
 
 	_, err := idb.NewInsert().Model(&group).Exec(ctx)
-	return group, errors.Wrapf(matchSentinelError(err), "Error creating group %s", group.Name)
+	return group, errors.Wrapf(db.MatchSentinelError(err), "Error creating group %s", group.Name)
 }
 
 // AddGroupWithMembers creates a group and adds members to it all in one transaction.
@@ -38,7 +38,7 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return Group{}, nil, errors.Wrapf(
-			matchSentinelError(err),
+			db.MatchSentinelError(err),
 			"Error starting transaction for group %d creation",
 			group.ID)
 	}
@@ -54,9 +54,16 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 		return Group{}, nil, err
 	}
 
-	err = AddUsersToGroupTx(ctx, tx, group.ID, uids...)
-	if err != nil {
-		return Group{}, nil, err
+	idsToAdd := make([]model.UserID, 0, len(uids)+1)
+	idsToAdd = append(idsToAdd, uids...)
+	if group.OwnerID != 0 && !slices.Contains(idsToAdd, group.OwnerID) {
+		idsToAdd = append(idsToAdd, group.OwnerID)
+	}
+	if len(idsToAdd) > 0 {
+		err = AddUsersToGroupTx(ctx, tx, group.ID, idsToAdd...)
+		if err != nil {
+			return Group{}, nil, err
+		}
 	}
 
 	users, err := UsersInGroupTx(ctx, tx, group.ID)
@@ -67,7 +74,7 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	err = tx.Commit()
 	if err != nil {
 		return Group{}, nil, errors.Wrapf(
-			matchSentinelError(err),
+			db.MatchSentinelError(err),
 			"Error committing changes to group %d",
 			group.ID)
 	}
@@ -83,7 +90,7 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 	var g Group
 	err := idb.NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
 
-	return g, errors.Wrapf(matchSentinelError(err), "Error getting group %d", gid)
+	return g, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d", gid)
 }
 
 // SearchGroups searches the database for groups. userBelongsTo is "optional"
@@ -101,7 +108,7 @@ func SearchGroups(ctx context.Context,
 		query = query.Where("group_name = ?", name)
 	}
 
-	if userBelongsTo > 0 {
+	if userBelongsTo != 0 {
 		query = query.Where(
 			`EXISTS(SELECT 1
 			FROM user_group_membership AS m
@@ -146,8 +153,8 @@ func SearchGroups(ctx context.Context,
 // group doesn't exist.
 func DeleteGroup(ctx context.Context, gid int) error {
 	res, err := db.Bun().NewDelete().Model(&Group{ID: gid}).WherePK().Exec(ctx)
-	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
-		return errors.Wrapf(matchSentinelError(foundErr), "Error deleting group %d", gid)
+	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+		return errors.Wrapf(db.MatchSentinelError(foundErr), "Error deleting group %d", gid)
 	}
 
 	return nil
@@ -162,7 +169,7 @@ func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
 	res, err := idb.NewUpdate().Model(&group).WherePK().Exec(ctx)
 
 	return errors.Wrapf(
-		matchSentinelError(mustHaveAffectedRows(res, err)),
+		db.MatchSentinelError(db.MustHaveAffectedRows(res, err)),
 		"Error updating group %d name",
 		group.ID)
 }
@@ -189,8 +196,8 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 	}
 
 	res, err := idb.NewInsert().Model(&groupMem).Exec(ctx)
-	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
-		sError := matchSentinelError(foundErr)
+	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
 				"Error adding %d user(s) to group %d because"+
@@ -219,8 +226,8 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
-	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
-		sError := matchSentinelError(foundErr)
+	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
+		sError := db.MatchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
 				"Error removing %d user(s) from group %d because"+
@@ -243,7 +250,7 @@ func UpdateGroupAndMembers(
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, "", errors.Wrapf(
-			matchSentinelError(err),
+			db.MatchSentinelError(err),
 			"Error starting transaction for group %d update",
 			gid)
 	}
@@ -293,7 +300,8 @@ func UpdateGroupAndMembers(
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, "", errors.Wrapf(matchSentinelError(err), "Error committing changes to group %d", gid)
+		return nil, "", errors.Wrapf(db.MatchSentinelError(err),
+			"Error committing changes to group %d", gid)
 	}
 
 	return users, newName, nil
@@ -313,44 +321,5 @@ func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, er
 		Where("ugm.group_id = ?", gid).
 		Scan(ctx)
 
-	return users, errors.Wrapf(matchSentinelError(err), "Error getting group %d info", gid)
-}
-
-func matchSentinelError(err error) error {
-	if errors.Is(err, sql.ErrNoRows) {
-		return db.ErrNotFound
-	}
-
-	switch pgErrCode(err) {
-	case db.CodeForeignKeyViolation:
-		return db.ErrNotFound
-	case db.CodeUniqueViolation:
-		return db.ErrDuplicateRecord
-	}
-
-	return err
-}
-
-// mustHaveAffectedRows checks if bun has affected rows in a table or not.
-// Returns ErrNotFound if no rows were affected and returns the provided error otherwise.
-func mustHaveAffectedRows(result sql.Result, err error) error {
-	if err == nil {
-		rowsAffected, affectedErr := result.RowsAffected()
-		if affectedErr != nil {
-			return affectedErr
-		}
-		if rowsAffected == 0 {
-			return db.ErrNotFound
-		}
-	}
-
-	return err
-}
-
-func pgErrCode(err error) string {
-	if e, ok := err.(*pgconn.PgError); ok {
-		return e.Code
-	}
-
-	return ""
+	return users, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d info", gid)
 }

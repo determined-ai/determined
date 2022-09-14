@@ -5,6 +5,7 @@ import { getAllByText, screen, waitFor } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
 
 import { paths } from 'routes/utils';
 
@@ -72,6 +73,22 @@ jest.mock('components/MonacoEditor', () => ({
   default: () => MonacoEditorMock,
 }));
 
+jest.mock('hooks/useSettings', () => {
+  const actualModule = jest.requireActual('hooks/useSettings');
+  const useSettings = jest.fn(() => {
+    const settings = { filePath: 'single-in-records.yaml' };
+    const updateSettings = jest.fn();
+
+    return { settings, updateSettings };
+  });
+
+  return {
+    __esModule: true,
+    ...actualModule,
+    default: useSettings,
+  };
+});
+
 const experimentIdMock = 123;
 const user = userEvent.setup();
 
@@ -94,7 +111,6 @@ describe('CodeViewer', () => {
     const { treeNodes } = await getElements();
 
     expect(treeNodes).toHaveLength(4);
-    expect([ 1, 2, 3, 4 ]).toHaveLength(4);
   });
 
   it('should handle clicking in the download icon when opening a file from the tree', async () => {
@@ -103,9 +119,9 @@ describe('CodeViewer', () => {
 
     const { treeNodes } = await getElements();
 
-    await waitFor(() => user.click(treeNodes[1]));
+    await waitFor(() => act(() => user.click(treeNodes[1])));
 
-    const button = await screen.getByLabelText('download');
+    const button = await screen.findByLabelText('download');
 
     await waitFor(() => user.click(button));
 

@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Menu, Modal } from 'antd';
+import { Dropdown, Menu, Modal, notification } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
 
@@ -7,6 +7,8 @@ import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperiment
 import useModalHyperparameterSearch
   from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
+import { UpdateSettings } from 'hooks/useSettings';
+import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
@@ -29,10 +31,13 @@ interface Props {
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
+  settings: ProjectDetailsSettings;
+  updateSettings: UpdateSettings<ProjectDetailsSettings>;
   workspaceId?: number;
 }
 
 const dropdownActions = [
+  Action.SwitchPin,
   Action.Activate,
   Action.Pause,
   Action.Archive,
@@ -51,6 +56,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
   onComplete,
   onVisibleChange,
+  settings,
+  updateSettings,
   children,
 }: Props) => {
   const id = experiment.id;
@@ -95,6 +102,25 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         case Action.OpenTensorBoard: {
           const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
+          break;
+        }
+        case Action.SwitchPin: {
+          const newPinned = { ...settings.pinned };
+          const pinSet = new Set(newPinned[experiment.projectId]);
+          if (pinSet.has(id)) {
+            pinSet.delete(id);
+          } else {
+            if (pinSet.size >= 5) {
+              notification.warn({
+                description: 'Up to 5 pinned items',
+                message: 'Unable to pin this item',
+              });
+              break;
+            }
+            pinSet.add(id);
+          }
+          newPinned[experiment.projectId] = Array.from(pinSet);
+          updateSettings({ pinned: newPinned });
           break;
         }
         case Action.Kill:
@@ -164,9 +190,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ).filter((action) => [ Action.Delete, Action.Move ].includes(action)
     ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
       (action === Action.Move && canMoveExperiment({ experiment }))
-    : true).map((action) => (
-    { danger: action === Action.Delete, key: action, label: action }
-  ));
+    : true)
+    .map((action) => {
+      if (action === Action.SwitchPin) {
+        const label = settings.pinned[experiment.projectId].includes(id) ? 'Unpin' : 'Pin';
+        return { key: action, label };
+      } else {
+        return { danger: action === Action.Delete, key: action, label: action };
+      }
+    });
 
   if (menuItems.length === 0) {
     return (children as JSX.Element) ?? (

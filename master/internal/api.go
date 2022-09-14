@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -23,7 +24,8 @@ import (
 type apiServer struct {
 	m *Master
 
-	usergroup.APIServer
+	usergroup.UserGroupAPIServer
+	rbac.RBACAPIServerWrapper
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.
