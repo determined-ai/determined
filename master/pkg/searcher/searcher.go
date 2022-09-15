@@ -60,7 +60,7 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 }
 
 func nonCustomSearchMethodError(method SearchMethod, unsupportedOp string) error {
-	return fmt.Errorf("%s is not supported for search method of type %T", unsupportedOp, method)
+	return fmt.Errorf("%T search method does not support %s", method, unsupportedOp)
 }
 
 func (s *Searcher) context() context {
