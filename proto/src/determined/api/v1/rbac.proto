@@ -85,12 +85,14 @@ message SearchRolesAssignableToScopeResponse {
 // to search for a role.
 message ListRolesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "limit" ] }
+    json_schema: { required: [ "is_global", "limit" ] }
   };
-  // the offset for pagination
+  // the offset for pagination.
   int32 offset = 3;
   // the limit for pagination.
   int32 limit = 4;
+  // searching global roles.
+  bool is_global = 5;
 }
 
 // ListRolesResponse is the body of the response for the call
