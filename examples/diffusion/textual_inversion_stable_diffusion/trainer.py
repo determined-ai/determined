@@ -39,7 +39,7 @@ class TextualInversionTrainer:
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
-        optimizer_name: Literal["adam", "adamw", "sgd"] = "sgd",
+        optimizer_name: Literal["adam", "adamw", "sgd"] = "adamw",
         learning_rate: float = 5e-04,
         other_optimzer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
