@@ -262,7 +262,7 @@ func newDispatcherResourceManager(
 
 		masterTLSConfig: masterTLSConfig,
 		loggingConfig:   loggingConfig,
-		jobWatcher:      newDispatchWatcher(apiClient, authToken),
+		jobWatcher:      newDispatchWatcher(apiClient, authToken, config.LauncherAuthFile),
 		authToken:       authToken,
 	}
 }
@@ -989,16 +989,26 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 
 	// Launch the HPC Resources manifest. Launch() method will ensure
 	// the manifest is in the RUNNING state on successful completion.
-	dispatchInfo, response, err := m.apiClient.LaunchApi.
+	dispatchInfo, r, err := m.apiClient.LaunchApi.
 		Launch(m.authContext(ctx)).
 		Manifest(*m.hpcResourcesManifest).
 		Impersonate(impersonatedUser).
 		Execute()
 	if err != nil {
-		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-			"{%v}, response: {%v}. Verify that the launcher service is up and reachable."+
-			" Try a restart the launcher service followed by a restart of the "+
-			"determined-master service. ", err, response)
+		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
+			r.StatusCode == http.StatusForbidden) {
+			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
+				"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
+				"the launcher service followed by a restart of the determined-master service.",
+				err, m.config.LauncherAuthFile)
+			m.authToken = loadAuthToken(m.config)
+			m.jobWatcher.ReloadAuthToken()
+		} else {
+			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
+				"{%v}, response: {%v}. Verify that the launcher service is up and reachable."+
+				" Try a restart the launcher service followed by a restart of the "+
+				"determined-master service. ", err, r)
+		}
 		return
 	}
 	ctx.Log().Debug(fmt.Sprintf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId()))
