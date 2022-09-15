@@ -137,7 +137,7 @@ const relevantPermissions = (
   userRoles.filter((r) => relevantAssigned.includes(r.name)).forEach((r) => {
     // TODO: is it possible a role is assigned to this workspace,
     // but not all of its permissions?
-    permissions = permissions.concat(r.permissions.filter((p) => p.globalOnly || workspaceId));
+    permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
   });
   return new Set<string>(permissions.map((p) => p.name));
 };

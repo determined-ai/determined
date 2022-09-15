@@ -204,10 +204,9 @@ export const getUserPermissions: DetApi<
   name: 'getUserPermissions',
   postProcess: (response) => {
     const fillerPermission: Type.Permission = {
-      globalOnly: true,
       id: response,
+      isGlobal: true,
       name: 'oss_user',
-      workspaceOnly: false,
     };
     return [ fillerPermission ];
   },

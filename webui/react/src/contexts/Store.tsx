@@ -161,10 +161,9 @@ const initState: State = {
     id: -1,
     name: 'OSS User',
     permissions: [ {
-      globalOnly: true,
       id: -1,
+      isGlobal: true,
       name: 'oss_user',
-      workspaceOnly: false,
     } ],
   } ],
   users: [],
