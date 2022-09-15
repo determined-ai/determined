@@ -517,6 +517,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CUDA,
 			tresSupported:    false,
 			gresSupported:    true,
+			Slurm:            []string{},
 			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
 			wantResourcesInstances: &map[string]int32{
