@@ -71,7 +71,7 @@ class ManagedCluster:
         else:
             pytest.fail(f"Agent is still present after {WAIT_FOR_KILL} seconds")
 
-    def restart_agent(self, wait_for_amnesia: bool = True) -> None:
+    def restart_agent(self, wait_for_amnesia: bool = True, wait_for_agent: bool = True) -> None:
         agent_data = get_agent_data(conf.make_master_url())
         if len(agent_data) == 1 and agent_data[0]["enabled"]:
             return
@@ -87,10 +87,11 @@ class ManagedCluster:
             else:
                 pytest.fail(f"Agent is still not forgotten after {WAIT_FOR_AMNESIA} seconds")
 
-        self.dc.restart_stage("agent1", wait=True, timeout=10)
+        self.dc.restart_stage("agent1", wait=wait_for_agent, timeout=10)
 
         WAIT_FOR_STARTUP = 10
-        self.wait_for_agent_ok(WAIT_FOR_STARTUP)
+        if wait_for_agent:
+            self.wait_for_agent_ok(WAIT_FOR_STARTUP)
 
     def kill_proxy(self) -> None:
         subprocess.run(["killall", "socat"])
