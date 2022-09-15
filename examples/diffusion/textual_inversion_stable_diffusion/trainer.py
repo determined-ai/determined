@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+from collections import defaultdict
 from PIL import Image
 from typing import Literal, Optional, Sequence, Union
 
@@ -115,6 +116,9 @@ class TextualInversionTrainer:
         self.generate_training_images = generate_training_images
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
+        inference_prompts = [
+            self._replace_placeholders_with_dummies(prompt) for prompt in inference_prompts
+        ]
         self.inference_noise_scheduler_name = inference_noise_scheduler_name
         self.inference_prompts = inference_prompts
         self.num_inference_steps = num_inference_steps
@@ -138,6 +142,7 @@ class TextualInversionTrainer:
         self.loss_history = []
         self.last_mean_loss = None
         self.generated_imgs = {prompt: [] for prompt in self.inference_prompts}
+        self.placeholder_token_map = defaultdict(list)
 
         self.accelerator = accelerate.Accelerator(
             gradient_accumulation_steps=self.gradient_accumulation_steps,
@@ -161,7 +166,7 @@ class TextualInversionTrainer:
         self.unet = None
         self.safety_checker = None
         self.feature_extractor = None
-        self.placeholder_token_ids = None
+        self.all_placeholder_token_ids = None
         self.train_dataset = None
         self.train_dataloader = None
         self.optimizer = None
@@ -315,35 +320,59 @@ class TextualInversionTrainer:
         Add new concept tokens to the tokenizer.
         """
         # Add the placeholder token in tokenizer
-        self.placeholder_token_ids = []
+        START_TOKEN = 49406
+        PAD_TOKEN = 49407
+        self.all_placeholder_token_ids = []
         initializer_token_ids = []
+        num_placeholders_added = 0
         for placeholder, initializer in zip(self.placeholder_tokens, self.initializer_tokens):
-            num_added_tokens = self.tokenizer.add_tokens(placeholder)
-            if num_added_tokens == 0:
-                raise ValueError(
-                    f"Tokenizer already contains the {placeholder}, please choose another token."
-                )
-
-            # Convert the initializer_tokens to ids:
-            initializer_token_id_list = self.tokenizer.encode(initializer, add_special_tokens=False)
-            initializer_token_ids.append(initializer_token_id_list)
-            placeholder_token_id = self.tokenizer.convert_tokens_to_ids(placeholder)
-            self.placeholder_token_ids.append(placeholder_token_id)
-
-        # Extend the size of the self.text_encoder to account for the new placeholder_tokens.
-        self.text_encoder.resize_token_embeddings(len(self.tokenizer))
-        # Initialize the placeholder vectors to coincide with their initializer vectors.
-        token_embeddings = self._get_token_embeddings()
-        for p_id, i_id in zip(self.placeholder_token_ids, initializer_token_ids):
-            token_embeddings[p_id] = token_embeddings[i_id]
+            # Compute the number of tokens the initializer maps to.
+            initializer_ids = self.tokenizer(
+                initializer,
+                padding="max_length",
+                truncation=True,
+                max_length=self.tokenizer.model_max_length,
+                return_tensors="pt",
+                add_special_tokens=False,
+            ).input_ids
+            nontrivial_initializer_locations = torch.isin(
+                initializer_ids, torch.tensor([START_TOKEN, PAD_TOKEN]), invert=True
+            )
+            nontrivial_initializer_ids = initializer_ids[nontrivial_initializer_locations]
+            assert (
+                len(nontrivial_initializer_ids) > 0
+            ), f'"{initializer}" maps to no tokens, please choose a different initializer.'
+            # Add a new placeholder token for every token in the initializer.
+            for _ in nontrivial_initializer_ids:
+                dummy_placeholder = "<" + str(num_placeholders_added) + ">"
+                num_added_tokens = self.tokenizer.add_tokens(dummy_placeholder)
+                if num_added_tokens == 0:
+                    raise ValueError(f"Tokenizer already contains the {dummy_placeholder}.")
+                num_placeholders_added += 1
+                self.placeholder_token_map[placeholder].append(dummy_placeholder)
+            # Get the ids of the new placeholders.
+            placeholder_token_ids = self.tokenizer.convert_tokens_to_ids(
+                self.placeholder_token_map[placeholder]
+            )
+            assert len(placeholder_token_ids) == len(
+                nontrivial_initializer_ids
+            ), "placeholder token ids and nontrivial initializer token count doesn't match"
+            self.all_placeholder_token_ids.append(placeholder_token_ids)
+            # Expand the token embeddings and initialize.
+            self.text_encoder.resize_token_embeddings(len(self.tokenizer))
+            # Initialize the placeholder vectors to coincide with their initializer vectors.
+            token_embeddings = self._get_token_embeddings()
+            for p_id, i_id in zip(placeholder_token_ids, nontrivial_initializer_ids):
+                token_embeddings[p_id] = token_embeddings[i_id]
 
         # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
         self.original_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
-            torch.tensor(self.placeholder_token_ids),
+            torch.tensor(self.all_placeholder_token_ids),
             invert=True,
         )
+        token_embeddings = self._get_token_embeddings()
         self.original_embedding_tensors = (
             token_embeddings[self.original_embedding_idxs]
             .detach()
@@ -365,11 +394,29 @@ class TextualInversionTrainer:
         for param in self.text_encoder.text_model.embeddings.token_embedding.parameters():
             param.requires_grad = True
 
+    def _tokenizer_fn(self, text: str) -> torch.Tensor:
+        """Helper function for turning text directly into a tensor."""
+        text = self._replace_placeholders_with_dummies(text)
+        tokenized_text = self.tokenizer(
+            text,
+            padding="max_length",
+            truncation=True,
+            max_length=self.tokenizer.model_max_length,
+            return_tensors="pt",
+        ).input_ids[0]
+        return tokenized_text
+
+    def _replace_placeholders_with_dummies(self, text: str) -> str:
+        """Helper function for replacing placeholders with dummy placeholders."""
+        for placeholder, dummy_placeholders in self.placeholder_token_map.items():
+            text = text.replace(placeholder, " ".join(dummy_placeholders))
+        return text
+
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
         self.train_dataset = data.TextualInversionDataset(
             train_img_dirs=self.train_img_dirs,
-            tokenizer=self.tokenizer,
+            tokenizer_fn=self._tokenizer_fn,
             placeholder_tokens=self.placeholder_tokens,
             learnable_properties=self.learnable_properties,
             img_size=self.img_size,
@@ -443,7 +490,8 @@ class TextualInversionTrainer:
                 "steps_completed": self.steps_completed,
                 "initializer_tokens": self.initializer_tokens,
                 "placeholder_tokens": self.placeholder_tokens,
-                "placeholder_token_ids": self.placeholder_token_ids,
+                "placeholder_token_ids": self.all_placeholder_token_ids,
+                "placeholder_token_map": self.placeholder_token_map,
                 "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
                 "inference_noise_scheduler_name": self.inference_noise_scheduler_name,
                 "inference_noise_scheduler_kwargs": self.inference_noise_scheduler_kwargs,
@@ -465,13 +513,13 @@ class TextualInversionTrainer:
             (
                 self.accelerator.unwrap_model(self.text_encoder)
                 .get_input_embeddings()
-                .weight[self.placeholder_token_ids]
+                .weight[self.all_placeholder_token_ids]
             )
             .detach()
             .cpu()
         )
         learned_embeds_dict = {
-            idx: tensor for idx, tensor in zip(self.placeholder_token_ids, learned_embeds)
+            idx: tensor for idx, tensor in zip(self.all_placeholder_token_ids, learned_embeds)
         }
         self.accelerator.save(learned_embeds_dict, path.joinpath("learned_embeds.pt"))
 

@@ -2,9 +2,8 @@ import os
 import PIL
 import torch
 from PIL import Image
-from typing import List, Sequence
+from typing import Callable, List, Sequence
 
-import torch.nn as nn
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -28,7 +27,7 @@ class TextualInversionDataset(Dataset):
     def __init__(
         self,
         train_img_dirs: Sequence[str],
-        tokenizer: nn.Module,
+        tokenizer_fn: Callable,
         placeholder_tokens: Sequence[str],
         learnable_properties: Sequence[str],
         img_size: int = 512,
@@ -50,7 +49,7 @@ class TextualInversionDataset(Dataset):
             ), f"learnable_properties must be one of {list(TEMPLATE_DICT.keys())}, not {prop}."
 
         self.train_img_dirs = train_img_dirs
-        self.tokenizer = tokenizer
+        self.tokenizer_fn = tokenizer_fn
         self.learnable_properties = learnable_properties
         self.img_size = img_size
         self.placeholder_tokens = placeholder_tokens
@@ -105,13 +104,7 @@ class TextualInversionDataset(Dataset):
 
     def _tokenize_text(self, text: str) -> torch.Tensor:
         """Tokenizes text and removes the batch dimension."""
-        tokenized_text = self.tokenizer(
-            text,
-            padding="max_length",
-            truncation=True,
-            max_length=self.tokenizer.model_max_length,
-            return_tensors="pt",
-        ).input_ids[0]
+        tokenized_text = self.tokenizer_fn(text)
         return tokenized_text
 
     def __len__(self):
