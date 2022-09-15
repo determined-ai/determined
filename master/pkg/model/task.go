@@ -156,11 +156,11 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 	// "STATE_TERMINATED" > "STATE_TERMINATING".
 	statesToOrder := map[AllocationState]int{
 		AllocationStatePending:     0,
-		AllocationStateWaiting:     1,
-		AllocationStateAssigned:    2,
-		AllocationStatePulling:     3,
-		AllocationStateStarting:    4,
-		AllocationStateRunning:     5,
+		AllocationStateAssigned:    1,
+		AllocationStatePulling:     2,
+		AllocationStateStarting:    3,
+		AllocationStateRunning:     4,
+		AllocationStateWaiting:     5,
 		AllocationStateTerminating: 6,
 		AllocationStateTerminated:  7,
 	}

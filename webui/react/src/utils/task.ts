@@ -270,10 +270,10 @@ export const tensorBoardMatchesSource = (
 };
 
 const commandStateSortOrder: CommandState[] = [
-  CommandState.Waiting,
   CommandState.Pulling,
   CommandState.Starting,
   CommandState.Running,
+  CommandState.Waiting,
   CommandState.Terminating,
   CommandState.Terminated,
 ];
