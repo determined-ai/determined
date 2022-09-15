@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -57,11 +59,13 @@ type launcherMonitor struct {
 	checkLauncherJob  chan launcherJob
 	schedulerTick     *time.Ticker
 	authToken         string
+	authFile          string
+	authMu            sync.RWMutex
 	mu                sync.RWMutex
 }
 
 // newDispatchWatcher initiates the process of monitoring the progress of launched jobs.
-func newDispatchWatcher(apiClient *launcher.APIClient, authToken string) *launcherMonitor {
+func newDispatchWatcher(apiClient *launcher.APIClient, authToken string, authFile string) *launcherMonitor {
 	return &launcherMonitor{
 		monitoredJobs:     map[string]launcherJob{},
 		jobsToRemove:      map[string]bool{},
@@ -72,6 +76,7 @@ func newDispatchWatcher(apiClient *launcher.APIClient, authToken string) *launch
 		// Poll job status this often
 		schedulerTick: time.NewTicker(time.Second * pollLoopIntervalSecs),
 		authToken:     authToken,
+		authFile:      authFile,
 	}
 }
 
@@ -231,6 +236,18 @@ func (m *launcherMonitor) processWatchedJobs(ctx *actor.Context) {
 	}
 }
 
+func (m *launcherMonitor) ReloadAuthToken() {
+	m.authMu.Lock()
+	defer m.authMu.Unlock()
+
+	if len(m.authFile) > 0 {
+		authToken, err := os.ReadFile(m.authFile)
+		if err == nil {
+			m.authToken = string(authToken)
+		}
+	}
+}
+
 func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) bool {
 	removeJob := false
 	dispatchID := job.dispatcherID
@@ -244,7 +261,16 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 	if err != nil {
 		if r != nil && r.StatusCode == 404 {
 			ctx.Log().Infof("DispatchID %s is either COMPLETE or TERMINATED", dispatchID)
-			removeJob = true
+			return true
+		}
+
+		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
+			r.StatusCode == http.StatusForbidden) {
+			ctx.Log().WithError(err).Infof("Failed to `GetEnvironmentStatus` for %s due to error {%v}. "+
+				"Reloaded the auth token file {%s}. If this error persists, restart "+
+				"the launcher service followed by a restart of the determined-master service.",
+				dispatchID, err, m.authFile)
+			m.ReloadAuthToken()
 		} else {
 			ctx.Log().WithError(err).Infof("error when calling `GetEnvironmentStatus` for %s:\n%v",
 				dispatchID, r)
