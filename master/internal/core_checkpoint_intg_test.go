@@ -4,10 +4,11 @@
 package internal
 
 import (
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

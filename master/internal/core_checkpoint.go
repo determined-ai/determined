@@ -7,6 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -15,9 +19,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"io"
-	"net/http"
-	"strings"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -25,8 +26,10 @@ import (
 )
 
 const (
+	// MIMEApplicationGZip is GZip's MIME type.
 	MIMEApplicationGZip = "application/gzip"
-	MIMEApplicationZip  = "application/zip"
+	// MIMEApplicationZip is Zip's MIME type.
+	MIMEApplicationZip = "application/zip"
 )
 
 func storageConfig2Str(config any) string {
@@ -47,21 +50,37 @@ func storageConfig2Str(config any) string {
 }
 
 type archiveWriter interface {
-	WriteFileHeader(fname string, size int64) error
+	WriteHeader(path string, size int64) error
 	Write(b []byte) (int, error)
+	Close() error
+}
+
+type archiveClosers struct {
+	closers []io.Closer
+}
+
+// Close() closes all items in closers in reverse order.
+func (ac *archiveClosers) Close() error {
+	for i := len(ac.closers) - 1; i >= 0; i-- {
+		err := ac.closers[i].Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type tarArchiveWriter struct {
 	tw *tar.Writer
 }
 
-func (aw *tarArchiveWriter) WriteFileHeader(fname string, size int64) error {
+func (aw *tarArchiveWriter) WriteHeader(path string, size int64) error {
 	hdr := tar.Header{
-		Name: fname,
+		Name: path,
 		Mode: 0666,
 		Size: size,
 	}
-	if strings.HasSuffix(fname, "/") {
+	if strings.HasSuffix(path, "/") {
 		// This a directory
 		hdr.Mode = 0777
 	}
@@ -77,9 +96,9 @@ type zipArchiveWriter struct {
 	zwContent io.Writer
 }
 
-func (aw *zipArchiveWriter) WriteFileHeader(fname string, size int64) error {
-	// Zip by default sets mode 0666 and 077 for files and folders respectively
-	zwc, err := aw.zw.Create(fname)
+func (aw *zipArchiveWriter) WriteHeader(path string, size int64) error {
+	// Zip by default sets mode 0666 and 0777 for files and folders respectively
+	zwc, err := aw.zw.Create(path)
 	if err != nil {
 		return err
 	}
@@ -89,6 +108,9 @@ func (aw *zipArchiveWriter) WriteFileHeader(fname string, size int64) error {
 
 func (aw *zipArchiveWriter) Write(p []byte) (int, error) {
 	var w io.Writer
+	// Guard against the mistake where WriteHeader() is not called before
+	// calling Write(). The AWS SDK likely will not make this mistake but
+	// zipArchiveWriter is not just limited to being used with AWS.
 	if aw.zwContent == nil {
 		return 0, nil
 	}
@@ -119,7 +141,7 @@ func (w *delayWriter) Write(p []byte) (int, error) {
 	return w.next.Write(p)
 }
 
-// Flush the buffer if it is nonempty.
+// Close flushes the buffer if it is nonempty.
 func (w *delayWriter) Close() error {
 	if w.buf != nil && len(w.buf) > 0 {
 		_, err := w.next.Write(w.buf)
@@ -136,19 +158,20 @@ func newDelayWriter(w io.Writer, delayBytes int) *delayWriter {
 	}
 }
 
-// S3SeqWriterAt satisfies S3 APIs' io.WriterAt interface while staying sequential.
+// seqWriterAt satisfies S3 APIs' io.WriterAt interface while staying sequential.
+// To use it with s3manager.Downloader, its concurrency needs be set to 1.
 // Ref: https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#Downloader
-type s3SeqWriterAt struct {
+type seqWriterAt struct {
 	next    io.Writer
 	written int64
 }
 
-func newS3SeqWriterAt(w io.Writer) *s3SeqWriterAt {
-	return &s3SeqWriterAt{next: w}
+func newSeqWriterAt(w io.Writer) *seqWriterAt {
+	return &seqWriterAt{next: w}
 }
 
 // WriteAt writes the content in buffer p.
-func (w *s3SeqWriterAt) WriteAt(p []byte, off int64) (int, error) {
+func (w *seqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 	if off != w.written {
 		return 0, fmt.Errorf(
 			"only supporting sequential writes,"+
@@ -156,10 +179,10 @@ func (w *s3SeqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 			off, w.written)
 	}
 	n, err := w.next.Write(p)
+	w.written += int64(n)
 	if err != nil {
 		return 0, err
 	}
-	w.written += int64(n)
 
 	return n, err
 }
@@ -182,7 +205,7 @@ func (i *batchDownloadIterator) Next() bool {
 	if i.pos == len(i.objects) {
 		return false
 	}
-	err := i.aw.WriteFileHeader(*i.objects[i.pos].Key, *i.objects[i.pos].Size)
+	err := i.aw.WriteHeader(*i.objects[i.pos].Key, *i.objects[i.pos].Size)
 	if err != nil {
 		i.err = err
 		return false
@@ -199,10 +222,10 @@ func (i *batchDownloadIterator) Err() error {
 func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 	return s3manager.BatchDownloadObject{
 		Object: ptrs.Ptr(s3.GetObjectInput{
-			Bucket: ptrs.Ptr(i.bucket),
+			Bucket: &i.bucket,
 			Key:    i.objects[i.pos].Key,
 		}),
-		Writer: newS3SeqWriterAt(i.aw),
+		Writer: newSeqWriterAt(i.aw),
 	}
 }
 
@@ -261,7 +284,7 @@ func (d *s3Downloader) download(c context.Context) error {
 
 	var errs []error
 	downloader := s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
-		d.Concurrency = 1 // Setting concurrency to 1 to use s3SeqWriterAt
+		d.Concurrency = 1 // Setting concurrency to 1 to use seqWriterAt
 	})
 	funcReadPage := func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 		iter := newBatchDownloadIterator(d.aw, d.bucket, output.Contents)
@@ -346,12 +369,10 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 	}
 }
 
-func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (*expconf.CheckpointStorageConfig, error) {
+func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
+	*expconf.CheckpointStorageConfig, error) {
 	checkpoint, err := m.db.CheckpointByUUID(id)
-	if err != nil {
-		return nil, err
-	}
-	if checkpoint == nil {
+	if err != nil || checkpoint == nil {
 		return nil, err
 	}
 
@@ -411,11 +432,9 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 			fmt.Sprintf("unable to download checkpoint %s: %s", args.CheckpointUUID, err.Error()))
 	}
 
-	for i := len(closers) - 1; i >= 0; i-- {
-		err = closers[i].Close()
-		if err != nil {
-			return err
-		}
+	err = writerPipe.Close()
+	if err != nil {
+		return err
 	}
 	c.Response().Flush()
 

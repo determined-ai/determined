@@ -8,15 +8,6 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -24,6 +15,17 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/uuid"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/labstack/echo/v4"
 
@@ -128,17 +130,14 @@ func checkZip(t *testing.T, content string, id string) {
 
 func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
 	etc.SetRootPath(db.RootFromDB)
-	// db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	user := db.RequireMockUser(t, pgDB)
 	// Using a different path than DefaultTestSrcPath since we are one level up than most db tests
-	exp := mockExperimentS3(t, pgDB, user,
-		"../../examples/tutorials/mnist_pytorch")
+	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch")
 	tr := db.RequireMockTrial(t, pgDB, exp)
 	allocation := db.RequireMockAllocation(t, pgDB, tr.TaskID)
-
 	// Create checkpoints
-	checkpoint1 := db.MockModelCheckpoint(id, tr, allocation)
-	err := pgDB.AddCheckpointMetadata(context.TODO(), &checkpoint1)
+	checkpoint := db.MockModelCheckpoint(id, tr, allocation)
+	err := pgDB.AddCheckpointMetadata(context.TODO(), &checkpoint)
 	require.NoError(t, err)
 }
 
