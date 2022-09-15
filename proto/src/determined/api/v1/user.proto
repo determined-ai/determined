@@ -3,6 +3,8 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
+
 import "determined/user/v1/user.proto";
 import "determined/api/v1/pagination.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -124,3 +126,17 @@ message PostUserSettingResponse {}
 message ResetUserSettingRequest {}
 // Response to ResetUserSettingRequest.
 message ResetUserSettingResponse {}
+
+// Get user settings.
+message GetUserWebSettingRequest {}
+// Response to GetUserSettingRequest.
+message GetUserWebSettingResponse {
+  // User settings.
+  google.protobuf.Struct settings = 1;
+}
+// Update user settings.
+message PostUserWebSettingRequest {
+  determined.user.v1.UserSettingsWeb setting = 1;
+}
+// Response to PostUserSettingRequest.
+message PostUserWebSettingResponse {}

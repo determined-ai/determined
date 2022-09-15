@@ -145,6 +145,26 @@ service Determined {
       tags: "Users"
     };
   }
+  rpc GetUserWebSetting(GetUserWebSettingRequest)
+      returns (GetUserWebSettingResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/settingweb",
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+  // Patch a user's settings for website
+  rpc PostUserWebSetting(PostUserWebSettingRequest)
+      returns (PostUserWebSettingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/settingweb",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
   // Get the requested user.
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = {

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
+import ErrorBoundary from 'components/ErrorBoundary';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import InteractiveTable, { ColumnDef,
@@ -80,7 +81,8 @@ import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
-
+import Test from './Test';
+import Test2 from './Test2';
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
 interface Params {
@@ -1012,6 +1014,17 @@ const ProjectDetails: React.FC = () => {
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
+      <ErrorBoundary>
+        <React.Suspense fallback={<div>loading</div>}>
+          <Test />
+        </React.Suspense>
+      </ErrorBoundary>
+      <div>------</div>
+      <ErrorBoundary>
+        <React.Suspense fallback={<div>loading</div>}>
+          <Test2 />
+        </React.Suspense>
+      </ErrorBoundary>
       <ProjectDetailsTabs
         curUser={user}
         fetchProject={fetchProject}

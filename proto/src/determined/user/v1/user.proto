@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -59,4 +60,8 @@ message UserWebSetting {
   string storage_path = 2;
   // The value of setting.
   string value = 3;
+}
+
+message UserSettingsWeb {
+  google.protobuf.Struct value = 1;
 }

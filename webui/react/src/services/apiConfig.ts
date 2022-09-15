@@ -216,6 +216,24 @@ export const getUserPermissions: DetApi<
   }),
 };
 
+export const getUserWebSetting: DetApi<
+  EmptyParams, Api.V1GetUserWebSettingResponse, Api.V1GetUserWebSettingResponse
+> = {
+  name: 'getUserWebSetting',
+  postProcess: (response) => response,
+  request: () => detApi.Users.getUserWebSetting(),
+};
+
+export const updateUserWebSetting: DetApi<
+  Service.UpdateUserWebSettingParams, Api.V1PostUserWebSettingResponse, Api.V1PostUserWebSettingResponse
+> = {
+  name: 'updateUserWebSetting',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.postUserWebSetting({
+    setting: params.setting
+  }),
+};
+
 /* Group */
 
 export const createGroup: DetApi<

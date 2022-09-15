@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
@@ -145,4 +146,9 @@ type UserWebSetting struct {
 	Key         string
 	Value       string
 	StoragePath string
+}
+
+type UserSettingsWeb struct {
+	UserID UserID
+	Value  *structpb.Struct `bun:"type:jsonb"`
 }

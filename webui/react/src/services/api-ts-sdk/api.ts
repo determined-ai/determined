@@ -3404,6 +3404,20 @@ export interface V1GetUserSettingResponse {
 }
 
 /**
+ * Response to GetUserSettingRequest.
+ * @export
+ * @interface V1GetUserWebSettingResponse
+ */
+export interface V1GetUserWebSettingResponse {
+    /**
+     * User settings.
+     * @type {any}
+     * @memberof V1GetUserWebSettingResponse
+     */
+    settings?: any;
+}
+
+/**
  * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  * @export
  * @enum {string}
@@ -5402,6 +5416,28 @@ export interface V1PostUserSettingRequest {
  * @interface V1PostUserSettingResponse
  */
 export interface V1PostUserSettingResponse {
+}
+
+/**
+ * Update user settings.
+ * @export
+ * @interface V1PostUserWebSettingRequest
+ */
+export interface V1PostUserWebSettingRequest {
+    /**
+     * 
+     * @type {V1UserSettingsWeb}
+     * @memberof V1PostUserWebSettingRequest
+     */
+    setting?: V1UserSettingsWeb;
+}
+
+/**
+ * Response to PostUserSettingRequest.
+ * @export
+ * @interface V1PostUserWebSettingResponse
+ */
+export interface V1PostUserWebSettingResponse {
 }
 
 /**
@@ -7721,6 +7757,20 @@ export interface V1UserRoleAssignment {
      * @memberof V1UserRoleAssignment
      */
     roleAssignment: V1RoleAssignment;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1UserSettingsWeb
+ */
+export interface V1UserSettingsWeb {
+    /**
+     * 
+     * @type {any}
+     * @memberof V1UserSettingsWeb
+     */
+    value?: any;
 }
 
 /**
@@ -23020,6 +23070,36 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserWebSetting(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users/settingweb`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME'} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -23197,6 +23277,46 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserWebSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserWebSetting(body: V1PostUserWebSettingRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserWebSetting.');
+            }
+            const localVarPath = `/api/v1/users/settingweb`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostUserWebSettingRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Reset a user's settings for website
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23320,6 +23440,23 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserWebSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserWebSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserWebSetting(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME'} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -23400,6 +23537,25 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserWebSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserWebSetting(body: V1PostUserWebSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserWebSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserWebSetting(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Reset a user's settings for website
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23466,6 +23622,14 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserWebSetting(options?: any) {
+            return UsersApiFp(configuration).getUserWebSetting(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME'} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -23507,6 +23671,16 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         postUserSetting(body: V1PostUserSettingRequest, options?: any) {
             return UsersApiFp(configuration).postUserSetting(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserWebSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserWebSetting(body: V1PostUserWebSettingRequest, options?: any) {
+            return UsersApiFp(configuration).postUserWebSetting(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23563,6 +23737,16 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUserWebSetting(options?: any) {
+        return UsersApiFp(this.configuration).getUserWebSetting(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a list of users.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME'} [sortBy] Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -23611,6 +23795,18 @@ export class UsersApi extends BaseAPI {
      */
     public postUserSetting(body: V1PostUserSettingRequest, options?: any) {
         return UsersApiFp(this.configuration).postUserSetting(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's settings for website
+     * @param {V1PostUserWebSettingRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public postUserWebSetting(body: V1PostUserWebSettingRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserWebSetting(body, options)(this.fetch, this.basePath);
     }
 
     /**

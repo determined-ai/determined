@@ -341,3 +341,18 @@ func ResetUserSetting(userID model.UserID) error {
 	_, err := Bun().NewDelete().Model(&setting).Where("user_id = ?", userID).Exec(context.TODO())
 	return err
 }
+
+// GetUserWebSetting gets user setting.
+func GetUserWebSetting(userID model.UserID) (userv1.UserSettingsWeb, error) {
+	setting := userv1.UserSettingsWeb{}
+	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userID).Scan(context.TODO())
+	return setting, err
+}
+
+// GetUserWebSetting gets user setting.
+func UpdateUserWebSetting(setting *model.UserSettingsWeb) error {
+	_, err := Bun().NewInsert().Model(setting).
+		On("CONFLICT (user_id) DO UPDATE").
+		Set("value = user_settings_web.value || EXCLUDED.value").Exec(context.TODO())
+	return err
+}

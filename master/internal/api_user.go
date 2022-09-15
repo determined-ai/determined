@@ -414,3 +414,41 @@ func (a *apiServer) ResetUserSetting(
 	err = db.ResetUserSetting(curUser.ID)
 	return &apiv1.ResetUserSettingResponse{}, err
 }
+
+func (a *apiServer) GetUserWebSetting(
+	ctx context.Context, req *apiv1.GetUserWebSettingRequest,
+) (*apiv1.GetUserWebSettingResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	settings, err := db.GetUserWebSetting(curUser.ID)
+	return &apiv1.GetUserWebSettingResponse{Settings: settings.Value}, err
+}
+
+func (a *apiServer) PostUserWebSetting(
+	ctx context.Context, req *apiv1.PostUserWebSettingRequest,
+) (*apiv1.PostUserWebSettingResponse, error) {
+	if req.Setting == nil {
+		return nil, status.Error(codes.InvalidArgument, "must specify setting")
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	settingModel := model.UserSettingsWeb{
+		UserID: curUser.ID,
+		Value:  req.Setting.Value,
+	}
+	// if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
+	// 	return nil, status.Error(codes.PermissionDenied, err.Error())
+	// }
+
+	err = db.UpdateUserWebSetting(&settingModel)
+	return &apiv1.PostUserWebSettingResponse{}, err
+}

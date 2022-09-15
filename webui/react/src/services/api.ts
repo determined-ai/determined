@@ -71,6 +71,14 @@ export const getUserPermissions = generateDetApi<
   Service.GetUserParams, number, Type.Permission[]
 >(Config.getUserPermissions);
 
+export const getUserWebSetting = generateDetApi<
+EmptyParams, Api.V1GetUserWebSettingResponse, Api.V1GetUserWebSettingResponse
+>(Config.getUserWebSetting);
+
+export const updateUserWebSetting = generateDetApi<
+Service.UpdateUserWebSettingParams, Api.V1PostUserWebSettingResponse, Api.V1PostUserWebSettingResponse
+>(Config.updateUserWebSetting);
+
 /* Groups */
 
 export const createGroup = generateDetApi<

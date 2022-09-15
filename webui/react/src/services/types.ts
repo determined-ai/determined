@@ -295,6 +295,10 @@ export interface UpdateUserSettingParams {
   storagePath: string;
 }
 
+export interface UpdateUserWebSettingParams {
+  setting: Api.V1UserSettingsWeb;
+}
+
 export interface UpdateGroupParams {
   addUsers?: Array<number>;
   groupId: number;

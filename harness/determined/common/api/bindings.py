@@ -2981,6 +2981,25 @@ class v1GetUserSettingResponse:
             "settings": [x.to_json() for x in self.settings],
         }
 
+class v1GetUserWebSettingResponse:
+    def __init__(
+        self,
+        *,
+        settings: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+    ):
+        self.settings = settings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserWebSettingResponse":
+        return cls(
+            settings=obj.get("settings", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "settings": self.settings if self.settings is not None else None,
+        }
+
 class v1GetUsersRequestSortBy(enum.Enum):
     SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     SORT_BY_DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
@@ -4903,6 +4922,25 @@ class v1PostUserSettingRequest:
         return {
             "storagePath": self.storagePath,
             "setting": self.setting.to_json(),
+        }
+
+class v1PostUserWebSettingRequest:
+    def __init__(
+        self,
+        *,
+        setting: "typing.Optional[v1UserSettingsWeb]" = None,
+    ):
+        self.setting = setting
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserWebSettingRequest":
+        return cls(
+            setting=v1UserSettingsWeb.from_json(obj["setting"]) if obj.get("setting", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "setting": self.setting.to_json() if self.setting is not None else None,
         }
 
 class v1PostWorkspaceRequest:
@@ -7008,6 +7046,25 @@ class v1UserRoleAssignment:
         return {
             "userId": self.userId,
             "roleAssignment": self.roleAssignment.to_json(),
+        }
+
+class v1UserSettingsWeb:
+    def __init__(
+        self,
+        *,
+        value: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+    ):
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserSettingsWeb":
+        return cls(
+            value=obj.get("value", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "value": self.value if self.value is not None else None,
         }
 
 class v1UserWebSetting:
@@ -9226,6 +9283,24 @@ def get_GetUserSetting(
         return v1GetUserSettingResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUserSetting", _resp)
 
+def get_GetUserWebSetting(
+    session: "api.Session",
+) -> "v1GetUserWebSettingResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users/settingweb",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserWebSettingResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserWebSetting", _resp)
+
 def get_GetUsers(
     session: "api.Session",
     *,
@@ -10139,6 +10214,26 @@ def post_PostUserSetting(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostUserSetting", _resp)
+
+def post_PostUserWebSetting(
+    session: "api.Session",
+    *,
+    body: "v1PostUserWebSettingRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/settingweb",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostUserWebSetting", _resp)
 
 def post_PostWorkspace(
     session: "api.Session",
