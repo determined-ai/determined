@@ -7,6 +7,7 @@ import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
@@ -95,6 +96,8 @@ const GroupManagement: React.FC = () => {
     settings,
     updateSettings,
   } = useSettings<GroupManagementSettings>(settingsConfig);
+
+  const canModifyGroups = usePermissions().canModifyGroups();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -199,7 +202,9 @@ const GroupManagement: React.FC = () => {
     }, {
       key: 'action',
       render: (_:string, r: V1User) => (
-        <Button onClick={() => onRemoveUser(record, r.id)}>Remove</Button>),
+        canModifyGroups ?
+          <Button onClick={() => onRemoveUser(record, r.id)}>Remove</Button> :
+          null),
       title: '',
     } ];
 
@@ -212,18 +217,20 @@ const GroupManagement: React.FC = () => {
         rowKey="id"
       />
     );
-  }, [ onRemoveUser, groupUsers ]);
+  }, [ onRemoveUser, groupUsers, canModifyGroups ]);
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: V1GroupSearchResult) => {
       return (
-        <GroupActionDropdown
-          expanded={!!(record.group.groupId && expandedKeys.includes(record.group.groupId))}
-          fetchGroup={fetchGroup}
-          fetchGroups={fetchGroups}
-          group={record}
-          users={users}
-        />
+        canModifyGroups ? (
+          <GroupActionDropdown
+            expanded={!!(record.group.groupId && expandedKeys.includes(record.group.groupId))}
+            fetchGroup={fetchGroup}
+            fetchGroups={fetchGroups}
+            group={record}
+            users={users}
+          />
+        ) : null
       );
     };
 
@@ -255,7 +262,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [ users, fetchGroups, expandedKeys, fetchGroup ]);
+  }, [ users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups ]);
 
   const table = useMemo(() => {
     return (

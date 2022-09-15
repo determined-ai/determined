@@ -8,6 +8,7 @@ import Page from 'components/Page';
 import { checkmarkRenderer, defaultRowClassName,
   getFullPaginationConfig, relativeTimeRenderer } from 'components/Table';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getGroups, getUsers, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -44,6 +45,8 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     fetchUsers();
   };
 
+  const canModifyGroups = usePermissions().canModifyGroups();
+
   enum MenuKey {
     EDIT = 'edit',
     STATE = 'state',
@@ -60,11 +63,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     funcs[e.key as MenuKey]();
   };
 
-  const menuItems: MenuProps['items'] = [
+  const menuItems: MenuProps['items'] = canModifyGroups ? [
     { key: MenuKey.VIEW, label: 'View Profile' },
     { key: MenuKey.EDIT, label: 'Edit' },
     { key: MenuKey.STATE, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-  ];
+  ] : [ { key: MenuKey.VIEW, label: 'View Profile' } ];
 
   return (
     <div className={dropdownCss.base}>

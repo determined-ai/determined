@@ -134,6 +134,7 @@ const initInfo: DeterminedInfo = {
   clusterName: '',
   isTelemetryEnabled: false,
   masterId: '',
+  rbacEnabled: false,
   version: process.env.VERSION || '',
 };
 
