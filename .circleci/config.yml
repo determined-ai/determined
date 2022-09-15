@@ -1640,6 +1640,8 @@ jobs:
       - run: pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
+      # Avoid a versino of pyzmq that was missing wheels when it was released.
+      - run: pip install "pyzmq!=24.0.0"
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
