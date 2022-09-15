@@ -39,10 +39,22 @@ const (
 )
 
 var mockCheckpointContent = map[string]string{
-	"emptyDir":    "",
-	"data.txt":    "This is mock data.",
-	"lib/math.py": "def triple(x):\n  return x * 3",
-	"print.py":    `print("hello")`,
+	"emptyDir": "",
+	"data.txt": "This is mock data.",
+	// This long string must be longer than delayWriter.delayBytes
+	"lib/big-data.txt": genLongString(1024 * 64),
+	"lib/math.py":      "def triple(x):\n  return x * 3",
+	"print.py":         `print("hello")`,
+}
+
+func genLongString(approxLength int) string {
+	const block = "12345678223456783234567842345678\n"
+	var sb strings.Builder
+
+	for j := 0; j < approxLength; j += len(block) {
+		sb.WriteString(block)
+	}
+	return sb.String()
 }
 
 func createMockCheckpointS3(bucket string, prefix string) error {

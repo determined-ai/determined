@@ -103,18 +103,20 @@ type delayWriter struct {
 }
 
 func (w *delayWriter) Write(p []byte) (int, error) {
-	if w.buf == nil {
-		return w.next.Write(p)
+	if w.buf != nil {
+		if len(w.buf)+len(p) < w.delayBytes {
+			// Not enough bytes yet, just buffer them and wait
+			w.buf = append(w.buf, p...)
+			return len(p), nil
+		}
+		// Enough bytes, flush buffered bytes, and then write current bytes
+		_, err := w.next.Write(w.buf)
+		w.buf = nil
+		if err != nil {
+			return 0, err
+		}
 	}
-
-	w.buf = append(w.buf, p...)
-	if len(w.buf) < w.delayBytes {
-		return len(p), nil
-	}
-
-	n, err := w.next.Write(w.buf)
-	w.buf = nil
-	return n, err
+	return w.next.Write(p)
 }
 
 // Flush the buffer if it is nonempty.
