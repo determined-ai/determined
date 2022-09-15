@@ -59,6 +59,10 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 	}
 }
 
+func nonCustomSearchMethodError(method SearchMethod, unsupportedOp string) error {
+	return fmt.Errorf("%T search method does not support %s", method, unsupportedOp)
+}
+
 func (s *Searcher) context() context {
 	return context{rand: s.Rand, hparams: s.hparams}
 }
@@ -186,18 +190,21 @@ func (s *Searcher) Progress() float64 {
 // GetCustomSearcherEventQueue returns the SearcherEventQueue of the custom searcher method.
 // It returns an error if the queue is nil because it means the searcher
 // method is not of type CustomSearcher.
-func (s *Searcher) GetCustomSearcherEventQueue() *SearcherEventQueue {
+func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
 	if sMethod, ok := s.method.(CustomSearchMethod); ok {
-		return sMethod.getSearcherEventQueue()
+		return sMethod.getSearcherEventQueue(), nil
 	}
-	return nil
+	return nil, nonCustomSearchMethodError(s.method, "GetCustomSearcherEventQueue")
 }
 
 // SetCustomSearcherProgress sets the custom searcher progress.
-func (s *Searcher) SetCustomSearcherProgress(progress float64) {
+func (s *Searcher) SetCustomSearcherProgress(progress float64) error {
 	if sMethod, ok := s.method.(CustomSearchMethod); ok {
 		sMethod.setCustomSearcherProgress(progress)
+		return nil
 	}
+
+	return nonCustomSearchMethodError(s.method, "SetCustomSearcherProgress")
 }
 
 // Record records operations that were requested by the searcher for a specific trial.
