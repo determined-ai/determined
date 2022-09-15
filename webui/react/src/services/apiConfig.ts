@@ -295,12 +295,16 @@ export const getGroupRoles: DetApi<
 };
 
 export const listRoles: DetApi<
-  EmptyParams,
+  Service.ListRolesParams,
   Api.V1ListRolesResponse, Type.UserRole[]
 > = {
   name: 'listRoles',
   postProcess: (response) => response.roles.map(decoder.mapV1Role),
-  request: () => detApi.RBAC.listRoles({ limit: 0 }),
+  request: (params) => detApi.RBAC.listRoles({
+    isGlobal: params.isGlobal,
+    limit: params.limit || 0,
+    offset: params.offset || 0,
+  }),
 };
 
 export const assignRolesToGroup: DetApi<
@@ -310,9 +314,9 @@ export const assignRolesToGroup: DetApi<
   name: 'assignRolesToGroup',
   postProcess: (response) => response,
   request: (params) => detApi.RBAC.assignRoles({
-    groupRoleAssignments: params.roles.map((role) => ({
+    groupRoleAssignments: params.roleIds.map((roleId) => ({
       groupId: params.groupId,
-      roleAssignment: { role: { roleId: role.id } },
+      roleAssignment: { role: { roleId } },
     })),
   }),
 };

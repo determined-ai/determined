@@ -136,7 +136,7 @@ const GroupManagement: React.FC = () => {
   }, [ groupUsers ]);
 
   const fetchRoles = useCallback(async (): Promise<void> => {
-    const response = await listRoles({});
+    const response = await listRoles({ isGlobal: true });
     setRoles(response);
   }, [ ]);
 

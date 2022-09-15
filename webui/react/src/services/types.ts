@@ -2,7 +2,7 @@ import { Dayjs } from 'dayjs';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
 import { DetailedUser, Job, Metadata, MetricName, MetricType, Note,
-  Scale, TrialWorkloadFilter, UserRole } from 'types';
+  Scale, TrialWorkloadFilter } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -314,7 +314,13 @@ export type GetGroupsParams = PaginationParams
 
 export interface AssignRolesToGroupParams {
   groupId: number;
-  roles: UserRole[];
+  roleIds: number[];
+}
+
+export interface ListRolesParams {
+  isGlobal: boolean;
+  limit?: number;
+  offset?: number;
 }
 
 export interface GetProjectParams {

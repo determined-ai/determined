@@ -106,8 +106,8 @@ export const getGroupRoles = generateDetApi<
 >(Config.getGroupRoles);
 
 export const listRoles = generateDetApi<
-  EmptyParams,
-   Api.V1ListRolesResponse, Type.UserRole[]
+  Service.ListRolesParams,
+  Api.V1ListRolesResponse, Type.UserRole[]
 >(Config.listRoles);
 
 export const assignRolesToGroup = generateDetApi<

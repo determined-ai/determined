@@ -78,13 +78,16 @@ const useModalGroupRoles = ({ onClose, group, roles }: ModalProps): ModalHooks =
   }, [ form ]);
 
   const onOk = useCallback(async () => {
+    if (!group.group.groupId) {
+      return;
+    }
     await form.validateFields();
 
     try {
       const formData = form.getFieldsValue();
       await assignRolesToGroup({
         groupId: group.group.groupId,
-        ...formData,
+        roleIds: formData.roles,
       });
       message.success('Updated group roles.');
       form.resetFields();
