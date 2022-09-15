@@ -279,6 +279,45 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     '        self.wrapped_lr_scheduler.step(metrics["validation_error"])\n'
                 )
 
+        if type(lr_scheduler) is torch.optim.lr_scheduler.OneCycleLR:
+            # XXX: is horovod necessary to reproduce this?
+            if self._distributed_backend.use_horovod():
+                raise det.errors.InvalidExperimentException(
+                    "detected that context.wrap_lr_scheduler() was called with an instance of "
+                    "torch.optim.lr_scheduler.OneCycleLR as the lr_scheduler.  This lr scheduler "
+                    "does not support serialization when combined with horovod distributed "
+                    "training but you can correct the problem with a small wrapper class:\n"
+                    "\n"
+                    "class MyOneCycleLR(torch.optim.lr_scheduler.OneCycleLR):\n"
+                    "    def state_dict(self):\n"
+                    "        return {\n"
+                    "            key: value for key, value in self.__dict__.items()\n"
+                    "            if key not in ['optimizer', 'anneal_func']\n"
+                    "        }\n"
+                    "\n"
+                    "Then you should be able to use MyOneCycleLR as a drop-in replacement."
+                )
+
+        if type(lr_scheduler) is torch.optim.lr_scheduler.CyclicLR:
+            # XXX: is horovod necessary to reproduce this?
+            if self._distributed_backend.use_horovod():
+                raise det.errors.InvalidExperimentException(
+                    "detected that context.wrap_lr_scheduler() was called with an instance of "
+                    "torch.optim.lr_scheduler.CyclicLR as the lr_scheduler.  This lr scheduler "
+                    "does not support serialization when combined with horovod distributed "
+                    "training but you can correct the problem with a small wrapper class:\n"
+                    "\n"
+                    "class MyCyclicLR(torch.optim.lr_scheduler.CyclicLR):\n"
+                    "    def state_dict(self):\n"
+                    "        return {\n"
+                    # XXX: I don't know what variables are right to exclude here
+                    "            key: value for key, value in self.__dict__.items()\n"
+                    "            if key not in ['optimizer', 'anneal_func']\n"
+                    "        }\n"
+                    "\n"
+                    "Then you should be able to use MyCyclicLR as a drop-in replacement."
+                )
+
         opt = getattr(lr_scheduler, "optimizer", None)
         if opt is not None:
             check.is_in(
