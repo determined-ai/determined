@@ -324,16 +324,9 @@ class TextualInversionTrainer:
                     f"Tokenizer already contains the {placeholder}, please choose another token."
                 )
 
-            # Convert the initializer_tokens, placeholder_tokens to ids.
+            # Convert the initializer_tokens to ids:
             initializer_token_id_list = self.tokenizer.encode(initializer, add_special_tokens=False)
-            # Check if initializer_tokens is a single token or a sequence of tokens.
-            if len(initializer_token_id_list) > 1:
-                raise ValueError(
-                    "The initializer token must get mapped to a single id."
-                    f" {initializer} is mapped to {initializer_token_id_list}"
-                )
-
-            initializer_token_ids.append(initializer_token_id_list[0])
+            initializer_token_ids.append(initializer_token_id_list)
             placeholder_token_id = self.tokenizer.convert_tokens_to_ids(placeholder)
             self.placeholder_token_ids.append(placeholder_token_id)
 
