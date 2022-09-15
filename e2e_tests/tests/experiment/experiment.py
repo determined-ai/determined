@@ -135,11 +135,7 @@ def wait_for_experiment_by_name_is_active(
         time.sleep(1)
 
     else:
-        pytest.fail(
-            "Experiment {} did not start any trial {} seconds".format(
-                experiment_name, max_wait_secs
-            )
-        )
+        pytest.fail(f"Experiment {experiment_name} did not start any trial {max_wait_secs} seconds")
 
 
 def wait_for_experiment_state(
