@@ -14,7 +14,7 @@ import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
-export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created, 
+export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created,
 advise user to reset password as soon as possible.`;
 export const API_SUCCESS_MESSAGE_EDIT = 'User has been updated';
 export const DISPLAY_NAME_NAME = 'displayName';
@@ -70,15 +70,15 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       title: 'Name',
     },
     {
-      dataIndex: 'globalOnly',
-      key: 'globalOnly',
+      dataIndex: 'isGlobal',
+      key: 'isGlobal',
       render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
       title: 'Global?',
     },
     {
-      dataIndex: 'workspaceOnly',
+      dataIndex: 'isGlobal',
       key: 'workspaceOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+      render: (val: boolean) => val ? '' : <Icon name="checkmark" />,
       title: 'Workspaces?',
     },
   ];
