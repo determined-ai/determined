@@ -2462,6 +2462,29 @@ class v1GetNotebooksResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetPermissionsSummaryResponse:
+    def __init__(
+        self,
+        *,
+        assignments: "typing.Sequence[v1RoleAssignmentSummary]",
+        roles: "typing.Sequence[v1Role]",
+    ):
+        self.roles = roles
+        self.assignments = assignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetPermissionsSummaryResponse":
+        return cls(
+            roles=[v1Role.from_json(x) for x in obj["roles"]],
+            assignments=[v1RoleAssignmentSummary.from_json(x) for x in obj["assignments"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roles": [x.to_json() for x in self.roles],
+            "assignments": [x.to_json() for x in self.assignments],
+        }
+
 class v1GetProjectResponse:
     def __init__(
         self,
@@ -4535,7 +4558,7 @@ class v1Permission:
     def __init__(
         self,
         *,
-        id: int,
+        id: "v1PermissionType",
         isGlobal: "typing.Optional[bool]" = None,
         name: "typing.Optional[str]" = None,
     ):
@@ -4546,17 +4569,38 @@ class v1Permission:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Permission":
         return cls(
-            id=obj["id"],
+            id=v1PermissionType(obj["id"]),
             name=obj.get("name", None),
             isGlobal=obj.get("isGlobal", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id,
+            "id": self.id.value,
             "name": self.name if self.name is not None else None,
             "isGlobal": self.isGlobal if self.isGlobal is not None else None,
         }
+
+class v1PermissionType(enum.Enum):
+    PERMISSION_TYPE_UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
+    PERMISSION_TYPE_ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
+    PERMISSION_TYPE_CREATE_EXPERIMENT = "PERMISSION_TYPE_CREATE_EXPERIMENT"
+    PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS = "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS"
+    PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA = "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA"
+    PERMISSION_TYPE_UPDATE_EXPERIMENT = "PERMISSION_TYPE_UPDATE_EXPERIMENT"
+    PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA = "PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA"
+    PERMISSION_TYPE_DELETE_EXPERIMENT = "PERMISSION_TYPE_DELETE_EXPERIMENT"
+    PERMISSION_TYPE_UPDATE_GROUP = "PERMISSION_TYPE_UPDATE_GROUP"
+    PERMISSION_TYPE_CREATE_WORKSPACE = "PERMISSION_TYPE_CREATE_WORKSPACE"
+    PERMISSION_TYPE_VIEW_WORKSPACE = "PERMISSION_TYPE_VIEW_WORKSPACE"
+    PERMISSION_TYPE_UPDATE_WORKSPACE = "PERMISSION_TYPE_UPDATE_WORKSPACE"
+    PERMISSION_TYPE_DELETE_WORKSPACE = "PERMISSION_TYPE_DELETE_WORKSPACE"
+    PERMISSION_TYPE_CREATE_PROJECT = "PERMISSION_TYPE_CREATE_PROJECT"
+    PERMISSION_TYPE_VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
+    PERMISSION_TYPE_UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
+    PERMISSION_TYPE_DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
+    PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
+    PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
 
 class v1PostAllocationProxyAddressRequest:
     def __init__(
@@ -5783,6 +5827,33 @@ class v1RoleAssignment:
         return {
             "role": self.role.to_json(),
             "scopeWorkspaceId": self.scopeWorkspaceId if self.scopeWorkspaceId is not None else None,
+        }
+
+class v1RoleAssignmentSummary:
+    def __init__(
+        self,
+        *,
+        isGlobal: "typing.Optional[bool]" = None,
+        roleId: "typing.Optional[int]" = None,
+        scopeWorkspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.roleId = roleId
+        self.scopeWorkspaceIds = scopeWorkspaceIds
+        self.isGlobal = isGlobal
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RoleAssignmentSummary":
+        return cls(
+            roleId=obj.get("roleId", None),
+            scopeWorkspaceIds=obj.get("scopeWorkspaceIds", None),
+            isGlobal=obj.get("isGlobal", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "roleId": self.roleId if self.roleId is not None else None,
+            "scopeWorkspaceIds": self.scopeWorkspaceIds if self.scopeWorkspaceIds is not None else None,
+            "isGlobal": self.isGlobal if self.isGlobal is not None else None,
         }
 
 class v1RoleWithAssignments:
@@ -8611,6 +8682,24 @@ def get_GetNotebooks(
     if _resp.status_code == 200:
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
+
+def get_GetPermissionsSummary(
+    session: "api.Session",
+) -> "v1GetPermissionsSummaryResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/permissions/summary",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetPermissionsSummaryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetPermissionsSummary", _resp)
 
 def get_GetProject(
     session: "api.Session",
