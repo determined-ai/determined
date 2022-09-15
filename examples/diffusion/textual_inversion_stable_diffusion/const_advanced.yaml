@@ -3,25 +3,25 @@ entrypoint: python -m determined.launch.torch_distributed accelerate launch main
 searcher:
   name: single
   metric: loss
-  max_length: 500 # Number of SGD steps, originally 3k
+  max_length: 250 # Number of SGD steps, originally 3k
 resources:
   slots_per_trial: 4
 max_restarts: 0
 environment:
     environment_variables:  
-        - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE # Replace with your HuggingFace User Access Token!
+        - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 checkpoint_storage:
     save_trial_best: 1
-    save_trial_latest: 1 # Save both the latest training config and the final pipeline
+    save_trial_latest: 1
 hyperparameters:
     model:
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
     data:
         learnable_properties: # One of 'object' or 'style' 
             - object
-        placeholder_tokens: # Special tokens representing new cocepts. Must not exist in tokenizer.  
+        placeholder_tokens: # Special tokens representing new concepts. Must not exist in tokenizer.
             - <cat-toy>
-        initializer_tokens: # Individual works closely related to added concepts. Must get mapped to single token by tokenizer. 
+        initializer_tokens: # Individual words closely related to added concepts. Must get mapped to single token by tokenizer.
             - cat
         train_img_dirs:
             - cat_imgs
@@ -32,20 +32,21 @@ hyperparameters:
     trainer:
         train_batch_size: 1 # Originally 1
         gradient_accumulation_steps: 4 # Originally 4 with train_batch_size=1, slots_per_trial=1. Should scale inversely to these latter configs
-        optimizer_name: sgd
-        learning_rate: 5e-01 # Originally 5e-04
+        optimizer_name: adamw
+        learning_rate: 5e-05 # Originally 5e-04
         scale_lr: True # Causes the bare learning_rate above to be scaled up by grad_acc_steps * train_batch_size * num_processes
-        checkpoint_freq: 100
-        metric_report_freq: 100
+        checkpoint_freq: 50
+        metric_report_freq: 50
         beta_start: 0.00085 # 0.00085
         beta_end: .012 # .012
         beta_schedule: scaled_linear # scaled_linear
         num_train_timesteps: 1000 # 1000
         train_seed: 2147483647
     inference:
+        generate_training_images: True
         inference_noise_scheduler_name: pndm
         inference_prompts:
-            - a photo of a <dai-logo>
+            - a photo of a <cat-toy>
         num_inference_steps: 50
         guidance_scale: 7.5
         generator_seed: 2147483647
