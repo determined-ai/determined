@@ -80,12 +80,14 @@ RETURNING id`)
 	return user.ID, nil
 }
 
+const PersonalGroupPostfix = "DeterminedPersonalGroup"
+
 func addUserPersonalGroup(tx *sqlx.Tx, userID model.UserID) error {
 	query := `
 INSERT INTO groups(group_name, user_id) 
-SELECT username || 'DeterminedPersonalGroup' AS group_name, id AS user_id FROM users 
+SELECT username || $2 AS group_name, id AS user_id FROM users 
 WHERE id = $1`
-	if _, err := tx.Exec(query, userID); err != nil {
+	if _, err := tx.Exec(query, userID, PersonalGroupPostfix); err != nil {
 		return errors.WithStack(err)
 	}
 
