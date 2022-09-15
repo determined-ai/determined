@@ -877,6 +877,10 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			slotsAvailable = int32(v.TotalCPUSlots)
 			slotsUsed = int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots)
 		}
+		slotsPerAgent := 0
+		if v.TotalNodes != 0 {
+			slotsPerAgent = int(slotsAvailable) / v.TotalNodes
+		}
 
 		pool := resourcepoolv1.ResourcePool{
 			Name:                         v.PartitionName,
@@ -893,7 +897,7 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			Preemptible:                  true,
 			MinAgents:                    int32(v.TotalNodes),
 			MaxAgents:                    int32(v.TotalNodes),
-			SlotsPerAgent:                0, // Must be unspecified
+			SlotsPerAgent:                int32(slotsPerAgent),
 			AuxContainerCapacityPerAgent: 0,
 			SchedulerType:                schedulerType,
 			SchedulerFittingPolicy:       fittingPolicy,
