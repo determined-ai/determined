@@ -72,6 +72,72 @@ def cancel_trial(trial_id: int) -> None:
     wait_for_trial_state(trial_id, determinedexperimentv1State.STATE_CANCELED)
 
 
+def wait_for_experiment_by_name_is_active(
+    experiment_name: str,
+    min_trials: int = 1,
+    max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    log_every: int = 60,
+) -> int:
+    for seconds_waited in range(max_wait_secs):
+        try:
+            response = bindings.get_GetExperiments(
+                determined_test_session(), name=experiment_name
+            ).experiments
+            if len(response) == 0:
+                time.sleep(1)
+                continue
+            if len(response) > 1:
+                pytest.fail(
+                    f"Multiple experiments with name={experiment_name}, "
+                    f"expected only 1 experiment."
+                )
+            experiment = response[0]
+            experiment_id = experiment.id
+        # Ignore network errors while polling for experiment state to avoid a
+        # single network flake to cause a test suite failure. If the master is
+        # unreachable multiple times, this test will fail after max_wait_secs.
+        except api.errors.MasterNotFoundException:
+            logging.warning(
+                "Network failure ignored when polling for state of "
+                "experiment {}".format(experiment_name)
+            )
+            time.sleep(1)
+            continue
+        except api.errors.NotFoundException:
+            logging.warning(
+                "Experiment not yet available to check state: "
+                "experiment {}".format(experiment_name)
+            )
+            time.sleep(0.25)
+            continue
+
+        if experiment.state == determinedexperimentv1State.STATE_ACTIVE:
+            if experiment.numTrials > min_trials:
+                return experiment_id
+            time.sleep(0.25)
+            continue
+
+        if is_terminal_state(experiment.state):
+            report_failed_experiment(experiment_id)
+
+            pytest.fail(
+                f"Experiment {experiment_id} terminated in {experiment.state.value} state, "
+                f"expected {determinedexperimentv1State.STATE_ACTIVE}"
+            )
+
+        if seconds_waited > 0 and seconds_waited % log_every == 0:
+            print(
+                f"Waited {seconds_waited} seconds for experiment {experiment_name} "
+                f"(currently {experiment.state.value}) to reach "
+                f"{determinedexperimentv1State.STATE_ACTIVE}"
+            )
+
+        time.sleep(1)
+
+    else:
+        pytest.fail(f"Experiment {experiment_name} did not start any trial {max_wait_secs} seconds")
+
+
 def wait_for_experiment_state(
     experiment_id: int,
     target_state: determinedexperimentv1State,
