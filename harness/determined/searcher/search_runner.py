@@ -234,6 +234,7 @@ class LocalSearchRunner(SearchRunner):
         Run custom search without an experiment id
         """
         logging.info("LocalSearchRunner.run")
+        client._require_singleton(lambda: None)()
 
         if context_dir is None:
             context_dir = os.getcwd()
