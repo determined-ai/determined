@@ -253,6 +253,7 @@ class TextualInversionTrainer:
         noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, timesteps)
 
         # Get the text embedding for conditioning
+        print("BATCH INPUT IDS: ", batch["input_ids"])
         encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
 
         # Predict the noise residual
@@ -320,7 +321,6 @@ class TextualInversionTrainer:
         START_TOKEN = 49406
         PAD_TOKEN = 49407
         self.all_placeholder_token_ids = []
-        initializer_token_ids = []
         num_placeholders_added = 0
         for placeholder, initializer in zip(self.placeholder_tokens, self.initializer_tokens):
             # Compute the number of tokens the initializer maps to.
@@ -355,7 +355,8 @@ class TextualInversionTrainer:
                 nontrivial_initializer_ids
             ), "placeholder token ids and nontrivial initializer token count doesn't match"
             self.logger.info(f'Added {len(placeholder_token_ids)} tokens for "{placeholder}".')
-            self.all_placeholder_token_ids.append(placeholder_token_ids)
+            self.all_placeholder_token_ids += placeholder_token_ids
+            print(50 * ":", self.all_placeholder_token_ids, sep="\n")
             # Expand the token embeddings and initialize.
             self.text_encoder.resize_token_embeddings(len(self.tokenizer))
             # Initialize the placeholder vectors to coincide with their initializer vectors.
@@ -394,15 +395,15 @@ class TextualInversionTrainer:
 
     def _tokenizer_fn(self, text: str) -> torch.Tensor:
         """Helper function for turning text directly into a tensor."""
-        text = self._replace_placeholders_with_dummies(text)
-        tokenized_text = self.tokenizer(
-            text,
+        dummy_text = self._replace_placeholders_with_dummies(text)
+        tokenized_dummy_text = self.tokenizer(
+            dummy_text,
             padding="max_length",
             truncation=True,
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids[0]
-        return tokenized_text
+        return tokenized_dummy_text
 
     def _replace_placeholders_with_dummies(self, text: str) -> str:
         """Helper function for replacing placeholders with dummy placeholders."""
@@ -516,6 +517,11 @@ class TextualInversionTrainer:
             .detach()
             .cpu()
         )
+        print(self.all_placeholder_token_ids)
+        print(type(self.all_placeholder_token_ids))
+        assert len(self.all_placeholder_token_ids) == len(
+            learned_embeds
+        ), "size of all placeholder token ids and learned_embeds do not match"
         learned_embeds_dict = {
             idx: tensor for idx, tensor in zip(self.all_placeholder_token_ids, learned_embeds)
         }
