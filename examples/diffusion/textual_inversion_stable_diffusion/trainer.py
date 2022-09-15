@@ -489,7 +489,7 @@ class TextualInversionTrainer:
                 "steps_completed": self.steps_completed,
                 "initializer_tokens": self.initializer_tokens,
                 "placeholder_tokens": self.placeholder_tokens,
-                "placeholder_token_ids": self.all_placeholder_token_ids,
+                "all_placeholder_token_ids": self.all_placeholder_token_ids,
                 "placeholder_token_map": self.placeholder_token_map,
                 "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
                 "inference_noise_scheduler_name": self.inference_noise_scheduler_name,
