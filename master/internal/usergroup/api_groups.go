@@ -2,6 +2,10 @@ package usergroup
 
 import (
 	"context"
+	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -15,6 +19,11 @@ type UserGroupAPIServer struct{}
 // CreateGroup creates a group and adds members to it, if any.
 func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.CreateGroupResponse, err error) {
+	if strings.Contains(req.Name, "DeterminedPersonalGroup") {
+		return nil, status.Error(codes.InvalidArgument,
+			"group name cannot contain 'DeterminedPersonalGroup'")
+	}
+
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
