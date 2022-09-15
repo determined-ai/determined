@@ -223,10 +223,10 @@ func (i *batchDownloadIterator) Err() error {
 // DownloadObject() eturns a DownloadObject.
 func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 	return s3manager.BatchDownloadObject{
-		Object: ptrs.Ptr(s3.GetObjectInput{
+		Object: &s3.GetObjectInput{
 			Bucket: &i.bucket,
 			Key:    i.objects[i.pos].Key,
-		}),
+		},
 		Writer: newSeqWriterAt(i.aw),
 	}
 }

@@ -20,7 +20,7 @@ import (
 func SetupCheckpointTestEcho(t *testing.T) (
 	*apiServer, model.User, echo.Context,
 ) {
-	api, _, _, user, _ := SetupProjectAuthZTest(t)
+	api, user, _ := SetupAPITest(t)
 
 	e := echo.New()
 	c := e.NewContext(nil, nil)
