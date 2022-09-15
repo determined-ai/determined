@@ -1,4 +1,4 @@
-import { Form, message, Select } from 'antd';
+import { Form, message, Select, Table } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -38,12 +38,29 @@ const ModalForm: React.FC<Props> = ({ form, group }) => {
     fetchGroupRoles();
   }, [ fetchGroupRoles ]);
 
+  const roleColumns = [
+    {
+      dataIndex: 'name',
+      key: 'name',
+      title: 'Name',
+    },
+  ];
+
   return (
     <Form
       form={form}
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 14 }}>
       <Form.Item label="Roles" name="roles">
+        {groupRoles.length
+          ? (
+            <Table
+              columns={roleColumns}
+              dataSource={groupRoles}
+              pagination={{ hideOnSinglePage: true, size: 'small' }}
+            />
+          )
+          : null}
         <Select
           loading={isLoading}
           mode="multiple"
