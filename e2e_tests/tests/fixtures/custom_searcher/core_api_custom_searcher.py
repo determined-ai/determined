@@ -63,7 +63,8 @@ class FallibleSearchRunner(CoreSearchRunner):
         # since that exception was raised in the previous run;
         # this testing approach works as long as the there is
         # at least one save between consecutive exceptions
-        self.search_method.exception_points.pop(0)
+        if len(search_method.exception_points) > 0:
+            self.search_method.exception_points.pop(0)
 
         if len(self.search_method.exception_points) > 0:
             if self.search_method.exception_points[0] == "after_save":
