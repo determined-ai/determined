@@ -398,35 +398,17 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 }
 
 // IsAgentRMReattachEnabled returns whether the container reattachment is enabled on AgentRM.
+// Most other checks on Reattachability have been moved to the ResourceManager interface and
+// deligated to RM implementations, however this one is referenced in PreStart without
+// the ability to access the targeted resource manager.
 func IsAgentRMReattachEnabled() bool {
 	config := GetMasterConfig()
+
 	if config.ResourceManager.AgentRM == nil {
 		return false
 	}
 	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.AgentReattachEnabled {
-			return true
-		}
-	}
-	return false
-}
-
-// IsReattachEnabled returns whether the container reattachment is enabled, e.g. for trials
-// to decide whether to try to restore open allocations.
-func IsReattachEnabled() bool {
-	return IsAgentRMReattachEnabled()
-}
-
-// IsReattachEnabledForRP returns whether the container reattachment is enabled for the given
-// resource pool.
-func IsReattachEnabledForRP(rpName string) bool {
-	config := GetMasterConfig()
-	if config.ResourceManager.AgentRM == nil {
-		return false
-	}
-
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.PoolName == rpName && rpConfig.AgentReattachEnabled {
 			return true
 		}
 	}
