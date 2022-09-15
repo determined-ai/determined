@@ -549,13 +549,13 @@ class TextualInversionTrainer:
         imgs_path = path.joinpath("imgs")
         os.makedirs(imgs_path, exist_ok=True)
         for prompt in self.inference_prompts:
-            prompt = self._replace_placeholders_with_dummies(prompt)
+            dummy_prompt = self._replace_placeholders_with_dummies(prompt)
             # Fix generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
             )
             generated_img = self.pipeline(
-                prompt=prompt,
+                prompt=dummy_prompt,
                 num_inference_steps=self.num_inference_steps,
                 guidance_scale=self.guidance_scale,
                 generator=generator,
