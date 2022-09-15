@@ -256,6 +256,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						SlotsAvailable: 20,
 						SlotsUsed:      12,
 						NumAgents:      12,
+						SlotsPerAgent:  1,
 					},
 				},
 				location:      "PBS",
@@ -285,6 +286,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						SlotsAvailable: 20,
 						SlotsUsed:      12,
 						NumAgents:      12,
+						SlotsPerAgent:  1,
 					},
 					{
 						Name:           "partition 3",
@@ -332,7 +334,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 
 				assert.Equal(t, pool.Description, tt.want.location+"-managed pool of resources")
 				assert.Equal(t, pool.Type, resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC)
-				assert.Equal(t, pool.SlotsPerAgent, int32(0))
+				assert.Equal(t, pool.SlotsPerAgent, tt.want.pools[i].SlotsPerAgent)
 				assert.Equal(t, pool.AuxContainerCapacityPerAgent, int32(0))
 				assert.Equal(t, pool.SchedulerType, tt.want.schedulerType)
 				assert.Equal(t, pool.SchedulerFittingPolicy, tt.want.fittingPolicy)
