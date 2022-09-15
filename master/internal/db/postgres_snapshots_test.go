@@ -51,8 +51,10 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	cSearcher2 := searcher.NewSearcher(4, customSearchMethod2, nil)
 	err2 := cSearcher2.Restore(restored_snapshotSearcher1)
 	require.NoError(t, err2)
-	queue1 := cSearcher1.GetCustomSearcherEventQueue()
-	queue2 := cSearcher2.GetCustomSearcherEventQueue()
+	queue1, err := cSearcher1.GetCustomSearcherEventQueue()
+	require.NoError(t, err)
+	queue2, err := cSearcher2.GetCustomSearcherEventQueue()
+	require.NoError(t, err)
 	require.Equal(t, queue1.GetEvents(), queue2.GetEvents())
 	db.DeleteSnapshotsForExperiment(1)
 }

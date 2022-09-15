@@ -27,13 +27,9 @@ func newCustomSearch(config expconf.CustomConfig) SearchMethod {
 		CustomConfig: config,
 		customSearchState: customSearchState{
 			SearchMethodType:   CustomSearch,
-			SearcherEventQueue: createSearcherEventQueue(),
+			SearcherEventQueue: newSearcherEventQueue(),
 		},
 	}
-}
-
-func createSearcherEventQueue() *SearcherEventQueue {
-	return newSearcherEventQueue()
 }
 
 func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
