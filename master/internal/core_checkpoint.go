@@ -71,6 +71,7 @@ func (ac *archiveClosers) Close() error {
 }
 
 type tarArchiveWriter struct {
+	archiveClosers
 	tw *tar.Writer
 }
 
@@ -92,6 +93,7 @@ func (aw *tarArchiveWriter) Write(p []byte) (int, error) {
 }
 
 type zipArchiveWriter struct {
+	archiveClosers
 	zw        *zip.Writer
 	zwContent io.Writer
 }
@@ -341,7 +343,7 @@ func newDownloader(
 }
 
 // It is assumed that a http status code is not sent until the first write to w.
-func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Closer, error) {
+func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, error) {
 	// DelayWriter delays the first write until we have successfully downloaded
 	// some bytes and are more confident that the download will succeed.
 	dw := newDelayWriter(w, 16*1024)
@@ -354,16 +356,16 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 		tw := tar.NewWriter(gz)
 		closers = append(closers, tw)
 
-		return &tarArchiveWriter{tw}, closers, nil
+		return &tarArchiveWriter{archiveClosers{closers}, tw}, nil
 
 	case MIMEApplicationZip:
 		zw := zip.NewWriter(dw)
 		closers = append(closers, zw)
 
-		return &zipArchiveWriter{zw, nil}, closers, nil
+		return &zipArchiveWriter{archiveClosers{closers}, zw, nil}, nil
 
 	default:
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"MIME type must be %s or %s but got %s",
 			MIMEApplicationGZip, MIMEApplicationZip, mimeType)
 	}
@@ -420,7 +422,7 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 	}
 
 	c.Response().Header().Set(echo.HeaderContentType, mimeType)
-	writerPipe, closers, err := buildWriterPipeline(c.Response(), mimeType)
+	writerPipe, err := buildWriterPipeline(c.Response(), mimeType)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
