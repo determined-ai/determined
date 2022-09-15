@@ -35,7 +35,7 @@ export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
 export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
   return {
     id: permission.id,
-    isGlobal: permission.isGlobal,
+    isGlobal: permission.isGlobal || false,
     name: permission.name || '',
   };
 };

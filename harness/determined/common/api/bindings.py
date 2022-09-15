@@ -3669,27 +3669,23 @@ class v1ListRolesRequest:
     def __init__(
         self,
         *,
-        isGlobal: bool,
         limit: int,
         offset: "typing.Optional[int]" = None,
     ):
         self.offset = offset
         self.limit = limit
-        self.isGlobal = isGlobal
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ListRolesRequest":
         return cls(
             offset=obj.get("offset", None),
             limit=obj["limit"],
-            isGlobal=obj["isGlobal"],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "offset": self.offset if self.offset is not None else None,
             "limit": self.limit,
-            "isGlobal": self.isGlobal,
         }
 
 class v1ListRolesResponse:

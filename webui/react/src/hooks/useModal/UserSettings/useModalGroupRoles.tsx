@@ -2,6 +2,7 @@ import { Form, message, Select } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { useStore } from 'contexts/Store';
 import { assignRolesToGroup, getGroupRoles } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -12,12 +13,12 @@ import handleError from 'utils/error';
 interface Props {
   form: FormInstance;
   group: V1GroupSearchResult;
-  roles: UserRole[];
 }
 
-const ModalForm: React.FC<Props> = ({ form, roles, group }) => {
+const ModalForm: React.FC<Props> = ({ form, group }) => {
   const [ groupRoles, setGroupRoles ] = useState<UserRole[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
+  const { knownRoles } = useStore();
 
   const fetchGroupRoles = useCallback(async () => {
     if (group?.group.groupId) {
@@ -49,8 +50,9 @@ const ModalForm: React.FC<Props> = ({ form, roles, group }) => {
           optionFilterProp="children"
           placeholder={`Add Roles to: ${group.group.name}`}
           showSearch>{
-            roles.filter(
-              (r) => !groupRoles.find((gr) => gr.id === r.id),
+            knownRoles.filter(
+              (r) => r.permissions.find((p) => p.isGlobal) &&
+                !groupRoles.find((gr) => gr.id === r.id),
             ).map((r) => (
               <Select.Option key={r.id} value={r.id}>{r.name}</Select.Option>
             ))
@@ -64,10 +66,9 @@ const ModalForm: React.FC<Props> = ({ form, roles, group }) => {
 interface ModalProps {
   group: V1GroupSearchResult;
   onClose?: () => void;
-  roles: UserRole[];
 }
 
-const useModalGroupRoles = ({ onClose, group, roles }: ModalProps): ModalHooks => {
+const useModalGroupRoles = ({ onClose, group }: ModalProps): ModalHooks => {
 
   const [ form ] = Form.useForm();
 
@@ -104,14 +105,14 @@ const useModalGroupRoles = ({ onClose, group, roles }: ModalProps): ModalHooks =
   const modalOpen = useCallback(() => {
     openOrUpdate({
       closable: true,
-      content: <ModalForm form={form} group={group} roles={roles} />,
+      content: <ModalForm form={form} group={group} />,
       icon: null,
       okText: 'Update Roles',
       onCancel: handleCancel,
       onOk: onOk,
       title: <h5>Update Roles</h5>,
     });
-  }, [ form, handleCancel, onOk, openOrUpdate, roles, group ]);
+  }, [ form, handleCancel, onOk, openOrUpdate, group ]);
 
   return { modalOpen, ...modalHook };
 };

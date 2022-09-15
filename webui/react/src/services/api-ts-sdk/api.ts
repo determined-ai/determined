@@ -4116,12 +4116,6 @@ export interface V1ListRolesRequest {
      * @memberof V1ListRolesRequest
      */
     limit: number;
-    /**
-     * searching global roles.
-     * @type {boolean}
-     * @memberof V1ListRolesRequest
-     */
-    isGlobal: boolean;
 }
 
 /**

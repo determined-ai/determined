@@ -301,7 +301,6 @@ export const listRoles: DetApi<
   name: 'listRoles',
   postProcess: (response) => response.roles.map(decoder.mapV1Role),
   request: (params) => detApi.RBAC.listRoles({
-    isGlobal: params.isGlobal,
     limit: params.limit || 0,
     offset: params.offset || 0,
   }),
