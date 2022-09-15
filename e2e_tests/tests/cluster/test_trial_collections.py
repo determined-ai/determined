@@ -121,7 +121,7 @@ def assert_collection_is_uniquely_represented_in_collections(
     collections = get_collections(sess, project_id=collection.projectId)
     matching_collections = [c for c in collections if c.id == collection.id]
     assert len(matching_collections) == 1
-    assert matching_collections[0] == collection
+    assert matching_collections[0].id == collection.id
 
 
 @pytest.mark.e2e_cpu
