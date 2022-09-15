@@ -140,12 +140,14 @@ const WorkspaceList: React.FC = () => {
         title: 'Name',
       },
       {
+        align: 'right',
         dataIndex: 'numProjects',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['numProjects'],
         key: 'numProjects',
         title: 'Projects',
       },
       {
+        align: 'center',
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
@@ -153,6 +155,7 @@ const WorkspaceList: React.FC = () => {
         title: 'User',
       },
       {
+        align: 'center',
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
@@ -160,6 +163,7 @@ const WorkspaceList: React.FC = () => {
         title: 'Archived',
       },
       {
+        align: 'center',
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         key: 'state',

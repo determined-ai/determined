@@ -2,13 +2,17 @@
   align-items: center;
   display: flex;
 }
+.centerHorizontally {
+  display: flex;
+  justify-content: center;
+}
 .versionBox {
   background-color: var(--theme-surface);
   border-radius: 15%;
   color: var(--theme-surface-on);
   height: min-content;
   padding: 6px;
-  width: min-content
+  width: min-content;
 }
 .wordBreak {
   word-break: break-word;

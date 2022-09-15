@@ -336,6 +336,7 @@ const ModelRegistry: React.FC = () => {
         title: 'Description',
       },
       {
+        align: 'right',
         dataIndex: 'numVersions',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['numVersions'],
         key: V1GetModelsRequestSortBy.NUMVERSIONS,
@@ -344,6 +345,7 @@ const ModelRegistry: React.FC = () => {
         title: 'Versions',
       },
       {
+        align: 'right',
         dataIndex: 'lastUpdatedTime',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdatedTime'],
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
@@ -362,6 +364,7 @@ const ModelRegistry: React.FC = () => {
         title: 'Tags',
       },
       {
+        align: 'center',
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',

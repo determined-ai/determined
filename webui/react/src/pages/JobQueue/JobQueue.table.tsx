@@ -62,6 +62,7 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
 
 export const columns: ColumnDef<Job>[] = [
   {
+    align: 'center',
     dataIndex: 'preemptible',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['preemptible'],
     key: 'jobsAhead',
@@ -76,6 +77,7 @@ export const columns: ColumnDef<Job>[] = [
   //   title: 'ID',
   // },
   {
+    align: 'center',
     dataIndex: 'type',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
     key: 'type',
@@ -124,6 +126,7 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Priority',
   },
   {
+    align: 'right',
     dataIndex: 'submissionTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['submissionTime'],
     key: 'submitted',
@@ -132,6 +135,7 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Submitted',
   },
   {
+    align: 'right',
     dataIndex: 'slots',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['slots'],
     key: 'slots',
@@ -148,6 +152,7 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Slots',
   },
   {
+    align: 'center',
     dataIndex: 'status',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['status'],
     key: 'state',
@@ -162,13 +167,15 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Status',
   },
   {
+    align: 'center',
     dataIndex: 'user',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
     key: 'user',
-    render: (_: unknown, record: Job): ReactNode => {
-      const cell = <Avatar userId={record.userId} />;
-      return cell;
-    },
+    render: (_: unknown, record: Job): ReactNode => (
+      <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+        <Avatar userId={record.userId} />
+      </div>
+    ),
     title: 'User',
   },
   {

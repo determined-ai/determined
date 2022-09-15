@@ -213,6 +213,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             case Api.V1SchedulerType.FAIRSHARE:
               col.title = 'Weight';
               col.dataIndex = 'weight';
+              col.align = 'right';
               break;
           }
           if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
@@ -225,7 +226,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             col.title = 'Preemptible';
             col.render = (_: unknown, record) => {
               return (
-                <div className={css.centerVertically}>
+                <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
                   {checkmarkRenderer(record.isPreemptible)}
                 </div>
               );
