@@ -253,7 +253,6 @@ class TextualInversionTrainer:
         noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, timesteps)
 
         # Get the text embedding for conditioning
-        print("BATCH INPUT IDS: ", batch["input_ids"])
         encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
 
         # Predict the noise residual
@@ -351,6 +350,7 @@ class TextualInversionTrainer:
             placeholder_token_ids = self.tokenizer.convert_tokens_to_ids(
                 self.placeholder_token_map[placeholder]
             )
+            # Sanity check
             assert len(placeholder_token_ids) == len(
                 nontrivial_initializer_ids
             ), "placeholder token ids and nontrivial initializer token count doesn't match"
@@ -517,8 +517,6 @@ class TextualInversionTrainer:
             .detach()
             .cpu()
         )
-        print(self.all_placeholder_token_ids)
-        print(type(self.all_placeholder_token_ids))
         assert len(self.all_placeholder_token_ids) == len(
             learned_embeds
         ), "size of all placeholder token ids and learned_embeds do not match"
