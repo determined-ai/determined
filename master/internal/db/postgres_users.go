@@ -80,6 +80,7 @@ RETURNING id`)
 	return user.ID, nil
 }
 
+// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
 const PersonalGroupPostfix = "DeterminedPersonalGroup"
 
 func addUserPersonalGroup(tx *sqlx.Tx, userID model.UserID) error {
