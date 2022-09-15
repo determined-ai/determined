@@ -7,12 +7,63 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
+
+// GetPermissionSummary retrieves a list of all roles a user is assigned to along with
+// what scopes that roles are assigned to.
+func GetPermissionSummary(
+	ctx context.Context, userID model.UserID,
+) (map[*Role][]*RoleAssignment, error) {
+	// Get a list of groups a user is in.
+	groups, _, _, err := usergroup.SearchGroups(ctx, "", userID, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) == 0 {
+		return nil, errors.New("user has to be in at least one group")
+	}
+	groupIDs := make([]int32, len(groups))
+	for i := range groups {
+		groupIDs[i] = int32(groups[i].ID)
+	}
+
+	// Get all role assignments to all groups the user is in.
+	var roleAssignments []*RoleAssignment
+	if err = db.Bun().NewSelect().Model(&roleAssignments).
+		Where("group_id IN (?)", bun.In(groupIDs)).
+		Relation("Scope").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	if len(roleAssignments) == 0 {
+		return nil, nil
+	}
+
+	// Get unique roles and associate them to role assignments.
+	roleIDsToAssignments := make(map[int][]*RoleAssignment)
+	for _, r := range roleAssignments {
+		roleIDsToAssignments[r.RoleID] = append(roleIDsToAssignments[r.RoleID], r)
+	}
+	var roles []*Role
+	if err = db.Bun().NewSelect().Model(&roles).
+		Where("id IN (?)", bun.In(maps.Keys(roleIDsToAssignments))).
+		Relation("Permissions").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	rolesToAssignments := make(map[*Role][]*RoleAssignment, len(roleIDsToAssignments))
+	for _, r := range roles {
+		rolesToAssignments[r] = roleIDsToAssignments[r.ID]
+	}
+	return rolesToAssignments, nil
+}
 
 // UserPermissionsForScope finds what permissions a user has on a give scope.
 // Passing a workspaceID of zero signals to only check for globally-assigned roles.
@@ -357,7 +408,7 @@ func getOrCreateRoleAssignmentScopeTx(ctx context.Context, idb bun.IDB,
 			return r, nil
 		}
 	} else {
-		scopeSelect = scopeSelect.Where("scope_workspace_id = ?", assignment.ScopeWorkspaceId)
+		scopeSelect = scopeSelect.Where("scope_workspace_id = ?", assignment.ScopeWorkspaceId.Value)
 
 		r.WorkspaceID.Int32 = assignment.ScopeWorkspaceId.Value
 		r.WorkspaceID.Valid = true

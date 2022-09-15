@@ -65,7 +65,9 @@ type launcherMonitor struct {
 }
 
 // newDispatchWatcher initiates the process of monitoring the progress of launched jobs.
-func newDispatchWatcher(apiClient *launcher.APIClient, authToken string, authFile string) *launcherMonitor {
+func newDispatchWatcher(
+	apiClient *launcher.APIClient, authToken string, authFile string,
+) *launcherMonitor {
 	return &launcherMonitor{
 		monitoredJobs:     map[string]launcherJob{},
 		jobsToRemove:      map[string]bool{},
