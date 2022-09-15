@@ -230,10 +230,18 @@ func getS3BucketRegion(ctx context.Context, bucket string) (string, error) {
 	return *out.LocationConstraint, nil
 }
 
-func s3DownloadCheckpoint(
-	c echo.Context, aw archiveWriter, bucket string, prefix string,
-) error {
-	region, err := getS3BucketRegion(c.Request().Context(), bucket)
+type checkpointDownloader interface {
+	download(c context.Context) error
+}
+
+type s3Downloader struct {
+	aw     archiveWriter
+	bucket string
+	prefix string
+}
+
+func (d *s3Downloader) download(c context.Context) error {
+	region, err := getS3BucketRegion(c, d.bucket)
 	if err != nil {
 		return err
 	}
@@ -252,9 +260,9 @@ func s3DownloadCheckpoint(
 		d.Concurrency = 1 // Setting concurrency to 1 to use s3SeqWriterAt
 	})
 	funcReadPage := func(output *s3.ListObjectsV2Output, lastPage bool) bool {
-		iter := newBatchDownloadIterator(aw, bucket, output.Contents)
+		iter := newBatchDownloadIterator(d.aw, d.bucket, output.Contents)
 		// Download every bucket in this page
-		err = downloader.DownloadWithIterator(c.Request().Context(), iter)
+		err = downloader.DownloadWithIterator(c, iter)
 		if iter.Err() != nil {
 			errs = append(errs, iter.Err())
 		}
@@ -266,10 +274,10 @@ func s3DownloadCheckpoint(
 		return len(errs) == 0
 	}
 	err = s3client.ListObjectsV2PagesWithContext(
-		c.Request().Context(),
+		c,
 		&s3.ListObjectsV2Input{
-			Bucket: ptrs.Ptr(bucket),
-			Prefix: ptrs.Ptr(prefix),
+			Bucket: &d.bucket,
+			Prefix: &d.prefix,
 		},
 		funcReadPage,
 	)
@@ -284,6 +292,25 @@ func s3DownloadCheckpoint(
 		return errors.New(msg)
 	}
 	return nil
+}
+
+func newDownloader(
+	storageConfig expconf.CheckpointStorageConfig,
+	aw archiveWriter,
+	id string,
+) (checkpointDownloader, error) {
+	switch storage := storageConfig.GetUnionMember().(type) {
+	case expconf.S3Config:
+		return &s3Downloader{
+			aw:     aw,
+			bucket: storage.Bucket(),
+			prefix: strings.TrimLeft(*storage.Prefix()+"/"+id, "/"),
+		}, nil
+	default:
+		return nil, echo.NewHTTPError(http.StatusNotImplemented,
+			fmt.Sprintf("checkpoint download via master is only supported on S3"+
+				", but the checkpoint's storage type is %s", storageConfig2Str(storage)))
+	}
 }
 
 // It is assumed that a http status code is not sent until the first write to w.
@@ -342,7 +369,6 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 		return echo.NewHTTPError(http.StatusNotFound,
 			fmt.Sprintf("checkpoint %s does not exist", args.CheckpointUUID))
 	}
-	storageUnion := expConfig.CheckpointStorage()
 
 	c.Response().Header().Set(echo.HeaderContentType, mimeType)
 	writerPipe, closers, err := buildWriterPipeline(c.Response(), mimeType)
@@ -350,20 +376,12 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	switch storage := storageUnion.GetUnionMember().(type) {
-	case expconf.S3Config:
-		err = s3DownloadCheckpoint(c, writerPipe, storage.Bucket(),
-			strings.TrimLeft(*storage.Prefix()+"/"+args.CheckpointUUID, "/"))
-
-	default:
-		return echo.NewHTTPError(http.StatusNotImplemented,
-			fmt.Sprintf("checkpoint download via master is only supported on S3"+
-				", but the checkpoint's storage type is %s", storageConfig2Str(storage)))
-	}
+	downloader, err := newDownloader(expConfig.CheckpointStorage(),
+		writerPipe, args.CheckpointUUID)
+	err = downloader.download(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
-			fmt.Sprintf("unable to download checkpoint %s: %s",
-				args.CheckpointUUID, err.Error()))
+			fmt.Sprintf("unable to download checkpoint %s: %s", args.CheckpointUUID, err.Error()))
 	}
 
 	for i := len(closers) - 1; i >= 0; i-- {
