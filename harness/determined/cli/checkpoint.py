@@ -95,7 +95,7 @@ def list_checkpoints(args: Namespace) -> None:
 def download(args: Namespace) -> None:
     checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
 
-    path = checkpoint.download(path=args.output_dir)
+    path = checkpoint.download(args.via_master, path=args.output_dir)
 
     if args.quiet:
         print(path)
@@ -144,6 +144,12 @@ main_cmd = Cmd(
                     "--quiet",
                     action="store_true",
                     help="Only print the path to the checkpoint.",
+                ),
+                Arg(
+                    "-m",
+                    "--via-master",
+                    action="store_true",
+                    help="Download the checkpoint through the master.",
                 ),
             ],
         ),

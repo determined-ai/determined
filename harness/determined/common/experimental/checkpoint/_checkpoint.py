@@ -1,8 +1,10 @@
 import dataclasses
 import enum
 import json
+import os
 import pathlib
 import shutil
+import subprocess
 import warnings
 from typing import Any, Dict, List, Optional, cast
 
@@ -112,7 +114,7 @@ class Checkpoint:
             "checkpoint storage configuration.".format(self.uuid, potential_paths)
         )
 
-    def download(self, path: Optional[str] = None) -> str:
+    def download(self, via_master: bool, path: Optional[str] = None) -> str:
         """
         Download checkpoint to local storage.
 
@@ -123,6 +125,8 @@ class Checkpoint:
           - :func:`determined.estimator.load_estimator_from_checkpoint_path`
 
         Arguments:
+            via_master (bool): If true, checkpoints are downloaded through the master,
+                otherwise they are downloaded directly from checkpoint storage.
             path (string, optional): Top level directory to place the
                 checkpoint under. If this parameter is not set, the checkpoint will
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
@@ -147,7 +151,14 @@ class Checkpoint:
                 raise NotImplementedError("Non-training checkpoints cannot be downloaded")
 
             checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
-            if checkpoint_storage["type"] == "shared_fs":
+            if via_master:
+                if checkpoint_storage["type"] != "s3":
+                    raise NotImplementedError(
+                        "Checkpoint download via master is only supported on S3"
+                        f", got {checkpoint_storage['type']}"
+                    )
+                self._download_via_master(local_ckpt_dir)
+            elif checkpoint_storage["type"] == "shared_fs":
                 src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
             else:
@@ -183,6 +194,33 @@ class Checkpoint:
             self.write_metadata_file(str(metadata_path))
 
         return str(local_ckpt_dir)
+
+    def _download_via_master(self, local_ckpt_dir: pathlib.Path) -> None:
+        local_ckpt_dir.mkdir(parents=True, exist_ok=True)
+        if os.name == "nt":
+            fext = "zip"
+            mime_type = "application/zip"
+        else:
+            fext = "tgz"
+            mime_type = "application/gzip"
+        resp = self._session.get(f"/checkpoints/{self.uuid}", headers={"Accept": mime_type})
+        if not resp.ok:
+            raise RuntimeError(
+                "unable to download checkpoint from master:", resp.status_code, resp.reason
+            )
+
+        tmpfile = pathlib.Path(f"{local_ckpt_dir}/{self.uuid}.{fext}")
+        with open(tmpfile, "wb") as f:
+            f.write(resp.content)
+
+        try:
+            if fext == "zip":
+                subprocess.run(["unzip", "-d", local_ckpt_dir, tmpfile], check=True)
+            else:
+                # gzip
+                subprocess.run(["tar", "-C", local_ckpt_dir, "-xzf", tmpfile], check=True)
+        finally:
+            tmpfile.unlink(missing_ok=True)
 
     def write_metadata_file(self, path: str) -> None:
         """
