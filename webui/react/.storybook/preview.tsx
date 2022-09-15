@@ -13,6 +13,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeOptions } from '../src/components/ThemeToggle';
 import StoreProvider, { StoreAction, useStoreDispatch } from '../src/contexts/Store';
 import useTheme from '../src/hooks/useTheme';
+import { StoreActionUI } from '../src/shared/contexts/UIStore';
 import { BrandingType } from '../src/types';
 
 export const globalTypes = {
@@ -76,7 +77,7 @@ const ChildView = (
       default:
         currentTheme = ThemeOptions.system.className;
     }
-    storeDispatch({ type: StoreAction.SetMode, value: currentTheme });
+    storeDispatch({ type: StoreActionUI.SetMode, value: currentTheme });
   }, [ context.globals.theme, storeDispatch ]);
 
   return <>{children}</>;
