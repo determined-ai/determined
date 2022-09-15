@@ -5,11 +5,13 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -295,7 +297,7 @@ func (d *s3Downloader) download(c context.Context) error {
 }
 
 func newDownloader(
-	storageConfig expconf.CheckpointStorageConfig,
+	storageConfig *expconf.CheckpointStorageConfig,
 	aw archiveWriter,
 	id string,
 ) (checkpointDownloader, error) {
@@ -342,6 +344,30 @@ func buildWriterPipeline(w io.Writer, mimeType string) (archiveWriter, []io.Clos
 	}
 }
 
+func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (*expconf.CheckpointStorageConfig, error) {
+	checkpoint, err := m.db.CheckpointByUUID(id)
+	if err != nil {
+		return nil, err
+	}
+	if checkpoint == nil {
+		return nil, err
+	}
+
+	bytes, err := json.Marshal(checkpoint.CheckpointTrainingMetadata.ExperimentConfig)
+	if err != nil {
+		return nil, err
+	}
+	spew.Dump(bytes)
+	spew.Dump(checkpoint.CheckpointTrainingMetadata.ExperimentConfig)
+
+	legacyConfig, err := expconf.ParseLegacyConfigJSON(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return ptrs.Ptr(legacyConfig.CheckpointStorage()), nil
+}
+
 func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 	args := struct {
 		CheckpointUUID string `path:"checkpoint_uuid"`
@@ -359,13 +385,13 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 	}
 
 	// Assume a checkpoint always has experiment configs
-	expConfig, err := m.db.ExperimentConfigForCheckpoint(checkpointUUID)
+	storageConfig, err := m.getCheckpointStorageConfig(checkpointUUID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to retrieve experiment config for checkpoint %s: %s",
 				args.CheckpointUUID, err.Error()))
 	}
-	if expConfig == nil {
+	if storageConfig == nil {
 		return echo.NewHTTPError(http.StatusNotFound,
 			fmt.Sprintf("checkpoint %s does not exist", args.CheckpointUUID))
 	}
@@ -376,8 +402,7 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	downloader, err := newDownloader(expConfig.CheckpointStorage(),
-		writerPipe, args.CheckpointUUID)
+	downloader, err := newDownloader(storageConfig, writerPipe, args.CheckpointUUID)
 	err = downloader.download(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,

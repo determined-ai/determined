@@ -1,10 +1,7 @@
 package db
 
 import (
-	"encoding/json"
 	"fmt"
-
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -29,7 +26,7 @@ func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
 	var checkpoints []model.Checkpoint
 	if err := db.queryRows(`
-	SELECT * FROM checkpoints_view c WHERE c.uuid
+	SELECT * FROM checkpoints_view c WHERE c.uuid 
 	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
@@ -113,28 +110,4 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	}
 
 	return groupeIDcUUIDS, nil
-}
-
-// ExperimentConfigForCheckpoint looks up the experiment config of the checkpoint by the
-// checkpoint UUID, and it returns nil if the checkpoint does not exist.
-func (db *PgDB) ExperimentConfigForCheckpoint(id uuid.UUID) (*expconf.ExperimentConfig, error) {
-	checkpoint, err := db.CheckpointByUUID(id)
-	if err != nil {
-		return nil, err
-	}
-	if checkpoint == nil {
-		return nil, err
-	}
-
-	bytes, err := json.Marshal(checkpoint.CheckpointTrainingMetadata.ExperimentConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	var config expconf.ExperimentConfig
-	err = json.Unmarshal(bytes, &config)
-	if err != nil {
-	}
-
-	return &config, nil
 }
