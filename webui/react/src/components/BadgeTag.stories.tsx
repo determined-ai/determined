@@ -9,6 +9,8 @@ import BadgeTag from './BadgeTag';
 export default {
   argTypes: {
     children: { name: 'text' },
+    label: { control: 'text' },
+    prelabel: { control: 'text' },
     state: { control: 'inline-radio', options: CommandState },
     type: { control: 'inline-radio', options: BadgeType },
   },

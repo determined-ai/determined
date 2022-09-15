@@ -4,7 +4,7 @@ import React from 'react';
 
 export default {
   argTypes: {
-    color: { control: { type: 'text' }, description: 'hexcode' },
+    color: { control: 'color' },
     placement: {
       control: {
         options: [ 'top',
