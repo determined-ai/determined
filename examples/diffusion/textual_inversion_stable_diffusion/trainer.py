@@ -54,6 +54,7 @@ class TextualInversionTrainer:
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.5,
         center_crop: bool = False,
+        generate_training_images: bool = True,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
         inference_noise_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "ddim",
         num_inference_steps: int = 50,
@@ -102,7 +103,6 @@ class TextualInversionTrainer:
         self.train_img_dirs = train_img_dirs
         self.train_seed = train_seed
 
-        # TODO: Fix inference_prompts default
         self.inference_noise_schedulers = {
             "ddim": DDIMScheduler,
             "lms-discrete": LMSDiscreteScheduler,
@@ -112,15 +112,26 @@ class TextualInversionTrainer:
             f"inference_noise_scheduler must be one {list(self.inference_noise_schedulers.keys())},"
             f" but got {inference_noise_scheduler_name}"
         )
-
+        self.generate_training_images = generate_training_images
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
         self.inference_noise_scheduler_name = inference_noise_scheduler_name
-        self.inference_prompts = inference_prompts or [f"a painting of a dog"]
+        self.inference_prompts = inference_prompts
         self.num_inference_steps = num_inference_steps
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
-        self.other_inference_noise_scheduler_kwargs = other_inference_noise_scheduler_kwargs or {}
+
+        # TODO: defaults for ddim and lms-discrete
+        default_inference_noise_scheduler_kwargs = {
+            "pndm": {"skip_prk_steps": True},
+            "ddim": {},
+            "lms-discrete": {},
+        }
+        if other_inference_noise_scheduler_kwargs is None:
+            other_inference_noise_scheduler_kwargs = default_inference_noise_scheduler_kwargs[
+                self.inference_noise_scheduler_name
+            ]
+        self.other_inference_noise_scheduler_kwargs = other_inference_noise_scheduler_kwargs
 
         self.logger = accelerate.logging.get_logger(__name__)
         self.steps_completed = 0
@@ -446,8 +457,9 @@ class TextualInversionTrainer:
             }
 
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
-                self._build_pipeline()
-                self._generate_and_write_imgs(path)
+                if self.generate_training_images:
+                    self._build_pipeline()
+                    self._generate_and_write_imgs(path)
                 self._write_optimizer_state_dict_to_path(path)
                 self._write_learned_embeddings_to_path(path)
 
