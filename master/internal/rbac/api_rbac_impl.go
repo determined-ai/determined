@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -22,11 +23,50 @@ func init() {
 // RBACAPIServerImpl contains the RBAC implementation of RBACAPIServer.
 type RBACAPIServerImpl struct{}
 
-// GetPermissionsSummary is stubbed for now.
-func (a *RBACAPIServerImpl) GetPermissionsSummary(context.Context,
-	*apiv1.GetPermissionsSummaryRequest,
-) (*apiv1.GetPermissionsSummaryResponse, error) {
-	return nil, nil
+// GetPermissionsSummary gets a permission overview for the currently logged in user.
+func (a *RBACAPIServerImpl) GetPermissionsSummary(
+	ctx context.Context, req *apiv1.GetPermissionsSummaryRequest,
+) (resp *apiv1.GetPermissionsSummaryResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	summary, err := GetPermissionSummary(ctx, u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var roles []Role
+	var assignments []*rbacv1.RoleAssignmentSummary
+	for role, roleAssignments := range summary {
+		var workspaceIDs []int32
+		isGlobal := false
+		for _, assign := range roleAssignments {
+			if assign.Scope.WorkspaceID.Valid {
+				workspaceIDs = append(workspaceIDs, assign.Scope.WorkspaceID.Int32)
+			} else {
+				isGlobal = true
+			}
+		}
+
+		assignments = append(assignments, &rbacv1.RoleAssignmentSummary{
+			RoleId:            int32(role.ID),
+			ScopeWorkspaceIds: workspaceIDs,
+			IsGlobal:          isGlobal,
+		})
+		roles = append(roles, *role)
+	}
+
+	return &apiv1.GetPermissionsSummaryResponse{
+		Roles:       dbRolesToAPISummary(roles),
+		Assignments: assignments,
+	}, nil
 }
 
 // GetRolesByID searches for roles that fulfill the criteria given by the user.

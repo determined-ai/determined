@@ -8,10 +8,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/usergroup"
@@ -116,7 +118,7 @@ func TestRbac(t *testing.T) {
 		Name:   testRole.Name,
 		Permissions: []*rbacv1.Permission{
 			{
-				Id:       int32(testPermission.ID),
+				Id:       rbacv1.PermissionType(testPermission.ID),
 				Name:     testPermission.Name,
 				IsGlobal: testPermission.Global,
 			},
@@ -127,7 +129,7 @@ func TestRbac(t *testing.T) {
 		Name:   testRole2.Name,
 		Permissions: []*rbacv1.Permission{
 			{
-				Id:       int32(testPermission.ID),
+				Id:       rbacv1.PermissionType(testPermission.ID),
 				Name:     testPermission.Name,
 				IsGlobal: testPermission.Global,
 			},
@@ -138,7 +140,7 @@ func TestRbac(t *testing.T) {
 		Name:   testRole3.Name,
 		Permissions: []*rbacv1.Permission{
 			{
-				Id:       int32(testPermission.ID),
+				Id:       rbacv1.PermissionType(testPermission.ID),
 				Name:     testPermission.Name,
 				IsGlobal: testPermission.Global,
 			},
@@ -150,7 +152,7 @@ func TestRbac(t *testing.T) {
 		UserId: int32(testUser.ID),
 		RoleAssignment: &rbacv1.RoleAssignment{
 			Role:             rbacRole,
-			ScopeWorkspaceId: &workspaceId,
+			ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
 		},
 	}
 
@@ -158,7 +160,7 @@ func TestRbac(t *testing.T) {
 		GroupId: int32(testGroupStatic.ID),
 		RoleAssignment: &rbacv1.RoleAssignment{
 			Role:             rbacRole,
-			ScopeWorkspaceId: &workspaceId,
+			ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
 		},
 	}
 	assignmentScope := RoleAssignmentScope{}
@@ -265,7 +267,9 @@ func TestRbac(t *testing.T) {
 			require.NoError(t, err, "failure inserting permission assignments in local setup")
 		}
 
-		roles, _, err := GetAllRoles(ctx, false, 0, 10)
+		allRoles, _, err := GetAllRoles(ctx, false, 0, 10)
+		roles := filterToTestRoles(allRoles)
+
 		require.NoError(t, err, "error getting all roles")
 		require.Equal(t, 4, len(roles), "incorrect number of roles retrieved")
 		require.True(t, compareRoles(testRole, roles[0]),
@@ -277,28 +281,30 @@ func TestRbac(t *testing.T) {
 		require.True(t, compareRoles(testRole4, roles[3]),
 			"test role 4 is not equivalent to the retrieved role")
 
-		roles, _, err = GetAllRoles(ctx, true, 0, 10)
+		globalRoles, _, err := GetAllRoles(ctx, true, 0, 10)
+		roles = filterToTestRoles(globalRoles)
 		require.NoError(t, err, "error getting non-global roles")
 		require.Equal(t, 3, len(roles), "incorrect number of non-global roles retrieved")
 		require.True(t, compareRoles(testRole, roles[0]), "test role 1 is not equivalent to the retrieved role")
 		require.True(t, compareRoles(testRole2, roles[1]), "test role 2 is not equivalent to the retrieved role")
 		require.True(t, compareRoles(testRole3, roles[2]), "test role 3 is not equivalent to the retrieved role")
 
-		roles, _, err = GetAllRoles(ctx, false, 0, 2)
+		roles, _, err = GetAllRoles(ctx, false, 0, len(allRoles)+1)
 		require.NoError(t, err, "error getting roles with limit")
-		require.Equal(t, 2, len(roles), "incorrect number of non-global roles retrieved")
-		require.True(t, compareRoles(testRole, roles[0]),
-			"test role 1 is not equivalent to the retrieved role")
-		require.True(t, compareRoles(testRole2, roles[1]),
-			"test role 2 is not equivalent to the retrieved role")
+		require.Len(t, roles, len(allRoles))
 
-		roles, _, err = GetAllRoles(ctx, false, 2, 10)
-		require.NoError(t, err, "error getting roles with offset")
-		require.Equal(t, 2, len(roles), "incorrect number of non-global roles retrieved")
-		require.True(t, compareRoles(testRole3, roles[0]),
-			"test role 3 is not equivalent to the retrieved role")
-		require.True(t, compareRoles(testRole4, roles[1]),
-			"test role 4 is not equivalent to the retrieved role")
+		roles, _, err = GetAllRoles(ctx, false, 0, len(allRoles)-1)
+		require.NoError(t, err, "error getting roles with limit")
+		require.Len(t, roles, len(allRoles)-1)
+
+		roles, _, err = GetAllRoles(ctx, false, 2, len(allRoles))
+		require.NoError(t, err, "error getting roles with limit")
+		require.Len(t, roles, len(allRoles)-2)
+		require.True(t, compareRoles(allRoles[2], roles[0]), "offset returned wrong first role")
+
+		roles, _, err = GetAllRoles(ctx, false, len(allRoles), len(allRoles))
+		require.NoError(t, err, "error getting roles with limit")
+		require.Len(t, roles, 0)
 	})
 
 	t.Run("test getting roles by id", func(t *testing.T) {
@@ -320,14 +326,14 @@ func TestRbac(t *testing.T) {
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: &workspaceId,
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
 				},
 			},
 			{
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole3,
-					ScopeWorkspaceId: &workspaceId,
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
 				},
 			},
 		}
@@ -364,7 +370,7 @@ func TestRbac(t *testing.T) {
 				GroupId: int32(testGroupOwnedByUser.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: &workspaceId,
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
 				},
 			},
 		}
@@ -426,6 +432,57 @@ func TestRbac(t *testing.T) {
 			"Unexpectedly found permission %v for user in %v", testPermission2.ID, permissions)
 		require.False(t, permissionsContainsAll(permissions, testPermission3.ID),
 			"Unexpectedly found permission %v for user in %v", testPermission3.ID, permissions)
+	})
+
+	t.Run("test GetPermissionSummary", func(t *testing.T) {
+		permissionsToAdd := []map[string]interface{}{
+			{
+				"permission_id": globalTestPermission.ID,
+				"role_id":       testRole.ID,
+			},
+			{
+				"permission_id": testPermission.ID,
+				"role_id":       testRole.ID,
+			},
+		}
+		for _, p := range permissionsToAdd {
+			_, err := db.Bun().NewInsert().Model(&p).TableExpr("permission_assignments").Exec(ctx)
+			require.NoError(t, err, "failure inserting permission assignments in local setup")
+		}
+
+		summary, err := GetPermissionSummary(ctx, testUser.ID)
+		require.NoError(t, err)
+		require.Len(t, summary, 1)
+		for k, v := range summary {
+			// Ignore checking IDs since they are generated.
+			for _, e := range v {
+				e.ScopeID = 0
+				e.Scope.ID = 0
+			}
+			sort.Slice(k.Permissions, func(i, j int) bool {
+				return k.Permissions[i].ID < k.Permissions[j].ID
+			})
+
+			expectedRole := testRole
+			expectedRole.Permissions = []Permission{
+				testPermission,
+				globalTestPermission,
+			}
+			require.Len(t, v, 1)
+			require.Equal(t, *k, expectedRole)
+			require.Equal(t, v[0], &RoleAssignment{
+				GroupID: testGroupStatic.ID,
+				RoleID:  testRole.ID,
+				ScopeID: 0,
+				Scope: &RoleAssignmentScope{
+					ID: 0,
+					WorkspaceID: sql.NullInt32{
+						Valid: true,
+						Int32: int32(testWorkspace.ID),
+					},
+				},
+			})
+		}
 	})
 }
 
@@ -527,4 +584,17 @@ func permissionsContainsAll(permissions []Permission, ids ...int) bool {
 	}
 
 	return true
+}
+
+func filterToTestRoles(rolesGotten []Role) []Role {
+	var roles []Role
+	for _, r := range rolesGotten {
+		for _, n := range []Role{testRole, testRole2, testRole3, testRole4} {
+			if r.Name == n.Name {
+				r := r
+				roles = append(roles, r)
+			}
+		}
+	}
+	return roles
 }
