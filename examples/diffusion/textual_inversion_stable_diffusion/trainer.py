@@ -116,9 +116,6 @@ class TextualInversionTrainer:
         self.generate_training_images = generate_training_images
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
-        inference_prompts = [
-            self._replace_placeholders_with_dummies(prompt) for prompt in inference_prompts
-        ]
         self.inference_noise_scheduler_name = inference_noise_scheduler_name
         self.inference_prompts = inference_prompts
         self.num_inference_steps = num_inference_steps
@@ -357,6 +354,7 @@ class TextualInversionTrainer:
             assert len(placeholder_token_ids) == len(
                 nontrivial_initializer_ids
             ), "placeholder token ids and nontrivial initializer token count doesn't match"
+            self.logger.info(f'Added {len(placeholder_token_ids)} tokens for "{placeholder}".')
             self.all_placeholder_token_ids.append(placeholder_token_ids)
             # Expand the token embeddings and initialize.
             self.text_encoder.resize_token_embeddings(len(self.tokenizer))
@@ -551,6 +549,7 @@ class TextualInversionTrainer:
         imgs_path = path.joinpath("imgs")
         os.makedirs(imgs_path, exist_ok=True)
         for prompt in self.inference_prompts:
+            prompt = self._replace_placeholders_with_dummies(prompt)
             # Fix generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
