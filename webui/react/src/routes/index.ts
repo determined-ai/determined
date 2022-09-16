@@ -49,6 +49,7 @@ const routeComponentMap: Record<string, FC> = {
   uncategorized: ProjectDetails,
   wait: Wait,
   workspaceDetails: WorkspaceDetails,
+  workspaceDetailsTab: WorkspaceDetails,
   workspaceList: WorkspaceList,
 };
 

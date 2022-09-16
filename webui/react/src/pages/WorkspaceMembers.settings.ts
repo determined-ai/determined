@@ -1,23 +1,25 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 
 export type MembersColumnName = | 'name' | 'role' | 'action';
 
+enum WorkspaceMembersSortBy {
+  USERNAME = 'username'
+}
 
 export const DEFAULT_COLUMNS: MembersColumnName[] = 
 ['name', 'role']
 
 export const DEFAULT_COLUMN_WIDTHS: Record<MembersColumnName, number> = {
-  name: 150,
-  role: 20,
-  action: 100,
+  name: 100,
+  role: 75,
+  action: 50,
 }
 
 export interface WorkspaceMembersSettings extends InteractiveTableSettings {
   columns: MembersColumnName[];
   name?: string;
-  sortKey: V1GetWorkspaceProjectsRequestSortBy;
+  sortKey: WorkspaceMembersSortBy;
 }
 
 const config: SettingsConfig = {
@@ -52,13 +54,13 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME,
+      defaultValue: WorkspaceMembersSortBy.USERNAME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },
     },
     {
-      defaultValue: 100,
+      defaultValue: 10,
       key: 'tableLimit',
       storageKey: 'tableLimit',
       type: { baseType: BaseType.Integer },

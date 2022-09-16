@@ -8,6 +8,12 @@ const routes: RouteConfig[] = [
     title: 'Interactive Task',
   },
   {
+    id: 'workspaceDetailsTab',
+    needAuth: true,
+    path: '/workspaces/:workspaceId/:tab',
+    title: 'Workspace',
+  },
+  {
     id: 'workspaceDetails',
     needAuth: true,
     path: '/workspaces/:workspaceId',

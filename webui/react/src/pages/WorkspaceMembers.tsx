@@ -1,4 +1,4 @@
-import { Select, Button } from 'antd';
+import { Select, Button, Menu, Dropdown } from 'antd';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import InteractiveTable, { ColumnDef,
@@ -24,7 +24,7 @@ export interface Member extends DetailedUser {
 
 const isMember = (obj: MemberOrGroup) => {
   const member = obj as Member;
-  return !!member.username;
+  return member.username || member.displayName;
 }
 
 const getName = (obj: MemberOrGroup): string => {
@@ -33,8 +33,9 @@ const getName = (obj: MemberOrGroup): string => {
   return isMember(obj) ? getDisplayName(member) : group.name;
 }
 export interface Group {
-  role: string
-  name: string
+  role: string;
+  name: string;
+  id: number;
 }
 
 type MemberOrGroup = Member | Group;
@@ -42,24 +43,51 @@ type MemberOrGroup = Member | Group;
 interface Props {
   users: DetailedUser[];
   workspace: Workspace;
+  pageRef: React.RefObject<HTMLElement>;
 }
 
 const roles = ["Admin", "Editor", "Viewer"]
 
-const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
-  const pageRef = useRef<HTMLElement>(null);
+const GroupOrMemberActionDropdown = () => {
+  const menuItems = (
+    <Menu>
+      <Menu.Item danger key="delete">
+        Delete
+      </Menu.Item>
+    </Menu>
+  );
 
-  const members: MemberOrGroup[] = [];
+  return (
+    <div>
+      <Dropdown
+        overlay={menuItems}
+        placement="bottomRight"
+        trigger={[ 'click' ]}>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
+        </Button>
+      </Dropdown>
+    </div>
+  );
+};
+
+const WorkspaceMembers: React.FC<Props> = ({users, workspace, pageRef}: Props) => {
+
+
+  const members: Member[] = [];
   users.forEach( u => {
-    const m: Member = u;
-    m.role = "Editor";
+      const m: Member = u;
+      m.role = "Editor";
     members.push(m);
-    const group = {
-      role: "Admin",
-      name: "group name"
-    }
-    members.push(group);
   })
+
+  const groups: MemberOrGroup[] = [
+    {id: Math.random() * 1000, name: 'Group One', role: 'Admin'},
+    {id:  Math.random() * 1000, name: 'Group Two', role: 'Admin'},
+    {id:  Math.random() * 1000, name: 'Group Three', role: 'Admin'}
+  ]
+  
+  const membersAndGroups = groups.concat(members);
 
   const {
     settings,
@@ -82,38 +110,31 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       onSearch={handleNameSearchApply}
     />
   ), [ handleNameSearchApply, handleNameSearchReset, settings.name ]);
-
+  
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
-  const projectColumns = useMemo(() => {
+  const columns = useMemo(() => {
 
     const nameRenderer = (value: string, record: MemberOrGroup) => {
       if(isMember(record)){
         const member = record as Member;
-        if(member?.displayName){
          return ( 
          <>
           <div className={css.userAvatarRowItem}> 
           <Avatar size={Size.Medium} userId={member.id} />
           </div>
           <div className={css.userRowItem}>
-          <div>{member.displayName}</div>
-          <div>{member.username}</div>
+          {member?.displayName ? (
+                      <>
+                      <div>{member.displayName}</div>
+                      <div>{member.username}</div>
+                      </>
+          ) : (
+            <div>{member.username}</div>
+          )}
           </div>
           </>
         )
-        } else {
-          return (
-            <>
-            <div className={css.userRowItem}> 
-            <Avatar userId={member.id} />
-            </div>
-            <div className={css.userRowItem}> 
-            <div>{member.username}</div>
-            </div>
-            </>
-          )
-        }
 
       }
       const group = record as Group
@@ -144,16 +165,18 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       )
     }
 
-    const actionRenderer = () => (
-      <Button>Remove</Button>
-    );
+    const actionRenderer =  (_:string, record: MemberOrGroup) => {
+        return (
+          <GroupOrMemberActionDropdown
+            
+          />
+        );
+      };
 
     return [
       {
-        dataIndex: 'username',
+        dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
-        key: 'username',
-        width: 100,
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         render: nameRenderer,
@@ -163,7 +186,6 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       {
         dataIndex: 'role',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['role'],
-        width: 75,
         render: roleRenderer,
         title: 'Role',
       },
@@ -174,30 +196,22 @@ const WorkspaceMembers: React.FC<Props> = ({users, workspace}: Props) => {
       title: '',
       align: 'right',
       fixed: 'right',
-      }
+        }
     ] as ColumnDef<MemberOrGroup>[];
-  }, [ users, workspace ]);
+  }, []);
  
-  const membersSettings = {
-    columns: ['username', 'role'],
-    columnWidths: [150, 50],
-    tableLimit: 10,
-    tableOffset: 0,
-    sortDesc: true
-  }
-
   return (
             <div className={css.membersContainer}>
             <InteractiveTable
-            columns={projectColumns}
+            columns={columns}
             containerRef={pageRef}
-            dataSource={members}        
+            dataSource={membersAndGroups}        
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
-            }, users.length)}
-            rowKey="username"
-            settings={membersSettings}
+            },  membersAndGroups.length)}
+            rowKey="id"
+            settings={settings}
             showSorterTooltip={false}
             size="small"
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}

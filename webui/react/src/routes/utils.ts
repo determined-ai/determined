@@ -162,6 +162,12 @@ export const paths = {
   workspaceDetails: (workspaceId: number | string): string => {
     return `/workspaces/${workspaceId}`;
   },
+  workspaceMembers: (workspaceId: number | string): string => {
+    return `/workspaces/${workspaceId}/members`;
+  },
+  workspaceProjects: (workspaceId: number | string): string => {
+    return `/workspaces/${workspaceId}/projects`;
+  },
   workspaceList: (): string => {
     return '/workspaces';
   },
