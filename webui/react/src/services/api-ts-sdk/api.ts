@@ -5440,6 +5440,12 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     name?: string;
+    /**
+     * Optional agent host uid and gid override.
+     * @type {V1AgentUserGroup}
+     * @memberof V1PatchWorkspace
+     */
+    agentUserGroup?: V1AgentUserGroup;
 }
 
 /**
@@ -5841,6 +5847,12 @@ export interface V1PostWorkspaceRequest {
      * @memberof V1PostWorkspaceRequest
      */
     name: string;
+    /**
+     * Optional agent host uid and gid override.
+     * @type {V1AgentUserGroup}
+     * @memberof V1PostWorkspaceRequest
+     */
+    agentUserGroup?: V1AgentUserGroup;
 }
 
 /**
@@ -8644,6 +8656,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     errorMessage: string;
+    /**
+     * Optional agent host uid and gid override.
+     * @type {V1AgentUserGroup}
+     * @memberof V1Workspace
+     */
+    agentUserGroup?: V1AgentUserGroup;
 }
 
 /**

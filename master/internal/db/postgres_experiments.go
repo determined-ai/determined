@@ -56,7 +56,7 @@ func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username
+		 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.project_id = $1`, id)
