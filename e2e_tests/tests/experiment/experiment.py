@@ -272,11 +272,14 @@ def experiment_first_trial(exp_id: int) -> int:
     return trial_id
 
 
-def determined_test_session() -> api.Session:
+def determined_test_session(admin: bool = False) -> api.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
-    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    username = "admin" if admin else "determined"
+    authentication.cli_auth = authentication.Authentication(
+        murl, requested_user=username, password="", try_reauth=True
+    )
+    return api.Session(murl, username, authentication.cli_auth, certs.cli_cert)
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
