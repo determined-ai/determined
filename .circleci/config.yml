@@ -2105,24 +2105,6 @@ jobs:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
-  scan-docker-images:
-    machine:
-      image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
-    steps:
-      - checkout
-      - set-slack-user-id
-      - setup-python-venv:
-          executor: <<pipeline.parameters.machine-image>>
-          extras-requires: anchorecli
-      - run: sudo snap install yq && sudo snap install jq
-      - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
-      - slack/status:
-          fail_only: True
-          only_for_branches: master
-          failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
-          channel: "infra-eng-team"
-
 workflows:
   lint:
     jobs:
@@ -2929,17 +2911,6 @@ workflows:
                 - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
                 - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
                 - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
-
-  weekly-vuln-scan:
-    triggers:
-      - schedule:
-          cron: "0 0 * * 0"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - scan-docker-images
 
   release:
     jobs:
