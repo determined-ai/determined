@@ -4,7 +4,6 @@ import { useParams } from 'react-router';
 
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
-import usePermissions from 'hooks/usePermissions';
 import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
@@ -32,9 +31,7 @@ const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const [ tabKey, setTabKey ] = useState<string>(tab || DEFAULT_TAB_KEY);
 
-  const rbacEnabled = useFeature().isOnRbac();
-  const canViewUsers = usePermissions().canViewUsers();
-  const canViewGroups = usePermissions().canViewGroups();
+  const rbacEnabled = useFeature().isOn('rbac');
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
@@ -49,12 +46,12 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      {(rbacEnabled || canViewUsers) && (
+      {rbacEnabled && (
         <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
           <UserManagement />
         </TabPane>
       )}
-      {(rbacEnabled || canViewGroups) && (
+      {rbacEnabled && (
         <TabPane key={TAB_KEYS[TabType.GroupManagement]} tab={TabType.GroupManagement}>
           <GroupManagement />
         </TabPane>

@@ -98,6 +98,7 @@ const GroupManagement: React.FC = () => {
   } = useSettings<GroupManagementSettings>(settingsConfig);
 
   const canModifyGroups = usePermissions().canModifyGroups();
+  const canViewGroups = usePermissions().canViewGroups();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -291,11 +292,11 @@ const GroupManagement: React.FC = () => {
       containerRef={pageRef}
       options={(
         <Space>
-          <Button onClick={onClickCreateGroup}>New Group</Button>
+          <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>New Group</Button>
         </Space>
       )}
       title="Groups">
-      <div className={css.usersTable}>{table}</div>
+      {canViewGroups && <div className={css.usersTable}>{table}</div>}
       {modalCreateGroupContextHolder}
     </Page>
   );

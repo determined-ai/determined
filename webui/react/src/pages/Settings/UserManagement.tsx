@@ -39,13 +39,13 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     contextHolder: modalEditUserContextHolder,
   } = useModalCreateUser({ groups, onClose: fetchUsers, user });
 
+  const canModifyUsers = usePermissions().canModifyGroups();
+
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
     message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
     fetchUsers();
   };
-
-  const canModifyGroups = usePermissions().canModifyGroups();
 
   enum MenuKey {
     EDIT = 'edit',
@@ -63,7 +63,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     funcs[e.key as MenuKey]();
   };
 
-  const menuItems: MenuProps['items'] = canModifyGroups ? [
+  const menuItems: MenuProps['items'] = canModifyUsers ? [
     { key: MenuKey.VIEW, label: 'View Profile' },
     { key: MenuKey.EDIT, label: 'Edit' },
     { key: MenuKey.STATE, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
@@ -96,6 +96,9 @@ const UserManagement: React.FC = () => {
     settings,
     updateSettings,
   } = useSettings<UserManagementSettings>(settingsConfig);
+
+  const canViewUsers = usePermissions().canViewUsers();
+  const canModifyUsers = usePermissions().canModifyGroups();
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
@@ -249,11 +252,15 @@ const UserManagement: React.FC = () => {
       containerRef={pageRef}
       options={(
         <Space>
-          <Button aria-label={CREAT_USER_LABEL} onClick={onClickCreateUser}>{CREATE_USER}</Button>
+          <Button
+            aria-label={CREAT_USER_LABEL}
+            disabled={!canModifyUsers}
+            onClick={onClickCreateUser}>{CREATE_USER}
+          </Button>
         </Space>
       )}
       title={USER_TITLE}>
-      <div className={css.usersTable}>{table}</div>
+      {canViewUsers && <div className={css.usersTable}>{table}</div>}
       {modalCreateUserContextHolder}
     </Page>
   );
