@@ -111,7 +111,13 @@ def wait_for_experiment_by_name_is_active(
             time.sleep(0.25)
             continue
 
-        if experiment.state == determinedexperimentv1State.STATE_ACTIVE:
+        if (
+            experiment.state == determinedexperimentv1State.STATE_ACTIVE
+            or experiment.state == determinedexperimentv1State.STATE_RUNNING
+            or experiment.state == determinedexperimentv1State.STATE_QUEUED
+            or experiment.state == determinedexperimentv1State.STATE_PULLING
+            or experiment.state == determinedexperimentv1State.STATE_STARTING
+        ):
             if experiment.numTrials > min_trials:
                 return experiment_id
             time.sleep(0.25)
