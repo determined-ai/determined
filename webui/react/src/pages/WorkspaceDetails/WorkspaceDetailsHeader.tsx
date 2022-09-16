@@ -82,12 +82,12 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         )}
       </Space>
       <div className={css.headerButton}>
-      {(!workspace.immutable && !workspace.archived) && (
-        <Button> Add Members</Button>
-      )}
-      {(!workspace.immutable && !workspace.archived) && (
-        <Button onClick={handleProjectCreateClick}>New Project</Button>
-      )}
+        {(!workspace.immutable && !workspace.archived) && (
+          <Button> Add Members</Button>
+        )}
+        {(!workspace.immutable && !workspace.archived) && (
+          <Button onClick={handleProjectCreateClick}>New Project</Button>
+        )}
       </div>
       {contextHolder}
     </div>

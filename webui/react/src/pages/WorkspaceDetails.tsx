@@ -1,43 +1,43 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 import { useParams } from 'react-router';
+
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import WorkspaceProjects from './WorkspaceProjects';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { getWorkspace} from 'services/api';
+import { getWorkspace } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { isNotFound} from 'shared/utils/service';
-import {Workspace } from 'types';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { isNotFound } from 'shared/utils/service';
+import { Workspace } from 'types';
+
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceMembers';
-import { routeToReactUrl } from 'shared/utils/routes';
+import WorkspaceProjects from './WorkspaceProjects';
 
 interface Params {
-  workspaceId: string;
   tab: string;
+  workspaceId: string;
 }
 
 export enum WorkspaceDetailsTab {
-  Projects = 'projects',
-  Members = 'members'
+  Members = 'members',
+  Projects = 'projects'
 }
 
-
 const WorkspaceDetails: React.FC = () => {
-  const { users, auth: { user } } = useStore();
+  const { users } = useStore();
   const { workspaceId, tab } = useParams<Params>();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ canceler ] = useState(new AbortController());
-  const tabKey = tab ? tab: WorkspaceDetailsTab.Projects;
+  const tabKey = tab ? tab : WorkspaceDetailsTab.Projects;
   const pageRef = useRef<HTMLElement>(null);
-  const basePath = paths.workspaceDetails(workspaceId);
   const id = parseInt(workspaceId);
 
   const fetchWorkspace = useCallback(async () => {
@@ -53,19 +53,18 @@ const WorkspaceDetails: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([ fetchWorkspace(), fetchUsers() ]);
-  }, [ fetchWorkspace, ]);
+  }, [ fetchWorkspace, fetchUsers ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const handleTabChange = useCallback(() => {
     const activeKey = tabKey as WorkspaceDetailsTab;
-    if(activeKey == WorkspaceDetailsTab.Projects){
-      routeToReactUrl(paths.workspaceMembers(workspaceId))
+    if (activeKey === WorkspaceDetailsTab.Projects){
+      routeToReactUrl(paths.workspaceMembers(workspaceId));
     } else {
-      routeToReactUrl(paths.workspaceProjects(workspaceId))
+      routeToReactUrl(paths.workspaceProjects(workspaceId));
     }
-  }, [ basePath, history, tabKey ]);
-
+  }, [ tabKey, workspaceId ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
@@ -91,23 +90,20 @@ const WorkspaceDetails: React.FC = () => {
       id="workspaceDetails">
       <Tabs
         activeKey={tabKey}
-        onChange={handleTabChange}
         destroyInactiveTabPane
-        >
+        onChange={handleTabChange}>
         <Tabs.TabPane
-          key={WorkspaceDetailsTab.Projects}
-          tab="Projects"
           destroyInactiveTabPane
-          >
-        <WorkspaceProjects workspace={workspace} id={id} pageRef={pageRef}/>
-      </Tabs.TabPane>
-      <Tabs.TabPane
           key={WorkspaceDetailsTab.Members}
-          tab="Members"
+          tab="Members">
+          <WorkspaceMembers pageRef={pageRef} users={users} />
+        </Tabs.TabPane>
+        <Tabs.TabPane
           destroyInactiveTabPane
-          >
-           <WorkspaceMembers users={users} workspace={workspace} pageRef={pageRef}/>
-      </Tabs.TabPane>
+          key={WorkspaceDetailsTab.Projects}
+          tab="Projects">
+          <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
+        </Tabs.TabPane>
       </Tabs>
     </Page>
   );

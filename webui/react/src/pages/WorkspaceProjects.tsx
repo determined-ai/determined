@@ -1,5 +1,6 @@
 import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import InlineEditor from 'components/InlineEditor';
@@ -14,7 +15,7 @@ import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import {  getWorkspaceProjects, patchProject } from 'services/api';
+import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -24,35 +25,32 @@ import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
+
 import css from './WorkspaceDetails.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceProjects.settings';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from './WorkspaceDetails/ProjectCard';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
+  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceProjects.settings';
 
 const { Option } = Select;
 
-
 interface Props {
-  workspace: Workspace;
   id: number;
   pageRef: React.RefObject<HTMLElement>;
+  workspace: Workspace;
 }
 
-
-const WorkspaceProjects: React.FC<Props> = ({workspace, id, pageRef}) => {
+const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { users, auth: { user } } = useStore();
   const [ projects, setProjects ] = useState<Project[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
 
-
   const {
     settings,
     updateSettings,
   } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
-
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -87,9 +85,9 @@ const WorkspaceProjects: React.FC<Props> = ({workspace, id, pageRef}) => {
     settings.tableOffset,
     settings.user,
     settings.view,
-    workspace?.archived ]);
+  ]);
 
-    useEffect(() => {fetchProjects()},[])
+  useEffect(() => { fetchProjects(); }, [ fetchProjects ]);
 
   const handleViewSelect = useCallback((value) => {
     updateSettings({ whose: value });
@@ -312,6 +310,7 @@ const WorkspaceProjects: React.FC<Props> = ({workspace, id, pageRef}) => {
     columns,
     fetchProjects,
     isLoading,
+    pageRef,
     projects,
     settings,
     total,
@@ -328,8 +327,8 @@ const WorkspaceProjects: React.FC<Props> = ({workspace, id, pageRef}) => {
   }, [ canceler ]);
 
   return (
-      <div className={css.base}>
-        <div className={css.controls}>
+    <div className={css.base}>
+      <div className={css.controls}>
         <SelectFilter
           dropdownMatchSelectWidth={140}
           showSearch={false}
@@ -362,7 +361,7 @@ const WorkspaceProjects: React.FC<Props> = ({workspace, id, pageRef}) => {
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
         </Space>
-        </div>
+      </div>
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
@@ -381,7 +380,7 @@ const WorkspaceProjects: React.FC<Props> = ({workspace, id, pageRef}) => {
           )
         )}
       </Spinner>
-      </div>
+    </div>
   );
 };
 

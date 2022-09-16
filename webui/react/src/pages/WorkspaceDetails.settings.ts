@@ -22,14 +22,14 @@ export const DEFAULT_COLUMNS: ProjectColumnName[] = [
   'userId',
 ];
 
-export const MEMBERS_DEFAULT_COLUMNS: MembersColumnName[] = 
-['name', 'role']
+export const MEMBERS_DEFAULT_COLUMNS: MembersColumnName[] =
+[ 'name', 'role' ];
 
 export const MEMBERS_DEFAULT_COLUMN_WIDTHS: Record<MembersColumnName, number> = {
+  action: 100,
   name: 150,
   role: 20,
-  action: 100,
-}
+};
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   action: 46,

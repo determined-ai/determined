@@ -7,14 +7,14 @@ enum WorkspaceMembersSortBy {
   USERNAME = 'username'
 }
 
-export const DEFAULT_COLUMNS: MembersColumnName[] = 
-['name', 'role']
+export const DEFAULT_COLUMNS: MembersColumnName[] =
+[ 'name', 'role' ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<MembersColumnName, number> = {
+  action: 50,
   name: 100,
   role: 75,
-  action: 50,
-}
+};
 
 export interface WorkspaceMembersSettings extends InteractiveTableSettings {
   columns: MembersColumnName[];
