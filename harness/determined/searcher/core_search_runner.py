@@ -5,7 +5,11 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import determined as det
-from determined.common.api import bindings
+from determined.common.api.bindings import (
+    determinedexperimentv1State,
+    get_GetExperiment,
+    post_PauseExperiment,
+)
 from determined.experimental import client
 from determined.searcher.search_method import Operation, SearchMethod
 from determined.searcher.search_runner import SearchRunner
@@ -75,20 +79,18 @@ class CoreSearchRunner(SearchRunner):
 
     def _pause_and_wait(self, session: client.Session, experiment_id: int) -> None:
         logging.info(f"Pausing multi-trial experiment {experiment_id}")
-        exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
-        if exp.state == bindings.determinedexperimentv1State.STATE_PAUSED:
+        exp = get_GetExperiment(session, experimentId=experiment_id).experiment
+        if exp.state == determinedexperimentv1State.STATE_PAUSED:
             return
-        elif exp.state == bindings.determinedexperimentv1State.STATE_ACTIVE:
-            bindings.post_PauseExperiment(session, id=experiment_id)
+        elif _is_experiment_active(exp.state):
+            post_PauseExperiment(session, id=experiment_id)
 
             while True:
                 time.sleep(5)
-                state = bindings.get_GetExperiment(
-                    session, experimentId=experiment_id
-                ).experiment.state
-                if state == bindings.determinedexperimentv1State.STATE_PAUSED:
+                state = get_GetExperiment(session, experimentId=experiment_id).experiment.state
+                if state == determinedexperimentv1State.STATE_PAUSED:
                     return
-                elif state != bindings.determinedexperimentv1State.STATE_ACTIVE:
+                elif not _is_experiment_active(state):
                     break
 
         logging.warning(f"Cannot pause Experiment {experiment_id} with current state {exp.state}.")
@@ -99,9 +101,21 @@ class CoreSearchRunner(SearchRunner):
         assert self.info is not None
 
         exp_id = self.info.trial.experiment_id
-        bindings.post_PauseExperiment(session, id=exp_id)
+        post_PauseExperiment(session, id=exp_id)
         while self.context.preempt.should_preempt() is False:
             time.sleep(5)
             continue
 
         return True
+
+
+def _is_experiment_active(state: determinedexperimentv1State) -> bool:
+    if (
+        state == determinedexperimentv1State.STATE_ACTIVE
+        or state == determinedexperimentv1State.STATE_QUEUED
+        or state == determinedexperimentv1State.STATE_RUNNING
+        or state == determinedexperimentv1State.STATE_STARTING
+        or state == determinedexperimentv1State.STATE_PULLING
+    ):
+        return True
+    return False
