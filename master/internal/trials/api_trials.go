@@ -81,7 +81,7 @@ func (a *TrialsAPIServer) QueryTrials(ctx context.Context,
 		req.Limit = 1000
 	}
 
-	q = db.PaginateBun(
+	q = db.PaginateBunUnsafe(
 		q,
 		orderColumn,
 		orderDirection,
@@ -105,11 +105,11 @@ func (a *TrialsAPIServer) QueryTrials(ctx context.Context,
 	return &resp, nil
 }
 
-// PatchTrials patches a target set of trials, specified either by a list
+// UpdateTrialTags patches a target set of trials, specified either by a list
 // of trial ids, or a set of filters, according to the provided patch.
-func (a *TrialsAPIServer) PatchTrials(ctx context.Context,
-	req *apiv1.PatchTrialsRequest,
-) (*apiv1.PatchTrialsResponse, error) {
+func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
+	req *apiv1.UpdateTrialTagsRequest,
+) (*apiv1.UpdateTrialTagsResponse, error) {
 	_, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("couldnt patch trials %w", err)
@@ -125,7 +125,7 @@ func (a *TrialsAPIServer) PatchTrials(ctx context.Context,
 	}
 
 	switch targetType := req.Target.(type) {
-	case *apiv1.PatchTrialsRequest_Filters:
+	case *apiv1.UpdateTrialTagsRequest_Filters:
 		filters := req.GetFilters()
 		err = checkTrialFiltersEmpty(filters)
 		if err != nil {
@@ -141,7 +141,7 @@ func (a *TrialsAPIServer) PatchTrials(ctx context.Context,
 		subQ.Column("trial_id")
 		q.Where("id IN (?)", subQ)
 
-	case *apiv1.PatchTrialsRequest_Trial:
+	case *apiv1.UpdateTrialTagsRequest_Trial:
 		trialIds := req.GetTrial().Ids
 		if len(trialIds) == 0 {
 			return nil, fmt.Errorf("no trial ids provided to patch")
@@ -162,7 +162,7 @@ func (a *TrialsAPIServer) PatchTrials(ctx context.Context,
 		rowsAffected = 0
 	}
 
-	return &apiv1.PatchTrialsResponse{RowsAffected: int32(rowsAffected)}, nil
+	return &apiv1.UpdateTrialTagsResponse{RowsAffected: int32(rowsAffected)}, nil
 }
 
 // GetTrialsCollections returns the list of collections for the (optionally) specified project.
@@ -183,8 +183,6 @@ func (a *TrialsAPIServer) GetTrialsCollections(
 		NewSelect().
 		Model(&collections)
 
-	// Where("user_id = ?", user.ID)
-
 	if req.ProjectId != 0 {
 		q = q.Where("project_id = ?", req.ProjectId)
 	}
@@ -192,7 +190,7 @@ func (a *TrialsAPIServer) GetTrialsCollections(
 	err = q.Scan(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt get trials collections %w", err)
+		return nil, fmt.Errorf("failed to get trials collections %w", err)
 	}
 
 	resp := &apiv1.GetTrialsCollectionsResponse{

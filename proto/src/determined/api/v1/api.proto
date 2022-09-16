@@ -516,7 +516,7 @@ service Determined {
   // Return trials matching a set of TrialFilters
   rpc QueryTrials(QueryTrialsRequest) returns (QueryTrialsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/query"
+      post: "/api/v1/trials/trial-comparison/query"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -525,9 +525,9 @@ service Determined {
   }
 
   // Update tags for trials by the trial ID
-  rpc PatchTrials(PatchTrialsRequest) returns (PatchTrialsResponse) {
+  rpc UpdateTrialTags(UpdateTrialTagsRequest) returns (UpdateTrialTagsResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/trials"
+      patch: "/api/v1/trials/trial-comparison/update-trial-tags"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -539,7 +539,7 @@ service Determined {
   rpc GetTrialsCollections(GetTrialsCollectionsRequest)
       returns (GetTrialsCollectionsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/collections"
+      get: "/api/v1/trials/trial-comparison/collections"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trial Comparison" ]
@@ -550,7 +550,7 @@ service Determined {
   rpc CreateTrialsCollection(CreateTrialsCollectionRequest)
       returns (CreateTrialsCollectionResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/collections"
+      post: "/api/v1/trials/trial-comparison/collections"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -562,7 +562,7 @@ service Determined {
   rpc PatchTrialsCollection(PatchTrialsCollectionRequest)
       returns (PatchTrialsCollectionResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/trials/collections"
+      patch: "/api/v1/trials/trial-comparison/collections"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -574,7 +574,7 @@ service Determined {
   rpc DeleteTrialsCollection(DeleteTrialsCollectionRequest)
       returns (DeleteTrialsCollectionResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/trials/collections/delete"
+      delete: "/api/v1/trials/trial-comparison/collections"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trial Comparison" ]

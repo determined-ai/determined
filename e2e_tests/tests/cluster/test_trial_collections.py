@@ -42,8 +42,8 @@ def patchTrials(
         {"trial": {"ids": trials}} if isinstance(trials, list) else {"filters": trials}
     )
     patch = {"patch": {"addTag": addTags, "removeTag": removeTags}}
-    body = bindings.v1PatchTrialsRequest.from_json({**target, **patch})
-    bindings.patch_PatchTrials(sess, body=body)
+    body = bindings.v1UpdateTrialTagsRequest.from_json({**target, **patch})
+    bindings.patch_UpdateTrialTags(sess, body=body)
 
 
 def assert_same_ids(a: List["SupportsLessThanT"], b: List["SupportsLessThanT"]) -> None:
@@ -214,10 +214,10 @@ def test_trial_collections() -> None:
                 except Exception:
                     continue
                 good_range_filters[namespace].append(
-                    {"name": name, "min": val - 0.00001, "max": val + 0.00001}
+                    {"name": name, "filter": { "gte": val - 0.00001, "lte": val + 0.00001 }}
                 )
                 bad_range_filters[namespace].append(
-                    {"name": name, "min": val + 1, "max": val + 1.0001}
+                    {"name": name, "filter": { "gte": val + 1, "lte": val + 1.0001 }}
                 )
 
         assert t_id in queryTrialsIds(sess, good_range_filters)

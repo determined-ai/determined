@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
@@ -158,38 +157,6 @@ func TrialsColumnForNamespace(namespace apiv1.TrialSorter_Namespace,
 	}
 }
 
-func conditionalForNumberRange(min *wrappers.DoubleValue, max *wrappers.DoubleValue) string {
-	switch {
-	case min != nil && max != nil:
-		return fmt.Sprintf("BETWEEN %f AND %f", min.Value, max.Value)
-	case min != nil:
-		return fmt.Sprintf(" > %f", min.Value)
-	case max != nil:
-		return fmt.Sprintf(" < %f", max.Value)
-	default:
-		return notNull
-	}
-}
-
-func conditionalForDateTimeRange(
-	q *bun.SelectQuery,
-	column string,
-	dateTime *apiv1.TimeRangeFilter,
-) {
-	startTime := dateTime.IntervalStart
-	endTime := dateTime.IntervalEnd
-	switch {
-	case startTime != nil && endTime != nil:
-		q.Where("? BETWEEN ? AND ?", column, startTime.AsTime(), endTime.AsTime())
-	case startTime != nil:
-		q.Where("? > ?", column, startTime.AsTime())
-	case endTime != nil:
-		q.Where("? < ?", column, endTime.AsTime())
-	default:
-		q.Where("? ?", column, bun.Safe(notNull))
-	}
-}
-
 // BuildFilterTrialsQuery queries for Trials matching the supplied TrialFilters.
 func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.SelectQuery, error) {
 	// FilterTrials filters trials according to filters
@@ -265,26 +232,30 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 		if !safeString.MatchString(f.Name) {
 			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
 		}
-		conditional := conditionalForNumberRange(f.Min, f.Max)
-		wherePhrase := fmt.Sprintf("(validation_metrics->>'%s')::float8 %s", f.Name, conditional)
-		q.Where(wherePhrase)
+		db.ApplyDoubleFieldFilter(
+			q,
+			fmt.Sprintf("(validation_metrics->>'%s')::float8", f.Name),
+			f.Filter,
+		)
 	}
 
 	for _, f := range filters.TrainingMetrics {
 		if !safeString.MatchString(f.Name) {
 			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
 		}
-		conditional := conditionalForNumberRange(f.Min, f.Max)
-		wherePhrase := fmt.Sprintf("(training_metrics->>'%s')::float8 %s", f.Name, conditional)
-		q.Where(wherePhrase)
+		db.ApplyDoubleFieldFilter(
+			q,
+			fmt.Sprintf("(training_metrics->>'%s')::float8", f.Name),
+			f.Filter,
+		)
 	}
 
 	for _, f := range filters.Hparams {
-		conditional := conditionalForNumberRange(f.Min, f.Max)
-		// this will fail for non-coerceable strings
-		// a request where you ask for string hps in a range is a "Bad Request"
-		wherePhrase := fmt.Sprintf("(%s)::float8 %s", hParamAccessor(f.Name), conditional)
-		q.Where(wherePhrase)
+		db.ApplyDoubleFieldFilter(
+			q,
+			fmt.Sprintf("(%s)::float8", hParamAccessor(f.Name)),
+			f.Filter,
+		)
 	}
 
 	if filters.Searcher != "" {
@@ -295,11 +266,11 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 	}
 
 	if filters.StartTime != nil {
-		conditionalForDateTimeRange(q, "start_time", filters.StartTime)
+		db.ApplyTimestampFieldFilter(q, bun.Ident("start_time"), filters.StartTime)
 	}
 
 	if filters.EndTime != nil {
-		conditionalForDateTimeRange(q, "end_time", filters.EndTime)
+		db.ApplyTimestampFieldFilter(q, bun.Ident("end_time"), filters.EndTime)
 	}
 
 	if len(filters.States) > 0 {
@@ -315,9 +286,11 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 	}
 
 	if filters.SearcherMetricValue != nil {
-		f := filters.SearcherMetricValue
-		conditional := conditionalForNumberRange(f.Min, f.Max)
-		q.Where("searcher_metric_value ?", conditional)
+		db.ApplyDoubleFieldFilter(
+			q,
+			bun.Ident("searcher_metric_value"),
+			filters.SearcherMetricValue,
+		)
 	}
 
 	return q, nil

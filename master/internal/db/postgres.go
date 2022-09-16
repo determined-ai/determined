@@ -116,7 +116,34 @@ func PaginateBun(
 	}
 	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
 
-	// needed this in order to order by e.g. metrics->>'loss'
+	query = query.Order(orderExp)
+
+	query = query.Offset(offset)
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	return query
+}
+
+// version of PaginateBun that allows an arbitrary order expression
+// like `metrics->>'loss'`
+func PaginateBunUnsafe(
+	query *bun.SelectQuery,
+	orderColumn string,
+	direction SortDirection,
+	offset,
+	limit int,
+) *bun.SelectQuery {
+	if orderColumn == "" {
+		orderColumn = "id"
+	}
+	if len(direction) == 0 {
+		direction = SortDirectionAsc
+	}
+	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
+
 	query = query.OrderExpr(orderExp)
 
 	query = query.Offset(offset)

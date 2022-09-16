@@ -5,8 +5,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
+import "determined/common/v1/common.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
 import "determined/log/v1/log.proto";
@@ -46,21 +46,12 @@ message WorkloadContainer {
 }
 
 // A filter structure to allow for range filters on arbitrary keys
-message DoubleRangeFilter {
+message ColumnFilter {
   // The name of the field on which the filters is applied.
   string name = 1;
-  // Minimum value for the field. optional.
-  google.protobuf.DoubleValue min = 2;
-  // Maximum value for the field. optional.
-  google.protobuf.DoubleValue max = 3;
-}
+  // The filter to apply to the given column
+  determined.common.v1.DoubleFieldFilter filter = 2;
 
-// A filter structure for filtering times within a given interval.
-message TimeRangeFilter {
-  // The start of the interval. optional.
-  google.protobuf.Timestamp interval_start = 1;
-  // The end of the interval. optional.
-  google.protobuf.Timestamp interval_end = 2;
 }
 
 // Tag for trials. Implemented in such a way to allow easy
@@ -111,14 +102,14 @@ message TrialFilters {
   repeated int32 workspace_ids = 3;
   // Filter trials to those containing ALL validation_metrics
   // within the indicated ranges.
-  repeated DoubleRangeFilter validation_metrics = 4;
+  repeated ColumnFilter validation_metrics = 4;
   // Filter trials to those containing ALL training_metrics
   // within the indicated ranges.
-  repeated DoubleRangeFilter training_metrics = 5;
+  repeated ColumnFilter training_metrics = 5;
   // Filter trials to those containing ALL hyperparameters
   // within the indicated ranges. Nested hparams are specified
   // with dots.
-  repeated DoubleRangeFilter hparams = 6;
+  repeated ColumnFilter hparams = 6;
   // Filter trials according to the creators user id.
   repeated int32 user_ids = 8;
   // Filter trials according to the name of the searcher used.
@@ -135,15 +126,15 @@ message TrialFilters {
   // Filter trials according to their rank within the experiment.
   RankWithinExp rank_within_exp = 10;
   // Filter trials to those starting within the given range.
-  TimeRangeFilter start_time = 11;
+  determined.common.v1.TimestampFieldFilter start_time = 11;
   // Filter trials to those ending within the given range.
-  TimeRangeFilter end_time = 12;
+  determined.common.v1.TimestampFieldFilter end_time = 12;
   // Filter trials to those with any of the given states.
   repeated determined.trial.v1.State states = 13;
   // Filter trials to those with the given searcher metric.
   string searcher_metric = 14;
   // Filter trials to those with a searcher metric within a given range
-  DoubleRangeFilter searcher_metric_value = 15;
+  determined.common.v1.DoubleFieldFilter searcher_metric_value = 15;
   // Filter trials to those with the provided ids
   repeated int32 trial_ids = 16;
 }
@@ -253,7 +244,7 @@ message TrialPatch {
 
 // Request to patch trials. Can either specify a set of filters or
 // set of trial ids as the patch target.
-message PatchTrialsRequest {
+message UpdateTrialTagsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "target", "patch" ] }
   };
@@ -274,7 +265,7 @@ message PatchTrialsRequest {
 }
 
 // Response message to PatchTrials
-message PatchTrialsResponse {
+message UpdateTrialTagsResponse {
   // The number of trials that were patched.
   int32 rows_affected = 1;
 }
