@@ -133,7 +133,7 @@ const GroupManagement: React.FC = () => {
     const response = await getGroup({ groupId });
     const i = groupUsers.findIndex((gr) => gr.groupId === groupId);
     i >= 0 ? groupUsers[i] = response.group : groupUsers.push(response.group);
-    setGroupUsers(groupUsers);
+    setGroupUsers(JSON.parse(JSON.stringify(groupUsers)));
   }, [ groupUsers ]);
 
   const fetchUsers = useCallback(async (): Promise<void> => {
