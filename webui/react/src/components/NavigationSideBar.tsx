@@ -10,6 +10,7 @@ import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
@@ -147,6 +148,8 @@ const NavigationSideBar: React.FC = () => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
 
+  const { canCreateWorkspace } = usePermissions();
+
   if (!showNavigation) return null;
 
   return (
@@ -223,9 +226,13 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
-                  <Button type="text" onClick={handleCreateWorkspace}>
-                    <Icon name="add-small" size="tiny" />
-                  </Button>
+                  {canCreateWorkspace
+                    ? (
+                      <Button type="text" onClick={handleCreateWorkspace}>
+                        <Icon name="add-small" size="tiny" />
+                      </Button>
+                    )
+                    : null}
                 </div>
               }
               icon="workspaces"

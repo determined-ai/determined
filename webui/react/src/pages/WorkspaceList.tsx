@@ -21,6 +21,7 @@ import {
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -57,6 +58,8 @@ const WorkspaceList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
   const [canceler] = useState(new AbortController());
+
+  const { canCreateWorkspace } = usePermissions();
 
   const { contextHolder, modalOpen } = useModalWorkspaceCreate();
 
@@ -316,7 +319,9 @@ const WorkspaceList: React.FC = () => {
       className={css.base}
       containerRef={pageRef}
       id="workspaces"
-      options={<Button onClick={handleWorkspaceCreateClick}>New Workspace</Button>}
+      options={canCreateWorkspace
+        ? <Button onClick={handleWorkspaceCreateClick}>New Workspace</Button>
+        : null}
       title="Workspaces">
       <div className={css.controls}>
         <SelectFilter

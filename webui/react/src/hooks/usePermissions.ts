@@ -34,6 +34,7 @@ interface WorkspacePermissionsArgs {
 }
 
 interface PermissionsHook {
+  canCreateWorkspace: boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
@@ -48,6 +49,7 @@ interface PermissionsHook {
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canViewGroups: () => boolean;
   canViewUsers: () => boolean;
+  canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
 }
 
@@ -60,9 +62,11 @@ const usePermissions = (): PermissionsHook => {
 
   // Determine if the user has access to any workspaces
   // Should be updated to check user assignments and roles once available
-  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user');
+  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user') ||
+    relevantPermissions(userAssignments, userRoles).has('view_workspaces');
 
   return {
+    canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
     canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
       canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
     canDeleteModel: (args: ModelPermissionsArgs) =>
@@ -86,6 +90,8 @@ const usePermissions = (): PermissionsHook => {
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
     canViewGroups: () => canViewGroups(user, userAssignments, userRoles),
     canViewUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+    canViewWorkspace: (args: WorkspacePermissionsArgs) =>
+      canViewWorkspace(args.workspace, userAssignments, userRoles),
     canViewWorkspaces,
   };
 };
@@ -287,6 +293,14 @@ const canMoveWorkspaceProjects = (
 };
 
 // Workspace actions
+const canCreateWorkspace = (
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return permitted.has('oss_user') || permitted.has('create_workspace');
+};
+
 const canDeleteWorkspace = (
   workspace?: PermissionWorkspace,
   user?: DetailedUser,
@@ -317,6 +331,15 @@ const canModifyWorkspace = (
       ? user.isAdmin || user.id === workspace.userId
       : permitted.has('modify_workspace'))
   );
+};
+
+const canViewWorkspace = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && (permitted.has('oss_user') || permitted.has('view_workspace'));
 };
 
 export default usePermissions;
