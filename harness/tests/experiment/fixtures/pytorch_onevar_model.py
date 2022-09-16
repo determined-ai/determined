@@ -384,6 +384,29 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
         return {"val_loss": loss}
 
 
+class OneVarApexAMPWithNoopScalerTrial(OneVarApexAMPTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        self.scaler = context.wrap_scaler(
+            torch.cuda.amp.GradScaler(
+                init_scale=self._init_scale,
+                growth_interval=self._growth_interval,
+                enabled=False,
+            )
+        )
+        super().__init__(context)
+
+
+class OneVarManualAMPWithNoopApexTrial(OneVarManualAMPTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        super().__init__(context)
+        self.model, self.optimizer = self.context.configure_apex_amp(
+            models=self.model,
+            optimizers=self.opt,
+            opt_level="O2",
+            enabled=False,
+        )
+
+
 if __name__ == "__main__":
     conf = yaml.safe_load(
         """

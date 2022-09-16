@@ -718,11 +718,15 @@ class TestPyTorchTrial:
             pytorch_onevar_model.OneVarApexAMPTrial,
             pytorch_onevar_model.OneVarAutoAMPTrial,
             pytorch_onevar_model.OneVarManualAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPWithNoopApexTrial,
+            pytorch_onevar_model.OneVarApexAMPWithNoopScalerTrial,
         ],
         ids=[
             "apex",
             "autocast",
             "manual",
+            "manual-with-noop-apex",
+            "apex-with-noop-scaler",
         ],
     )
     def test_amp(self, trial_class) -> None:
