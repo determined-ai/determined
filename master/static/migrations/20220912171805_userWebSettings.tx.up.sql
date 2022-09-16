@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS user_settings_webs (
   user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  value jsonb,
+  value jsonb NOT NULL DEFAULT '{}'::jsonb,
   CONSTRAINT user_setting_web_uniq UNIQUE (user_id)
 );
 

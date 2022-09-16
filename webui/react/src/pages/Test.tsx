@@ -2,24 +2,19 @@ import React, { useState } from 'react';
 import { useRecoilState } from 'recoil';
 
 import {
-  DomainName,
-  ProjectDetail,
+  AllData,
+  ProjectDetailKey,
   userSettingsDomainState,
 } from 'recoil/userSettings';
-import { updateUserWebSetting } from 'services/api';
 
 const Test: React.FC = () => {
-  const [count, setCount] = useState<number>(0);
-  const [userWebSettings, setUserWebSettings] = useRecoilState<ProjectDetail>(
-    userSettingsDomainState(DomainName.ProjectDetail)
-  );
+  const [ count, setCount ] = useState<number>(0);
+  const [ userWebSettings, setUserWebSettings ] =
+    useRecoilState<AllData[ProjectDetailKey.ColumnWidths]>(
+      userSettingsDomainState(ProjectDetailKey.ColumnWidths),
+    );
   const onClick = () => {
-    setUserWebSettings({
-      ...userWebSettings,
-      archived: true,
-      columnWidths: [],
-    });
-    updateUserWebSetting({ setting: { value: { new: { f: { count } } } } });
+    setUserWebSettings({ columnWidths: [ count + 1 ] });
     setCount((prev) => prev + 1);
   };
   return (
