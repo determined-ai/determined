@@ -42,7 +42,7 @@ const ModalForm: React.FC<Props> = ({ form, group }) => {
     {
       dataIndex: 'name',
       key: 'name',
-      title: 'Name',
+      title: 'Role Name',
     },
   ];
 
@@ -51,16 +51,16 @@ const ModalForm: React.FC<Props> = ({ form, group }) => {
       form={form}
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 14 }}>
+      {groupRoles.length
+        ? (
+          <Table
+            columns={roleColumns}
+            dataSource={groupRoles}
+            pagination={{ hideOnSinglePage: true, size: 'small' }}
+          />
+        )
+        : null}
       <Form.Item label="Roles" name="roles">
-        {groupRoles.length
-          ? (
-            <Table
-              columns={roleColumns}
-              dataSource={groupRoles}
-              pagination={{ hideOnSinglePage: true, size: 'small' }}
-            />
-          )
-          : null}
         <Select
           loading={isLoading}
           mode="multiple"
