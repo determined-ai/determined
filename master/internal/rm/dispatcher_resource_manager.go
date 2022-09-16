@@ -502,8 +502,13 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		if impersonatedUser == "root" {
 			sendResourceStateChangedErrorResponse(ctx,
 				fmt.Errorf(
-					"agent user not configured for user '%s' or specified as 'root'",
-					msg.Spec.Owner.Username),
+					"You are logged in as Determined user '%s', however the user ID on the "+
+						"target HPC cluster for this user has either not been configured, or has "+
+						"been set to the "+
+						"disallowed value of 'root'. In either case, as a determined administrator, "+
+						"use the command 'det user link-with-agent-user' to specify how jobs for "+
+						"Determined user '%s' are to be launched on your HPC cluster.",
+					msg.Spec.Owner.Username, msg.Spec.Owner.Username),
 				msg, "")
 			return nil
 		}
