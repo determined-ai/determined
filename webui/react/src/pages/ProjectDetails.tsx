@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -106,7 +106,7 @@ import settingsConfig, {
 } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
 
-const filterKeys: Array<keyof ProjectDetailsSettings> = ['label', 'search', 'state', 'user'];
+const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
 interface Params {
   projectId: string;
@@ -131,13 +131,13 @@ const ProjectDetails: React.FC = () => {
     auth: { user },
   } = useStore();
   const { projectId } = useParams<Params>();
-  const [project, setProject] = useState<Project>();
-  const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
-  const [pageError, setPageError] = useState<Error>();
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
-  const [canceler] = useState(new AbortController());
+  const [ project, setProject ] = useState<Project>();
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
+  const [ labels, setLabels ] = useState<string[]>([]);
+  const [ pageError, setPageError ] = useState<Error>();
+  const [ isLoading, setIsLoading ] = useState(true);
+  const [ total, setTotal ] = useState(0);
+  const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
     usePermissions();
@@ -148,7 +148,7 @@ const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-  }, [updateDestinationSettings, project?.workspaceId]);
+  }, [ updateDestinationSettings, project?.workspaceId ]);
 
   const id = parseInt(projectId);
 
@@ -160,9 +160,9 @@ const ProjectDetails: React.FC = () => {
       acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
       return acc;
     }, {} as Record<RecordKey, ProjectExperiment>);
-  }, [experiments, project]);
+  }, [ experiments, project ]);
 
-  const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
+  const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
@@ -172,7 +172,7 @@ const ProjectDetails: React.FC = () => {
       canDeleteExperiment,
       canMoveExperiment,
     );
-  }, [canDeleteExperiment, canMoveExperiment, experimentMap, settings.row]);
+  }, [ canDeleteExperiment, canMoveExperiment, experimentMap, settings.row ]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -185,13 +185,12 @@ const ProjectDetails: React.FC = () => {
     } catch (e) {
       if (!pageError) setPageError(e as Error);
     }
-  }, [canceler.signal, id, pageError]);
+  }, [ canceler.signal, id, pageError ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+        encodeExperimentState(state as RunState));
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
@@ -232,7 +231,7 @@ const ProjectDetails: React.FC = () => {
       const expectedNumPages = Math.ceil(totalItems / settings.tableLimit);
       const imaginaryTotalItems = totalItems + pinnedIds.length * expectedNumPages;
       setTotal(imaginaryTotalItems);
-      setExperiments([...pinnedExpResponse.experiments, ...otherExpResponse.experiments]);
+      setExperiments([ ...pinnedExpResponse.experiments, ...otherExpResponse.experiments ]);
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
@@ -261,19 +260,19 @@ const ProjectDetails: React.FC = () => {
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, id]);
+  }, [ canceler.signal, id ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels()]);
-  }, [fetchProject, fetchExperiments, fetchUsers, fetchLabels]);
+    await Promise.allSettled([ fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
+  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const experimentTags = useExperimentTags(fetchAll);
 
-  const handleActionComplete = useCallback(() => fetchExperiments(), [fetchExperiments]);
+  const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
@@ -281,12 +280,12 @@ const ProjectDetails: React.FC = () => {
     (newSearch: string) => {
       updateSettings({ row: undefined, search: newSearch || undefined });
     },
-    [updateSettings],
+    [ updateSettings ],
   );
 
   const handleNameSearchReset = useCallback(() => {
     updateSettings({ row: undefined, search: undefined });
-  }, [updateSettings]);
+  }, [ updateSettings ]);
 
   const nameFilterSearch = useCallback(
     (filterProps: FilterDropdownProps) => (
@@ -297,7 +296,7 @@ const ProjectDetails: React.FC = () => {
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search],
+    [ handleNameSearchApply, handleNameSearchReset, settings.search ],
   );
 
   const handleLabelFilterApply = useCallback(
@@ -307,12 +306,12 @@ const ProjectDetails: React.FC = () => {
         row: undefined,
       });
     },
-    [updateSettings],
+    [ updateSettings ],
   );
 
   const handleLabelFilterReset = useCallback(() => {
     updateSettings({ label: undefined, row: undefined });
-  }, [updateSettings]);
+  }, [ updateSettings ]);
 
   const labelFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => (
@@ -325,7 +324,7 @@ const ProjectDetails: React.FC = () => {
         onReset={handleLabelFilterReset}
       />
     ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings.label],
+    [ handleLabelFilterApply, handleLabelFilterReset, settings.label ],
   );
 
   const handleStateFilterApply = useCallback(
@@ -335,12 +334,12 @@ const ProjectDetails: React.FC = () => {
         state: states.length !== 0 ? (states as RunState[]) : undefined,
       });
     },
-    [updateSettings],
+    [ updateSettings ],
   );
 
   const handleStateFilterReset = useCallback(() => {
     updateSettings({ row: undefined, state: undefined });
-  }, [updateSettings]);
+  }, [ updateSettings ]);
 
   const stateFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => (
@@ -352,7 +351,7 @@ const ProjectDetails: React.FC = () => {
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state],
+    [ handleStateFilterApply, handleStateFilterReset, settings.state ],
   );
 
   const handleUserFilterApply = useCallback(
@@ -362,12 +361,12 @@ const ProjectDetails: React.FC = () => {
         user: users.length !== 0 ? users : undefined,
       });
     },
-    [updateSettings],
+    [ updateSettings ],
   );
 
   const handleUserFilterReset = useCallback(() => {
     updateSettings({ row: undefined, user: undefined });
-  }, [updateSettings]);
+  }, [ updateSettings ]);
 
   const userFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => (
@@ -380,7 +379,7 @@ const ProjectDetails: React.FC = () => {
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user],
+    [ handleUserFilterApply, handleUserFilterReset, settings.user ],
   );
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
@@ -399,6 +398,22 @@ const ProjectDetails: React.FC = () => {
     }
   }, []);
 
+  const ContextMenu = useCallback(
+    ({ record, onVisibleChange, children }) => {
+      return (
+        <ExperimentActionDropdown
+          experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
+          onComplete={handleActionComplete}
+          onVisibleChange={onVisibleChange}>
+          {children}
+        </ExperimentActionDropdown>
+      );
+    },
+    [ project, settings, updateSettings, handleActionComplete ],
+  );
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
@@ -410,12 +425,7 @@ const ProjectDetails: React.FC = () => {
 
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return (
-        <ExperimentActionDropdown
-          experiment={getProjectExperimentForExperimentItem(record, project)}
-          settings={settings}
-          updateSettings={updateSettings}
-          onComplete={handleActionComplete}
-        />
+        <ContextMenu record={record} />
       );
     };
 
@@ -524,8 +534,7 @@ const ProjectDetails: React.FC = () => {
               RunState.Canceled,
               RunState.Completed,
               RunState.Errored,
-            ].includes(value),
-          )
+            ].includes(value))
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
@@ -603,12 +612,11 @@ const ProjectDetails: React.FC = () => {
     project,
     experimentTags,
     settings,
-    updateSettings,
-    handleActionComplete,
     saveExperimentDescription,
+    ContextMenu,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
     if (!settings.columns?.length || !settings.columnWidths?.length) {
       updateSettings({
@@ -627,7 +635,7 @@ const ProjectDetails: React.FC = () => {
       }
       if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
     }
-  }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
+  }, [ settings.columns, settings.columnWidths, columns, updateSettings ]);
 
   const transferColumns = useMemo(() => {
     return columns
@@ -635,7 +643,7 @@ const ProjectDetails: React.FC = () => {
         (column) => column.title !== '' && column.title !== 'Action' && column.title !== 'Archived',
       )
       .map((column) => column.dataIndex?.toString() ?? '');
-  }, [columns]);
+  }, [ columns ]);
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
     useModalExperimentMove({ onClose: handleActionComplete, user });
@@ -727,7 +735,7 @@ const ProjectDetails: React.FC = () => {
         });
       }
     },
-    [fetchExperiments, sendBatchActions, updateSettings],
+    [ fetchExperiments, sendBatchActions, updateSettings ],
   );
 
   const showConfirmation = useCallback(
@@ -743,7 +751,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Confirm Batch Action',
       });
     },
-    [submitBatchAction],
+    [ submitBatchAction ],
   );
 
   const handleBatchAction = useCallback(
@@ -754,31 +762,31 @@ const ProjectDetails: React.FC = () => {
         showConfirmation(action as Action);
       }
     },
-    [submitBatchAction, showConfirmation],
+    [ submitBatchAction, showConfirmation ],
   );
 
   const handleTableRowSelect = useCallback(
     (rowKeys) => {
       updateSettings({ row: rowKeys });
     },
-    [updateSettings],
+    [ updateSettings ],
   );
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
-  }, [updateSettings]);
+  }, [ updateSettings ]);
 
   const resetFilters = useCallback(() => {
-    resetSettings([...filterKeys, 'tableOffset']);
+    resetSettings([ ...filterKeys, 'tableOffset' ]);
     clearSelected();
-  }, [clearSelected, resetSettings]);
+  }, [ clearSelected, resetSettings ]);
 
   const handleUpdateColumns = useCallback(
     (columns: ExperimentColumnName[]) => {
       if (columns.length === 0) {
         updateSettings({
-          columns: ['id', 'name'],
-          columnWidths: [DEFAULT_COLUMN_WIDTHS['id'], DEFAULT_COLUMN_WIDTHS['name']],
+          columns: [ 'id', 'name' ],
+          columnWidths: [ DEFAULT_COLUMN_WIDTHS['id'], DEFAULT_COLUMN_WIDTHS['name'] ],
         });
       } else {
         updateSettings({
@@ -787,7 +795,7 @@ const ProjectDetails: React.FC = () => {
         });
       }
     },
-    [updateSettings],
+    [ updateSettings ],
   );
 
   const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
@@ -799,8 +807,11 @@ const ProjectDetails: React.FC = () => {
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({});
-  }, [openCustomizeColumns]);
+    openCustomizeColumns({
+      initialVisibleColumns:
+        settings.columns?.filter((col) => transferColumns.includes(col)),
+    });
+  }, [ openCustomizeColumns, settings.columns, transferColumns ]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -813,14 +824,14 @@ const ProjectDetails: React.FC = () => {
           newColumns = settings.columns;
           newColumnWidths = settings.columnWidths;
         } else {
-          newColumns = [...settings.columns, 'archived'];
-          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
+          newColumns = [ ...settings.columns, 'archived' ];
+          newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
         }
       } else {
         const archivedIndex = settings.columns.indexOf('archived');
         if (archivedIndex !== -1) {
-          newColumns = [...settings.columns];
-          newColumnWidths = [...settings.columnWidths];
+          newColumns = [ ...settings.columns ];
+          newColumnWidths = [ ...settings.columnWidths ];
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
@@ -835,7 +846,7 @@ const ProjectDetails: React.FC = () => {
         row: undefined,
       });
     },
-    [settings, updateSettings],
+    [ settings, updateSettings ],
   );
 
   const handleNewNotesPage = useCallback(async () => {
@@ -846,7 +857,7 @@ const ProjectDetails: React.FC = () => {
     } catch (e) {
       handleError(e);
     }
-  }, [fetchProject, project?.id]);
+  }, [ fetchProject, project?.id ]);
 
   const handleSaveNotes = useCallback(
     async (notes: Note[]) => {
@@ -858,7 +869,7 @@ const ProjectDetails: React.FC = () => {
         handleError(e);
       }
     },
-    [fetchProject, project?.id],
+    [ fetchProject, project?.id ],
   );
 
   const { contextHolder: modalProjectNodeDeleteContextHolder, modalOpen: openNoteDelete } =
@@ -873,7 +884,7 @@ const ProjectDetails: React.FC = () => {
         handleError(e);
       }
     },
-    [openNoteDelete, project?.id],
+    [ openNoteDelete, project?.id ],
   );
 
   useEffect(() => {
@@ -882,7 +893,7 @@ const ProjectDetails: React.FC = () => {
       const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
       updateSettings({ tableOffset: offset });
     }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
+  }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
   /*
    * Get new experiments based on changes to the
@@ -907,23 +918,7 @@ const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [canceler]);
-
-  const ContextMenu = useCallback(
-    ({ record, onVisibleChange, children }) => {
-      return (
-        <ExperimentActionDropdown
-          experiment={getProjectExperimentForExperimentItem(record, project)}
-          settings={settings}
-          updateSettings={updateSettings}
-          onComplete={handleActionComplete}
-          onVisibleChange={onVisibleChange}>
-          {children}
-        </ExperimentActionDropdown>
-      );
-    },
-    [project, settings, updateSettings, handleActionComplete],
-  );
+  }, [ canceler ]);
 
   const ExperimentTabOptions = useMemo(() => {
     const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
@@ -977,7 +972,7 @@ const ProjectDetails: React.FC = () => {
           <Dropdown
             overlay={<Menu {...getMenuProps()} />}
             placement="bottomRight"
-            trigger={['click']}>
+            trigger={[ 'click' ]}>
             <div>
               <Icon name="overflow-vertical" />
             </div>
@@ -1031,9 +1026,9 @@ const ProjectDetails: React.FC = () => {
                 preserveSelectedRowKeys: true,
                 selectedRowKeys: settings.row ?? [],
               }}
-              scroll={{
-                y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)`,
-              }}
+              scroll={
+                { y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }
+              }
               settings={settings as InteractiveTableSettings}
               showSorterTooltip={false}
               size="small"

@@ -1,10 +1,11 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal, notification } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
@@ -71,17 +72,17 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: experiment.id ? [experiment.id] : undefined,
+      experimentIds: experiment.id ? [ experiment.id ] : undefined,
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
-  }, [openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId]);
+  }, [ openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId ]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
+  }, [ openModalHyperparameterSearch ]);
 
-  const handleMenuClick = async (params: MenuInfo): Promise<void> => {
+  const handleMenuClick = useCallback(async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
       const action = params.key as Action;
@@ -101,7 +102,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           if (onComplete) onComplete(action);
           break;
         case Action.OpenTensorBoard: {
-          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
+          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
         }
@@ -181,17 +182,27 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onVisibleChange?.(false);
     }
     // TODO show loading indicator when we have a button component that supports it.
-  };
+  }, [
+    experiment.id,
+    experiment.projectId,
+    handleExperimentMove,
+    handleHyperparameterSearch,
+    id,
+    onComplete,
+    onVisibleChange,
+    settings.pinned,
+    updateSettings,
+  ]);
 
   const { canMoveExperiment, canDeleteExperiment } = usePermissions();
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions)
-    .filter((action) =>
-      [Action.Delete, Action.Move].includes(action)
-        ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-          (action === Action.Move && canMoveExperiment({ experiment }))
-        : true,
-    )
+  const menuItems = useMemo(() => getActionsForExperiment(
+    experiment,
+    dropdownActions,
+  ).filter((action) => [ Action.Delete, Action.Move ].includes(action)
+    ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
+    (action === Action.Move && canMoveExperiment({ experiment }))
+    : true)
     .map((action) => {
       if (action === Action.SwitchPin) {
         const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';
@@ -199,7 +210,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       } else {
         return { danger: action === Action.Delete, key: action, label: action };
       }
-    });
+    }), [
+    experiment,
+    settings.pinned,
+    canDeleteExperiment,
+    canMoveExperiment,
+    id,
+  ]);
+
+  const menu = useMemo(
+    () => <Menu items={menuItems} onClick={handleMenuClick} />,
+    [ menuItems, handleMenuClick ],
+  );
 
   if (menuItems.length === 0) {
     return (
@@ -213,14 +235,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     );
   }
 
-  const menu = <Menu items={menuItems} onClick={handleMenuClick} />;
-
   return children ? (
     <>
       <Dropdown
         overlay={menu}
         placement="bottomLeft"
-        trigger={['contextMenu']}
+        trigger={[ 'contextMenu' ]}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
@@ -229,7 +249,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>
