@@ -111,7 +111,7 @@ def wait_for_experiment_by_name_is_active(
             time.sleep(0.25)
             continue
 
-        if experiment.state == determinedexperimentv1State.STATE_ACTIVE:
+        if _is_experiment_active(experiment.state):
             if experiment.numTrials > min_trials:
                 return experiment_id
             time.sleep(0.25)
@@ -136,6 +136,18 @@ def wait_for_experiment_by_name_is_active(
 
     else:
         pytest.fail(f"Experiment {experiment_name} did not start any trial {max_wait_secs} seconds")
+
+
+def _is_experiment_active(exp_state: determinedexperimentv1State) -> bool:
+    if (
+        exp_state == determinedexperimentv1State.STATE_ACTIVE
+        or exp_state == determinedexperimentv1State.STATE_RUNNING
+        or exp_state == determinedexperimentv1State.STATE_QUEUED
+        or exp_state == determinedexperimentv1State.STATE_PULLING
+        or exp_state == determinedexperimentv1State.STATE_STARTING
+    ):
+        return True
+    return False
 
 
 def wait_for_experiment_state(

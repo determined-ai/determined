@@ -194,8 +194,7 @@ def test_pause_random_searcher_core_api() -> None:
         searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
         exp.wait_for_experiment_state(
             searcher_exp_id,
-            determinedexperimentv1State.STATE_ACTIVE,
-            max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
+            determinedexperimentv1State.STATE_RUNNING,
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
@@ -217,13 +216,13 @@ def test_pause_random_searcher_core_api() -> None:
     # activate multi-trial experiment
     exp.activate_experiment(multi_trial_exp_id)
     exp.wait_for_experiment_state(
-        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_ACTIVE
+        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
     )
 
     # activate searcher
     exp.activate_experiment(searcher_exp_id)
     exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_ACTIVE
+        searcher_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
     )
 
     # wait for experiment to complete
@@ -269,8 +268,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
         exp.wait_for_experiment_state(
             searcher_exp_id,
-            determinedexperimentv1State.STATE_ACTIVE,
-            max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
+            determinedexperimentv1State.STATE_RUNNING,
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
@@ -292,13 +290,13 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     # activate multi-trial experiment
     exp.activate_experiment(multi_trial_exp_id)
     exp.wait_for_experiment_state(
-        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_ACTIVE
+        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
     )
 
     # activate searcher
     exp.activate_experiment(searcher_exp_id)
     exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_ACTIVE
+        searcher_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
     )
 
     # wait for experiment to complete
