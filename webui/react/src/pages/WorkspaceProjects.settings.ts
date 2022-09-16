@@ -125,7 +125,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.String },
     },
   ],
-  storagePath: 'workspace-projects',
+  storagePath: 'workspace-details',
 };
 
 export default config;

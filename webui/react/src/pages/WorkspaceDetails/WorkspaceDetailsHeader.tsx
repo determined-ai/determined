@@ -46,6 +46,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
     }
   }, [ workspace.id ]);
 
+  const rbacEnabled = false;
+
   return (
     <div className={css.base}>
       <Space align="center">
@@ -82,7 +84,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         )}
       </Space>
       <div className={css.headerButton}>
-        {(!workspace.immutable && !workspace.archived) && (
+        {(rbacEnabled && workspace.immutable && !workspace.archived) && (
           <Button> Add Members</Button>
         )}
         {(!workspace.immutable && !workspace.archived) && (

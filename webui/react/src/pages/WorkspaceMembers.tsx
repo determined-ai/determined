@@ -17,9 +17,9 @@ import {
 import { DetailedUser } from 'types';
 import { getDisplayName } from 'utils/user';
 
-import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings } from './WorkspaceMembers.settings';
+import css from './WorkspaceProjects.module.scss';
 
 export interface Member extends DetailedUser {
   role?: string;

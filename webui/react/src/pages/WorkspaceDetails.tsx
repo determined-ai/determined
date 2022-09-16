@@ -30,6 +30,8 @@ export enum WorkspaceDetailsTab {
   Projects = 'projects'
 }
 
+const rbacEnabled = true;
+
 const WorkspaceDetails: React.FC = () => {
   const { users } = useStore();
   const { workspaceId, tab } = useParams<Params>();
@@ -88,23 +90,27 @@ const WorkspaceDetails: React.FC = () => {
         />
       )}
       id="workspaceDetails">
-      <Tabs
-        activeKey={tabKey}
-        destroyInactiveTabPane
-        onChange={handleTabChange}>
-        <Tabs.TabPane
-          destroyInactiveTabPane
-          key={WorkspaceDetailsTab.Members}
-          tab="Members">
-          <WorkspaceMembers pageRef={pageRef} users={users} />
-        </Tabs.TabPane>
-        <Tabs.TabPane
-          destroyInactiveTabPane
-          key={WorkspaceDetailsTab.Projects}
-          tab="Projects">
-          <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
-        </Tabs.TabPane>
-      </Tabs>
+      {
+        rbacEnabled ? (
+          <Tabs
+            activeKey={tabKey}
+            destroyInactiveTabPane
+            onChange={handleTabChange}>
+            <Tabs.TabPane
+              destroyInactiveTabPane
+              key={WorkspaceDetailsTab.Projects}
+              tab="Projects">
+              <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
+            </Tabs.TabPane>
+            <Tabs.TabPane
+              destroyInactiveTabPane
+              key={WorkspaceDetailsTab.Members}
+              tab="Members">
+              <WorkspaceMembers pageRef={pageRef} users={users} />
+            </Tabs.TabPane>
+          </Tabs>
+        ) : (<WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />)
+      }
     </Page>
   );
 };
