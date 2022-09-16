@@ -107,7 +107,7 @@ const usePermissions = (): PermissionsHook => {
       userAssignments,
       userRoles,
     ),
-    canModifyUsers: () => canModifyUsers(
+    canModifyUsers: () => canAdministrateUsers(
       user,
       userAssignments,
       userRoles,
@@ -136,7 +136,7 @@ const usePermissions = (): PermissionsHook => {
       userAssignments,
       userRoles,
     ),
-    canViewUsers: () => canViewUsers(
+    canViewUsers: () => canAdministrateUsers(
       user,
       userAssignments,
       userRoles,
@@ -167,24 +167,14 @@ const relevantPermissions = (
 };
 
 // User actions
-const canViewUsers = (
+const canAdministrateUsers = (
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return !!user && (permitted.has('oss_user') ? user.isAdmin
-    : permitted.has('view_users'));
-};
-
-const canModifyUsers = (
-  user?: DetailedUser,
-  userAssignments?: UserAssignment[],
-  userRoles?: UserRole[],
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!user && (permitted.has('oss_user') ? user.isAdmin
-    : permitted.has('modify_users'));
+    : permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'));
 };
 
 const canViewGroups = (
@@ -194,7 +184,7 @@ const canViewGroups = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return !!user && (permitted.has('oss_user') ? user.isAdmin
-    : permitted.has('view_groups'));
+    : true);
 };
 
 const canModifyGroups = (
@@ -204,7 +194,7 @@ const canModifyGroups = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return !!user && (permitted.has('oss_user') ? user.isAdmin
-    : permitted.has('modify_users'));
+    : permitted.has('PERMISSION_CAN_UPDATE_GROUP'));
 };
 
 // Experiment actions
