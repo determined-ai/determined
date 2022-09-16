@@ -19,7 +19,7 @@ jest.mock('routes/utils', () => {
     __esModule: true,
     handlePath: () => Promise.resolve(),
     paths: { experimentFileFromTree: () => '/fakePath' },
-    serverAddress: () => ""
+    serverAddress: () => '',
   };
 });
 
