@@ -46,7 +46,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
     }
   }, [ workspace.id ]);
 
-  const rbacEnabled = false;
+  const rbacEnabled = true;
 
   return (
     <div className={css.base}>
