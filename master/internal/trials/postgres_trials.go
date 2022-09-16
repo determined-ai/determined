@@ -16,8 +16,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-const notNull = "IS NOT NULL"
-
 // TrialsAugmented shows provides information about a Trial.
 type TrialsAugmented struct {
 	bun.BaseModel         `bun:"table:trials_augmented_view,alias:trials_augmented_view"`
@@ -232,30 +230,39 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 		if !safeString.MatchString(f.Name) {
 			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
 		}
-		db.ApplyDoubleFieldFilter(
+		_, err := db.ApplyDoubleFieldFilter(
 			q,
 			fmt.Sprintf("(validation_metrics->>'%s')::float8", f.Name),
 			f.Filter,
 		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, f := range filters.TrainingMetrics {
 		if !safeString.MatchString(f.Name) {
 			return nil, fmt.Errorf("metric filter %s contains possible SQL injection", f.Name)
 		}
-		db.ApplyDoubleFieldFilter(
+		_, err := db.ApplyDoubleFieldFilter(
 			q,
 			fmt.Sprintf("(training_metrics->>'%s')::float8", f.Name),
 			f.Filter,
 		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, f := range filters.Hparams {
-		db.ApplyDoubleFieldFilter(
+		_, err := db.ApplyDoubleFieldFilter(
 			q,
 			fmt.Sprintf("(%s)::float8", hParamAccessor(f.Name)),
 			f.Filter,
 		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if filters.Searcher != "" {
@@ -266,11 +273,17 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 	}
 
 	if filters.StartTime != nil {
-		db.ApplyTimestampFieldFilter(q, bun.Ident("start_time"), filters.StartTime)
+		_, err := db.ApplyTimestampFieldFilter(q, bun.Ident("start_time"), filters.StartTime)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if filters.EndTime != nil {
-		db.ApplyTimestampFieldFilter(q, bun.Ident("end_time"), filters.EndTime)
+		_, err := db.ApplyTimestampFieldFilter(q, bun.Ident("end_time"), filters.EndTime)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(filters.States) > 0 {
@@ -286,11 +299,14 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 	}
 
 	if filters.SearcherMetricValue != nil {
-		db.ApplyDoubleFieldFilter(
+		_, err := db.ApplyDoubleFieldFilter(
 			q,
 			bun.Ident("searcher_metric_value"),
 			filters.SearcherMetricValue,
 		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return q, nil

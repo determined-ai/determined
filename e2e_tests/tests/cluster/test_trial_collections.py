@@ -5,7 +5,8 @@ import pytest
 
 from determined.common.api import authentication, bindings, errors
 from determined.common.experimental import session
-from tests import config as conf, api_utils as utils
+from tests import api_utils as utils
+from tests import config as conf
 from tests import experiment as exp
 
 if TYPE_CHECKING:
@@ -214,10 +215,10 @@ def test_trial_collections() -> None:
                 except Exception:
                     continue
                 good_range_filters[namespace].append(
-                    {"name": name, "filter": { "gte": val - 0.00001, "lte": val + 0.00001 }}
+                    {"name": name, "filter": {"gte": val - 0.00001, "lte": val + 0.00001}}
                 )
                 bad_range_filters[namespace].append(
-                    {"name": name, "filter": { "gte": val + 1, "lte": val + 1.0001 }}
+                    {"name": name, "filter": {"gte": val + 1, "lte": val + 1.0001}}
                 )
 
         assert t_id in queryTrialsIds(sess, good_range_filters)

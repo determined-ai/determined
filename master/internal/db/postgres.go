@@ -26,6 +26,8 @@ var (
 	tokenKeys        *model.AuthTokenKeypair
 )
 
+const id = "id"
+
 // RegisterModel registers a model in Bun or, if theOneBun is not yet initialized,
 // sets it up to be registered once initialized. It's generally best to pass a nil
 // pointer of your model's type as argument m.
@@ -109,7 +111,7 @@ func PaginateBun(
 	limit int,
 ) *bun.SelectQuery {
 	if orderColumn == "" {
-		orderColumn = "id"
+		orderColumn = id
 	}
 	if len(direction) == 0 {
 		direction = SortDirectionAsc
@@ -127,8 +129,8 @@ func PaginateBun(
 	return query
 }
 
-// version of PaginateBun that allows an arbitrary order expression
-// like `metrics->>'loss'`
+// PaginateBunUnsafe is a version of PaginateBun that
+// allows an arbitrary order expression like `metrics->>'loss'`.
 func PaginateBunUnsafe(
 	query *bun.SelectQuery,
 	orderColumn string,
@@ -137,7 +139,7 @@ func PaginateBunUnsafe(
 	limit int,
 ) *bun.SelectQuery {
 	if orderColumn == "" {
-		orderColumn = "id"
+		orderColumn = id
 	}
 	if len(direction) == 0 {
 		direction = SortDirectionAsc
