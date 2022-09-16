@@ -39,8 +39,8 @@ interface PermissionsHook {
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
-  canModifyGroups: () => boolean;
   canGetPermissions: boolean;
+  canModifyGroups: () => boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyUsers: () => boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
