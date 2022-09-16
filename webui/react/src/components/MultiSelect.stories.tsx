@@ -10,7 +10,7 @@ const { Option } = Select;
 export default {
   argTypes: { count: { control: { max: 26, min: 0, step: 1, type: 'range' } } },
   component: MultiSelect,
-  title: 'Determined/MultiSelect',
+  title: 'Determined/Dropdowns/MultiSelect',
 } as Meta<typeof MultiSelect>;
 
 type MultiSelectProps = React.ComponentProps<typeof MultiSelect>;

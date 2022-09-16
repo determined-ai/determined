@@ -6,7 +6,7 @@ import Dropdown, { Placement } from './Dropdown';
 export default {
   component: Dropdown,
   parameters: { layout: 'centered' },
-  title: 'Determined/Dropdown',
+  title: 'Determined/Dropdowns/Dropdown',
 };
 
 const content = (

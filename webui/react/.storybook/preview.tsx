@@ -60,6 +60,25 @@ const ChildView = (
         version: '',
       },
     });
+    // Setting up a user in the store
+    storeDispatch({
+      type: StoreAction.SetUsers,
+      value: [ {
+        id: 1,
+        isActive: true,
+        isAdmin: true,
+        username: 'Admin',
+      } ],
+    });
+    storeDispatch({
+      type: StoreAction.SetCurrentUser,
+      value: {
+        id: 1,
+        isActive: true,
+        isAdmin: true,
+        username: 'Admin',
+      },
+    });
   }, [ storeDispatch ]);
 
   useEffect(() => {
@@ -104,6 +123,11 @@ export const decorators = [
 ];
 export const parameters = {
   layout: 'centered',
-  options: { storySort: { order: [ 'Ant Design', 'Shared', 'Determined' ] } },
+  options: {
+    storySort: {
+      method: 'alphabetical',
+      order: [ 'Ant Design', 'Shared', 'Determined' ],
+    },
+  },
   viewport: { viewports: INITIAL_VIEWPORTS },
 };

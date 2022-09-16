@@ -5,9 +5,11 @@ import {
   ExperimentBase,
   ExperimentSearcherName,
   HyperparameterType,
+  Project,
   RunState,
   TrialDetails,
-} from 'types';
+  Workspace,
+  WorkspaceState } from 'types';
 import { generateExperiment } from 'utils/task';
 
 export const generateTestExperimentData = (): {
@@ -260,4 +262,36 @@ export const generateTestExperimentData = (): {
   };
 
   return { checkpoint, experiment, trial };
+};
+
+export const generateTestProjectData = (overrides: Partial<Project> = {}): Project => {
+  return {
+    archived: false,
+    id: 1,
+    immutable: false,
+    name: 'Project Name',
+    notes: [],
+    numActiveExperiments: 1,
+    numExperiments: 1,
+    state: WorkspaceState.Unspecified,
+    userId: 1,
+    workspaceId: 1,
+    workspaceName: 'Workspace Name',
+    ...overrides,
+  };
+};
+
+export const generateTestWorkspaceData = (overrides: Partial<Workspace> = {}): Workspace => {
+  return {
+    archived: false,
+    id: 1,
+    immutable: false,
+    name: 'Workspace Name',
+    numExperiments: 1,
+    numProjects: 1,
+    pinned: false,
+    state: WorkspaceState.Unspecified,
+    userId: 1,
+    ...overrides,
+  };
 };
