@@ -29,10 +29,10 @@ describe('Settings Page', () => {
   });
 
   it('should enable user management for admins only', () => {
-    setup();
 
     // TODO: Change out to set user to be admin and check for user management tab.
-    history.push('/rbac-enabled');
+    history.push('/?f_rbac=on');
+    setup();
 
     expect(screen.queryByRole('tab', { name: TabType.UserManagement })).toBeInTheDocument();
   });
