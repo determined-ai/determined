@@ -16,7 +16,9 @@
 #      the desktop that you are using.
 #
 #   2)  Unless you specify both -n -x, you must have password-less ssh configured to the
-#   target cluster, to enable the ssh connection without prompts.
+#   target cluster, to enable the ssh connection without prompts.  Configure ~/.ssh/conf
+#   to automatically configure your remote user name if your desktop username is
+#   different than on the cluster.
 #
 #      ssh-copy-id {cluster}
 #
@@ -69,7 +71,7 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
     echo "  -t     Force debug level to trace regardless of cluster configuration value."
     echo "  -p     Use podman as a container host (otherwise singlarity)."
     echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
-    echo "  -u     Use provided username."
+    echo "  -u     Use provided {username} to lookup the per-user port number."
     echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
     echo
     echo "Documentation:"
@@ -113,8 +115,12 @@ function pull_auth_token() {
     ssh -t $HOST 'sudo cat /opt/launcher/jetty/base/etc/.launcher.token' | tee ~/.token.log
     # Token is the last line of the output (no newline)
     TOKEN=$(tail -n 1 ~/.token.log)
-    echo -n "${TOKEN}" > ~/.${CLUSTER}.token
-    cat ~/.${CLUSTER}.token
+    if [[ ! "${TOKEN}" = *" "* ]] ; then
+        echo -n "${TOKEN}" > ~/.${CLUSTER}.token
+        echo "INFO: Saved token as  ~/.${CLUSTER}.token"
+    else
+        echo "WARNING: No token retieved: ${TOKEN}" >&2
+    fi
 }
 
 # Update your username/port pair
@@ -124,9 +130,7 @@ USERPORT_rcorujo=8085
 USERPORT_phillipgaisford=8086
 USERPORT_pankaj=8087
 USERPORT_alyssa=8088
-USERPORT_charlestran=8089
 USERPORT_jerryharrow=8090
-USERPORT_cameronquilici=8093
 USERPORT_canmingcobble=8092
 
 USERPORT=$(lookup "USERPORT_$USERNAME")
@@ -146,7 +150,7 @@ elif [[ ! " ${CLUSTERS[*]} " =~ " $CLUSTER "  ]]; then
     exit 1
 fi
 
-# Update your JETTY HTTP/SSL username/port pair from loadDevLauncher.sh
+# Update your JETTY HTTP username/port pair from loadDevLauncher.sh
 DEV_LAUNCHER_PORT_madagund=18083
 DEV_LAUNCHER_PORT_stokc=18084
 DEV_LAUNCHER_PORT_rcorujo=18085
@@ -350,12 +354,18 @@ echo
 
 # Terminate our tunnels on exit
 trap "kill 0" EXIT
+if [[ -n $INTUNNEL || -n $TUNNEL ]]; then
+    # Terminate any tunnels (non-interactive sshd proceses for the user)
+    ssh $OPT_MASTERHOST pkill -u '$USER' -x -f  '"^sshd: $USER[ ]*$"'
+fi
 if [[ -n $INTUNNEL ]]; then
    mkintunnel  $OPT_MASTERHOST $OPT_LAUNCHERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
 if [[ -n $TUNNEL ]]; then
    mktunnel $OPT_MASTERHOST $OPT_MASTERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
+# Give a little time for the tunnels to setup before using
+sleep 3
 
 
 # Although devcluster supports variables, numeric values fail to load, so
