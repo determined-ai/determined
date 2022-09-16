@@ -5,7 +5,7 @@ import pytest
 
 from determined.common.api import authentication, bindings, errors
 from determined.common.experimental import session
-from tests import config as conf
+from tests import config as conf, api_utils as utils
 from tests import experiment as exp
 
 if TYPE_CHECKING:
@@ -129,7 +129,7 @@ def test_trial_collections() -> None:
 
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, None, None, None)
+    sess = utils.determined_test_session()
 
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/adaptive.yaml"), conf.fixtures_path("no_op")
