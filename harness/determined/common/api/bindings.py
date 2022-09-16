@@ -4554,7 +4554,7 @@ class v1Permission:
     def __init__(
         self,
         *,
-        id: "typing.Optional[v1PermissionType]" = None,
+        id: "v1PermissionType",
         isGlobal: "typing.Optional[bool]" = None,
         name: "typing.Optional[str]" = None,
     ):
@@ -4565,14 +4565,14 @@ class v1Permission:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Permission":
         return cls(
-            id=v1PermissionType(obj["id"]) if obj.get("id", None) is not None else None,
+            id=v1PermissionType(obj["id"]),
             name=obj.get("name", None),
             isGlobal=obj.get("isGlobal", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id.value if self.id is not None else None,
+            "id": self.id.value,
             "name": self.name if self.name is not None else None,
             "isGlobal": self.isGlobal if self.isGlobal is not None else None,
         }
@@ -5779,9 +5779,9 @@ class v1Role:
     def __init__(
         self,
         *,
+        roleId: int,
         name: "typing.Optional[str]" = None,
         permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None,
-        roleId: "typing.Optional[int]" = None,
     ):
         self.roleId = roleId
         self.name = name
@@ -5790,14 +5790,14 @@ class v1Role:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Role":
         return cls(
-            roleId=obj.get("roleId", None),
+            roleId=obj["roleId"],
             name=obj.get("name", None),
             permissions=[v1Permission.from_json(x) for x in obj["permissions"]] if obj.get("permissions", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roleId": self.roleId if self.roleId is not None else None,
+            "roleId": self.roleId,
             "name": self.name if self.name is not None else None,
             "permissions": [x.to_json() for x in self.permissions] if self.permissions is not None else None,
         }

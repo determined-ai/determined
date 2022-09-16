@@ -312,6 +312,17 @@ export interface GetGroupParams {
 
 export type GetGroupsParams = PaginationParams
 
+export interface AssignRolesToGroupParams {
+  groupId: number;
+  roleIds: number[];
+}
+
+export interface ListRolesParams {
+  isGlobal?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
 export interface GetProjectParams {
   id: number;
 }

@@ -11,6 +11,7 @@ import {
   getUsers,
   getUserSetting,
   getWorkspaces,
+  listRoles,
 } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, ResourceType } from 'types';
@@ -125,6 +126,19 @@ export const useFetchPinnedWorkspaces = (canceler: AbortController): () => Promi
         { signal: canceler.signal },
       );
       storeDispatch({ type: StoreAction.SetPinnedWorkspaces, value: pinnedWorkspaces.workspaces });
+    } catch (e) { handleError(e); }
+  }, [ canceler, storeDispatch ]);
+};
+
+export const useFetchKnownRoles = (canceler: AbortController): () => Promise<void> => {
+  const storeDispatch = useStoreDispatch();
+  return useCallback(async (): Promise<void> => {
+    try {
+      const roles = await listRoles(
+        { limit: 0 },
+        { signal: canceler.signal },
+      );
+      storeDispatch({ type: StoreAction.SetKnownRoles, value: roles });
     } catch (e) { handleError(e); }
   }, [ canceler, storeDispatch ]);
 };

@@ -4105,7 +4105,7 @@ export interface V1LaunchTensorboardResponse {
  */
 export interface V1ListRolesRequest {
     /**
-     * 
+     * the offset for pagination.
      * @type {number}
      * @memberof V1ListRolesRequest
      */
@@ -5050,7 +5050,7 @@ export interface V1Permission {
      * @type {V1PermissionType}
      * @memberof V1Permission
      */
-    id?: V1PermissionType;
+    id: V1PermissionType;
     /**
      * 
      * @type {string}
@@ -6463,7 +6463,7 @@ export interface V1Role {
      * @type {number}
      * @memberof V1Role
      */
-    roleId?: number;
+    roleId: number;
     /**
      * 
      * @type {string}

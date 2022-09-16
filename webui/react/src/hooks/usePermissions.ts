@@ -39,7 +39,7 @@ interface PermissionsHook {
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
-  canGetPermissions: () => boolean;
+  canGetPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
@@ -86,7 +86,7 @@ const usePermissions = (): PermissionsHook => {
       userAssignments,
       userRoles,
     ),
-    canGetPermissions: () => canGetPermissions(
+    canGetPermissions: canGetPermissions(
       user,
       userAssignments,
       userRoles,
