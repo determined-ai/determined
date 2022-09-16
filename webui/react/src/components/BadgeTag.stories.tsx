@@ -15,7 +15,7 @@ export default {
     type: { control: 'inline-radio', options: BadgeType },
   },
   component: BadgeTag,
-  title: 'Determined/BadgeTag',
+  title: 'Determined/Badges/BadgeTag',
 } as Meta<typeof BadgeTag>;
 
 export const Default: ComponentStory<typeof BadgeTag> = (args) => (

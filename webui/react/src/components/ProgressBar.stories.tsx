@@ -11,7 +11,7 @@ export default {
     state: { control: { options: { ...RunState, ...CommandState }, type: 'select' } },
   },
   component: ProgressBar,
-  title: 'Determined/ProgressBar',
+  title: 'Determined/Bars/ProgressBar',
 } as Meta<typeof ProgressBar>;
 
 export const Default: ComponentStory<typeof ProgressBar> = (args) => (

@@ -8,7 +8,7 @@ import Bar from './Bar';
 export default {
   argTypes: { size: { control: 'inline-radio' } },
   component: Bar,
-  title: 'Determined/Bar',
+  title: 'Determined/Bars/Bar',
 } as Meta<typeof Bar>;
 
 export const Default: ComponentStory<typeof Bar> = (args) => (

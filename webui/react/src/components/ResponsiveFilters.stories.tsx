@@ -9,7 +9,7 @@ const { Option } = Select;
 export default {
   component: ResponsiveFilters,
   parameters: { layout: 'padded' },
-  title: 'Determined/ResponsiveFilters',
+  title: 'Determined/Dropdowns/ResponsiveFilters',
 };
 
 const options = new Array(10).fill(null).map((_, index) => (
