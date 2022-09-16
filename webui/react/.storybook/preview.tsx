@@ -1,5 +1,6 @@
 import 'shared/styles/index.scss';
 import 'shared/styles/storybook.scss';
+import 'shared/styles/antd.scss';
 import 'shared/prototypes';
 
 import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';

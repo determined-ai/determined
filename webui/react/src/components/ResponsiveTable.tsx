@@ -49,10 +49,16 @@ export const handleTableChange = (
     updateSettings(newSettings, shouldPush);
   };
 };
-
-const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
-  const [hasScrollBeenEnabled, setHasScrollBeenEnabled] = useState<boolean>(false);
-  const [tableScroll, setTableScroll] = useState(scroll);
+/**
+ * Depricated. Prefer using InteractiveTable instead.
+ */
+const ResponsiveTable: ResponsiveTable = ({
+  loading,
+  scroll,
+  ...props
+}) => {
+  const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
+  const [ tableScroll, setTableScroll ] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
   const resize = useResize(tableRef);
 
