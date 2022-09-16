@@ -31,6 +31,7 @@ interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
@@ -83,6 +84,7 @@ export enum StoreAction {
   SetActiveExperiments = 'SetActiveExperiments',
 
   // User assignments, roles, and derived permissions
+  SetKnownRoles = 'SetKnownRoles',
   SetUserAssignments = 'SetUserAssignments',
   SetUserRoles = 'SetUserRoles',
 }
@@ -109,6 +111,7 @@ type Action =
   tensorboards: number;
 }}
 | { type: StoreAction.SetActiveExperiments, value: number }
+| { type: StoreAction.SetKnownRoles, value: UserRole[] }
 | { type: StoreAction.SetUserRoles, value: UserRole[] }
 | { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
 | ActionUI;
@@ -150,6 +153,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  knownRoles: [],
   pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
@@ -290,6 +294,9 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetActiveTasks:
       if (isEqual(state.activeTasks, action.value)) return state;
       return { ...state, activeTasks: action.value };
+    case StoreAction.SetKnownRoles:
+      if (isEqual(state.knownRoles, action.value)) return state;
+      return { ...state, knownRoles: action.value };
     case StoreAction.SetUserRoles:
       if (isEqual(state.userRoles, action.value)) return state;
       return { ...state, userRoles: action.value };

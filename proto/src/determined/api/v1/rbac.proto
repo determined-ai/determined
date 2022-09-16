@@ -87,7 +87,7 @@ message ListRolesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "limit" ] }
   };
-  // the offset for pagination
+  // the offset for pagination.
   int32 offset = 3;
   // the limit for pagination.
   int32 limit = 4;

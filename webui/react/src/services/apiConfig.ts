@@ -31,6 +31,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Models: new Api.ModelsApi(config),
     Notebooks: new Api.NotebooksApi(config),
     Projects: new Api.ProjectsApi(config),
+    RBAC: new Api.RBACApi(config),
     Shells: new Api.ShellsApi(config),
     StreamingCluster: Api.ClusterApiFetchParamCreator(config),
     StreamingExperiments: Api.ExperimentsApiFetchParamCreator(config),
@@ -280,6 +281,43 @@ Service.DeleteGroupParams,
   request: (params) => detApi.Internal.deleteGroup(
     params.groupId,
   ),
+};
+
+/* Roles */
+
+export const getGroupRoles: DetApi<
+  Service.GetGroupParams,
+  Api.V1GetRolesAssignedToGroupResponse, Type.UserRole[]
+> = {
+  name: 'getRolesAssignedToGroup',
+  postProcess: (response) => (response.roles || []).map(decoder.mapV1Role),
+  request: (params) => detApi.RBAC.getRolesAssignedToGroup(params.groupId),
+};
+
+export const listRoles: DetApi<
+  Service.ListRolesParams,
+  Api.V1ListRolesResponse, Type.UserRole[]
+> = {
+  name: 'listRoles',
+  postProcess: (response) => response.roles.map(decoder.mapV1Role),
+  request: (params) => detApi.RBAC.listRoles({
+    limit: params.limit || 0,
+    offset: params.offset || 0,
+  }),
+};
+
+export const assignRolesToGroup: DetApi<
+  Service.AssignRolesToGroupParams,
+  Api.V1AssignRolesResponse, Api.V1AssignRolesResponse
+> = {
+  name: 'assignRolesToGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.RBAC.assignRoles({
+    groupRoleAssignments: params.roleIds.map((roleId) => ({
+      groupId: params.groupId,
+      roleAssignment: { role: { roleId } },
+    })),
+  }),
 };
 
 /* Info */
