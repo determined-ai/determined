@@ -72,11 +72,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: experiment.id ? [ experiment.id ] : undefined,
+      experimentIds: id ? [ id ] : undefined,
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
-  }, [ openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId ]);
+  }, [ openExperimentMove, id, experiment.projectId, experiment.workspaceId ]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
@@ -173,7 +173,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
-        publicMessage: `Unable to ${params.key} experiment ${experiment.id}.`,
+        publicMessage: `Unable to ${params.key} experiment ${id}.`,
         publicSubject: `${capitalize(params.key.toString())} failed.`,
         silent: false,
         type: ErrorType.Server,
@@ -183,7 +183,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     }
     // TODO show loading indicator when we have a button component that supports it.
   }, [
-    experiment.id,
     experiment.projectId,
     handleExperimentMove,
     handleHyperparameterSearch,
