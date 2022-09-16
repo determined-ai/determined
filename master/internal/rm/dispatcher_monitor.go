@@ -32,13 +32,13 @@ var messagePatternsOfInterest = []*regexp.Regexp{
 	// Remove the carrier prefix and "()" will contain just the Slurm error message.
 	// The (?s) is a non-capturing option that allows . to match newlines.
 	// This provides the additional SBATCH error context in the message
-	regexp.MustCompile("com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm" +
-		" - Slurm job is in a (?s)(.+)"),
+	regexp.MustCompile("com.cray.analytics.capsules.carriers.hpc.\\S+" +
+		" - [Slurm|Pbs] job is in a (?s)(.+)"),
 
 	// Whatever matches what's inside the "()" will contain the root cause of the SLURM error.
 	// The (?s) is a non-capturing option that allows . to match newlines.
 	// This provides the additional SBATCH error context in the message
-	regexp.MustCompile("Slurm job process terminated with exit code \\d+:\n*(?s)(.+)"),
+	regexp.MustCompile("[Slurm|Pbs] job process terminated with exit code \\d+:\n*(?s)(.+)"),
 }
 
 // launcherJob describes a new launcher job, the progress of which we need to track.
