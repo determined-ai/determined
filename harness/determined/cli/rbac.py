@@ -1,9 +1,14 @@
 import json
 from argparse import Namespace
-from collections import namedtuple
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Set, Tuple
 
-from determined.cli import default_pagination_args, render, setup_session, workspace, user_groups
+from determined.cli import (
+    default_pagination_args,
+    require_feature_flag,
+    setup_session,
+    user_groups,
+    workspace,
+)
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
@@ -14,6 +19,7 @@ rbac_flag_disabled_message = (
     + "and the Master Configuration option security.authz.rbac_ui_enabled."
 )
 
+
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def my_permissions(args: Namespace) -> None:
@@ -23,34 +29,39 @@ def my_permissions(args: Namespace) -> None:
         print(json.dumps(resp.to_json(), indent=2))
         return
 
-    role_id_to_permissions = {}
+    role_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
     for r in resp.roles:
-        role_id_to_permissions[r.roleId] = set(r.permissions)
+        if r.permissions is not None and r.roleId is not None:
+            role_id_to_permissions[r.roleId] = set(r.permissions)
 
-    scope_id_to_permissions = {}
+    scope_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
     for a in resp.assignments:
+        if a.roleId is None:
+            raise api.errors.BadResponseException("expected roleId to be provided")
+
         if a.isGlobal:
             if 0 not in scope_id_to_permissions:
-                scope_id_to_permissions[0] = set()            
+                scope_id_to_permissions[0] = set()
             scope_id_to_permissions[0].update(role_id_to_permissions[a.roleId])
-            
+
+        if a.scopeWorkspaceIds is None:
+            a.scopeWorkspaceIds = []
         for wid in a.scopeWorkspaceIds:
             if wid not in scope_id_to_permissions:
-                scope_id_to_permissions[wid] = set()            
+                scope_id_to_permissions[wid] = set()
             scope_id_to_permissions[wid].update(role_id_to_permissions[a.roleId])
 
-            
     for wid, perms in scope_id_to_permissions.items():
         if wid == 0:
             print("global permissions assigned")
         else:
             workspace_name = bindings.get_GetWorkspace(session, id=wid).workspace.name
-            print(f"permissions assigned over workspace {'workspace_name'} with ID '{wid}'")
+            print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
         for p in perms:
             print(f"\tpermission '{p.name}' with type {p.id}")
         print()
 
-        
+
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_roles(args: Namespace) -> None:
@@ -64,17 +75,20 @@ def list_roles(args: Namespace) -> None:
         print(json.dumps(resp.to_json(), indent=2))
         return
 
-    if len(resp.roles) == 0:
+    if resp.roles is None or len(resp.roles) == 0:
         print("no roles found")
+        return
     for r in resp.roles:
-        print(f"role '{r.name}' with ID {r.roleId}")        
+        print(f"role '{r.name}' with ID {r.roleId}")
+        if r.permissions is None:
+            continue
         for p in r.permissions:
             print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
 
 
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def list_users_roles(args: Namespace) -> None:    
+def list_users_roles(args: Namespace) -> None:
     session = setup_session(args)
     user_id = user_groups.usernames_to_user_ids(session, [args.username])[0]
     resp = bindings.get_GetRolesAssignedToUser(session, userId=user_id)
@@ -82,10 +96,13 @@ def list_users_roles(args: Namespace) -> None:
         print(json.dumps(resp.to_json(), indent=2))
         return
 
-    if len(resp.roles) == 0:
+    if resp.roles is None or len(resp.roles) == 0:
         print("user has no role assignments")
+        return
     for r in resp.roles:
         print(f"user is assigned to role '{r.name}' with ID {r.roleId}")
+        if r.permissions is None:
+            continue
         for p in r.permissions:
             print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
 
@@ -100,10 +117,13 @@ def list_groups_roles(args: Namespace) -> None:
         print(json.dumps(resp.to_json(), indent=2))
         return
 
-    if len(resp.roles) == 0:
+    if resp.roles is None or len(resp.roles) == 0:
         print("group has no role assignments")
+        return
     for r in resp.roles:
         print(f"group is assigned to role '{r.name}' with ID {r.roleId}")
+        if r.permissions is None:
+            continue
         for p in r.permissions:
             print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
 
@@ -119,13 +139,24 @@ def describe_role(args: Namespace) -> None:
         print(json.dumps(resp.to_json().get("roles")[0], indent=2))
         return
 
-    role = resp.roles[0]
-    print(f"role '{role.role.name}' with ID {role.role.roleId}")
-    for p in role.role.permissions:
+    if resp.roles is None or len(resp.roles) != 1:
+        raise api.errors.BadRequestException(f"could not find role name {args.role_name}")
+
+    role = resp.roles[0].role
+    if role is None:
+        raise api.errors.BadResponseException("expected role to be provided")
+
+    print(f"role '{role.name}' with ID {role.roleId}")
+    if role.permissions is None:
+        role.permissions = []
+    for p in role.permissions:
         print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
     print()
 
-    for group_assignment in role.groupRoleAssignments:
+    group_assignments = resp.roles[0].groupRoleAssignments
+    if group_assignments is None:
+        group_assignments = []
+    for group_assignment in group_assignments:
         scope = "globally"
         workspace_id = group_assignment.roleAssignment.scopeWorkspaceId
         if workspace_id is not None:
@@ -135,22 +166,27 @@ def describe_role(args: Namespace) -> None:
         group_name = bindings.get_GetGroup(session, groupId=group_assignment.groupId).group.name
         print(f"\tassigned to group '{group_name}' with ID {group_assignment.groupId} {scope}")
 
-    for user_assignment in role.userRoleAssignments:
+    user_assignments = resp.roles[0].userRoleAssignments
+    if user_assignments is None:
+        user_assignments = []
+    for user_assignment in user_assignments:
         scope = "globally"
-        workspace_id = user_assignment.roleAssignment.scopeWorkspaceId        
+        workspace_id = user_assignment.roleAssignment.scopeWorkspaceId
         if workspace_id is not None:
             workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
             scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
 
-
-        username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username        
+        username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username
         print(f"\tassigned directly to user '{username}' with ID {user_assignment.userId} {scope}")
 
 
-def create_assignment_request(session: session.Session, args: Namespace) -> (List[bindings.v1UserRoleAssignment], List[bindings.v1GroupRoleAssignment]):
+def create_assignment_request(
+    session: session.Session, args: Namespace
+) -> Tuple[List[bindings.v1UserRoleAssignment], List[bindings.v1GroupRoleAssignment]]:
     if (args.username_to_assign is None) == (args.group_name_to_assign is None):
         raise api.errors.BadRequestException(
-            "must provide exactly one of --username-to-assign or --group-name-to-assign")
+            "must provide exactly one of --username-to-assign or --group-name-to-assign"
+        )
 
     role = bindings.v1Role(roleId=role_name_to_role_id(session, args.role_name))
 
@@ -164,29 +200,34 @@ def create_assignment_request(session: session.Session, args: Namespace) -> (Lis
         return [bindings.v1UserRoleAssignment(userId=user_id, roleAssignment=role_assign)], []
 
     group_id = user_groups.group_name_to_group_id(session, args.group_name_to_assign)
-    return [], [bindings.v1GroupRoleAssignment(groupId=group_id, roleAssignment=role_assign)]        
+    return [], [bindings.v1GroupRoleAssignment(groupId=group_id, roleAssignment=role_assign)]
 
 
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def assign_role(args: Namespace) -> None:    
+def assign_role(args: Namespace) -> None:
     session = setup_session(args)
     user_assign, group_assign = create_assignment_request(session, args)
-    req = bindings.v1AssignRolesRequest(userRoleAssignments=user_assign,
-                                        groupRoleAssignments=group_assign)
+    req = bindings.v1AssignRolesRequest(
+        userRoleAssignments=user_assign, groupRoleAssignments=group_assign
+    )
     bindings.post_AssignRoles(session, body=req)
 
     scope = " globally"
     if args.workspace_name:
         scope = f" to workspace {args.workspace_name}"
     if len(user_assign) > 0:
+        role_id = user_assign[0].roleAssignment.role.roleId
         print(
-            f"assigned role '{args.role_name}' with ID {user_assign[0].roleAssignment.role.roleId} " +
-            f"to user '{args.username_to_assign}' with ID {user_assign[0].userId}{scope}")
+            f"assigned role '{args.role_name}' with ID {role_id} "
+            + f"to user '{args.username_to_assign}' with ID {user_assign[0].userId}{scope}"
+        )
     else:
+        role_id = group_assign[0].roleAssignment.role.roleId
         print(
-            f"assigned role '{args.role_name}' with ID {group_assign[0].roleAssignment.role.roleId} " +
-            f"to group '{args.group_name_to_assign}' with ID {group_assign[0].groupId}{scope}")
+            f"assigned role '{args.role_name}' with ID {role_id} "
+            + f"to group '{args.group_name_to_assign}' with ID {group_assign[0].groupId}{scope}"
+        )
 
 
 @authentication.required
@@ -194,8 +235,9 @@ def assign_role(args: Namespace) -> None:
 def unassign_role(args: Namespace) -> None:
     session = setup_session(args)
     user_assign, group_assign = create_assignment_request(session, args)
-    req = bindings.v1RemoveAssignmentsRequest(userRoleAssignments=user_assign,
-                                              groupRoleAssignments=group_assign)
+    req = bindings.v1RemoveAssignmentsRequest(
+        userRoleAssignments=user_assign, groupRoleAssignments=group_assign
+    )
     bindings.post_RemoveAssignments(session, body=req)
 
     scope = " globally"
@@ -203,19 +245,21 @@ def unassign_role(args: Namespace) -> None:
         scope = f" to workspace {args.workspace_name}"
     if len(user_assign) > 0:
         print(
-            f"removed role '{args.role_name}' with ID {user_assign[0].roleAssignment.role.roleId} " +
-            f"from user '{args.username_to_assign}' with ID {user_assign[0].userId}{scope}")        
+            f"removed role '{args.role_name}' with ID {user_assign[0].roleAssignment.role.roleId} "
+            + f"from user '{args.username_to_assign}' with ID {user_assign[0].userId}{scope}"
+        )
     else:
         print(
-            f"removed role '{args.role_name}' with ID {group_assign[0].roleAssignment.role.roleId} " +
-            f"from group '{args.group_name_to_assign}' with ID {group_assign[0].groupId}{scope}")
+            f"removed role '{args.role_name}' with ID {group_assign[0].roleAssignment.role.roleId} "
+            + f"from group '{args.group_name_to_assign}' with ID {group_assign[0].groupId}{scope}"
+        )
 
 
 def role_name_to_role_id(session: session.Session, role_name: str) -> int:
     req = bindings.v1ListRolesRequest(limit=499, offset=0)
     resp = bindings.post_ListRoles(session=session, body=req)
     for r in resp.roles:
-        if r.name == role_name:
+        if r.name == role_name and r.roleId is not None:
             return r.roleId
     raise api.errors.BadRequestException(f"could not find role name {role_name}")
 
@@ -239,8 +283,11 @@ args_description = [
                 list_roles,
                 "list roles",
                 [
-                    Arg("--exclude-global-roles", action="store_true",
-                        help="Ignore roles with global permissions"),
+                    Arg(
+                        "--exclude-global-roles",
+                        action="store_true",
+                        help="Ignore roles with global permissions",
+                    ),
                     Arg("--json", action="store_true", help="print as JSON"),
                     *default_pagination_args,
                 ],
@@ -270,7 +317,7 @@ args_description = [
                 "describe a role",
                 [
                     Arg("role_name", help="name of role to describe"),
-                    Arg("--json", action="store_true", help="print as JSON"),                    
+                    Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
             Cmd(
@@ -279,12 +326,19 @@ args_description = [
                 "assign a role to a user or group",
                 [
                     Arg("role_name", help="name of role to assign"),
-                    Arg("--workspace-name", default=None,
-                        help="workspace name of the scope of the role assignment"), 
-                    Arg("--username-to-assign", default=None,
-                        help="username to assign the role to"),
-                    Arg("--group-name-to-assign", default=None,
-                        help="group name to assign the role to"),
+                    Arg(
+                        "--workspace-name",
+                        default=None,
+                        help="workspace name of the scope of the role assignment",
+                    ),
+                    Arg(
+                        "--username-to-assign", default=None, help="username to assign the role to"
+                    ),
+                    Arg(
+                        "--group-name-to-assign",
+                        default=None,
+                        help="group name to assign the role to",
+                    ),
                 ],
             ),
             Cmd(
@@ -293,15 +347,23 @@ args_description = [
                 "unassign a role from a user or group",
                 [
                     Arg("role_name", help="name of role to unassign"),
-                    Arg("--workspace-name", default=None,
-                        help="workspace name of the scope of the role assignment"),
-                    Arg("--username-to-assign", default=None,
-                        help="username to unassign the role to"),
-                    Arg("--group-name-to-assign", default=None,
-                        help="group name to unassign the role to"),
+                    Arg(
+                        "--workspace-name",
+                        default=None,
+                        help="workspace name of the scope of the role assignment",
+                    ),
+                    Arg(
+                        "--username-to-assign",
+                        default=None,
+                        help="username to unassign the role to",
+                    ),
+                    Arg(
+                        "--group-name-to-assign",
+                        default=None,
+                        help="group name to unassign the role to",
+                    ),
                 ],
-            )                    
-        ]
+            ),
+        ],
     )
 ]  # type: List[Any]
-

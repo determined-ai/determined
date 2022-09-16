@@ -25,6 +25,7 @@ from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
 from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.project import args_description as project_args_description
+from determined.cli.rbac import args_description as rbac_args_description
 from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
@@ -36,7 +37,6 @@ from determined.cli.top_arg_descriptions import deploy_cmd
 from determined.cli.trial import args_description as trial_args_description
 from determined.cli.user import args_description as user_args_description
 from determined.cli.user_groups import args_description as user_groups_args_description
-from determined.cli.rbac import args_description as rbac_args_description
 from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
 from determined.cli.workspace import args_description as workspace_args_description
