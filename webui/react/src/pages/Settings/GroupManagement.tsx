@@ -60,7 +60,7 @@ const GroupActionDropdown = ({
         Edit/Add Users
       </Menu.Item>
       <Menu.Item key="roles" onClick={() => openEditGroupRolesModal()}>
-        Edit/Add Roles
+        Add Roles
       </Menu.Item>
       <Menu.Item danger key="delete" onClick={() => openDeleteGroupModal()}>
         Delete
