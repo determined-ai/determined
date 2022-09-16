@@ -141,8 +141,8 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
       const group = record as Group;
       return (
         <>
-          <div className={css.userRowItem}>
-            <img src={groupIcon} />
+          <div className={css.userAvatarRowItem}>
+          <Icon name="group" />
           </div>
           <div className={css.userRowItem}>
             <div>{group.name}</div>
