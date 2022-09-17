@@ -1,9 +1,10 @@
 import queryString from 'query-string';
-import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 
 type ValidFeature = 'rbac' // Add new feature switches here using `|`
+const queryParams = queryString.parse(window.location.search);
+
 interface FeatureHook {
   isOn: (feature: ValidFeature) => boolean
 }
@@ -13,8 +14,6 @@ const useFeature = (): FeatureHook => {
 };
 
 const IsOn = (feature: string): boolean => {
-  const location = useLocation();
-  const queryParams = queryString.parse(location.search);
   const { info: { rbacEnabled } } = useStore();
   switch (feature) {
     case 'rbac':
