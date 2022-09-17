@@ -1,14 +1,14 @@
 import React from 'react';
 
-import useWebSettings, { ProjectDetailKey } from 'recoil/userSettings/useWebSettings';
+import useWebSettings, { ProjectDetailType } from 'recoil/userSettings/useWebSettings';
 
 const Test2: React.FC = () => {
-  const [ pinned, setPinned ] = useWebSettings(ProjectDetailKey.Pinned);
-  const onClick = () => setPinned({ pinned: [] });
+  const [ archived, setArchived ] = useWebSettings(ProjectDetailType.Archived);
+  const onClick = () => setArchived({ pd_archived: false });
   return (
     <>
       <button onClick={onClick}>button</button>
-      <div>{JSON.stringify(pinned)}</div>
+      <div>{JSON.stringify(archived.pd_archived)}</div>
     </>
   );
 };

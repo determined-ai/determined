@@ -2,47 +2,49 @@ import { atomFamily, selector, selectorFamily, SetterOrUpdater, useRecoilState }
 
 import { getUserWebSetting, updateUserWebSetting } from 'services/api';
 
-export enum ProjectDetailKey {
-  Archived = 'archived',
-  ColumnWidths = 'columnWidths',
-  Pinned = 'pinned',
-  SortKey = 'sortKey',
-  TableLimit = 'tableLimit',
-  UserFilter = 'userFilter',
-}
+export const ProjectDetailType = {
+  Archived: 'pd_archived',
+  ColumnWidths: 'pd_columnWidths',
+  Pinned: 'pd_pinned',
+  SortKey: 'pd_sortKey',
+  TableLimit: 'pd_tableLimit',
+  UserFilter: 'pd_userFilter',
+} as const;
 
-export enum ThemeKey {
-  Theme = 'theme'
-}
+type ProjectDetailType = typeof ProjectDetailType[keyof typeof ProjectDetailType];
+
+export const ThemeType = { Theme: 'theme' } as const;
+
+type ThemeType = typeof ThemeType[keyof typeof ThemeType];
 
 export type ProjectDetail = {
-  [ProjectDetailKey.Archived]: { archived: boolean };
-  [ProjectDetailKey.ColumnWidths]: {columnWidths: number[]};
-  [ProjectDetailKey.Pinned]: {pinned: Record<number, number[]>};
-  [ProjectDetailKey.SortKey]: {sortKey: string};
-  [ProjectDetailKey.TableLimit]: {tableLimit: number};
-  [ProjectDetailKey.UserFilter]: {userFilter: number[]};
+  [ProjectDetailType.Archived]: boolean;
+  [ProjectDetailType.ColumnWidths]: number[];
+  [ProjectDetailType.Pinned]: Record<number, number[]>;
+  [ProjectDetailType.SortKey]: string;
+  [ProjectDetailType.TableLimit]: number;
+  [ProjectDetailType.UserFilter]: number[];
 };
 
 export type Theme = {
-  [ThemeKey.Theme]: {theme: 'dark' | 'light' | 'system'};
+  [ThemeType.Theme]: 'dark' | 'light' | 'system';
 };
 
 export type AllData = ProjectDetail & Theme;
 
-const defaultAllData = {
-  [ProjectDetailKey.Archived]: { archived: false },
-  [ProjectDetailKey.ColumnWidths]: { columnWidths: [] },
-  [ProjectDetailKey.Pinned]: { pinned: { 1: [] } },
-  [ProjectDetailKey.SortKey]: { sortKey: '' },
-  [ProjectDetailKey.TableLimit]: { tableLimit: 20 },
-  [ProjectDetailKey.UserFilter]: { userFilter: [] },
-  [ThemeKey.Theme]: { theme: 'system' },
+const defaultAllData: AllData = {
+  [ProjectDetailType.Archived]: false,
+  [ProjectDetailType.ColumnWidths]: [],
+  [ProjectDetailType.Pinned]: { 1: [] },
+  [ProjectDetailType.SortKey]: '',
+  [ProjectDetailType.TableLimit]: 20,
+  [ProjectDetailType.UserFilter]: [],
+  [ThemeType.Theme]: 'system',
 };
 
-type DomainName = ProjectDetailKey | ThemeKey;
+type DomainName = ProjectDetailType | ThemeType;
 
-const allUserSettings = selector<AllData>({
+const allUserSettingsState = selector<AllData>({
   get: async () => {
     try {
       const response = await getUserWebSetting({});
@@ -56,14 +58,14 @@ const allUserSettings = selector<AllData>({
       throw new Error('d');
     }
   },
-  key: 'allUserSettings',
+  key: 'allUserSettingsState',
 });
 
 const userSettingsDomainState = atomFamily<any, DomainName>({
   default: selectorFamily<unknown, DomainName>({
     get: (domain) => ({ get }) => {
-      const domains = get(allUserSettings);
-      return domains[domain];
+      const domains = get(allUserSettingsState);
+      return { [domain]: domains[domain] };
     },
     key: 'userSettingsDomainQuery',
   }),
@@ -78,8 +80,8 @@ const userSettingsDomainState = atomFamily<any, DomainName>({
 });
 
 const useWebSettings = <T extends DomainName>(domain: T):
-[AllData[T], SetterOrUpdater<AllData[T]>] => {
-  const [ userWebSettings, setUserWebSettings ] = useRecoilState<AllData[T]>(
+[Record<T, AllData[T]>, SetterOrUpdater<Record<T, AllData[T]>>] => {
+  const [ userWebSettings, setUserWebSettings ] = useRecoilState<Record<T, AllData[T]>>(
     userSettingsDomainState(domain),
   );
 
