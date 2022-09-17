@@ -56,7 +56,13 @@ class TextualInversionDataset(Dataset):
         self.center_crop = center_crop
         self.flip_p = flip_p
 
-        self.flip_transform = transforms.RandomHorizontalFlip(p=self.flip_p)
+        self._base_img_trans = transforms.Compose(
+            [
+                transforms.Resize(size=self.img_size, interpolation=self.interpolation),
+                transforms.ToTensor(),
+                transforms.RandomHorizontalFlip(p=self.flip_p),
+            ]
+        )
 
         self.records = []
         for dir_path, token, prop in zip(
@@ -90,13 +96,9 @@ class TextualInversionDataset(Dataset):
         """Converts a list of PIL images into appropriately transformed tensors."""
         img_ts = []
         for img in imgs:
-            img_t = transforms.ToTensor()(img)
             if self.center_crop:
-                crop_size = min(img_t.shape[-1], img_t.shape[-2])
-                img_t = transforms.CenterCrop(crop_size)(img_t)
-            img_t = transforms.Resize(
-                (self.img_size, self.img_size), interpolation=self.interpolation
-            )(img_t)
+                img = transforms.CenterCrop(size=min(img.size))(img)
+            img_t = self._base_img_trans(img)
             # Normalize the tensor to be in the range [-1, 1]
             img_t = (img_t - 0.5) * 2.0
             img_ts.append(img_t)
