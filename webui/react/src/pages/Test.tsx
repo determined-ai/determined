@@ -4,7 +4,7 @@ import useWebSettings, { ProjectDetailKey } from 'recoil/userSettings/useWebSett
 
 const Test: React.FC = () => {
   const [ count, setCount ] = useState<number>(0);
-  const [ pinned, setPinned ] = useWebSettings<ProjectDetailKey.Pinned>(ProjectDetailKey.Pinned);
+  const [ pinned, setPinned ] = useWebSettings(ProjectDetailKey.Pinned);
 
   const onClick = () => {
     setPinned({ pinned: { 1: [ 1, 2, count + 1 ] } });
@@ -13,7 +13,7 @@ const Test: React.FC = () => {
   return (
     <>
       <button onClick={onClick}>button {count}</button>
-      <div>{JSON.stringify(pinned.pinned)}</div>
+      <div>{JSON.stringify(pinned)}</div>
     </>
   );
 };
