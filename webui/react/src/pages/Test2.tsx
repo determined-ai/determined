@@ -1,18 +1,14 @@
 import React from 'react';
-import { useRecoilState } from 'recoil';
 
-import { AllData, ProjectDetailKey, userSettingsDomainState } from 'recoil/userSettings';
+import useWebSettings, { ProjectDetailKey } from 'recoil/userSettings/useWebSettings';
 
 const Test2: React.FC = () => {
-  const [ userWebSettings, setUserWebSettings ] =
-   useRecoilState<AllData[ProjectDetailKey.Archived]>(
-     userSettingsDomainState(ProjectDetailKey.Archived),
-   );
-  const onClick = () => setUserWebSettings({ archived: false });
+  const [ archived, setArchived ] = useWebSettings(ProjectDetailKey.Archived);
+  const onClick = () => setArchived({ archived: false });
   return (
     <>
       <button onClick={onClick}>button</button>
-      <div>{JSON.stringify(userWebSettings)}</div>
+      <div>{JSON.stringify(archived.archived)}</div>
     </>
   );
 };

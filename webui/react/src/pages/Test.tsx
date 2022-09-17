@@ -1,26 +1,19 @@
 import React, { useState } from 'react';
-import { useRecoilState } from 'recoil';
 
-import {
-  AllData,
-  ProjectDetailKey,
-  userSettingsDomainState,
-} from 'recoil/userSettings';
+import useWebSettings, { ProjectDetailKey } from 'recoil/userSettings/useWebSettings';
 
 const Test: React.FC = () => {
   const [ count, setCount ] = useState<number>(0);
-  const [ userWebSettings, setUserWebSettings ] =
-    useRecoilState<AllData[ProjectDetailKey.ColumnWidths]>(
-      userSettingsDomainState(ProjectDetailKey.ColumnWidths),
-    );
+  const [ pinned, setPinned ] = useWebSettings<ProjectDetailKey.Pinned>(ProjectDetailKey.Pinned);
+
   const onClick = () => {
-    setUserWebSettings({ columnWidths: [ count + 1 ] });
+    setPinned({ pinned: { 1: [ 1, 2, count + 1 ] } });
     setCount((prev) => prev + 1);
   };
   return (
     <>
       <button onClick={onClick}>button {count}</button>
-      <div>{JSON.stringify(userWebSettings)}</div>
+      <div>{JSON.stringify(pinned.pinned)}</div>
     </>
   );
 };

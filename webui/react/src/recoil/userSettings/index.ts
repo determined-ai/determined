@@ -1,103 +1,98 @@
-import { atomFamily, selector, selectorFamily } from 'recoil';
+export type d = string
+// import { atomFamily, selector, selectorFamily } from 'recoil';
 
-import { getUserWebSetting, updateUserWebSetting } from 'services/api';
+// import { getUserWebSetting, updateUserWebSetting } from 'services/api';
 
-export enum ProjectDetailKey {
-  Archived = 'archived',
-  ColumnWidths = 'columnWidths',
-  Pinned = 'pinned',
-  SortKey = 'sortKey',
-  TableLimit = 'tableLimit',
-  UserFilter = 'userFilter',
-}
+// export enum ProjectDetailKey {
+//   Archived = 'archived',
+//   ColumnWidths = 'columnWidths',
+//   Pinned = 'pinned',
+//   SortKey = 'sortKey',
+//   TableLimit = 'tableLimit',
+//   UserFilter = 'userFilter',
+// }
 
-export enum ThemeKey {
-  Theme = 'theme'
-}
+// export enum ThemeKey {
+//   Theme = 'theme'
+// }
 
-export type ProjectDetail = {
-  [ProjectDetailKey.Archived]: { archived: boolean };
-  [ProjectDetailKey.ColumnWidths]: {columnWidths: number[]};
-  [ProjectDetailKey.Pinned]: {pinned: Record<number, number[]>};
-  [ProjectDetailKey.SortKey]: {sortKey: string};
-  [ProjectDetailKey.TableLimit]: {tableLimit: number};
-  [ProjectDetailKey.UserFilter]: {userFilter: number[]};
-};
+// export type ProjectDetail = {
+//   [ProjectDetailKey.Archived]: { archived: boolean };
+//   [ProjectDetailKey.ColumnWidths]: {columnWidths: number[]};
+//   [ProjectDetailKey.Pinned]: {pinned: Record<number, number[]>};
+//   [ProjectDetailKey.SortKey]: {sortKey: string};
+//   [ProjectDetailKey.TableLimit]: {tableLimit: number};
+//   [ProjectDetailKey.UserFilter]: {userFilter: number[]};
+// };
 
-export type Theme = {
-  [ThemeKey.Theme]: {theme: 'dark' | 'light' | 'system'};
-};
+// export type Theme = {
+//   [ThemeKey.Theme]: {theme: 'dark' | 'light' | 'system'};
+// };
 
-type ProjectDetailDB = {
-  [ProjectDetailKey.Archived]:boolean;
-  [ProjectDetailKey.ColumnWidths]: number[];
-  [ProjectDetailKey.Pinned]: Record<number, number[]>;
-  [ProjectDetailKey.SortKey]: string;
-  [ProjectDetailKey.TableLimit]: number;
-  [ProjectDetailKey.UserFilter]: number[];
-};
+// export type AllData = ProjectDetail & Theme;
 
-type ThemeDB = {
-  [ThemeKey.Theme]: 'dark' | 'light' | 'system';
-};
+// const defaultAllData = {
+//   [ProjectDetailKey.Archived]: { archived: false },
+//   [ProjectDetailKey.ColumnWidths]: { columnWidths: [] },
+//   [ProjectDetailKey.Pinned]: { pinned: { 1: [] } },
+//   [ProjectDetailKey.SortKey]: { sortKey: '' },
+//   [ProjectDetailKey.TableLimit]: { tableLimit: 20 },
+//   [ProjectDetailKey.UserFilter]: { userFilter: [] },
+//   [ThemeKey.Theme]: { theme: 'system' },
+// };
 
-export type AllData = ProjectDetail & Theme;
+// type DomainName = ProjectDetailKey | ThemeKey;
 
-export type AllDataDB = ProjectDetailDB & ThemeDB;
-
-const getDefaultAllData = (newSettings: AllDataDB): AllData => {
-  return {
-    [ProjectDetailKey.Archived]: { archived: newSettings.archived ?? false },
-    [ProjectDetailKey.ColumnWidths]: { columnWidths: newSettings.columnWidths ?? [] },
-    [ProjectDetailKey.Pinned]: { pinned: newSettings.pinned ?? { 1: [] } },
-    [ProjectDetailKey.SortKey]: { sortKey: newSettings.sortKey ?? '' },
-    [ProjectDetailKey.TableLimit]: { tableLimit: newSettings.tableLimit ?? 20 },
-    [ProjectDetailKey.UserFilter]: { userFilter: newSettings.userFilter ?? [] },
-    [ThemeKey.Theme]: { theme: newSettings.theme ?? 'system' },
-  };
-};
-
-type DomainName = ProjectDetailKey | ThemeKey;
-
-const allUserSettings = selector<AllData>({
-  get: async () => {
-    try {
-      const response = await getUserWebSetting({});
-      const settings: AllData = getDefaultAllData(response.settings);
-      return settings;
-    } catch (e) {
-      throw new Error('d');
-    }
-  },
-  key: 'allUserSettings',
-});
-
-// const userSettingsDomainsState = atom<Set<string>>({
-//   default: new Set(Object.keys(DomainName)), // TODO: add more
-//   key: 'userSettingsDomainsState',
+// const allUserSettings = selector<AllData>({
+//   get: async () => {
+//     try {
+//       const response = await getUserWebSetting({});
+//       const resSettings = response.settings;
+//       Object.keys(resSettings).forEach((key: string) => {
+//         resSettings[key] = { [key]: resSettings[key] };
+//       });
+//       const settings: AllData = { ...defaultAllData, ...resSettings };
+//       return settings;
+//     } catch (e) {
+//       throw new Error('d');
+//     }
+//   },
+//   key: 'allUserSettings',
 // });
 
-const getDomain = <K extends keyof AllData>(
-  domains: AllData,
-  domainName: K,
-): typeof domains[K] => {
-  return domains[domainName];
-};
+// export const userSettingsDomainState = atomFamily<any, DomainName>({
+//   default: selectorFamily<unknown, DomainName>({
+//     get: (domain) => ({ get }) => {
+//       const domains = get(allUserSettings);
+//       return domains[domain];
+//     },
+//     key: 'userSettingsDomainQuery',
+//   }),
+//   effects: [
+//     ({ onSet }) => {
+//       onSet((newValue) => {
+//         updateUserWebSetting({ setting: { value: newValue } });
+//       });
+//     },
+//   ],
+//   key: 'userSettingsDomainState',
+// });
 
-export const userSettingsDomainState = atomFamily<any, DomainName>({
-  default: selectorFamily<unknown, DomainName>({
-    get: (domain) => ({ get }) => {
-      const domains = get(allUserSettings);
-      return getDomain(domains, domain);
-    },
-    key: 'userSettingsDomainQuery',
-  }),
-  effects: [
-    ({ onSet }) => {
-      onSet((newValue) => {
-        updateUserWebSetting({ setting: { value: newValue } });
-      });
-    },
-  ],
-  key: 'userSettingsDomainState',
-});
+// export const multipleUserSettingsDomainStates = selectorFamily<
+//     {[k: string]: any}, ProjectDetailKey[]
+//   >({
+//     get: (propaties) => ({ get }) => {
+//       const obj = Object.fromEntries(
+//         propaties
+//           .filter((key) => key in get(allUserSettings))
+//           .map((key) => [ key, get(userSettingsDomainState(key)) ]),
+//       );
+//       return obj;
+//     },
+//     key: 'multipleUserSettingsDomainStates',
+//     set: (field) => ({ set }, newValue) => {
+//       for (const a of field) {
+//         set(userSettingsDomainState(a), { [a]: newValue });
+//       }
+//     },
+//   });
