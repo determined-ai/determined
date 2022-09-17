@@ -14,7 +14,7 @@ import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
-import { isEqual } from 'shared/utils/data';
+import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
@@ -133,7 +133,7 @@ const GroupManagement: React.FC = () => {
     const response = await getGroup({ groupId });
     const i = groupUsers.findIndex((gr) => gr.groupId === groupId);
     i >= 0 ? groupUsers[i] = response.group : groupUsers.push(response.group);
-    setGroupUsers(JSON.parse(JSON.stringify(groupUsers)));
+    setGroupUsers(clone(groupUsers));
   }, [ groupUsers ]);
 
   const fetchUsers = useCallback(async (): Promise<void> => {
