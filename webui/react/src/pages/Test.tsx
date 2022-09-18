@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
-import useWebSettings, { ProjectDetailType } from 'recoil/userSettings/useWebSettings';
+import useWebSettings, { UserWebSettingsKeys } from 'recoil/userSettings/useWebSettings';
 
 const Test: React.FC = () => {
   const [ count, setCount ] = useState<number>(0);
-  const [ pinned, setPinned ] = useWebSettings(ProjectDetailType.Pinned);
+  const [ pinned, setPinned ] = useWebSettings(UserWebSettingsKeys.PG_Pinned);
 
   const onClick = () => {
     setPinned({ pd_pinned: { 1: [ 1, 2, count + 1 ] } });

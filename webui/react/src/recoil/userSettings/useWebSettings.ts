@@ -2,67 +2,63 @@ import { atomFamily, selector, selectorFamily, SetterOrUpdater, useRecoilState }
 
 import { getUserWebSetting, updateUserWebSetting } from 'services/api';
 
-export const ProjectDetailType = {
-  Archived: 'pd_archived',
-  ColumnWidths: 'pd_columnWidths',
-  Pinned: 'pd_pinned',
-  SortKey: 'pd_sortKey',
-  TableLimit: 'pd_tableLimit',
-  UserFilter: 'pd_userFilter',
+export const UserWebSettingsKeys = {
+  // Global
+  Global_Theme: 'global_theme',
+
+  // Project Detail
+  PG_Archived: 'pd_archived',
+  PG_ColumnWidths: 'pd_columnWidths',
+  PG_Pinned: 'pd_pinned',
+  PG_SortKey: 'pd_sortKey',
+  PG_TableLimit: 'pd_tableLimit',
+  PG_UserFilter: 'pd_userFilter',
 } as const;
 
-type ProjectDetailType = typeof ProjectDetailType[keyof typeof ProjectDetailType];
+type UserWebSettingsDomainName = typeof UserWebSettingsKeys[keyof typeof UserWebSettingsKeys];
 
-export const ThemeType = { Theme: 'theme' } as const;
+export type UserWebSettings = {
+  // Global
+  [UserWebSettingsKeys.Global_Theme]: 'dark' | 'light' | 'system';
 
-type ThemeType = typeof ThemeType[keyof typeof ThemeType];
+  // Project Detail
+  [UserWebSettingsKeys.PG_Archived]: boolean;
+  [UserWebSettingsKeys.PG_ColumnWidths]: number[];
+  [UserWebSettingsKeys.PG_Pinned]: Record<number, number[]>;
+  [UserWebSettingsKeys.PG_SortKey]: string;
+  [UserWebSettingsKeys.PG_TableLimit]: number;
+  [UserWebSettingsKeys.PG_UserFilter]: number[];
+}
 
-export type ProjectDetail = {
-  [ProjectDetailType.Archived]: boolean;
-  [ProjectDetailType.ColumnWidths]: number[];
-  [ProjectDetailType.Pinned]: Record<number, number[]>;
-  [ProjectDetailType.SortKey]: string;
-  [ProjectDetailType.TableLimit]: number;
-  [ProjectDetailType.UserFilter]: number[];
+const defaultUserWebSettings: UserWebSettings = {
+  // Global
+  [UserWebSettingsKeys.Global_Theme]: 'system',
+
+  // Project Detail
+  [UserWebSettingsKeys.PG_Archived]: false,
+  [UserWebSettingsKeys.PG_ColumnWidths]: [],
+  [UserWebSettingsKeys.PG_Pinned]: { 1: [] },
+  [UserWebSettingsKeys.PG_SortKey]: '',
+  [UserWebSettingsKeys.PG_TableLimit]: 20,
+  [UserWebSettingsKeys.PG_UserFilter]: [],
 };
 
-export type Theme = {
-  [ThemeType.Theme]: 'dark' | 'light' | 'system';
-};
-
-export type AllData = ProjectDetail & Theme;
-
-const defaultAllData: AllData = {
-  [ProjectDetailType.Archived]: false,
-  [ProjectDetailType.ColumnWidths]: [],
-  [ProjectDetailType.Pinned]: { 1: [] },
-  [ProjectDetailType.SortKey]: '',
-  [ProjectDetailType.TableLimit]: 20,
-  [ProjectDetailType.UserFilter]: [],
-  [ThemeType.Theme]: 'system',
-};
-
-type DomainName = ProjectDetailType | ThemeType;
-
-const allUserSettingsState = selector<AllData>({
+const allUserSettingsState = selector<UserWebSettings>({
   get: async () => {
     try {
       const response = await getUserWebSetting({});
       const resSettings = response.settings;
-      Object.keys(resSettings).forEach((key: string) => {
-        resSettings[key] = { [key]: resSettings[key] };
-      });
-      const settings: AllData = { ...defaultAllData, ...resSettings };
+      const settings: UserWebSettings = { ...defaultUserWebSettings, ...resSettings };
       return settings;
     } catch (e) {
-      throw new Error('d');
+      throw new Error('unable to fetch userWebSettings data');
     }
   },
   key: 'allUserSettingsState',
 });
 
-const userSettingsDomainState = atomFamily<any, DomainName>({
-  default: selectorFamily<unknown, DomainName>({
+const userSettingsDomainState = atomFamily<any, UserWebSettingsDomainName>({
+  default: selectorFamily<unknown, UserWebSettingsDomainName>({
     get: (domain) => ({ get }) => {
       const domains = get(allUserSettingsState);
       return { [domain]: domains[domain] };
@@ -79,9 +75,9 @@ const userSettingsDomainState = atomFamily<any, DomainName>({
   key: 'userSettingsDomainState',
 });
 
-const useWebSettings = <T extends DomainName>(domain: T):
-[Record<T, AllData[T]>, SetterOrUpdater<Record<T, AllData[T]>>] => {
-  const [ userWebSettings, setUserWebSettings ] = useRecoilState<Record<T, AllData[T]>>(
+const useWebSettings = <T extends UserWebSettingsDomainName>(domain: T):
+[Record<T, UserWebSettings[T]>, SetterOrUpdater<Record<T, UserWebSettings[T]>>] => {
+  const [ userWebSettings, setUserWebSettings ] = useRecoilState<Record<T, UserWebSettings[T]>>(
     userSettingsDomainState(domain),
   );
 
