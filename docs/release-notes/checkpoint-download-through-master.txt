@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  API: Support downloading checkpoints through the master. It only supports AWS S3 for now and relies on implicit IAM permissions on the master. Two endpoints are added for downloading checkpoints in different file formats:
-  - Download the checkpoint as a tgz (gzipped and tarred) file: `/checkpoints/:checkpoint_uuid/tgz`
-  - Download the checkpoint as zip file (convenient for Windows users): `/checkpoints/:checkpoint_uuid/zip`
