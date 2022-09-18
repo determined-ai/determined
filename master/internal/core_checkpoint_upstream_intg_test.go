@@ -91,21 +91,19 @@ func checkTgz(t *testing.T, content io.Reader, id string) {
 	require.NoError(t, err, "failed to create a gzip reader")
 	tr := tar.NewReader(zr)
 	gotMap := make(map[string]string)
-	prefix := S3_TEST_PREFIX + "/" + id + "/"
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
 			break // End of archive
 		}
 		require.NoError(t, err, "failed to read record header")
-		pathname := strings.TrimPrefix(hdr.Name, prefix)
 		buf := &strings.Builder{}
 		if hdr.Size > 0 {
 			_, err := io.Copy(buf, tr)
 			_, err = io.Copy(os.Stdout, tr)
 			require.NoError(t, err, "failed to read content of file", hdr.Name)
 		}
-		gotMap[pathname] = buf.String()
+		gotMap[hdr.Name] = buf.String()
 	}
 	require.Equal(t, mockCheckpointContent, gotMap)
 }
@@ -114,16 +112,14 @@ func checkZip(t *testing.T, content string, id string) {
 	zr, err := zip.NewReader(strings.NewReader(content), int64(len(content)))
 	require.NoError(t, err, "failed to create a zip reader")
 	gotMap := make(map[string]string)
-	prefix := S3_TEST_PREFIX + "/" + id + "/"
 	for _, f := range zr.File {
-		pathname := strings.TrimPrefix(f.Name, prefix)
 		buf := &strings.Builder{}
 		rc, err := f.Open()
 		require.NoError(t, err, "unable to decompress file", f.Name)
 		_, err = io.Copy(buf, rc)
 		require.NoError(t, err, "unable to read content of file", f.Name)
 		rc.Close()
-		gotMap[pathname] = buf.String()
+		gotMap[f.Name] = buf.String()
 	}
 	require.Equal(t, mockCheckpointContent, gotMap)
 }

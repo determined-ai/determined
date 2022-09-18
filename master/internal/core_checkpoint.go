@@ -199,6 +199,7 @@ type batchDownloadIterator struct {
 	err    error
 	pos    int
 	bucket string
+	prefix string
 }
 
 // Next() returns true if the next item is available.
@@ -207,7 +208,8 @@ func (i *batchDownloadIterator) Next() bool {
 	if i.pos == len(i.objects) {
 		return false
 	}
-	err := i.aw.WriteHeader(*i.objects[i.pos].Key, *i.objects[i.pos].Size)
+	pathname := strings.TrimPrefix(*i.objects[i.pos].Key, i.prefix)
+	err := i.aw.WriteHeader(pathname, *i.objects[i.pos].Size)
 	if err != nil {
 		i.err = err
 		return false
@@ -232,10 +234,14 @@ func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 }
 
 func newBatchDownloadIterator(aw archiveWriter,
-	bucket string, objs []*s3.Object) *batchDownloadIterator {
+	bucket string, prefix string, objs []*s3.Object) *batchDownloadIterator {
+	if !strings.HasSuffix(prefix, "/"){
+		prefix += "/"
+	}
 	return &batchDownloadIterator{
 		aw:      aw,
 		bucket:  bucket,
+		prefix:  prefix,
 		objects: objs,
 		pos:     -1,
 	}
@@ -289,7 +295,7 @@ func (d *s3Downloader) download(c context.Context) error {
 		d.Concurrency = 1 // Setting concurrency to 1 to use seqWriterAt
 	})
 	funcReadPage := func(output *s3.ListObjectsV2Output, lastPage bool) bool {
-		iter := newBatchDownloadIterator(d.aw, d.bucket, output.Contents)
+		iter := newBatchDownloadIterator(d.aw, d.bucket, d.prefix, output.Contents)
 		// Download every bucket in this page
 		err = downloader.DownloadWithIterator(c, iter)
 		if iter.Err() != nil {
