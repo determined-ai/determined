@@ -104,13 +104,6 @@ test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
 	go test -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
 
-.PHONY: test-intg-upstream
-test-intg-upstream: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
-test-intg-upstream: export DET_INTEGRATION_ES_HOST ?= localhost
-test-intg-upstream: export DET_INTEGRATION_ES_PORT ?= 9200
-test-intg-upstream:
-	go test -tags="integration upstream" -coverprofile=coverage.out -covermode count -cover ./internal
-
 .PHONY: pre-package
 pre-package:
 	rm -rf build

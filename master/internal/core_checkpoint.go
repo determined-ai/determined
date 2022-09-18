@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -235,7 +234,7 @@ func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 
 func newBatchDownloadIterator(aw archiveWriter,
 	bucket string, prefix string, objs []*s3.Object) *batchDownloadIterator {
-	if !strings.HasSuffix(prefix, "/"){
+	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
 	return &batchDownloadIterator{
@@ -388,8 +387,6 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 	if err != nil {
 		return nil, err
 	}
-	spew.Dump(bytes)
-	spew.Dump(checkpoint.CheckpointTrainingMetadata.ExperimentConfig)
 
 	legacyConfig, err := expconf.ParseLegacyConfigJSON(bytes)
 	if err != nil {
