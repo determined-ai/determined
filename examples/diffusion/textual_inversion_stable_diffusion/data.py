@@ -15,8 +15,6 @@ INTERPOLATION_DICT = {
     "bicubic": transforms.InterpolationMode.BICUBIC,
 }
 
-MAX_INT = 2 ** 32 - 1
-
 
 class TextualInversionDataset(Dataset):
     """Dataset for textual inversion, pairing tokenized captions with images.  Contains
