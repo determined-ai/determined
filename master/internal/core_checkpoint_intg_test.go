@@ -98,7 +98,6 @@ func checkTgz(t *testing.T, content io.Reader, id string) {
 		buf := &strings.Builder{}
 		if hdr.Size > 0 {
 			_, err := io.Copy(buf, tr)
-			_, err = io.Copy(os.Stdout, tr)
 			require.NoError(t, err, "failed to read content of file", hdr.Name)
 		}
 		gotMap[hdr.Name] = buf.String()

@@ -11,13 +11,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -265,7 +266,7 @@ func getS3BucketRegion(ctx context.Context, bucket string) (string, error) {
 }
 
 type checkpointDownloader interface {
-	download(c context.Context) error
+	download(ctx context.Context) error
 }
 
 type s3Downloader struct {
@@ -274,8 +275,8 @@ type s3Downloader struct {
 	prefix string
 }
 
-func (d *s3Downloader) download(c context.Context) error {
-	region, err := getS3BucketRegion(c, d.bucket)
+func (d *s3Downloader) download(ctx context.Context) error {
+	region, err := getS3BucketRegion(ctx, d.bucket)
 	if err != nil {
 		return err
 	}
@@ -289,26 +290,26 @@ func (d *s3Downloader) download(c context.Context) error {
 	// the existing AWS credentials.
 	s3client := s3.New(sess)
 
-	var errs []error
+	var merr error
 	downloader := s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
 		d.Concurrency = 1 // Setting concurrency to 1 to use seqWriterAt
 	})
 	funcReadPage := func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 		iter := newBatchDownloadIterator(d.aw, d.bucket, d.prefix, output.Contents)
 		// Download every bucket in this page
-		err = downloader.DownloadWithIterator(c, iter)
+		err = downloader.DownloadWithIterator(ctx, iter)
 		if iter.Err() != nil {
-			errs = append(errs, iter.Err())
+			merr = multierror.Append(merr, iter.Err())
 		}
 		if err != nil {
-			errs = append(errs, err)
+			merr = multierror.Append(merr, err)
 		}
 
 		// Return False to stop paging
-		return len(errs) == 0
+		return merr == nil
 	}
 	err = s3client.ListObjectsV2PagesWithContext(
-		c,
+		ctx,
 		&s3.ListObjectsV2Input{
 			Bucket: &d.bucket,
 			Prefix: &d.prefix,
@@ -316,14 +317,10 @@ func (d *s3Downloader) download(c context.Context) error {
 		funcReadPage,
 	)
 	if err != nil {
-		errs = append(errs, err)
+		merr = multierror.Append(merr, err)
 	}
-	if len(errs) > 0 {
-		msg := "one or more errors encountered during checkpoint download:"
-		for _, v := range errs {
-			msg += fmt.Sprintf("\n  %s;", v.Error())
-		}
-		return errors.New(msg)
+	if merr != nil {
+		return fmt.Errorf("one or more errors encountered during checkpoint download: %w", merr)
 	}
 	return nil
 }
@@ -431,6 +428,10 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 	}
 
 	downloader, err := newDownloader(storageConfig, writerPipe, args.CheckpointUUID)
+	if err != nil {
+		return err
+	}
+
 	err = downloader.download(c.Request().Context())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
