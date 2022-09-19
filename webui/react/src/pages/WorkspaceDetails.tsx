@@ -5,6 +5,7 @@ import { useHistory, useLocation, useParams } from 'react-router';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
@@ -30,11 +31,9 @@ export enum WorkspaceDetailsTab {
   Projects = 'projects'
 }
 
-// Temporary Mock for rbacEnabled functionality
-const rbacEnabled = false;
-
 const WorkspaceDetails: React.FC = () => {
   const { users } = useStore();
+  const rbacEnabled = useFeature().isOn('rbac');
   const { workspaceId } = useParams<Params>();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ pageError, setPageError ] = useState<Error>();
@@ -46,7 +45,7 @@ const WorkspaceDetails: React.FC = () => {
   const location = useLocation();
   const basePath = paths.workspaceDetails(workspaceId);
   const { canViewWorkspace } = usePermissions();
-  
+
   const fetchWorkspace = useCallback(async () => {
     try {
       const response = await getWorkspace({ id }, { signal: canceler.signal });

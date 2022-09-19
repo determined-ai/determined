@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
+import useFeature from 'hooks/useFeature';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import usePermissions from 'hooks/usePermissions';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
@@ -24,6 +25,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
+
+  const rbacEnabled = useFeature().isOn('rbac');
 
   const canModify = usePermissions().canModifyWorkspace;
 
@@ -48,9 +51,6 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
     },
     [workspace.id],
   );
-
-  // Temporary Mock for rbacEnabled functionality
-  const rbacEnabled = false;
 
   return (
     <div className={css.base}>
@@ -88,16 +88,13 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         )}
       </Space>
       <div className={css.headerButton}>
-        {(rbacEnabled && workspace.immutable && !workspace.archived) && (
+        {(rbacEnabled && !workspace.immutable && !workspace.archived) && (
           <Button> Add Members</Button>
         )}
         {(!workspace.immutable && !workspace.archived) && (
           <Button onClick={handleProjectCreateClick}>New Project</Button>
         )}
       </div>
-      {!workspace.immutable && !workspace.archived && (
-        <Button onClick={handleProjectCreateClick}>New Project</Button>
-      )}
       {contextHolder}
     </div>
   );
