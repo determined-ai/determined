@@ -81,7 +81,7 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
 
 export const stateRenderer: Renderer<{ state: StateOfUnion}> =
 (_, record) => (
-  <div className={css.centerVertically}>
+  <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
     <Badge state={record.state} type={BadgeType.State} />
   </div>
 );
@@ -91,7 +91,9 @@ export const tooltipRenderer: Renderer = (text) => (
 );
 
 export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
-  <UserAvatar userId={record.userId} />
+  <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+    <UserAvatar userId={record.userId} />
+  </div>
 );
 
 /* Command Task Table Column Renderers */

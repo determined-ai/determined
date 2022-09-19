@@ -8,6 +8,7 @@ import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
 import { Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo,
   PoolOverview, ResourcePool, ResourceType, UserAssignment, UserRole, Workspace } from 'types';
+import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
 
@@ -31,6 +32,7 @@ interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
@@ -83,6 +85,7 @@ export enum StoreAction {
   SetActiveExperiments = 'SetActiveExperiments',
 
   // User assignments, roles, and derived permissions
+  SetKnownRoles = 'SetKnownRoles',
   SetUserAssignments = 'SetUserAssignments',
   SetUserRoles = 'SetUserRoles',
 }
@@ -109,6 +112,7 @@ type Action =
   tensorboards: number;
 }}
 | { type: StoreAction.SetActiveExperiments, value: number }
+| { type: StoreAction.SetKnownRoles, value: UserRole[] }
 | { type: StoreAction.SetUserRoles, value: UserRole[] }
 | { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
 | ActionUI;
@@ -149,6 +153,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  knownRoles: [],
   pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
@@ -161,10 +166,9 @@ const initState: State = {
     id: -1,
     name: 'OSS User',
     permissions: [ {
-      globalOnly: true,
       id: -1,
+      isGlobal: true,
       name: 'oss_user',
-      workspaceOnly: false,
     } ],
   } ],
   users: [],
@@ -176,6 +180,14 @@ const DispatchContext = React.createContext<Dispatch<Action> | undefined>(undefi
 
 const clearAuthCookie = (): void => {
   document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
+/**
+ * set the auth cookie if it's not already set.
+ * @param token auth token
+ */
+const ensureAuthCookieSet = (token: string): void => {
+  if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
 };
 
 export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
@@ -248,6 +260,12 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, auth: { ...state.auth, checked: false } };
     case StoreAction.SetAuth:
       if (action.value.token) {
+        /**
+         * project Samuel provisioned auth doesn't set a cookie
+         * like our other auth methods do.
+         *
+        */
+        ensureAuthCookieSet(action.value.token);
         globalStorage.authToken = action.value.token;
       }
       return { ...state, auth: { ...action.value, checked: true } };
@@ -290,6 +308,9 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetActiveTasks:
       if (isEqual(state.activeTasks, action.value)) return state;
       return { ...state, activeTasks: action.value };
+    case StoreAction.SetKnownRoles:
+      if (isEqual(state.knownRoles, action.value)) return state;
+      return { ...state, knownRoles: action.value };
     case StoreAction.SetUserRoles:
       if (isEqual(state.userRoles, action.value)) return state;
       return { ...state, userRoles: action.value };

@@ -24,6 +24,22 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map((user) => mapV1User(user));
 };
 
+export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
+  return {
+    id: role.roleId,
+    name: role.name || '',
+    permissions: (role.permissions || []).map(mapV1Permission),
+  };
+};
+
+export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
+  return {
+    id: permission.id,
+    isGlobal: permission.isGlobal || false,
+    name: permission.name || '',
+  };
+};
+
 export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   return {
     limit: data?.limit ?? 0,

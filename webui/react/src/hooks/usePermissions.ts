@@ -39,7 +39,7 @@ interface PermissionsHook {
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
-  canGetPermissions: () => boolean;
+  canGetPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
@@ -86,7 +86,7 @@ const usePermissions = (): PermissionsHook => {
       userAssignments,
       userRoles,
     ),
-    canGetPermissions: () => canGetPermissions(
+    canGetPermissions: canGetPermissions(
       user,
       userAssignments,
       userRoles,
@@ -137,7 +137,7 @@ const relevantPermissions = (
   userRoles.filter((r) => relevantAssigned.includes(r.name)).forEach((r) => {
     // TODO: is it possible a role is assigned to this workspace,
     // but not all of its permissions?
-    permissions = permissions.concat(r.permissions.filter((p) => p.globalOnly || workspaceId));
+    permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
   });
   return new Set<string>(permissions.map((p) => p.name));
 };

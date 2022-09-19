@@ -80,6 +80,7 @@ import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
+
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
 interface Params {
@@ -384,6 +385,7 @@ const ProjectDetails: React.FC = () => {
 
     return [
       {
+        align: 'right',
         dataIndex: 'id',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
         key: V1GetExperimentsRequestSortBy.ID,
@@ -423,6 +425,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Tags',
       },
       {
+        align: 'right',
         dataIndex: 'forkedFrom',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
         key: V1GetExperimentsRequestSortBy.FORKEDFROM,
@@ -432,6 +435,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Forked From',
       },
       {
+        align: 'right',
         dataIndex: 'startTime',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
         key: V1GetExperimentsRequestSortBy.STARTTIME,
@@ -442,6 +446,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Start Time',
       },
       {
+        align: 'right',
         dataIndex: 'duration',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
         key: 'duration',
@@ -450,6 +455,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Duration',
       },
       {
+        align: 'right',
         dataIndex: 'numTrials',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['numTrials'],
         key: V1GetExperimentsRequestSortBy.NUMTRIALS,
@@ -495,6 +501,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Resource Pool',
       },
       {
+        align: 'center',
         dataIndex: 'progress',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
         key: V1GetExperimentsRequestSortBy.PROGRESS,
@@ -503,6 +510,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Progress',
       },
       {
+        align: 'center',
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
@@ -901,7 +909,8 @@ const ProjectDetails: React.FC = () => {
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
-    switchShowArchived ]);
+    switchShowArchived,
+  ]);
 
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {

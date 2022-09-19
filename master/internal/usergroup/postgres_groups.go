@@ -89,6 +89,9 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 	}
 	var g Group
 	err := idb.NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
+	if g.OwnerID != 0 {
+		return Group{}, errors.Wrap(db.ErrNotFound, "cannot get a personal group")
+	}
 
 	return g, errors.Wrapf(db.MatchSentinelError(err), "Error getting group %d", gid)
 }
@@ -96,13 +99,32 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 // SearchGroups searches the database for groups. userBelongsTo is "optional"
 // in that if a value < 1 is passed in, the parameter is ignored. SearchGroups
 // does not return an error if no groups are found, as that is considered a
-// successful search.
-func SearchGroups(ctx context.Context,
-	name string,
-	userBelongsTo model.UserID,
-	offset, limit int,
+// successful search. SearchGroups includes personal groups which should not
+// be exposed to an end user.
+func SearchGroups(
+	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
+) (groups []Group, memberCounts []int32, tableRows int, err error) {
+	return searchGroups(ctx, name, userBelongsTo, offset, limit, true)
+}
+
+// SearchGroupsWithoutPersonalGroups searches the database for groups.
+// userBelongsTo is "optional" in that if a value < 1 is passed in, the
+// parameter is ignored. SearchGroups does not return an error if no groups
+// are found, as that is considered a successful search.
+func SearchGroupsWithoutPersonalGroups(
+	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
+) (groups []Group, memberCounts []int32, tableRows int, err error) {
+	return searchGroups(ctx, name, userBelongsTo, offset, limit, false)
+}
+
+func searchGroups(ctx context.Context,
+	name string, userBelongsTo model.UserID, offset, limit int, includePersonal bool,
 ) (groups []Group, memberCounts []int32, tableRows int, err error) {
 	query := db.Bun().NewSelect().Model(&groups)
+
+	if !includePersonal {
+		query = query.Where("groups.user_id IS NULL")
+	}
 
 	if len(name) > 0 {
 		query = query.Where("group_name = ?", name)
@@ -152,7 +174,11 @@ func SearchGroups(ctx context.Context,
 // DeleteGroup deletes a group from the database. Returns ErrNotFound if the
 // group doesn't exist.
 func DeleteGroup(ctx context.Context, gid int) error {
-	res, err := db.Bun().NewDelete().Model(&Group{ID: gid}).WherePK().Exec(ctx)
+	res, err := db.Bun().NewDelete().
+		Model(&Group{ID: gid}).
+		WherePK().
+		Where("user_id IS NULL"). // Cannot delete personal group.
+		Exec(ctx)
 	if foundErr := db.MustHaveAffectedRows(res, err); foundErr != nil {
 		return errors.Wrapf(db.MatchSentinelError(foundErr), "Error deleting group %d", gid)
 	}
@@ -166,7 +192,11 @@ func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
-	res, err := idb.NewUpdate().Model(&group).WherePK().Exec(ctx)
+	res, err := idb.NewUpdate().
+		Model(&group).
+		WherePK().
+		Where("user_id IS NULL"). // Cannot update personal group.
+		Exec(ctx)
 
 	return errors.Wrapf(
 		db.MatchSentinelError(db.MustHaveAffectedRows(res, err)),
@@ -181,6 +211,9 @@ func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
 func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
 	if idb == nil {
 		idb = db.Bun()
+	}
+	if _, err := GroupByIDTx(ctx, idb, gid); err != nil {
+		return err
 	}
 
 	if len(uids) < 1 {
@@ -214,6 +247,10 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 // returns ErrNotFound if the group or one of the users' membership rows
 // aren't found.
 func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
+	if _, err := GroupByIDTx(ctx, idb, gid); err != nil {
+		return err
+	}
+
 	if len(uids) < 1 {
 		return nil
 	}

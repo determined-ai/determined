@@ -14,7 +14,7 @@ import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
-export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created, 
+export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created,
 advise user to reset password as soon as possible.`;
 export const API_SUCCESS_MESSAGE_EDIT = 'User has been updated';
 export const DISPLAY_NAME_NAME = 'displayName';
@@ -41,10 +41,30 @@ interface FormValues {
   USER_NAME_NAME: string;
 }
 
+const permissionColumns = [
+  {
+    dataIndex: 'name',
+    key: 'name',
+    title: 'Name',
+  },
+  {
+    dataIndex: 'isGlobal',
+    key: 'isGlobal',
+    render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+    title: 'Global?',
+  },
+  {
+    dataIndex: 'workspaceOnly',
+    key: 'workspaceOnly',
+    render: (val: boolean) => val ? '' : <Icon name="checkmark" />,
+    title: 'Workspaces?',
+  },
+];
+
 const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
   const [ permissions, setPermissions ] = useState<Permission[]>([]);
 
-  const canSeePermissions = usePermissions().canGetPermissions();
+  const canSeePermissions = usePermissions().canGetPermissions;
 
   const updatePermissions = useCallback(async () => {
     if (user && canSeePermissions) {
@@ -62,26 +82,6 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       updatePermissions();
     }
   }, [ form, updatePermissions, user ]);
-
-  const columns = [
-    {
-      dataIndex: 'name',
-      key: 'name',
-      title: 'Name',
-    },
-    {
-      dataIndex: 'globalOnly',
-      key: 'globalOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
-      title: 'Global?',
-    },
-    {
-      dataIndex: 'workspaceOnly',
-      key: 'workspaceOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
-      title: 'Workspaces?',
-    },
-  ];
 
   return (
     <Form<FormValues>
@@ -135,7 +135,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       )}
       {!!user && canSeePermissions && (
         <Table
-          columns={columns}
+          columns={permissionColumns}
           dataSource={permissions}
           pagination={{ hideOnSinglePage: true, size: 'small' }}
         />

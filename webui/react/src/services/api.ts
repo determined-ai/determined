@@ -98,6 +98,23 @@ Service.DeleteGroupParams,
  Api.V1DeleteGroupResponse, Api.V1DeleteGroupResponse
 >(Config.deleteGroup);
 
+/* Roles */
+
+export const getGroupRoles = generateDetApi<
+  Service.GetGroupParams,
+  Api.V1GetRolesAssignedToGroupResponse, Type.UserRole[]
+>(Config.getGroupRoles);
+
+export const listRoles = generateDetApi<
+  Service.ListRolesParams,
+  Api.V1ListRolesResponse, Type.UserRole[]
+>(Config.listRoles);
+
+export const assignRolesToGroup = generateDetApi<
+  Service.AssignRolesToGroupParams,
+  Api.V1AssignRolesResponse, Api.V1AssignRolesResponse
+>(Config.assignRolesToGroup);
+
 /* Info */
 
 export const getInfo = generateDetApi<

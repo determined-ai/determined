@@ -807,10 +807,9 @@ export interface UserAssignment {
 }
 
 export interface Permission {
-  globalOnly: boolean;
   id: number;
+  isGlobal: boolean;
   name: string;
-  workspaceOnly: boolean;
 }
 
 export interface UserRole {

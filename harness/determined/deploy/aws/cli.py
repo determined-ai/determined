@@ -45,7 +45,6 @@ def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment
     deployment_type_map = {
         constants.deployment_types.SIMPLE: simple.Simple,
         constants.deployment_types.SECURE: secure.Secure,
-        constants.deployment_types.VPC: vpc.VPC,
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
         constants.deployment_types.GOVCLOUD: govcloud.Govcloud,

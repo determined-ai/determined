@@ -1,5 +1,8 @@
 module.exports = {
-  extends: [ 'stylelint-config-standard' ],
+  extends: [
+    'stylelint-config-standard',
+    'stylelint-config-prettier', // stylelint-config-prettier should be the last
+  ],
   plugins: [ 'stylelint-order', 'stylelint-scss' ],
   rules: {
     'at-rule-no-unknown': null,
