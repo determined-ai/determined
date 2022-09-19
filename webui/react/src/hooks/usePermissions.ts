@@ -40,10 +40,14 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canGetPermissions: boolean;
+  canModifyGroups: () => boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canModifyUsers: () => boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canViewGroups: () => boolean;
+  canViewUsers: () => boolean;
   canViewWorkspaces: boolean;
 }
 
@@ -91,9 +95,19 @@ const usePermissions = (): PermissionsHook => {
       userAssignments,
       userRoles,
     ),
+    canModifyGroups: () => canModifyGroups(
+      user,
+      userAssignments,
+      userRoles,
+    ),
     canModifyProjects: (args: ProjectPermissionsArgs) => canModifyWorkspaceProjects(
       args.workspace,
       args.project,
+      user,
+      userAssignments,
+      userRoles,
+    ),
+    canModifyUsers: () => canAdministrateUsers(
       user,
       userAssignments,
       userRoles,
@@ -113,6 +127,16 @@ const usePermissions = (): PermissionsHook => {
     canMoveProjects: (args: ProjectPermissionsArgs) => canMoveWorkspaceProjects(
       args.workspace,
       args.project,
+      user,
+      userAssignments,
+      userRoles,
+    ),
+    canViewGroups: () => canViewGroups(
+      user,
+      userAssignments,
+      userRoles,
+    ),
+    canViewUsers: () => canAdministrateUsers(
       user,
       userAssignments,
       userRoles,
@@ -140,6 +164,37 @@ const relevantPermissions = (
     permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
   });
   return new Set<string>(permissions.map((p) => p.name));
+};
+
+// User actions
+const canAdministrateUsers = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!user && (permitted.has('oss_user') ? user.isAdmin
+    : permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'));
+};
+
+const canViewGroups = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!user && (permitted.has('oss_user') ? user.isAdmin
+    : true);
+};
+
+const canModifyGroups = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!user && (permitted.has('oss_user') ? user.isAdmin
+    : permitted.has('PERMISSION_CAN_UPDATE_GROUP'));
 };
 
 // Experiment actions

@@ -49,6 +49,7 @@ export interface DeterminedInfo {
   externalLogoutUri?: string;
   isTelemetryEnabled: boolean;
   masterId: string;
+  rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
   version: string;
 }
