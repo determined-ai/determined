@@ -91,6 +91,57 @@ getPbsTaskNum()
     fi
 }
 
+# CUDA_VISIBLE_DEVICES is set by both SLURM and PBS. However, there can be differences in the 
+# format used by each of them. SLURM is guaranteed to set the value using simple number like 
+# "0,1,2" whereas PBS can sometimes set the value using GPU UUID like 
+# "GPU-UUID1,GPU-UUID2,GPU-UUID3".
+# We follow the format used by SLURM. So, before using the value of CUDA_VISIBLE_DEVICES we have to 
+# make sure it is made of simple numbers instead of UUIDs. If it is not, then we update it to match 
+# that format.
+# convert_to_gpu_numbers will inspect the value of CUDA_VISIBLE_DEVICES and convert it to gpu 
+# numbers format. If the input is already in the simple number format the same value is returned.
+# If the input based on GPU UUID format, it it converted to simple number format and returned as a 
+# string. If there is an error during the conversion, the error is logged and the function returns 
+# the existing CUDA_VISIBLE_DEVICES value.
+# TODO: Need to handle Multi Instance GPU (MIG) Format.
+# Refer: https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf Section 9.6.1 for 
+# further information on MIG format
+convert_to_gpu_numbers(){
+    # Process the value of CUDA_VISIBLE_DEVICES and store the values in an array.
+    # IFS flag is set to "," to process the string as a comma separated list.
+    IFS=',' read -r -a cuda_device_ids <<< "$CUDA_VISIBLE_DEVICES"
+    # Check if the first element is a number.
+    if [[ "${cuda_device_ids[0]}" =~ ^[[:digit:]]+$ ]]; then
+        # Return the value as it is, if it is already in simple number format.
+        echo "${CUDA_VISIBLE_DEVICES}"
+    else
+        # Update the value of CUDA_VISIBLE_DEVICES.
+        cuda_devices_string=""
+        error_flag=0
+        # Below for loop will creates a string in the format "0,1,2,"
+        for gpu_id in "${cuda_device_ids[@]}"
+        do
+            # Retrieve gpu id in the simple number format using the nvidia-smi command.
+            simple_gpu_id=$(nvidia-smi --query-gpu=index --format=csv,noheader -i ${gpu_id})
+            # If the command failed log warning and return the existing value as it is.
+            if [ $? -ne 0 ];then
+                log "ERROR: Failed to retrieve index for GID ${gpu_id} using nvidia-smi." 1>&2
+                error_flag=1
+                break
+            fi
+            cuda_devices_string+="$simple_gpu_id"
+            cuda_devices_string+=","
+        done
+        if [[ error_flag -ne 0 ]]; then
+            # Return the value as it is in case of an error.
+            echo "${CUDA_VISIBLE_DEVICES}"
+        else
+            # Return the number format string excluding the trailing comma.
+            echo "${cuda_devices_string::-1}"
+        fi
+    fi
+}
+
 # When PBS Pro is being used as the Workload Manager, the "PBS_*" environment
 # variables will be set. Map the "PBS_*" environment variables to their Slurm
 # equivalent.  Make sure that SLURM_PROCID is not set in case the user is
@@ -164,6 +215,11 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     # One case for each device.Type in the Determined master source supported by slurm.
     case $DET_SLOT_TYPE in
         "cuda")
+            if [ ! -z "$CUDA_VISIBLE_DEVICES" ]; then
+                # Ensure CUDA_VISIBLE_DEVICES is in the format of simple numbers like "0,1,2"
+                export CUDA_VISIBLE_DEVICES="$(convert_to_gpu_numbers)"
+            fi
+
             export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
             export DET_UNIQUE_PORT_OFFSET=$(echo $CUDA_VISIBLE_DEVICES | cut -d',' -f1)
             export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
@@ -179,8 +235,7 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                         if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
                             log "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
                         fi 
-                    done
-        
+                    done        
                 else
                     log "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
                 fi
