@@ -46,6 +46,9 @@ check-js:
 .PHONY: check-css
 check-css:
 	npm run lint:css
+.PHONY: check-misc
+check-misc:
+	npm run format-check:misc
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
@@ -53,19 +56,23 @@ check-package-lock:
 check-requirements:
 	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
 .PHONY: check
-check: check-js check-css check-package-lock
+check: check-js check-css check-misc check-package-lock
+
 
 .PHONY: fmt-js
 fmt-js:
-	npm run lint:js -- --fix
+	npm run format:js
 .PHONY: fmt-css
 fmt-css:
-	npm run lint:css -- --fix
+	npm run  format:css
+.PHONY: fmt-misc
+fmt-misc:
+	npm run  format:misc
 .PHONY: fmt-package-lock
 fmt-package-lock:
 	sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
 .PHONY: fmt
-fmt: fmt-js fmt-css fmt-package-lock
+fmt: fmt-js fmt-css fmt-misc fmt-package-lock
 
 .PHONY: test
 test:
