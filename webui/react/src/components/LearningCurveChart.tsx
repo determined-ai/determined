@@ -13,7 +13,7 @@ interface Props {
   onTrialClick?: (event: MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
   selectedMetric: MetricName;
-  selectedScale: Scale
+  selectedScale: Scale;
   selectedTrialIds: number[];
   trialIds: number[];
   xValues: number[];
@@ -34,13 +34,13 @@ const LearningCurveChart: React.FC<Props> = ({
   trialIds,
   xValues,
 }: Props) => {
-  const [ focusIndex, setFocusIndex ] = useState<number>();
+  const [focusIndex, setFocusIndex] = useState<number>();
 
-  const selectedTrialsIdsSet = useMemo(() => new Set(selectedTrialIds), [ selectedTrialIds ]);
+  const selectedTrialsIdsSet = useMemo(() => new Set(selectedTrialIds), [selectedTrialIds]);
 
   const chartData: AlignedData = useMemo(() => {
-    return [ xValues, ...data ];
-  }, [ data, xValues ]);
+    return [xValues, ...data];
+  }, [data, xValues]);
 
   const chartOptions: Options = useMemo(() => {
     return {
@@ -61,21 +61,23 @@ const LearningCurveChart: React.FC<Props> = ({
       focus: { alpha: SERIES_UNFOCUSED_ALPHA },
       height: CHART_HEIGHT,
       legend: { show: false },
-      plugins: [ closestPointPlugin({
-        getPointTooltipHTML: (x, y, point) => {
-          const trialId = trialIds[point.seriesIdx - 1];
-          return `Trial ID: ${trialId}<br />Batches: ${x}<br />Metric: ${y}`;
-        },
-        onPointClick: (e, point) => {
-          if (typeof onTrialClick !== 'function') return;
-          onTrialClick(e, trialIds[point.seriesIdx - 1]);
-        },
-        onPointFocus: (point) => {
-          if (typeof onTrialFocus !== 'function') return;
-          onTrialFocus(point ? trialIds[point.seriesIdx - 1] : null);
-        },
-        yScale: 'y',
-      }) ],
+      plugins: [
+        closestPointPlugin({
+          getPointTooltipHTML: (x, y, point) => {
+            const trialId = trialIds[point.seriesIdx - 1];
+            return `Trial ID: ${trialId}<br />Batches: ${x}<br />Metric: ${y}`;
+          },
+          onPointClick: (e, point) => {
+            if (typeof onTrialClick !== 'function') return;
+            onTrialClick(e, trialIds[point.seriesIdx - 1]);
+          },
+          onPointFocus: (point) => {
+            if (typeof onTrialFocus !== 'function') return;
+            onTrialFocus(point ? trialIds[point.seriesIdx - 1] : null);
+          },
+          yScale: 'y',
+        }),
+      ],
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'batches' },
@@ -90,7 +92,7 @@ const LearningCurveChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [ onTrialClick, onTrialFocus, selectedMetric, selectedScale, trialIds, selectedTrialsIdsSet ]);
+  }, [onTrialClick, onTrialFocus, selectedMetric, selectedScale, trialIds, selectedTrialsIdsSet]);
 
   /*
    * Focus on a trial series if provided.
@@ -101,7 +103,7 @@ const LearningCurveChart: React.FC<Props> = ({
       seriesIdx = trialIds.findIndex((id) => id === focusedTrialId);
     }
     setFocusIndex(seriesIdx !== -1 ? seriesIdx : undefined);
-  }, [ focusedTrialId, trialIds ]);
+  }, [focusedTrialId, trialIds]);
 
   return <UPlotChart data={chartData} focusIndex={focusIndex} options={chartOptions} />;
 };

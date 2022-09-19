@@ -15,9 +15,8 @@ import css from './Omnibar.module.scss';
  * A potential option is use the value prop in combinatio with encoding the tree path into
  * the options returned by the tree extension.
  */
-const omnibarInput = () => document.querySelector(
-  '#omnibar input[type="text"]',
-) as (HTMLInputElement | null);
+const omnibarInput = () =>
+  document.querySelector('#omnibar input[type="text"]') as HTMLInputElement | null;
 
 const Omnibar: React.FC = () => {
   const storeDispatch = useStoreDispatch();
@@ -25,33 +24,36 @@ const Omnibar: React.FC = () => {
 
   const hideBar = useCallback(() => {
     storeDispatch({ type: StoreAction.HideOmnibar });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
-  const onAction = useCallback(async (item, query) => {
-    const input: HTMLInputElement|null = omnibarInput();
+  const onAction = useCallback(
+    async (item, query) => {
+      const input: HTMLInputElement | null = omnibarInput();
 
-    if (!input) return;
-    if (isTreeNode(item)) {
-      try {
-        await Tree.onAction(input, item, query);
-        if (item.closeBar) {
-          hideBar();
+      if (!input) return;
+      if (isTreeNode(item)) {
+        try {
+          await Tree.onAction(input, item, query);
+          if (item.closeBar) {
+            hideBar();
+          }
+        } catch (e) {
+          handleError(e);
         }
-      } catch (e) {
-        handleError(e);
       }
-    }
-  }, [ hideBar ]);
+    },
+    [hideBar],
+  );
 
   useEffect(() => {
-    const input: HTMLInputElement|null = omnibarInput();
+    const input: HTMLInputElement | null = omnibarInput();
     if (ui.omnibar.isShowing) {
       if (input) {
         input.focus();
         input.select();
       }
     }
-  }, [ ui.omnibar.isShowing ]);
+  }, [ui.omnibar.isShowing]);
 
   return (
     <div className={css.base} style={{ display: ui.omnibar.isShowing ? 'unset' : 'none' }}>
@@ -59,7 +61,7 @@ const Omnibar: React.FC = () => {
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>
           autoFocus={true}
-          extensions={[ Tree.extension ]}
+          extensions={[Tree.extension]}
           maxResults={7}
           placeholder='Type a command or "help" for more info.'
           render={TreeNode}

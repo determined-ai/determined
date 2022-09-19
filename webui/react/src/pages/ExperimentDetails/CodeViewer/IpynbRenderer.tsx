@@ -9,7 +9,7 @@ export type IpynbInterface = {
   worksheets?: {
     cells: CellType[];
   }[];
-}
+};
 
 interface Props {
   file: IpynbInterface;

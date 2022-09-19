@@ -16,8 +16,8 @@ interface Props {
 }
 
 const ModalForm: React.FC<Props> = ({ form, group }) => {
-  const [ groupRoles, setGroupRoles ] = useState<UserRole[]>([]);
-  const [ isLoading, setIsLoading ] = useState(true);
+  const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { knownRoles } = useStore();
 
   const fetchGroupRoles = useCallback(async () => {
@@ -26,17 +26,17 @@ const ModalForm: React.FC<Props> = ({ form, group }) => {
         const roles = await getGroupRoles({ groupId: group.group.groupId });
         setGroupRoles(roles);
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch this group\'s roles.' });
+        handleError(e, { publicSubject: "Unable to fetch this group's roles." });
       } finally {
         setIsLoading(false);
       }
     } else {
       setIsLoading(false);
     }
-  }, [ group ]);
+  }, [group]);
   useEffect(() => {
     fetchGroupRoles();
-  }, [ fetchGroupRoles ]);
+  }, [fetchGroupRoles]);
 
   const roleColumns = [
     {
@@ -47,33 +47,31 @@ const ModalForm: React.FC<Props> = ({ form, group }) => {
   ];
 
   return (
-    <Form
-      form={form}
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 14 }}>
-      {groupRoles.length
-        ? (
-          <Table
-            columns={roleColumns}
-            dataSource={groupRoles}
-            pagination={{ hideOnSinglePage: true, size: 'small' }}
-          />
-        )
-        : null}
+    <Form form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
+      {groupRoles.length ? (
+        <Table
+          columns={roleColumns}
+          dataSource={groupRoles}
+          pagination={{ hideOnSinglePage: true, size: 'small' }}
+        />
+      ) : null}
       <Form.Item label="Roles" name="roles">
         <Select
           loading={isLoading}
           mode="multiple"
           optionFilterProp="children"
           placeholder={`Add Roles to: ${group.group.name}`}
-          showSearch>{
-            knownRoles.filter(
-              (r) => r.permissions.find((p) => p.isGlobal) &&
-                !groupRoles.find((gr) => gr.id === r.id),
-            ).map((r) => (
-              <Select.Option key={r.id} value={r.id}>{r.name}</Select.Option>
-            ))
-          }
+          showSearch>
+          {knownRoles
+            .filter(
+              (r) =>
+                r.permissions.find((p) => p.isGlobal) && !groupRoles.find((gr) => gr.id === r.id),
+            )
+            .map((r) => (
+              <Select.Option key={r.id} value={r.id}>
+                {r.name}
+              </Select.Option>
+            ))}
         </Select>
       </Form.Item>
     </Form>
@@ -86,14 +84,13 @@ interface ModalProps {
 }
 
 const useModalGroupRoles = ({ onClose, group }: ModalProps): ModalHooks => {
-
-  const [ form ] = Form.useForm();
+  const [form] = Form.useForm();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => {
     form.resetFields();
-  }, [ form ]);
+  }, [form]);
 
   const onOk = useCallback(async () => {
     if (!group.group.groupId) {
@@ -117,7 +114,7 @@ const useModalGroupRoles = ({ onClose, group }: ModalProps): ModalHooks => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [ form, onClose, group ]);
+  }, [form, onClose, group]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
@@ -129,7 +126,7 @@ const useModalGroupRoles = ({ onClose, group }: ModalProps): ModalHooks => {
       onOk: onOk,
       title: <h5>Update Roles</h5>,
     });
-  }, [ form, handleCancel, onOk, openOrUpdate, group ]);
+  }, [form, handleCancel, onOk, openOrUpdate, group]);
 
   return { modalOpen, ...modalHook };
 };

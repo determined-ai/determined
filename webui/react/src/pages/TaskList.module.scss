@@ -16,9 +16,7 @@
   }
   button {
     background-color: var(--theme-colors-monochrome-17);
-    border:
-      solid var(--theme-stroke-width)
-      var(--theme-colors-monochrome-11);
+    border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-11);
     border-radius: var(--theme-border-radius);
     cursor: pointer;
     font-size: 12px;
@@ -35,7 +33,7 @@
   align-items: center;
   display: flex;
 
-  & > [class*=Icon_base] {
+  & > [class*='Icon_base'] {
     margin-right: 8px;
   }
 }

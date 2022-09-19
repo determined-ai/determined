@@ -8,7 +8,10 @@ const LOREM_IPSUM = `
   reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
   pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
   culpa qui officia deserunt mollit anim id est laborum.
-`.replace(/(?:\r\n|\r|\n)/g, '').replace(/\s+/g, ' ').trim();
+`
+  .replace(/(?:\r\n|\r|\n)/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
 
 describe('md5 Utility', () => {
   const tests = [

@@ -24,7 +24,7 @@ const ModalTrigger: React.FC = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return (
     <CheckpointModalTrigger

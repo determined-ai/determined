@@ -25,10 +25,12 @@ const Container: React.FC = () => {
       name: GROUP_NAME,
     },
   };
-  const roles = [ {
-    id: -2,
-    name: 'Test Role',
-  } ];
+  const roles = [
+    {
+      id: -2,
+      name: 'Test Role',
+    },
+  ];
 
   const { contextHolder, modalOpen } = useModalGroupRoles({ group, roles });
 
@@ -68,9 +70,7 @@ describe('useModalGropRoles', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: 'Update Roles' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Update Roles' })).not.toBeInTheDocument();
     });
   });
 
@@ -81,9 +81,7 @@ describe('useModalGropRoles', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: 'Update Roles' }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Update Roles' })).not.toBeInTheDocument();
     });
   });
 });

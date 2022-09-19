@@ -17,8 +17,8 @@ interface Props {
 }
 
 const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
-  const [ name, setName ] = useState(project.name);
-  const [ description, setDescription ] = useState(project.description ?? '');
+  const [name, setName] = useState(project.name);
+  const [description, setDescription] = useState(project.description ?? '');
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHooks } = useModal({ onClose });
 
@@ -34,16 +34,20 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <div>
-          <label className={css.label} htmlFor="name">Name</label>
+          <label className={css.label} htmlFor="name">
+            Name
+          </label>
           <Input id="name" value={name} onChange={handleNameInput} />
         </div>
         <div>
-          <label className={css.label} htmlFor="description">Description</label>
+          <label className={css.label} htmlFor="description">
+            Description
+          </label>
           <Input id="description" value={description} onChange={handleDescriptionInput} />
         </div>
       </div>
     );
-  }, [ description, handleDescriptionInput, handleNameInput, name ]);
+  }, [description, handleDescriptionInput, handleNameInput, name]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -57,23 +61,29 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ description, name, project.id ]);
+  }, [description, name, project.id]);
 
-  const getModalProps = useCallback((name: string): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okButtonProps: { disabled: !validateLength(name) },
-      okText: 'Save Changes',
-      onOk: handleOk,
-      title: 'Edit Project',
-    };
-  }, [ handleOk, modalContent ]);
+  const getModalProps = useCallback(
+    (name: string): ModalFuncProps => {
+      return {
+        closable: true,
+        content: modalContent,
+        icon: null,
+        okButtonProps: { disabled: !validateLength(name) },
+        okText: 'Save Changes',
+        onOk: handleOk,
+        title: 'Edit Project',
+      };
+    },
+    [handleOk, modalContent],
+  );
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    openOrUpdate({ ...getModalProps(project.name), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate, project.name ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      openOrUpdate({ ...getModalProps(project.name), ...initialModalProps });
+    },
+    [getModalProps, openOrUpdate, project.name],
+  );
 
   /**
    * When modal props changes are detected, such as modal content
@@ -81,7 +91,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
-  }, [ getModalProps, modalRef, name, openOrUpdate ]);
+  }, [getModalProps, modalRef, name, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHooks };
 };
