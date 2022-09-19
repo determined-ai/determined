@@ -1,11 +1,17 @@
-'''
+"""
 This example shows ASHA (Asynchronous Successive Halving Algorithm) implemented as a custom SearchMethod.
 For details related to ASHA see https://docs.determined.ai/latest/training/hyperparameter/search-methods/hp-adaptive-asha.html
 
 ASHASearchMethod provides implementation for abstract methods from SearchMethod class, which
 are invoked by CoreSearchRunner in response to the SearcherEvents received
 from the multi-trial experiment. The methods return a list of Operations to CoreSearchRunner
-which sends them to the multi-trial experiment for execution.
+which sends them to the multi-trial experiment for execution, as depicted below.
+
+Multi-trial experiment  --- (SearcherEvent1) ----> CoreSearchRunner  --- (SearcherEvent1) ---> SearchMethod
+Multi-trial experiment <---   (Operations1)  ----  CoreSearchRunner <---   (Operations1)  ---  SearchMethod
+Multi-trial experiment  --- (SearcherEvent2) ----> CoreSearchRunner  --- (SearcherEvent2) ---> SearchMethod
+Multi-trial experiment <---   (Operations2)  ----  CoreSearchRunner <---   (Operations2)  ---  SearchMethod
+and so on.
 
 Currently, we support the following operations:
   -> Create - starts a new trial with a unique trial id and a set of hyperparameters,
@@ -23,9 +29,9 @@ CoreSearchRunner is terminated or interrupted.
 To provide fault tolerance, CoreSearchRunner calls save() and save_method_state() after processing
 each SearcherEvent and before sending the list of Operation to the multi-trial experiment.
 On resumption, CoreSearchRunner calls load() and load_method_state(), and gets SearcherEvents from the multi-trial
-experiment. If a SearcherEvent has already been processed, then CoreSearchRunner re-sends the operations.
-Otherwise, it continues to process SearcherEvents. That is, CoreSearchRunner invokes the SearchMethod methods
-corresponding to the Searcher Event, gets the operations, saves the state and send the operations.
+experiment. If a SearcherEvent has already been processed by SearchMethod, then CoreSearchRunner re-sends the
+operations. Otherwise, it continues to process SearcherEvents as usual. That is, CoreSearchRunner invokes
+the methods corresponding to the SearcherEvent, gets the operations, saves the state and send the operations.
 
 To ensure that CoreSearchRunner process is resumed automatically in the case of failure,
 make sure to set `max_restarts` in the `searcher.yaml` file to a number greater than 0.
@@ -34,7 +40,7 @@ While implementation of save_method_state() and load_method_state() depends on t
 in this example we propose to encapsulate all variables required by ASHASearchMethod in a new class,
 ASHASearchMethodState. Having ASHASearchMethodState as a separate object, we propose to save and load
 ASHASearchMethodState object wth pickle for convenience.
-'''
+"""
 
 import dataclasses
 import logging

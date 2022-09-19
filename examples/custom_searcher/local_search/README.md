@@ -1,11 +1,9 @@
 # Custom SearchMethod with LocalSearchRunner
 
-This example shows how to implement a custom hyperparameter SearchMethod that enable fault tolerance support.
-To run the custom SearchMethod, in this example we use LocalSeachRunner that executes the custom SearchMethod
+This example shows how to implement a custom hyperparameter SearchMethod that enable fault tolerance.
+To run the custom SearchMethod, in this example we use LocalSearchRunner that executes the custom SearchMethod
 on your local machine. 
 For an example of running the custom SearchMethod on a cluster, see `examples/custom_searcher/core_search_runner`.
-
-
 
 ## Files
 * **asha.py**: The code for ASHA implemented as a custom SearchMethod.
@@ -32,4 +30,4 @@ For instance, `export DET_MASTER=<master_host:port>`.
 ## Result
 LocalSearchRunner executes the custom SearchMethod on your local machine, 
 while the multi-trial experiment for hyperparameter search is started on a Determined cluster.
-LocalSearchRunner handles the communication between the custom SearchMethod and the experiment.
+LocalSearchRunner handles the communication between the custom SearchMethod and the multi-trial experiment.

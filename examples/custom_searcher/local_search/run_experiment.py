@@ -31,7 +31,7 @@ if __name__ == "__main__":
     # It should include all files necessary to run the experiment (as usual).
     context_dir = 'context_dir'
 
-    c
+    # Path to the .yaml file with the multi-trial experiment configuration
     model_config = "custom_config.yaml"
 
     ########################################################################

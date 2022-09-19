@@ -21,9 +21,8 @@ from determined.searcher.core_search_runner import CoreSearchRunner
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
-
-    # Path to the .yaml file with experiment configuration
-    experiment_config = 'custom_config.yaml'
+    # Path to the .yaml file with the multi-trial experiment configuration
+    model_config = 'custom_config.yaml'
 
     ########################################################################
     # Fault Tolerance for CoreSearchRunner
@@ -56,4 +55,4 @@ if __name__ == "__main__":
         #      -> otherwise, new experiment is created.
         # 2) Handles communication between the multi-trial experiment and the custom SearchMethod
         # 3) Exits when the experiment is completed.
-        search_runner.run(experiment_config)
+        search_runner.run(model_config)

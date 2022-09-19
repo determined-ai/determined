@@ -5,7 +5,13 @@ For details related to ASHA see https://docs.determined.ai/latest/training/hyper
 ASHASearchMethod provides implementation for abstract methods from SearchMethod class, which
 are invoked by LocalSearchRunner in response to the SearcherEvents received
 from the multi-trial experiment. The methods return a list of Operations to LocalSearchRunner
-which sends them to the multi-trial experiment for execution.
+which sends them to the multi-trial experiment for execution, as depicted below.
+
+Multi-trial experiment  --- (SearcherEvent1) ----> LocalSearchRunner  --- (SearcherEvent1) ---> SearchMethod
+Multi-trial experiment <---   (Operations1)  ----  LocalSearchRunner <---   (Operations1)  ---  SearchMethod
+Multi-trial experiment  --- (SearcherEvent2) ----> LocalSearchRunner  --- (SearcherEvent2) ---> SearchMethod
+Multi-trial experiment <---   (Operations2)  ----  LocalSearchRunner <---   (Operations2)  ---  SearchMethod
+and so on.
 
 Currently, we support the following operations:
   -> Create - starts a new trial with a unique trial id and a set of hyperparameters,
