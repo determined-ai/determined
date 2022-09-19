@@ -319,9 +319,11 @@ const WorkspaceList: React.FC = () => {
       className={css.base}
       containerRef={pageRef}
       id="workspaces"
-      options={canCreateWorkspace
-        ? <Button onClick={handleWorkspaceCreateClick}>New Workspace</Button>
-        : null}
+      options={
+        canCreateWorkspace ? (
+          <Button onClick={handleWorkspaceCreateClick}>New Workspace</Button>
+        ) : null
+      }
       title="Workspaces">
       <div className={css.controls}>
         <SelectFilter

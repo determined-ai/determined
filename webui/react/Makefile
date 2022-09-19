@@ -40,14 +40,17 @@ live: check-requirements start
 start:
 	npm start
 
-.PHONY: check-js
-check-js:
-	npm run lint:js
-.PHONY: check-css
-check-css:
-	npm run lint:css
-.PHONY: check-misc
-check-misc:
+.PHONY: check-eslint
+check-eslint:
+	npm run eslint
+.PHONY: check-stylelint
+check-stylelint:
+	npm run stylelint
+check-prettier-js:
+	npm run format-check:js
+check-prettier-css:
+	npm run format-check:css
+check-prettier-misc:
 	npm run format-check:misc
 .PHONY: check-package-lock
 check-package-lock:
@@ -55,8 +58,10 @@ check-package-lock:
 .PHONY: check-requirements
 check-requirements:
 	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
+.PHONY: check-prettier
+check-prettier: check-prettier-js check-prettier-css check-prettier-misc
 .PHONY: check
-check: check-js check-css check-misc check-package-lock
+check: check-eslint check-stylelint check-prettier check-package-lock
 
 
 .PHONY: fmt-js

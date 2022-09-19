@@ -139,10 +139,8 @@ const ProjectDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const {
-    canDeleteExperiment, canMoveExperiment, canViewWorkspace,
-    canViewWorkspaces,
-  } = usePermissions();
+  const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
+    usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
