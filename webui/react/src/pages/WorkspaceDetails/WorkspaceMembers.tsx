@@ -48,7 +48,7 @@ interface Props {
   users: DetailedUser[];
 }
 
-const roles = [ 'Admin', 'Editor', 'Viewer' ];
+const roles = [ 'Basic','Cluster Admin','Editor','Viewer','Restricted','Workspace Admin'];
 
 const GroupOrMemberActionDropdown = () => {
   const menuItems = (
@@ -65,7 +65,7 @@ const GroupOrMemberActionDropdown = () => {
         overlay={menuItems}
         placement="bottomRight"
         trigger={[ 'click' ]}>
-        <Button className={css.overflow} type="text">
+        <Button type="text">
           <Icon name="overflow-vertical" />
         </Button>
       </Dropdown>
@@ -83,9 +83,9 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
   });
 
   const groups: MemberOrGroup[] = [
-    { id: Math.random() * 1000, name: 'Group One', role: 'Admin' },
-    { id: Math.random() * 1000, name: 'Group Two', role: 'Admin' },
-    { id: Math.random() * 1000, name: 'Group Three', role: 'Admin' },
+    { id: Math.random() * 1000, name: 'Group One', role: roles[0] },
+    { id: Math.random() * 1000, name: 'Group Two', role: roles[1] },
+    { id: Math.random() * 1000, name: 'Group Three', role: roles[5] },
   ];
 
   const membersAndGroups = groups.concat(members);
@@ -154,6 +154,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
     const roleRenderer = (value: string, record: Member) => {
       return (
         <Select
+          className={css.selectContainer}
           value={record.role}>{
             roles.map((role) => (
               <Select.Option key={role} value={role}>
