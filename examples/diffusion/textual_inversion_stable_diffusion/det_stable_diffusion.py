@@ -7,6 +7,7 @@ from typing import Literal, Optional, Sequence, Union
 
 
 import accelerate
+import attrdict
 import determined as det
 import torch
 import torch.nn.functional as F
@@ -27,7 +28,7 @@ from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 import data
 
 
-class TextualInversionTrainer:
+class DetStableDiffusion:
     """Class for training a textual inversion model."""
 
     def __init__(
@@ -182,6 +183,23 @@ class TextualInversionTrainer:
         # Pipeline construction is deferred until the _save call
         self.inference_noise_scheduler_kwargs = None
         self.pipeline = None
+
+    @classmethod
+    def init_on_cluster(cls) -> "DetStableDiffusion":
+        """Creates a DetStableDiffusion instance on the cluster."""
+        use_auth_token = os.environ["HF_AUTH_TOKEN"]
+        info = det.get_cluster_info()
+        hparams = attrdict.AttrDict(info.trial.hparams)
+        latest_checkpoint = info.latest_checkpoint
+
+        return cls(
+            use_auth_token=use_auth_token,
+            latest_checkpoint=latest_checkpoint,
+            **hparams.model,
+            **hparams.data,
+            **hparams.trainer,
+            **hparams.inference,
+        )
 
     def train(self) -> None:
         """Run the full latent inversion training loop."""
