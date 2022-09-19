@@ -644,8 +644,8 @@ class PyTorchTrialController(det.TrialController):
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:
-        # Backwards compat with older checkpoint formats. List is newest to
-        # oldest known state_dict locations.
+        # Backwards compat with older checkpoint formats. List is of the newest to
+        # the oldest known state_dict locations.
         potential_paths = [
             ["state_dict.pth"],
             ["determined", "state_dict.pth"],

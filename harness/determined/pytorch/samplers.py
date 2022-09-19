@@ -45,7 +45,7 @@ class DistributedSampler(torch.utils.data.Sampler):
     DistributedSampler will iterate through an underlying sampler and return samples which
     belong to this shard.
 
-    DistributedSampler is different than the PyTorch built-in torch.utils.data.DistributedSampler
+    DistributedSampler is different from the PyTorch built-in torch.utils.data.DistributedSampler
     because theirs is meant to be a standalone sampler.  Theirs does shuffling and assumes a
     constant size dataset as an input.  Ours is meant to be used a building block in a chain of
     samplers, so it accepts a sampler as input that may or may not be constant-size.
@@ -76,7 +76,7 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
     DistributedBatchSampler will iterate through an underlying batch sampler and return batches
     which belong to this shard.
 
-    DistributedBatchSampler is different than the PyTorch built-in
+    DistributedBatchSampler is different from the PyTorch built-in
     torch.utils.data.distributed.DistributedSampler, because that
     DistributedSampler expects to bbe called before the BatchSampler, and
     additionally the DistributedSampler is meant to be a stand-alone sampler.

@@ -207,7 +207,7 @@ class _SimpleReducer(MetricReducer):
 
 def default_allgather_fn(metrics: Any) -> List:
     """
-    A noop allgather implementation to ensure that custom reducers work outside of Determined.
+    A noop allgather implementation to ensure that custom reducers work outside Determined.
     """
     return [metrics]
 

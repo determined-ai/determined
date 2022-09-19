@@ -671,7 +671,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         clip_grads: Optional[Callable[[Iterator], None]] = None,
         auto_zero_grads: bool = True,
         scaler: Optional[Any] = None,
-        # Should be torch.cuda.amp.GradScaler, but:
+        # Should be ``torch.cuda.amp.GradScaler``, but:
         #   * other implementations might be possible
         #   * requiring this type forces upgrades to PyTorch 1.6+
     ) -> None:
