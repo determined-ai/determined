@@ -170,6 +170,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			ctx.SetParamValues(id)
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/tgz", nil))
 			err = api.m.getCheckpointTgz(ctx)
+			require.NoError(t, err, "API call returns error")
 			checkTgz(t, rec.Body, id)
 			return err
 		}, []any{mock.Anything, mock.Anything}},
@@ -184,6 +185,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			ctx.SetParamValues(id)
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/zip", nil))
 			err = api.m.getCheckpointZip(ctx)
+			require.NoError(t, err, "API call returns error")
 			checkZip(t, rec.Body.String(), id)
 			return err
 		}, []any{mock.Anything, mock.Anything}},

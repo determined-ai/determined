@@ -3,6 +3,7 @@ package internal
 import (
 	"archive/tar"
 	"archive/zip"
+	"bufio"
 	"compress/gzip"
 	"context"
 	"encoding/json"
@@ -120,43 +121,23 @@ func (aw *zipArchiveWriter) Write(p []byte) (int, error) {
 	return w.Write(p)
 }
 
+// delayWriter wraps bufio.Writer to provide Close()
 type delayWriter struct {
-	delayBytes int
-	buf        []byte
-	next       io.Writer
+	next *bufio.Writer
 }
 
 func (w *delayWriter) Write(p []byte) (int, error) {
-	if w.buf != nil {
-		if len(w.buf)+len(p) < w.delayBytes {
-			// Not enough bytes yet, just buffer them and wait
-			w.buf = append(w.buf, p...)
-			return len(p), nil
-		}
-		// Enough bytes, flush buffered bytes, and then write current bytes
-		_, err := w.next.Write(w.buf)
-		w.buf = nil
-		if err != nil {
-			return 0, err
-		}
-	}
 	return w.next.Write(p)
 }
 
 // Close flushes the buffer if it is nonempty.
 func (w *delayWriter) Close() error {
-	if w.buf != nil && len(w.buf) > 0 {
-		_, err := w.next.Write(w.buf)
-		return err
-	}
-	return nil
+	return w.next.Flush()
 }
 
 func newDelayWriter(w io.Writer, delayBytes int) *delayWriter {
 	return &delayWriter{
-		delayBytes: delayBytes,
-		buf:        make([]byte, 0, delayBytes),
-		next:       w,
+		next: bufio.NewWriterSize(w, delayBytes),
 	}
 }
 
@@ -320,7 +301,7 @@ func (d *s3Downloader) download(ctx context.Context) error {
 		merr = multierror.Append(merr, err)
 	}
 	if merr != nil {
-		return fmt.Errorf("one or more errors encountered during checkpoint download: %w", merr)
+		return fmt.Errorf("checkpoint download failed: %w", merr)
 	}
 	return nil
 }
@@ -440,7 +421,8 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 
 	err = writerPipe.Close()
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError,
+			fmt.Sprintf("checkpoint download interrupted due to error: %s", err.Error()))
 	}
 	c.Response().Flush()
 
