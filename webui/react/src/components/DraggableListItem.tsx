@@ -20,7 +20,7 @@ interface DroppableItemProps {
 
 const DraggableTypes = { COLUMN: 'COLUMN' };
 
-// ignore-prettier
+// prettier-ignore
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 const withDragAndDropProvider = <T extends {}>(Component: React.FunctionComponent<T>) =>
   (props: T) =>
