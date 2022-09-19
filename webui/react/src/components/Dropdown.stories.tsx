@@ -1,6 +1,9 @@
 import { ComponentStory, Meta } from '@storybook/react';
 import { Button, Menu } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
+
+import { useStore } from 'contexts/Store';
+import AvatarCard from 'shared/components/AvatarCard';
 
 import Dropdown, { Placement } from './Dropdown';
 
@@ -21,4 +24,36 @@ export const Default: ComponentStory<typeof Dropdown> = (args) => (
   </Dropdown>
 );
 
+export const Settings: ComponentStory<typeof Dropdown> = (args) => {
+  const {
+    ui,
+    auth: { user },
+  } = useStore();
+  const menuItems = useMemo(() => {
+    return (
+      <Menu
+        items={[
+          { key: 'theme-toggle', label: 'System Mode' },
+          {
+            key: 'settings',
+            label: 'Settings',
+          },
+          { key: 'sign-out', label: 'Sign Out' },
+        ]}
+        selectable={false}
+      />
+    );
+  }, []);
+  return (
+    <Dropdown
+      {...args}
+      content={menuItems}
+      offset={{ x: 16, y: -8 }}
+      placement={Placement.BottomLeft}>
+      <AvatarCard darkLight={ui.darkLight} displayName={user?.displayName ?? 'Admin'} />
+    </Dropdown>
+  );
+};
+
 Default.args = { placement: Placement.BottomLeft, showArrow: true };
+Settings.args = {};

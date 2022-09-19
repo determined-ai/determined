@@ -1,0 +1,21 @@
+.base {
+  width: 500px;
+
+  .largeGroup {
+    display: flex;
+    gap: 8px;
+
+    :global(.ant-radio-button-wrapper) {
+      height: 100%;
+      padding: 16px;
+      padding-bottom: 12px;
+      width: 100%;
+
+      .radioButton {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  }
+}

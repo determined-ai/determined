@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import loremIpsum from 'storybook/loremIpsum';
 
 import useModal from './useModal';
-import css from './useModal.module.scss';
+import css from './useModal.stories.module.scss';
 
 export default {
   component: useModal,
@@ -31,7 +31,7 @@ export const Default = (args: Partial<ModalFuncProps>): React.ReactNode => {
       icon: null,
       ...args,
     };
-  }, [ args ]);
+  }, [args]);
 
   return (
     <>
@@ -46,16 +46,14 @@ export const SeparatedBody = (args: Partial<ModalFuncProps>): React.ReactNode =>
 
   const handleCloseModal = useCallback(() => {
     modalClose();
-  }, [ modalClose ]);
+  }, [modalClose]);
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
       className: css.borderedModal,
       content: (
         <>
-          <div className={css.base}>
-            {loremIpsum}
-          </div>
+          <div className={css.base}>{loremIpsum}</div>
           <div className={css.footer}>
             <div className={css.spacer} />
             <Space>
@@ -70,7 +68,7 @@ export const SeparatedBody = (args: Partial<ModalFuncProps>): React.ReactNode =>
       icon: null,
       ...args,
     };
-  }, [ args, handleCloseModal ]);
+  }, [args, handleCloseModal]);
 
   return (
     <>
@@ -85,16 +83,14 @@ export const ExtraFooterButton = (args: Partial<ModalFuncProps>): React.ReactNod
 
   const handleCloseModal = useCallback(() => {
     modalClose();
-  }, [ modalClose ]);
+  }, [modalClose]);
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
-      className: css.modal,
+      className: css.footerModal,
       content: (
         <>
-          <div className={css.base}>
-            {loremIpsum}
-          </div>
+          <div className={css.base}>{loremIpsum}</div>
           <div className={css.footer}>
             <Button type="text">Extra Button</Button>
             <div className={css.spacer} />
@@ -110,7 +106,47 @@ export const ExtraFooterButton = (args: Partial<ModalFuncProps>): React.ReactNod
       icon: null,
       ...args,
     };
-  }, [ args, handleCloseModal ]);
+  }, [args, handleCloseModal]);
+
+  return (
+    <>
+      <Button onClick={() => modalOpen(modalProps)}>Open Modal</Button>
+      {contextHolder}
+    </>
+  );
+};
+
+export const OneFooterButton = (args: Partial<ModalFuncProps>): React.ReactNode => {
+  const { contextHolder, modalOpen } = useModal();
+
+  const modalProps: Partial<ModalFuncProps> = useMemo(() => {
+    return {
+      content: loremIpsum,
+      icon: null,
+      ...args,
+      cancelButtonProps: { style: { display: 'none' } },
+    };
+  }, [args]);
+
+  return (
+    <>
+      <Button onClick={() => modalOpen(modalProps)}>Open Modal</Button>
+      {contextHolder}
+    </>
+  );
+};
+
+export const NoFooter = (args: Partial<ModalFuncProps>): React.ReactNode => {
+  const { contextHolder, modalOpen } = useModal();
+
+  const modalProps: Partial<ModalFuncProps> = useMemo(() => {
+    return {
+      className: css.noFooterModal,
+      content: loremIpsum,
+      icon: null,
+      ...args,
+    };
+  }, [args]);
 
   return (
     <>
@@ -123,3 +159,5 @@ export const ExtraFooterButton = (args: Partial<ModalFuncProps>): React.ReactNod
 Default.args = args;
 SeparatedBody.args = args;
 ExtraFooterButton.args = args;
+OneFooterButton.args = args;
+NoFooter.args = args;

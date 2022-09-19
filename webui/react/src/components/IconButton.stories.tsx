@@ -33,7 +33,7 @@ export default {
     },
   },
   component: IconButton,
-  title: 'Determined/IconButton',
+  title: 'Determined/Buttons/IconButton',
 } as Meta<typeof IconButton>;
 
 export const Default: ComponentStory<typeof IconButton> = (args) => (
