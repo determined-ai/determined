@@ -6,7 +6,6 @@ import React, {
   CSSProperties,
   MutableRefObject,
   useCallback,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -50,7 +49,7 @@ export interface InteractiveTableSettings {
 }
 
 export const WIDGET_COLUMN_WIDTH = 46;
-const DEFAULT_RESIZE_THROTTLE_TIME = 30;
+const DEFAULT_RESIZE_THROTTLE_TIME = 100;
 const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
@@ -382,25 +381,6 @@ const InteractiveTable: InteractiveTable = ({
     [ pageWidth ],
   );
 
-  useLayoutEffect(() => {
-    const newSettingsWidths = settings.columnWidths;
-    if (!newSettingsWidths) return;
-    const widths = getUpscaledWidths(newSettingsWidths);
-    const dropRightStyles = widths.map((width, idx) => ({
-      left: `${width / 2}px`,
-      width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-    }));
-    const dropLeftStyles = widths.map((width, idx) => ({
-      left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-      width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-    }));
-    setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  }, [
-    settings.columnWidths,
-    getUpscaledWidths,
-    pageWidth,
-  ]);
-
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
       if (Array.isArray(tableSorter)) return;
@@ -441,15 +421,9 @@ const InteractiveTable: InteractiveTable = ({
         setWidthData(({ widths: prevWidths, ...rest }) => {
           const column = settings.columns[resizeIndex];
           const minWidth = columnDefs[column].defaultWidth;
-          let targetWidths;
-          if (x < minWidth) {
-            targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              prevWidthIndex === resizeIndex ? minWidth : prevWidth);
-          } else {
-            const newWidth = x;
-            targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              prevWidthIndex === resizeIndex ? newWidth : prevWidth);
-          }
+          let targetWidths = prevWidths;
+
+          targetWidths[resizeIndex] = x < minWidth ? minWidth : x;
 
           const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
           /**
@@ -464,16 +438,28 @@ const InteractiveTable: InteractiveTable = ({
             targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
               targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion);
           }
-          return { widths: targetWidths, ...rest };
+
+          const widths = getUpscaledWidths(targetWidths);
+          const dropRightStyles = widths.map((width, idx) => ({
+            left: `${(width / 2)}px`,
+            width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+          }));
+          const dropLeftStyles = widths.map((width, idx) => ({
+            left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+            width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+          }));
+
+          return { ...rest, dropLeftStyles, dropRightStyles, widths };
         });
       });
     },
-    [ settings.columns, pageWidth, columnDefs ],
+    [ settings.columns, pageWidth, columnDefs, getUpscaledWidths ],
   );
 
   const handleResizeStart = useCallback(
     (index) => (e: Event, { x }: DraggableData) => {
       setIsResizing(true);
+
       setWidthData(({ widths, ...rest }) => {
         const column = settings.columns[index];
         const startWidth = widths[index];
@@ -488,6 +474,7 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
+
     updateSettings({ columnWidths: widthData.widths.map(Math.round) });
   }, [ updateSettings, widthData ]);
 
