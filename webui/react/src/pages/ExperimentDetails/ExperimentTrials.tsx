@@ -15,7 +15,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';

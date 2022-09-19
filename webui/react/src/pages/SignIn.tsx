@@ -11,7 +11,7 @@ import PageMessage from 'components/PageMessage';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import { defaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';

@@ -18,7 +18,7 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import {

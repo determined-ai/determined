@@ -8,7 +8,7 @@ import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig } from 
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchResourcePools } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';

@@ -7,7 +7,7 @@ import PageNotFound from 'components/PageNotFound';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';

@@ -19,7 +19,7 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
   archiveModel,

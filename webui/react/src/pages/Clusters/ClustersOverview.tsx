@@ -12,7 +12,7 @@ import {
   useFetchAgents,
   useFetchResourcePools,
 } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { percent } from 'shared/utils/number';

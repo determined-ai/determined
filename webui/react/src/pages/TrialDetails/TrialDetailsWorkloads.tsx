@@ -11,7 +11,7 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';

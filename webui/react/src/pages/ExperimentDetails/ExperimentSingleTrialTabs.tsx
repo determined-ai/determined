@@ -6,7 +6,7 @@ import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';

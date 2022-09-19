@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { terminalRunStates } from 'constants/states';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';

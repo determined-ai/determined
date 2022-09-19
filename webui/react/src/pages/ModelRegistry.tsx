@@ -28,7 +28,7 @@ import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';

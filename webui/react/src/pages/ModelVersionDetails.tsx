@@ -8,7 +8,7 @@ import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';

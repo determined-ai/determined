@@ -9,7 +9,7 @@ import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';

@@ -45,7 +45,7 @@ import useModalExperimentMove, {
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {

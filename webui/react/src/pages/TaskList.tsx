@@ -27,7 +27,7 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
+import usePolling from 'shared/hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
