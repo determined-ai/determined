@@ -3,8 +3,6 @@ from typing import Any, Dict, List
 
 import torch
 
-import determined.common.check as check
-
 
 class LRScheduler:
     """Wrapper for a PyTorch LRScheduler.
@@ -67,8 +65,10 @@ class LRScheduler:
             frequency:
                 Sets the frequency at which the batch and epoch step modes get triggered.
         """
-        check.check_not_none(scheduler)
-        check.check_isinstance(step_mode, LRScheduler.StepMode)
+        if scheduler is None:
+            raise ValueError("scheduler must not be None.")
+        if not isinstance(step_mode, LRScheduler.StepMode):
+            raise TypeError(f"step_mode must be an LRScheduler.StepMode. Got {type(step_mode)}.")
 
         self._scheduler = scheduler
         self._step_mode = step_mode
