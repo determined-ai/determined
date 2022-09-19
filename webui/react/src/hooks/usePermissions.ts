@@ -62,7 +62,8 @@ const usePermissions = (): PermissionsHook => {
 
   // Determine if the user has access to any workspaces
   // Should be updated to check user assignments and roles once available
-  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user') ||
+  const canViewWorkspaces =
+    relevantPermissions(userAssignments, userRoles).has('oss_user') ||
     relevantPermissions(userAssignments, userRoles).has('view_workspaces');
 
   return {
