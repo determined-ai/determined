@@ -23,6 +23,7 @@ export interface WorkspaceMembersSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: 'members',
   settings: [
     {
       defaultValue: DEFAULT_COLUMNS,
@@ -72,7 +73,6 @@ const config: SettingsConfig = {
     },
   ],
   storagePath: 'workspace-members',
-  applicableRoutespace: 'members'
 };
 
 export default config;

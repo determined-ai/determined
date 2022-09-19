@@ -1,18 +1,19 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { useParams, useHistory } from 'react-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
+import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isNotFound } from 'shared/utils/service';
 import { Workspace } from 'types';
-import { paths } from 'routes/utils';
+
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
@@ -33,11 +34,11 @@ const rbacEnabled = false;
 
 const WorkspaceDetails: React.FC = () => {
   const { users } = useStore();
-  const { workspaceId, tab } = useParams<Params>();
+  const { workspaceId } = useParams<Params>();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ canceler ] = useState(new AbortController());
-  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects)
+  const [ tabKey, setTabKey ] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
   const pageRef = useRef<HTMLElement>(null);
   const id = parseInt(workspaceId);
   const history = useHistory();
@@ -63,12 +64,11 @@ const WorkspaceDetails: React.FC = () => {
     const tab = activeTab as WorkspaceDetailsTab;
     history.replace(`${basePath}/${tab}`);
     setTabKey(tab);
-  }, [ tabKey, workspaceId ]);
+  }, [ basePath, history ]);
 
-    // Abort cancel signal when app unmounts.
-    useEffect(() => {
-      return () => canceler.abort();
-    }, [ canceler ]);
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;

@@ -49,6 +49,7 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: 'projects',
   settings: [
     {
       defaultValue: false,
@@ -126,7 +127,6 @@ const config: SettingsConfig = {
     },
   ],
   storagePath: 'workspace-details',
-  applicableRoutespace: 'projects'
 };
 
 export default config;
