@@ -11,7 +11,7 @@
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "craco start",
     "build": "craco build",
-    "lint": "npm run lint:js && npm run lint:css",
+    "lint": "npm run lint:js && npm run lint:css && npm run format-check",
     "lint:js": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:css": "stylelint --config .stylelintrc.js \"src/**/*.{css,less,scss}\"",
     "format": "npm run format:js && npm run format:css && npm run format:misc",
