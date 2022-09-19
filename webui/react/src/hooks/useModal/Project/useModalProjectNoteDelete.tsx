@@ -24,21 +24,20 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalProjectNoteDelete = ({ onClose, project }: Props = {}): ModalHooks => {
-  const [pageNumber, setPageNumber] = useState(0);
+  const [ pageNumber, setPageNumber ] = useState(0);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <p>
-          Are you sure you want to delete&nbsp;
+        <p>Are you sure you want to delete&nbsp;
           <strong>&quot;{project?.notes?.[pageNumber]?.name ?? 'Untitled'}&quot;</strong>?
         </p>
         <p>This cannot be undone.</p>
       </div>
     );
-  }, [pageNumber, project?.notes]);
+  }, [ pageNumber, project?.notes ]);
 
   const handleOk = useCallback(async () => {
     if (!project?.id) return;
@@ -56,7 +55,7 @@ const useModalProjectNoteDelete = ({ onClose, project }: Props = {}): ModalHooks
         type: ErrorType.Server,
       });
     }
-  }, [pageNumber, project?.id, project?.notes]);
+  }, [ pageNumber, project?.id, project?.notes ]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
@@ -68,15 +67,12 @@ const useModalProjectNoteDelete = ({ onClose, project }: Props = {}): ModalHooks
       onOk: handleOk,
       title: 'Delete Page',
     };
-  }, [handleOk, modalContent]);
+  }, [ handleOk, modalContent ]);
 
-  const modalOpen = useCallback(
-    ({ pageNumber, initialModalProps }: ShowModalProps) => {
-      setPageNumber(pageNumber);
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
-    },
-    [getModalProps, openOrUpdate],
-  );
+  const modalOpen = useCallback(({ pageNumber, initialModalProps }: ShowModalProps) => {
+    setPageNumber(pageNumber);
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
+  }, [ getModalProps, openOrUpdate ]);
 
   /**
    * When modal props changes are detected, such as modal content
@@ -84,7 +80,7 @@ const useModalProjectNoteDelete = ({ onClose, project }: Props = {}): ModalHooks
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps());
-  }, [getModalProps, modalRef, openOrUpdate]);
+  }, [ getModalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

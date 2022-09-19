@@ -5,7 +5,7 @@ import TableBatch from './TableBatch';
 
 export default {
   component: TableBatch,
-  decorators: [withKnobs],
+  decorators: [ withKnobs ],
   parameters: { layout: 'padded' },
   title: 'TableBatch',
 };
@@ -17,9 +17,15 @@ const batchOptions = [
 ];
 
 export const Default = (): React.ReactNode => (
-  <TableBatch actions={batchOptions} selectedRowCount={1} />
+  <TableBatch
+    actions={batchOptions}
+    selectedRowCount={1}
+  />
 );
 
 export const Custom = (): React.ReactNode => (
-  <TableBatch actions={batchOptions} selectedRowCount={number('selectedRowCount', 1)} />
+  <TableBatch
+    actions={batchOptions}
+    selectedRowCount={number('selectedRowCount', 1)}
+  />
 );

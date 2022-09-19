@@ -9,9 +9,5 @@
   pointer-events: none;
   user-select: none;
 }
-.disabledLegend:global(.u-off) > * {
-  opacity: 1;
-}
-.hiddenLegend {
-  display: none;
-}
+.disabledLegend:global(.u-off) > * { opacity: 1; }
+.hiddenLegend { display: none; }

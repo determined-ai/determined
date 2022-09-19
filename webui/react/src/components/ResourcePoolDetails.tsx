@@ -16,6 +16,7 @@ interface Props {
 }
 
 const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
+
   const details = clone(pool.details);
   for (const key in details) {
     if (details[key] === null) {
@@ -53,6 +54,7 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       ))}
     </Modal>
   );
+
 };
 
 export default ResourcePoolDetails;

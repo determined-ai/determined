@@ -22,7 +22,7 @@ interface Props {
   content: React.ReactNode;
   disableAutoDismiss?: boolean;
   initVisible?: boolean;
-  offset?: { x: number; y: number };
+  offset?: { x: number, y: number };
   onVisibleChange?: (visible: boolean) => void;
   placement?: Placement;
   showArrow?: boolean;
@@ -37,10 +37,10 @@ const Dropdown: React.FC<Props> = ({
   showArrow = true,
   ...props
 }: Props) => {
-  const [isVisible, setIsVisible] = useState(initVisible);
+  const [ isVisible, setIsVisible ] = useState(initVisible);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
-  const classes = [css.base, css[placement]];
+  const classes = [ css.base, css[placement] ];
 
   const contentStyle = useMemo(() => {
     switch (placement) {
@@ -111,54 +111,48 @@ const Dropdown: React.FC<Props> = ({
       default:
         return undefined;
     }
-  }, [offset, placement]);
+  }, [ offset, placement ]);
 
   if (isVisible) classes.push(css.visible);
   if (showArrow) classes.push(css.arrow);
 
-  const handleClick = useCallback(
-    (event) => {
-      if (!event || !event.target) return;
+  const handleClick = useCallback((event) => {
+    if (!event || !event.target) return;
 
-      event.stopPropagation();
+    event.stopPropagation();
 
-      const isAntPicker =
-        event.target.closest('div') &&
-        typeof event.target.closest('div').className === 'string' &&
-        event.target.closest('div').className.indexOf('ant-picker') >= 0;
-      const isTrigger = triggerRef.current?.contains(event.target);
-      const isDropdown = dropdownRef.current?.contains(event.target);
+    const isAntPicker = (
+      event.target.closest('div') &&
+      typeof event.target.closest('div').className === 'string'
+      && event.target.closest('div').className.indexOf('ant-picker') >= 0
+    );
+    const isTrigger = triggerRef.current?.contains(event.target);
+    const isDropdown = dropdownRef.current?.contains(event.target);
 
-      if (isAntPicker) {
-        return;
-      } else if (isTrigger) {
-        setIsVisible((prev) => !prev);
-      } else if (isDropdown) {
-        if (!disableAutoDismiss) setIsVisible(false);
-      } else {
-        setIsVisible(false);
-      }
-    },
-    [disableAutoDismiss],
-  );
+    if (isAntPicker) {
+      return;
+    } else if (isTrigger) {
+      setIsVisible((prev) => !prev);
+    } else if (isDropdown) {
+      if (!disableAutoDismiss) setIsVisible(false);
+    } else {
+      setIsVisible(false);
+    }
+  }, [ disableAutoDismiss ]);
 
   useEffect(() => {
     if (onVisibleChange) onVisibleChange(isVisible);
-  }, [isVisible, onVisibleChange]);
+  }, [ isVisible, onVisibleChange ]);
 
   useEffect(() => {
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
-  }, [handleClick]);
+  }, [ handleClick ]);
 
   return (
     <div className={classes.join(' ')}>
-      <div className={css.content} ref={dropdownRef} style={contentStyle}>
-        {props.content}
-      </div>
-      <div className={css.trigger} ref={triggerRef}>
-        {props.children}
-      </div>
+      <div className={css.content} ref={dropdownRef} style={contentStyle}>{props.content}</div>
+      <div className={css.trigger} ref={triggerRef}>{props.children}</div>
     </div>
   );
 };

@@ -31,7 +31,7 @@ interface Queries {
 const Wait: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const { taskType } = useParams<Params>();
-  const [waitStatus, setWaitStatus] = useState<WaitStatus>();
+  const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
   const capitalizedTaskType = capitalize(taskType);
@@ -47,7 +47,7 @@ const Wait: React.FC = () => {
   useEffect(() => {
     storeDispatch({ type: StoreActionUI.HideUIChrome });
     return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   const handleTaskError = (err: Error) => {
     handleError({
@@ -71,7 +71,7 @@ const Wait: React.FC = () => {
         if (!lastRun) {
           return;
         }
-        if ([CommandState.Terminated].includes(lastRun.state)) {
+        if ([ CommandState.Terminated ].includes(lastRun.state)) {
           clearInterval(ival);
         } else if (lastRun.isReady) {
           clearInterval(ival);
@@ -82,7 +82,7 @@ const Wait: React.FC = () => {
         handleTaskError(e as Error);
       }
     }, 1000);
-  }, [eventUrl, serviceAddr]);
+  }, [ eventUrl, serviceAddr ]);
 
   return (
     <PageMessage title={capitalizedTaskType}>

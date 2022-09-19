@@ -13,7 +13,7 @@ const useRouteTracker = (): void => {
 
     // Clean up listener during unmount.
     return () => unlisten();
-  }, [listen, trackPage]);
+  }, [ listen, trackPage ]);
 };
 
 export default useRouteTracker;

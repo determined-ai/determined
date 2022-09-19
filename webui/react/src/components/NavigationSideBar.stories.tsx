@@ -14,13 +14,14 @@ const NavigationLoggedIn = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   return <NavigationSideBar />;
 };
 
 export const Default = (): React.ReactNode => (
   <div style={{ display: 'flex', width: '100vw' }}>
-    <NavigationLoggedIn />;<div style={{ flexGrow: 1 }}>Content</div>
+    <NavigationLoggedIn />;
+    <div style={{ flexGrow: 1 }}>Content</div>
   </div>
 );

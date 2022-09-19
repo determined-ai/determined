@@ -10,12 +10,13 @@ export default {
 };
 
 const CheckpointModalTriggerContainer = () => {
+
   const storeDispatch = useStoreDispatch();
   const { checkpoint, experiment } = generateTestExperimentData();
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   return (
     <CheckpointModalTrigger

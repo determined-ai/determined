@@ -3,7 +3,7 @@ import { isString } from './data';
 const PERCENT_REGEX = /^(\d+\.?\d*|\.\d+)%$/;
 const DEFAULT_PRECISION = 6;
 
-export const clamp = (val: number, min: number, max: number): number => {
+export const clamp = (val: number, min: number, max: number):number => {
   return Math.max(Math.min(val, max), min);
 };
 

@@ -96,6 +96,7 @@ const config: SettingsConfig = {
         baseType: BaseType.Float,
         isArray: true,
       },
+
     },
     {
       key: 'label',

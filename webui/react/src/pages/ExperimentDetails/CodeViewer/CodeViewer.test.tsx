@@ -12,8 +12,7 @@ import { paths } from 'routes/utils';
 import CodeViewer, { Props } from './CodeViewer';
 
 const MonacoEditorMock: React.FC = () => <></>;
-const hashedFileMock =
-  'ZGVzY3JpcHRpb246IG5vb3Bfc2luZ2xlCmNoZWNrcG9pbnRfc3RvcmFnZToKICB0eXBlOiBzaGFyZWRfZnMKICBob3N0X3BhdGg6IC90bXAKICBzdG9yYWdlX3BhdGg6IGRldGVybWluZWQtaW50ZWdyYXRpb24tY2hlY2twb2ludHMKICBzYXZlX3RyaWFsX2Jlc3Q6IDMwCmh5cGVycGFyYW1ldGVyczoKICBnbG9iYWxfYmF0Y2hfc2l6ZTogMzIKICBtZXRyaWNzX3Byb2dyZXNzaW9uOiBkZWNyZWFzaW5nCiAgbWV0cmljc19iYXNlOiAwLjkKICBtZXRyaWNzX3NpZ21hOiAwCnNlYXJjaGVyOgogIG1ldHJpYzogdmFsaWRhdGlvbl9lcnJvcgogIHNtYWxsZXJfaXNfYmV0dGVyOiB0cnVlCiAgbmFtZTogc2luZ2xlCiAgbWF4X2xlbmd0aDoKICAgIHJlY29yZHM6IDgwMDAKcmVwcm9kdWNpYmlsaXR5OgogIGV4cGVyaW1lbnRfc2VlZDogOTk5Cm1pbl92YWxpZGF0aW9uX3BlcmlvZDoKICByZWNvcmRzOiA0MDAwCm1heF9yZXN0YXJ0czogMAplbnRyeXBvaW50OiBtb2RlbF9kZWY6Tm9PcFRyaWFsCg==';
+const hashedFileMock = 'ZGVzY3JpcHRpb246IG5vb3Bfc2luZ2xlCmNoZWNrcG9pbnRfc3RvcmFnZToKICB0eXBlOiBzaGFyZWRfZnMKICBob3N0X3BhdGg6IC90bXAKICBzdG9yYWdlX3BhdGg6IGRldGVybWluZWQtaW50ZWdyYXRpb24tY2hlY2twb2ludHMKICBzYXZlX3RyaWFsX2Jlc3Q6IDMwCmh5cGVycGFyYW1ldGVyczoKICBnbG9iYWxfYmF0Y2hfc2l6ZTogMzIKICBtZXRyaWNzX3Byb2dyZXNzaW9uOiBkZWNyZWFzaW5nCiAgbWV0cmljc19iYXNlOiAwLjkKICBtZXRyaWNzX3NpZ21hOiAwCnNlYXJjaGVyOgogIG1ldHJpYzogdmFsaWRhdGlvbl9lcnJvcgogIHNtYWxsZXJfaXNfYmV0dGVyOiB0cnVlCiAgbmFtZTogc2luZ2xlCiAgbWF4X2xlbmd0aDoKICAgIHJlY29yZHM6IDgwMDAKcmVwcm9kdWNpYmlsaXR5OgogIGV4cGVyaW1lbnRfc2VlZDogOTk5Cm1pbl92YWxpZGF0aW9uX3BlcmlvZDoKICByZWNvcmRzOiA0MDAwCm1heF9yZXN0YXJ0czogMAplbnRyeXBvaW50OiBtb2RlbF9kZWY6Tm9PcFRyaWFsCg==';
 
 jest.mock('routes/utils', () => {
   return {
@@ -29,45 +28,44 @@ jest.mock('services/api', () => {
     __esModule: true,
     // encoded file taken from the API
     getExperimentFileFromTree: (id: number) => Promise.resolve(hashedFileMock),
-    getExperimentFileTree: (id: number) =>
-      Promise.resolve([
-        {
-          contentLength: 505,
-          contentType: 'text/plain; charset=utf-8',
-          files: [],
-          isDir: false,
-          modifiedTime: '2022-01-04T00:58:09Z',
-          name: 'single-in-records.yaml',
-          path: 'single-in-records.yaml',
-        },
-        {
-          contentLength: 560,
-          contentType: 'text/plain; charset=utf-8',
-          files: [],
-          isDir: false,
-          modifiedTime: '2022-01-04T00:58:09Z',
-          name: 'single-one-short-step.yaml',
-          path: 'single-one-short-step.yaml',
-        },
-        {
-          contentLength: 488,
-          contentType: 'text/plain; charset=utf-8',
-          files: [],
-          isDir: false,
-          modifiedTime: '2022-01-04T00:58:09Z',
-          name: 'adaptive.yaml',
-          path: 'adaptive.yaml',
-        },
-        {
-          contentLength: 10710,
-          contentType: 'text/plain; charset=utf-8',
-          files: [],
-          isDir: false,
-          modifiedTime: '2022-06-21T20:30:06Z',
-          name: 'model_def.py',
-          path: 'model_def.py',
-        },
-      ]),
+    getExperimentFileTree: (id: number) => Promise.resolve([
+      {
+        contentLength: 505,
+        contentType: 'text/plain; charset=utf-8',
+        files: [],
+        isDir: false,
+        modifiedTime: '2022-01-04T00:58:09Z',
+        name: 'single-in-records.yaml',
+        path: 'single-in-records.yaml',
+      },
+      {
+        contentLength: 560,
+        contentType: 'text/plain; charset=utf-8',
+        files: [],
+        isDir: false,
+        modifiedTime: '2022-01-04T00:58:09Z',
+        name: 'single-one-short-step.yaml',
+        path: 'single-one-short-step.yaml',
+      },
+      {
+        contentLength: 488,
+        contentType: 'text/plain; charset=utf-8',
+        files: [],
+        isDir: false,
+        modifiedTime: '2022-01-04T00:58:09Z',
+        name: 'adaptive.yaml',
+        path: 'adaptive.yaml',
+      },
+      {
+        contentLength: 10710,
+        contentType: 'text/plain; charset=utf-8',
+        files: [],
+        isDir: false,
+        modifiedTime: '2022-06-21T20:30:06Z',
+        name: 'model_def.py',
+        path: 'model_def.py',
+      },
+    ]),
   };
 });
 
@@ -95,9 +93,7 @@ jest.mock('hooks/useSettings', () => {
 const experimentIdMock = 123;
 const user = userEvent.setup();
 
-const setup = (
-  props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
-) => {
+const setup = (props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock }) => {
   render(<CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />);
 };
 

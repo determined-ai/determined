@@ -12,8 +12,20 @@ export default {
   title: 'ResourcePoolCardLight',
 };
 
-export const Default = (): React.ReactNode => <ResourcePoolCardLight resourcePool={rps.random()} />;
+export const Default = (): React.ReactNode => (
+  <ResourcePoolCardLight
+    resourcePool={rps.random()}
+  />
+);
 
-export const CPU = (): React.ReactNode => <ResourcePoolCardLight resourcePool={rps.random()} />;
+export const CPU = (): React.ReactNode => (
+  <ResourcePoolCardLight
+    resourcePool={rps.random()}
+  />
+);
 
-export const Aux = (): React.ReactNode => <ResourcePoolCardLight resourcePool={rps.random()} />;
+export const Aux = (): React.ReactNode => (
+  <ResourcePoolCardLight
+    resourcePool={rps.random()}
+  />
+);

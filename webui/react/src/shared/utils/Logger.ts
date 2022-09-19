@@ -26,7 +26,7 @@ const generateNamespace = (parts: string[], separator = NAMEPACE_SEPARATOR) => {
 };
 
 /** returns the underlying Debug logger. */
-export const getLogger = (namespace: string, level: Level): ((...msg: unknown[]) => void) => {
+export const getLogger = (namespace: string, level: Level): (...msg: unknown[]) => void => {
   const logger = debug(`${namespace}:${level}`);
   return logger;
 };
@@ -51,7 +51,7 @@ class Logger implements LoggerInterface {
   }
 
   extend(...namespace: string[]): Logger {
-    return new Logger(generateNamespace([this.namespace, ...namespace]));
+    return new Logger(generateNamespace([ this.namespace, ...namespace ]));
   }
 
   debug(...msg: unknown[]): void {

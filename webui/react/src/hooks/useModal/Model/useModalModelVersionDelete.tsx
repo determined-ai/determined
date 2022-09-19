@@ -5,9 +5,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
 import useModal, {
-  CANNOT_DELETE_MODAL_PROPS,
-  ModalHooks as Hooks,
-  ModalCloseReason,
+  CANNOT_DELETE_MODAL_PROPS, ModalHooks as Hooks, ModalCloseReason,
 } from 'shared/hooks/useModal/useModal';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -24,14 +22,14 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const [modelVersion, setModelVersion] = useState<ModelVersion>();
+  const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
 
   const { canDeleteModelVersion } = usePermissions();
 
   const handleOnClose = useCallback(() => {
     setModelVersion(undefined);
     onClose?.(ModalCloseReason.Cancel);
-  }, [onClose]);
+  }, [ onClose ]);
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleOnClose });
 
@@ -53,29 +51,24 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [modelVersion]);
+  }, [ modelVersion ]);
 
-  const getModalProps = useCallback(
-    (modelVersion: ModelVersion): ModalFuncProps => {
-      return canDeleteModelVersion({ modelVersion })
-        ? {
-            closable: true,
-            content: `
+  const getModalProps = useCallback((modelVersion: ModelVersion): ModalFuncProps => {
+    return canDeleteModelVersion({ modelVersion }) ? {
+      closable: true,
+      content: `
         Are you sure you want to delete this version
         "Version ${modelVersion.version}" from this model?
       `,
-            icon: null,
-            maskClosable: true,
-            okButtonProps: { type: 'primary' },
-            okText: 'Delete Version',
-            okType: 'danger',
-            onOk: handleOk,
-            title: 'Confirm Delete',
-          }
-        : clone(CANNOT_DELETE_MODAL_PROPS);
-    },
-    [canDeleteModelVersion, handleOk],
-  );
+      icon: null,
+      maskClosable: true,
+      okButtonProps: { type: 'primary' },
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: handleOk,
+      title: 'Confirm Delete',
+    } : clone(CANNOT_DELETE_MODAL_PROPS);
+  }, [ canDeleteModelVersion, handleOk ]);
 
   const modalOpen = useCallback((modelVersion: ModelVersion) => setModelVersion(modelVersion), []);
 
@@ -85,7 +78,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
    */
   useEffect(() => {
     if (modelVersion) openOrUpdate(getModalProps(modelVersion));
-  }, [getModalProps, modelVersion, openOrUpdate]);
+  }, [ getModalProps, modelVersion, openOrUpdate ]);
 
   return { modalOpen, ...modalHook };
 };

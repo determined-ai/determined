@@ -42,13 +42,16 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
-  await readStream<V1TrialLogsResponse>(detApi.StreamingExperiments.trialLogs(trialId), (ev) => {
-    downloadStringBuffer += ev.message;
-    if (downloadStringBuffer.length > MAX_PART_SIZE) {
-      parts.push(downloadStringBuffer);
-      downloadStringBuffer = '';
-    }
-  });
+  await readStream<V1TrialLogsResponse>(
+    detApi.StreamingExperiments.trialLogs(trialId),
+    (ev) => {
+      downloadStringBuffer += ev.message;
+      if (downloadStringBuffer.length > MAX_PART_SIZE) {
+        parts.push(downloadStringBuffer);
+        downloadStringBuffer = '';
+      }
+    },
+  );
   if (downloadStringBuffer !== '') parts.push(downloadStringBuffer);
   const trial = await getTrialDetails({ id: trialId });
   downloadText(`experiment_${trial.experimentId}_trial_${trialId}_logs.txt`, parts);
@@ -58,7 +61,7 @@ const generateLogStringBuffer = (count: number, avgLength: number): string => {
   const msg = new Array(avgLength).fill('a').join('') + '\n';
   let stringBuffer = '';
   for (let i = 0; i < count; i++) {
-    stringBuffer += i + msg;
+    stringBuffer += (i + msg);
   }
   return stringBuffer;
 };
@@ -71,7 +74,7 @@ export const getCookie = (name: string): string | null => {
 
 export const setCookie = (name: string, value: string): void => {
   const date = new Date();
-  date.setTime(date.getTime() + 7 * 24 * 60 * 60 * 1000);
+  date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
   document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
 };
 
@@ -92,11 +95,10 @@ export const simulateLogsDownload = (numCharacters: number): number => {
   const start = Date.now();
   const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
   const chunkCount = Math.ceil(numCharacters / MAX_PART_SIZE);
-  const parts = new Array(chunkCount)
-    .fill(0)
+  const parts = new Array(chunkCount).fill(0)
     .map(() => generateLogStringBuffer(Math.pow(2, 20), 128));
   downloadText('simulated-logs.txt', parts);
-  return Date.now() - start;
+  return (Date.now() - start);
 };
 
 const updateFavicon = (iconPath: string): void => {

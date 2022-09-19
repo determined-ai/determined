@@ -7,22 +7,26 @@ import * as routes from './routes';
 
 const setup = (url = '/', base = 'http://www.example.com') => {
   const newUrl = new URL(url, base);
-  Object.defineProperty(window, 'location', {
-    value: {
-      hash: newUrl.hash,
-      host: newUrl.host,
-      hostname: newUrl.hostname,
-      href: newUrl.href,
-      origin: newUrl.origin,
-      password: newUrl.password,
-      pathname: newUrl.pathname.toString(),
-      port: newUrl.port,
-      protocol: newUrl.protocol,
-      search: newUrl.search,
-      username: newUrl.username,
+  Object.defineProperty(
+    window,
+    'location',
+    {
+      value: {
+        hash: newUrl.hash,
+        host: newUrl.host,
+        hostname: newUrl.hostname,
+        href: newUrl.href,
+        origin: newUrl.origin,
+        password: newUrl.password,
+        pathname: newUrl.pathname.toString(),
+        port: newUrl.port,
+        protocol: newUrl.protocol,
+        search: newUrl.search,
+        username: newUrl.username,
+      },
+      writable: true,
     },
-    writable: true,
-  });
+  );
   const location: Location = window.location;
   return { location };
 };
@@ -125,11 +129,8 @@ describe('Routes Utilities', () => {
       expect(window.open).not.toHaveBeenCalled();
       routes.openBlank('https://localhost:3000');
       expect(window.open).toHaveBeenCalledTimes(1);
-      expect(window.open).toHaveBeenCalledWith(
-        'https://localhost:3000',
-        '_blank',
-        'noopener,noreferrer',
-      );
+      expect(window.open)
+        .toHaveBeenCalledWith('https://localhost:3000', '_blank', 'noopener,noreferrer');
     });
 
     it('should direct to https://localhost:3000/det/projects/1?test=true', () => {
@@ -147,7 +148,8 @@ describe('Routes Utilities', () => {
       expect(window.open).not.toHaveBeenCalled();
       routes.openBlank('/test');
       expect(window.open).toHaveBeenCalledTimes(1);
-      expect(window.open).toHaveBeenCalledWith('/test', '_blank', 'noopener,noreferrer');
+      expect(window.open)
+        .toHaveBeenCalledWith('/test', '_blank', 'noopener,noreferrer');
     });
   });
 
@@ -171,34 +173,30 @@ describe('Routes Utilities', () => {
 
   describe('isNewTabClickEvent', () => {
     it('should be NewTabClickEvent', () => {
-      const e1: AnyMouseEvent = new MouseEvent('click', {
-        button: 1,
-        ctrlKey: false,
-        metaKey: false,
-      });
+      const e1: AnyMouseEvent = new MouseEvent(
+        'click',
+        { button: 1, ctrlKey: false, metaKey: false },
+      );
       expect(routes.isNewTabClickEvent(e1)).toBeTruthy();
 
-      const e2: AnyMouseEvent = new MouseEvent('click', {
-        button: 0,
-        ctrlKey: false,
-        metaKey: true,
-      });
+      const e2: AnyMouseEvent = new MouseEvent(
+        'click',
+        { button: 0, ctrlKey: false, metaKey: true },
+      );
       expect(routes.isNewTabClickEvent(e2)).toBeTruthy();
 
-      const e3: AnyMouseEvent = new MouseEvent('click', {
-        button: 0,
-        ctrlKey: true,
-        metaKey: false,
-      });
+      const e3: AnyMouseEvent = new MouseEvent(
+        'click',
+        { button: 0, ctrlKey: true, metaKey: false },
+      );
       expect(routes.isNewTabClickEvent(e3)).toBeTruthy();
     });
 
     it('should not be NewTabClickEvent', () => {
-      const e: AnyMouseEvent = new MouseEvent('click', {
-        button: 0,
-        ctrlKey: false,
-        metaKey: false,
-      });
+      const e: AnyMouseEvent = new MouseEvent(
+        'click',
+        { button: 0, ctrlKey: false, metaKey: false },
+      );
       expect(routes.isNewTabClickEvent(e)).toBeFalsy();
     });
   });
@@ -314,21 +312,25 @@ describe('Routes Utilities', () => {
       expect(history.push).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
       expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(path, {
-        loginRedirect: {
-          hash: '',
-          host: 'www.example.com',
-          hostname: 'www.example.com',
-          href: 'http://www.example.com/',
-          origin: 'http://www.example.com',
-          password: '',
-          pathname: '/',
-          port: '',
-          protocol: 'http:',
-          search: '',
-          username: '',
+      expect(history.push).toHaveBeenCalledWith(
+        path,
+        {
+          loginRedirect:
+          {
+            hash: '',
+            host: 'www.example.com',
+            hostname: 'www.example.com',
+            href: 'http://www.example.com/',
+            origin: 'http://www.example.com',
+            password: '',
+            pathname: '/',
+            port: '',
+            protocol: 'http:',
+            search: '',
+            username: '',
+          },
         },
-      });
+      );
     });
 
     it('should route to react URL with determined.ai base url', () => {
@@ -337,21 +339,25 @@ describe('Routes Utilities', () => {
       expect(history.push).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
       expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(path, {
-        loginRedirect: {
-          hash: '',
-          host: 'www.determined.ai',
-          hostname: 'www.determined.ai',
-          href: 'https://www.determined.ai/',
-          origin: 'https://www.determined.ai',
-          password: '',
-          pathname: '/',
-          port: '',
-          protocol: 'https:',
-          search: '',
-          username: '',
+      expect(history.push).toHaveBeenCalledWith(
+        path,
+        {
+          loginRedirect:
+          {
+            hash: '',
+            host: 'www.determined.ai',
+            hostname: 'www.determined.ai',
+            href: 'https://www.determined.ai/',
+            origin: 'https://www.determined.ai',
+            password: '',
+            pathname: '/',
+            port: '',
+            protocol: 'https:',
+            search: '',
+            username: '',
+          },
         },
-      });
+      );
     });
   });
 });

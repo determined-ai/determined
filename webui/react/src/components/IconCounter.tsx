@@ -17,7 +17,7 @@ enum IconCounterType {
 }
 
 const IconCounter: React.FC<Props> = (props: Props) => {
-  const classes = [css.base];
+  const classes = [ css.base ];
   if (props.type) classes.push(css[props.type]);
   return (
     <a className={classes.join(' ')} onClick={props.onClick}>

@@ -9,7 +9,7 @@ import css from './ThemeToggle.module.scss';
 interface ThemeOption {
   className: Mode;
   displayName: string;
-  next: Mode;
+  next: Mode
 }
 
 export const ThemeOptions: Record<Mode, ThemeOption> = {
@@ -34,7 +34,7 @@ const ThemeToggle: React.FC = () => {
   const { ui } = useStore();
   const storeDispatch = useStoreDispatch();
 
-  const classes = [css.toggler];
+  const classes = [ css.toggler ];
   const currentThemeOption = ThemeOptions[ui.mode];
   classes.push(css[currentThemeOption.className]);
 
@@ -48,7 +48,9 @@ const ThemeToggle: React.FC = () => {
     <div className={css.base} onClick={newThemeMode}>
       <div className={css.container}>
         <div className={classes.join(' ')} />
-        <div className={css.mode}>{currentThemeOption.displayName}</div>
+        <div className={css.mode}>
+          {currentThemeOption.displayName}
+        </div>
       </div>
     </div>
   );

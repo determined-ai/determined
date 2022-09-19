@@ -31,13 +31,13 @@ export enum StoreActionUI {
 }
 
 export type ActionUI =
-  | { type: StoreActionUI.HideUIChrome }
-  | { type: StoreActionUI.HideUISpinner }
-  | { type: StoreActionUI.SetMode; value: Mode }
-  | { type: StoreActionUI.SetPageVisibility; value: boolean }
-  | { type: StoreActionUI.SetTheme; value: { darkLight: DarkLight; theme: Theme } }
-  | { type: StoreActionUI.ShowUIChrome }
-  | { type: StoreActionUI.ShowUISpinner };
+    | { type: StoreActionUI.HideUIChrome }
+    | { type: StoreActionUI.HideUISpinner }
+    | { type: StoreActionUI.SetMode; value: Mode }
+    | { type: StoreActionUI.SetPageVisibility; value: boolean }
+    | { type: StoreActionUI.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
+    | { type: StoreActionUI.ShowUIChrome }
+    | { type: StoreActionUI.ShowUISpinner }
 /**
  * return a part of the input state that should be updated.
  * @param state ui state

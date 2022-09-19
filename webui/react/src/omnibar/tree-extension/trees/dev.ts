@@ -15,28 +15,26 @@ const dev: TreeNode[] = [
       {
         label: 'set <URL>',
         onCustomInput: (inp: string): Children => {
-          return [
-            {
-              closeBar: true,
-              label: inp || '<URL>',
-              onAction: async () => {
-                const isAlive = await checkServerAlive(inp);
-                if (isAlive) {
-                  setServerAddress(inp);
-                } else {
-                  const error = new DetError(undefined, {
-                    isUserTriggered: true,
-                    level: ErrorLevel.Error,
-                    publicMessage: `Could not find a valid server at "${inp}"`,
-                    publicSubject: 'Server not found',
-                    type: ErrorType.Ui,
-                  });
-                  throw error;
-                }
-              },
-              title: inp,
+          return [ {
+            closeBar: true,
+            label: inp || '<URL>',
+            onAction: async () => {
+              const isAlive = await checkServerAlive(inp);
+              if (isAlive) {
+                setServerAddress(inp);
+              } else {
+                const error = new DetError(undefined, {
+                  isUserTriggered: true,
+                  level: ErrorLevel.Error,
+                  publicMessage: `Could not find a valid server at "${inp}"`,
+                  publicSubject: 'Server not found',
+                  type: ErrorType.Ui,
+                });
+                throw error;
+              }
             },
-          ];
+            title: inp,
+          } ];
         },
         title: 'set',
       },
@@ -55,7 +53,7 @@ const dev: TreeNode[] = [
   },
   {
     closeBar: true,
-    onAction: (): void => {
+    onAction: ():void => {
       const resetStorage = userPreferencesStorage();
       resetStorage();
     },

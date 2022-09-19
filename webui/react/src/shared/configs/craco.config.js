@@ -14,8 +14,7 @@ module.exports = {
   babel: {
     plugins: [
       [
-        'import',
-        {
+        'import', {
           libraryDirectory: 'es',
           libraryName: 'antd',
           style: true,
@@ -93,7 +92,7 @@ module.exports = {
           'suggest',
           'wordHighlighter',
         ],
-        languages: ['markdown', 'yaml', 'python'],
+        languages: [ 'markdown', 'yaml', 'python' ],
       }),
     ],
   },

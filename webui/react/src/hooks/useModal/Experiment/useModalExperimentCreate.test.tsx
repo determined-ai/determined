@@ -31,14 +31,12 @@ const ModalTrigger: React.FC = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   return (
     <>
-      <Button
-        onClick={() =>
-          modalOpen({ experiment: experiment, trial: trial, type: CreateExperimentType.Fork })
-        }>
+      <Button onClick={() =>
+        modalOpen({ experiment: experiment, trial: trial, type: CreateExperimentType.Fork })}>
         Show Jupyter Lab
       </Button>
       {contextHolder}

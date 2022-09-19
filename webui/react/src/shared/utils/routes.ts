@@ -9,8 +9,8 @@ const logger = rootLogger.extend('utils', 'routes');
 
 export const isFullPath = (url: string): boolean => {
   try {
-    return url.startsWith('http') && !!new URL(url);
-  } catch (e) {
+    return url.startsWith('http') && !!(new URL(url));
+  } catch (e){
     return false;
   }
 };
@@ -23,13 +23,15 @@ export const locationToPath = (location?: Location): string | null => {
   if (!location || !location.pathname) return null;
   return location.pathname + location.search + location.hash;
 };
-export const windowOpenFeatures = ['noopener', 'noreferrer'];
+export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
 export const openBlank = (url: string): void => {
   window.open(url, '_blank', windowOpenFeatures.join(','));
 };
 export type AnyMouseEvent = MouseEvent | React.MouseEvent;
 export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;
-export const isMouseEvent = (ev: AnyMouseEvent | React.KeyboardEvent): ev is AnyMouseEvent => {
+export const isMouseEvent = (
+  ev: AnyMouseEvent | React.KeyboardEvent,
+): ev is AnyMouseEvent => {
   return 'button' in ev;
 };
 export const isNewTabClickEvent = (event: AnyMouseEvent): boolean => {
@@ -40,10 +42,10 @@ export const isNewTabClickEvent = (event: AnyMouseEvent): boolean => {
 export const reactHostAddress = (): string => {
   return `${window.location.protocol}//${window.location.host}`;
 };
-export const ensureAbsolutePath = (url: string): string => (isAbsolutePath(url) ? url : '/' + url);
-export const filterOutLoginLocation = (location: {
-  pathname: string;
-}): { pathname: string } | undefined => {
+export const ensureAbsolutePath = (url: string): string => isAbsolutePath(url) ? url : '/' + url;
+export const filterOutLoginLocation = (
+  location: { pathname: string },
+): { pathname: string } | undefined => {
   return location.pathname.includes('login') ? undefined : clone(location);
 };
 export const parseUrl = (url: string): URL => {

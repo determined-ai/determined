@@ -43,50 +43,42 @@ export interface Props {
   pageRef: React.RefObject<HTMLElement>;
 }
 
-const ExperimentMultiTrialTabs: React.FC<Props> = ({
-  experiment,
-  fetchExperimentDetails,
-  pageRef,
-}: Props) => {
+const ExperimentMultiTrialTabs: React.FC<Props> = (
+  { experiment, fetchExperimentDetails, pageRef }: Props,
+) => {
   const { tab, viz } = useParams<Params>();
   const history = useHistory();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
-  const [tabKey, setTabKey] = useState(defaultTabKey);
+  const [ tabKey, setTabKey ] = useState(defaultTabKey);
 
   const basePath = paths.experimentDetails(experiment.id);
 
-  const handleTabChange = useCallback(
-    (key) => {
-      setTabKey(key);
-      history.replace(`${basePath}/${key}`);
-    },
-    [basePath, history],
-  );
+  const handleTabChange = useCallback((key) => {
+    setTabKey(key);
+    history.replace(`${basePath}/${key}`);
+  }, [ basePath, history ]);
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
       history.replace(`${basePath}/${tabKey}`);
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [ basePath, history, tab, tabKey ]);
 
-  const handleNotesUpdate = useCallback(
-    async (editedNotes: string) => {
-      try {
-        await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
-        await fetchExperimentDetails();
-      } catch (e) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment notes.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-      }
-    },
-    [experiment.id, fetchExperimentDetails],
-  );
+  const handleNotesUpdate = useCallback(async (editedNotes: string) => {
+    try {
+      await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError(e, {
+        level: ErrorLevel.Error,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment notes.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
 
   return (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>

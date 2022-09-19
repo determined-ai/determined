@@ -84,9 +84,8 @@ export class Storage {
   }
 
   keys(): string[] {
-    const prefix = this.pathKeys.length !== 0 ? [...this.pathKeys, ''].join(this.delimiter) : '';
-    return this.store
-      .keys()
+    const prefix = this.pathKeys.length !== 0 ? [ ...this.pathKeys, '' ].join(this.delimiter) : '';
+    return this.store.keys()
       .filter((key) => key.startsWith(prefix))
       .map((key) => key.replace(prefix, ''));
   }
@@ -108,7 +107,7 @@ export class Storage {
   }
 
   fork(basePath: string): Storage {
-    basePath = [...this.pathKeys, basePath].join(this.delimiter);
+    basePath = [ ...this.pathKeys, basePath ].join(this.delimiter);
     return new Storage({ basePath, delimiter: this.delimiter, store: this.store });
   }
 
@@ -121,10 +120,10 @@ export class Storage {
   }
 
   private computeKey(key: string): string {
-    return [...this.pathKeys, key].join(this.delimiter);
+    return [ ...this.pathKeys, key ].join(this.delimiter);
   }
 
-  private parsePath(path: string, delimiter: string): string[] {
+  private parsePath (path: string, delimiter: string): string[] {
     return path.split(delimiter).filter((key) => key !== '');
   }
 }

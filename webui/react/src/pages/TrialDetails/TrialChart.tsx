@@ -40,8 +40,8 @@ const TrialChart: React.FC<Props> = ({
   trialId,
   trialTerminated,
 }: Props) => {
-  const [scale, setScale] = useState<Scale>(Scale.Linear);
-  const [trialSumm, setTrialSummary] = useState<MetricContainer[]>([]);
+  const [ scale, setScale ] = useState<Scale>(Scale.Linear);
+  const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
@@ -50,18 +50,18 @@ const TrialChart: React.FC<Props> = ({
         metricNames: metricNames,
         scale: scale,
         startBatches: 0,
-        trialIds: [trialId],
+        trialIds: [ trialId ],
       });
       setTrialSummary(summ[0].metrics);
     }
-  }, [metricNames, scale, trialId]);
+  }, [ metricNames, scale, trialId ]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
   useEffect(() => {
     if (trialTerminated) {
       stopPolling();
     }
-  }, [trialTerminated, stopPolling]);
+  }, [ trialTerminated, stopPolling ]);
   if (trialTerminated) {
     stopPolling();
   }
@@ -73,9 +73,8 @@ const TrialChart: React.FC<Props> = ({
     metrics.forEach((metric, index) => {
       yValues[index] = {};
 
-      const mWrapper = trialSumm.find(
-        (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
-      );
+      const mWrapper = trialSumm.find((mContainer) =>
+        mContainer.name === metric.name && mContainer.type === metric.type);
       if (!mWrapper || !mWrapper.data) {
         return;
       }
@@ -91,11 +90,11 @@ const TrialChart: React.FC<Props> = ({
     xValues.sort((a, b) => a - b);
 
     const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
-      return xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null));
+      return xValues.map((xValue) => yValue[xValue] != null ? yValue[xValue] : null);
     });
 
-    return [xValues, ...yValuesArray];
-  }, [metrics, trialSumm]);
+    return [ xValues, ...yValuesArray ];
+  }, [ metrics, trialSumm ]);
 
   const chartOptions: Options = useMemo(() => {
     return {
@@ -106,7 +105,7 @@ const TrialChart: React.FC<Props> = ({
       height: 400,
       key: trialId,
       legend: { show: false },
-      plugins: [tooltipsPlugin(), trackAxis()],
+      plugins: [ tooltipsPlugin(), trackAxis() ],
       scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'Batch' },
@@ -118,7 +117,7 @@ const TrialChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [metrics, scale, trialId]);
+  }, [ metrics, scale, trialId ]);
 
   const options = (
     <ResponsiveFilters>
@@ -138,11 +137,11 @@ const TrialChart: React.FC<Props> = ({
       <div className={css.base}>
         {
           <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
-            {chartData[0].length === 0 ? (
-              <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <UPlotChart data={chartData} options={chartOptions} />
-            )}
+            {
+              chartData[0].length === 0
+                ? <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                : <UPlotChart data={chartData} options={chartOptions} />
+            }
           </Spinner>
         }
       </div>

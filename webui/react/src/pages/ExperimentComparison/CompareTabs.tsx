@@ -8,9 +8,11 @@ const CompareVisualization = React.lazy(() => {
 
 const ExperimentComparisonTabs: React.FC = () => {
   return (
+
     <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
       <CompareVisualization />
     </React.Suspense>
+
   );
 };
 

@@ -31,13 +31,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .option > [class*='Icon_base']:last-child {
+  .option > [class*=Icon_base]:last-child {
     display: none;
   }
   .option.selected {
     font-weight: bold;
   }
-  .option.selected > [class*='Icon_base'] {
+  .option.selected > [class*=Icon_base] {
     color: var(--theme-status-active);
     display: flex;
   }

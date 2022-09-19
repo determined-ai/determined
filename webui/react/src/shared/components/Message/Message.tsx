@@ -24,7 +24,12 @@ const IMAGE_MAP = {
   [MessageType.Warning]: Images.ImageWarning,
 };
 
-const Message: React.FC<Props> = ({ message, style, title, type = MessageType.Alert }: Props) => {
+const Message: React.FC<Props> = ({
+  message,
+  style,
+  title,
+  type = MessageType.Alert,
+}: Props) => {
   const { ui } = useStore();
   const ImageComponent = IMAGE_MAP[type];
   return (

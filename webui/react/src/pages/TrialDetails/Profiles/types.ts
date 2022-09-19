@@ -21,10 +21,10 @@ export type MetricsAggregateInterface = {
   // group information by { [time]: { [name]: value, ... }, ... }
   data?: uPlot.AlignedData;
   initialTimestamp?: number;
-  isEmpty: boolean;
+  isEmpty: boolean,
   // set to false when the 1st event is received
-  isLoading: boolean;
-  names: string[];
+  isLoading: boolean,
+  names: string[],
 };
 
 export interface ChartProps {
@@ -32,7 +32,7 @@ export interface ChartProps {
   trial: TrialDetails;
 }
 
-export interface ProfilerMetricsBatch extends Omit<V1TrialProfilerMetricsBatch, 'timestamps'> {
+export interface ProfilerMetricsBatch extends Omit<V1TrialProfilerMetricsBatch, 'timestamps'>{
   timestamps: string[];
 }
 

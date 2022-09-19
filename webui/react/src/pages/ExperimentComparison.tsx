@@ -16,21 +16,22 @@ const ExperimentComparison: React.FC = () => {
 
   const experimentIds: number[] = useMemo(() => {
     const query: Query = queryString.parse(location.search);
-    if (query.id && typeof query.id === 'string') {
-      return [parseInt(query.id)];
+    if (query.id && typeof query.id === 'string'){
+      return [ parseInt(query.id) ];
     } else if (Array.isArray(query.id)) {
+
       return query.id.map((x) => parseInt(x));
     }
     return [];
-  }, [location.search]);
+  }, [ location.search ]);
 
-  const [canceler] = useState(new AbortController());
+  const [ canceler ] = useState(new AbortController());
 
   const pageRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [canceler]);
+  }, [ canceler ]);
 
   if (!experimentIds || !experimentIds.length) {
     return <Message title="No Experiments chosen for comparison" />;
@@ -40,7 +41,9 @@ const ExperimentComparison: React.FC = () => {
     <Page
       bodyNoPadding
       containerRef={pageRef}
-      headerComponent={<ComparisonHeader />}
+      headerComponent={(
+        <ComparisonHeader />
+      )}
       stickyHeader
       title="Compare Experiments">
       <ComparisonTabs />

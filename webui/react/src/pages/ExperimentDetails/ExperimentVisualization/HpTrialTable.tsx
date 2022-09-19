@@ -8,10 +8,13 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
 import { Primitive, RecordKey } from 'shared/types';
-import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
+import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
+  str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
-import { HyperparametersFlattened, HyperparameterType, MetricName } from 'types';
+import {
+  HyperparametersFlattened, HyperparameterType, MetricName,
+} from 'types';
 
 import css from './HpTrialTable.module.scss';
 
@@ -52,12 +55,12 @@ const HpTrialTable: React.FC<Props> = ({
   handleTableRowSelect,
   selectedRowKeys,
 }: Props) => {
-  const [pageSize, setPageSize] = useState(MINIMUM_PAGE_SIZE);
+  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
 
   const dataSource = useMemo(() => {
     if (!filteredTrialIdMap) return trialHps;
     return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
-  }, [filteredTrialIdMap, trialHps]);
+  }, [ filteredTrialIdMap, trialHps ]);
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
@@ -123,43 +126,39 @@ const HpTrialTable: React.FC<Props> = ({
         return primitiveSorter(a, b);
       };
     };
-    const hpColumns = Object.keys(hyperparameters || {}).map((key) => {
-      return {
-        key,
-        render: hpRenderer(key),
-        sorter: hpColumnSorter(key),
-        title: key,
-      };
-    });
+    const hpColumns = Object
+      .keys(hyperparameters || {})
+      .map((key) => {
+        return {
+          key,
+          render: hpRenderer(key),
+          sorter: hpColumnSorter(key),
+          title: key,
+        };
+      });
 
-    return [idColumn, metricColumn, ...hpColumns];
-  }, [colorScale, hyperparameters, metric, trialIds, experimentId]);
+    return [ idColumn, metricColumn, ...hpColumns ];
+  }, [ colorScale, hyperparameters, metric, trialIds, experimentId ]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
   }, []);
 
-  const handleTableRow = useCallback(
-    (record: TrialHParams) => ({
-      onMouseEnter: (event: React.MouseEvent) => {
-        if (onMouseEnter) onMouseEnter(event, record);
-      },
-      onMouseLeave: (event: React.MouseEvent) => {
-        if (onMouseLeave) onMouseLeave(event, record);
-      },
-    }),
-    [onMouseEnter, onMouseLeave],
-  );
-
-  const rowClassName = useCallback(
-    (record: TrialHParams) => {
-      return defaultRowClassName({
-        clickable: false,
-        highlighted: record.id === highlightedTrialId,
-      });
+  const handleTableRow = useCallback((record: TrialHParams) => ({
+    onMouseEnter: (event: React.MouseEvent) => {
+      if (onMouseEnter) onMouseEnter(event, record);
     },
-    [highlightedTrialId],
-  );
+    onMouseLeave: (event: React.MouseEvent) => {
+      if (onMouseLeave) onMouseLeave(event, record);
+    },
+  }), [ onMouseEnter, onMouseLeave ]);
+
+  const rowClassName = useCallback((record: TrialHParams) => {
+    return defaultRowClassName({
+      clickable: false,
+      highlighted: record.id === highlightedTrialId,
+    });
+  }, [ highlightedTrialId ]);
 
   return (
     <ResponsiveTable<TrialHParams>
@@ -169,15 +168,11 @@ const HpTrialTable: React.FC<Props> = ({
       pagination={getPaginationConfig(dataSource.length, pageSize)}
       rowClassName={rowClassName}
       rowKey="id"
-      rowSelection={
-        selection
-          ? {
-              onChange: handleTableRowSelect,
-              preserveSelectedRowKeys: true,
-              selectedRowKeys,
-            }
-          : undefined
-      }
+      rowSelection={selection ? {
+        onChange: handleTableRowSelect,
+        preserveSelectedRowKeys: true,
+        selectedRowKeys,
+      } : undefined}
       scroll={{ x: 1000 }}
       showSorterTooltip={false}
       size="small"

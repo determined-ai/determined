@@ -21,14 +21,11 @@ interface Props {
 }
 
 const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks => {
-  const [type, setType] = useState<ActionType>(ActionType.Cancel);
+  const [ type, setType ] = useState<ActionType>(ActionType.Cancel);
 
-  const handleClose = useCallback(
-    (reason) => {
-      onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
-    },
-    [onClose, type],
-  );
+  const handleClose = useCallback((reason) => {
+    onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
+  }, [ onClose, type ]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
@@ -40,7 +37,9 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
     return (
       <div className={css.base}>
         <div>Are you sure you want to stop experiment {experimentId}?</div>
-        <Checkbox checked={isCancel} onChange={handleCheckBoxChange}>
+        <Checkbox
+          checked={isCancel}
+          onChange={handleCheckBoxChange}>
           Save checkpoint before stopping
         </Checkbox>
         {!isCancel && (
@@ -52,7 +51,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
         )}
       </div>
     );
-  }, [experimentId, type]);
+  }, [ experimentId, type ]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -70,7 +69,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
         type: ErrorType.Server,
       });
     }
-  }, [experimentId, type]);
+  }, [ experimentId, type ]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
@@ -79,14 +78,11 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
       onOk: handleOk,
       title: 'Confirm Stop',
     };
-  }, [handleOk, modalContent]);
+  }, [ handleOk, modalContent ]);
 
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...modalProps, ...initialModalProps });
-    },
-    [modalProps, openOrUpdate],
-  );
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    openOrUpdate({ ...modalProps, ...initialModalProps });
+  }, [ modalProps, openOrUpdate ]);
 
   /**
    * When modal props changes are detected, such as modal content
@@ -94,7 +90,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
+  }, [ modalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

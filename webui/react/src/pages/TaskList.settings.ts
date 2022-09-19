@@ -46,6 +46,7 @@ export interface Settings extends InteractiveTableSettings {
 
 const config: SettingsConfig = {
   settings: [
+
     {
       defaultValue: DEFAULT_COLUMNS,
       key: 'columns',

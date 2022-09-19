@@ -4,12 +4,12 @@ import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 
 export type UserColumnName =
-  | 'action'
-  | 'displayName'
-  | 'username'
-  | 'isActive'
-  | 'isAdmin'
-  | 'modifiedAt';
+| 'action'
+| 'displayName'
+| 'username'
+| 'isActive'
+| 'isAdmin'
+| 'modifiedAt'
 
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
@@ -53,6 +53,7 @@ const config: SettingsConfig = {
         baseType: BaseType.Float,
         isArray: true,
       },
+
     },
     {
       key: 'row',

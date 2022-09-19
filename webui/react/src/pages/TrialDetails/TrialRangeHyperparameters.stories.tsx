@@ -1,14 +1,9 @@
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import {
-  CheckpointStorageType,
-  ExperimentBase,
-  ExperimentSearcherName,
+import { CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
-  RunState,
-  TrialDetails,
-} from 'types';
+  RunState, TrialDetails } from 'types';
 import { generateExperiments } from 'utils/task';
 
 import TrialRangeHyperparameters from './TrialRangeHyperparameters';
@@ -39,7 +34,7 @@ const TrialRangeHyperparametersContainer = () => {
           maxval: 64,
           minval: 8,
           type: HyperparameterType.Categorical,
-          vals: [8, 16, 32, 64],
+          vals: [ 8, 16, 32, 64 ],
         },
         constant: {
           type: HyperparameterType.Constant,
@@ -79,9 +74,8 @@ const TrialRangeHyperparametersContainer = () => {
         storage_path: 'determined-checkpoint',
         type: 'shared_fs',
       },
-      data: {
-        url: 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz',
-      },
+      data:
+      { url: 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz' },
       data_layer: {
         container_storage_path: null,
         host_storage_path: null,
@@ -194,7 +188,7 @@ const TrialRangeHyperparametersContainer = () => {
         maxval: 64,
         minval: 8,
         type: HyperparameterType.Categorical,
-        vals: [8, 16, 32, 64],
+        vals: [ 8, 16, 32, 64 ],
       },
       constant: {
         type: HyperparameterType.Constant,
@@ -263,7 +257,7 @@ const TrialRangeHyperparametersContainer = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+  }, [ storeDispatch ]);
 
   return <TrialRangeHyperparameters experiment={sampleExp} trial={sampleTrial} />;
 };

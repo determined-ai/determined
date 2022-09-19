@@ -6,8 +6,7 @@ import { useLocation } from 'react-router';
 import { useStore } from 'contexts/Store';
 import { getExperimentDetails } from 'services/api';
 import {
-  V1ExpCompareMetricNamesResponse,
-  V1ExpCompareTrialsSampleResponse,
+  V1ExpCompareMetricNamesResponse, V1ExpCompareTrialsSampleResponse,
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -20,18 +19,14 @@ import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentVisualizationType,
   Hyperparameter,
-  HyperparameterType,
-  MetricName,
-  MetricType,
-  metricTypeParamMap,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { Scale } from 'types';
 
 import css from './CompareVisualization.module.scss';
 import CompareCurve from './CompareVisualization/CompareCurve';
 import CompareFilters, {
-  ViewType,
-  VisualizationFilters,
+  ViewType, VisualizationFilters,
 } from './CompareVisualization/CompareFilters';
 import { TrialHParams } from './CompareVisualization/CompareTable';
 
@@ -39,9 +34,9 @@ enum PageError {
   MetricBatches,
   MetricHpImportance,
   MetricNames,
-  ExperimentSample,
+  ExperimentSample
 }
-export type HpValsMap = Record<string, Set<Primitive>>;
+export type HpValsMap = Record<string, Set<Primitive>>
 
 const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH = 0;
@@ -55,9 +50,12 @@ const PAGE_ERROR_MESSAGES = {
   [PageError.ExperimentSample]: 'Unable to retrieve experiment info.',
 };
 const CompareVisualization: React.FC = () => {
+
   const { ui } = useStore();
 
-  const fullHParams = useRef<string[]>([]);
+  const fullHParams = useRef<string[]>(
+    [],
+  );
 
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
@@ -72,19 +70,20 @@ const CompareVisualization: React.FC = () => {
 
   const experimentIds: number[] = useMemo(() => {
     const query = queryString.parse(location.search);
-    if (query.id && typeof query.id === 'string') {
-      return [parseInt(query.id)];
-    } else if (Array.isArray(query.id)) {
+    if (query.id && typeof query.id === 'string'){
+      return [ parseInt(query.id) ];
+    } else if (Array.isArray(query.id)){
       return query.id.map((x) => parseInt(x));
     }
     return [];
-  }, [location.search]);
 
-  const [filters, setFilters] = useState<VisualizationFilters>(defaultFilters);
-  const [batches, setBatches] = useState<number[]>([]);
-  const [metrics, setMetrics] = useState<MetricName[]>([]);
+  }, [ location.search ]);
 
-  const [pageError, setPageError] = useState<PageError>();
+  const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
+  const [ batches, setBatches ] = useState<number[]>([]);
+  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+
+  const [ pageError, setPageError ] = useState<PageError>();
 
   useEffect(() => {
     if (filters.metric) return;
@@ -92,21 +91,22 @@ const CompareVisualization: React.FC = () => {
     getExperimentDetails({ id }).then((experiment) => {
       const metric = { name: experiment.config.searcher.metric, type: MetricType.Validation };
       setFilters((filters) => ({ ...filters, metric }));
-    });
-  }, [filters.metric, experimentIds]);
-  //
-  const [trialIds, setTrialIds] = useState<number[]>([]);
-  const [chartData, setChartData] = useState<(number | null)[][]>([]);
-  const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
 
-  const [hyperparameters, setHyperparameters] = useState<Record<string, Hyperparameter>>({});
-  const [hpVals, setHpVals] = useState<HpValsMap>({});
+    });
+  }, [ filters.metric, experimentIds ]);
+  //
+  const [ trialIds, setTrialIds ] = useState<number[]>([]);
+  const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
+  const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
+
+  const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
+  const [ hpVals, setHpVals ] = useState<HpValsMap>({});
   const typeKey = DEFAULT_TYPE_KEY;
-  const hasLoaded = useMemo(() => !!(trialIds.length && metrics.length > 0), [metrics, trialIds]);
+  const hasLoaded = useMemo(() => !!(trialIds.length && metrics.length > 0), [ metrics, trialIds ]);
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
-  }, []);
+  }, [ ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     setFilters((filters) => ({ ...filters, metric }));
@@ -140,27 +140,30 @@ const CompareVisualization: React.FC = () => {
       (event) => {
         if (!event || !event.trials) return;
 
-        (event.promotedTrials || []).forEach((trialId) => (trialIdsMap[trialId] = trialId));
+        (event.promotedTrials || []).forEach((trialId) => trialIdsMap[trialId] = trialId);
         // (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
         setTrialIds((prevTrialIds) =>
-          isEqual(prevTrialIds, newTrialIds) ? prevTrialIds : newTrialIds,
-        );
+          isEqual(prevTrialIds, newTrialIds)
+            ? prevTrialIds
+            : newTrialIds);
 
         (event.trials || []).forEach((trial) => {
           const id = trial.trialId;
           const flatHParams = flattenObject(trial.hparams || {});
-          Object.keys(flatHParams).forEach((hpParam) => {
-            // distinguishing between constant vs not is irrelevant when constant
-            // hps can vary across experiments. placeholder code
-            hyperparameters[hpParam] = { type: HyperparameterType.Constant };
-            //
-            if (hpValsMap[hpParam] == null) {
-              hpValsMap[hpParam] = new Set([flatHParams[hpParam]]);
-            } else {
-              hpValsMap[hpParam].add(flatHParams[hpParam]);
-            }
-          });
+          Object.keys(flatHParams).forEach(
+            (hpParam) => {
+              // distinguishing between constant vs not is irrelevant when constant
+              // hps can vary across experiments. placeholder code
+              (hyperparameters[hpParam] = { type: HyperparameterType.Constant });
+              //
+              if (hpValsMap[hpParam] == null) {
+                hpValsMap[hpParam] = new Set([ flatHParams[hpParam] ]);
+              } else {
+                hpValsMap[hpParam].add(flatHParams[hpParam]);
+              }
+            },
+          );
           setHyperparameters(hyperparameters);
           const hasHParams = Object.keys(flatHParams).length !== 0;
 
@@ -197,20 +200,19 @@ const CompareVisualization: React.FC = () => {
         const newBatches = Object.values(batchesMap);
         setBatches(newBatches);
 
-        const newChartData = newTrialIds.map((trialId) =>
-          newBatches.map((batch) => {
-            const value = metricsMap[trialId][batch];
-            return Number.isFinite(value) ? value : null;
-          }),
-        );
+        const newChartData = newTrialIds.map((trialId) => newBatches.map((batch) => {
+          const value = metricsMap[trialId][batch];
+          return Number.isFinite(value) ? value : null;
+        }));
         setChartData(newChartData);
+
       },
     ).catch((e) => {
       setPageError(e);
     });
 
     return () => canceler.abort();
-  }, [filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds]);
+  }, [ filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !trialIds?.length) return;
@@ -220,13 +222,15 @@ const CompareVisualization: React.FC = () => {
     const validationMetricsMap: Record<string, boolean> = {};
 
     readStream<V1ExpCompareMetricNamesResponse>(
-      detApi.StreamingInternal.expCompareMetricNames(trialIds, undefined, {
-        signal: canceler.signal,
-      }),
+      detApi.StreamingInternal.expCompareMetricNames(
+        trialIds,
+        undefined,
+        { signal: canceler.signal },
+      ),
       (event) => {
         if (!event) return;
-        (event.trainingMetrics || []).forEach((metric) => (trainingMetricsMap[metric] = true));
-        (event.validationMetrics || []).forEach((metric) => (validationMetricsMap[metric] = true));
+        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
 
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
@@ -241,7 +245,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [trialIds, ui.isPageHidden]);
+  }, [ trialIds, ui.isPageHidden ]);
 
   if (!experimentIds.length) {
     return (
@@ -270,9 +274,14 @@ const CompareVisualization: React.FC = () => {
   );
   return (
     <div className={css.base}>
-      <Tabs activeKey={typeKey} destroyInactiveTabPane type="card">
-        <Tabs.TabPane key={ExperimentVisualizationType.LearningCurve} tab="Learning Curve">
-          {experimentIds.length > 0 && filters.metric?.name && (
+      <Tabs
+        activeKey={typeKey}
+        destroyInactiveTabPane
+        type="card">
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.LearningCurve}
+          tab="Learning Curve">
+          {(experimentIds.length > 0 && filters.metric?.name && (
             <CompareCurve
               batches={batches}
               chartData={chartData}
@@ -286,7 +295,7 @@ const CompareVisualization: React.FC = () => {
               trialHps={trialHps}
               trialIds={trialIds}
             />
-          )}
+          ))}
         </Tabs.TabPane>
       </Tabs>
     </div>

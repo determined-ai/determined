@@ -13,7 +13,7 @@ export default {
 
 export const Default = (): React.ReactNode => {
   const columns = useMemo(() => {
-    const arr = [...DEFAULT_COLUMNS] as string[];
+    const arr = [ ...DEFAULT_COLUMNS ] as string[];
     for (let i = 0; i < 50; i++) {
       arr.push(generateAlphaNumeric());
     }
@@ -27,14 +27,16 @@ export const Default = (): React.ReactNode => {
 
   const openModal = useCallback(() => {
     modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
-  }, [modalOpen]);
+  }, [ modalOpen ]);
 
-  return <Button onClick={openModal}>Columns</Button>;
+  return (
+    <Button onClick={openModal}>Columns</Button>
+  );
 };
 
 export const LongList = (): React.ReactNode => {
   const columns = useMemo(() => {
-    const arr = [...DEFAULT_COLUMNS] as string[];
+    const arr = [ ...DEFAULT_COLUMNS ] as string[];
     for (let i = 0; i < 50000; i++) {
       arr.push(generateAlphaNumeric());
     }
@@ -48,7 +50,9 @@ export const LongList = (): React.ReactNode => {
 
   const openModal = useCallback(() => {
     modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
-  }, [modalOpen]);
+  }, [ modalOpen ]);
 
-  return <Button onClick={openModal}>Columns</Button>;
+  return (
+    <Button onClick={openModal}>Columns</Button>
+  );
 };

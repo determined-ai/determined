@@ -5,10 +5,13 @@ import {
   CoreApiGenericCheckpoint,
 } from 'types';
 
-type CheckpointChecker = (checkpoint: CoreApiGenericCheckpoint) => boolean;
+type CheckpointChecker = (
+  checkpoint: CoreApiGenericCheckpoint) => boolean
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-export const alwaysTrueCheckpointChecker = (checkpoint: CoreApiGenericCheckpoint): boolean => true;
+export const alwaysTrueCheckpointChecker = (
+  checkpoint: CoreApiGenericCheckpoint,
+): boolean => true;
 
 const CheckpointCheckers: Record<CheckpointAction, CheckpointChecker> = {
   /**
@@ -19,7 +22,8 @@ const CheckpointCheckers: Record<CheckpointAction, CheckpointChecker> = {
 
   [checkpointAction.Delete]: alwaysTrueCheckpointChecker,
 
-  [checkpointAction.Register]: (checkpoint) => checkpoint.state === CheckpointState.Completed,
+  [checkpointAction.Register]: (checkpoint) =>
+    checkpoint.state === CheckpointState.Completed,
 };
 
 export const canActionCheckpoint = (
@@ -42,8 +46,7 @@ export const getActionsForCheckpointsUnion = (
   if (!checkpoints.length) return []; // redundant, for clarity
   const actionsForCheckpoints = checkpoints.map((e) => getActionsForCheckpoint(e, targets));
   return targets.filter((action) =>
-    actionsForCheckpoints.some((checkpointActions) => checkpointActions.includes(action)),
-  );
+    actionsForCheckpoints.some((checkpointActions) => checkpointActions.includes(action)));
 };
 
 export const getActionsForCheckpointsIntersection = (
@@ -53,6 +56,5 @@ export const getActionsForCheckpointsIntersection = (
   if (!checkpoints.length) [];
   const actionsForCheckpoints = checkpoints.map((e) => getActionsForCheckpoint(e, targets));
   return targets.filter((action) =>
-    actionsForCheckpoints.every((checkpointActions) => checkpointActions.includes(action)),
-  );
+    actionsForCheckpoints.every((checkpointActions) => checkpointActions.includes(action)));
 };
