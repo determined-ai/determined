@@ -90,10 +90,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [fetchExperimentDetails]);
 
-  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
-
-  const isMovable =
-    canActionExperiment(Action.Move, experiment) && canMoveExperiment({ experiment });
+  const expPermissions = usePermissions();
+  const isMovable = canActionExperiment(Action.Move, experiment) &&
+    expPermissions.canMoveExperiment({ experiment });
 
   const { contextHolder: modalExperimentStopContextHolder, modalOpen: openModalStop } =
     useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
@@ -256,7 +255,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: handleContinueTrialClick,
       },
       [Action.Delete]: {
-        icon: <Icon name="fork" size="small" />,
         isLoading: isRunningDelete,
         key: 'delete',
         label: 'Delete',
@@ -318,17 +316,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
 
-    const availableActions = getActionsForExperiment(experiment, headerActions).filter((action) =>
-      [Action.Delete, Action.Move].includes(action)
-        ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-          (action === Action.Move && canMoveExperiment({ experiment }))
-        : true,
-    );
+    const availableActions = getActionsForExperiment(experiment, headerActions, expPermissions);
 
     return availableActions.map((action) => options[action]) as Option[];
   }, [
-    canDeleteExperiment,
-    canMoveExperiment,
+    expPermissions,
     isRunningArchive,
     handleContinueTrialClick,
     isRunningDelete,

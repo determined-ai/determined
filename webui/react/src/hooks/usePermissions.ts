@@ -5,10 +5,12 @@ import {
   ModelItem,
   ModelVersion,
   Permission,
+  PermissionWorkspace,
   Project,
   ProjectExperiment,
   UserAssignment,
   UserRole,
+  WorkspacePermissionsArgs,
 } from 'types';
 
 interface ModelPermissionsArgs {
@@ -24,18 +26,10 @@ interface ProjectPermissionsArgs {
   workspace?: PermissionWorkspace;
 }
 
-interface PermissionWorkspace {
-  id: number;
-  userId?: number;
-}
-
-interface WorkspacePermissionsArgs {
-  workspace?: PermissionWorkspace;
-}
-
 interface PermissionsHook {
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
+  canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
@@ -74,6 +68,8 @@ const usePermissions = (): PermissionsHook => {
     canAssignRoles: (args: WorkspacePermissionsArgs) =>
       canAssignRoles(args.workspace, user, userAssignments, userRoles),
     canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
+    canCreateExperiment: (args: WorkspacePermissionsArgs) =>
+      canCreateExperiment(args.workspace, userAssignments, userRoles),
     canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
       canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
     canDeleteModel: (args: ModelPermissionsArgs) =>
@@ -151,16 +147,6 @@ const canAdministrateUsers = (
   );
 };
 
-// experiment artifacts (usually checkpoints)
-const canViewExperimentArtifacts = (
-  workspace?: PermissionWorkspace,
-  userAssignments?: UserAssignment[],
-  userRoles?: UserRole[],
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return workspace && permitted.has('oss_user') || permitted.has('view_experiment_artifacts');
-};
-
 const canViewGroups = (
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
@@ -183,6 +169,15 @@ const canModifyGroups = (
 };
 
 // Experiment actions
+const canCreateExperiment = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && (permitted.has('oss_user') || permitted.has('create_experiment'));
+};
+
 const canDeleteExperiment = (
   experiment: ProjectExperiment,
   user?: DetailedUser,
@@ -213,6 +208,26 @@ const canMoveExperiment = (
       ? user.isAdmin || user.id === experiment.userId
       : permitted.has('move_experiment'))
   );
+};
+
+// experiment artifacts (usually checkpoints)
+const canViewExperimentArtifacts = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && (permitted.has('oss_user') || permitted.has('view_experiment_artifacts'));
+};
+
+// User actions
+const canGetPermissions = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!user && (permitted.has('oss_user') ? user.isAdmin : permitted.has('view_permissions'));
 };
 
 // Model and ModelVersion actions

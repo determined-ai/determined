@@ -183,15 +183,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const { canMoveExperiment, canDeleteExperiment } = usePermissions();
-
-  const menuItems = getActionsForExperiment(experiment, dropdownActions)
-    .filter((action) =>
-      [Action.Delete, Action.Move].includes(action)
-        ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-          (action === Action.Move && canMoveExperiment({ experiment }))
-        : true,
-    )
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
     .map((action) => {
       if (action === Action.SwitchPin) {
         const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';

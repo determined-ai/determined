@@ -139,8 +139,7 @@ const ProjectDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
-    usePermissions();
+  const expPermissions = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -169,10 +168,9 @@ const ProjectDetails: React.FC = () => {
     return getActionsForExperimentsUnion(
       experiments,
       batchActions,
-      canDeleteExperiment,
-      canMoveExperiment,
+      expPermissions,
     );
-  }, [canDeleteExperiment, canMoveExperiment, experimentMap, settings.row]);
+  }, [experimentMap, expPermissions, settings.row]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -645,7 +643,7 @@ const ProjectDetails: React.FC = () => {
           experimentIds: settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
-              canMoveExperiment({ experiment: experimentMap[id] }),
+              expPermissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
           sourceProjectId: project?.id,
           sourceWorkspaceId: project?.workspaceId,
@@ -682,7 +680,7 @@ const ProjectDetails: React.FC = () => {
       );
     },
     [
-      canMoveExperiment,
+      expPermissions,
       settings.row,
       openMoveModal,
       project?.workspaceId,
