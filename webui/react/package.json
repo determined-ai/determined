@@ -13,6 +13,7 @@
     "build": "craco build",
     "eslint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "stylelint": "stylelint --config .stylelintrc.js \"src/**/*.{css,less,scss}\"",
+    "lint": "npm run eslint && npm run stylelint && npm run format-check",
     "format": "npm run format:js && npm run format:css && npm run format:misc",
     "format:js": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "format:css": "prettier --write \"src/**/*.{css,less,scss}\"",
