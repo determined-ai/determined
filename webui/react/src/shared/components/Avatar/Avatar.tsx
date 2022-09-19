@@ -32,9 +32,8 @@ const getInitials = (name = ''): string => {
     .join('');
 
   // If initials are long, just keep the first and the last.
-  return initials.length > 2
-    ? `${initials.charAt(0)}${initials.substring(initials.length - 1)}`
-    : initials;
+  return initials.length > 2 ?
+    `${initials.charAt(0)}${initials.substring(initials.length - 1)}` : initials;
 };
 
 const getColor = (name = '', darkLight: DarkLight): string => {
@@ -58,7 +57,7 @@ const Avatar: React.FC<Props> = ({
     backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, darkLight),
     borderRadius: square ? '10%' : '100%',
   };
-  const classes = [css.base, css[size]];
+  const classes = [ css.base, css[size] ];
 
   if (className) classes.push(className);
 
@@ -68,13 +67,7 @@ const Avatar: React.FC<Props> = ({
     </div>
   );
 
-  return hideTooltip ? (
-    avatar
-  ) : (
-    <Tooltip placement="right" title={displayName}>
-      {avatar}
-    </Tooltip>
-  );
+  return hideTooltip ? avatar : <Tooltip placement="right" title={displayName}>{avatar}</Tooltip>;
 };
 
 export default Avatar;

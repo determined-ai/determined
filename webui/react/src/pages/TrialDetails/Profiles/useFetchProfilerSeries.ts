@@ -9,7 +9,7 @@ import { AvailableSeries } from './types';
 
 export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
   const { ui } = useStore();
-  const [availableSeries, setAvailableSeries] = useState<AvailableSeries>({});
+  const [ availableSeries, setAvailableSeries ] = useState<AvailableSeries>({});
 
   useEffect(() => {
     if (ui.isPageHidden) return;
@@ -17,9 +17,11 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingProfiler.getTrialProfilerAvailableSeries(trialId, true, {
-        signal: canceler.signal,
-      }),
+      detApi.StreamingProfiler.getTrialProfilerAvailableSeries(
+        trialId,
+        true,
+        { signal: canceler.signal },
+      ),
       (event: V1GetTrialProfilerAvailableSeriesResponse) => {
         const newAvailableSeries: AvailableSeries = {};
 
@@ -47,7 +49,7 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
     );
 
     return () => canceler.abort();
-  }, [trialId, ui.isPageHidden]);
+  }, [ trialId, ui.isPageHidden ]);
 
   return availableSeries;
 };

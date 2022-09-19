@@ -8,7 +8,7 @@ import SlotAllocationBar, { Props as SlotAllocationProps } from './SlotAllocatio
 
 export default {
   component: SlotAllocationBar,
-  decorators: [withKnobs],
+  decorators: [ withKnobs ],
   title: 'SlotAllocationBar',
 };
 
@@ -20,7 +20,9 @@ const Wrapper: React.FC<SlotAllocationProps> = (props) => (
 
 export const Default = (): React.ReactNode => (
   <Wrapper
-    resourceStates={[ResourceState.Pulling, ResourceState.Running]}
+    resourceStates={[
+      ResourceState.Pulling, ResourceState.Running,
+    ]}
     showLegends
     size={ShirtSize.large}
     totalSlots={4}
@@ -29,19 +31,26 @@ export const Default = (): React.ReactNode => (
 
 export const NoLegends = (): React.ReactNode => (
   <Wrapper
-    resourceStates={[ResourceState.Pulling, ResourceState.Running]}
+    resourceStates={[
+      ResourceState.Pulling, ResourceState.Running,
+    ]}
     size={ShirtSize.large}
     totalSlots={4}
   />
 );
 
 export const ZeroTotalSlots = (): React.ReactNode => (
-  <Wrapper resourceStates={[]} showLegends size={ShirtSize.large} totalSlots={0} />
+  <Wrapper
+    resourceStates={[]}
+    showLegends
+    size={ShirtSize.large}
+    totalSlots={0}
+  />
 );
 
 export const ZeroTotalSlotsWithMismatchingProps = (): React.ReactNode => (
   <Wrapper
-    resourceStates={[ResourceState.Running]}
+    resourceStates={[ ResourceState.Running ]}
     showLegends
     size={ShirtSize.large}
     totalSlots={0}

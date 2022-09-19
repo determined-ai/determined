@@ -29,8 +29,8 @@ interface Props {
 }
 
 const ModalForm: React.FC<Props> = ({ form, users, group }) => {
-  const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [ groupDetail, setGroupDetail ] = useState<V1GroupDetails>();
+  const [ isLoading, setIsLoading ] = useState(true);
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
       try {
@@ -45,13 +45,16 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
     } else {
       setIsLoading(false);
     }
-  }, [group, form]);
+  }, [ group, form ]);
   useEffect(() => {
     fetchGroup();
-  }, [fetchGroup]);
+  }, [ fetchGroup ]);
 
   return (
-    <Form form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
+    <Form
+      form={form}
+      labelCol={{ span: 8 }}
+      wrapperCol={{ span: 14 }}>
       <Form.Item
         label={GROUP_NAME_LABEL}
         name={GROUP_NAME_NAME}
@@ -62,34 +65,36 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
             required: true,
           },
         ]}
-        validateTrigger={['onSubmit', 'onChange']}>
+        validateTrigger={[ 'onSubmit', 'onChange' ]}>
         <Input autoFocus maxLength={128} placeholder="Group Name" />
       </Form.Item>
       {group ? (
-        <Form.Item label={USER_ADD_LABEL} name={USER_ADD_NAME}>
+        <Form.Item
+          label={USER_ADD_LABEL}
+          name={USER_ADD_NAME}>
           <Select
             loading={isLoading}
             mode="multiple"
             optionFilterProp="children"
             placeholder="Add Users"
-            showSearch>
-            {users
-              .filter((u) => !groupDetail?.users?.map((gu) => gu.id).includes(u.id))
-              .map((u) => (
-                <Select.Option key={u.id} value={u.id}>
-                  {getDisplayName(u)}
-                </Select.Option>
-              ))}
+            showSearch>{
+              users.filter(
+                (u) => !groupDetail?.users?.map((gu) => gu.id).includes(u.id),
+              ).map((u) => (
+                <Select.Option key={u.id} value={u.id}>{getDisplayName(u)}</Select.Option>
+              ))
+            }
           </Select>
         </Form.Item>
       ) : (
-        <Form.Item label={USER_LABEL} name={USER_ADD_NAME}>
-          <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>
-            {users.map((u) => (
-              <Select.Option key={u.id} value={u.id}>
-                {getDisplayName(u)}
-              </Select.Option>
-            ))}
+        <Form.Item
+          label={USER_LABEL}
+          name={USER_ADD_NAME}>
+          <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>{
+            users.map((u) => (
+              <Select.Option key={u.id} value={u.id}>{getDisplayName(u)}</Select.Option>
+            ))
+          }
           </Select>
         </Form.Item>
       )}
@@ -104,13 +109,14 @@ interface ModalProps {
 }
 
 const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks => {
-  const [form] = Form.useForm();
+
+  const [ form ] = Form.useForm();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => {
     form.resetFields();
-  }, [form]);
+  }, [ form ]);
 
   const onOk = useCallback(async () => {
     await form.validateFields();
@@ -133,7 +139,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [form, onClose, group]);
+  }, [ form, onClose, group ]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
@@ -145,7 +151,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       onOk: onOk,
       title: <h5>{group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
-  }, [form, handleCancel, onOk, openOrUpdate, users, group]);
+  }, [ form, handleCancel, onOk, openOrUpdate, users, group ]);
 
   return { modalOpen, ...modalHook };
 };

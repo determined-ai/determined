@@ -18,13 +18,13 @@ interface Props {
 
 interface RenderProps {
   markdown: string;
-  onClick?: (e: React.MouseEvent) => void;
+  onClick?: (e: React.MouseEvent) => void
   placeholder?: string;
 }
 
 enum TabType {
   Edit = 'edit',
-  Preview = 'preview',
+  Preview = 'preview'
 }
 
 const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick }) => {
@@ -34,24 +34,28 @@ const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick 
       {showPlaceholder ? (
         <div className={css.placeholder}>{placeholder}</div>
       ) : (
-        <MarkdownViewer options={{ disableParsingRawHTML: true }}>{markdown}</MarkdownViewer>
+        <MarkdownViewer options={{ disableParsingRawHTML: true }}>
+          {markdown}
+        </MarkdownViewer>
       )}
     </div>
   );
 };
 
-const Markdown: React.FC<Props> = ({ editing = false, markdown, onChange, onClick }: Props) => {
+const Markdown: React.FC<Props> = ({
+  editing = false,
+  markdown,
+  onChange,
+  onClick,
+}: Props) => {
+
   return (
     <div aria-label="markdown-editor" className={css.base}>
       {editing ? (
         <Tabs className="no-padding">
           <TabPane className={css.noOverflow} key={TabType.Edit} tab="Edit">
             <React.Suspense
-              fallback={
-                <div>
-                  <Spinner tip="Loading text editor..." />
-                </div>
-              }>
+              fallback={<div><Spinner tip="Loading text editor..." /></div>}>
               <MonacoEditor
                 defaultValue={markdown}
                 language="markdown"
@@ -75,7 +79,11 @@ const Markdown: React.FC<Props> = ({ editing = false, markdown, onChange, onClic
           </TabPane>
         </Tabs>
       ) : (
-        <MarkdownRender markdown={markdown} placeholder="Add notes..." onClick={onClick} />
+        <MarkdownRender
+          markdown={markdown}
+          placeholder="Add notes..."
+          onClick={onClick}
+        />
       )}
     </div>
   );

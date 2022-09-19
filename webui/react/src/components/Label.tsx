@@ -11,8 +11,13 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   type?: LabelTypes;
 }
 
-const Label: React.FC<Props> = ({ className, children, type, ...props }: Props) => {
-  const classes = [css.base];
+const Label: React.FC<Props> = ({
+  className,
+  children,
+  type,
+  ...props
+}: Props) => {
+  const classes = [ css.base ];
 
   if (type) classes.push(css[type]);
   if (className) classes.push(className);

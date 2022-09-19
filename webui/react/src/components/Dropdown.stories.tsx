@@ -10,8 +10,10 @@ export default {
 };
 
 const content = (
-  <Menu
-    items={new Array(7).fill(null).map((_, index) => ({ key: index, label: `Menu Item ${index}` }))}
+  <Menu items={
+    new Array(7).fill(null).map((_, index) => (
+      { key: index, label: `Menu Item ${index}` }
+    ))}
   />
 );
 

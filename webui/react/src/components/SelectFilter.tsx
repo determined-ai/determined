@@ -1,6 +1,11 @@
 import { Select } from 'antd';
 import { RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
-import React, { forwardRef, useCallback, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
 
@@ -55,23 +60,23 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
   }: Props,
   ref?: React.Ref<RefSelectProps>,
 ) {
-  const [isOpen, setIsOpen] = useState(false);
-  const classes = [className, css.base];
+  const [ isOpen, setIsOpen ] = useState(false);
+  const classes = [ className, css.base ];
 
   if (disableTags) classes.push(css.disableTags);
   if (verticalLayout) classes.push(css.vertical);
 
-  const optionsCount = useMemo(() => countOptions(props.children), [props.children]);
+  const optionsCount = useMemo(() => countOptions(props.children), [ props.children ]);
 
-  const [maxTagCount, maxTagPlaceholder] = useMemo(() => {
-    if (!disableTags) return [undefined, props.maxTagPlaceholder];
+  const [ maxTagCount, maxTagPlaceholder ] = useMemo(() => {
+    if (!disableTags) return [ undefined, props.maxTagPlaceholder ];
 
-    const count = Array.isArray(props.value) ? props.value.length : props.value ? 1 : 0;
+    const count = Array.isArray(props.value) ? props.value.length : (props.value ? 1 : 0);
     const isPlural = count > 1;
     const itemLabel = itemName ? `${itemName}${isPlural ? 's' : ''}` : 'selected';
     const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
-    return isOpen ? [0, ''] : [0, placeholder];
-  }, [disableTags, isOpen, itemName, optionsCount, props.maxTagPlaceholder, props.value]);
+    return isOpen ? [ 0, '' ] : [ 0, placeholder ];
+  }, [ disableTags, isOpen, itemName, optionsCount, props.maxTagPlaceholder, props.value ]);
 
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);

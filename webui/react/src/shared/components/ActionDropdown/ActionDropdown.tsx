@@ -12,9 +12,11 @@ import { Eventually } from '../../types';
 import css from './ActionDropdown.module.scss';
 
 // TODO parameterize Action using Enums? https://github.com/microsoft/TypeScript/issues/30611
-export type Triggers<T extends string> = Partial<{ [key in T]: () => Eventually<void> }>;
-export type Confirmations<T extends string> = Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'> }>;
-type DisabledActions<T extends string> = Partial<{ [key in T]: boolean }>;
+export type Triggers<T extends string> = Partial<{ [key in T]: () => Eventually<void> }>
+export type Confirmations<T extends string> =
+  Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'> }>
+type DisabledActions<T extends string> =
+  Partial<{ [key in T]: boolean }>
 type DangerousActions<T extends string> = DisabledActions<T>;
 
 interface Props<T extends string> {
@@ -27,7 +29,7 @@ interface Props<T extends string> {
    * whether to prompt the user to confirm the action before executing it
    * with options to customize the generated modal.
    */
-  confirmations?: Confirmations<T>;
+  confirmations?: Confirmations<T>
   /**
    * whether the action is marked as dangerous or not.
    */
@@ -61,39 +63,42 @@ interface Props<T extends string> {
   /**
    * how to open dropdown.
    */
-  trigger?: ('click' | 'contextMenu' | 'hover')[];
+  trigger?: ('click' | 'contextMenu' | 'hover')[]
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const ActionDropdown = <T extends string>({
-  id,
-  kind,
-  onComplete,
-  onTrigger,
-  confirmations,
-  danger,
-  disabled,
-  actionOrder,
-  onError,
-  trigger,
-  onVisibleChange,
-  children,
-}: Props<T>): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
-  const menuClickErrorHandler = useCallback(
-    (e: unknown, actionKey: string, kind: string, id: string): void => {
-      onError(
-        new DetError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: wrapPublicMessage(e, `Unable to ${actionKey} ${kind} ${id}.`),
-          publicSubject: `${capitalize(actionKey.toString())} failed.`,
-          silent: false,
-          type: ErrorType.Server,
-        }),
-      );
-    },
-    [onError],
-  );
+const ActionDropdown = <T extends string>(
+  {
+    id,
+    kind,
+    onComplete,
+    onTrigger,
+    confirmations,
+    danger,
+    disabled,
+    actionOrder,
+    onError,
+    trigger,
+    onVisibleChange,
+    children,
+  }: Props<T>,
+): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
+
+  const menuClickErrorHandler = useCallback((
+    e: unknown,
+    actionKey: string,
+    kind: string,
+    id: string,
+  ): void => {
+    onError(new DetError(e, {
+      level: ErrorLevel.Error,
+      publicMessage: wrapPublicMessage(e, `Unable to ${actionKey} ${kind} ${id}.`),
+      publicSubject: `${capitalize(actionKey.toString())} failed.`,
+      silent: false,
+      type: ErrorType.Server,
+    }));
+  }, [ onError ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
@@ -120,6 +125,7 @@ const ActionDropdown = <T extends string>({
       } else {
         await onOk();
       }
+
     } catch (e) {
       menuClickErrorHandler(e, params.key, kind, id);
     }
@@ -149,7 +155,7 @@ const ActionDropdown = <T extends string>({
       <Dropdown
         overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
         placement="bottomRight"
-        trigger={trigger ?? ['contextMenu']}
+        trigger={trigger ?? [ 'contextMenu' ]}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
@@ -159,7 +165,7 @@ const ActionDropdown = <T extends string>({
       <Dropdown
         overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
         placement="bottomRight"
-        trigger={trigger ?? ['click']}
+        trigger={trigger ?? [ 'click' ]}
         onVisibleChange={onVisibleChange}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />

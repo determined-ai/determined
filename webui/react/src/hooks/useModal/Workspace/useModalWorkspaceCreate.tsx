@@ -18,7 +18,7 @@ interface Props {
 }
 
 const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
-  const [form] = Form.useForm<FormInputs>();
+  const [ form ] = Form.useForm<FormInputs>();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -28,12 +28,12 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
         <Form.Item
           label="Workspace Name"
           name="workspaceName"
-          rules={[{ message: 'Workspace name is required ', required: true }]}>
+          rules={[ { message: 'Workspace name is required ', required: true } ]}>
           <Input maxLength={80} />
         </Form.Item>
       </Form>
     );
-  }, [form]);
+  }, [ form ]);
 
   const handleOk = useCallback(async () => {
     const values = await form.validateFields();
@@ -62,7 +62,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
         });
       }
     }
-  }, [form]);
+  }, [ form ]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
@@ -73,14 +73,11 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
       onOk: handleOk,
       title: 'New Workspace',
     };
-  }, [handleOk, modalContent]);
+  }, [ handleOk, modalContent ]);
 
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
-    },
-    [getModalProps, openOrUpdate],
-  );
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
+  }, [ getModalProps, openOrUpdate ]);
 
   /**
    * When modal props changes are detected, such as modal content
@@ -88,7 +85,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps());
-  }, [getModalProps, modalRef, openOrUpdate]);
+  }, [ getModalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

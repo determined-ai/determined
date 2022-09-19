@@ -6,7 +6,7 @@ import { isCommandTask } from 'utils/task';
 
 export interface WaitStatus {
   isReady: boolean;
-  state: CommandState;
+  state: CommandState
 }
 
 export const commandToEventUrl = (command: Command | CommandTask): string => {

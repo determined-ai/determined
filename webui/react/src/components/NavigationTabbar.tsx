@@ -24,12 +24,12 @@ interface ToolbarItemProps extends LinkProps {
 
 const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: ToolbarItemProps) => {
   const location = useLocation();
-  const classes = [css.toolbarItem];
-  const [isActive, setIsActive] = useState(false);
+  const classes = [ css.toolbarItem ];
+  const [ isActive, setIsActive ] = useState(false);
 
   if (isActive) classes.push(css.active);
 
-  useEffect(() => setIsActive(location.pathname === path), [location.pathname, path]);
+  useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
 
   return (
     <Link className={classes.join(' ')} path={path} {...props}>
@@ -41,10 +41,12 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
 const NavigationTabbar: React.FC = () => {
   const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
-  const [isShowingOverflow, setIsShowingOverflow] = useState(false);
-  const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+  const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
+  const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
+  const {
+    contextHolder: modalJupyterLabContextHolder,
+    modalOpen: openJupyterLabModal,
+  } = useModalJupyterLab();
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
@@ -55,7 +57,7 @@ const NavigationTabbar: React.FC = () => {
       return;
     }
     setIsShowingPinnedWorkspaces(true);
-  }, [pinnedWorkspaces.length]);
+  }, [ pinnedWorkspaces.length ]);
   const handleActionSheetCancel = useCallback(() => {
     setIsShowingOverflow(false);
     setIsShowingPinnedWorkspaces(false);
@@ -63,7 +65,7 @@ const NavigationTabbar: React.FC = () => {
   const handleLaunchJupyterLab = useCallback(() => {
     setIsShowingOverflow(false);
     openJupyterLabModal();
-  }, [openJupyterLabModal]);
+  }, [ openJupyterLabModal ]);
 
   const handlePathUpdate = useCallback((e, path) => {
     handlePath(e, { path });
@@ -93,7 +95,8 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'workspaces',
             label: 'Workspaces',
-            onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceList()),
             path: paths.workspaceList(),
           },
           ...pinnedWorkspaces.map((workspace) => ({

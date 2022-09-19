@@ -29,18 +29,16 @@ const useModalColumnsCustomize = ({
   defaultVisibleColumns,
   onSave,
 }: Props): ModalHooks => {
-  const [columnList] = useState(columns); //this is only to prevent rerendering
-  const [searchTerm, setSearchTerm] = useState('');
-  const {
-    modalOpen: openOrUpdate,
-    modalRef,
-    ...modalHook
-  } = useModal({ onClose: () => setSearchTerm('') });
-  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [ columnList ] = useState(columns); //this is only to prevent rerendering
+  const [ searchTerm, setSearchTerm ] = useState('');
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal(
+    { onClose: () => setSearchTerm('') },
+  );
+  const [ visibleColumns, setVisibleColumns ] = useState<string[]>([]);
 
   const handleSave = useCallback(() => {
     onSave?.(visibleColumns);
-  }, [onSave, visibleColumns]);
+  }, [ onSave, visibleColumns ]);
 
   const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value);
@@ -49,17 +47,17 @@ const useModalColumnsCustomize = ({
   const hiddenColumns = useMemo(() => {
     const visibleColumnsSet = new Set(visibleColumns);
     return columnList.filter((column) => !visibleColumnsSet.has(column));
-  }, [columnList, visibleColumns]);
+  }, [ columnList, visibleColumns ]);
 
   const filteredHiddenColumns = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
     return hiddenColumns.filter((column) => regex.test(camelCaseToSentence(column)));
-  }, [hiddenColumns, searchTerm]);
+  }, [ hiddenColumns, searchTerm ]);
 
   const filteredVisibleColumns = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
     return visibleColumns.filter((column) => regex.test(camelCaseToSentence(column)));
-  }, [visibleColumns, searchTerm]);
+  }, [ visibleColumns, searchTerm ]);
 
   const makeHidden = useCallback((transfer: string | string[]) => {
     if (Array.isArray(transfer)) {
@@ -72,94 +70,81 @@ const useModalColumnsCustomize = ({
 
   const makeVisible = useCallback((transfer: string | string[]) => {
     if (Array.isArray(transfer)) {
-      setVisibleColumns((prev) => [...prev, ...transfer]);
+      setVisibleColumns((prev) => [ ...prev, ...transfer ]);
     } else {
-      setVisibleColumns((prev) => [...prev, transfer]);
+      setVisibleColumns((prev) => [ ...prev, transfer ]);
     }
   }, []);
 
   const resetColumns = useCallback(() => {
     setVisibleColumns(defaultVisibleColumns);
-  }, [defaultVisibleColumns]);
+  }, [ defaultVisibleColumns ]);
 
-  const renderColumnName = useCallback(
-    (columnName: string) => {
-      const sentenceColumnName = columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
-      const regex = new RegExp(searchTerm, 'i');
-      if (searchTerm === '' || !regex.test(sentenceColumnName)) {
-        return <span>{sentenceColumnName}</span>;
-      }
-      const searchIndex = sentenceColumnName.search(regex);
-      return (
-        <span>
-          {sentenceColumnName.slice(0, searchIndex)}
-          <mark>{sentenceColumnName.match(regex)?.[0]}</mark>
-          {sentenceColumnName.slice(searchIndex + searchTerm.length)}
-        </span>
-      );
-    },
-    [searchTerm],
-  );
+  const renderColumnName = useCallback((columnName: string) => {
+    const sentenceColumnName = columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
+    const regex = new RegExp(searchTerm, 'i');
+    if (searchTerm === '' || !regex.test(sentenceColumnName)){
+      return <span>{sentenceColumnName}</span>;
+    }
+    const searchIndex = sentenceColumnName.search(regex);
+    return (
+      <span>{sentenceColumnName.slice(0, searchIndex)}
+        <mark>{sentenceColumnName.match(regex)?.[0]}</mark>
+        {sentenceColumnName.slice(searchIndex + searchTerm.length)}
+      </span>
+    );
+  }, [ searchTerm ]);
 
-  const renderRow = useCallback(
-    (row, style, handleClick) => {
-      return (
-        <li style={style} onClick={handleClick}>
-          {renderColumnName(row)}
-        </li>
-      );
-    },
-    [renderColumnName],
-  );
+  const renderRow = useCallback((row, style, handleClick) => {
+    return (
+      <li style={style} onClick={handleClick}>
+        {renderColumnName(row)}
+      </li>
+    );
+  }, [ renderColumnName ]);
 
-  const switchRowOrder = useCallback(
-    (column: string, newNeighborColumn: string) => {
-      if (column !== newNeighborColumn) {
-        const updatedVisibleColumns = [...visibleColumns];
-        const columnIndex = updatedVisibleColumns.findIndex((columnName) => columnName === column);
-        const newNeighborColumnIndex = updatedVisibleColumns.findIndex(
-          (columnName) => columnName === newNeighborColumn,
-        );
-        updatedVisibleColumns.splice(columnIndex, 1);
-        updatedVisibleColumns.splice(newNeighborColumnIndex, 0, column);
-        setVisibleColumns(updatedVisibleColumns);
-      }
-      return;
-    },
-    [visibleColumns],
-  );
+  const switchRowOrder = useCallback((column:string, newNeighborColumn:string) => {
+    if (column !== newNeighborColumn){
+      const updatedVisibleColumns = [ ...visibleColumns ];
+      const columnIndex =
+      updatedVisibleColumns.findIndex((columnName) => columnName === column);
+      const newNeighborColumnIndex =
+      updatedVisibleColumns.findIndex((columnName) => columnName === newNeighborColumn);
+      updatedVisibleColumns.splice(columnIndex, 1);
+      updatedVisibleColumns.splice(newNeighborColumnIndex, 0, column);
+      setVisibleColumns(updatedVisibleColumns);
+    }
+    return;
+  }, [ visibleColumns ]);
 
-  const renderDraggableRow = useCallback(
-    (row, index, style, handleClick, handleDrop) => {
-      return (
-        <DraggableListItem
-          columnName={row}
-          index={index}
-          style={style}
-          onClick={handleClick}
-          onDrop={handleDrop}>
-          {renderColumnName(row)}
-        </DraggableListItem>
-      );
-    },
-    [renderColumnName],
-  );
+  const renderDraggableRow = useCallback((row, index, style, handleClick, handleDrop) => {
+    return (
+      <DraggableListItem
+        columnName={row}
+        index={index}
+        style={style}
+        onClick={handleClick}
+        onDrop={handleDrop}>
+        {renderColumnName(row)}
+      </DraggableListItem>
+    );
+  }, [ renderColumnName ]);
 
-  const renderHiddenRow = useCallback(
-    ({ index, style }) => {
-      const row = filteredHiddenColumns[index];
-      return renderRow(row, style, () => makeVisible(row));
-    },
-    [filteredHiddenColumns, makeVisible, renderRow],
-  );
+  const renderHiddenRow = useCallback(({ index, style }) => {
+    const row = filteredHiddenColumns[index];
+    return renderRow(row, style, () => makeVisible(row));
+  }, [ filteredHiddenColumns, makeVisible, renderRow ]);
 
-  const renderVisibleRow = useCallback(
-    ({ index, style }) => {
-      const row = filteredVisibleColumns[index];
-      return renderDraggableRow(row, index, style, () => makeHidden(row), switchRowOrder);
-    },
-    [filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder],
-  );
+  const renderVisibleRow = useCallback(({ index, style }) => {
+    const row = filteredVisibleColumns[index];
+    return renderDraggableRow(
+      row,
+      index,
+      style,
+      () => makeHidden(row),
+      switchRowOrder,
+    );
+  }, [ filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder ]);
 
   const modalContent = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -207,8 +192,7 @@ const useModalColumnsCustomize = ({
         </div>
       </div>
     );
-  }, [
-    defaultVisibleColumns,
+  }, [ defaultVisibleColumns,
     handleSearch,
     filteredHiddenColumns,
     renderHiddenRow,
@@ -217,8 +201,7 @@ const useModalColumnsCustomize = ({
     renderVisibleRow,
     makeVisible,
     resetColumns,
-    makeHidden,
-  ]);
+    makeHidden ]);
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
@@ -231,15 +214,12 @@ const useModalColumnsCustomize = ({
       onOk: handleSave,
       title: 'Customize Columns',
     };
-  }, [modalContent, handleSave]);
+  }, [ modalContent, handleSave ]);
 
-  const modalOpen = useCallback(
-    ({ initialVisibleColumns, initialModalProps }: ShowModalProps) => {
-      setVisibleColumns(initialVisibleColumns ?? defaultVisibleColumns);
-      openOrUpdate({ ...modalProps, ...initialModalProps });
-    },
-    [defaultVisibleColumns, modalProps, openOrUpdate],
-  );
+  const modalOpen = useCallback(({ initialVisibleColumns, initialModalProps }: ShowModalProps) => {
+    setVisibleColumns(initialVisibleColumns ?? defaultVisibleColumns);
+    openOrUpdate({ ...modalProps, ...initialModalProps });
+  }, [ defaultVisibleColumns, modalProps, openOrUpdate ]);
 
   /**
    * When modal props changes are detected, such as modal content
@@ -247,7 +227,7 @@ const useModalColumnsCustomize = ({
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
+  }, [ modalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

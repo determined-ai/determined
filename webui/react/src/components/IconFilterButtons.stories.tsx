@@ -15,4 +15,6 @@ const defaultConfig = [
   { active: false, icon: 'command', id: 'command', label: 'Commands' },
 ];
 
-export const Default = (): React.ReactNode => <IconFilterButtons buttons={defaultConfig} />;
+export const Default = (): React.ReactNode => (
+  <IconFilterButtons buttons={defaultConfig} />
+);

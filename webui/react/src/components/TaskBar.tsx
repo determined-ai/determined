@@ -5,18 +5,20 @@ import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
-import { killTask } from 'services/api';
+import {
+  killTask,
+} from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 
 import css from './TaskBar.module.scss';
-interface Props {
+interface Props{
   handleViewLogsClick: () => void;
   id: string;
   name: string;
   resourcePool: string;
-  type: CommandType;
+  type: CommandType
 }
 
 export const TaskBar: React.FC<Props> = ({
@@ -25,11 +27,12 @@ export const TaskBar: React.FC<Props> = ({
   name,
   resourcePool,
   type,
-}: Props) => {
+} : Props) => {
+
   const task = useMemo(() => {
     const commandTask = { id, name, resourcePool, type } as CommandTask;
     return commandTask;
-  }, [id, name, resourcePool, type]);
+  }, [ id, name, resourcePool, type ]);
 
   const deleteTask = useCallback((task: CommandTask) => {
     Modal.confirm({
@@ -50,16 +53,12 @@ export const TaskBar: React.FC<Props> = ({
   const dropdownOverlay = useMemo(() => {
     enum MenuKey {
       KILL = 'kill',
-      VIEW_LOGS = 'viewLogs',
+      VIEW_LOGS = 'viewLogs'
     }
 
     const funcs = {
-      [MenuKey.KILL]: () => {
-        deleteTask(task);
-      },
-      [MenuKey.VIEW_LOGS]: () => {
-        handleViewLogsClick();
-      },
+      [MenuKey.KILL]: () => { deleteTask(task); },
+      [MenuKey.VIEW_LOGS]: () => { handleViewLogsClick(); },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
@@ -72,15 +71,20 @@ export const TaskBar: React.FC<Props> = ({
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [task, deleteTask, handleViewLogsClick]);
+  }, [ task, deleteTask, handleViewLogsClick ]);
 
   return (
     <div className={css.base}>
       <div className={css.barContent}>
         <span>{name}</span>
         <span>&#8212;</span>
-        <Dropdown overlay={dropdownOverlay} placement="bottomRight" trigger={['click']}>
-          <div className={css.dropdownTrigger} data-testid="task-action-dropdown-trigger">
+        <Dropdown
+          overlay={dropdownOverlay}
+          placement="bottomRight"
+          trigger={[ 'click' ]}>
+          <div
+            className={css.dropdownTrigger}
+            data-testid="task-action-dropdown-trigger">
             <span className={css.dropdownTrigger}>{resourcePool}</span>
             <Icon name="arrow-down" size="tiny" />
           </div>

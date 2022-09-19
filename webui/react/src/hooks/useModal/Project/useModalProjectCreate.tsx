@@ -20,7 +20,7 @@ interface Props {
 }
 
 const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
-  const [form] = Form.useForm<FormInputs>();
+  const [ form ] = Form.useForm<FormInputs>();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
@@ -29,7 +29,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         <Form.Item
           label="Project Name"
           name="projectName"
-          rules={[{ message: 'Name is required ', required: true }]}>
+          rules={[ { message: 'Name is required ', required: true } ]}>
           <Input maxLength={80} />
         </Form.Item>
         <Form.Item label="Description" name="description">
@@ -37,7 +37,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         </Form.Item>
       </Form>
     );
-  }, [form]);
+  }, [ form ]);
 
   const handleOk = useCallback(async () => {
     const values = await form.validateFields();
@@ -71,7 +71,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         });
       }
     }
-  }, [form, workspaceId]);
+  }, [ form, workspaceId ]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
@@ -82,14 +82,11 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       onOk: handleOk,
       title: 'New Project',
     };
-  }, [handleOk, modalContent]);
+  }, [ handleOk, modalContent ]);
 
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
-    },
-    [getModalProps, openOrUpdate],
-  );
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
+  }, [ getModalProps, openOrUpdate ]);
 
   /**
    * When modal props changes are detected, such as modal content
@@ -97,7 +94,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps());
-  }, [getModalProps, modalRef, openOrUpdate]);
+  }, [ getModalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

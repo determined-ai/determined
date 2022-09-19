@@ -1,19 +1,16 @@
-import {
-  CheckpointState,
+import { CheckpointState,
   CheckpointStorageType,
-  CheckpointWorkloadExtended,
-  ExperimentBase,
-  ExperimentSearcherName,
+  CheckpointWorkloadExtended, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
   RunState,
-  TrialDetails,
-} from 'types';
+  TrialDetails } from 'types';
 import { generateExperiment } from 'utils/task';
 
-export const generateTestExperimentData = (): {
-  checkpoint: CheckpointWorkloadExtended;
-  experiment: ExperimentBase;
-  trial: TrialDetails;
+export const generateTestExperimentData = ():
+{
+  checkpoint: CheckpointWorkloadExtended,
+  experiment: ExperimentBase,
+  trial: TrialDetails
 } => {
   const exp = generateExperiment();
   const experiment: ExperimentBase = {
@@ -35,7 +32,7 @@ export const generateTestExperimentData = (): {
           maxval: 64,
           minval: 8,
           type: HyperparameterType.Categorical,
-          vals: [8, 16, 32, 64],
+          vals: [ 8, 16, 32, 64 ],
         },
         constant: {
           type: HyperparameterType.Constant,
@@ -75,9 +72,8 @@ export const generateTestExperimentData = (): {
         storage_path: 'determined-checkpoint',
         type: 'shared_fs',
       },
-      data: {
-        url: 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz',
-      },
+      data:
+      { url: 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz' },
       data_layer: {
         container_storage_path: null,
         host_storage_path: null,
@@ -190,7 +186,7 @@ export const generateTestExperimentData = (): {
         maxval: 64,
         minval: 8,
         type: HyperparameterType.Categorical,
-        vals: [8, 16, 32, 64],
+        vals: [ 8, 16, 32, 64 ],
       },
       constant: {
         type: HyperparameterType.Constant,

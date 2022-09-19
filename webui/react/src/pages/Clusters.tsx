@@ -16,7 +16,7 @@ const { TabPane } = Tabs;
 enum TabType {
   Overview = 'overview',
   HistoricalUsage = 'historical-usage',
-  Logs = 'logs',
+  Logs = 'logs'
 }
 
 interface Params {
@@ -30,23 +30,23 @@ const Clusters: React.FC = () => {
   const basePath = paths.clusters();
   const history = useHistory();
 
-  const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const { agents, cluster: overview, resourcePools } = useStore();
 
   const cluster = useMemo(() => {
     return clusterStatusText(overview, resourcePools, agents);
-  }, [overview, resourcePools, agents]);
+  }, [ overview, resourcePools, agents ]);
 
-  const handleTabChange = useCallback(
-    (key) => {
-      setTabKey(key);
-      history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-    },
-    [basePath, history],
-  );
+  const handleTabChange = useCallback((key) => {
+    setTabKey(key);
+    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+  }, [ basePath, history ]);
 
   return (
-    <Page bodyNoPadding id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
+    <Page
+      bodyNoPadding
+      id="cluster"
+      title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <ClustersOverview />

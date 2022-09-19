@@ -149,9 +149,9 @@ describe('String Utilities', () => {
 
   describe('versionToString', () => {
     const cases = [
-      { parsed: [1, 0, 0], str: '1.0.0' },
-      { parsed: [0, 1, 0], str: '0.1.0' },
-      { parsed: [23, 0, 1], str: '23.0.1' },
+      { parsed: [ 1, 0, 0 ], str: '1.0.0' },
+      { parsed: [ 0, 1, 0 ], str: '0.1.0' },
+      { parsed: [ 23, 0, 1 ], str: '23.0.1' },
     ].map(({ str, parsed }) => ({
       parsed: {
         major: parsed[0],
@@ -189,12 +189,12 @@ describe('String Utilities', () => {
 
   describe('listToStr', () => {
     it('should glue defined list items together', () => {
-      expect(utils.listToStr(['a', 'b', 'c'])).toBe('a b c');
-      expect(utils.listToStr(['a', undefined, 'b', undefined, 'c'])).toBe('a b c');
+      expect(utils.listToStr([ 'a', 'b', 'c' ])).toBe('a b c');
+      expect(utils.listToStr([ 'a', undefined, 'b', undefined, 'c' ])).toBe('a b c');
     });
 
     it('should glue defined list items together with custom glue', () => {
-      expect(utils.listToStr(['a', undefined, 'b', undefined, 'c'], ', ')).toBe('a, b, c');
+      expect(utils.listToStr([ 'a', undefined, 'b', undefined, 'c' ], ', ')).toBe('a, b, c');
     });
   });
 
@@ -234,9 +234,8 @@ describe('String Utilities', () => {
       const testStr = 'adoptacat';
       const suffix = '...';
       const size = 4;
-      expect(utils.truncate(testStr, size, suffix)).toBe(
-        testStr.substring(0, size - suffix.length) + suffix,
-      );
+      expect(utils.truncate(testStr, size, suffix))
+        .toBe(testStr.substring(0, size - suffix.length) + suffix);
     });
 
     it('should support skipping the suffix', () => {

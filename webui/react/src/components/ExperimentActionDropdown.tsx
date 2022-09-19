@@ -4,27 +4,26 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import {
-  activateExperiment,
-  archiveExperiment,
-  cancelExperiment,
-  deleteExperiment,
-  killExperiment,
-  openOrCreateTensorBoard,
-  pauseExperiment,
-  unarchiveExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
+  openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { ExperimentAction as Action, ProjectExperiment } from 'types';
+import {
+  ExperimentAction as Action, ProjectExperiment,
+} from 'types';
 import handleError from 'utils/error';
-import { getActionsForExperiment } from 'utils/experiment';
+import {
+  getActionsForExperiment,
+} from 'utils/experiment';
 import { openCommand } from 'utils/wait';
 
 interface Props {
@@ -62,8 +61,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: Props) => {
   const id = experiment.id;
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openExperimentMove } =
-    useModalExperimentMove({ onClose: onComplete });
+  const {
+    contextHolder: modalExperimentMoveContextHolder,
+    modalOpen: openExperimentMove,
+  } = useModalExperimentMove({ onClose: onComplete });
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -71,23 +72,21 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: experiment.id ? [experiment.id] : undefined,
+      experimentIds: experiment.id ? [ experiment.id ] : undefined,
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
-  }, [openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId]);
+  }, [ openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId ]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
+  }, [ openModalHyperparameterSearch ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
       const action = params.key as Action;
-      switch (
-        action // Cases should match menu items.
-      ) {
+      switch (action) { // Cases should match menu items.
         case Action.Activate:
           await activateExperiment({ experimentId: id });
           if (onComplete) onComplete(action);
@@ -101,7 +100,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           if (onComplete) onComplete(action);
           break;
         case Action.OpenTensorBoard: {
-          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
+          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
         }
@@ -185,13 +184,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const { canMoveExperiment, canDeleteExperiment } = usePermissions();
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions)
-    .filter((action) =>
-      [Action.Delete, Action.Move].includes(action)
-        ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-          (action === Action.Move && canMoveExperiment({ experiment }))
-        : true,
-    )
+  const menuItems = getActionsForExperiment(
+    experiment,
+    dropdownActions,
+  ).filter((action) => [ Action.Delete, Action.Move ].includes(action)
+    ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
+      (action === Action.Move && canMoveExperiment({ experiment }))
+    : true)
     .map((action) => {
       if (action === Action.SwitchPin) {
         const label = settings.pinned[experiment.projectId].includes(id) ? 'Unpin' : 'Pin';
@@ -202,14 +201,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     });
 
   if (menuItems.length === 0) {
-    return (
-      (children as JSX.Element) ?? (
-        <div className={css.base} title="No actions available" onClick={stopPropagation}>
-          <button disabled>
-            <Icon name="overflow-vertical" />
-          </button>
-        </div>
-      )
+    return (children as JSX.Element) ?? (
+      <div className={css.base} title="No actions available" onClick={stopPropagation}>
+        <button disabled>
+          <Icon name="overflow-vertical" />
+        </button>
+      </div>
     );
   }
 
@@ -220,7 +217,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       <Dropdown
         overlay={menu}
         placement="bottomLeft"
-        trigger={['contextMenu']}
+        trigger={[ 'contextMenu' ]}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
@@ -229,7 +226,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

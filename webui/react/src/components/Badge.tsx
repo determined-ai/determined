@@ -34,7 +34,7 @@ const Badge: React.FC<BadgeProps> = ({
 
   const { classes, style } = useMemo(() => {
     const isDark = ui.darkLight === DarkLight.Dark;
-    const classes = [css.base];
+    const classes = [ css.base ];
     const style: CSSProperties = {};
 
     if (type === BadgeType.State) {
@@ -47,11 +47,9 @@ const Badge: React.FC<BadgeProps> = ({
       style.color = getStateColorCssVar(state, { isOn: true });
       classes.push(css.state);
 
-      if (
-        state === SlotState.Free ||
-        state === ResourceState.Warm ||
-        state === ResourceState.Potential
-      ) {
+      if (state === SlotState.Free
+        || state === ResourceState.Warm
+        || state === ResourceState.Potential) {
         classes.push(css.neutral);
 
         if (state === ResourceState.Potential) classes.push(css.dashed);
@@ -64,7 +62,7 @@ const Badge: React.FC<BadgeProps> = ({
     }
 
     return { classes, style };
-  }, [state, type, ui.darkLight]);
+  }, [ state, type, ui.darkLight ]);
 
   const badge = (
     <span className={classes.join(' ')} style={style}>

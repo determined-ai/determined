@@ -34,14 +34,12 @@ const Grid: React.FC<Props> = ({
     gridGap: `calc(${sizeMap[gap]} + var(--theme-density) * 1px)`,
     gridTemplateColumns: `repeat(${mode}, minmax(${minItemWidth}px, 1fr))`,
   };
-  const classes = [css.base];
+  const classes = [ css.base ];
 
   if (border) classes.push(css.border);
 
   return (
-    <div className={classes.join(' ')} style={style}>
-      {children}
-    </div>
+    <div className={classes.join(' ')} style={style}>{children}</div>
   );
 };
 

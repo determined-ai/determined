@@ -22,7 +22,7 @@ const TableFilterSearch: React.FC<Props> = ({
   visible,
 }: Props) => {
   const inputRef = useRef<InputRef>(null);
-  const [search, setSearch] = useState(value);
+  const [ search, setSearch ] = useState(value);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
@@ -32,12 +32,12 @@ const TableFilterSearch: React.FC<Props> = ({
     setSearch('');
     if (onReset) onReset();
     if (clearFilters) clearFilters();
-  }, [clearFilters, onReset]);
+  }, [ clearFilters, onReset ]);
 
   const handleSearch = useCallback(() => {
     if (onSearch) onSearch(search);
     confirm();
-  }, [confirm, onSearch, search]);
+  }, [ confirm, onSearch, search ]);
 
   useEffect(() => {
     if (!visible) return;
@@ -45,7 +45,7 @@ const TableFilterSearch: React.FC<Props> = ({
     setTimeout(() => {
       if (inputRef.current) inputRef.current.focus({ cursor: 'all' });
     }, 0);
-  }, [visible]);
+  }, [ visible ]);
 
   return (
     <div className={css.base}>
@@ -61,10 +61,18 @@ const TableFilterSearch: React.FC<Props> = ({
         />
       </div>
       <div className={css.footer}>
-        <Button aria-label="Reset Search" size="small" type="link" onClick={handleReset}>
+        <Button
+          aria-label="Reset Search"
+          size="small"
+          type="link"
+          onClick={handleReset}>
           Reset
         </Button>
-        <Button aria-label="Apply Search" size="small" type="primary" onClick={handleSearch}>
+        <Button
+          aria-label="Apply Search"
+          size="small"
+          type="primary"
+          onClick={handleSearch}>
           Search
         </Button>
       </div>

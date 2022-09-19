@@ -27,5 +27,6 @@ describe('page functions', () => {
   it('should use correct class name', () => {
     const container = setup({ bodyNoPadding: true, stickyHeader: true });
     expect(container.getElementsByClassName('base bodyNoPadding stickyHeader')).toHaveLength(1);
+
   });
 });

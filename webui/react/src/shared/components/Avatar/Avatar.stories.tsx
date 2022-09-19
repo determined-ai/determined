@@ -7,11 +7,11 @@ import Avatar from './Avatar';
 
 export default {
   component: Avatar,
-  decorators: [withKnobs],
+  decorators: [ withKnobs ],
   title: 'Avatar',
 };
 
-const DARK_LIGHT_OPTIONS = [DarkLight.Dark, DarkLight.Light];
+const DARK_LIGHT_OPTIONS = [ DarkLight.Dark, DarkLight.Light ];
 
 export const Default = (): React.ReactNode => (
   <Avatar darkLight={DarkLight.Light} displayName="Anonymous" />

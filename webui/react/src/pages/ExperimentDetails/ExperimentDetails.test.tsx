@@ -47,7 +47,7 @@ jest.mock('services/api', () => ({
  */
 jest.mock('./ExperimentVisualization', () => ({
   __esModule: true,
-  default: () => <div>Experiment Visualization</div>,
+  default: () => (<div>Experiment Visualization</div>),
 }));
 
 const setup = () => {
@@ -96,16 +96,18 @@ describe('Experment Details Page', () => {
   describe('Single Trial Experiment', () => {
     beforeAll(() => {
       (useParams as jest.Mock).mockReturnValue({ experimentId: 1241 });
-      (getExperimentDetails as jest.Mock).mockResolvedValue(
-        RESPONSES.singleTrial.getExperimentsDetails,
-      );
-      (getExpValidationHistory as jest.Mock).mockResolvedValue(
-        RESPONSES.singleTrial.getExpValidationHistory,
-      );
-      (getExpTrials as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getExpTrials);
-      (getProject as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getProject);
-      (getTrialDetails as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getTrialDetails);
-      (getWorkspace as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
+      (getExperimentDetails as jest.Mock)
+        .mockResolvedValue(RESPONSES.singleTrial.getExperimentsDetails);
+      (getExpValidationHistory as jest.Mock)
+        .mockResolvedValue(RESPONSES.singleTrial.getExpValidationHistory);
+      (getExpTrials as jest.Mock)
+        .mockResolvedValue(RESPONSES.singleTrial.getExpTrials);
+      (getProject as jest.Mock)
+        .mockResolvedValue(RESPONSES.singleTrial.getProject);
+      (getTrialDetails as jest.Mock)
+        .mockResolvedValue(RESPONSES.singleTrial.getTrialDetails);
+      (getWorkspace as jest.Mock)
+        .mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
     });
 
     it('should show single trial experiment page with id', async () => {
@@ -127,15 +129,16 @@ describe('Experment Details Page', () => {
   describe('Multi-Trial Experiment', () => {
     beforeAll(() => {
       (useParams as jest.Mock).mockReturnValue({ experimentId: 1249 });
-      (getExperimentDetails as jest.Mock).mockResolvedValue(
-        RESPONSES.multiTrial.getExperimentsDetails,
-      );
-      (getExpValidationHistory as jest.Mock).mockResolvedValue(
-        RESPONSES.multiTrial.getExpValidationHistory,
-      );
-      (getExpTrials as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getExpTrials);
-      (getProject as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getProject);
-      (getWorkspace as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
+      (getExperimentDetails as jest.Mock)
+        .mockResolvedValue(RESPONSES.multiTrial.getExperimentsDetails);
+      (getExpValidationHistory as jest.Mock)
+        .mockResolvedValue(RESPONSES.multiTrial.getExpValidationHistory);
+      (getExpTrials as jest.Mock)
+        .mockResolvedValue(RESPONSES.multiTrial.getExpTrials);
+      (getProject as jest.Mock)
+        .mockResolvedValue(RESPONSES.multiTrial.getProject);
+      (getWorkspace as jest.Mock)
+        .mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
     });
 
     it('should show multi-trial experiment page with id', async () => {

@@ -5,6 +5,6 @@ interface UserNameFields {
   username?: string;
 }
 
-export function getDisplayName(user: DetailedUser | User | UserNameFields | undefined): string {
+export function getDisplayName (user: DetailedUser | User | UserNameFields | undefined): string {
   return user?.displayName || user?.username || 'Unavailable';
 }

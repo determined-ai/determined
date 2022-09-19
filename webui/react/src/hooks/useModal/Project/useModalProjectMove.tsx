@@ -23,8 +23,8 @@ interface Props {
 }
 
 const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
-  const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [ destinationWorkspaceId, setDestinationWorkspaceId ] = useState<number>();
+  const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -32,7 +32,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
     try {
       const response = await getWorkspaces({ limit: 0 });
       setWorkspaces((prev) => {
-        const withoutDefault = response.workspaces.filter((w) => !w.immutable);
+        const withoutDefault = response.workspaces.filter((w) =>
+          !w.immutable);
         if (isEqual(prev, withoutDefault)) return prev;
         return withoutDefault;
       });
@@ -45,30 +46,26 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, []);
+  }, [ ]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();
-  }, [fetchWorkspaces, modalRef]);
+  }, [ fetchWorkspaces, modalRef ]);
 
-  const handleWorkspaceSelect = useCallback(
-    (selectedWorkspaceId: SelectValue) => {
-      if (typeof selectedWorkspaceId !== 'number') return;
-      const workspace = workspaces.find((w) => w.id === selectedWorkspaceId);
-      if (!workspace) return;
-      const disabled = workspace.archived || workspace.id === project.workspaceId;
-      if (disabled) return;
-      setDestinationWorkspaceId((prev) => (disabled ? prev : (selectedWorkspaceId as number)));
-    },
-    [workspaces, project.workspaceId],
-  );
+  const handleWorkspaceSelect = useCallback((selectedWorkspaceId: SelectValue) => {
+
+    if (typeof selectedWorkspaceId !== 'number') return;
+    const workspace = workspaces.find((w) => w.id === selectedWorkspaceId);
+    if (!workspace) return;
+    const disabled = workspace.archived || workspace.id === project.workspaceId;
+    if (disabled) return;
+    setDestinationWorkspaceId((prev) => disabled ? prev : selectedWorkspaceId as number);
+  }, [ workspaces, project.workspaceId ]);
 
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <label className={css.label} htmlFor="workspace">
-          Workspace
-        </label>
+        <label className={css.label} htmlFor="workspace">Workspace</label>
         <Select
           id="workspace"
           placeholder="Select a destination workspace."
@@ -79,9 +76,15 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
           {workspaces.map((workspace) => {
             const disabled = workspace.archived || workspace.id === project.workspaceId;
             return (
-              <Option disabled={disabled} key={workspace.id} value={workspace.id}>
+              <Option
+                disabled={disabled}
+                key={workspace.id}
+                value={workspace.id}>
                 <div className={disabled ? css.workspaceOptionDisabled : ''}>
-                  <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                  <Typography.Text
+                    ellipsis={true}>
+                    {workspace.name}
+                  </Typography.Text>
                   {workspace.archived && <Icon name="archive" />}
                   {workspace.id === project.workspaceId && <Icon name="checkmark" />}
                 </div>
@@ -91,7 +94,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         </Select>
       </div>
     );
-  }, [handleWorkspaceSelect, workspaces, project.workspaceId, destinationWorkspaceId]);
+  }, [ handleWorkspaceSelect, workspaces, project.workspaceId, destinationWorkspaceId ]);
 
   const handleOk = useCallback(async () => {
     if (!destinationWorkspaceId) return;
@@ -99,18 +102,20 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
       await moveProject({ destinationWorkspaceId, projectId: project.id });
       const destinationWorkspaceName: string =
         workspaces.find((w) => w.id === destinationWorkspaceId)?.name ?? '';
-      notification.open({
-        btn: null,
-        description: (
-          <div>
-            <p>
-              {project.name} moved to workspace {destinationWorkspaceName}
-            </p>
-            <Link path={paths.workspaceDetails(destinationWorkspaceId)}>View Workspace</Link>
-          </div>
-        ),
-        message: 'Move Success',
-      });
+      notification.open(
+        {
+          btn: null,
+          description: (
+            <div>
+              <p>
+                {project.name} moved to workspace {destinationWorkspaceName}
+              </p>
+              <Link path={paths.workspaceDetails(destinationWorkspaceId)}>View Workspace</Link>
+            </div>
+          ),
+          message: 'Move Success',
+        },
+      );
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -120,31 +125,25 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, project.id, project.name, workspaces]);
+  }, [ destinationWorkspaceId, project.id, project.name, workspaces ]);
 
-  const getModalProps = useCallback(
-    (destinationWorkspaceId?: number): ModalFuncProps => {
-      return {
-        closable: true,
-        content: modalContent,
-        icon: null,
-        okButtonProps: { disabled: !destinationWorkspaceId },
-        okText: 'Move Project',
-        onOk: handleOk,
-        title: 'Move Project',
-      };
-    },
-    [handleOk, modalContent],
-  );
+  const getModalProps = useCallback((destinationWorkspaceId?: number): ModalFuncProps => {
+    return {
+      closable: true,
+      content: modalContent,
+      icon: null,
+      okButtonProps: { disabled: !destinationWorkspaceId },
+      okText: 'Move Project',
+      onOk: handleOk,
+      title: 'Move Project',
+    };
+  }, [ handleOk, modalContent ]);
 
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      setDestinationWorkspaceId(undefined);
-      fetchWorkspaces();
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
-    },
-    [fetchWorkspaces, getModalProps, openOrUpdate],
-  );
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    setDestinationWorkspaceId(undefined);
+    fetchWorkspaces();
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
+  }, [ fetchWorkspaces, getModalProps, openOrUpdate ]);
 
   /**
    * When modal props changes are detected, such as modal content
@@ -152,7 +151,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(destinationWorkspaceId));
-  }, [destinationWorkspaceId, getModalProps, modalRef, openOrUpdate]);
+  }, [ destinationWorkspaceId, getModalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };
