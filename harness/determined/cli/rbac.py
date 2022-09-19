@@ -51,6 +51,9 @@ def my_permissions(args: Namespace) -> None:
                 scope_id_to_permissions[wid] = set()
             scope_id_to_permissions[wid].update(role_id_to_permissions[a.roleId])
 
+    if len(scope_id_to_permissions) == 0:
+        print("no permissions assigned")
+        return
     for wid, perms in scope_id_to_permissions.items():
         if wid == 0:
             print("global permissions assigned")
