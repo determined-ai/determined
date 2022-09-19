@@ -4,11 +4,11 @@ https://github.com/huggingface/notebooks/blob/main/diffusers/sd_textual_inversio
 import determined as det
 import logging
 
-from det_stable_diffusion import DetStableDiffusion
+from detsd import DetStableDiffusionTITrainer
 
 logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
 
 if __name__ == "__main__":
-    dsd = DetStableDiffusion.init_on_cluster()
-    dsd.train()
+    trainer = DetStableDiffusionTITrainer.init_on_cluster()
+    trainer.train()

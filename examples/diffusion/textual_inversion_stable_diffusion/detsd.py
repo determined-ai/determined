@@ -3,7 +3,7 @@ import os
 import pathlib
 from collections import defaultdict
 from PIL import Image
-from typing import Literal, Optional, Sequence, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 
 import accelerate
@@ -12,6 +12,7 @@ import determined as det
 import torch
 import torch.nn.functional as F
 from determined.pytorch import TorchData
+from determined.experimental import client
 from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
@@ -28,13 +29,24 @@ from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
 
+# TODO: defaults for ddim and lms-discrete
+NOISE_SCHEDULER_DICT = {
+    "ddim": DDIMScheduler,
+    "lms-discrete": LMSDiscreteScheduler,
+    "pndm": PNDMScheduler,
+}
+DEFAULT_SCHEDULER_KWARGS_DICT = {
+    "pndm": {"skip_prk_steps": True},
+    "ddim": {},
+    "lms-discrete": {},
+}
 
-class DetStableDiffusion:
+
+class DetStableDiffusionTITrainer:
     """Class for training a textual inversion model."""
 
     def __init__(
         self,
-        use_auth_token: str,
         train_img_dirs: Union[str, Sequence[str]],
         placeholder_tokens: Union[str, Sequence[str]],
         initializer_tokens: Union[str, Sequence[str]],
@@ -66,7 +78,14 @@ class DetStableDiffusion:
         other_inference_noise_scheduler_kwargs: Optional[dict] = None,
         latest_checkpoint: Optional[str] = None,
     ) -> None:
-        self.use_auth_token = use_auth_token
+        # We assume that the Huggingface User Access token has been stored as a HF_AUTH_TOKEN
+        # environment variable. See https://huggingface.co/docs/hub/security-tokens
+        try:
+            self.use_auth_token = os.environ["HF_AUTH_TOKEN"]
+        except KeyError:
+            raise KeyError(
+                "Please set your HF User Access token as the HF_AUTH_TOKEN environment variable."
+            )
         self.latest_checkpoint = latest_checkpoint
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
 
@@ -106,13 +125,8 @@ class DetStableDiffusion:
         self.train_img_dirs = train_img_dirs
         self.train_seed = train_seed
 
-        self.inference_noise_schedulers = {
-            "ddim": DDIMScheduler,
-            "lms-discrete": LMSDiscreteScheduler,
-            "pndm": PNDMScheduler,
-        }
-        assert inference_noise_scheduler_name in self.inference_noise_schedulers, (
-            f"inference_noise_scheduler must be one {list(self.inference_noise_schedulers.keys())},"
+        assert inference_noise_scheduler_name in NOISE_SCHEDULER_DICT, (
+            f"inference_noise_scheduler must be one {list(NOISE_SCHEDULER_DICT.keys())},"
             f" but got {inference_noise_scheduler_name}"
         )
         self.generate_training_images = generate_training_images
@@ -124,14 +138,8 @@ class DetStableDiffusion:
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
 
-        # TODO: defaults for ddim and lms-discrete
-        default_inference_noise_scheduler_kwargs = {
-            "pndm": {"skip_prk_steps": True},
-            "ddim": {},
-            "lms-discrete": {},
-        }
         if other_inference_noise_scheduler_kwargs is None:
-            other_inference_noise_scheduler_kwargs = default_inference_noise_scheduler_kwargs[
+            other_inference_noise_scheduler_kwargs = DEFAULT_SCHEDULER_KWARGS_DICT[
                 self.inference_noise_scheduler_name
             ]
         self.other_inference_noise_scheduler_kwargs = other_inference_noise_scheduler_kwargs
@@ -140,7 +148,6 @@ class DetStableDiffusion:
         self.steps_completed = 0
         self.loss_history = []
         self.last_mean_loss = None
-        self.generated_imgs = {prompt: [] for prompt in self.inference_prompts}
         self.placeholder_token_map = defaultdict(list)
 
         self.accelerator = accelerate.Accelerator(
@@ -158,7 +165,7 @@ class DetStableDiffusion:
             self.learning_rate *= self.effective_global_batch_size
             self.logger.info(f"Using scaled learning rate {self.learning_rate}")
 
-        # The below are instantiated through the immediately following methods
+        # The below are instantiated as needed through private methods.
         self.tokenizer = None
         self.text_encoder = None
         self.vae = None
@@ -174,12 +181,6 @@ class DetStableDiffusion:
         self.original_embedding_tensors = None
 
         self._build_models()
-        self._add_new_tokens()
-        self._freeze_layers()
-        self._build_dataset_and_dataloader()
-        self._build_optimizer()
-        self._build_train_noise_scheduler()
-        self._wrap_and_prepare()
 
         # Pipeline construction is deferred until the _save call
         self.inference_noise_scheduler_kwargs = None
@@ -188,13 +189,11 @@ class DetStableDiffusion:
     @classmethod
     def init_on_cluster(cls) -> "DetStableDiffusion":
         """Creates a DetStableDiffusion instance on the cluster."""
-        use_auth_token = os.environ["HF_AUTH_TOKEN"]
         info = det.get_cluster_info()
         hparams = attrdict.AttrDict(info.trial.hparams)
         latest_checkpoint = info.latest_checkpoint
 
         return cls(
-            use_auth_token=use_auth_token,
             latest_checkpoint=latest_checkpoint,
             **hparams.model,
             **hparams.data,
@@ -202,9 +201,32 @@ class DetStableDiffusion:
             **hparams.inference,
         )
 
+    @classmethod
+    def init_from_uuid(
+        cls, uuid: str, learned_embeds_filename: str = "learned_embeds.pt"
+    ) -> "DetStableDiffusion":
+        """Creates a DetStableDiffusion instance from a Determined checkpoint uuid.  Must be logged
+        into the Determined cluster to use this method.  If not logged-in in a notebook environment,
+        call determined.experimental.client.login first.
+        """
+        checkpoint = client.get_checkpoint(uuid)
+        checkpoint_path = pathlib.Path(checkpoint.download())
+        with open(checkpoint_path.joinpath("metadata.json"), "r") as f:
+            checkpoint_metadata_dict = json.load(f)
+        learned_embeds_dict = torch.load(checkpoint_path.joinpath(learned_embeds_filename))
+        pass
+
     def train(self) -> None:
         """Run the full textual inversion training loop. Training must be performed on a
         Determined cluster."""
+
+        self._add_new_tokens()
+        self._freeze_layers()
+        self._build_dataset_and_dataloader()
+        self._build_optimizer()
+        self._build_train_noise_scheduler()
+        self._wrap_and_prepare()
+
         self.logger.info("--------------- Starting Training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
         self.logger.info(f"Learning rate: {self.learning_rate}")
@@ -214,7 +236,9 @@ class DetStableDiffusion:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
             distributed = None
-        with det.core.init(distributed=distributed) as core_context:
+        with det.core.init(
+            distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
+        ) as core_context:
             self._restore_latest_checkpoint(core_context)
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
@@ -377,7 +401,6 @@ class DetStableDiffusion:
             ), "placeholder token ids and nontrivial initializer token count doesn't match"
             self.logger.info(f'Added {len(placeholder_token_ids)} tokens for "{placeholder}".')
             self.all_placeholder_token_ids += placeholder_token_ids
-            print(50 * ":", self.all_placeholder_token_ids, sep="\n")
             # Expand the token embeddings and initialize.
             self.text_encoder.resize_token_embeddings(len(self.tokenizer))
             # Initialize the placeholder vectors to coincide with their initializer vectors.
@@ -491,9 +514,6 @@ class DetStableDiffusion:
                     with open(path.joinpath("metadata.json"), "r") as f:
                         checkpoint_metadata_dict = json.load(f)
                         self.steps_completed = checkpoint_metadata_dict["steps_completed"]
-                    # Only the main process needs the generated_imgs history.
-                    if self.accelerator.is_main_process:
-                        self.generated_imgs = torch.load(path.joinpath("generated_imgs.pt"))
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     self.optimizer.load_state_dict(optimizer_state_dict)
                     learned_embeds_dict = torch.load(path.joinpath("learned_embeds.pt"))
@@ -520,7 +540,7 @@ class DetStableDiffusion:
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 if self.generate_training_images:
                     self._build_pipeline()
-                    self._generate_and_write_imgs(path, core_context)
+                    self._generate_and_write_tb_imgs(path, core_context)
                 self._write_optimizer_state_dict_to_path(path)
                 self._write_learned_embeddings_to_path(path)
 
@@ -549,9 +569,7 @@ class DetStableDiffusion:
     def _build_pipeline(self) -> None:
         """Build the pipeline for the chief worker only."""
         if self.accelerator.is_main_process:
-            inference_noise_scheduler = self.inference_noise_schedulers[
-                self.inference_noise_scheduler_name
-            ]
+            inference_noise_scheduler = NOISE_SCHEDULER_DICT[self.inference_noise_scheduler_name]
             self.inference_noise_scheduler_kwargs = {
                 "beta_start": self.beta_start,
                 "beta_end": self.beta_end,
@@ -568,50 +586,35 @@ class DetStableDiffusion:
                 feature_extractor=self.feature_extractor,
             ).to(self.accelerator.device)
 
-    def _generate_and_write_imgs(self, path: pathlib.Path, core_context: det.core.Context) -> None:
-        # Generate a new image using the pipeline.
+    def _generate_and_write_tb_imgs(
+        self, path: pathlib.Path, core_context: det.core.Context
+    ) -> None:
+        """Generates images using the current pipeline and logs them to tensorboard."""
         self.logger.info("Generating sample images")
-        imgs_path = path.joinpath("imgs")
-        os.makedirs(imgs_path, exist_ok=True)
+        tb_dir = core_context.train.get_tensorboard_path()
+        tb_writer = SummaryWriter(log_dir=tb_dir)
         for prompt in self.inference_prompts:
             dummy_prompt = self._replace_placeholders_with_dummies(prompt)
             # Fix generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
             )
+            # Need to set output_type to anything other than `pil` to get numpy arrays out. Needed
+            # for tensorboard logging.s
             generated_img = self.pipeline(
                 prompt=dummy_prompt,
                 num_inference_steps=self.num_inference_steps,
                 guidance_scale=self.guidance_scale,
                 generator=generator,
+                output_type="np",
             ).images[0]
-            prompt_img_dict = self.generated_imgs[prompt]
-            prompt_img_dict.append((self.steps_completed, generated_img))
-            prompt_imgs_path = imgs_path.joinpath("_".join(prompt.split()))
-            os.makedirs(prompt_imgs_path, exist_ok=True)
-            img_grid = Image.new("RGB", size=(len(prompt_img_dict) * self.img_size, self.img_size))
-            for idx, (step, img) in enumerate(prompt_img_dict):
-                img.save(prompt_imgs_path.joinpath(f"{step}.png"))
-                img_grid.paste(img, box=(idx * self.img_size, 0))
-            img_grid.save(prompt_imgs_path.joinpath("all_imgs.png"))
-            # Create a gif
-            first_img = prompt_img_dict[0][1]
-            first_img.save(
-                fp=prompt_imgs_path.joinpath("all_imgs.gif"),
-                format="GIF",
-                append_images=(img for _, img in prompt_img_dict),
-                save_all=True,
-                duration=1000,
-                loop=1,
+            tb_writer.add_image(
+                prompt,
+                img_tensor=generated_img,
+                global_step=self.steps_completed,
+                dataformats="HWC",
             )
-        # Finally, write self.generated_imgs to path for use during a checkpoint restore.
-        self.accelerator.save(self.generated_imgs, path.joinpath("generated_imgs.pt"))
-        tb_dir = core_context.get_tensorboard_path()
-        tb_writer = SummaryWriter(log_dir=tb_dir)
-        tb_writer.add_image(
-            "random_tensor", img_tensor=torch.randn(3, 64, 64), global_step=self.steps_completed
-        )
-        core_context.upload_tensorboard_files()
+        core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
@@ -637,3 +640,217 @@ class DetStableDiffusion:
         except AttributeError:
             token_embeddings = self.text_encoder.get_input_embeddings().weight.data
         return token_embeddings
+
+
+# class DetStableDiffusionTIGenerator:
+#     """Class for generating images from a Stable Diffusion checkpoint pre-trained using Determined
+#     AI.
+#     """
+#
+#     def __init__(
+#         self,
+#         checkpoint_paths: Optional[List[Union[str, pathlib.Path]]] = None,
+#         learned_embeds_filename: str = "learned_embeds.pt",
+#         scheduler_name: str = "pndm",
+#         scheduler_kwargs: Optional[Dict[str, Any]] = None,
+#         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
+#         device: str = "cuda",
+#         use_autocast: bool = True,
+#         use_fp16: bool = True,
+#     ) -> None:
+#         # We assume that the Huggingface User Access token has been stored as a HF_AUTH_TOKEN
+#         # environment variable. See https://huggingface.co/docs/hub/security-tokens
+#         try:
+#             self.use_auth_token = os.environ["HF_AUTH_TOKEN"]
+#         except KeyError:
+#             raise KeyError(
+#                 "Please set your HF User Access token as the HF_AUTH_TOKEN environment variable."
+#             )
+#         self.checkpoint_paths = checkpoint_paths or []
+#         self.learned_embeds_filename = learned_embeds_filename
+#         self.scheduler_name = scheduler_name
+#         self.scheduler_kwargs = scheduler_kwargs or DEFAULT_SCHEDULER_KWARGS_DICT[scheduler_name]
+#         self.pretrained_model_name_or_path = pretrained_model_name_or_path
+#         self.device = device
+#         assert not (
+#             use_fp16 and not use_autocast
+#         ), "use_autocast must be True when use_fp16 is also True"
+#         self.use_autocast = use_autocast
+#         self.use_fp16 = use_fp16
+#
+#         self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**self.scheduler_kwargs)
+#
+#         # The below attrs are non-trivially instantiated as necessary through private methods.
+#         self.placeholder_token_map = defaultdict(list)
+#
+#         self._build_models()
+#         self._add_learned_concepts()
+#         self._build_pipeline()
+#
+#     @classmethod
+#     def init_from_uuids(
+#         cls, uuid: Union[str, Sequence[str]], learned_embeds_filename: str = "learned_embeds.pt"
+#     ) -> "DetStableDiffusion":
+#         """Creates a DetStableDiffusion instance from a Determined checkpoint uuid.  Must be logged
+#         into the Determined cluster to use this method.  If not logged-in in a notebook environment,
+#         call determined.experimental.client.login first.
+#         """
+#         checkpoint = client.get_checkpoint(uuid)
+#         checkpoint_paths = pathlib.Path(checkpoint.download())
+#         with open(checkpoint_paths.joinpath("metadata.json"), "r") as f:
+#             checkpoint_metadata_dict = json.load(f)
+#
+#         pass
+#
+#     def _build_models(self) -> None:
+#         print("Downloading pre-trained models...")
+#         revision = "fp16" if self.use_fp16 else "main"
+#         self.tokenizer = CLIPTokenizer.from_pretrained(
+#             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
+#             subfolder="tokenizer",
+#             use_auth_token=self.use_auth_token,
+#             revision=revision,
+#         )
+#         self.text_encoder = CLIPTextModel.from_pretrained(
+#             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
+#             subfolder="text_encoder",
+#             use_auth_token=self.use_auth_token,
+#             revision=revision,
+#         )
+#         self.vae = AutoencoderKL.from_pretrained(
+#             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
+#             subfolder="vae",
+#             use_auth_token=self.use_auth_token,
+#             revision=revision,
+#         )
+#         self.unet = UNet2DConditionModel.from_pretrained(
+#             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
+#             subfolder="unet",
+#             use_auth_token=self.use_auth_token,
+#             revision=revision,
+#         )
+#         self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
+#             pretrained_model_name_or_path="CompVis/stable-diffusion-safety-checker"
+#         )
+#         self.feature_extractor = CLIPFeatureExtractor.from_pretrained(
+#             pretrained_model_name_or_path="openai/clip-vit-base-patch32"
+#         )
+#
+#     def _add_learned_concepts(self) -> None:
+#         print("Adding learned concepts...")
+#         for path in self.checkpoint_paths:
+#             if isinstance(path, str):
+#                 path = pathlib.Path(path)
+#             self.learned_embeds_dict = torch.load(path.joinpath(self.learned_embeds_filename))
+#             with open(path.joinpath("metadata.json"), "r") as f:
+#                 checkpoint_metadata_dict = json.load(f)
+#             new_placeholder_token_map = checkpoint_metadata_dict["placeholder_token_map"]
+#             curr_placeholders = set(self.placeholder_token_map.keys())
+#             new_placeholders = set(new_placeholder_token_map.keys())
+#             placeholder_conflicts = curr_placeholders & new_placeholders
+#             assert (
+#                 not placeholder_conflicts
+#             ), f"Placeholder tokens must be unique. Conflicts: {placeholder_conflicts}."
+#             self.placeholder_token_map = {**self.placeholder_token_map, **new_placeholder_token_map}
+#
+#             # Incorporate newly learned concepts into the text_encoder
+#             placeholder_tokens = checkpoint_metadata_dict["placeholder_tokens"]
+#             learned_embeds_dict = torch.load(path.joinpath(self.learned_embeds_filename))
+#             for dummy_placeholder_list in self.placeholder_token_map.values():
+#                 for dummy_token in dummy_placeholder_list:
+#                     self.tokenizer.add_tokens(dummy_token)
+#             self.text_encoder.resize_token_embeddings(len(self.tokenizer))
+#             token_embeds = self.text_encoder.get_input_embeddings().weight.data
+#             for idx, tensor in learned_embeds_dict.items():
+#                 token_embeds[idx] = tensor
+#
+#     def _build_pipeline(self) -> None:
+#         print("Building the pipeline...")
+#         self.pipeline = StableDiffusionPipeline(
+#             text_encoder=self.text_encoder,
+#             vae=self.vae,
+#             unet=self.unet,
+#             tokenizer=self.tokenizer,
+#             scheduler=self.scheduler,
+#             safety_checker=self.safety_checker,
+#             feature_extractor=self.feature_extractor,
+#         ).to(self.device)
+#
+#     def _replace_placeholders_with_dummies(self, text: str) -> str:
+#         for placeholder, dummy_placeholders in self.placeholder_token_map.items():
+#             text = text.replace(placeholder, " ".join(dummy_placeholders))
+#         return text
+#
+#     def _get_image_grid_from_prompt(
+#         self,
+#         prompt: str,
+#         rows: int = 1,
+#         cols: int = 1,
+#         num_inference_steps: int = 50,
+#         guidance_scale: int = 7.5,
+#         saved_img_dir: Optional[str] = None,
+#         generator_seed: int = 2147483647,
+#         parallelize_factor: int = 1,
+#         other_pipeline_call_kwargs: Optional[dict] = None,
+#     ) -> Image.Image:
+#         """Generates an image from the provided prompt and optionally writes the results to disk."""
+#         other_pipeline_call_kwargs = other_pipeline_call_kwargs or {}
+#         num_samples = rows * cols
+#         # Could insert a check that num_samples % parallelize_factor == 0, else wasting compute
+#         # Generate images sequentially, as parallel computation may induce OOM
+#         images = []
+#         generated_samples = 0
+#         # The dummy prompts are what actually get fed into the pipeline
+#         dummy_prompt = self._replace_placeholders_with_dummies(prompt)
+#         generator = torch.Generator(device="cuda").manual_seed(generator_seed)
+#         while generated_samples < num_samples:
+#             context = torch.autocast("cuda") if self.use_autocast else nullcontext
+#             with context:
+#                 out = self.pipeline(
+#                     [dummy_prompt] * parallelize_factor,
+#                     num_inference_steps=num_inference_steps,
+#                     guidance_scale=guidance_scale,
+#                     generator=generator,
+#                     **other_pipeline_call_kwargs,
+#                 )
+#             for nsfw, image in zip(out["nsfw_content_detected"], out["sample"]):
+#                 # Re-try, if nsfw_content_detected
+#                 if nsfw:
+#                     continue
+#                 images.append(image)
+#                 generated_samples += 1
+#                 if saved_img_dir is not None:
+#                     # TODO: Currently using short uuids to ensure unique file name. Use a better system.
+#                     uuid = shortuuid.uuid()
+#                     file_suffix = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{generator_seed}_seed_{uuid}.png"
+#                     filename = prompt[: 255 - len(file_suffix)] + file_suffix
+#                     filename = "_".join(filename.split())
+#                     self._save_image(image, filename, saved_img_dir)
+#         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
+#         if num_samples > 1 and saved_img_dir is not None:
+#             # TODO: Clean up repeated code
+#             uuid = shortuuid.uuid()
+#             file_suffix = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{generator_seed}_seed_{uuid}_GRID.png"
+#             filename = prompt[: 255 - len(file_suffix)] + file_suffix
+#             filename = "_".join(filename.split())
+#             self._save_image(image_grid, filename, saved_img_dir)
+#         return image_grid
+#
+#     def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:
+#         w, h = images[0].size
+#         image_grid = Image.new("RGB", size=(cols * w, rows * h))
+#         for idx, img in enumerate(images):
+#             image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
+#         return image_grid
+#
+#     def _save_image(self, image: Image.Image, filename: str, saved_img_dir: str) -> None:
+#         """Saves the image as a time-stamped png file."""
+#         saved_img_dir = pathlib.Path(saved_img_dir)
+#         save_path = saved_img_dir.joinpath(filename)
+#         image.save(save_path)
+#
+#     def __call__(self, prompt: str, parallelize_factor: int = 1, *args, **kwargs) -> Image.Image:
+#         image_grid = self._get_image_grid_from_prompt(
+#             prompt=prompt, parallelize_factor=parallelize_factor, *args, **kwargs
+#         )
+#         return image_grid
