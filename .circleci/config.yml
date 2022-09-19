@@ -1637,7 +1637,7 @@ jobs:
     steps:
       - checkout
       - run: python --version
-      - run: pip install --upgrade --user pip
+      - run: python -m pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
       # Avoid a versino of pyzmq that was missing wheels when it was released.
