@@ -31,7 +31,7 @@ export enum WorkspaceDetailsTab {
 }
 
 // Temporary Mock for rbacEnabled functionality
-const rbacEnabled = true;
+const rbacEnabled = false;
 
 const WorkspaceDetails: React.FC = () => {
   const { users } = useStore();

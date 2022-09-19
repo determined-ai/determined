@@ -47,7 +47,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
   }, [ workspace.id ]);
 
   // Temporary Mock for rbacEnabled functionality
-  const rbacEnabled = true;
+  const rbacEnabled = false;
 
   return (
     <div className={css.base}>
