@@ -29,19 +29,16 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   className,
   direction = 'vertical',
   workspace,
-  onComplete, trigger,
+  onComplete,
+  trigger,
   onVisibleChange,
 }: Props) => {
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
-  const {
-    contextHolder: modalWorkspaceDeleteContextHolder,
-    modalOpen: openWorkspaceDelete,
-  } = useModalWorkspaceDelete({ onClose: onComplete, workspace });
-  const {
-    contextHolder: modalWorkspaceEditContextHolder,
-    modalOpen: openWorkspaceEdit,
-  } = useModalWorkspaceEdit({ onClose: onComplete, workspace });
+  const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
+    useModalWorkspaceDelete({ onClose: onComplete, workspace });
+  const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
+    useModalWorkspaceEdit({ onClose: onComplete, workspace });
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
@@ -61,7 +58,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ onComplete, workspace.archived, workspace.id ]);
+  }, [onComplete, workspace.archived, workspace.id]);
 
   const handlePinClick = useCallback(async () => {
     if (workspace.pinned) {
@@ -81,15 +78,15 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned ]);
+  }, [fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned]);
 
   const handleEditClick = useCallback(() => {
     openWorkspaceEdit();
-  }, [ openWorkspaceEdit ]);
+  }, [openWorkspaceEdit]);
 
   const handleDeleteClick = useCallback(() => {
     openWorkspaceDelete();
-  }, [ openWorkspaceDelete ]);
+  }, [openWorkspaceDelete]);
 
   const WorkspaceActionMenu = useMemo(() => {
     enum MenuKey {
@@ -100,20 +97,30 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     }
 
     const funcs = {
-      [MenuKey.SWITCH_PIN]: () => { handlePinClick(); },
-      [MenuKey.EDIT]: () => { handleEditClick(); },
-      [MenuKey.SWITCH_ARCHIVED]: () => { handleArchiveClick(); },
-      [MenuKey.DELETE]: () => { handleDeleteClick(); },
+      [MenuKey.SWITCH_PIN]: () => {
+        handlePinClick();
+      },
+      [MenuKey.EDIT]: () => {
+        handleEditClick();
+      },
+      [MenuKey.SWITCH_ARCHIVED]: () => {
+        handleArchiveClick();
+      },
+      [MenuKey.DELETE]: () => {
+        handleDeleteClick();
+      },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
       funcs[e.key as MenuKey]();
     };
 
-    const menuItems: MenuProps['items'] = [ {
-      key: MenuKey.SWITCH_PIN,
-      label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
-    } ];
+    const menuItems: MenuProps['items'] = [
+      {
+        key: MenuKey.SWITCH_PIN,
+        label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
+      },
+    ];
 
     if (canModifyWorkspace({ workspace })) {
       if (!workspace.archived) {
@@ -144,7 +151,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       <Dropdown
         overlay={WorkspaceActionMenu}
         placement="bottomLeft"
-        trigger={trigger ?? [ 'contextMenu', 'click' ]}
+        trigger={trigger ?? ['contextMenu', 'click']}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
@@ -153,13 +160,13 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     </>
   ) : (
     <div
-      className={[ css.base, className ].join(' ')}
+      className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
         overlay={WorkspaceActionMenu}
         placement="bottomRight"
-        trigger={trigger ?? [ 'click' ]}>
+        trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

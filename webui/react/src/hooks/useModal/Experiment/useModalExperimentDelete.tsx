@@ -31,7 +31,7 @@ const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks =>
         type: ErrorType.Server,
       });
     }
-  }, [ experiment.id, experiment.projectId ]);
+  }, [experiment.id, experiment.projectId]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
@@ -41,11 +41,14 @@ const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks =>
       onOk: handleOk,
       title: 'Confirm Experiment Deletion',
     };
-  }, [ handleOk, experiment.id ]);
+  }, [handleOk, experiment.id]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      openOrUpdate({ ...modalProps, ...initialModalProps });
+    },
+    [modalProps, openOrUpdate],
+  );
 
   return { modalOpen, ...modalHook };
 };

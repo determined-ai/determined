@@ -5,10 +5,11 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
@@ -30,7 +31,7 @@ interface Queries {
 const Wait: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const { taskType } = useParams<Params>();
-  const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
+  const [waitStatus, setWaitStatus] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
   const capitalizedTaskType = capitalize(taskType);
@@ -44,9 +45,9 @@ const Wait: React.FC = () => {
   }
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
-  }, [ storeDispatch ]);
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
+  }, [storeDispatch]);
 
   const handleTaskError = (err: Error) => {
     handleError({
@@ -70,7 +71,7 @@ const Wait: React.FC = () => {
         if (!lastRun) {
           return;
         }
-        if ([ CommandState.Terminated ].includes(lastRun.state)) {
+        if ([CommandState.Terminated].includes(lastRun.state)) {
           clearInterval(ival);
         } else if (lastRun.isReady) {
           clearInterval(ival);
@@ -81,7 +82,7 @@ const Wait: React.FC = () => {
         handleTaskError(e as Error);
       }
     }, 1000);
-  }, [ eventUrl, serviceAddr ]);
+  }, [eventUrl, serviceAddr]);
 
   return (
     <PageMessage title={capitalizedTaskType}>

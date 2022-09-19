@@ -35,7 +35,7 @@ export const defaultScrollInfo = {
 
 export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
   const element = ref.current;
-  const [ scrollInfo, setScrollInfo ] = useState<ScrollInfo>({
+  const [scrollInfo, setScrollInfo] = useState<ScrollInfo>({
     ...defaultScrollInfo,
     scrollHeight: element?.scrollHeight || 0,
     scrollLeft: element?.scrollLeft || 0,
@@ -45,21 +45,24 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
     viewWidth: element?.clientWidth || 0,
   });
 
-  const handleResize = useCallback((entries) => {
-    // Check to make sure the scroll element is being observed for resize.
-    const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
-    if (!element || elements.indexOf(element) === -1) return;
+  const handleResize = useCallback(
+    (entries) => {
+      // Check to make sure the scroll element is being observed for resize.
+      const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
+      if (!element || elements.indexOf(element) === -1) return;
 
-    setScrollInfo((prevScrollInfo) => ({
-      ...prevScrollInfo,
-      dx: element.scrollLeft - prevScrollInfo.scrollLeft,
-      dy: element.scrollTop - prevScrollInfo.scrollTop,
-      scrollHeight: element.scrollHeight,
-      scrollWidth: element.scrollWidth,
-      viewHeight: element.clientHeight,
-      viewWidth: element.clientWidth,
-    }));
-  }, [ element ]);
+      setScrollInfo((prevScrollInfo) => ({
+        ...prevScrollInfo,
+        dx: element.scrollLeft - prevScrollInfo.scrollLeft,
+        dy: element.scrollTop - prevScrollInfo.scrollTop,
+        scrollHeight: element.scrollHeight,
+        scrollWidth: element.scrollWidth,
+        viewHeight: element.clientHeight,
+        viewWidth: element.clientWidth,
+      }));
+    },
+    [element],
+  );
 
   const handleScroll = useCallback(() => {
     if (!element) return;
@@ -73,7 +76,7 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
       scrollTop: element.scrollTop,
       scrollWidth: element.scrollWidth,
     }));
-  }, [ element ]);
+  }, [element]);
 
   useEffect(() => {
     if (!element) return;
@@ -86,7 +89,7 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
       resizeObserver.unobserve(element);
       element.removeEventListener(SCROLL_EVENT, handleScroll);
     };
-  }, [ element, handleResize, handleScroll ]);
+  }, [element, handleResize, handleScroll]);
 
   return scrollInfo;
 };

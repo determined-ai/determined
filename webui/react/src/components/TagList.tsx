@@ -24,22 +24,29 @@ export const ARIA_LABEL_INPUT = 'new-tag-input';
 const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
-const EditableTagList: React.FC<Props> = (
-  { compact, disabled = false, ghost, tags, onChange }: Props,
-) => {
+const EditableTagList: React.FC<Props> = ({
+  compact,
+  disabled = false,
+  ghost,
+  tags,
+  onChange,
+}: Props) => {
   const initialState = {
     editInputIndex: -1,
     inputVisible: false,
     inputWidth: 82,
   };
-  const [ state, setState ] = useState(initialState);
-  const [ showMore, setShowMore ] = useState(false);
+  const [state, setState] = useState(initialState);
+  const [showMore, setShowMore] = useState(false);
   const inputRef = useRef<InputRef>(null);
   const editInputRef = useRef<InputRef>(null);
 
-  const handleClose = useCallback((removedTag) => {
-    onChange?.(tags.filter((tag) => tag !== removedTag));
-  }, [ onChange, tags ]);
+  const handleClose = useCallback(
+    (removedTag) => {
+      onChange?.(tags.filter((tag) => tag !== removedTag));
+    },
+    [onChange, tags],
+  );
 
   const handleTagPlus = useCallback(() => {
     setState((state) => ({ ...state, inputVisible: true }));
@@ -47,35 +54,38 @@ const EditableTagList: React.FC<Props> = (
 
   useEffect(() => {
     if (state.inputVisible) inputRef.current?.focus();
-  }, [ state.inputVisible ]);
+  }, [state.inputVisible]);
 
   useEffect(() => {
     if (state.editInputIndex === -1) return;
     editInputRef.current?.focus();
     editInputRef.current?.select();
-  }, [ state.editInputIndex ]);
+  }, [state.editInputIndex]);
 
   const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
-  const handleInputConfirm = useCallback((
-    e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
-    previousValue?: string,
-  ) => {
-    const newTag = (e.target as HTMLInputElement).value.trim();
-    const oldTag = previousValue?.trim();
-    const updatedTags = tags.filter((tag) => tag !== oldTag);
-    if (newTag) {
-      if (!updatedTags.includes(newTag)) {
-        updatedTags.push(newTag);
+  const handleInputConfirm = useCallback(
+    (
+      e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
+      previousValue?: string,
+    ) => {
+      const newTag = (e.target as HTMLInputElement).value.trim();
+      const oldTag = previousValue?.trim();
+      const updatedTags = tags.filter((tag) => tag !== oldTag);
+      if (newTag) {
+        if (!updatedTags.includes(newTag)) {
+          updatedTags.push(newTag);
+        }
+        onChange?.(updatedTags);
       }
-      onChange?.(updatedTags);
-    }
-    setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
-  }, [ onChange, tags ]);
+      setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
+    },
+    [onChange, tags],
+  );
 
   const { editInputIndex, inputVisible, inputWidth } = state;
 
-  const classes = [ css.base ];
+  const classes = [css.base];
   if (ghost) classes.push(css.ghost);
 
   return (
@@ -112,11 +122,7 @@ const EditableTagList: React.FC<Props> = (
           const isLongTag = tag.length > TAG_MAX_LENGTH;
 
           const tagElement = (
-            <Tag
-              closable={!disabled}
-              id={htmlId}
-              key={tag}
-              onClose={() => handleClose(tag)}>
+            <Tag closable={!disabled} id={htmlId} key={tag} onClose={() => handleClose(tag)}>
               <span
                 onClick={(e) => {
                   e.preventDefault();
@@ -133,7 +139,13 @@ const EditableTagList: React.FC<Props> = (
               </span>
             </Tag>
           );
-          return isLongTag ? <Tooltip key={tag} title={tag}>{tagElement}</Tooltip> : tagElement;
+          return isLongTag ? (
+            <Tooltip key={tag} title={tag}>
+              {tagElement}
+            </Tooltip>
+          ) : (
+            tagElement
+          );
         })}
       {inputVisible ? (
         <Input

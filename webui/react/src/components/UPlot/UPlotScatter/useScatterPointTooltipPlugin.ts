@@ -72,86 +72,92 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
     uPlotRef.current.previousDataIndex = undefined;
   }, []);
 
-  const setTooltip = useCallback((u: uPlot) => {
-    if (!tooltipRef.current) return;
+  const setTooltip = useCallback(
+    (u: uPlot) => {
+      if (!tooltipRef.current) return;
 
-    const { dataIndex, seriesIndex } = uPlotRef.current;
-    if (dataIndex == null || dataIndex === uPlotRef.current.previousDataIndex) return;
+      const { dataIndex, seriesIndex } = uPlotRef.current;
+      if (dataIndex == null || dataIndex === uPlotRef.current.previousDataIndex) return;
 
-    const xData = u.data[seriesIndex][X_INDEX] as unknown as UPlotData[];
-    const yData = u.data[seriesIndex][Y_INDEX] as unknown as UPlotData[];
-    const x = xData[dataIndex];
-    const y = yData[dataIndex];
-    if (x == null || y == null) return;
+      const xData = u.data[seriesIndex][X_INDEX] as unknown as UPlotData[];
+      const yData = u.data[seriesIndex][Y_INDEX] as unknown as UPlotData[];
+      const x = xData[dataIndex];
+      const y = yData[dataIndex];
+      if (x == null || y == null) return;
 
-    const keyValues = u.data[seriesIndex]
-      .map((data: unknown, index: number) => {
-        if (data == null) return null;
+      const keyValues = u.data[seriesIndex]
+        .map((data: unknown, index: number) => {
+          if (data == null) return null;
 
-        const label = props.labels?.[index];
-        if (label == null) return null;
+          const label = props.labels?.[index];
+          if (label == null) return null;
 
-        const value = (data as UPlotData[])[dataIndex];
-        if (value == null) return null;
+          const value = (data as UPlotData[])[dataIndex];
+          if (value == null) return null;
 
-        return { key: label, value: humanReadableNumber(value) };
-      })
-      .filter((keyValue) => keyValue != null) as KeyValue[];
-    createTooltipContent(tooltipRef.current, keyValues);
+          return { key: label, value: humanReadableNumber(value) };
+        })
+        .filter((keyValue) => keyValue != null) as KeyValue[];
+      createTooltipContent(tooltipRef.current, keyValues);
 
-    /**
-     * Tooltip has to be shown with the updated content
-     * in order to calculate the bounding rect.
-     */
-    tooltipRef.current.className = [ css.tooltip, css.show ].join(' ');
-    tooltipVisible.current = true;
+      /**
+       * Tooltip has to be shown with the updated content
+       * in order to calculate the bounding rect.
+       */
+      tooltipRef.current.className = [css.tooltip, css.show].join(' ');
+      tooltipVisible.current = true;
 
-    const chartRect = u.root.querySelector(ROOT_SELECTOR)?.getBoundingClientRect();
-    if (!chartRect) return;
+      const chartRect = u.root.querySelector(ROOT_SELECTOR)?.getBoundingClientRect();
+      if (!chartRect) return;
 
-    /**
-     * Calculate where the tooltip should be placed based on
-     * the size of the tooltip content and the cursor position.
-     */
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    const valueLeft = u.valToPos(x, u.axes[0].scale || 'x');
-    const valueTop = u.valToPos(y, u.axes[1].scale || 'y');
-    const isLeftHalf = valueLeft < chartRect.width / 2;
-    const isTopHalf = valueTop < chartRect.height / 2;
-    const left = isLeftHalf ? valueLeft : valueLeft - tooltipRect.width;
-    const top = isTopHalf ? valueTop : valueTop - tooltipRect.height;
-    const offsetX = (isLeftHalf ? 1 : -1) * (props.offsetX || DEFAULT_OFFSET_X);
-    const offsetY = (isTopHalf ? 1 : -1) * (props.offsetY || DEFAULT_OFFSET_Y);
-    tooltipRef.current.style.left = `${left + offsetX}px`;
-    tooltipRef.current.style.top = `${top + offsetY}px`;
+      /**
+       * Calculate where the tooltip should be placed based on
+       * the size of the tooltip content and the cursor position.
+       */
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+      const valueLeft = u.valToPos(x, u.axes[0].scale || 'x');
+      const valueTop = u.valToPos(y, u.axes[1].scale || 'y');
+      const isLeftHalf = valueLeft < chartRect.width / 2;
+      const isTopHalf = valueTop < chartRect.height / 2;
+      const left = isLeftHalf ? valueLeft : valueLeft - tooltipRect.width;
+      const top = isTopHalf ? valueTop : valueTop - tooltipRect.height;
+      const offsetX = (isLeftHalf ? 1 : -1) * (props.offsetX || DEFAULT_OFFSET_X);
+      const offsetY = (isTopHalf ? 1 : -1) * (props.offsetY || DEFAULT_OFFSET_Y);
+      tooltipRef.current.style.left = `${left + offsetX}px`;
+      tooltipRef.current.style.top = `${top + offsetY}px`;
 
-    uPlotRef.current.previousDataIndex = uPlotRef.current.dataIndex;
-  }, [ props.labels, props.offsetX, props.offsetY ]);
-
-  const plugin = useMemo(() => ({
-    hooks: {
-      ready: (u: uPlot) => {
-        const tooltip = document.getElementById(tooltipId.current);
-        if (tooltip) return;
-
-        tooltipRef.current = document.createElement('div');
-        tooltipRef.current.id = tooltipId.current;
-        tooltipRef.current.className = css.tooltip;
-
-        rootRef.current = u.root.querySelector<HTMLDivElement>(ROOT_SELECTOR);
-        rootRef.current?.appendChild(tooltipRef.current);
-      },
-      setCursor: (u: uPlot) => {
-        uPlotRef.current.dataIndex = u.cursor.dataIdx?.(u, 1, 0, 0);
-
-        if (uPlotRef.current.dataIndex != null) {
-          setTooltip(u);
-        } else {
-          hideTooltip();
-        }
-      },
+      uPlotRef.current.previousDataIndex = uPlotRef.current.dataIndex;
     },
-  }), [ hideTooltip, setTooltip ]);
+    [props.labels, props.offsetX, props.offsetY],
+  );
+
+  const plugin = useMemo(
+    () => ({
+      hooks: {
+        ready: (u: uPlot) => {
+          const tooltip = document.getElementById(tooltipId.current);
+          if (tooltip) return;
+
+          tooltipRef.current = document.createElement('div');
+          tooltipRef.current.id = tooltipId.current;
+          tooltipRef.current.className = css.tooltip;
+
+          rootRef.current = u.root.querySelector<HTMLDivElement>(ROOT_SELECTOR);
+          rootRef.current?.appendChild(tooltipRef.current);
+        },
+        setCursor: (u: uPlot) => {
+          uPlotRef.current.dataIndex = u.cursor.dataIdx?.(u, 1, 0, 0);
+
+          if (uPlotRef.current.dataIndex != null) {
+            setTooltip(u);
+          } else {
+            hideTooltip();
+          }
+        },
+      },
+    }),
+    [hideTooltip, setTooltip],
+  );
 
   return plugin;
 };

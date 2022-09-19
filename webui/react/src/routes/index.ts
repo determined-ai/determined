@@ -63,8 +63,7 @@ const appRoutes: RouteConfig[] = Routes.map((route) => {
   };
 });
 
-export const defaultRoute = appRoutes
-  .find((route) => route.id === defaultRouteId) as RouteConfig;
+export const defaultRoute = appRoutes.find((route) => route.id === defaultRouteId) as RouteConfig;
 
 appRoutes.push({
   id: 'catch-all',

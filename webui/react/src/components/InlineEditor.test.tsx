@@ -1,20 +1,17 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitForElementToBeRemoved,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import InlineEditor from './InlineEditor';
 
-const setup = ({ disabled, onSaveReturnsError, value, pattern } = {
-  disabled: false,
-  onSaveReturnsError: false,
-  pattern: new RegExp(''),
-  value: 'before',
-}) => {
+const setup = (
+  { disabled, onSaveReturnsError, value, pattern } = {
+    disabled: false,
+    onSaveReturnsError: false,
+    pattern: new RegExp(''),
+    value: 'before',
+  },
+) => {
   const user = userEvent.setup();
   const onSave = onSaveReturnsError
     ? jest.fn(() => Promise.resolve(new Error()))

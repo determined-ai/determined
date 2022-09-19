@@ -2,9 +2,10 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { Redirect, Switch } from 'react-router-dom';
 import { CompatRoute } from 'react-router-dom-v5-compat';
 
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { paths } from 'routes/utils';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
 
@@ -15,22 +16,22 @@ interface Props {
 const Router: React.FC<Props> = (props: Props) => {
   const { auth } = useStore();
   const storeDispatch = useStoreDispatch();
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
   const checkAuth = useAuthCheck(canceler);
 
   useEffect(() => {
     checkAuth();
-  }, [ checkAuth ]);
+  }, [checkAuth]);
 
   useEffect(() => {
     if (auth.isAuthenticated) {
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionUI.HideUISpinner });
     }
-  }, [ auth.isAuthenticated, storeDispatch ]);
+  }, [auth.isAuthenticated, storeDispatch]);
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   return (
     <Switch>
@@ -44,7 +45,7 @@ const Router: React.FC<Props> = (props: Props) => {
             <CompatRoute
               {...route}
               key={route.id}
-              render={({ location }: {location: Location}): ReactNode => (
+              render={({ location }: { location: Location }): ReactNode => (
                 <Redirect
                   to={{
                     pathname: paths.login(),
@@ -56,10 +57,10 @@ const Router: React.FC<Props> = (props: Props) => {
           );
         } else if (route.redirect) {
           /*
-          * We treat '*' as a catch-all path and specifically avoid wrapping the
-          * `Redirect` with a `DomRoute` component. This ensures the catch-all
-          * redirect will occur when encountered in the `Switch` traversal.
-          */
+           * We treat '*' as a catch-all path and specifically avoid wrapping the
+           * `Redirect` with a `DomRoute` component. This ensures the catch-all
+           * redirect will occur when encountered in the `Switch` traversal.
+           */
           if (route.path === '*') {
             return <Redirect key={route.id} to={route.redirect} />;
           } else {

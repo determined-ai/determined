@@ -14,7 +14,7 @@
       opacity: 0.75;
     }
   }
-  [class*=Icon_base_] {
+  [class*='Icon_base_'] {
     padding: 0 8px;
   }
   .trial {
@@ -40,7 +40,9 @@
     .experiment {
       font-size: 14px;
     }
-    [class*=Icon_base_] { display: none; }
+    [class*='Icon_base_'] {
+      display: none;
+    }
     .trial {
       font-size: 14px;
       margin-top: 8px;

@@ -348,7 +348,7 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == determinedexperimentv1State.STATE_ACTIVE else 0
+        1 if t.trial.state == determinedexperimentv1State.STATE_RUNNING else 0
         for t in experiment_trials(experiment_id)
     )
 
@@ -368,9 +368,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
+    return [tl.message for tl in api.trial_logs(determined_test_session(), trial_id, follow=follow)]
 
 
 def workloads_with_training(
@@ -573,7 +571,7 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ACTIVE)
+    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_RUNNING)
     paused = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_PAUSED)
     stopping_completed = sum(
         1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_COMPLETED

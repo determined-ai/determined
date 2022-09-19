@@ -19,27 +19,35 @@ export interface FiltersInterface {
 interface Props {
   settings: Settings;
   systemSeries: AvailableSeriesType;
-  updateSettings?: UpdateSettings<Settings>
+  updateSettings?: UpdateSettings<Settings>;
 }
 
 const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSettings }) => {
+  const handleChangeAgentId = useCallback(
+    (newAgentId: SelectValue) => {
+      updateSettings?.({ agentId: newAgentId as unknown as string });
+    },
+    [updateSettings],
+  );
 
-  const handleChangeAgentId = useCallback((newAgentId: SelectValue) => {
-    updateSettings?.({ agentId: newAgentId as unknown as string });
-  }, [ updateSettings ]);
+  const handleChangeGpuUuid = useCallback(
+    (newGpuUuid: SelectValue) => {
+      updateSettings?.({ gpuUuid: newGpuUuid as unknown as string });
+    },
+    [updateSettings],
+  );
 
-  const handleChangeGpuUuid = useCallback((newGpuUuid: SelectValue) => {
-    updateSettings?.({ gpuUuid: newGpuUuid as unknown as string });
-  }, [ updateSettings ]);
-
-  const handleChangeName = useCallback((newName: SelectValue) => {
-    updateSettings?.({ name: newName as unknown as string });
-  }, [ updateSettings ]);
+  const handleChangeName = useCallback(
+    (newName: SelectValue) => {
+      updateSettings?.({ name: newName as unknown as string });
+    },
+    [updateSettings],
+  );
 
   const uuidOptions = useMemo(() => {
     if (!settings.name || !settings.agentId) return [];
     return systemSeries?.[settings.name]?.[settings.agentId]?.filter((uuid) => !!uuid) || [];
-  }, [ settings, systemSeries ]);
+  }, [settings, systemSeries]);
 
   if (!settings || !updateSettings) return null;
 
@@ -52,9 +60,12 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
         style={{ width: 220 }}
         value={settings.name}
         onChange={handleChangeName}>
-        {systemSeries && Object.keys(systemSeries).map((name) => (
-          <Option key={name} value={name}>{name}</Option>
-        ))}
+        {systemSeries &&
+          Object.keys(systemSeries).map((name) => (
+            <Option key={name} value={name}>
+              {name}
+            </Option>
+          ))}
       </SelectFilter>
       <SelectFilter
         enableSearchFilter={false}
@@ -63,11 +74,13 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
         style={{ width: 220 }}
         value={settings.agentId}
         onChange={handleChangeAgentId}>
-        {settings.name && systemSeries && (
+        {settings.name &&
+          systemSeries &&
           Object.keys(systemSeries[settings.name]).map((agentId) => (
-            <Option key={agentId} value={agentId}>{agentId}</Option>
-          ))
-        )}
+            <Option key={agentId} value={agentId}>
+              {agentId}
+            </Option>
+          ))}
       </SelectFilter>
       {uuidOptions.length !== 0 && (
         <SelectFilter
@@ -80,7 +93,9 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
           value={settings.gpuUuid}
           onChange={handleChangeGpuUuid}>
           {uuidOptions.map((gpuUuid) => (
-            <Option key={gpuUuid} value={gpuUuid}>{gpuUuid}</Option>
+            <Option key={gpuUuid} value={gpuUuid}>
+              {gpuUuid}
+            </Option>
           ))}
         </SelectFilter>
       )}

@@ -21,30 +21,33 @@ interface Props {
 }
 
 const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
-  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate(
-    { workspaceId: workspace.id },
-  );
+  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
+    workspaceId: workspace.id,
+  });
 
   const canModify = usePermissions().canModifyWorkspace;
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
-  }, [ openProjectCreate ]);
+  }, [openProjectCreate]);
 
-  const handleNameChange = useCallback(async (name: string) => {
-    try {
-      await patchWorkspace({ id: workspace.id, name });
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to edit workspace.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-      return e as Error;
-    }
-  }, [ workspace.id ]);
+  const handleNameChange = useCallback(
+    async (name: string) => {
+      try {
+        await patchWorkspace({ id: workspace.id, name });
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to edit workspace.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+        return e as Error;
+      }
+    },
+    [workspace.id],
+  );
 
   // Temporary Mock for rbacEnabled functionality
   const rbacEnabled = false;
@@ -55,9 +58,9 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         <DynamicIcon name={workspace.name} size={32} />
         <h1 className={css.name}>
           <InlineEditor
-            disabled={workspace.immutable ||
-                 workspace.archived
-                || !canModify({ workspace: workspace })}
+            disabled={
+              workspace.immutable || workspace.archived || !canModify({ workspace: workspace })
+            }
             maxLength={80}
             value={workspace.name}
             onSave={handleNameChange}
@@ -77,7 +80,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         )}
         {!workspace.immutable && (
           <WorkspaceActionDropdown
-            trigger={[ 'click' ]}
+            trigger={['click']}
             workspace={workspace}
             onComplete={fetchWorkspace}>
             <DownOutlined className={css.dropdown} />
@@ -92,6 +95,9 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
           <Button onClick={handleProjectCreateClick}>New Project</Button>
         )}
       </div>
+      {!workspace.immutable && !workspace.archived && (
+        <Button onClick={handleProjectCreateClick}>New Project</Button>
+      )}
       {contextHolder}
     </div>
   );

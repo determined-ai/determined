@@ -34,112 +34,130 @@ interface WorkspacePermissionsArgs {
 }
 
 interface PermissionsHook {
+  canCreateWorkspace: boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
-  canGetPermissions: () => boolean;
+  canGetPermissions: boolean;
+  canModifyGroups: () => boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canModifyUsers: () => boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canViewGroups: () => boolean;
+  canViewUsers: () => boolean;
+  canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
 }
 
 const usePermissions = (): PermissionsHook => {
-  const { auth: { user }, userAssignments, userRoles } = useStore();
+  const {
+    auth: { user },
+    userAssignments,
+    userRoles,
+  } = useStore();
 
   // Determine if the user has access to any workspaces
   // Should be updated to check user assignments and roles once available
-  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user');
+  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user') ||
+    relevantPermissions(userAssignments, userRoles).has('view_workspaces');
 
   return {
-    canDeleteExperiment: (args: ExperimentPermissionsArgs) => canDeleteExperiment(
-      args.experiment,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canDeleteModel: (args: ModelPermissionsArgs) => canDeleteModel(
-      args.model,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canDeleteModelVersion: (args: ModelVersionPermissionsArgs) => canDeleteModelVersion(
-      args.modelVersion,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canDeleteProjects: (args: ProjectPermissionsArgs) => canDeleteWorkspaceProjects(
-      args.workspace,
-      args.project,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canDeleteWorkspace: (args: WorkspacePermissionsArgs) => canDeleteWorkspace(
-      args.workspace,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canGetPermissions: () => canGetPermissions(
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canModifyProjects: (args: ProjectPermissionsArgs) => canModifyWorkspaceProjects(
-      args.workspace,
-      args.project,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canModifyWorkspace: (args: WorkspacePermissionsArgs) => canModifyWorkspace(
-      args.workspace,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canMoveExperiment: (args: ExperimentPermissionsArgs) => canMoveExperiment(
-      args.experiment,
-      user,
-      userAssignments,
-      userRoles,
-    ),
-    canMoveProjects: (args: ProjectPermissionsArgs) => canMoveWorkspaceProjects(
-      args.workspace,
-      args.project,
-      user,
-      userAssignments,
-      userRoles,
-    ),
+    canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
+    canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
+      canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
+    canDeleteModel: (args: ModelPermissionsArgs) =>
+      canDeleteModel(args.model, user, userAssignments, userRoles),
+    canDeleteModelVersion: (args: ModelVersionPermissionsArgs) =>
+      canDeleteModelVersion(args.modelVersion, user, userAssignments, userRoles),
+    canDeleteProjects: (args: ProjectPermissionsArgs) =>
+      canDeleteWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
+    canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
+      canDeleteWorkspace(args.workspace, user, userAssignments, userRoles),
+    canGetPermissions: canGetPermissions(user, userAssignments, userRoles),
+    canModifyGroups: () => canModifyGroups(user, userAssignments, userRoles),
+    canModifyProjects: (args: ProjectPermissionsArgs) =>
+      canModifyWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
+    canModifyUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+    canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
+      canModifyWorkspace(args.workspace, user, userAssignments, userRoles),
+    canMoveExperiment: (args: ExperimentPermissionsArgs) =>
+      canMoveExperiment(args.experiment, user, userAssignments, userRoles),
+    canMoveProjects: (args: ProjectPermissionsArgs) =>
+      canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
+    canViewGroups: () => canViewGroups(user, userAssignments, userRoles),
+    canViewUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+    canViewWorkspace: (args: WorkspacePermissionsArgs) =>
+      canViewWorkspace(args.workspace, userAssignments, userRoles),
     canViewWorkspaces,
   };
 };
 
 // Permissions inside this workspace scope (no workspace = cluster-wide scope)
+// Typically returns a Set<string> of permissions.
 const relevantPermissions = (
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
   workspaceId?: number,
-): Set<string> => {
+): { has: (arg0: string) => boolean } => {
   if (!userAssignments || !userRoles) {
     // console.error('missing UserAssignment or UserRole');
     return new Set<string>();
   }
-  const relevantAssigned = userAssignments.filter((a) => a.cluster ||
-    (workspaceId && a.workspaces && a.workspaces.includes(workspaceId))).map((a) => a.name);
+  const relevantAssigned = userAssignments
+    .filter((a) => a.cluster || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)))
+    .map((a) => a.name);
   let permissions = Array<Permission>();
-  userRoles.filter((r) => relevantAssigned.includes(r.name)).forEach((r) => {
-    // TODO: is it possible a role is assigned to this workspace,
-    // but not all of its permissions?
-    permissions = permissions.concat(r.permissions.filter((p) => p.globalOnly || workspaceId));
-  });
-  return new Set<string>(permissions.map((p) => p.name));
+  userRoles
+    .filter((r) => relevantAssigned.includes(r.name))
+    .forEach((r) => {
+      // TODO: is it possible a role is assigned to this workspace,
+      // but not all of its permissions?
+      permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
+    });
+  const permitter = new Set<string>(permissions.map((p) => p.name));
+  // a cluster_admin has all permissions
+  if (permitter.has('cluster_admin')) {
+    return { has: () => true };
+  }
+  return permitter;
+};
+
+// User actions
+const canAdministrateUsers = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return (
+    !!user &&
+    (permitted.has('oss_user') ? user.isAdmin : permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'))
+  );
+};
+
+const canViewGroups = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !!user && (permitted.has('oss_user') ? user.isAdmin : true);
+};
+
+const canModifyGroups = (
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return (
+    !!user &&
+    (permitted.has('oss_user') ? user.isAdmin : permitted.has('PERMISSION_CAN_UPDATE_GROUP'))
+  );
 };
 
 // Experiment actions
@@ -150,9 +168,13 @@ const canDeleteExperiment = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
-  return !!experiment && !!user &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
-      : permitted.has('delete_experiment'));
+  return (
+    !!experiment &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === experiment.userId
+      : permitted.has('delete_experiment'))
+  );
 };
 
 const canMoveExperiment = (
@@ -162,9 +184,13 @@ const canMoveExperiment = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
-  return !!experiment && !!user &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === experiment.userId)
-      : permitted.has('move_experiment'));
+  return (
+    !!experiment &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === experiment.userId
+      : permitted.has('move_experiment'))
+  );
 };
 
 // User actions
@@ -174,8 +200,7 @@ const canGetPermissions = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!user && (permitted.has('oss_user') ? user.isAdmin
-    : permitted.has('view_permissions'));
+  return !!user && (permitted.has('oss_user') ? user.isAdmin : permitted.has('view_permissions'));
 };
 
 // Model and ModelVersion actions
@@ -186,9 +211,13 @@ const canDeleteModel = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!model && !!user &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === model.userId)
-      : permitted.has('delete_model'));
+  return (
+    !!model &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === model.userId
+      : permitted.has('delete_model'))
+  );
 };
 
 const canDeleteModelVersion = (
@@ -198,9 +227,13 @@ const canDeleteModelVersion = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!modelVersion && !!user &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === modelVersion.userId)
-      : permitted.has('delete_model_version'));
+  return (
+    !!modelVersion &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === modelVersion.userId
+      : permitted.has('delete_model_version'))
+  );
 };
 
 // Project actions
@@ -213,9 +246,14 @@ const canDeleteWorkspaceProjects = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !!workspace && !!user && !!project &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
-      : permitted.has('delete_projects'));
+  return (
+    !!workspace &&
+    !!user &&
+    !!project &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === project.userId
+      : permitted.has('delete_projects'))
+  );
 };
 
 const canModifyWorkspaceProjects = (
@@ -226,9 +264,14 @@ const canModifyWorkspaceProjects = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !!workspace && !!user && !!project &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
-      : permitted.has('modify_projects'));
+  return (
+    !!workspace &&
+    !!user &&
+    !!project &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === project.userId
+      : permitted.has('modify_projects'))
+  );
 };
 
 const canMoveWorkspaceProjects = (
@@ -239,12 +282,25 @@ const canMoveWorkspaceProjects = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !!workspace && !!user && !!project &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === project.userId)
-      : permitted.has('move_projects'));
+  return (
+    !!workspace &&
+    !!user &&
+    !!project &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === project.userId
+      : permitted.has('move_projects'))
+  );
 };
 
 // Workspace actions
+const canCreateWorkspace = (
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return permitted.has('oss_user') || permitted.has('create_workspace');
+};
+
 const canDeleteWorkspace = (
   workspace?: PermissionWorkspace,
   user?: DetailedUser,
@@ -252,9 +308,13 @@ const canDeleteWorkspace = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !!workspace && !!user &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
-      : permitted.has('delete_workspace'));
+  return (
+    !!workspace &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === workspace.userId
+      : permitted.has('delete_workspace'))
+  );
 };
 
 const canModifyWorkspace = (
@@ -264,9 +324,22 @@ const canModifyWorkspace = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !!workspace && !!user &&
-    (permitted.has('oss_user') ? (user.isAdmin || user.id === workspace.userId)
-      : permitted.has('modify_workspace'));
+  return (
+    !!workspace &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === workspace.userId
+      : permitted.has('modify_workspace'))
+  );
+};
+
+const canViewWorkspace = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return !!workspace && (permitted.has('oss_user') || permitted.has('view_workspace'));
 };
 
 export default usePermissions;

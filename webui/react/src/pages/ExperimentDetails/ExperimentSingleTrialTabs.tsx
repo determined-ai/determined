@@ -5,8 +5,7 @@ import { useHistory, useParams } from 'react-router';
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import useModalHyperparameterSearch
-  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
@@ -35,7 +34,7 @@ enum TabType {
   Overview = 'overview',
   Profiler = 'profiler',
   Workloads = 'workloads',
-  Notes = 'notes'
+  Notes = 'notes',
 }
 
 interface Params {
@@ -52,17 +51,20 @@ export interface Props {
   pageRef: React.RefObject<HTMLElement>;
 }
 
-const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { experiment, fetchExperimentDetails, onTrialUpdate, pageRef }: Props,
-) => {
+const ExperimentSingleTrialTabs: React.FC<Props> = ({
+  experiment,
+  fetchExperimentDetails,
+  onTrialUpdate,
+  pageRef,
+}: Props) => {
   const history = useHistory();
-  const [ trialId, setFirstTrialId ] = useState<number>();
-  const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
+  const [trialId, setFirstTrialId] = useState<number>();
+  const [wontHaveTrials, setWontHaveTrials] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
   const { tab } = useParams<Params>();
-  const [ canceler ] = useState(new AbortController());
-  const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
-  const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+  const [canceler] = useState(new AbortController());
+  const [trialDetails, setTrialDetails] = useState<TrialDetails>();
+  const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
@@ -93,7 +95,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler, experiment.id, experiment.state, onTrialUpdate ]);
+  }, [canceler, experiment.id, experiment.state, onTrialUpdate]);
 
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;
@@ -109,40 +111,42 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler.signal, onTrialUpdate, trialId ]);
+  }, [canceler.signal, onTrialUpdate, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
-  const { stopPolling: stopPollingFirstTrialId } = usePolling(
-    fetchFirstTrialId,
-    { rerunOnNewFn: true },
-  );
+  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId, {
+    rerunOnNewFn: true,
+  });
 
-  const handleTabChange = useCallback((key) => {
-    setTabKey(key);
-    history.replace(`${basePath}/${key}`);
-  }, [ basePath, history ]);
+  const handleTabChange = useCallback(
+    (key) => {
+      setTabKey(key);
+      history.replace(`${basePath}/${key}`);
+    },
+    [basePath, history],
+  );
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
     history.replace(`${basePath}/${TabType.Logs}?tail`);
-  }, [ basePath, history ]);
+  }, [basePath, history]);
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
       history.replace(`${basePath}/${tabKey}`);
     }
-  }, [ basePath, history, tab, tabKey ]);
+  }, [basePath, history, tab, tabKey]);
 
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
       stopPolling();
     }
-  }, [ trialDetails, stopPolling ]);
+  }, [trialDetails, stopPolling]);
 
   useEffect(() => {
     if (wontHaveTrials || trialId !== undefined) stopPollingFirstTrialId();
-  }, [ trialId, stopPollingFirstTrialId, wontHaveTrials ]);
+  }, [trialId, stopPollingFirstTrialId, wontHaveTrials]);
 
   useEffect(() => {
     return () => {
@@ -150,7 +154,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       stopPolling();
       stopPollingFirstTrialId();
     };
-  }, [ canceler, stopPolling, stopPollingFirstTrialId ]);
+  }, [canceler, stopPolling, stopPollingFirstTrialId]);
 
   /*
    * Immediately attempt to fetch trial details instead of waiting for the
@@ -158,26 +162,29 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
    */
   useEffect(() => {
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
-  }, [ fetchTrialDetails, prevTrialId, trialId ]);
+  }, [fetchTrialDetails, prevTrialId, trialId]);
 
-  const handleNotesUpdate = useCallback(async (editedNotes: string) => {
-    try {
-      await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
-      await fetchExperimentDetails();
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to update experiment notes.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [ experiment.id, fetchExperimentDetails ]);
+  const handleNotesUpdate = useCallback(
+    async (editedNotes: string) => {
+      try {
+        await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
+        await fetchExperimentDetails();
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to update experiment notes.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
+    },
+    [experiment.id, fetchExperimentDetails],
+  );
 
   const handleHPSearch = useCallback(() => {
     openHyperparameterSearchModal({});
-  }, [ openHyperparameterSearchModal ]);
+  }, [openHyperparameterSearchModal]);
 
   return (
     <TrialLogPreview
@@ -186,22 +193,20 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       onViewLogs={handleViewLogs}>
       <Tabs
         activeKey={tabKey}
-        tabBarExtraContent={tabKey === 'hyperparameters' ? (
-          <div style={{ padding: 8 }}>
-            <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
-          </div>
-        ) :
-          undefined}
+        tabBarExtraContent={
+          tabKey === 'hyperparameters' ? (
+            <div style={{ padding: 8 }}>
+              <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
+            </div>
+          ) : undefined
+        }
         tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">
-          <TrialDetailsHyperparameters
-            pageRef={pageRef}
-            trial={trialDetails as TrialDetails}
-          />
+          <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
         </TabPane>
         <TabPane key="checkpoints" tab="Checkpoints">
           <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />

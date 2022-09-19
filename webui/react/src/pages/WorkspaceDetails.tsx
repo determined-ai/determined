@@ -6,6 +6,7 @@ import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
@@ -44,6 +45,8 @@ const WorkspaceDetails: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
   const basePath = paths.workspaceDetails(workspaceId);
+  const { canViewWorkspace } = usePermissions();
+  
   const fetchWorkspace = useCallback(async () => {
     try {
       const response = await getWorkspace({ id }, { signal: canceler.signal });
@@ -51,7 +54,7 @@ const WorkspaceDetails: React.FC = () => {
     } catch (e) {
       if (!pageError) setPageError(e as Error);
     }
-  }, [ canceler.signal, id, pageError ]);
+  }, [canceler.signal, id, pageError]);
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -79,29 +82,27 @@ const WorkspaceDetails: React.FC = () => {
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
-    const message =
-      `Unable to fetch Workspace ${workspaceId}`;
+    const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
     return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
+  }
+
+  if (!canViewWorkspace({ workspace: { id } })) {
+    return <PageNotFound />;
   }
 
   return (
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={(
-        <WorkspaceDetailsHeader
-          fetchWorkspace={fetchAll}
-          workspace={workspace}
-        />
-      )}
+      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
       id="workspaceDetails">
       {
         rbacEnabled ? (

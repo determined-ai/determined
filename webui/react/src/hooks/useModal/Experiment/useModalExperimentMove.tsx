@@ -7,6 +7,7 @@ import { FixedSizeList as List } from 'react-window';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import projectDetailConfigSettings, { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -74,16 +75,17 @@ const moveExperimentWithHandler = async (
 };
 
 const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
-  const {
-    settings: destSettings,
-    updateSettings: updateDestSettings,
-  } = useSettings<Settings>(settingsConfig);
-  const [ sourceProjectId, setSourceProjectId ] = useState<number|undefined>();
-  const [ experimentIds, setExperimentIds ] = useState<number[]>();
-  const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
-  const [ projects, setProjects ] = useState<Project[]>([]);
+  const { settings: destSettings, updateSettings: updateDestSettings } =
+    useSettings<Settings>(settingsConfig);
 
-  const handleClose = useCallback(() => onClose?.(), [ onClose ]);
+  const { settings: projectSettings, updateSettings: updateProjectSettings } =
+    useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
+  const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
+  const [experimentIds, setExperimentIds] = useState<number[]>();
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
@@ -120,56 +122,62 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ destSettings.workspaceId ]);
+  }, [destSettings.workspaceId]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();
-  }, [ fetchWorkspaces, modalRef ]);
+  }, [fetchWorkspaces, modalRef]);
 
-  const handleWorkspaceSelect = useCallback((workspaceId: SelectValue) => {
-    updateDestSettings({
-      projectId: (workspaceId === 1 && sourceProjectId !== 1) ? 1 : undefined,
-      workspaceId: workspaceId as number,
-    });
-    setProjects([]);
-  }, [ sourceProjectId, updateDestSettings ]);
+  const handleWorkspaceSelect = useCallback(
+    (workspaceId: SelectValue) => {
+      updateDestSettings({
+        projectId: workspaceId === 1 && sourceProjectId !== 1 ? 1 : undefined,
+        workspaceId: workspaceId as number,
+      });
+      setProjects([]);
+    },
+    [sourceProjectId, updateDestSettings],
+  );
 
   const handleProjectSelect = useCallback(
     (project: Project) => {
       if (project.archived || project.id === sourceProjectId) return;
       updateDestSettings({ projectId: project.id });
     },
-    [ sourceProjectId, updateDestSettings ],
+    [sourceProjectId, updateDestSettings],
   );
 
   useEffect(() => {
     if (modalRef.current) fetchProjects();
-  }, [ fetchProjects, modalRef ]);
+  }, [fetchProjects, modalRef]);
 
-  const renderRow = useCallback(({ index, style }) => {
-    const disabled = projects[index].archived || projects[index].id === sourceProjectId;
-    const selected = projects[index].id === destSettings.projectId;
-    return (
-      <li
-        className={disabled ? css.disabled : selected ? css.selected : css.default}
-        style={style}
-        onClick={() => handleProjectSelect(projects[index])}>
-        <Typography.Text
-          disabled={disabled}
-          ellipsis={true}>
-          {projects[index].name}
-        </Typography.Text>
-        {projects[index].archived && <Icon name="archive" />}
-        {projects[index].id === sourceProjectId && <Icon name="checkmark" />}
-      </li>
-    );
-  }, [ destSettings.projectId, handleProjectSelect, projects, sourceProjectId ]);
+  const renderRow = useCallback(
+    ({ index, style }) => {
+      const disabled = projects[index].archived || projects[index].id === sourceProjectId;
+      const selected = projects[index].id === destSettings.projectId;
+      return (
+        <li
+          className={disabled ? css.disabled : selected ? css.selected : css.default}
+          style={style}
+          onClick={() => handleProjectSelect(projects[index])}>
+          <Typography.Text disabled={disabled} ellipsis={true}>
+            {projects[index].name}
+          </Typography.Text>
+          {projects[index].archived && <Icon name="archive" />}
+          {projects[index].id === sourceProjectId && <Icon name="checkmark" />}
+        </li>
+      );
+    },
+    [destSettings.projectId, handleProjectSelect, projects, sourceProjectId],
+  );
 
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
         <div>
-          <label className={css.label} htmlFor="workspace">Workspace</label>
+          <label className={css.label} htmlFor="workspace">
+            Workspace
+          </label>
           <SelectFilter
             id="workspace"
             placeholder="Select a destination workspace."
@@ -179,15 +187,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             onSelect={handleWorkspaceSelect}>
             {workspaces.map((workspace) => {
               return (
-                <Option
-                  disabled={workspace.archived}
-                  key={workspace.id}
-                  value={workspace.id}>
+                <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
                   <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
-                    <Typography.Text
-                      ellipsis={true}>
-                      {workspace.name}
-                    </Typography.Text>
+                    <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
                     {workspace.archived && <Icon name="archive" />}
                   </div>
                 </Option>
@@ -197,35 +199,36 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         </div>
         {destSettings.workspaceId !== 1 && (
           <div>
-            <label className={css.label} htmlFor="project">Project</label>
+            <label className={css.label} htmlFor="project">
+              Project
+            </label>
             {destSettings.workspaceId === undefined ? (
               <div className={css.emptyContainer}>
                 <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
-            ) :
-              projects.length === 0 ? (
-                <div className={css.emptyContainer}>
-                  <Empty
-                    description="Workspace contains no projects"
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  />
-                </div>
-              ) : (
-                <List
-                  className={css.listContainer}
-                  height={200}
-                  innerElementType="ul"
-                  itemCount={projects.length}
-                  itemSize={24}
-                  width="100%">
-                  {renderRow}
-                </List>
-              )}
+            ) : projects.length === 0 ? (
+              <div className={css.emptyContainer}>
+                <Empty
+                  description="Workspace contains no projects"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              </div>
+            ) : (
+              <List
+                className={css.listContainer}
+                height={200}
+                innerElementType="ul"
+                itemCount={projects.length}
+                itemSize={24}
+                width="100%">
+                {renderRow}
+              </List>
+            )}
           </div>
         )}
       </div>
     );
-  }, [ handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces ]);
+  }, [handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
@@ -234,15 +237,17 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
     const results = await Promise.allSettled(
       experimentIds.map((experimentId) =>
-        moveExperimentWithHandler(experimentId, destSettings.projectId as number)),
+        moveExperimentWithHandler(experimentId, destSettings.projectId as number),
+      ),
     );
-    const numFailures = results.filter((res) => (
-      res.status !== 'fulfilled' || res.value === 1
-    )).length;
+    const numFailures = results.filter(
+      (res) => res.status !== 'fulfilled' || res.value === 1,
+    ).length;
 
-    const experimentText = experimentIds.length === 1
-      ? `Experiment ${experimentIds[0]}`
-      : `${experimentIds.length} experiments`;
+    const experimentText =
+      experimentIds.length === 1
+        ? `Experiment ${experimentIds[0]}`
+        : `${experimentIds.length} experiments`;
 
     const destinationProjectName =
       projects.find((p) => p.id === destSettings.projectId)?.name ?? '';
@@ -260,6 +265,15 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ),
         message: 'Move Success',
       });
+      if (sourceProjectId) {
+        const newPinned = { ...projectSettings.pinned };
+        const pinSet = new Set(newPinned[sourceProjectId]);
+        for (const experimentId of experimentIds) {
+          pinSet.delete(experimentId);
+        }
+        newPinned[sourceProjectId] = Array.from(pinSet);
+        updateProjectSettings({ pinned: newPinned });
+      }
     } else if (numFailures === experimentIds.length) {
       notification.warn({
         description: `Unable to move ${experimentText}`,
@@ -270,8 +284,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         description: (
           <div onClick={closeNotification}>
             <p>
-              {numFailures} out of {experimentIds.length} experiments failed to move
-              to project {destinationProjectName}
+              {numFailures} out of {experimentIds.length} experiments failed to move to project{' '}
+              {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(destSettings.projectId)}>View Project</Link>
           </div>
@@ -280,20 +294,31 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         message: 'Partial Move Failure',
       });
     }
-  }, [ closeNotification, destSettings.projectId, experimentIds, projects ]);
+  }, [
+    closeNotification,
+    destSettings.projectId,
+    experimentIds,
+    projectSettings.pinned,
+    projects,
+    sourceProjectId,
+    updateProjectSettings,
+  ]);
 
-  const getModalProps = useCallback((experimentIds, destinationProjectId): ModalFuncProps => {
-    const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okButtonProps: { disabled: !destinationProjectId },
-      okText: `Move Experiment${pluralizer}`,
-      onOk: handleOk,
-      title: `Move Experiment${pluralizer}`,
-    };
-  }, [ handleOk, modalContent ]);
+  const getModalProps = useCallback(
+    (experimentIds, destinationProjectId): ModalFuncProps => {
+      const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';
+      return {
+        closable: true,
+        content: modalContent,
+        icon: null,
+        okButtonProps: { disabled: !destinationProjectId },
+        okText: `Move Experiment${pluralizer}`,
+        onOk: handleOk,
+        title: `Move Experiment${pluralizer}`,
+      };
+    },
+    [handleOk, modalContent],
+  );
 
   const modalOpen = useCallback(
     ({
@@ -330,7 +355,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(experimentIds, destSettings.projectId));
-  }, [ destSettings.projectId, getModalProps, modalRef, openOrUpdate, experimentIds ]);
+  }, [destSettings.projectId, getModalProps, modalRef, openOrUpdate, experimentIds]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

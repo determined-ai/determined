@@ -15,7 +15,7 @@ const Container = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return (
     <>

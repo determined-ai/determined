@@ -21,7 +21,7 @@ export interface DetailedUser extends User {
 }
 
 export interface DetailedUserList extends WithPagination {
-  users: DetailedUser[],
+  users: DetailedUser[];
 }
 
 export interface Auth {
@@ -42,13 +42,14 @@ export enum BrandingType {
 
 export interface DeterminedInfo {
   branding?: BrandingType;
-  checked: boolean,
+  checked: boolean;
   clusterId: string;
   clusterName: string;
   externalLoginUri?: string;
   externalLogoutUri?: string;
   isTelemetryEnabled: boolean;
   masterId: string;
+  rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
   version: string;
 }
@@ -66,7 +67,7 @@ export enum ResourceType {
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
-export const deviceTypes = new Set([ ResourceType.CPU, ResourceType.CUDA, ResourceType.ROCM ]);
+export const deviceTypes = new Set([ResourceType.CPU, ResourceType.CUDA, ResourceType.ROCM]);
 
 export enum ResourceState { // This is almost CommandState
   Unspecified = 'UNSPECIFIED',
@@ -76,7 +77,7 @@ export enum ResourceState { // This is almost CommandState
   Running = 'RUNNING',
   Terminated = 'TERMINATED',
   Warm = 'WARM',
-  Potential = 'POTENTIAL'
+  Potential = 'POTENTIAL',
 }
 
 // High level Slot state
@@ -84,7 +85,7 @@ export enum SlotState {
   Running = 'RUNNING',
   Free = 'FREE',
   Pending = 'PENDING',
-  Potential = 'POTENTIAL'
+  Potential = 'POTENTIAL',
 }
 
 export const resourceStates: ResourceState[] = [
@@ -140,13 +141,12 @@ export interface StartEndTimes extends EndTimes {
 
 /* Command */
 export enum CommandState {
-  Pending = 'PENDING',
-  Assigned = 'ASSIGNED',
   Pulling = 'PULLING',
   Starting = 'STARTING',
   Running = 'RUNNING',
   Terminating = 'TERMINATING',
   Terminated = 'TERMINATED',
+  Queued = 'QUEUED',
 }
 
 export type State = CommandState | RunState;
@@ -282,7 +282,7 @@ export interface ExperimentConfig {
     maxSlots?: number;
   };
   searcher: {
-    max_length?: Record<'batches' | 'records' | 'epochs', number>,
+    max_length?: Record<'batches' | 'records' | 'epochs', number>;
     max_trials?: number;
     metric: string;
     name: ExperimentSearcherName;
@@ -307,6 +307,7 @@ export enum ExperimentAction {
   Move = 'Move',
   Pause = 'Pause',
   OpenTensorBoard = 'View in TensorBoard',
+  SwitchPin = 'Switch Pin',
   Unarchive = 'Unarchive',
   ViewLogs = 'View Logs',
 }
@@ -328,6 +329,10 @@ export enum RunState {
   Deleting = 'DELETING',
   DeleteFailed = 'DELETE_FAILED',
   Unspecified = 'UNSPECIFIED',
+  Queued = 'QUEUED',
+  Pulling = 'PULLING',
+  Starting = 'STARTING',
+  Running = 'RUNNING',
 }
 
 export interface ValidationHistory {
@@ -350,7 +355,9 @@ export enum MetricType {
 }
 
 export type MetricTypeParam =
-  'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION';
+  | 'METRIC_TYPE_UNSPECIFIED'
+  | 'METRIC_TYPE_TRAINING'
+  | 'METRIC_TYPE_VALIDATION';
 
 export const metricTypeParamMap: Record<string, MetricTypeParam> = {
   [MetricType.Training]: 'METRIC_TYPE_TRAINING',
@@ -445,8 +452,8 @@ export interface TrialPagination extends WithPagination {
   trials: TrialItem[];
 }
 
-type HpValue = Primitive | RawJson
-export type TrialHyperparameters = Record<string, HpValue>
+type HpValue = Primitive | RawJson;
+export type TrialHyperparameters = Record<string, HpValue>;
 
 export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
@@ -597,7 +604,7 @@ export interface ModelPagination extends WithPagination {
 
 export interface ModelVersions extends WithPagination {
   model: ModelItem;
-  modelVersions: ModelVersion[]
+  modelVersions: ModelVersion[];
 }
 
 export interface Task {
@@ -610,7 +617,7 @@ export interface Task {
 }
 
 // CompoundRunState adds more information about a job's state to RunState.
-export type CompoundRunState = RunState | JobState
+export type CompoundRunState = RunState | JobState;
 
 export interface ExperimentTask extends Task {
   archived: boolean;
@@ -802,10 +809,9 @@ export interface UserAssignment {
 }
 
 export interface Permission {
-  globalOnly: boolean;
   id: number;
+  isGlobal: boolean;
   name: string;
-  workspaceOnly: boolean;
 }
 
 export interface UserRole {

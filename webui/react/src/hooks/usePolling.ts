@@ -12,7 +12,7 @@ interface PollingHooks {
 
 interface PollingOptions {
   interval?: number;
-  rerunOnNewFn?: boolean
+  rerunOnNewFn?: boolean;
   runImmediately?: boolean;
 }
 
@@ -62,29 +62,32 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
       timer.current = undefined;
       if (isPolling.current) poll();
     }, pollingOptions.current.interval) as unknown as NodeJS.Timeout;
-  }, [ clearTimer ]);
+  }, [clearTimer]);
 
   const startPolling = useCallback(async () => {
     isPolling.current = true;
     if (pollingOptions.current.runImmediately) await savedPollingFn.current();
     poll();
-  }, [ poll ]);
+  }, [poll]);
 
-  const stopPolling = useCallback((options: StopOptions = {}) => {
-    isPolling.current = false;
-    if (!options.terminateGracefully) clearTimer();
-  }, [ clearTimer ]);
+  const stopPolling = useCallback(
+    (options: StopOptions = {}) => {
+      isPolling.current = false;
+      if (!options.terminateGracefully) clearTimer();
+    },
+    [clearTimer],
+  );
 
   // Update polling function if a new one is passed in.
   useEffect(() => {
     savedPollingFn.current = pollingFn;
-  }, [ pollingFn ]);
+  }, [pollingFn]);
 
   // Start polling when mounted and stop polling when umounted.
   useEffect(() => {
     startPolling();
     return () => stopPolling();
-  }, [ startPolling, stopPolling, pollingFnIndicator ]);
+  }, [startPolling, stopPolling, pollingFnIndicator]);
 
   useEffect(() => {
     if (ui.isPageHidden) {
@@ -102,7 +105,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
        */
       if (!isPolling.current && isPollingBeforeHidden.current) startPolling();
     }
-  }, [ startPolling, stopPolling, ui.isPageHidden ]);
+  }, [startPolling, stopPolling, ui.isPageHidden]);
 
   return { isPolling: isPolling.current, startPolling, stopPolling };
 };

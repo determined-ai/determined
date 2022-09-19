@@ -49,11 +49,10 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
     settings.gpuUuid,
   );
 
-  const options = useMemo(() => getOptionsForMetrics(settings.name ?? '', systemMetrics.names), [
-    getOptionsForMetrics,
-    settings.name,
-    systemMetrics.names,
-  ]);
+  const options = useMemo(
+    () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
+    [getOptionsForMetrics, settings.name, systemMetrics.names],
+  );
 
   useEffect(() => {
     if (!systemSeries || (settings.agentId && settings.name)) return;
@@ -67,23 +66,23 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
     }
 
     if (!settings.agentId) {
-      newSettings.agentId = Object.keys(systemSeries[(newSettings.name as unknown) as string])[0];
+      newSettings.agentId = Object.keys(systemSeries[newSettings.name as unknown as string])[0];
     }
 
     if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
-  }, [ settings.agentId, settings.name, systemSeries, updateSettings ]);
+  }, [settings.agentId, settings.name, systemSeries, updateSettings]);
 
   return (
     <Section
       bodyBorder
       bodyNoPadding
-      filters={(
+      filters={
         <SystemMetricFilter
           settings={settings}
           systemSeries={systemSeries}
           updateSettings={updateSettings}
         />
-      )}
+      }
       title="System Metrics">
       <UPlotChart data={systemMetrics.data} options={options} />
     </Section>

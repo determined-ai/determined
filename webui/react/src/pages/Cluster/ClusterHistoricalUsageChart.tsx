@@ -10,13 +10,13 @@ import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
-  chartKey?: number
-  groupBy?: GroupBy,
-  height?: number,
-  hoursByLabel: Record<string, number[]>,
-  hoursTotal?: number[],
-  label?: string,
-  time: string[],
+  chartKey?: number;
+  groupBy?: GroupBy;
+  height?: number;
+  hoursByLabel: Record<string, number[]>;
+  hoursTotal?: number[];
+  label?: string;
+  time: string[];
 }
 
 const CHART_HEIGHT = 350;
@@ -33,7 +33,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   const chartData: AlignedData = useMemo(() => {
     const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
 
-    const data: AlignedData = [ timeUnix ];
+    const data: AlignedData = [timeUnix];
     if (hoursTotal) {
       data.push(hoursTotal);
     }
@@ -43,7 +43,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
     });
 
     return data;
-  }, [ hoursByLabel, hoursTotal, time ]);
+  }, [hoursByLabel, hoursTotal, time]);
   const chartOptions: Options = useMemo(() => {
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
@@ -52,7 +52,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       timeSeries = { label: 'Month', value: '{YYYY}-{MM}' };
     }
 
-    const series: Series[] = [ timeSeries ];
+    const series: Series[] = [timeSeries];
     if (hoursTotal) {
       series.push({
         label: 'total',
@@ -77,10 +77,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
             const rangeSecs = scaleMax - scaleMin;
             const rangeDays = rangeSecs / (24 * 60 * 60);
             const pxPerDay = plotDim / rangeDays;
-            return Math.max(
-              60,
-              pxPerDay * (groupBy === GroupBy.Month ? 28 : 1),
-            );
+            return Math.max(60, pxPerDay * (groupBy === GroupBy.Month ? 28 : 1));
           },
           values: (self, splits) => {
             return splits.map((i) => {
@@ -96,11 +93,13 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       series,
       tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [ groupBy, height, hoursByLabel, hoursTotal, label, chartKey ]);
+  }, [groupBy, height, hoursByLabel, hoursTotal, label, chartKey]);
   const hasData = useMemo(() => {
-    return Object.keys(hoursByLabel)
-      .reduce((agg, label) => agg || hoursByLabel[label].length > 0, false);
-  }, [ hoursByLabel ]);
+    return Object.keys(hoursByLabel).reduce(
+      (agg, label) => agg || hoursByLabel[label].length > 0,
+      false,
+    );
+  }, [hoursByLabel]);
 
   if (!hasData) {
     return <Message title="No data to plot." type={MessageType.Empty} />;

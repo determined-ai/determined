@@ -9,7 +9,7 @@ import BadgeTag from './BadgeTag';
 
 export default {
   component: BadgeTag,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'BadgeTag',
 };
 
@@ -21,7 +21,7 @@ export const Custom = (): React.ReactNode => (
   <BadgeTag
     label={text('Label', 'Label')}
     preLabel={text('Pre Label', '')}
-    state={select('State', CommandState, CommandState.Assigned)}
+    state={select('State', CommandState, CommandState.Running)}
     type={select<BadgeType>('Type', knobTypeOptions, BadgeType.Default)}>
     {text('Content', 'a4fdb98')}
   </BadgeTag>

@@ -1,41 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 enum V1OrderBy {
-  UNSPECIFIED = <any> 'ORDER_BY_UNSPECIFIED',
-  ASC = <any> 'ORDER_BY_ASC',
-  DESC = <any> 'ORDER_BY_DESC'
+  UNSPECIFIED = <any>'ORDER_BY_UNSPECIFIED',
+  ASC = <any>'ORDER_BY_ASC',
+  DESC = <any>'ORDER_BY_DESC',
 }
 
 enum ProtobufNullValue {
-  NULLVALUE = <any> 'NULL_VALUE'
+  NULLVALUE = <any>'NULL_VALUE',
 }
 
 import { DetError } from './error';
 import * as service from './service';
 
 describe('Service Utilities', () => {
-
   describe('isAuthFailure', () => {
     it('marks false for 200s', () => {
-
       const response = new Response('ok', { status: 200 });
 
       expect(service.isAuthFailure(response)).toBe(false);
     });
 
     it('marks false for 404s', () => {
-
       const response = new Response('not found', { status: 404 });
 
       expect(service.isAuthFailure(response)).toBe(false);
     });
     it('marks true for 401s', () => {
-
       const response = new Response('unauthorized', { status: 401 });
 
       expect(service.isAuthFailure(response)).toBe(true);
     });
     it('marks true for external 500s', () => {
-
       const response = new Response('external request failure', { status: 500 });
 
       expect(service.isAuthFailure(response, true)).toBe(true);
@@ -72,20 +67,19 @@ describe('Service Utilities', () => {
     });
 
     it('returns true for det errors with not found in message', () => {
-      const e = new DetError(
-        'could not do',
-        { publicMessage: 'could not do because Not Found', silent: true },
-      );
+      const e = new DetError('could not do', {
+        publicMessage: 'could not do because Not Found',
+        silent: true,
+      });
       expect(service.isNotFound(e)).toBe(true);
     });
 
     it('returns false for det errors with not found not in message', () => {
-      const e = new DetError(
-        'could not do',
-        { publicMessage: 'could not do because bad', silent: true },
-      );
+      const e = new DetError('could not do', {
+        publicMessage: 'could not do because bad',
+        silent: true,
+      });
       expect(service.isNotFound(e)).toBe(false);
-
     });
     it('returns true for errors with not found in message', () => {
       const e = new Error('could not do because not found');
@@ -117,14 +111,12 @@ describe('Service Utilities', () => {
 
   describe('processApiError', () => {
     it('is good', () => {
-
       expect(1).toBe(1);
     });
   });
 
   describe('generateDetApi', () => {
     it('iis good', () => {
-
       expect(1).toBe(1);
     });
   });
@@ -139,32 +131,30 @@ describe('Service Utilities', () => {
     });
 
     it('returns default for invalid values', () => {
-      expect(service.validateDetApiEnum(V1OrderBy, 'asdfasdf'))
-        .toBe(V1OrderBy.UNSPECIFIED);
+      expect(service.validateDetApiEnum(V1OrderBy, 'asdfasdf')).toBe(V1OrderBy.UNSPECIFIED);
     });
 
     it('returns undefined when no default value exists', () => {
-      expect(service.validateDetApiEnum(ProtobufNullValue, 'asdfasdf'))
-        .toBeUndefined();
+      expect(service.validateDetApiEnum(ProtobufNullValue, 'asdfasdf')).toBeUndefined();
     });
   });
 
   describe('validateDetApiEnumList', () => {
     it('should preserve valid input list', () => {
-      const input = [ V1OrderBy.ASC, V1OrderBy.DESC ];
-      const expectedOutput = [ V1OrderBy.ASC, V1OrderBy.DESC ];
+      const input = [V1OrderBy.ASC, V1OrderBy.DESC];
+      const expectedOutput = [V1OrderBy.ASC, V1OrderBy.DESC];
       expect(service.validateDetApiEnumList(V1OrderBy, input)).toStrictEqual(expectedOutput);
     });
 
     it('should return undefined when all inputs are unspecified or invalid', () => {
-      const input = [ V1OrderBy.UNSPECIFIED, V1OrderBy.UNSPECIFIED, 'bucket' ];
+      const input = [V1OrderBy.UNSPECIFIED, V1OrderBy.UNSPECIFIED, 'bucket'];
 
       expect(service.validateDetApiEnumList(V1OrderBy, input)).toBeUndefined();
     });
 
     it('should filter bad entries', () => {
-      const input = [ V1OrderBy.ASC, V1OrderBy.DESC, 'bucket' ];
-      const expectedOutput = [ V1OrderBy.ASC, V1OrderBy.DESC ];
+      const input = [V1OrderBy.ASC, V1OrderBy.DESC, 'bucket'];
+      const expectedOutput = [V1OrderBy.ASC, V1OrderBy.DESC];
       expect(service.validateDetApiEnumList(V1OrderBy, input)).toStrictEqual(expectedOutput);
     });
   });
@@ -181,7 +171,6 @@ describe('Service Utilities', () => {
       Object.values(window).forEach((thing) => {
         expect(service.identity(thing)).toBe(thing);
       });
-
     });
   });
 });

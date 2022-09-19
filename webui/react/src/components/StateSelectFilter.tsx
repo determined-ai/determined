@@ -22,11 +22,15 @@ const defaultProps = {
 };
 
 const commandOptions = Object.values(CommandState).map((value) => (
-  <Option key={value} value={value}>{commandStateToLabel[value]}</Option>
+  <Option key={value} value={value}>
+    {commandStateToLabel[value]}
+  </Option>
 ));
 
 const experimentOptions = Object.values(RunState).map((value) => (
-  <Option key={value} value={value}>{runStateToLabel[value]}</Option>
+  <Option key={value} value={value}>
+    {runStateToLabel[value]}
+  </Option>
 ));
 
 const StateSelectFilter: React.FC<Props> = ({
@@ -39,8 +43,12 @@ const StateSelectFilter: React.FC<Props> = ({
     if (showExperimentStates && showCommandStates) {
       return (
         <>
-          <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>
-          <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>
+          <OptGroup key="experimentGroup" label="Experiment States">
+            {experimentOptions}
+          </OptGroup>
+          <OptGroup key="commandGroup" label="Command States">
+            {commandOptions}
+          </OptGroup>
         </>
       );
     } else if (showExperimentStates) {
@@ -48,13 +56,16 @@ const StateSelectFilter: React.FC<Props> = ({
     } else if (showCommandStates) {
       return commandOptions;
     }
-  }, [ showExperimentStates, showCommandStates ]);
+  }, [showExperimentStates, showCommandStates]);
 
-  const handleSelect = useCallback((newValue: SelectValue) => {
-    if (!onChange) return;
-    const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
-    onChange(singleValue);
-  }, [ onChange ]);
+  const handleSelect = useCallback(
+    (newValue: SelectValue) => {
+      if (!onChange) return;
+      const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
+      onChange(singleValue);
+    },
+    [onChange],
+  );
 
   return (
     <SelectFilter
@@ -62,7 +73,9 @@ const StateSelectFilter: React.FC<Props> = ({
       label="State"
       value={value}
       onSelect={handleSelect}>
-      <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
+      <Option key={ALL_VALUE} value={ALL_VALUE}>
+        All
+      </Option>
       {options}
     </SelectFilter>
   );
