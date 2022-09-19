@@ -13,7 +13,6 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
 
-from determined.common import check
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import (
@@ -170,8 +169,10 @@ class LightningAdapter(PyTorchTrial):
 
         """
 
-        check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
-        check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')
+        if precision not in {16, 32}:
+            raise ValueError("Only precisions 16 & 32 are supported.")
+        if amp_backend not in {"native", "apex"}:
+            raise ValueError('Only "native" and "apex" AMP-backends are supported.')
 
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
@@ -299,12 +300,11 @@ class LightningAdapter(PyTorchTrial):
                     "- Tuple of dictionaries as described, with an optional ‘frequency’ key.\n"
                 )
 
-            check.check_isinstance(
-                lrs["scheduler"].optimizer,
-                Optimizer,
-                "A returned LRScheduler from `configure_optimizers` is "
-                "missing the optimizer attribute.",
-            )
+            if not isinstance(lrs["scheduler"].optimizer, Optimizer):
+                raise TypeError(
+                    "A returned LRScheduler from `configure_optimizers` is "
+                    "missing the optimizer attribute.",
+                )
 
             # switch the user's unwrapped optimizer with the wrapped version.
             lrs["scheduler"].optimizer = wrapped_opt
