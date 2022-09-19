@@ -418,7 +418,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     ) -> Tuple:
         """
         Configure automatic mixed precision for your models and optimizers using NVIDIA's Apex
-        PyTorch extension. Note that details for apex.amp are handled automatically within
+        PyTorch extension. Note that details for ``apex.amp`` are handled automatically within
         Determined after this call.
 
         This function must be called **after** you have finished constructing your models and
@@ -571,7 +571,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             That means the gradient on each parameter can only be calculated once on each batch.
             If a parameter is associated with multiple losses, you can either choose to call
             ``backward'' on only one of those losses, or you can set the ``require_grads`` flag of
-            a parameter or module to false to avoid manual gradient accumulation on that parameter.
+            a parameter or module to ``False`` to avoid manual gradient accumulation on that
+            parameter.
             However, you can do gradient accumulation across batches by setting
             :ref:`optimizations.aggregation_frequency <config-aggregation-frequency>` in the
             experiment configuration to be greater than 1.
