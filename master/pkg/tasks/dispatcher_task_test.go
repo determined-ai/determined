@@ -466,13 +466,13 @@ func Test_ToDispatcherManifest(t *testing.T) {
 	tests := []struct {
 		name                   string
 		containerRunType       string
+		isPbsScheduler         bool
 		slotType               device.Type
 		tresSupported          bool
 		gresSupported          bool
 		Slurm                  []string
 		Pbs                    []string
-		wantCarrier0           string
-		wantCarrier1           string
+		wantCarrier            string
 		wantResourcesInstances *map[string]int32
 		wantResourcesGpus      *map[string]int32
 		wantSlurmArgs          []string
@@ -481,20 +481,34 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		errorContains          string
 	}{
 		{
-			name:             "Test singularity",
+			name:             "Test singularity with Slurm",
 			containerRunType: "singularity",
 			slotType:         device.CUDA,
 			tresSupported:    true,
-			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
-			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 		},
 		{
-			name:             "Test podman",
+			name:             "Test singularity with PBS",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			tresSupported:    true,
+			isPbsScheduler:   true,
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+		},
+		{
+			name:             "Test podman with Slurm",
 			containerRunType: "podman",
 			slotType:         device.CPU,
 			tresSupported:    false,
-			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
-			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs",
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
+		},
+		{
+			name:             "Test podman with PBS",
+			containerRunType: "podman",
+			slotType:         device.CPU,
+			tresSupported:    false,
+			isPbsScheduler:   true,
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs",
 		},
 		{
 			name:             "Test TresSupported true",
@@ -502,8 +516,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			slotType:         device.CUDA,
 			tresSupported:    true,
 			gresSupported:    true,
-			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
-			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantResourcesInstances: &map[string]int32{
 				"per-node": 1,
 			},
@@ -518,8 +531,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			tresSupported:    false,
 			gresSupported:    true,
 			Slurm:            []string{},
-			wantCarrier0:     "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
-			wantCarrier1:     "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs",
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantResourcesInstances: &map[string]int32{
 				"nodes": 16,
 				"total": 16,
@@ -597,7 +609,8 @@ func Test_ToDispatcherManifest(t *testing.T) {
 
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
 				"masterHost", 8888, "certName", 16, tt.slotType,
-				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType)
+				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType,
+				tt.isPbsScheduler)
 
 			if tt.wantErr {
 				assert.ErrorContains(t, err, tt.errorContains)
@@ -613,12 +626,9 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				assert.Equal(t, *payload.Id, "com.cray.analytics.capsules.generic.container")
 				assert.Equal(t, *payload.Version, "latest")
 
-				assert.Equal(t, len(*payload.Carriers), 2)
-				if len(tt.wantCarrier0) > 0 {
-					assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier0)
-				}
-				if len(tt.wantCarrier1) > 0 {
-					assert.Equal(t, (*payload.Carriers)[1], tt.wantCarrier1)
+				assert.Equal(t, len(*payload.Carriers), 1)
+				if len(tt.wantCarrier) > 0 {
+					assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier)
 				}
 
 				launchParameters := payload.LaunchParameters

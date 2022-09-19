@@ -492,7 +492,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
 			m.config.MasterHost, m.config.MasterPort, m.masterTLSConfig.CertificateName,
 			req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
-			m.config.LauncherContainerRunType)
+			m.config.LauncherContainerRunType, m.wlmType == pbsSchedulerType)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,
 				"unable to create the Slurm launcher manifest")
