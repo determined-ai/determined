@@ -1640,7 +1640,7 @@ jobs:
       - run: python -m pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
-      # Avoid a versino of pyzmq that was missing wheels when it was released.
+      # Avoid a version of pyzmq that was missing wheels when it was released.
       - run: pip install "pyzmq!=24.0.0"
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
@@ -1766,7 +1766,7 @@ jobs:
     steps:
       - queue/until_front_of_line:
           only-on-branch: master
-          # Basically wait forever -- we would prefer not to fail deploys and
+          # Basically wait forever -- we would prefer not to fail deploys, and
           # we'll likely never be this backed up.
           time: '10000'
       - checkout
@@ -2464,7 +2464,7 @@ workflows:
             - request-dev-deploy
             - package-and-push-system-dev
 
-      # Dsitributed tests
+      # Distributed tests
       - request-e2e-cpu-distributed:
           type: approval
           filters: *upstream-feature-branch
@@ -2485,12 +2485,12 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
 
-      # Deepseed tests
+      # DeepSpeed tests
       - request-deepspeed-tests:
           type: approval
           filters: *upstream-feature-branch
 
-        # DeepSpeed tests do not work on K80s so we need V100 instances.
+        # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-deepspeed
           context: aws
@@ -2837,7 +2837,7 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-        # DeepSpeed tests do not work on K80s so we need V100 instances.
+        # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context: aws
