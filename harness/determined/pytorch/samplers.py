@@ -3,8 +3,6 @@ from typing import Iterator
 import numpy as np
 import torch
 
-from determined.common import check
-
 
 class RepeatSampler(torch.utils.data.Sampler):
     """
@@ -96,9 +94,12 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
     def __init__(
         self, batch_sampler: torch.utils.data.BatchSampler, num_workers: int, rank: int
     ) -> None:
-        check.gt(rank, -1, "rank must be non-negative")
-        check.gt(num_workers, 0, "num_workers must be positive")
-        check.lt(rank, num_workers, "rank must be less than num_workers")
+        if rank < 0:
+            raise ValueError("rank must be non-negative.")
+        if num_workers < 1:
+            raise ValueError("num_workers must be strictly positive.")
+        if rank >= num_workers:
+            raise ValueError("rank must be less than num_workers.")
 
         self.batch_sampler = batch_sampler
         self.num_workers = num_workers
