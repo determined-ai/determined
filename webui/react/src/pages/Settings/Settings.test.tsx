@@ -15,19 +15,22 @@ const USERNAME = 'test_username1';
 const Container: React.FC = () => {
   const storeDispatch = useStoreDispatch();
 
-  const currentUser: DetailedUser = useMemo(() => ({
-    displayName: DISPLAY_NAME,
-    id: 1,
-    isActive: true,
-    isAdmin: true,
-    username: USERNAME,
-  }), []);
+  const currentUser: DetailedUser = useMemo(
+    () => ({
+      displayName: DISPLAY_NAME,
+      id: 1,
+      isActive: true,
+      isAdmin: true,
+      username: USERNAME,
+    }),
+    [],
+  );
 
   const loadUser = useCallback(() => {
     storeDispatch({ type: StoreAction.SetCurrentUser, value: currentUser });
-  }, [ storeDispatch, currentUser ]);
+  }, [storeDispatch, currentUser]);
 
-  useEffect(() => loadUser(), [ loadUser ]);
+  useEffect(() => loadUser(), [loadUser]);
 
   return <Settings />;
 };
@@ -53,7 +56,6 @@ describe('Settings Page', () => {
   });
 
   it('should enable user management for admins only', () => {
-
     // TODO: Change out to set user to be admin and check for user management tab.
     history.push('/?f_rbac=on');
     setup();

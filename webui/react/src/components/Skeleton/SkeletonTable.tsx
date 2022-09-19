@@ -11,15 +11,11 @@ interface Props extends SkeletonSectionProps {
   rows?: number;
 }
 
-const SkeletonTable: React.FC<Props> = ({
-  columns = 10,
-  rows = 10,
-  ...props
-}: Props) => {
+const SkeletonTable: React.FC<Props> = ({ columns = 10, rows = 10, ...props }: Props) => {
   const columnProps = useMemo(() => {
     if (isNumber(columns)) return new Array(columns).fill({});
     return columns;
-  }, [ columns ]);
+  }, [columns]);
   return (
     <SkeletonSection {...props}>
       <div className={css.base}>

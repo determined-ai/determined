@@ -3,11 +3,11 @@ import queryString from 'query-string';
 import { useStore } from 'contexts/Store';
 import { DeterminedInfo } from 'types';
 
-type ValidFeature = 'rbac' // Add new feature switches here using `|`
+type ValidFeature = 'rbac'; // Add new feature switches here using `|`
 const queryParams = queryString.parse(window.location.search);
 
 interface FeatureHook {
-  isOn: (feature: ValidFeature) => boolean
+  isOn: (feature: ValidFeature) => boolean;
 }
 
 const useFeature = (): FeatureHook => {

@@ -43,24 +43,26 @@ const MetricSelectFilter: React.FC<Props> = ({
   width = 200,
   onChange,
 }: Props) => {
-  const [ filterString, setFilterString ] = useState('');
+  const [filterString, setFilterString] = useState('');
   const selectRef = useRef<RefSelectProps>(null);
 
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map((metric) => metricNameToValue(metric));
     if (!multiple && !Array.isArray(value) && value) return metricNameToValue(value);
     return undefined;
-  }, [ multiple, value ]);
+  }, [multiple, value]);
 
   const trainingMetricNames = useMemo(() => {
     return metricNames.filter((metric) => metric.type === MetricType.Training);
-  }, [ metricNames ]);
+  }, [metricNames]);
 
   const validationMetricNames = useMemo(() => {
     return metricNames.filter((metric) => metric.type === MetricType.Validation);
-  }, [ metricNames ]);
+  }, [metricNames]);
 
-  const totalNumMetrics = useMemo(() => { return metricNames.length; }, [ metricNames ]);
+  const totalNumMetrics = useMemo(() => {
+    return metricNames.length;
+  }, [metricNames]);
 
   /*
    * visibleMetrics should always match the list of metrics that antd displays to
@@ -70,43 +72,49 @@ const MetricSelectFilter: React.FC<Props> = ({
     return metricNames.filter((metricName: MetricName) => {
       return filterFn(filterString, metricName.name);
     });
-  }, [ metricNames, filterString ]);
+  }, [metricNames, filterString]);
 
-  const handleMetricSelect = useCallback((newValue: SelectValue) => {
-    if (!onChange) return;
+  const handleMetricSelect = useCallback(
+    (newValue: SelectValue) => {
+      if (!onChange) return;
 
-    if ((newValue as string) === allOptionId) {
-      (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
-      selectRef.current?.blur();
-      return;
-    }
-    if ((newValue as string) === resetOptionId) {
-      (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
-      selectRef.current?.blur();
-      return;
-    }
+      if ((newValue as string) === allOptionId) {
+        (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
+        selectRef.current?.blur();
+        return;
+      }
+      if ((newValue as string) === resetOptionId) {
+        (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
+        selectRef.current?.blur();
+        return;
+      }
 
-    const metricName = valueToMetricName(newValue as string);
-    if (!metricName) return;
+      const metricName = valueToMetricName(newValue as string);
+      if (!metricName) return;
 
-    if (multiple) {
-      const newMetric = Array.isArray(value) ? [ ...value ] : [];
-      if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
+      if (multiple) {
+        const newMetric = Array.isArray(value) ? [...value] : [];
+        if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
+        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+      } else {
+        (onChange as SingleHandler)(metricName);
+      }
+    },
+    [multiple, onChange, value, visibleMetrics, defaultMetricNames],
+  );
+
+  const handleMetricDeselect = useCallback(
+    (newValue: SelectValue) => {
+      if (!onChange || !multiple) return;
+      if (!Array.isArray(value) || value.length <= 1) return;
+
+      const newMetric = Array.isArray(value) ? [...value] : [];
+      const index = newMetric.findIndex((metric) => metricNameToValue(metric) === newValue);
+      if (index !== -1) newMetric.splice(index, 1);
       (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
-    } else {
-      (onChange as SingleHandler)(metricName);
-    }
-  }, [ multiple, onChange, value, visibleMetrics, defaultMetricNames ]);
-
-  const handleMetricDeselect = useCallback((newValue: SelectValue) => {
-    if (!onChange || !multiple) return;
-    if (!Array.isArray(value) || value.length <= 1) return;
-
-    const newMetric = Array.isArray(value) ? [ ...value ] : [];
-    const index = newMetric.findIndex((metric) => metricNameToValue(metric) === newValue);
-    if (index !== -1) newMetric.splice(index, 1);
-    (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
-  }, [ multiple, onChange, value ]);
+    },
+    [multiple, onChange, value],
+  );
 
   const handleFiltering = useCallback((search: string, option) => {
     if (option.key === allOptionId || option.key === resetOptionId) return true;
@@ -139,24 +147,23 @@ const MetricSelectFilter: React.FC<Props> = ({
         <BadgeTag label={allOptionLabel} />
       </Option>
     );
+  }, [totalNumMetrics, visibleMetrics]);
 
-  }, [ totalNumMetrics, visibleMetrics ]);
-
-  const [ maxTagCount, selectorPlaceholder ] = useMemo(() => {
+  const [maxTagCount, selectorPlaceholder] = useMemo(() => {
     // This should never happen, but fall back to inoffensive empty placeholder
     if (metricValues === undefined) {
-      return [ 0, '' ];
+      return [0, ''];
     }
     if (metricValues.length === 0) {
       // If we set maxTagCount=0 in this case, this placeholder will not be displayed.
-      return [ -1, 'None selected' ];
+      return [-1, 'None selected'];
     } else if (metricValues.length === totalNumMetrics) {
       // If we set maxTagCount=-1 in these cases, it will display tags instead of the placeholder.
-      return [ 0, `All ${totalNumMetrics} selected` ];
+      return [0, `All ${totalNumMetrics} selected`];
     } else {
-      return [ 0, `${metricValues.length} of ${totalNumMetrics} selected` ];
+      return [0, `${metricValues.length} of ${totalNumMetrics} selected`];
     }
-  }, [ metricValues, totalNumMetrics ]);
+  }, [metricValues, totalNumMetrics]);
 
   return (
     <SelectFilter

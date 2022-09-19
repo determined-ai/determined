@@ -1,8 +1,10 @@
 import { Button, Dropdown, Menu, message, Space, Table } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import InteractiveTable, { InteractiveTableSettings,
-  onRightClickableCell } from 'components/InteractiveTable';
+import InteractiveTable, {
+  InteractiveTableSettings,
+  onRightClickableCell,
+} from 'components/InteractiveTable';
 import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
@@ -20,8 +22,10 @@ import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 
 import css from './GroupManagement.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  GroupManagementSettings } from './GroupManagement.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  GroupManagementSettings,
+} from './GroupManagement.settings';
 
 interface DropdownProps {
   expanded: boolean;
@@ -42,18 +46,12 @@ const GroupActionDropdown = ({
     fetchGroups();
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
   };
-  const {
-    modalOpen: openEditGroupModal,
-    contextHolder: modalEditGroupContextHolder,
-  } = useModalCreateGroup({ group, onClose: onFinishEdit, users });
-  const {
-    modalOpen: openEditGroupRolesModal,
-    contextHolder: modalEditGroupRolesContextHolder,
-  } = useModalGroupRoles({ group, onClose: onFinishEdit });
-  const {
-    modalOpen: openDeleteGroupModal,
-    contextHolder: modalDeleteGroupContextHolder,
-  } = useModalDeleteGroup({ group, onClose: fetchGroups });
+  const { modalOpen: openEditGroupModal, contextHolder: modalEditGroupContextHolder } =
+    useModalCreateGroup({ group, onClose: onFinishEdit, users });
+  const { modalOpen: openEditGroupRolesModal, contextHolder: modalEditGroupRolesContextHolder } =
+    useModalGroupRoles({ group, onClose: onFinishEdit });
+  const { modalOpen: openDeleteGroupModal, contextHolder: modalDeleteGroupContextHolder } =
+    useModalDeleteGroup({ group, onClose: fetchGroups });
 
   const menuItems = (
     <Menu>
@@ -71,10 +69,7 @@ const GroupActionDropdown = ({
 
   return (
     <div className={dropdownCss.base}>
-      <Dropdown
-        overlay={menuItems}
-        placement="bottomRight"
-        trigger={[ 'click' ]}>
+      <Dropdown overlay={menuItems} placement="bottomRight" trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -87,19 +82,16 @@ const GroupActionDropdown = ({
 };
 
 const GroupManagement: React.FC = () => {
-  const [ groups, setGroups ] = useState<V1GroupSearchResult[]>([]);
-  const [ groupUsers, setGroupUsers ] = useState<V1GroupDetails[]>([]);
-  const [ users, setUsers ] = useState<DetailedUser[]>([]);
-  const [ isLoading, setIsLoading ] = useState(true);
-  const [ total, setTotal ] = useState(0);
-  const [ expandedKeys, setExpandedKeys ] = useState<readonly React.Key[]>([]);
-  const [ canceler ] = useState(new AbortController());
+  const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
+  const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
+  const [users, setUsers] = useState<DetailedUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [expandedKeys, setExpandedKeys] = useState<readonly React.Key[]>([]);
+  const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<GroupManagementSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<GroupManagementSettings>(settingsConfig);
 
   const canModifyGroups = usePermissions().canModifyGroups();
   const canViewGroups = usePermissions().canViewGroups();
@@ -124,24 +116,21 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
+  }, [canceler.signal, settings.tableLimit, settings.tableOffset]);
 
-  const fetchGroup = useCallback(async (groupId: number): Promise<void> => {
-    const response = await getGroup({ groupId });
-    const i = groupUsers.findIndex((gr) => gr.groupId === groupId);
-    i >= 0 ? groupUsers[i] = response.group : groupUsers.push(response.group);
-    setGroupUsers(clone(groupUsers));
-  }, [ groupUsers ]);
+  const fetchGroup = useCallback(
+    async (groupId: number): Promise<void> => {
+      const response = await getGroup({ groupId });
+      const i = groupUsers.findIndex((gr) => gr.groupId === groupId);
+      i >= 0 ? (groupUsers[i] = response.group) : groupUsers.push(response.group);
+      setGroupUsers(clone(groupUsers));
+    },
+    [groupUsers],
+  );
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
-      const response = await getUsers(
-        {},
-        { signal: canceler.signal },
-      );
+      const response = await getUsers({}, { signal: canceler.signal });
       setUsers((prev) => {
         if (isEqual(prev, response.users)) return prev;
         return response.users;
@@ -149,94 +138,105 @@ const GroupManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     }
-  }, [ canceler.signal ]);
+  }, [canceler.signal]);
 
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-  }, [
-    settings.tableLimit,
-    settings.tableOffset,
-    fetchGroups,
-    fetchUsers ]);
+  }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
 
-  const {
-    modalOpen: openCreateGroupModal,
-    contextHolder: modalCreateGroupContextHolder,
-  } = useModalCreateGroup({ onClose: fetchGroups, users: users });
+  const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
+    useModalCreateGroup({ onClose: fetchGroups, users: users });
 
   const onClickCreateGroup = useCallback(() => {
     openCreateGroupModal();
-  }, [ openCreateGroupModal ]);
+  }, [openCreateGroupModal]);
 
-  const onExpand = useCallback((expand:boolean, record:V1GroupSearchResult) => {
-    const { group: { groupId } } = record;
-    if (!groupId || !expand) return;
-    fetchGroup(groupId);
-  }, [ fetchGroup ]);
+  const onExpand = useCallback(
+    (expand: boolean, record: V1GroupSearchResult) => {
+      const {
+        group: { groupId },
+      } = record;
+      if (!groupId || !expand) return;
+      fetchGroup(groupId);
+    },
+    [fetchGroup],
+  );
 
   const onExpandedRowsChange = (keys: readonly React.Key[]) => setExpandedKeys(keys);
 
-  const onRemoveUser = useCallback(async (record: V1GroupSearchResult, userId) => {
-    const { group: { groupId } } = record;
-    if (!groupId) return;
-    try {
-      await updateGroup({ groupId, removeUsers: [ userId ] });
-      message.success('User has been deleted.');
-      onExpand(true, record);
-      fetchGroups();
-    } catch (e) {
-      message.error('Error deleting group.');
-      handleError(e, { silent: true, type: ErrorType.Input });
-    }
-  }, [ onExpand, fetchGroups ]);
+  const onRemoveUser = useCallback(
+    async (record: V1GroupSearchResult, userId) => {
+      const {
+        group: { groupId },
+      } = record;
+      if (!groupId) return;
+      try {
+        await updateGroup({ groupId, removeUsers: [userId] });
+        message.success('User has been deleted.');
+        onExpand(true, record);
+        fetchGroups();
+      } catch (e) {
+        message.error('Error deleting group.');
+        handleError(e, { silent: true, type: ErrorType.Input });
+      }
+    },
+    [onExpand, fetchGroups],
+  );
 
-  const expandedUserRender = useCallback((record:V1GroupSearchResult) => {
-    const { group: { groupId } } = record;
-    const g = groupUsers.find((gr) => gr.groupId === groupId);
-    const userColumn = [ {
-      dataIndex: 'displayName',
-      key: 'displayName',
-      title: 'Display Name',
-      width: '40%',
-    }, {
-      dataIndex: 'username',
-      key: 'username',
-      title: 'User Name',
-      width: '50%',
-    }, {
-      key: 'action',
-      render: (_:string, r: V1User) => (
-        canModifyGroups ?
-          <Button onClick={() => onRemoveUser(record, r.id)}>Remove</Button> :
-          null),
-      title: '',
-    } ];
+  const expandedUserRender = useCallback(
+    (record: V1GroupSearchResult) => {
+      const {
+        group: { groupId },
+      } = record;
+      const g = groupUsers.find((gr) => gr.groupId === groupId);
+      const userColumn = [
+        {
+          dataIndex: 'displayName',
+          key: 'displayName',
+          title: 'Display Name',
+          width: '40%',
+        },
+        {
+          dataIndex: 'username',
+          key: 'username',
+          title: 'User Name',
+          width: '50%',
+        },
+        {
+          key: 'action',
+          render: (_: string, r: V1User) =>
+            canModifyGroups ? (
+              <Button onClick={() => onRemoveUser(record, r.id)}>Remove</Button>
+            ) : null,
+          title: '',
+        },
+      ];
 
-    return (
-      <Table
-        columns={userColumn}
-        dataSource={g?.users}
-        loading={!g}
-        pagination={false}
-        rowKey="id"
-      />
-    );
-  }, [ onRemoveUser, groupUsers, canModifyGroups ]);
+      return (
+        <Table
+          columns={userColumn}
+          dataSource={g?.users}
+          loading={!g}
+          pagination={false}
+          rowKey="id"
+        />
+      );
+    },
+    [onRemoveUser, groupUsers, canModifyGroups],
+  );
 
   const columns = useMemo(() => {
-    const actionRenderer = (_:string, record: V1GroupSearchResult) => {
-      return (
-        canModifyGroups ? (
-          <GroupActionDropdown
-            expanded={!!(record.group.groupId && expandedKeys.includes(record.group.groupId))}
-            fetchGroup={fetchGroup}
-            fetchGroups={fetchGroups}
-            group={record}
-            users={users}
-          />
-        ) : null
-      );
+    const actionRenderer = (_: string, record: V1GroupSearchResult) => {
+      return canModifyGroups ? (
+        <GroupActionDropdown
+          expanded={!!(record.group.groupId && expandedKeys.includes(record.group.groupId))}
+          fetchGroup={fetchGroup}
+          fetchGroups={fetchGroups}
+          group={record}
+          users={users}
+        />
+      ) : null;
     };
 
     return [
@@ -245,7 +245,7 @@ const GroupManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: 'name',
         onCell: onRightClickableCell,
-        render: (_:string, r: V1GroupSearchResult) => r.group.name,
+        render: (_: string, r: V1GroupSearchResult) => r.group.name,
         title: 'Group Name',
       },
       {
@@ -253,7 +253,7 @@ const GroupManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['users'],
         key: 'users',
         onCell: onRightClickableCell,
-        render: (_:string, r: V1GroupSearchResult) => r.numMembers,
+        render: (_: string, r: V1GroupSearchResult) => r.numMembers,
         title: 'Users',
       },
       {
@@ -267,7 +267,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [ users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups ]);
+  }, [users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
 
   const table = useMemo(() => {
     return (
@@ -277,28 +277,33 @@ const GroupManagement: React.FC = () => {
         dataSource={groups}
         expandable={{ expandedRowRender: expandedUserRender, onExpand, onExpandedRowsChange }}
         loading={isLoading}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, total)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          total,
+        )}
         rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey={(r) => r.group.groupId||0}
+        rowKey={(r) => r.group.groupId || 0}
         settings={settings as InteractiveTableSettings}
         showSorterTooltip={false}
         size="small"
         updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       />
     );
-  }, [ groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand ]);
+  }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (
     <Page
       containerRef={pageRef}
-      options={(
+      options={
         <Space>
-          <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>New Group</Button>
+          <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+            New Group
+          </Button>
         </Space>
-      )}
+      }
       title="Groups">
       {canViewGroups && <div className={css.usersTable}>{table}</div>}
       {modalCreateGroupContextHolder}

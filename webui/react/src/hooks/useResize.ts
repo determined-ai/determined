@@ -17,7 +17,7 @@ const defaultResizeInfo = {
 export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
 
 const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
-  const [ resizeInfo, setResizeInfo ] = useState<ResizeInfo>(defaultResizeInfo);
+  const [resizeInfo, setResizeInfo] = useState<ResizeInfo>(defaultResizeInfo);
 
   useEffect(() => {
     let element = document.body;
@@ -42,7 +42,7 @@ const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
     setResizeInfo(rect);
 
     return (): void => resizeObserver.unobserve(element);
-  }, [ ref ]);
+  }, [ref]);
 
   return resizeInfo;
 };

@@ -23,17 +23,13 @@ const AuthToken: React.FC = () => {
         message: 'Unable to Copy to Clipboard',
       });
     }
-  }, [ token ]);
+  }, [token]);
 
   return (
     <Result
       className={css.base}
       extra={[
-        <Button
-          icon={<CopyOutlined />}
-          key="copy"
-          type="primary"
-          onClick={handleCopyToClipboard}>
+        <Button icon={<CopyOutlined />} key="copy" type="primary" onClick={handleCopyToClipboard}>
           Copy token to clipboard
         </Button>,
       ]}

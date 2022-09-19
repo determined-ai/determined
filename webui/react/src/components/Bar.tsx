@@ -43,7 +43,7 @@ const sizeMap = {
 };
 
 const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.small }: Props) => {
-  const classes: string[] = [ css.base ];
+  const classes: string[] = [css.base];
 
   if (barOnly) classes.push(css.barOnly);
   if (inline) classes.push(css.inline);
@@ -54,13 +54,14 @@ const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.small }
         className={css.bar}
         style={{ height: `calc(${sizeMap[size]} + var(--theme-density) * 1px)` }}>
         <div className={css.parts}>
-          {parts.filter((part) => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => (
-            <Tooltip key={idx} title={part.label}>
-              <li style={partStyle(part)} />
-            </Tooltip>
-          ))}
+          {parts
+            .filter((part) => part.percent !== 0 && !isNaN(part.percent))
+            .map((part, idx) => (
+              <Tooltip key={idx} title={part.label}>
+                <li style={partStyle(part)} />
+              </Tooltip>
+            ))}
         </div>
-
       </div>
     </div>
   );

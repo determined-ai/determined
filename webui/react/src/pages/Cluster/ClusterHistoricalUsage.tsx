@@ -23,8 +23,8 @@ export const MAX_RANGE_DAY = 31;
 export const MAX_RANGE_MONTH = 36;
 
 const ClusterHistoricalUsage: React.FC = () => {
-  const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries>();
-  const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
+  const [chartSeries, setChartSeries] = useState<ResourceAllocationChartSeries>();
+  const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { users } = useStore();
 
@@ -57,16 +57,19 @@ const ClusterHistoricalUsage: React.FC = () => {
     }
 
     return filters;
-  }, [ settings ]);
+  }, [settings]);
 
-  const handleFilterChange = useCallback((newFilter: ClusterHistoricalUsageFiltersInterface) => {
-    const dateFormat = 'YYYY-MM' + (newFilter.groupBy === GroupBy.Day ? '-DD' : '');
-    updateSettings({
-      after: newFilter.afterDate.format(dateFormat),
-      before: newFilter.beforeDate.format(dateFormat),
-      groupBy: newFilter.groupBy,
-    });
-  }, [ updateSettings ]);
+  const handleFilterChange = useCallback(
+    (newFilter: ClusterHistoricalUsageFiltersInterface) => {
+      const dateFormat = 'YYYY-MM' + (newFilter.groupBy === GroupBy.Day ? '-DD' : '');
+      updateSettings({
+        after: newFilter.afterDate.format(dateFormat),
+        before: newFilter.beforeDate.format(dateFormat),
+        groupBy: newFilter.groupBy,
+      });
+    },
+    [updateSettings],
+  );
 
   /**
    * When grouped by month force csv modal to display start/end of month.
@@ -90,9 +93,10 @@ const ClusterHistoricalUsage: React.FC = () => {
     (async () => {
       const res = await getResourceAllocationAggregated({
         endDate: filters.beforeDate,
-        period: (filters.groupBy === GroupBy.Month
-          ? 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
-          : 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'),
+        period:
+          filters.groupBy === GroupBy.Month
+            ? 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
+            : 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY',
         startDate: filters.afterDate,
       });
 
@@ -100,7 +104,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         mapResourceAllocationApiToChartSeries(res.resourceEntries, filters.groupBy, users),
       );
     })();
-  }, [ filters, users ]);
+  }, [filters, users]);
 
   return (
     <div className={css.base}>

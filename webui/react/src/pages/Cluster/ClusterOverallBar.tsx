@@ -9,26 +9,25 @@ import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 export const ClusterOverallBar: React.FC = () => {
-
   const { agents, cluster: overview } = useStore();
 
   const cudaSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.CUDA);
-  }, [ agents ]);
+  }, [agents]);
 
   const rocmSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.ROCM);
-  }, [ agents ]);
+  }, [agents]);
 
   const cpuSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.CPU);
-  }, [ agents ]);
+  }, [agents]);
 
   return (
     <Section hideTitle title="Overall Allocation">
       {overview.CUDA.total + overview.ROCM.total + overview.CPU.total === 0 ? (
         <Message title="No connected agents." type={MessageType.Empty} />
-      ) : null }
+      ) : null}
       {overview.CUDA.total > 0 && (
         <SlotAllocationBar
           resourceStates={cudaSlotStates}

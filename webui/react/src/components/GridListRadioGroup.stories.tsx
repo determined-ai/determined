@@ -9,7 +9,7 @@ export default {
 };
 
 export const Default = (): React.ReactNode => {
-  const [ view, setView ] = useState<GridListView>(GridListView.Grid);
+  const [view, setView] = useState<GridListView>(GridListView.Grid);
 
   const handleChange = useCallback((value: GridListView) => setView(value), []);
 

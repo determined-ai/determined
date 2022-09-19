@@ -40,7 +40,7 @@ const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
 
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
@@ -48,7 +48,7 @@ const SignIn: React.FC = () => {
 
   const externalAuthError = useMemo(() => {
     return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
-  }, [ auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt ]);
+  }, [auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt]);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -81,17 +81,17 @@ const SignIn: React.FC = () => {
     } else if (auth.checked) {
       storeDispatch({ type: StoreActionUI.HideUISpinner });
     }
-  }, [ auth, info, location, queries, storeDispatch ]);
+  }, [auth, info, location, queries, storeDispatch]);
 
   useEffect(() => {
     storeDispatch({ type: StoreActionUI.HideUIChrome });
     return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   // Stop the polling upon a dismount of this page.
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   /*
    * Don't render sign in page if...
@@ -107,11 +107,12 @@ const SignIn: React.FC = () => {
    * An external auth error occurs when there are external auth urls,
    * auth fails with a jwt.
    */
-  if (externalAuthError) return (
-    <PageMessage title="Cluster Not Available">
-      <p>Cluster is not ready. Please try again later.</p>
-    </PageMessage>
-  );
+  if (externalAuthError)
+    return (
+      <PageMessage title="Cluster Not Available">
+        <p>Cluster is not ready. Please try again later.</p>
+      </PageMessage>
+    );
 
   return (
     <Page docTitle="Sign In">

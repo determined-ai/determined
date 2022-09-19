@@ -7,12 +7,12 @@ import InlineEditor from './InlineEditor';
 
 export default {
   component: InlineEditor,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'InlineEditor',
 };
 
 export const Default = (): React.ReactNode => {
-  const [ value, setValue ] = useState('Edit Me!');
+  const [value, setValue] = useState('Edit Me!');
 
   const save = useCallback((newValue: string): Promise<void> => {
     return new Promise<void>((resolve) => {
@@ -23,9 +23,12 @@ export const Default = (): React.ReactNode => {
     });
   }, []);
 
-  const handleSave = useCallback(async (newValue: string) => {
-    await save(newValue);
-  }, [ save ]);
+  const handleSave = useCallback(
+    async (newValue: string) => {
+      await save(newValue);
+    },
+    [save],
+  );
 
   return (
     <InlineEditor
@@ -38,6 +41,4 @@ export const Default = (): React.ReactNode => {
   );
 };
 
-export const LargeText = (): React.ReactNode => (
-  <InlineEditor value={loremIpsum} />
-);
+export const LargeText = (): React.ReactNode => <InlineEditor value={loremIpsum} />;

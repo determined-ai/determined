@@ -11,14 +11,13 @@ export const isNumber = (data: unknown): data is number => typeof data === 'numb
 export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };
-export const isPrimitive = (data: unknown): boolean => (
+export const isPrimitive = (data: unknown): boolean =>
   isBigInt(data) ||
   isBoolean(data) ||
   isNullOrUndefined(data) ||
   isNumber(data) ||
   isString(data) ||
-  isSymbol(data)
-);
+  isSymbol(data);
 export const isPromise = (data: unknown): data is Promise<unknown> => {
   if (!isObject(data)) return false;
   return typeof (data as { then?: any }).then === 'function';
@@ -71,9 +70,9 @@ export const hasObjectKeys = (data: unknown): boolean => {
 export const flattenObject = <T = Primitive>(
   object: UnknownRecord,
   options?: {
-    continueFn?: (value: unknown) => boolean,
-    delimiter?: string,
-    keys?: RecordKey[],
+    continueFn?: (value: unknown) => boolean;
+    delimiter?: string;
+    keys?: RecordKey[];
   },
 ): Record<RecordKey, T> => {
   const continueFn = options?.continueFn ?? isObject;
@@ -81,7 +80,7 @@ export const flattenObject = <T = Primitive>(
   const keys = options?.keys ?? [];
   return Object.keys(object).reduce((acc, key) => {
     const value = object[key] as UnknownRecord;
-    const newKeys = [ ...keys, key ];
+    const newKeys = [...keys, key];
     if (continueFn(value)) {
       acc = { ...acc, ...flattenObject<T>(value, { continueFn, delimiter, keys: newKeys }) };
     } else {
@@ -99,7 +98,7 @@ export const unflattenObject = <T = unknown>(
   const unflattened: UnknownRecord = {};
   const regexSafeDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(`^(.+?)${regexSafeDelimiter}(.+)$`);
-  Object.entries(object).forEach(([ paramPath, value ]) => {
+  Object.entries(object).forEach(([paramPath, value]) => {
     let key = paramPath;
     let matches = key.match(regex);
     let pathRef = unflattened;
@@ -119,19 +118,16 @@ export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   if (path === '') return obj as T;
   let value = obj || {};
-  return path.split('.').every((key) => ((value = value[key]) !== undefined)) ?
-    value as T : undefined;
+  return path.split('.').every((key) => (value = value[key]) !== undefined)
+    ? (value as T)
+    : undefined;
 };
 
 export const getPathList = <T>(obj: RawJson, path: string[]): T | undefined => {
   return getPath<T>(obj, path.join('.'));
 };
 
-export const getPathOrElse = <T>(
-  obj: Record<string, unknown>,
-  path: string,
-  fallback: T,
-): T => {
+export const getPathOrElse = <T>(obj: Record<string, unknown>, path: string, fallback: T): T => {
   const value = getPath<T>(obj, path);
   return value !== undefined ? value : fallback;
 };

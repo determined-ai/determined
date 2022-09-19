@@ -35,7 +35,7 @@ jest.mock('services/api', () => ({
   },
 }));
 
-const users: Array<DetailedUser> = [ currentUser ];
+const users: Array<DetailedUser> = [currentUser];
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
@@ -44,18 +44,19 @@ const Container: React.FC = () => {
   const loadUsers = useCallback(() => {
     storeDispatch({ type: StoreAction.SetUsers, value: users });
     storeDispatch({ type: StoreAction.SetCurrentUser, value: currentUser });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
-  useEffect(() => loadUsers(), [ loadUsers ]);
+  useEffect(() => loadUsers(), [loadUsers]);
 
   return <SettingsAccount />;
 };
 
-const setup = () => render(
-  <StoreProvider>
-    <Container />
-  </StoreProvider>,
-);
+const setup = () =>
+  render(
+    <StoreProvider>
+      <Container />
+    </StoreProvider>,
+  );
 
 describe('SettingsAccount', () => {
   it('should render with correct values', () => {

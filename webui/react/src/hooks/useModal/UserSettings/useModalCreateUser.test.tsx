@@ -6,8 +6,13 @@ import React from 'react';
 import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
 
-import useModalCreateUser, { ADMIN_LABEL, API_SUCCESS_MESSAGE_CREATE, DISPLAY_NAME_LABEL,
-  MODAL_HEADER_LABEL_CREATE, USER_NAME_LABEL } from './useModalCreateUser';
+import useModalCreateUser, {
+  ADMIN_LABEL,
+  API_SUCCESS_MESSAGE_CREATE,
+  DISPLAY_NAME_LABEL,
+  MODAL_HEADER_LABEL_CREATE,
+  USER_NAME_LABEL,
+} from './useModalCreateUser';
 
 const mockCreateUser = jest.fn();
 

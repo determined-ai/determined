@@ -14,7 +14,7 @@ const { TabPane } = Tabs;
 export enum TabType {
   Account = 'Account',
   UserManagement = 'User Management',
-  GroupManagement = 'Group Management'
+  GroupManagement = 'Group Management',
 }
 
 interface Params {
@@ -30,7 +30,7 @@ const DEFAULT_TAB_KEY = TAB_KEYS[TabType.Account];
 
 const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
-  const [ tabKey, setTabKey ] = useState<string>(tab || DEFAULT_TAB_KEY);
+  const [tabKey, setTabKey] = useState<string>(tab || DEFAULT_TAB_KEY);
 
   const rbacEnabled = useFeature().isOn('rbac');
   const canViewUsers = usePermissions().canViewUsers();
@@ -63,11 +63,7 @@ const SettingsContent: React.FC = () => {
 };
 
 const Settings: React.FC = () => (
-  <Page
-    bodyNoPadding
-    id="cluster"
-    stickyHeader
-    title="Settings">
+  <Page bodyNoPadding id="cluster" stickyHeader title="Settings">
     <SettingsContent />
   </Page>
 );

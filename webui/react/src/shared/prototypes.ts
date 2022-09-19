@@ -12,16 +12,16 @@ export {};
  * out of range index, JS will return `undefined`.
  */
 
-Array.prototype.first = function() {
+Array.prototype.first = function () {
   return this[0];
 };
 
-Array.prototype.last = function() {
+Array.prototype.last = function () {
   return this[this.length - 1];
 };
 
-Array.prototype.random = function() {
-  const index = Math.floor((Math.random() * this.length));
+Array.prototype.random = function () {
+  const index = Math.floor(Math.random() * this.length);
   return this[index];
 };
 
@@ -61,10 +61,10 @@ function quickSort<T>(arr: T[], low: number, high: number, compareFn: (a: T, b: 
  * Array.prototype.sortAll will sort `undefined` also and treat them the same as
  * how `null` values are treated.
  */
-Array.prototype.sortAll = function(compareFn) {
+Array.prototype.sortAll = function (compareFn) {
   return quickSort(this, 0, this.length - 1, compareFn);
 };
 
-Storage.prototype.keys = function() {
+Storage.prototype.keys = function () {
   return Object.keys(this);
 };

@@ -34,14 +34,16 @@ describe('AvatarCard', () => {
   describe('Light Dark Mode', () => {
     it('should be light mode color', () => {
       const { view } = setup({ darkLight: DarkLight.Light, displayName: 'Admin' });
-      expect(view.container.querySelector('#avatar'))
-        .toHaveStyle('background-color: hsl(290, 63%, 60%)');
+      expect(view.container.querySelector('#avatar')).toHaveStyle(
+        'background-color: hsl(290, 63%, 60%)',
+      );
     });
 
     it('should be dark mode color', () => {
       const { view } = setup({ darkLight: DarkLight.Dark, displayName: 'Admin' });
-      expect(view.container.querySelector('#avatar'))
-        .toHaveStyle('background-color: hsl(290, 63%, 38%)');
+      expect(view.container.querySelector('#avatar')).toHaveStyle(
+        'background-color: hsl(290, 63%, 38%)',
+      );
     });
   });
 
@@ -54,9 +56,11 @@ describe('AvatarCard', () => {
     });
 
     it('should have a class name', () => {
-      const { view } = setup(
-        { className: 'test-class', darkLight: DarkLight.Light, displayName: 'test' },
-      );
+      const { view } = setup({
+        className: 'test-class',
+        darkLight: DarkLight.Light,
+        displayName: 'test',
+      });
       const { container } = view;
       expect(container.children[0]).toHaveAttribute('class');
       expect(container.children[0]).toHaveClass('base');
