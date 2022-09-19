@@ -149,9 +149,14 @@ func TestAuthzPostUser(t *testing.T) {
 
 	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{
 		User: &userv1.User{
-			Username:       "admin",
-			Admin:          true,
-			AgentUserGroup: &userv1.AgentUserGroup{AgentUid: 5, AgentGid: 6},
+			Username: "admin",
+			Admin:    true,
+			AgentUserGroup: &userv1.AgentUserGroup{
+				AgentUid:   5,
+				AgentGid:   6,
+				AgentUser:  "five",
+				AgentGroup: "six",
+			},
 		},
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
