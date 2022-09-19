@@ -26,9 +26,10 @@ import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
-import css from './WorkspaceProjects.module.scss';
 import ProjectActionDropdown from '../WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from '../WorkspaceDetails/ProjectCard';
+
+import css from './WorkspaceProjects.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceProjects.settings';
 

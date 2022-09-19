@@ -8,7 +8,6 @@ import { getFullPaginationConfig } from 'components/Table';
 import TableFilterSearch from 'components/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import groupIcon from 'shared/assets/images/People.svg';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import {
@@ -17,13 +16,16 @@ import {
 import { DetailedUser } from 'types';
 import { getDisplayName } from 'utils/user';
 
+import css from './WorkspaceMembers.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings } from './WorkspaceMembers.settings';
-import css from './WorkspaceMembers.module.scss';
 
+// Mock types and functions for Workspace Members and Groups
 export interface Member extends DetailedUser {
   role?: string;
 }
+
+type MemberOrGroup = Member | Group;
 
 const isMember = (obj: MemberOrGroup) => {
   const member = obj as Member;
@@ -35,20 +37,17 @@ const getName = (obj: MemberOrGroup): string => {
   const group = obj as Group;
   return isMember(obj) ? getDisplayName(member) : group.name;
 };
+
+const roles = [ 'Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin' ];
 export interface Group {
   id: number;
   name: string;
   role: string;
 }
-
-type MemberOrGroup = Member | Group;
-
 interface Props {
   pageRef: React.RefObject<HTMLElement>;
   users: DetailedUser[];
 }
-
-const roles = [ 'Basic','Cluster Admin','Editor','Viewer','Restricted','Workspace Admin'];
 
 const GroupOrMemberActionDropdown = () => {
   const menuItems = (
@@ -76,18 +75,22 @@ const GroupOrMemberActionDropdown = () => {
 const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
 
   const members: Member[] = [];
+
+  // Assign a mock role to users
   users.forEach((u) => {
     const m: Member = u;
     m.role = 'Editor';
     members.push(m);
   });
 
+  // Create mock groups to show the UI renders correctly
   const groups: MemberOrGroup[] = [
     { id: Math.random() * 1000, name: 'Group One', role: roles[0] },
     { id: Math.random() * 1000, name: 'Group Two', role: roles[1] },
     { id: Math.random() * 1000, name: 'Group Three', role: roles[5] },
   ];
 
+  // Mock table row data
   const membersAndGroups = groups.concat(members);
 
   const {
@@ -142,7 +145,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
       return (
         <>
           <div className={css.userAvatarRowItem}>
-          <Icon name="group" />
+            <Icon name="group" />
           </div>
           <div className={css.userRowItem}>
             <div>{group.name}</div>
