@@ -1,7 +1,7 @@
 import * as utils from './browser';
 
 describe('Browser Utilities', () => {
-  describe('getCookie', () => {
+  describe('cookies', () => {
     const cookieKeyValues = [
       { key: 'Closed', value: '2021-03-30T16:39:43.159Z' },
       { key: 'Id', value: 'NMRjx7JvgF' },
@@ -21,6 +21,13 @@ describe('Browser Utilities', () => {
 
     cookieKeyValues.forEach((test) => {
       it(`should extract cookie key "${test.key}" value as "${test.value}"`, () => {
+        expect(utils.getCookie(test.key)).toBe(test.value || null);
+      });
+    });
+
+    cookieKeyValues.forEach((test) => {
+      it(`should set cookie key "${test.key}" value as "${test.value}"`, () => {
+        utils.setCookie(test.key, test.value);
         expect(utils.getCookie(test.key)).toBe(test.value || null);
       });
     });
