@@ -72,6 +72,7 @@ const config: SettingsConfig = {
     },
   ],
   storagePath: 'workspace-members',
+  applicableRoutespace: 'members'
 };
 
 export default config;

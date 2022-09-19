@@ -126,6 +126,7 @@ const config: SettingsConfig = {
     },
   ],
   storagePath: 'workspace-details',
+  applicableRoutespace: 'projects'
 };
 
 export default config;

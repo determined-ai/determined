@@ -165,12 +165,6 @@ export const paths = {
   workspaceList: (): string => {
     return '/workspaces';
   },
-  workspaceMembers: (workspaceId: number | string): string => {
-    return `/workspaces/${workspaceId}/members`;
-  },
-  workspaceProjects: (workspaceId: number | string): string => {
-    return `/workspaces/${workspaceId}/projects`;
-  },
 };
 /*
   routeAll determines whether a path should be routed through internal React router or hanled

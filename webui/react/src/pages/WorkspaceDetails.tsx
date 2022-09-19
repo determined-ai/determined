@@ -1,20 +1,18 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { useParams, useHistory } from 'react-router';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { Workspace } from 'types';
-
+import { paths } from 'routes/utils';
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
@@ -39,10 +37,11 @@ const WorkspaceDetails: React.FC = () => {
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ canceler ] = useState(new AbortController());
-  const tabKey = tab ? tab : WorkspaceDetailsTab.Projects;
+  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects)
   const pageRef = useRef<HTMLElement>(null);
   const id = parseInt(workspaceId);
-
+  const history = useHistory();
+  const basePath = paths.workspaceDetails(workspaceId);
   const fetchWorkspace = useCallback(async () => {
     try {
       const response = await getWorkspace({ id }, { signal: canceler.signal });
@@ -60,14 +59,16 @@ const WorkspaceDetails: React.FC = () => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  const handleTabChange = useCallback(() => {
-    const activeKey = tabKey as WorkspaceDetailsTab;
-    if (activeKey === WorkspaceDetailsTab.Projects){
-      routeToReactUrl(paths.workspaceMembers(workspaceId));
-    } else {
-      routeToReactUrl(paths.workspaceProjects(workspaceId));
-    }
+  const handleTabChange = useCallback((activeTab) => {
+    const tab = activeTab as WorkspaceDetailsTab;
+    history.replace(`${basePath}/${tab}`);
+    setTabKey(tab);
   }, [ tabKey, workspaceId ]);
+
+    // Abort cancel signal when app unmounts.
+    useEffect(() => {
+      return () => canceler.abort();
+    }, [ canceler ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
