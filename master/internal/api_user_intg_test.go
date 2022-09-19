@@ -145,7 +145,12 @@ func TestAuthzPostUser(t *testing.T) {
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUserError")
 	authzUsers.On("CanCreateUser", curUser,
 		model.User{Username: "admin", Admin: true},
-		&model.AgentUserGroup{UID: 5, GID: 6}).Return(fmt.Errorf("canCreateUserError")).Once()
+		&model.AgentUserGroup{
+			UID:   5,
+			GID:   6,
+			User:  "five",
+			Group: "six",
+		}).Return(fmt.Errorf("canCreateUserError")).Once()
 
 	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{
 		User: &userv1.User{
