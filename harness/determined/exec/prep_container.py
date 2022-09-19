@@ -25,7 +25,7 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
     model_def_resp = None
     try:
         model_def_resp = bindings.get_GetModelDef(sess, experimentId=trial_info.experiment_id)
-    except api.errors.MasterNotFoundException as e:
+    except Exception as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
         # sysadmins debug their cluster.
