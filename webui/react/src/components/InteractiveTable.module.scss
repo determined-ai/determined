@@ -114,3 +114,25 @@
     color: var(--theme-status-active);
   }
 }
+.resizeShadow {
+  border-radius: 4px;
+  bottom: 0;
+  cursor: col-resize;
+  height: 100%;
+  position: absolute;
+  right: -2.5px;
+  user-select: none;
+  width: 4px;
+  z-index: 3;
+  background-color: var(--theme-status-active);
+
+  &::before {
+    content: '';
+    cursor: col-resize;
+    height: 100vh;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+  }
+}

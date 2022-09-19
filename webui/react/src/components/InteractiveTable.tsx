@@ -6,13 +6,13 @@ import React, {
   CSSProperties,
   MutableRefObject,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
-import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
@@ -49,7 +49,7 @@ export interface InteractiveTableSettings {
 }
 
 export const WIDGET_COLUMN_WIDTH = 46;
-const DEFAULT_RESIZE_THROTTLE_TIME = 100;
+const DEFAULT_RESIZE_THROTTLE_TIME = 200;
 const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
@@ -221,6 +221,14 @@ const Cell = React.memo(({
   );
 });
 
+const ResizeShadow: React.FC<{ display: 'none' | 'block'; x: number; }> = React.memo(
+  ({ x, display }) => {
+    return (
+      <span className={css.resizeShadow} style={{ display, left: x, position: 'absolute' }} />
+    );
+  },
+);
+
 const HeaderCell = ({
   onResize,
   onResizeStart,
@@ -239,6 +247,8 @@ const HeaderCell = ({
   ...props
 }: HeaderCellProps) => {
   const resizingRef = useRef<HTMLDivElement>(null);
+  const [ xValue, setXValue ] = useState(0);
+  const [ shadowVisibility, setShadowVisibility ] = useState<'none' | 'block'>('none');
 
   const headerCellClasses = [ css.headerCell ];
   const dropTargetClasses = [ css.dropTarget ];
@@ -292,15 +302,25 @@ const HeaderCell = ({
       />
       <DraggableCore
         nodeRef={resizingRef}
-        onDrag={onResize}
-        onStart={onResizeStart}
-        onStop={onResizeStop}>
+        onDrag={(e, data) => {
+          setXValue(data.x);
+          onResize(e, data);
+        }}
+        onStart={(e, data) => {
+          setShadowVisibility('block');
+          onResizeStart(e, data);
+        }}
+        onStop={(e, data) => {
+          setShadowVisibility('none');
+          onResizeStop(e, data);
+        }}>
         <span
           className={css.columnResizeHandle}
           ref={resizingRef}
           onClick={(e) => e.stopPropagation()}
         />
       </DraggableCore>
+      <ResizeShadow display={shadowVisibility} x={xValue} />
       <span
         className={dropTargetClasses.join(' ')}
         ref={drop}
@@ -349,6 +369,7 @@ const InteractiveTable: InteractiveTable = ({
   ) as ColumnDefs<string, UnknownRecord>;
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
+  const timeout = useRef<NodeJS.Timeout>();
   const [ widthData, setWidthData ] = useState({
     dropLeftStyles: settings?.columnWidths?.map(() => ({})) ?? [],
     dropRightStyles: settings?.columnWidths?.map(() => ({})) ?? [],
@@ -417,41 +438,45 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleResize = useCallback(
     (resizeIndex) => {
-      return throttle(DEFAULT_RESIZE_THROTTLE_TIME, (e: Event, { x }: DraggableData) => {
-        setWidthData(({ widths: prevWidths, ...rest }) => {
-          const column = settings.columns[resizeIndex];
-          const minWidth = columnDefs[column].defaultWidth;
-          let targetWidths = prevWidths;
+      return (e: Event, { x }: DraggableData) => {
+        if (timeout.current) clearTimeout(timeout.current);
 
-          targetWidths[resizeIndex] = x < minWidth ? minWidth : x;
+        timeout.current = setTimeout(() => {
+          setWidthData(({ widths: prevWidths, ...rest }) => {
+            const column = settings.columns[resizeIndex];
+            const minWidth = columnDefs[column].defaultWidth;
+            let targetWidths = prevWidths;
 
-          const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
-          /**
-           * If the table width is less than the page width, the browser upscales,
-           * and then the resize no longer tracks with the cursor.
-           * we manually do the scaling here to keep the tableWidth >= pageWidth
-           * in particular, we distribute the deficit among the other columns
-           */
-          const shortage = pageWidth - targetWidthSum;
-          if (shortage > 0) {
-            const compensatingPortion = shortage / (prevWidths.length - 1);
-            targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
-              targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion);
-          }
+            targetWidths[resizeIndex] = x < minWidth ? minWidth : x;
 
-          const widths = getUpscaledWidths(targetWidths);
-          const dropRightStyles = widths.map((width, idx) => ({
-            left: `${(width / 2)}px`,
-            width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-          }));
-          const dropLeftStyles = widths.map((width, idx) => ({
-            left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-            width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-          }));
+            const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
+            /**
+             * If the table width is less than the page width, the browser upscales,
+             * and then the resize no longer tracks with the cursor.
+             * we manually do the scaling here to keep the tableWidth >= pageWidth
+             * in particular, we distribute the deficit among the other columns
+             */
+            const shortage = pageWidth - targetWidthSum;
+            if (shortage > 0) {
+              const compensatingPortion = shortage / (prevWidths.length - 1);
+              targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
+                targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion);
+            }
 
-          return { ...rest, dropLeftStyles, dropRightStyles, widths };
-        });
-      });
+            const widths = getUpscaledWidths(targetWidths);
+            const dropRightStyles = widths.map((width, idx) => ({
+              left: `${(width / 2)}px`,
+              width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+            }));
+            const dropLeftStyles = widths.map((width, idx) => ({
+              left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+              width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+            }));
+
+            return { ...rest, dropLeftStyles, dropRightStyles, widths };
+          });
+        }, DEFAULT_RESIZE_THROTTLE_TIME);
+      };
     },
     [ settings.columns, pageWidth, columnDefs, getUpscaledWidths ],
   );
@@ -551,6 +576,12 @@ const InteractiveTable: InteractiveTable = ({
     },
     header: { cell: HeaderCell },
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeout.current) clearTimeout(timeout.current);
+    };
+  }, []);
 
   return (
     <div className={css.tableContainer} ref={tableRef}>
