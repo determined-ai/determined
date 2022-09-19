@@ -23,6 +23,7 @@ from diffusers import (
 )
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
@@ -202,7 +203,8 @@ class DetStableDiffusion:
         )
 
     def train(self) -> None:
-        """Run the full latent inversion training loop."""
+        """Run the full textual inversion training loop. Training must be performed on a
+        Determined cluster."""
         self.logger.info("--------------- Starting Training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
         self.logger.info(f"Learning rate: {self.learning_rate}")
@@ -518,7 +520,7 @@ class DetStableDiffusion:
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 if self.generate_training_images:
                     self._build_pipeline()
-                    self._generate_and_write_imgs(path)
+                    self._generate_and_write_imgs(path, core_context)
                 self._write_optimizer_state_dict_to_path(path)
                 self._write_learned_embeddings_to_path(path)
 
@@ -566,7 +568,7 @@ class DetStableDiffusion:
                 feature_extractor=self.feature_extractor,
             ).to(self.accelerator.device)
 
-    def _generate_and_write_imgs(self, path: pathlib.Path) -> None:
+    def _generate_and_write_imgs(self, path: pathlib.Path, core_context: det.core.Context) -> None:
         # Generate a new image using the pipeline.
         self.logger.info("Generating sample images")
         imgs_path = path.joinpath("imgs")
@@ -604,6 +606,12 @@ class DetStableDiffusion:
             )
         # Finally, write self.generated_imgs to path for use during a checkpoint restore.
         self.accelerator.save(self.generated_imgs, path.joinpath("generated_imgs.pt"))
+        tb_dir = core_context.get_tensorboard_path()
+        tb_writer = SummaryWriter(log_dir=tb_dir)
+        tb_writer.add_image(
+            "random_tensor", img_tensor=torch.randn(3, 64, 64), global_step=self.steps_completed
+        )
+        core_context.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
