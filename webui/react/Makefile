@@ -40,15 +40,15 @@ live: check-requirements start
 start:
 	npm start
 
-.PHONY: check-js
-check-js:
-	npm run lint:js
-.PHONY: check-css
-check-css:
-	npm run lint:css
-.PHONY: check-misc
-check-misc:
-	npm run format-check:misc
+.PHONY: check-eslint
+check-eslint:
+	npm run eslint
+.PHONY: check-stylelint
+check-stylelint:
+	npm run stylelint
+.PHONY: check-prettier
+check-prettier:
+	npm run format-check
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
@@ -56,7 +56,7 @@ check-package-lock:
 check-requirements:
 	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
 .PHONY: check
-check: check-js check-css check-misc check-package-lock
+check: check-eslint check-stylelint check-prettier check-package-lock
 
 
 .PHONY: fmt-js
