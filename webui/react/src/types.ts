@@ -817,3 +817,15 @@ export interface UserRole {
 export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
+
+// Mock types and functions for Workspace Members and Groups
+export interface Group {
+  id: number;
+  name: string;
+  role: string;
+}
+export interface Member extends DetailedUser {
+  role?: string;
+}
+
+export type MemberOrGroup = Member | Group;

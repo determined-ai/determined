@@ -31,7 +31,7 @@ export enum WorkspaceDetailsTab {
 }
 
 // Temporary Mock for rbacEnabled functionality
-const rbacEnabled = false;
+const rbacEnabled = true;
 
 const WorkspaceDetails: React.FC = () => {
   const { users } = useStore();
@@ -107,7 +107,7 @@ const WorkspaceDetails: React.FC = () => {
               destroyInactiveTabPane
               key={WorkspaceDetailsTab.Members}
               tab="Members">
-              <WorkspaceMembers pageRef={pageRef} users={users} />
+              <WorkspaceMembers pageRef={pageRef} users={users} workspace={workspace} />
             </Tabs.TabPane>
           </Tabs>
         ) : (<WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />)

@@ -7,29 +7,23 @@ import InteractiveTable, { ColumnDef,
 import { getFullPaginationConfig } from 'components/Table';
 import TableFilterSearch from 'components/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
+import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import {
   alphaNumericSorter,
 } from 'shared/utils/sort';
-import { DetailedUser } from 'types';
+import { DetailedUser, Group, Member, MemberOrGroup, Workspace } from 'types';
 import { getDisplayName } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings } from './WorkspaceMembers.settings';
 
-// Mock types and functions for Workspace Members and Groups
-export interface Member extends DetailedUser {
-  role?: string;
-}
-
-type MemberOrGroup = Member | Group;
-
 const isMember = (obj: MemberOrGroup) => {
   const member = obj as Member;
-  return member.username || member.displayName;
+  return member?.username || member?.displayName;
 };
 
 const getName = (obj: MemberOrGroup): string => {
@@ -39,22 +33,38 @@ const getName = (obj: MemberOrGroup): string => {
 };
 
 const roles = [ 'Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin' ];
-export interface Group {
-  id: number;
-  name: string;
-  role: string;
-}
 interface Props {
   pageRef: React.RefObject<HTMLElement>;
   users: DetailedUser[];
+  workspace: Workspace;
 }
 
-const GroupOrMemberActionDropdown = () => {
+interface GroupOrMemberActionDropdownProps {
+  memberOrGroup: MemberOrGroup;
+  name: string;
+  workspace: Workspace;
+}
+
+const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
+  memberOrGroup,
+  workspace,
+  name,
+}) => {
+
+  const {
+    modalOpen: openWorkspaceRemoveMemberModal,
+    contextHolder: openWorkspaceRemoveMemberContextHolder,
+  } = useModalWorkspaceRemoveMember({ member: memberOrGroup, name, workspace });
+
   const menuItems = (
     <Menu>
-      <Menu.Item danger key="delete">
+      <Menu.Item
+        danger
+        key="delete"
+        onClick={() => openWorkspaceRemoveMemberModal()}>
         Delete
       </Menu.Item>
+      {openWorkspaceRemoveMemberContextHolder}
     </Menu>
   );
 
@@ -72,7 +82,7 @@ const GroupOrMemberActionDropdown = () => {
   );
 };
 
-const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
+const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props) => {
 
   const members: Member[] = [];
 
@@ -85,9 +95,9 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
 
   // Create mock groups to show the UI renders correctly
   const groups: MemberOrGroup[] = [
-    { id: Math.random() * 1000, name: 'Group One', role: roles[0] },
-    { id: Math.random() * 1000, name: 'Group Two', role: roles[1] },
-    { id: Math.random() * 1000, name: 'Group Three', role: roles[5] },
+    { id: 999, name: 'Group One', role: roles[0] },
+    { id: 1000, name: 'Group Two', role: roles[1] },
+    { id: 1001 * 1000, name: 'Group Three', role: roles[5] },
   ];
 
   // Mock table row data
@@ -169,9 +179,13 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
       );
     };
 
-    const actionRenderer = () => {
+    const actionRenderer = (value: string, record: MemberOrGroup) => {
       return (
-        <GroupOrMemberActionDropdown />
+        <GroupOrMemberActionDropdown
+          memberOrGroup={record}
+          name={getName(record)}
+          workspace={workspace}
+        />
       );
     };
 
@@ -200,7 +214,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef }: Props) => {
         title: '',
       },
     ] as ColumnDef<MemberOrGroup>[];
-  }, [ nameFilterSearch, tableSearchIcon ]);
+  }, [ nameFilterSearch, tableSearchIcon, workspace ]);
 
   return (
     <div className={css.membersContainer}>
