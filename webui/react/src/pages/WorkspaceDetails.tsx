@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useHistory, useLocation, useParams } from 'react-router';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -42,6 +42,7 @@ const WorkspaceDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const id = parseInt(workspaceId);
   const history = useHistory();
+  const location = useLocation();
   const basePath = paths.workspaceDetails(workspaceId);
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -65,6 +66,16 @@ const WorkspaceDetails: React.FC = () => {
     history.replace(`${basePath}/${tab}`);
     setTabKey(tab);
   }, [ basePath, history ]);
+
+  useEffect(() => {
+
+    // Set the correct pathname to ensure
+    // that user settings will save.
+
+    if (!location.pathname.includes(WorkspaceDetailsTab.Projects) &&
+    !location.pathname.includes(WorkspaceDetailsTab.Members))
+      history.replace(`${basePath}/${tabKey}`);
+  }, [basePath, history, location.pathname, tabKey]);
 
   useEffect(() => {
     return () => canceler.abort();
