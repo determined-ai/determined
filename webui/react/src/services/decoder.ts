@@ -64,6 +64,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.Determined
     externalLogoutUri: data.externalLogoutUri,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
+    rbacEnabled: !!data.rbacEnabled,
     ssoProviders: data.ssoProviders,
     version: data.version,
   };
