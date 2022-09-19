@@ -17,8 +17,8 @@ import { Workspace } from 'types';
 
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
-import WorkspaceMembers from './WorkspaceMembers';
-import WorkspaceProjects from './WorkspaceProjects';
+import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
+import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 
 interface Params {
   tab: string;
