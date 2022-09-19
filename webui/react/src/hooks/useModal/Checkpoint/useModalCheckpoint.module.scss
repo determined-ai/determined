@@ -55,14 +55,13 @@
     padding-right: 6px;
   }
   .resourceSpacer {
-    background:
-      repeating-linear-gradient(
-        to right,
-        var(--theme-float-border-weak) 0,
-        var(--theme-float-border-weak) 2px,
-        transparent 3px,
-        transparent 7px
-      );
+    background: repeating-linear-gradient(
+      to right,
+      var(--theme-float-border-weak) 0,
+      var(--theme-float-border-weak) 2px,
+      transparent 3px,
+      transparent 7px
+    );
     flex-grow: 1;
     height: 2px;
     margin: 5px 0;

@@ -39,7 +39,7 @@ enum TabType {
   Active = 'active',
   Queued = 'queued',
   Stats = 'stats',
-  Configuration = 'configuration'
+  Configuration = 'configuration',
 }
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
@@ -49,7 +49,7 @@ const ResourcepoolDetail: React.FC = () => {
 
   const pool = useMemo(() => {
     return resourcePools.find((pool) => pool.name === poolname);
-  }, [ poolname, resourcePools ]);
+  }, [poolname, resourcePools]);
 
   const usage = useMemo(() => {
     if (!pool) return 0;
@@ -57,23 +57,23 @@ const ResourcepoolDetail: React.FC = () => {
     const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
     const runningState = resourceStates.filter((s) => s === ResourceState.Running).length;
     const slotsPotential = maxPoolSlotCapacity(pool);
-    const slotsAvaiablePer = slotsPotential && slotsPotential > totalSlots
-      ? (totalSlots / slotsPotential) : 1;
+    const slotsAvaiablePer =
+      slotsPotential && slotsPotential > totalSlots ? totalSlots / slotsPotential : 1;
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
-  }, [ pool, agents ]);
+  }, [pool, agents]);
 
   const history = useHistory();
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
 
-  const [ tabKey, setTabKey ] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
-  const [ poolStats, setPoolStats ] = useState<V1RPQueueStat>();
+  const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
+  const [poolStats, setPoolStats] = useState<V1RPQueueStat>();
 
   const fetchStats = useCallback(async () => {
     try {
-      const promises = [
-        getJobQStats({}, { signal: canceler.signal }),
-      ] as [ Promise<V1GetJobQueueStatsResponse> ];
-      const [ stats ] = await Promise.all(promises);
+      const promises = [getJobQStats({}, { signal: canceler.signal })] as [
+        Promise<V1GetJobQueueStatsResponse>,
+      ];
+      const [stats] = await Promise.all(promises);
       const pool = stats.results.find((p) => p.resourcePool === poolname);
       setPoolStats(pool);
     } catch (e) {
@@ -84,7 +84,7 @@ const ResourcepoolDetail: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ canceler.signal, poolname ]);
+  }, [canceler.signal, poolname]);
 
   usePolling(fetchStats, { rerunOnNewFn: true });
 
@@ -92,18 +92,21 @@ const ResourcepoolDetail: React.FC = () => {
     if (tab || !pool) return;
     const basePath = paths.resourcePool(pool.name);
     history.replace(`${basePath}/${DEFAULT_POOL_TAB_KEY}`);
-  }, [ history, pool, tab ]);
+  }, [history, pool, tab]);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_POOL_TAB_KEY);
-  }, [ tab ]);
+  }, [tab]);
 
-  const handleTabChange = useCallback((key) => {
-    if (!pool) return;
-    setTabKey(key);
-    const basePath = paths.resourcePool(pool.name);
-    history.replace(`${basePath}/${key}`);
-  }, [ history, pool ]);
+  const handleTabChange = useCallback(
+    (key) => {
+      if (!pool) return;
+      setTabKey(key);
+      const basePath = paths.resourcePool(pool.name);
+      history.replace(`${basePath}/${key}`);
+    },
+    [history, pool],
+  );
 
   const renderPoolConfig = useCallback(() => {
     if (!pool) return;
@@ -129,7 +132,7 @@ const ResourcepoolDetail: React.FC = () => {
         ))}
       </Page>
     );
-  }, [ pool ]);
+  }, [pool]);
 
   if (!pool) return <div />;
   return (
@@ -140,9 +143,10 @@ const ResourcepoolDetail: React.FC = () => {
           <div className={css.icon}>
             <PoolLogo type={pool.type} />
           </div>
-          <div>{`${pool.name} (${
-            V1SchedulerTypeToLabel[pool.schedulerType]
-          }) ${usage ? `- ${floatToPercent(usage)}` : '' } `}
+          <div>
+            {`${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
+              usage ? `- ${floatToPercent(usage)}` : ''
+            } `}
           </div>
         </div>
       </Section>
@@ -173,10 +177,8 @@ const ResourcepoolDetail: React.FC = () => {
           </TabPane>
         </Tabs>
       </Section>
-
     </Page>
   );
-
 };
 
 export default ResourcepoolDetail;

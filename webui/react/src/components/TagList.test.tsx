@@ -4,7 +4,7 @@ import React from 'react';
 
 import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_TRIGGER } from './TagList';
 
-const initTags = [ 'hello', 'world', 'space gap' ].sort();
+const initTags = ['hello', 'world', 'space gap'].sort();
 
 const setup = (tags: string[] = []) => {
   const handleOnChange = jest.fn();
@@ -33,13 +33,13 @@ describe('TagList', () => {
 
     await user.keyboard(addition);
     await user.click(view.getByLabelText(ARIA_LABEL_CONTAINER));
-    expect(handleOnChange).toHaveBeenCalledWith([ addition ]);
+    expect(handleOnChange).toHaveBeenCalledWith([addition]);
   });
 
   it('handles tag removal', async () => {
     const removalIndex = Math.floor(Math.random() * initTags.length);
     const removalTag = initTags[removalIndex];
-    const resultTags = [ ...initTags.slice(0, removalIndex), ...initTags.slice(removalIndex + 1) ];
+    const resultTags = [...initTags.slice(0, removalIndex), ...initTags.slice(removalIndex + 1)];
     const { handleOnChange, view, user } = setup(initTags);
 
     const tag = view.getByText(removalTag).closest('[id]') as HTMLElement;

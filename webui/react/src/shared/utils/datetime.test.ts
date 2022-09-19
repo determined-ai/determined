@@ -10,10 +10,7 @@ describe('Datetime Utilities', () => {
       '2021-11-11T01:01:01.000+07:00',
       '2021-11-11T11:11:11.000-07:00',
     ];
-    const FORMAT = [
-      'MMM DD, YYYY HH:mma',
-      'MMMM DD (dddd)',
-    ];
+    const FORMAT = ['MMM DD, YYYY HH:mma', 'MMMM DD (dddd)'];
 
     [
       { input: DATE[0], output: '2021-11-23, 05:59:59' },
@@ -59,9 +56,7 @@ describe('Datetime Utilities', () => {
     [
       {
         input: { date: DATE[2], options: { inputUTC: true } },
-        output: dayjs
-          .utc(utils.stripTimezone(DATE[2]))
-          .format(utils.DEFAULT_DATETIME_FORMAT),
+        output: dayjs.utc(utils.stripTimezone(DATE[2])).format(utils.DEFAULT_DATETIME_FORMAT),
       },
       {
         input: { date: DATE[3], options: { inputUTC: true, outputUTC: false } },
@@ -80,11 +75,7 @@ describe('Datetime Utilities', () => {
   });
 
   describe('getDuration', () => {
-    const DATES = [
-      '2021-11-11 01:01:01Z',
-      '2021-11-11 11:11:11Z',
-      'Nov 11, 2021 11:11:11Z',
-    ];
+    const DATES = ['2021-11-11 01:01:01Z', '2021-11-11 11:11:11Z', 'Nov 11, 2021 11:11:11Z'];
 
     [
       { input: { endTime: DATES[1], startTime: DATES[0] }, output: 36610000 },

@@ -47,7 +47,7 @@ const CURRENT_USER: DetailedUser = {
   username: USERNAME,
 };
 
-const USERS: Array<DetailedUser> = [ CURRENT_USER ];
+const USERS: Array<DetailedUser> = [CURRENT_USER];
 
 const user = userEvent.setup();
 
@@ -58,9 +58,9 @@ const Container: React.FC = () => {
   const loadUsers = useCallback(() => {
     storeDispatch({ type: StoreAction.SetUsers, value: USERS });
     storeDispatch({ type: StoreAction.SetCurrentUser, value: CURRENT_USER });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
-  useEffect(() => loadUsers(), [ loadUsers ]);
+  useEffect(() => loadUsers(), [loadUsers]);
 
   return (
     <div>

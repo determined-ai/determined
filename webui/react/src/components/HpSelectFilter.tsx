@@ -27,38 +27,44 @@ const HpSelectFilter: React.FC<Props> = ({
 }: Props) => {
   const values = useMemo(() => {
     if (!value) return [];
-    return Array.isArray(value) ? value : [ value ];
-  }, [ value ]);
+    return Array.isArray(value) ? value : [value];
+  }, [value]);
 
   const sortedFullHParams = useMemo(() => {
     const hParams = clone(fullHParams) as string[];
     return hParams.sortAll((a, b) => hpImportanceSorter(a, b, hpImportance));
-  }, [ hpImportance, fullHParams ]);
+  }, [hpImportance, fullHParams]);
 
-  const handleSelect = useCallback((selected: SelectValue, option) => {
-    if (!onChange) return;
+  const handleSelect = useCallback(
+    (selected: SelectValue, option) => {
+      if (!onChange) return;
 
-    if (selected === ALL_VALUE) {
-      onChange([], option);
-      if (document.activeElement) (document.activeElement as HTMLElement).blur();
-    } else {
-      const newValue = clone(values);
+      if (selected === ALL_VALUE) {
+        onChange([], option);
+        if (document.activeElement) (document.activeElement as HTMLElement).blur();
+      } else {
+        const newValue = clone(values);
+        const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
+
+        if (!newValue.includes(selectedValue)) newValue.push(selectedValue);
+
+        onChange(newValue as SelectValue, option);
+      }
+    },
+    [onChange, values],
+  );
+
+  const handleDeselect = useCallback(
+    (selected: SelectValue, option) => {
+      if (!onChange) return;
+
       const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-
-      if (!newValue.includes(selectedValue)) newValue.push(selectedValue);
+      const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
 
       onChange(newValue as SelectValue, option);
-    }
-  }, [ onChange, values ]);
-
-  const handleDeselect = useCallback((selected: SelectValue, option) => {
-    if (!onChange) return;
-
-    const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-    const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
-
-    onChange(newValue as SelectValue, option);
-  }, [ onChange, values ]);
+    },
+    [onChange, values],
+  );
 
   return (
     <SelectFilter
@@ -72,7 +78,9 @@ const HpSelectFilter: React.FC<Props> = ({
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
+      <Option key={ALL_VALUE} value={ALL_VALUE}>
+        All
+      </Option>
       {sortedFullHParams.map((hParam) => {
         const importance = hpImportance[hParam];
         return (

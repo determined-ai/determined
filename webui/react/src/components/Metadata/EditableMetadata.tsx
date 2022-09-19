@@ -13,34 +13,38 @@ interface Props {
 }
 
 const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetadata }: Props) => {
-  const [ metadataRows, metadataList ] = useMemo(() => {
-    const { rows, list } = Object.entries(metadata).reduce((acc, [ key, value ]) => {
-      acc.rows.push({ content: value, label: key });
-      acc.list.push({ key, value });
-      return acc;
-    }, { list: [] as {key: string, value: string}[], rows: [] as InfoRow[] });
+  const [metadataRows, metadataList] = useMemo(() => {
+    const { rows, list } = Object.entries(metadata).reduce(
+      (acc, [key, value]) => {
+        acc.rows.push({ content: value, label: key });
+        acc.list.push({ key, value });
+        return acc;
+      },
+      { list: [] as { key: string; value: string }[], rows: [] as InfoRow[] },
+    );
     if (list.length === 0) list.push({ key: '', value: '' });
-    return [ rows, list ];
-  }, [ metadata ]);
+    return [rows, list];
+  }, [metadata]);
 
-  const onValuesChange = useCallback((
-    _changedValues,
-    values: {metadata: Metadata[]},
-  ) => {
-    const newMetadata = values.metadata.reduce((acc, row) => {
-      if (row?.key) acc[row.key] = row.value;
-      return acc;
-    }, {} as Metadata);
+  const onValuesChange = useCallback(
+    (_changedValues, values: { metadata: Metadata[] }) => {
+      const newMetadata = values.metadata.reduce((acc, row) => {
+        if (row?.key) acc[row.key] = row.value;
+        return acc;
+      }, {} as Metadata);
 
-    updateMetadata?.(newMetadata);
-  }, [ updateMetadata ]);
+      updateMetadata?.(newMetadata);
+    },
+    [updateMetadata],
+  );
 
   return (
     <Form initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
       {editing ? (
         <>
           <div className={css.titleRow}>
-            <span>Key</span><span>Value</span>
+            <span>Key</span>
+            <span>Value</span>
           </div>
           <Form.List name="metadata">
             {(fields, { add, remove }) => (
@@ -52,16 +56,16 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                     onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
                   />
                 ))}
-                <Button
-                  className={css.addRow}
-                  type="link"
-                  onClick={add}>+ Add Row
+                <Button className={css.addRow} type="link" onClick={add}>
+                  + Add Row
                 </Button>
               </>
             )}
           </Form.List>
         </>
-      ) : <InfoBox rows={metadataRows} />}
+      ) : (
+        <InfoBox rows={metadataRows} />
+      )}
     </Form>
   );
 };

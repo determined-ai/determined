@@ -11,7 +11,9 @@ const rps = resourcePools as unknown as ResourcePool[];
 
 const setup = (pool: ResourcePool) => {
   const view = render(
-    <StoreProvider><RenderAllocationBarResourcePool resourcePool={pool} /></StoreProvider>,
+    <StoreProvider>
+      <RenderAllocationBarResourcePool resourcePool={pool} />
+    </StoreProvider>,
   );
   return { view };
 };

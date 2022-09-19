@@ -5,15 +5,23 @@ import { useParams } from 'react-router';
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef,
+import InteractiveTable, {
+  ColumnDef,
   InteractiveTableSettings,
-  onRightClickableCell } from 'components/InteractiveTable';
+  onRightClickableCell,
+} from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import SelectFilter from 'components/SelectFilter';
-import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
-  relativeTimeRenderer, stateRenderer, userRenderer } from 'components/Table';
+import {
+  checkmarkRenderer,
+  GenericRenderer,
+  getFullPaginationConfig,
+  relativeTimeRenderer,
+  stateRenderer,
+  userRenderer,
+} from 'components/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -32,8 +40,12 @@ import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  ProjectColumnName,
+  WhoseProjects,
+  WorkspaceDetailsSettings,
+} from './WorkspaceDetails.settings';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
@@ -45,22 +57,22 @@ interface Params {
 }
 
 const WorkspaceDetails: React.FC = () => {
-  const { users, auth: { user } } = useStore();
+  const {
+    users,
+    auth: { user },
+  } = useStore();
   const { workspaceId } = useParams<Params>();
-  const [ workspace, setWorkspace ] = useState<Workspace>();
-  const [ projects, setProjects ] = useState<Project[]>([]);
-  const [ pageError, setPageError ] = useState<Error>();
-  const [ isLoading, setIsLoading ] = useState(true);
-  const [ total, setTotal ] = useState(0);
-  const [ canceler ] = useState(new AbortController());
+  const [workspace, setWorkspace] = useState<Workspace>();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [pageError, setPageError] = useState<Error>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
   const id = parseInt(workspaceId);
 
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -69,20 +81,23 @@ const WorkspaceDetails: React.FC = () => {
     } catch (e) {
       if (!pageError) setPageError(e as Error);
     }
-  }, [ canceler.signal, id, pageError ]);
+  }, [canceler.signal, id, pageError]);
 
   const fetchProjects = useCallback(async () => {
     try {
-      const response = await getWorkspaceProjects({
-        archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
-        id,
-        limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
-        name: settings.name,
-        offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
-        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-        sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
-        users: settings.user,
-      }, { signal: canceler.signal });
+      const response = await getWorkspaceProjects(
+        {
+          archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
+          id,
+          limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
+          name: settings.name,
+          offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
+          users: settings.user,
+        },
+        { signal: canceler.signal },
+      );
       setTotal(response.pagination.total ?? 0);
       setProjects((prev) => {
         if (isEqual(prev, response.projects)) return prev;
@@ -93,7 +108,8 @@ const WorkspaceDetails: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal,
+  }, [
+    canceler.signal,
     id,
     settings.archived,
     settings.name,
@@ -103,31 +119,44 @@ const WorkspaceDetails: React.FC = () => {
     settings.tableOffset,
     settings.user,
     settings.view,
-    workspace?.archived ]);
+    workspace?.archived,
+  ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([ fetchWorkspace(), fetchProjects(), fetchUsers() ]);
-  }, [ fetchWorkspace, fetchProjects, fetchUsers ]);
+    await Promise.allSettled([fetchWorkspace(), fetchProjects(), fetchUsers()]);
+  }, [fetchWorkspace, fetchProjects, fetchUsers]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  const handleViewSelect = useCallback((value) => {
-    updateSettings({ whose: value });
-  }, [ updateSettings ]);
+  const handleViewSelect = useCallback(
+    (value) => {
+      updateSettings({ whose: value });
+    },
+    [updateSettings],
+  );
 
-  const handleSortSelect = useCallback((value) => {
-    updateSettings({
-      sortDesc: (value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-        value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME) ? false : true,
-      sortKey: value,
-    });
-  }, [ updateSettings ]);
+  const handleSortSelect = useCallback(
+    (value) => {
+      updateSettings({
+        sortDesc:
+          value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
+          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            ? false
+            : true,
+        sortKey: value,
+      });
+    },
+    [updateSettings],
+  );
 
-  const handleViewChange = useCallback((value: GridListView) => {
-    updateSettings({ view: value });
-  }, [ updateSettings ]);
+  const handleViewChange = useCallback(
+    (value: GridListView) => {
+      updateSettings({ view: value });
+    },
+    [updateSettings],
+  );
 
   useEffect(() => {
     switch (settings.whose) {
@@ -135,13 +164,13 @@ const WorkspaceDetails: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: user ? [ user.username ] : undefined });
+        updateSettings({ user: user ? [user.username] : undefined });
         break;
       case WhoseProjects.Others:
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [ settings.whose, updateSettings, user, users ]);
+  }, [settings.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription, projectId: number) => {
     try {
@@ -171,7 +200,7 @@ const WorkspaceDetails: React.FC = () => {
       />
     );
 
-    const descriptionRenderer = (value:string, record: Project) => (
+    const descriptionRenderer = (value: string, record: Project) => (
       <InlineEditor
         disabled={record.archived}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
@@ -206,9 +235,9 @@ const WorkspaceDetails: React.FC = () => {
         dataIndex: 'lastUpdated',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdated'],
         render: (_: number, record: Project): React.ReactNode =>
-          record.lastExperimentStartedAt ?
-            relativeTimeRenderer(new Date(record.lastExperimentStartedAt)) :
-            null,
+          record.lastExperimentStartedAt
+            ? relativeTimeRenderer(new Date(record.lastExperimentStartedAt))
+            : null,
         title: 'Last Experiment Started',
       },
       {
@@ -242,64 +271,63 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ fetchProjects, saveProjectDescription, user, workspace?.archived ]);
+  }, [fetchProjects, saveProjectDescription, user, workspace?.archived]);
 
-  const switchShowArchived = useCallback((showArchived: boolean) => {
-    let newColumns: ProjectColumnName[];
-    let newColumnWidths: number[];
+  const switchShowArchived = useCallback(
+    (showArchived: boolean) => {
+      let newColumns: ProjectColumnName[];
+      let newColumnWidths: number[];
 
-    if (showArchived) {
-      if (settings.columns?.includes('archived')) {
-        // just some defensive coding: don't add archived twice
-        newColumns = settings.columns;
-        newColumnWidths = settings.columnWidths;
+      if (showArchived) {
+        if (settings.columns?.includes('archived')) {
+          // just some defensive coding: don't add archived twice
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
+        } else {
+          newColumns = [...settings.columns, 'archived'];
+          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
+        }
       } else {
-        newColumns = [ ...settings.columns, 'archived' ];
-        newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
+        const archivedIndex = settings.columns.indexOf('archived');
+        if (archivedIndex !== -1) {
+          newColumns = [...settings.columns];
+          newColumnWidths = [...settings.columnWidths];
+          newColumns.splice(archivedIndex, 1);
+          newColumnWidths.splice(archivedIndex, 1);
+        } else {
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
+        }
       }
-    } else {
-      const archivedIndex = settings.columns.indexOf('archived');
-      if (archivedIndex !== -1) {
-        newColumns = [ ...settings.columns ];
-        newColumnWidths = [ ...settings.columnWidths ];
-        newColumns.splice(archivedIndex, 1);
-        newColumnWidths.splice(archivedIndex, 1);
-      } else {
-        newColumns = settings.columns;
-        newColumnWidths = settings.columnWidths;
-      }
-    }
-    updateSettings({
-      archived: showArchived,
-      columns: newColumns,
-      columnWidths: newColumnWidths,
-    });
-
-  }, [ settings, updateSettings ]);
+      updateSettings({
+        archived: showArchived,
+        columns: newColumns,
+        columnWidths: newColumnWidths,
+      });
+    },
+    [settings, updateSettings],
+  );
 
   const actionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
       <ProjectActionDropdown
         curUser={user}
         project={record}
-        trigger={[ 'contextMenu' ]}
+        trigger={['contextMenu']}
         workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>
     ),
-    [ fetchProjects, user, workspace?.archived ],
+    [fetchProjects, user, workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid
-            gap={ShirtSize.medium}
-            minItemWidth={250}
-            mode={GridMode.AutoFill}>
+          <Grid gap={ShirtSize.medium} minItemWidth={250} mode={GridMode.AutoFill}>
             {projects.map((project) => (
               <ProjectCard
                 curUser={user}
@@ -319,10 +347,13 @@ const WorkspaceDetails: React.FC = () => {
             ContextMenu={actionDropdown}
             dataSource={projects}
             loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              },
+              total,
+            )}
             rowKey="id"
             settings={settings}
             size="small"
@@ -330,7 +361,8 @@ const WorkspaceDetails: React.FC = () => {
           />
         );
     }
-  }, [ actionDropdown,
+  }, [
+    actionDropdown,
     columns,
     fetchProjects,
     isLoading,
@@ -339,26 +371,26 @@ const WorkspaceDetails: React.FC = () => {
     total,
     updateSettings,
     user,
-    workspace?.archived ]);
+    workspace?.archived,
+  ]);
 
   useEffect(() => {
     fetchWorkspace();
-  }, [ fetchWorkspace ]);
+  }, [fetchWorkspace]);
 
   useEffect(() => {
     fetchProjects();
-  }, [ fetchProjects ]);
+  }, [fetchProjects]);
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
-    const message =
-      `Unable to fetch Workspace ${workspaceId}`;
+    const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
     return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
@@ -368,12 +400,7 @@ const WorkspaceDetails: React.FC = () => {
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={(
-        <WorkspaceDetailsHeader
-          fetchWorkspace={fetchAll}
-          workspace={workspace}
-        />
-      )}
+      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter
@@ -412,19 +439,14 @@ const WorkspaceDetails: React.FC = () => {
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
+        ) : workspace.numProjects === 0 ? (
+          <Message
+            message='Create a project with the "New Project" button or in the CLI.'
+            title="Workspace contains no projects. "
+            type={MessageType.Empty}
+          />
         ) : (
-          workspace.numProjects === 0 ? (
-            <Message
-              message='Create a project with the "New Project" button or in the CLI.'
-              title="Workspace contains no projects. "
-              type={MessageType.Empty}
-            />
-          ) : (
-            <Message
-              title="No projects matching the current filters"
-              type={MessageType.Empty}
-            />
-          )
+          <Message title="No projects matching the current filters" type={MessageType.Empty} />
         )}
       </Spinner>
     </Page>

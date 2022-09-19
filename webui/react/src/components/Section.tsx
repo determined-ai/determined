@@ -28,8 +28,8 @@ const defaultProps = { divider: false };
 const Section: React.FC<Props> = ({ className = '', ...props }: Props) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
   const id = props.id || defaultId;
-  const classes = [ css.base, className ];
-  const titleClasses = [ css.title ];
+  const classes = [css.base, className];
+  const titleClasses = [css.title];
 
   if (props.bodyBorder) classes.push(css.bodyBorder);
   if (props.bodyDynamic) classes.push(css.bodyDynamic);
@@ -44,16 +44,13 @@ const Section: React.FC<Props> = ({ className = '', ...props }: Props) => {
     <section className={classes.join(' ')} id={id}>
       {(props.title || props.options) && (
         <div className={css.header}>
-          {props.title && !props.hideTitle &&
-            <h5 className={titleClasses.join(' ')}>{props.title}</h5>}
+          {props.title && !props.hideTitle && (
+            <h5 className={titleClasses.join(' ')}>{props.title}</h5>
+          )}
           {props.options && <div className={css.options}>{props.options}</div>}
         </div>
       )}
-      {props.filters && (
-        <div className={css.filterBar}>
-          {props.filters}
-        </div>
-      )}
+      {props.filters && <div className={css.filterBar}>{props.filters}</div>}
       <div className={css.body}>
         <Spinner spinning={!!props.loading}>{props.children}</Spinner>
       </div>
