@@ -68,6 +68,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	tresSupported bool,
 	gresSupported bool,
 	containerRunType string,
+	isPbsLauncher bool,
 ) (*launcher.Manifest, string, string, error) {
 	/*
 	 * The user that the "launcher" is going to run the Determined task
@@ -116,15 +117,17 @@ func (t *TaskSpec) ToDispatcherManifest(
 	payload.SetVersion("latest")
 
 	if containerRunType == podman {
-		payload.SetCarriers([]string{
-			podmanCarrierSlurm,
-			podmanCarrierPbs,
-		})
+		if isPbsLauncher {
+			payload.SetCarriers([]string{podmanCarrierPbs})
+		} else {
+			payload.SetCarriers([]string{podmanCarrierSlurm})
+		}
 	} else {
-		payload.SetCarriers([]string{
-			singularityCarrierSlurm,
-			singularityCarrierPbs,
-		})
+		if isPbsLauncher {
+			payload.SetCarriers([]string{singularityCarrierPbs})
+		} else {
+			payload.SetCarriers([]string{singularityCarrierSlurm})
+		}
 	}
 
 	// Create payload launch parameters
