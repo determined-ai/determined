@@ -1,7 +1,7 @@
 # Custom SearchMethod with LocalSearchRunner
 
-This example shows how to implement a custom hyperparameter SearchMethod that enable fault tolerance.
-To run the custom SearchMethod, in this example we use LocalSearchRunner that executes the custom SearchMethod
+This example shows how to implement a custom hyperparameter SearchMethod that enables fault tolerance.
+To run the custom SearchMethod, in this example we use LocalSearchRunner that executes the custom SearchMethod 
 on your local machine. 
 For an example of running the custom SearchMethod on a cluster, see `examples/custom_searcher/core_search_runner`.
 
