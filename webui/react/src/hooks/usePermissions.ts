@@ -50,6 +50,7 @@ interface PermissionsHook {
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
+  canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
   canViewUsers: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -97,6 +98,8 @@ const usePermissions = (): PermissionsHook => {
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
     canUpdateRoles: (args: WorkspacePermissionsArgs) =>
       canUpdateRoles(args.workspace, user, userAssignments, userRoles),
+    canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
+      canViewExperimentArtifacts(args.workspace, userAssignments, userRoles),
     canViewGroups: canViewGroups(user, userAssignments, userRoles),
     canViewUsers: canAdministrateUsers(user, userAssignments, userRoles),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>
@@ -146,6 +149,16 @@ const canAdministrateUsers = (
     !!user &&
     (permitted.has('oss_user') ? user.isAdmin : permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'))
   );
+};
+
+// experiment artifacts (usually checkpoints)
+const canViewExperimentArtifacts = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return workspace && permitted.has('oss_user') || permitted.has('view_experiment_artifacts');
 };
 
 const canViewGroups = (

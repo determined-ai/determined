@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
+import usePermissions from 'hooks/usePermissions';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
@@ -88,6 +89,10 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
+  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
+
   return (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="visualization" tab="Visualization">
@@ -102,18 +107,22 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       <TabPane key="trials" tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key="checkpoints" tab="Checkpoints">
-        <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-      </TabPane>
-      <TabPane key="code" tab="Code">
-        <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-          <CodeViewer
-            experimentId={experiment.id}
-            runtimeConfig={experiment.configRaw}
-            submittedConfig={experiment.originalConfig}
-          />
-        </React.Suspense>
-      </TabPane>
+      {showExperimentArtifacts ? (
+        <>
+          <TabPane key="checkpoints" tab="Checkpoints">
+            <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+          </TabPane>
+          <TabPane key="code" tab="Code">
+            <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+              <CodeViewer
+                experimentId={experiment.id}
+                runtimeConfig={experiment.configRaw}
+                submittedConfig={experiment.originalConfig}
+              />
+            </React.Suspense>
+          </TabPane>
+        </>
+      ) : null}
       <TabPane key="notes" tab="Notes">
         <NotesCard
           notes={experiment.notes ?? ''}

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import useMetricNames from 'hooks/useMetricNames';
+import usePermissions from 'hooks/usePermissions';
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ErrorType } from 'shared/utils/error';
@@ -20,6 +21,10 @@ export interface Props {
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig, { storagePath });
+
+  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
 
   const [metricNames, setMetricNames] = useState<MetricName[]>([]);
   useMetricNames({
@@ -67,25 +72,29 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   return (
     <div className={css.base}>
       <TrialInfoBox experiment={experiment} trial={trial} />
-      <TrialChart
-        defaultMetricNames={defaultMetrics}
-        metricNames={metricNames}
-        metrics={metrics}
-        trialId={trial?.id}
-        trialTerminated={
-          trial ? trial.state === RunState.Completed || trial.state === RunState.Error : false
-        }
-        onMetricChange={handleMetricChange}
-      />
-      <TrialDetailsWorkloads
-        defaultMetrics={defaultMetrics}
-        experiment={experiment}
-        metricNames={metricNames}
-        metrics={metrics}
-        settings={settings}
-        trial={trial}
-        updateSettings={updateSettings}
-      />
+      {showExperimentArtifacts ? (
+        <>
+          <TrialChart
+            defaultMetricNames={defaultMetrics}
+            metricNames={metricNames}
+            metrics={metrics}
+            trialId={trial?.id}
+            trialTerminated={
+              trial ? trial.state === RunState.Completed || trial.state === RunState.Error : false
+            }
+            onMetricChange={handleMetricChange}
+          />
+          <TrialDetailsWorkloads
+            defaultMetrics={defaultMetrics}
+            experiment={experiment}
+            metricNames={metricNames}
+            metrics={metrics}
+            settings={settings}
+            trial={trial}
+            updateSettings={updateSettings}
+          />
+        </>
+      ) : null}
     </div>
   );
 };

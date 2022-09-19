@@ -5,7 +5,10 @@ import { useHistory, useParams } from 'react-router';
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -186,6 +189,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     openHyperparameterSearchModal({});
   }, [openHyperparameterSearchModal]);
 
+  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -208,18 +215,22 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <TabPane key="hyperparameters" tab="Hyperparameters">
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="checkpoints" tab="Checkpoints">
-          <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-        </TabPane>
-        <TabPane key="code" tab="Code">
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
-              submittedConfig={experiment.originalConfig}
-            />
-          </React.Suspense>
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <>
+            <TabPane key="checkpoints" tab="Checkpoints">
+              <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+            </TabPane>
+            <TabPane key="code" tab="Code">
+              <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+                <CodeViewer
+                  experimentId={experiment.id}
+                  runtimeConfig={experiment.configRaw}
+                  submittedConfig={experiment.originalConfig}
+                />
+              </React.Suspense>
+            </TabPane>
+          </>
+        ) : null}
         <TabPane key="notes" tab="Notes">
           <NotesCard
             notes={experiment.notes ?? ''}
