@@ -91,11 +91,12 @@ const usePermissions = (): PermissionsHook => {
 };
 
 // Permissions inside this workspace scope (no workspace = cluster-wide scope)
+// Typically returns a Set<string> of permissions.
 const relevantPermissions = (
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
   workspaceId?: number,
-): Set<string> => {
+): { has: (arg0: string) => boolean } => {
   if (!userAssignments || !userRoles) {
     // console.error('missing UserAssignment or UserRole');
     return new Set<string>();
@@ -111,7 +112,12 @@ const relevantPermissions = (
       // but not all of its permissions?
       permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
     });
-  return new Set<string>(permissions.map((p) => p.name));
+  const permitter = new Set<string>(permissions.map((p) => p.name));
+  // a cluster_admin has all permissions
+  if (permitter.has('cluster_admin')) {
+    return { has: () => true };
+  }
+  return permitter;
 };
 
 // User actions
