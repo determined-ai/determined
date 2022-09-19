@@ -289,7 +289,7 @@ class LightningAdapter(PyTorchTrial):
             if wrapped_opt is None:
                 raise InvalidModelException(
                     "An LRScheduler is returned in `configure_optimizers` without having "
-                    "returned the optimizer itself. Please follow PyTorchLightning's documenation"
+                    "returned the optimizer itself. Please follow PyTorchLightning's documentation"
                     "to make sure you're returning one of the expected values."
                     "- Single optimizer.\n"
                     "- List or Tuple - List of optimizers.\n"
@@ -410,7 +410,7 @@ class LightningAdapter(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         """
-        evaluate_batch implements the evalute_batch interface from PyTorchTrial using user provided
+        evaluate_batch implements the evaluate_batch interface from PyTorchTrial using user provided
         lightning_module.
 
         """
