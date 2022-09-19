@@ -229,9 +229,10 @@ class TextualInversionTrainer:
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
-        # Convert images to latent space
+        # Convert images to latent space.
         latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
         latents = latent_dist.sample().detach()
+
         # In 2112.10752, it was found that the latent space variance plays a large role in image
         # quality.  The following scale factor helps to maintain unit latent variance.  See
         # https://github.com/huggingface/diffusers/issues/437 for more details.
@@ -240,23 +241,23 @@ class TextualInversionTrainer:
 
         # Sample noise that we'll add to the latents
         noise = torch.randn(latents.shape).to(self.accelerator.device)
-        # Sample a random timestep for each image
-        timesteps = torch.randint(
+        # Sample a random timestep for each image in the batch.
+        rand_timesteps = torch.randint(
             0,
             self.num_train_timesteps,
             (self.train_batch_size,),
             device=self.accelerator.device,
         ).long()
 
-        # Add noise to the latents according to the noise magnitude at each timestep
-        # (this is the forward diffusion process)
-        noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, timesteps)
+        # Add noise to the latents according to the noise magnitude at each timestep. This is the
+        # forward diffusion process.
+        noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, rand_timesteps)
 
-        # Get the text embedding for conditioning
+        # Get the text embedding for the prompt.
         encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
 
         # Predict the noise residual
-        noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
+        noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         loss = F.mse_loss(noise_pred, noise)
         self.accelerator.backward(loss)
         self.loss_history.append(loss.detach())
