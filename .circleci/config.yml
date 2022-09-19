@@ -1171,7 +1171,11 @@ jobs:
       - helm/install-helm-client
       - run: helm plugin install https://github.com/chartmuseum/helm-push.git
       - login-helm
-      - run: make -C helm release
+      - run:
+          name: Publish built helm chart
+          command: |
+            go install github.com/goreleaser/goreleaser@v1.1.0
+            PATH=$HOME/go/bin:$PATH make -C helm release
 
   publish-python-package:
     parameters:
