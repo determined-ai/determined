@@ -1,5 +1,3 @@
-# from typing import Any, List
-
 import pytest
 
 from determined.cli.user_groups import group_name_to_group_id, usernames_to_user_ids
