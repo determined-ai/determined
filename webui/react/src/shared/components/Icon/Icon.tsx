@@ -5,19 +5,18 @@ import { CommonProps } from '../../types';
 
 import css from './Icon.module.scss';
 
-export type IconSize = (
-  'tiny' |
-  'small' |
-  'medium' |
-  'large' |
-  'big' |
-  'great' |
-  'huge' |
-  'enormous' |
-  'giant' |
-  'jumbo' |
-  'mega'
-);
+export type IconSize =
+  | 'tiny'
+  | 'small'
+  | 'medium'
+  | 'large'
+  | 'big'
+  | 'great'
+  | 'huge'
+  | 'enormous'
+  | 'giant'
+  | 'jumbo'
+  | 'mega';
 
 export interface Props extends CommonProps {
   name?: string;
@@ -26,7 +25,7 @@ export interface Props extends CommonProps {
 }
 
 const Icon: React.FC<Props> = ({ name = 'star', size = 'medium', title, ...rest }: Props) => {
-  const classes = [ css.base ];
+  const classes = [css.base];
 
   if (name) classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);

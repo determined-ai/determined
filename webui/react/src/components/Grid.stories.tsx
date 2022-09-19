@@ -19,17 +19,22 @@ const GridElement: React.FC = () => {
   return <div style={style} />;
 };
 
-const GridElements: React.ReactNodeArray =
-  new Array(27).fill(0).map((_, idx) => <GridElement key={idx} />);
+const GridElements: React.ReactNodeArray = new Array(27)
+  .fill(0)
+  .map((_, idx) => <GridElement key={idx} />);
 
 export const Default = (): React.ReactNode => <Grid gap={ShirtSize.large}>{GridElements}</Grid>;
 
 export const NoGap = (): React.ReactNode => <Grid>{GridElements}</Grid>;
 
 export const SmallCells = (): React.ReactNode => (
-  <Grid gap={ShirtSize.large} minItemWidth={100}>{GridElements}</Grid>
+  <Grid gap={ShirtSize.large} minItemWidth={100}>
+    {GridElements}
+  </Grid>
 );
 
 export const BigCells = (): React.ReactNode => (
-  <Grid gap={ShirtSize.large} minItemWidth={300}>{GridElements}</Grid>
+  <Grid gap={ShirtSize.large} minItemWidth={300}>
+    {GridElements}
+  </Grid>
 );

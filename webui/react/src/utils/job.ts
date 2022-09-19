@@ -8,7 +8,10 @@ import handleError from 'utils/error';
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.
 export const unsupportedQPosSchedulers = new Set([
-  Api.V1SchedulerType.FAIRSHARE, Api.V1SchedulerType.PBS, Api.V1SchedulerType.SLURM ]);
+  Api.V1SchedulerType.FAIRSHARE,
+  Api.V1SchedulerType.PBS,
+  Api.V1SchedulerType.SLURM,
+]);
 
 export const jobTypeIconName = (jobType: JobType): string => {
   const type = jobTypeToCommandType(jobType);
@@ -21,9 +24,7 @@ export const jobTypeLabel = (jobType: JobType): string => {
 };
 
 // translate JobType to CommandType
-export const jobTypeToCommandType = (
-  jobType: JobType,
-): CommandType | undefined => {
+export const jobTypeToCommandType = (jobType: JobType): CommandType | undefined => {
   switch (jobType) {
     case JobType.NOTEBOOK:
       return CommandType.JupyterLab;
@@ -38,9 +39,10 @@ export const jobTypeToCommandType = (
   }
 };
 
-export const orderedSchedulers = new Set(
-  [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
-);
+export const orderedSchedulers = new Set([
+  Api.V1SchedulerType.PRIORITY,
+  Api.V1SchedulerType.KUBERNETES,
+]);
 
 /**
  * Create the update request based on a given position for a job.
@@ -61,10 +63,10 @@ export const moveJobToPositionUpdate = (
     silent: false,
   };
   if (position < 1 || position % 1 !== 0) {
-    throw new DetError(
-      `Invalid queue position: ${position}.`,
-      { ...errOpts, type: ErrorType.Input },
-    );
+    throw new DetError(`Invalid queue position: ${position}.`, {
+      ...errOpts,
+      type: ErrorType.Input,
+    });
   }
   const anchorJob = jobs.find((job) => job.summary.jobsAhead === position - 1);
   const job = jobs.find((job) => job.jobId === jobId);
@@ -96,10 +98,7 @@ export const moveJobToPositionUpdate = (
   }
 };
 
-export const moveJobToTop = async (
-  curTopJob: Job,
-  targetJob: Job,
-): Promise<void> => {
+export const moveJobToTop = async (curTopJob: Job, targetJob: Job): Promise<void> => {
   if (curTopJob.jobId === targetJob.jobId || targetJob.summary.jobsAhead === 0) {
     return; // no op
   }
@@ -108,7 +107,7 @@ export const moveJobToTop = async (
       aheadOf: curTopJob.jobId,
       jobId: targetJob.jobId,
     };
-    await updateJobQueue({ updates: [ update ] });
+    await updateJobQueue({ updates: [update] });
   } catch (e) {
     handleError(e, { publicMessage: wrapPublicMessage(e, 'Failed to move job to top') });
   }
@@ -119,6 +118,5 @@ We cannot modify scheduling parameters of non fault tolerant jobs in Kubernetes.
 */
 export const canManageJob = (job: Job, rp?: ResourcePool): boolean => {
   if (!rp) return false;
-  return !(rp.schedulerType === Api.V1SchedulerType.KUBERNETES &&
-    job.type !== JobType.EXPERIMENT);
+  return !(rp.schedulerType === Api.V1SchedulerType.KUBERNETES && job.type !== JobType.EXPERIMENT);
 };

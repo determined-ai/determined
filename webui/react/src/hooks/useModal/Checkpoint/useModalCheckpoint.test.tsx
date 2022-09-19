@@ -29,7 +29,7 @@ const Container: React.FC = (props: Partial<Props> = {}) => {
     ...props,
   });
 
-  const handleClick = useCallback(() => modalOpen(), [ modalOpen ]);
+  const handleClick = useCallback(() => modalOpen(), [modalOpen]);
 
   return (
     <StoreProvider>

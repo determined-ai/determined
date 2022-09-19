@@ -5,20 +5,22 @@ import React from 'react';
 import { handlePath, serverAddress } from 'routes/utils';
 
 interface Props {
-  afterDate: Dayjs,
-  beforeDate: Dayjs,
+  afterDate: Dayjs;
+  beforeDate: Dayjs;
   onVisibleChange: (visible: boolean) => void;
 }
 
-const ClusterHistoricalUsageCsvModal: React.FC<Props> = (
-  { afterDate, beforeDate, onVisibleChange }: Props,
-) => {
-  const [ form ] = Form.useForm();
+const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
+  afterDate,
+  beforeDate,
+  onVisibleChange,
+}: Props) => {
+  const [form] = Form.useForm();
 
   const handleOk = (event: React.MouseEvent): void => {
     const formAfterDate = form.getFieldValue('afterDate');
     const formBeforeDate = form.getFieldValue('beforeDate');
-    const searchParams = new URLSearchParams;
+    const searchParams = new URLSearchParams();
 
     searchParams.append('timestamp_after', formAfterDate.startOf('day').toISOString());
     searchParams.append('timestamp_before', formBeforeDate.endOf('day').toISOString());
@@ -48,10 +50,7 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = (
       visible={true}
       onCancel={() => onVisibleChange(false)}
       onOk={handleOk}>
-      <Form
-        form={form}
-        initialValues={{ afterDate, beforeDate }}
-        labelCol={{ span: 8 }}>
+      <Form form={form} initialValues={{ afterDate, beforeDate }} labelCol={{ span: 8 }}>
         <Form.Item label="Start" name="afterDate">
           <DatePicker
             allowClear={false}

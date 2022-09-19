@@ -8,21 +8,19 @@ import { StoreActionUI } from 'shared/contexts/UIStore';
 import css from './NoPermissions.module.scss';
 
 const NoPermissions: React.FC = () => {
-
   const storeDispatch = useStoreDispatch();
-  useEffect(() => storeDispatch({ type: StoreActionUI.HideUIChrome }), [ storeDispatch ]);
+  useEffect(() => storeDispatch({ type: StoreActionUI.HideUIChrome }), [storeDispatch]);
 
   return (
-    <Page
-      bodyNoPadding>
+    <Page bodyNoPadding>
       <div className={css.base}>
         <div className={css.icon}>
           <Icon name="warning-large" size="mega" />
         </div>
         <h6>You don&lsquo;t have access to a workspace</h6>
         <p className={css.message}>
-          In order to access and use Determined you need to be added to a workspace.
-          Contact your admin to request to be added to a workspace.
+          In order to access and use Determined you need to be added to a workspace. Contact your
+          admin to request to be added to a workspace.
         </p>
       </div>
     </Page>

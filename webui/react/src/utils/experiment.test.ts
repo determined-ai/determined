@@ -66,7 +66,7 @@ describe('Experiment Utilities', () => {
   });
 
   describe('trialHParamsToExperimentHParams', () => {
-    const tests: { input: Type.TrialHyperparameters, output: RawJson }[] = [
+    const tests: { input: Type.TrialHyperparameters; output: RawJson }[] = [
       {
         input: {
           'arch.n_filters1': 62,

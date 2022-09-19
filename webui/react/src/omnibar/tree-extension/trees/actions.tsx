@@ -6,8 +6,12 @@ import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
 import { routeToReactUrl } from 'shared/utils/routes';
 /** generates a handler that alerts when called */
-export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
-export const visitAction = (url: string) => ((): void => routeToReactUrl(url));
+export const alertAction =
+  (msg: string): FinalAction =>
+  () => {
+    message.info(msg);
+  };
+export const visitAction = (url: string) => (): void => routeToReactUrl(url);
 export const noOp = (): void => undefined;
 export const parseIds = (input: string): number[] => input.split(',').map((i) => parseInt(i));
 
@@ -27,11 +31,15 @@ export const displayHelp = (): void => {
       <>
         <p>Keyboard shortcuts:</p>
         <ul>
-          {keymap.map((el, idx) => <li key={idx}>{el}</li>)}
+          {keymap.map((el, idx) => (
+            <li key={idx}>{el}</li>
+          ))}
         </ul>
         <p>Available commands:</p>
         <ul>
-          {commands.map((el, idx) => <li key={idx}>{el}</li>)}
+          {commands.map((el, idx) => (
+            <li key={idx}>{el}</li>
+          ))}
         </ul>
       </>
     ),

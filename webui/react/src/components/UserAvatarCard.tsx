@@ -8,7 +8,7 @@ import { getDisplayName } from 'utils/user';
 export interface Props {
   className?: string;
   darkLight: DarkLight;
-  user?: DetailedUser | User
+  user?: DetailedUser | User;
 }
 
 const UserAvatarCard: React.FC<Props> = ({ className, darkLight, user }) => (

@@ -20,28 +20,29 @@ const SettingsAccount: React.FC = () => {
   const { auth } = useStore();
   const storeDispatch = useStoreDispatch();
 
-  const {
-    contextHolder: modalPasswordChangeContextHolder,
-    modalOpen: openChangePasswordModal,
-  } = useModalPasswordChange();
+  const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
+    useModalPasswordChange();
 
   const handlePasswordClick = useCallback(() => {
     openChangePasswordModal();
-  }, [ openChangePasswordModal ]);
+  }, [openChangePasswordModal]);
 
-  const handleSave = useCallback(async (newValue: string) => {
-    try {
-      const user = await patchUser({
-        userId: auth.user?.id || 0,
-        userParams: { displayName: newValue },
-      });
-      storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
-      message.success(API_SUCCESS_MESSAGE);
-    } catch (e) {
-      message.error(API_ERROR_MESSAGE);
-      handleError(e, { silent: true, type: ErrorType.Input });
-    }
-  }, [ auth.user, storeDispatch ]);
+  const handleSave = useCallback(
+    async (newValue: string) => {
+      try {
+        const user = await patchUser({
+          userId: auth.user?.id || 0,
+          userParams: { displayName: newValue },
+        });
+        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        message.success(API_SUCCESS_MESSAGE);
+      } catch (e) {
+        message.error(API_ERROR_MESSAGE);
+        handleError(e, { silent: true, type: ErrorType.Input });
+      }
+    },
+    [auth.user, storeDispatch],
+  );
 
   return (
     <div className={css.base}>

@@ -8,7 +8,7 @@ const { Option } = Select;
 
 export default {
   component: SelectFilter,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'SelectFilter',
 };
 

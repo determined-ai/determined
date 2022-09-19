@@ -4,8 +4,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { isNumber, isString } from 'shared/utils/data';
 import {
-  DURATION_DAY, DURATION_HOUR, DURATION_MINUTE, DURATION_SECOND,
-  DURATION_YEAR, durationInEnglish,
+  DURATION_DAY,
+  DURATION_HOUR,
+  DURATION_MINUTE,
+  DURATION_SECOND,
+  DURATION_YEAR,
+  durationInEnglish,
 } from 'shared/utils/datetime';
 import { capitalize, capitalizeWord } from 'shared/utils/string';
 
@@ -39,7 +43,7 @@ const TimeAgo: React.FC<Props> = ({
   tooltipFormat = DEFAULT_TOOLTIP_FORMAT,
   units = 1,
 }: Props) => {
-  const [ now, setNow ] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
   const classes: string[] = [];
 
   if (className) classes.push(className);
@@ -53,11 +57,11 @@ const TimeAgo: React.FC<Props> = ({
       return datetime.valueOf();
     }
     return undefined;
-  }, [ datetime ]);
+  }, [datetime]);
 
   const delta = useMemo(() => {
     return milliseconds === undefined ? 0 : now - milliseconds;
-  }, [ milliseconds, now ]);
+  }, [milliseconds, now]);
 
   const duration = useMemo(() => {
     if (delta < DURATION_MINUTE) return JUST_NOW;
@@ -73,7 +77,7 @@ const TimeAgo: React.FC<Props> = ({
     };
     const time = durationInEnglish(delta, options);
     return `${time} ago`;
-  }, [ delta, dateFormat, long, milliseconds, units ]);
+  }, [delta, dateFormat, long, milliseconds, units]);
 
   const durationString = useMemo(() => {
     switch (stringCase) {
@@ -86,7 +90,7 @@ const TimeAgo: React.FC<Props> = ({
       default:
         return duration;
     }
-  }, [ duration, stringCase ]);
+  }, [duration, stringCase]);
 
   const updateInterval = useMemo(() => {
     if (noUpdate || delta === 0) return 0;
@@ -94,7 +98,7 @@ const TimeAgo: React.FC<Props> = ({
     if (delta < DURATION_HOUR) return DURATION_MINUTE;
     if (delta < DURATION_DAY) return DURATION_HOUR;
     if (delta < DURATION_YEAR) return DURATION_DAY;
-  }, [ delta, noUpdate ]);
+  }, [delta, noUpdate]);
 
   useEffect(() => {
     const timer = updateInterval
@@ -104,7 +108,7 @@ const TimeAgo: React.FC<Props> = ({
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [ updateInterval ]);
+  }, [updateInterval]);
 
   return (
     <Tooltip title={dayjs(milliseconds).format(tooltipFormat)}>

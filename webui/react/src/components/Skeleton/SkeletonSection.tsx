@@ -36,13 +36,13 @@ const SkeletonSection: React.FC<Props> = ({
   size = 'medium',
   title,
 }: Props) => {
-  const classes = [ css.base, css[size] ];
+  const classes = [css.base, css[size]];
   const showHeader = !!title || !!filters;
 
   const titleSkeleton = useMemo(() => {
     if (!title) return null;
     return renderTitle(title);
-  }, [ title ]);
+  }, [title]);
 
   const filterSkeleton = useMemo(() => {
     if (!filters) return null;
@@ -51,11 +51,11 @@ const SkeletonSection: React.FC<Props> = ({
     if (isNumber(filters)) {
       content = new Array(filters).fill(null).map((_, index) => renderFilter(index));
     } else {
-      const filterProps = (Array.isArray(filters) ? filters : [ filters ]) as SkeletonTitleProps[];
+      const filterProps = (Array.isArray(filters) ? filters : [filters]) as SkeletonTitleProps[];
       content = filterProps.map((props, index) => renderFilter(index, props));
     }
     return <div className={css.filters}>{content}</div>;
-  }, [ filters ]);
+  }, [filters]);
 
   const contentSkeleton = useMemo(() => {
     if (React.isValidElement(children)) return children;
@@ -64,7 +64,7 @@ const SkeletonSection: React.FC<Props> = ({
     if (contentType === ContentType.Chart) content = <img src={iconChart} />;
     if (contentType === ContentType.Logs) content = <img src={iconLogs} />;
     return <div className={css.content}>{content}</div>;
-  }, [ children, contentType ]);
+  }, [children, contentType]);
 
   return (
     <div className={classes.join(' ')}>

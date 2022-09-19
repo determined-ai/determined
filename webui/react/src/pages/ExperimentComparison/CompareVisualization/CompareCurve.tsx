@@ -8,10 +8,7 @@ import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Scale } from 'types';
-import {
-  ExperimentAction as Action, CommandTask, Hyperparameter,
-  MetricName,
-} from 'types';
+import { ExperimentAction as Action, CommandTask, Hyperparameter, MetricName } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'utils/wait';
 
@@ -21,19 +18,18 @@ import css from './CompareCurve.module.scss';
 import HpTrialTable, { TrialHParams } from './CompareTable';
 
 interface Props {
-  batches: number[]
+  batches: number[];
   chartData: (number | null)[][];
   filters?: React.ReactNode;
   // fullHParams: string[];
   hasLoaded: boolean;
-  hpVals: HpValsMap
+  hpVals: HpValsMap;
   hyperparameters: Record<string, Hyperparameter>;
   selectedMaxTrial: number;
-  selectedMetric: MetricName
+  selectedMetric: MetricName;
   selectedScale: Scale;
   trialHps: TrialHParams[];
   trialIds: number[];
-
 }
 
 const CompareCurve: React.FC<Props> = ({
@@ -49,8 +45,8 @@ const CompareCurve: React.FC<Props> = ({
   hyperparameters,
   hasLoaded,
 }: Props) => {
-  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
-  const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
+  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
 
   const hasTrials = trialIds.length !== 0;
 
@@ -70,31 +66,38 @@ const CompareCurve: React.FC<Props> = ({
     setSelectedRowKeys([]);
   }, []);
 
-  const sendBatchActions = useCallback(async (action: Action) => {
-    if (action === Action.OpenTensorBoard) {
-      return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
-    }
-  }, [ selectedRowKeys ]);
-
-  const submitBatchAction = useCallback(async (action: Action) => {
-    try {
-      const result = await sendBatchActions(action);
-      if (action === Action.OpenTensorBoard && result) {
-        openCommand(result as CommandTask);
+  const sendBatchActions = useCallback(
+    async (action: Action) => {
+      if (action === Action.OpenTensorBoard) {
+        return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
       }
-    } catch (e) {
-      const publicSubject = action === Action.OpenTensorBoard ?
-        'Unable to View TensorBoard for Selected Trials' :
-        `Unable to ${action} Selected Trials`;
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject,
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [ sendBatchActions ]);
+    },
+    [selectedRowKeys],
+  );
+
+  const submitBatchAction = useCallback(
+    async (action: Action) => {
+      try {
+        const result = await sendBatchActions(action);
+        if (action === Action.OpenTensorBoard && result) {
+          openCommand(result as CommandTask);
+        }
+      } catch (e) {
+        const publicSubject =
+          action === Action.OpenTensorBoard
+            ? 'Unable to View TensorBoard for Selected Trials'
+            : `Unable to ${action} Selected Trials`;
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject,
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
+    },
+    [sendBatchActions],
+  );
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
@@ -127,9 +130,7 @@ const CompareCurve: React.FC<Props> = ({
             />
           </div>
           <TableBatch
-            actions={[
-              { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-            ]}
+            actions={[{ label: Action.OpenTensorBoard, value: Action.OpenTensorBoard }]}
             selectedRowCount={selectedRowKeys.length}
             onAction={(action) => submitBatchAction(action as Action)}
             onClear={clearSelected}
@@ -149,7 +150,6 @@ const CompareCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-
     </div>
   );
 };

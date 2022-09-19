@@ -5,14 +5,14 @@ import StateSelectFilter from './StateSelectFilter';
 
 export default {
   component: StateSelectFilter,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'StateSelectFilter',
 };
 
 export const Default = (): React.ReactNode => <StateSelectFilter />;
 
 export const Custom = (): React.ReactNode => {
-  const [ currentValue, setCurrentValue ] = useState('');
+  const [currentValue, setCurrentValue] = useState('');
   return (
     <StateSelectFilter
       showCommandStates={boolean('showCommandStates', true)}

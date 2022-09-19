@@ -47,7 +47,7 @@ const shouldRecreate = (
 
   if (chart?.series?.length !== next.series?.length) return true;
 
-  const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([ scaleKey, nextScale ]) => {
+  const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([scaleKey, nextScale]) => {
     const prevScale = prev?.scales?.[scaleKey];
     return prevScale?.distr !== nextScale?.distr;
   });
@@ -56,9 +56,11 @@ const shouldRecreate = (
 
   const someAxisHasChanged = prev.axes?.some((prevAxis, seriesIdx) => {
     const nextAxis = next.axes?.[seriesIdx];
-    return (prevAxis.label !== nextAxis?.label)
-      || (prevAxis.stroke !== nextAxis?.stroke)
-      || (prevAxis.scale !== nextAxis?.scale);
+    return (
+      prevAxis.label !== nextAxis?.label ||
+      prevAxis.stroke !== nextAxis?.stroke ||
+      prevAxis.scale !== nextAxis?.scale
+    );
   });
   if (someAxisHasChanged) return true;
 
@@ -66,12 +68,12 @@ const shouldRecreate = (
     const nextSerie = next.series?.[seriesIdx];
     const prevSerie = prev.series?.[seriesIdx];
     return (
-      (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show)
-      || (prevSerie?.show != null && prevSerie?.show !== nextSerie?.show)
-      || (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
-      || (nextSerie?.stroke != null && chartSerie?.stroke !== nextSerie?.stroke)
-      || (nextSerie?.paths != null && chartSerie?.paths !== nextSerie?.paths)
-      || (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
+      (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show) ||
+      (prevSerie?.show != null && prevSerie?.show !== nextSerie?.show) ||
+      (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label) ||
+      (nextSerie?.stroke != null && chartSerie?.stroke !== nextSerie?.stroke) ||
+      (nextSerie?.paths != null && chartSerie?.paths !== nextSerie?.paths) ||
+      (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
     );
   });
   if (someSeriesHasChanged) return true;
@@ -89,8 +91,8 @@ const UPlotChart: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const [ isReady, setIsReady ] = useState(false);
-  const classes = [ css.base ];
+  const [isReady, setIsReady] = useState(false);
+  const classes = [css.base];
 
   const { ui } = useStore();
   const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
@@ -103,8 +105,8 @@ const UPlotChart: React.FC<Props> = ({
     const extended: Partial<uPlot.Options> = uPlot.assign(
       {
         hooks: {
-          destroy: [ () => setIsReady(false), () => setZoomed(false) ],
-          ready: [ () => setIsReady(true) ],
+          destroy: [() => setIsReady(false), () => setZoomed(false)],
+          ready: [() => setIsReady(true)],
         },
         width: chartDivRef.current?.offsetWidth,
       },
@@ -128,7 +130,7 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended as uPlot.Options;
-  }, [ boundsOptions, options, setZoomed, ui.theme ]);
+  }, [boundsOptions, options, setZoomed, ui.theme]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 
@@ -145,7 +147,7 @@ const UPlotChart: React.FC<Props> = ({
       chartRef.current?.destroy();
       chartRef.current = undefined;
       try {
-        if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length){
+        if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length) {
           chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
         }
       } catch (e) {
@@ -161,7 +163,7 @@ const UPlotChart: React.FC<Props> = ({
       }
     } else {
       try {
-        if (chartRef.current && isReady){
+        if (chartRef.current && isReady) {
           chartRef.current.setData(data as AlignedData, !zoomed);
         }
       } catch (e) {
@@ -176,7 +178,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [ data, extendedOptions, isReady, previousOptions, title, zoomed ]);
+  }, [data, extendedOptions, isReady, previousOptions, title, zoomed]);
 
   /**
    * When a focus index is provided, highlight applicable series.
@@ -185,7 +187,7 @@ const UPlotChart: React.FC<Props> = ({
     if (!chartRef.current) return;
     const hasFocus = focusIndex !== undefined;
     chartRef.current.setSeries(hasFocus ? (focusIndex as number) + 1 : null, { focus: hasFocus });
-  }, [ focusIndex ]);
+  }, [focusIndex]);
 
   /*
    * Resize the chart when resize events happen.
@@ -193,10 +195,10 @@ const UPlotChart: React.FC<Props> = ({
   const resize = useResize(chartDivRef);
   useEffect(() => {
     if (!chartRef.current) return;
-    const [ width, height ] = [ resize.width, options?.height || chartRef.current.height ];
+    const [width, height] = [resize.width, options?.height || chartRef.current.height];
     if (chartRef.current.width === width && chartRef.current.height === height) return;
     chartRef.current.setSize({ height, width });
-  }, [ options?.height, resize ]);
+  }, [options?.height, resize]);
 
   /*
    * Resync the chart when scroll events happen to correct the cursor position upon
