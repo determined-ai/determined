@@ -46,15 +46,20 @@ check-eslint:
 .PHONY: check-stylelint
 check-stylelint:
 	npm run stylelint
-.PHONY: check-prettier
-check-prettier:
-	npm run format-check
+check-prettier-js:
+	npm run format-check:js
+check-prettier-css:
+	npm run format-check:css
+check-prettier-misc:
+	npm run format-check:misc
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
 .PHONY: check-requirements
 check-requirements:
 	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
+.PHONY: check-prettier
+check-prettier: check-prettier-js check-prettier-css check-prettier-misc
 .PHONY: check
 check: check-eslint check-stylelint check-prettier check-package-lock
 
