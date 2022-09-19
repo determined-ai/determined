@@ -1,6 +1,7 @@
 import queryString from 'query-string';
 
 import { useStore } from 'contexts/Store';
+import { DeterminedInfo } from 'types';
 
 type ValidFeature = 'rbac' // Add new feature switches here using `|`
 const queryParams = queryString.parse(window.location.search);
@@ -10,11 +11,12 @@ interface FeatureHook {
 }
 
 const useFeature = (): FeatureHook => {
-  return { isOn: (ValidFeature) => IsOn(ValidFeature) };
+  const { info } = useStore();
+  return { isOn: (ValidFeature) => IsOn(ValidFeature, info) };
 };
 
-const IsOn = (feature: string): boolean => {
-  const { info: { rbacEnabled } } = useStore();
+const IsOn = (feature: string, info: DeterminedInfo): boolean => {
+  const { rbacEnabled } = info;
   switch (feature) {
     case 'rbac':
       return rbacEnabled || queryParams[`f_${feature}`] === 'on';
