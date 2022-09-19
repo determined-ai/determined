@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from time import sleep
-from typing import Any, Pattern
+from typing import Pattern, Optional
 
 import backoff
 from determined.common import api
@@ -33,7 +33,7 @@ def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str
     )
 
 
-def main(ready: Pattern, waiting: Pattern):
+def main(ready: Pattern, waiting: Optional[Pattern]):
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
