@@ -7,7 +7,6 @@ import torch.nn as nn
 
 import determined as det
 from determined import profiler, pytorch, util
-from determined.common import check
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
 
@@ -171,7 +170,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         """Returns a wrapped model."""
 
         if self.env.managed_training:
-            check.false(self._use_apex, "Must call wrap_model() before configure_apex_amp.")
+            if self._use_apex:
+                raise det.errors.InvalidExperimentException(
+                    "Must call wrap_model() before configure_apex_amp.",
+                )
 
             model = model.to(self.device)
 
@@ -225,12 +227,14 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         """
         if self.env.managed_training:
-            check.false(self._use_apex, "Must call wrap_optimizer() before configure_apex_amp.")
-            check.gt_eq(
-                backward_passes_per_step,
-                1,
-                "backward_passes_per_step for local gradient aggregation must be >= 1",
-            )
+            if self._use_apex:
+                raise det.errors.InvalidExperimentException(
+                    "Must call wrap_optimizer() before configure_apex_amp.",
+                )
+            if backward_passes_per_step < 1:
+                raise det.errors.InvalidExperimentException(
+                    "backward_passes_per_step for local gradient aggregation must be >= 1.",
+                )
 
             if self.distributed.size > 1 and self._distributed_backend.use_horovod():
                 optimizer = hvd.DistributedOptimizer(
@@ -281,11 +285,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         opt = getattr(lr_scheduler, "optimizer", None)
         if opt is not None:
-            check.is_in(
-                opt,
-                self.optimizers,
-                "Must use an optimizer that is returned by wrap_optimizer()",
-            )
+            if opt not in self.optimizers:
+                raise det.errors.InvalidExperimentException(
+                    "Must use an optimizer that is returned by wrap_optimizer().",
+                )
         wrapped = pytorch.LRScheduler(lr_scheduler, step_mode, frequency)
         self.lr_schedulers.append(wrapped)
 
@@ -338,7 +341,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             device = torch.device("cuda", 0)
         else:
             device = torch.device("cpu")
-        check.is_not_none(device)
+        if device is None:
+            raise Exception("Error initializing torch.device")
         return device
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
@@ -368,18 +372,28 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             The scaler. It may be wrapped to add additional functionality for use in Determined.
         """
 
-        check.true(HAVE_AMP, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
+        if not HAVE_AMP:
+            raise det.errors.InvalidExperimentException(
+                "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.",
+            )
 
-        check.false(self._use_apex, "Do not mix APEX with PyTorch AMP.")
+        if self._use_apex:
+            raise det.errors.InvalidExperimentException("Do not mix APEX with PyTorch AMP.")
 
-        check.is_none(self._scaler, "Please only call wrap_scaler or use_amp once.")
+        if self._scaler is not None:
+            raise det.errors.InvalidExperimentException(
+                "Please only call wrap_scaler or use_amp once.",
+            )
 
-        check.true(len(self.models) == 0, "Please call wrap_scaler before wrap_model.")
+        if self.models:
+            raise det.errors.InvalidExperimentException(
+                "Please call wrap_scaler before wrap_model.",
+            )
 
-        check.true(
-            torch.cuda.is_available(),
-            "Mixed precision training (AMP) is supported only on GPU slots.",
-        )
+        if not torch.cuda.is_available():
+            raise det.errors.InvalidExperimentException(
+                "Mixed precision training (AMP) is supported only on GPU slots.",
+            )
 
         self._scaler = scaler
 
@@ -459,33 +473,31 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if not enabled or not self.env.managed_training:
             return models, optimizers
 
-        if self._scaler is not None:
-            check.false(self._scaler.is_enabled(), "Do not mix APEX with PyTorch AMP")
+        if self._scaler is not None and self._scaler.is_enabled():
+            raise det.errors.InvalidExperimentException("Do not mix APEX with PyTorch AMP.")
 
-        check.false(self._use_apex, "Please only call configure_apex_amp once.")
+        if self._use_apex:
+            raise det.errors.InvalidExperimentException("Please only call configure_apex_amp once.")
+
         if self.distributed.size > 1:
-            check.eq(
-                num_losses,
-                1,
-                "When using parallel/distributed training, "
-                "Determined only supports configure_apex_amp with num_losses = 1",
+            if num_losses != 1:
+                raise det.errors.InvalidExperimentException(
+                    "When using parallel/distributed training, "
+                    "Determined only supports configure_apex_amp with num_losses = 1.",
+                )
+            if self._aggregation_frequency > 1:
+                raise det.errors.InvalidExperimentException(
+                    "Mixed precision training (AMP) is not supported with "
+                    "distributed training and "
+                    "aggregation frequency > 1.",
+                )
+
+        if not torch.cuda.is_available():
+            raise det.errors.InvalidExperimentException(
+                "Mixed precision training (AMP) is supported only on GPU slots.",
             )
 
         self._use_apex = True
-
-        if self.distributed.size > 1:
-            check.eq(
-                self._aggregation_frequency,
-                1,
-                "Mixed precision training (AMP) is not supported with "
-                "distributed training and "
-                "aggregation frequency > 1.",
-            )
-
-        check.true(
-            torch.cuda.is_available(),
-            "Mixed precision training (AMP) is supported only on GPU slots.",
-        )
 
         if self._distributed_backend.use_torch():
             # We need to get the pre-wrapped input models to initialize APEX because
@@ -643,7 +655,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     @staticmethod
     def _average_gradients(parameters: Any, divisor: int) -> None:
-        check.gt_eq(divisor, 1)
+        if divisor < 1:
+            raise ValueError("divisor < 1")
         if divisor == 1:
             return
 
@@ -692,11 +705,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 ``wrap_scaler()`` was called directly.
         """
 
-        check.true(
-            auto_zero_grads or self._aggregation_frequency == 1,
-            "if optimizations.aggregation_frequency is larger than 1, "
-            "you can only set auto_zero_grads to be true. ",
-        )
+        if self._aggregation_frequency > 1 and not auto_zero_grads:
+            raise det.errors.InvalidExperimentException(
+                "if optimizations.aggregation_frequency is larger than 1, "
+                "auto_zero_grads must be set to true. ",
+            )
 
         if not self._should_communicate_and_update():
             return

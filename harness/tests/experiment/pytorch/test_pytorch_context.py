@@ -2,7 +2,6 @@ import pytest
 import torch
 
 from determined import errors, pytorch
-from determined.common import check
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
@@ -32,7 +31,7 @@ class TestPyTorchContext:
             metrics = trial.evaluate_batch(batch)
 
     def test_average_gradients(self) -> None:
-        with pytest.raises(check.CheckFailedError):
+        with pytest.raises(ValueError):
             self.context._average_gradients(None, 0)
         assert self.context._average_gradients(None, 1) is None
 
@@ -55,5 +54,5 @@ class TestPyTorchContext:
             assert scaler == self.context.wrap_scaler(scaler)
             assert scaler == self.context._scaler
         else:
-            with pytest.raises(check.CheckFailedError):
+            with pytest.raises(errors.InvalidExperimentException):
                 self.context.wrap_scaler(None)
