@@ -78,8 +78,6 @@
   z-index: 3;
 
   &:active {
-    background-color: var(--theme-status-active);
-
     &::before {
       content: '';
       cursor: col-resize;
