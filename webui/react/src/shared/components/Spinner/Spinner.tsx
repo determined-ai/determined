@@ -24,7 +24,7 @@ const Spinner: React.FC<Props> = ({
   tip,
   ...props
 }: Props) => {
-  const classes = [ css.base ];
+  const classes = [css.base];
 
   if (className) classes.push(className);
   if (center || tip) classes.push(css.center);
@@ -32,11 +32,11 @@ const Spinner: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')}>
       <Spin
-        indicator={(
+        indicator={
           <div className={css.spin}>
             <Icon name="spinner" size={size} />
           </div>
-        )}
+        }
         spinning={spinning}
         tip={tip}
         {...props}>

@@ -7,14 +7,18 @@
     justify-content: space-between;
     width: 100%;
 
-    .title { flex-basis: 25%; }
+    .title {
+      flex-basis: 25%;
+    }
     .filters {
       display: inline-flex;
       flex-basis: 33%;
       gap: 16px;
       justify-content: flex-end;
 
-      .filter { min-width: 40px; }
+      .filter {
+        min-width: 40px;
+      }
     }
   }
   .content {
@@ -32,7 +36,15 @@
     }
   }
 }
-.base.small > .content { height: 100px; }
-.base.medium > .content { height: 200px; }
-.base.large > .content { height: 400px; }
-.base.max { height: 100%; }
+.base.small > .content {
+  height: 100px;
+}
+.base.medium > .content {
+  height: 200px;
+}
+.base.large > .content {
+  height: 400px;
+}
+.base.max {
+  height: 100%;
+}

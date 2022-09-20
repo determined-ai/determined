@@ -456,10 +456,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             If  ``optimizers`` args were lists, the corresponding return value will
             also be a list.
         """
-        if not self.env.managed_training:
+        if not enabled or not self.env.managed_training:
             return models, optimizers
 
-        check.is_none(self._scaler, "Do not mix APEX with PyTorch AMP")
+        if self._scaler is not None:
+            check.false(self._scaler.is_enabled(), "Do not mix APEX with PyTorch AMP")
 
         check.false(self._use_apex, "Please only call configure_apex_amp once.")
         if self.distributed.size > 1:
@@ -477,6 +478,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 self._aggregation_frequency,
                 1,
                 "Mixed precision training (AMP) is not supported with "
+                "distributed training and "
                 "aggregation frequency > 1.",
             )
 

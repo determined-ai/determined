@@ -14,7 +14,7 @@ interface Props {
 }
 
 const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
-  const [ currentValue, setCurrentValue ] = useState(value);
+  const [currentValue, setCurrentValue] = useState(value);
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
@@ -26,7 +26,7 @@ const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
         { id: 3, isActive: false, isAdmin: false, username: 'inactive' },
       ],
     });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return (
     <UserSelectFilter
@@ -36,6 +36,4 @@ const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
   );
 };
 
-export const Default = (): React.ReactNode => (
-  <UserSelectFilterWithUsers />
-);
+export const Default = (): React.ReactNode => <UserSelectFilterWithUsers />;

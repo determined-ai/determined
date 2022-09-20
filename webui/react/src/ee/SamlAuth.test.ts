@@ -4,10 +4,7 @@ import * as utils from './SamlAuth';
 
 describe('SamlAuth', () => {
   describe('samlUrl', () => {
-    const BASE_PATHS = [
-      '/abc/def-ghi',
-      '/HelloWorld/What%20is%20up?',
-    ];
+    const BASE_PATHS = ['/abc/def-ghi', '/HelloWorld/What%20is%20up?'];
     const QUERIES = [
       {
         default: 'columns=id&columns=user&sortDesc=false&tableLimit=20',
@@ -41,7 +38,7 @@ describe('SamlAuth', () => {
       someKey: 'someValue',
     };
     const QUERIES_OUTPUT = {
-      columns: [ 'id', 'user' ],
+      columns: ['id', 'user'],
       someKey: 'someValue',
       sortDesc: 'false',
       tableLimit: '20',

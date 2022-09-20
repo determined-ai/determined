@@ -36,6 +36,18 @@ enum State {
   STATE_DELETE_FAILED = 11;
   // The experiment is killed and is shutting down.
   STATE_STOPPING_KILLED = 12;
+  // The experiment is queued (waiting to be run, or job state is still queued).
+  // Queued is a substate of the Active state.
+  STATE_QUEUED = 13;
+  // The experiment is pulling the image. Pulling is a substate of the Active
+  // state.
+  STATE_PULLING = 14;
+  // The experiment is preparing the environment after finishing pulling the
+  // image. Starting is a substate of the Active state.
+  STATE_STARTING = 15;
+  // The experiment has an allocation actively running.
+  // Running is a substate of the Active state.
+  STATE_RUNNING = 16;
 }
 
 // Experiment is a collection of one or more trials that are exploring a

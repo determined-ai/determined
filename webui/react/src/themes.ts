@@ -7,8 +7,16 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'shared/themes';
-import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState, WorkspaceState } from 'types';
+import {
+  BrandingType,
+  CheckpointState,
+  CommandState,
+  JobState,
+  ResourceState,
+  RunState,
+  SlotState,
+  WorkspaceState,
+} from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -33,8 +41,10 @@ const stateColorMapping = {
   [RunState.StoppingCompleted]: 'success',
   [RunState.StoppingError]: 'critical',
   [RunState.Unspecified]: 'inactive',
-  [CommandState.Pending]: 'warning',
-  [CommandState.Assigned]: 'warning',
+  [RunState.Queued]: 'warning',
+  [RunState.Pulling]: 'pending',
+  [RunState.Starting]: 'pending',
+  [RunState.Running]: 'active',
   [CommandState.Pulling]: 'active',
   [CommandState.Starting]: 'active',
   [CommandState.Running]: 'active',
@@ -55,12 +65,18 @@ const stateColorMapping = {
   [JobState.QUEUED]: 'warning',
 };
 
-export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
-SlotState | JobState | WorkspaceState
+export type StateOfUnion =
+  | RunState
+  | CommandState
+  | ResourceState
+  | CheckpointState
+  | SlotState
+  | JobState
+  | WorkspaceState;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,
-  options: { isOn?: boolean, strongWeak?: 'strong' | 'weak' } = {},
+  options: { isOn?: boolean; strongWeak?: 'strong' | 'weak' } = {},
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
   const on = options.isOn ? '-on' : '';

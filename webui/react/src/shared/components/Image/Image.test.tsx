@@ -55,7 +55,7 @@ describe('Image', () => {
       const { view } = setupImageAlert({ darkLight: DarkLight.Dark });
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Alert')).toBeInTheDocument();
-      expect(view.container.firstChild).toHaveClass(...[ 'alert', 'dark' ]);
+      expect(view.container.firstChild).toHaveClass(...['alert', 'dark']);
       expect(view.container.firstChild).toHaveAttribute('fill', 'none');
       expect(view.container.firstChild).toHaveAttribute('height', '100');
       expect(view.container.firstChild).toHaveAttribute('width', '100');
@@ -70,7 +70,7 @@ describe('Image', () => {
       const { view } = setupImageEmpty();
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Empty')).toBeInTheDocument();
-      expect(view.container.firstChild).toHaveClass(...[ 'ant-empty-img-simple' ]);
+      expect(view.container.firstChild).toHaveClass(...['ant-empty-img-simple']);
       expect(view.container.firstChild).not.toHaveAttribute('fill', 'none');
       expect(view.container.firstChild).toHaveAttribute('height', '100');
       expect(view.container.firstChild).toHaveAttribute('width', '100');
@@ -113,7 +113,7 @@ describe('Image', () => {
       const { view } = setupImageWarning({ darkLight: DarkLight.Dark });
       const svg = view.container.querySelector('svg');
       expect(screen.getByTitle('Warning')).toBeInTheDocument();
-      expect(view.container.firstChild).toHaveClass(...[ 'warning', 'dark' ]);
+      expect(view.container.firstChild).toHaveClass(...['warning', 'dark']);
       expect(view.container.firstChild).toHaveAttribute('fill', 'none');
       expect(view.container.firstChild).toHaveAttribute('height', '100');
       expect(view.container.firstChild).toHaveAttribute('width', '100');

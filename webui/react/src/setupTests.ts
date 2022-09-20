@@ -21,12 +21,12 @@ Schema.warning = noOp;
 Object.defineProperty(window, 'matchMedia', {
   value: () => ({
     addEventListener: jest.fn(),
-    addListener: jest.fn(),         // deprecated
+    addListener: jest.fn(), // deprecated
     dispatchEvent: jest.fn(),
     matches: false,
     onchange: null,
     removeEventListener: jest.fn(),
-    removeListener: jest.fn(),       // deprecated
+    removeListener: jest.fn(), // deprecated
   }),
 });
 

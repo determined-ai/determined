@@ -7,9 +7,7 @@ export default {
   title: 'Message',
 };
 
-export const Default = (): React.ReactNode => (
-  <Message title="Message title is required" />
-);
+export const Default = (): React.ReactNode => <Message title="Message title is required" />;
 
 export const WarningType = (): React.ReactNode => (
   <Message title="Warning type" type={MessageType.Warning} />

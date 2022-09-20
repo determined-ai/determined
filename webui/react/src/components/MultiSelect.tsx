@@ -12,37 +12,43 @@ const { Option } = Select;
 const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, ...props }) => {
   const allLabel = useMemo(() => {
     return itemName ? `All ${itemName}s` : 'All';
-  }, [ itemName ]);
+  }, [itemName]);
 
   const values = useMemo(() => {
     if (!value) return [];
-    return Array.isArray(value) ? value : [ value ];
-  }, [ value ]);
+    return Array.isArray(value) ? value : [value];
+  }, [value]);
 
-  const handleSelect = useCallback((selected: SelectValue, option) => {
-    if (!onChange) return;
+  const handleSelect = useCallback(
+    (selected: SelectValue, option) => {
+      if (!onChange) return;
 
-    if (selected === ALL_VALUE) {
-      onChange([], option);
-      if (document.activeElement) (document.activeElement as HTMLElement).blur();
-    } else {
-      const newValue = clone(values);
+      if (selected === ALL_VALUE) {
+        onChange([], option);
+        if (document.activeElement) (document.activeElement as HTMLElement).blur();
+      } else {
+        const newValue = clone(values);
+        const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
+
+        if (!newValue.includes(selectedValue)) newValue.push(selectedValue);
+
+        onChange(newValue as SelectValue, option);
+      }
+    },
+    [onChange, values],
+  );
+
+  const handleDeselect = useCallback(
+    (selected: SelectValue, option) => {
+      if (!onChange) return;
+
       const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-
-      if (!newValue.includes(selectedValue)) newValue.push(selectedValue);
+      const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
 
       onChange(newValue as SelectValue, option);
-    }
-  }, [ onChange, values ]);
-
-  const handleDeselect = useCallback((selected: SelectValue, option) => {
-    if (!onChange) return;
-
-    const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-    const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
-
-    onChange(newValue as SelectValue, option);
-  }, [ onChange, values ]);
+    },
+    [onChange, values],
+  );
 
   return (
     <SelectFilter
@@ -57,7 +63,9 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, .
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option key={ALL_VALUE} value={ALL_VALUE}>{allLabel}</Option>
+      <Option key={ALL_VALUE} value={ALL_VALUE}>
+        {allLabel}
+      </Option>
       {props.children}
     </SelectFilter>
   );

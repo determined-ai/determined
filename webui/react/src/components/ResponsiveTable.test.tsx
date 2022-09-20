@@ -11,7 +11,9 @@ import { generateAlphaNumeric } from 'shared/utils/string';
 
 import ResponsiveTable from './ResponsiveTable';
 import TableFilterDropdown, {
-  ARIA_LABEL_APPLY, ARIA_LABEL_CONTAINER, ARIA_LABEL_INPUT,
+  ARIA_LABEL_APPLY,
+  ARIA_LABEL_CONTAINER,
+  ARIA_LABEL_INPUT,
 } from './TableFilterDropdown';
 
 enum ColumnValueType {
@@ -148,14 +150,15 @@ const setup = (options?: { pagination?: Pagination }) => {
     />,
   );
 
-  const rerender = () => view.rerender(
-    <ResponsiveTable<TableItem>
-      columns={columns}
-      dataSource={data}
-      pagination={paginationConfig}
-      onChange={onChange}
-    />,
-  );
+  const rerender = () =>
+    view.rerender(
+      <ResponsiveTable<TableItem>
+        columns={columns}
+        dataSource={data}
+        pagination={paginationConfig}
+        onChange={onChange}
+      />,
+    );
 
   const user = userEvent.setup();
 
@@ -246,7 +249,8 @@ describe('ResponsiveTable', () => {
      * This hack required to override animation style properties in antd.
      * Waiting for the animation to complete does not work.
      */
-    const dropdown = screen.getByLabelText(ARIA_LABEL_CONTAINER)
+    const dropdown = screen
+      .getByLabelText(ARIA_LABEL_CONTAINER)
       .closest('.ant-dropdown') as HTMLElement;
     dropdown.style.removeProperty('opacity');
     dropdown.style.removeProperty('pointer-events');

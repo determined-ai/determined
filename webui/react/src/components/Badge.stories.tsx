@@ -8,7 +8,7 @@ import Badge, { BadgeType } from './Badge';
 
 export default {
   component: Badge,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'Badge',
 };
 
@@ -18,7 +18,7 @@ export const Default = (): React.ReactNode => <Badge>a4fdb98</Badge>;
 
 export const Custom = (): React.ReactNode => (
   <Badge
-    state={select('State', CommandState, CommandState.Assigned)}
+    state={select('State', CommandState, CommandState.Running)}
     type={select<BadgeType>('Type', knobTypeOptions, BadgeType.Default)}>
     {text('Content', 'a4fdb98')}
   </Badge>

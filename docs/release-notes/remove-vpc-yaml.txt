@@ -1,0 +1,6 @@
+:orphan:
+
+**Breaking Changes**
+
+- ``det deploy aws``: Remove ``--deployment-type=vpc`` option. Please use ``efs`` or ``fsx`` deployment types instead.
+

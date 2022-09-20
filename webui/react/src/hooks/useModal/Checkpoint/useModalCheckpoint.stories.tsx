@@ -23,7 +23,7 @@ const Container = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return <Button onClick={() => modalOpen()}>View Checkpoint</Button>;
 };

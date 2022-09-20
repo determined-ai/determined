@@ -261,6 +261,16 @@ VALUES
 func (db *PgDB) ensureStep(
 	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
 ) error {
+	var exists bool
+	switch err := tx.QueryRowxContext(ctx, `
+SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
+		trialID, stepsCompleted).Scan(&exists); {
+	case err != nil:
+		return err
+	case exists:
+		return nil
+	}
+
 	if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, trial_run_id, state,

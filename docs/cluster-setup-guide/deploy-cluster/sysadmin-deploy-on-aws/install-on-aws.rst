@@ -82,9 +82,6 @@ aws --deployment-type secure``).
 -  ``simple``: The simple deployment provides an easy way to deploy a Determined cluster in AWS.
    This creates the master instance in the default subnet for the account.
 
--  ``vpc``: The VPC deployment creates a separate VPC with public subnets; the Determined cluster is
-   deployed into these subnets.
-
 -  ``efs``: The EFS deployment creates an `EFS <https://aws.amazon.com/efs/>`_ file system and a
    Determined cluster into a separate VPC. The EFS drive attaches to agent instances at
    ``/mnt/efs``. This path is automatically bind-mounted into the task containers.

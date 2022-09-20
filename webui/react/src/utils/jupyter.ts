@@ -6,19 +6,17 @@ import handleError from 'utils/error';
 import { openCommand } from 'utils/wait';
 
 export interface JupyterLabOptions {
-  name?: string,
-  pool?:string,
-  slots?: number,
-  template?: string,
+  name?: string;
+  pool?: string;
+  slots?: number;
+  template?: string;
 }
 
 interface JupyterLabLaunchOptions extends JupyterLabOptions {
-  config?: RawJson,
+  config?: RawJson;
 }
 
-export const launchJupyterLab = async (
-  options: JupyterLabLaunchOptions = {},
-): Promise<void> => {
+export const launchJupyterLab = async (options: JupyterLabLaunchOptions = {}): Promise<void> => {
   try {
     const jupyterLab = await apiLaunchJupyterLab({
       config: options.config || {
@@ -42,9 +40,7 @@ export const launchJupyterLab = async (
   }
 };
 
-export const previewJupyterLab = async (
-  options: JupyterLabOptions = {},
-): Promise<RawJson> => {
+export const previewJupyterLab = async (options: JupyterLabOptions = {}): Promise<RawJson> => {
   try {
     const config = await apiPreviewJupyterLab({
       config: {

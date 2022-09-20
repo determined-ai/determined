@@ -8,7 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
@@ -16,6 +16,7 @@ import { defaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
+import { StoreActionUI } from 'shared/contexts/UIStore';
 import { RecordKey } from 'shared/types';
 import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
@@ -39,7 +40,7 @@ const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
 
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
@@ -47,7 +48,7 @@ const SignIn: React.FC = () => {
 
   const externalAuthError = useMemo(() => {
     return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
-  }, [ auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt ]);
+  }, [auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt]);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -65,7 +66,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionUI.HideUISpinner });
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -78,19 +79,19 @@ const SignIn: React.FC = () => {
         routeAll(queries.redirect);
       }
     } else if (auth.checked) {
-      storeDispatch({ type: StoreAction.HideUISpinner });
+      storeDispatch({ type: StoreActionUI.HideUISpinner });
     }
-  }, [ auth, info, location, queries, storeDispatch ]);
+  }, [auth, info, location, queries, storeDispatch]);
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
-  }, [ storeDispatch ]);
+    storeDispatch({ type: StoreActionUI.HideUIChrome });
+    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
+  }, [storeDispatch]);
 
   // Stop the polling upon a dismount of this page.
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   /*
    * Don't render sign in page if...
@@ -106,11 +107,12 @@ const SignIn: React.FC = () => {
    * An external auth error occurs when there are external auth urls,
    * auth fails with a jwt.
    */
-  if (externalAuthError) return (
-    <PageMessage title="Cluster Not Available">
-      <p>Cluster is not ready. Please try again later.</p>
-    </PageMessage>
-  );
+  if (externalAuthError)
+    return (
+      <PageMessage title="Cluster Not Available">
+        <p>Cluster is not ready. Please try again later.</p>
+      </PageMessage>
+    );
 
   return (
     <Page docTitle="Sign In">
