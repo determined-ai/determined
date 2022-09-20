@@ -391,10 +391,16 @@ const ProjectDetails: React.FC = () => {
     }
   }, []);
 
+  const canEditExperiment =
+    !!project &&
+    expPermissions.canModifyExperimentMetadata({
+      workspace: { id: project.workspaceId },
+    });
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
-        disabled={record.archived || project?.archived}
+        disabled={record.archived || project?.archived || !canEditExperiment}
         tags={record.labels}
         onChange={experimentTags.handleTagListChange(record.id)}
       />
@@ -413,7 +419,7 @@ const ProjectDetails: React.FC = () => {
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
       <TextEditorModal
-        disabled={record.archived}
+        disabled={record.archived || !canEditExperiment}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         title="Edit description"
         value={value}
@@ -590,6 +596,7 @@ const ProjectDetails: React.FC = () => {
     users,
     project,
     experimentTags,
+    canEditExperiment,
     settings,
     updateSettings,
     handleActionComplete,
