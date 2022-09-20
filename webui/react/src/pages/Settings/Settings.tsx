@@ -38,10 +38,13 @@ const SettingsContent: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { canViewUsers } = usePermissions();
 
-  const handleTabChange = useCallback((key) => {
-    setTabKey(key);
-    history.replace(paths.settings(key));
-  }, [history]);
+  const handleTabChange = useCallback(
+    (key) => {
+      setTabKey(key);
+      history.replace(paths.settings(key));
+    },
+    [history],
+  );
 
   return (
     <Tabs

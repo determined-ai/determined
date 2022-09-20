@@ -170,7 +170,6 @@ const UserManagement: React.FC = () => {
   }, [openCreateUserModal]);
 
   const columns = useMemo(() => {
-
     const actionRenderer = (_: string, record: DetailedUser) => {
       return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
     };

@@ -45,7 +45,7 @@ interface FormValues {
 }
 
 const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
-  const [ permissions, setPermissions ] = useState<Permission[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canGetPermissions, canModifyPermissions } = usePermissions();
@@ -66,7 +66,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
     if (user) {
       updatePermissions();
     }
-  }, [ form, updatePermissions, user ]);
+  }, [form, updatePermissions, user]);
 
   const permissionTableColumn = useMemo(() => {
     const columns = [
@@ -78,13 +78,13 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
       {
         dataIndex: 'isGlobal',
         key: 'isGlobal',
-        render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+        render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
         title: 'Global?',
       },
       {
         dataIndex: 'workspaceOnly',
         key: 'workspaceOnly',
-        render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
+        render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
         title: 'Workspaces?',
       },
     ];
@@ -140,13 +140,8 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
       )}
       {rbacEnabled && canModifyPermissions && !viewOnly && (
         <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
-          <Select
-          mode="multiple"
-          optionFilterProp="children"
-          placeholder={'Add Roles'}
-          showSearch>
-            {knownRoles
-            .map((r) => (
+          <Select mode="multiple" optionFilterProp="children" placeholder={'Add Roles'} showSearch>
+            {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
                 {r.name}
               </Select.Option>
@@ -227,14 +222,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       openOrUpdate({
         closable: true,
         // passing a default brandind due to changes on the initial state
-        content: (
-          <ModalForm
-            form={form}
-            groups={groups}
-            user={user}
-            viewOnly={viewOnly}
-          />
-        ),
+        content: <ModalForm form={form} groups={groups} user={user} viewOnly={viewOnly} />,
         icon: null,
         okText: viewOnly ? 'Close' : user ? 'Update' : 'Create User',
         onCancel: handleCancel,
