@@ -85,6 +85,7 @@ func newAWSCluster(
 		}
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
+	configFileBase64 := base64.StdEncoding.EncodeToString(config.AgentConfigFileContents)
 
 	cluster := &awsCluster{
 		resourcePool:     resourcePool,
@@ -98,6 +99,7 @@ func newAWSCluster(
 			StartupScriptBase64:          startupScriptBase64,
 			ContainerStartupScriptBase64: containerScriptBase64,
 			MasterCertBase64:             masterCertBase64,
+			ConfigFileBase64:             configFileBase64,
 			SlotType:                     config.AWS.SlotType(),
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
@@ -337,12 +339,13 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 				},
 			},
 		},
-		DryRun:       aws.Bool(dryRun),
-		ImageId:      aws.String(c.ImageID),
-		InstanceType: aws.String(c.AWSClusterConfig.InstanceType.Name()),
-		KeyName:      aws.String(c.SSHKeyName),
-		MaxCount:     aws.Int64(int64(instanceNum)),
-		MinCount:     aws.Int64(1),
+		DryRun:                            aws.Bool(dryRun),
+		ImageId:                           aws.String(c.ImageID),
+		InstanceInitiatedShutdownBehavior: aws.String(ec2.ShutdownBehaviorTerminate),
+		InstanceType:                      aws.String(c.AWSClusterConfig.InstanceType.Name()),
+		KeyName:                           aws.String(c.SSHKeyName),
+		MaxCount:                          aws.Int64(int64(instanceNum)),
+		MinCount:                          aws.Int64(1),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("instance"),

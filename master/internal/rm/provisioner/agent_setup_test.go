@@ -48,6 +48,11 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
+echo  | base64 --decode > /usr/local/determined/agent.yaml
+echo "#### PRINTING CONFIG FILE START ####"
+cat /usr/local/determined/agent.yaml
+echo "#### PRINTING CONFIG FILE END ####"
+
 slot_type="cuda"
 if [ $slot_type == "cuda" ] || [ $slot_type == "gpu" ]; then
     echo "#### Starting agent with NVIDIA GPUs"
@@ -78,6 +83,7 @@ cat /usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT END ####"
 
 docker run --init --name determined-agent  \
+    --privileged \
     --restart always \
     --network default \
     --runtime=runc \
@@ -89,8 +95,13 @@ docker run --init --name determined-agent  \
     -e DET_FLUENT_IMAGE="fluent-test" \
     -e DET_AGENT_RECONNECT_ATTEMPTS="5" \
     -e DET_AGENT_RECONNECT_BACKOFF="5" \
+    -v /usr/sbin/shutdown:/usr/sbin/shutdown \
+    -v /run/systemd/system:/run/systemd/system \
+    -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
+    -v /sys/fs/cgroup:/sys/fs/cgroup \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
+    -v /usr/local/determined/agent.yaml:/etc/determined/agent.yaml \
     "${docker_args[@]}" \
     "test_docker_image"
 `
