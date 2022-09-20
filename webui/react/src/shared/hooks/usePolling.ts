@@ -11,7 +11,7 @@ interface PollingHooks {
 }
 
 interface PollingOptions {
-  /** whether to stop polling when the page is not in focus. */
+  /** whether to continue polling when the page/tab is out of focus. */
   continueWhenHidden?: boolean;
   interval?: number;
   rerunOnNewFn?: boolean;
@@ -92,7 +92,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
     return () => stopPolling();
   }, [startPolling, stopPolling, pollingFnIndicator]);
 
-  // controll polling when the page is hidden
+  // control polling when the page is hidden
   useEffect(() => {
     if (pollingOptions.current.continueWhenHidden) return;
     if (ui.isPageHidden) {
