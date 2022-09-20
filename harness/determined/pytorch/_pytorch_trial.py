@@ -48,12 +48,12 @@ class PyTorchTrialController(det.TrialController):
                     FutureWarning,
                 )
 
-        if not self.context.models:
+        if len(self.context.models) == 0:
             raise det.errors.InvalidExperimentException(
                 "Must have at least one model. "
                 "This might be caused by not wrapping your model with wrap_model().",
             )
-        if not self.context.optimizers:
+        if len(self.context.optimizers) == 0:
             raise det.errors.InvalidExperimentException(
                 "Must have at least one optimizer. "
                 "This might be caused by not wrapping your optimizer with wrap_optimizer().",
@@ -539,7 +539,7 @@ class PyTorchTrialController(det.TrialController):
             batch_metrics = []
 
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
-            if not self.validation_loader:
+            if len(self.validation_loader) == 0:
                 raise RuntimeError("validation_loader is empty.")
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
