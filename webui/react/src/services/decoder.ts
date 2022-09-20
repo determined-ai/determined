@@ -196,10 +196,10 @@ export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
           {
             STATE_PULLING: types.CommandState.Pulling,
             STATE_RUNNING: types.CommandState.Running,
-            STATE_WAITING: types.CommandState.Waiting,
             STATE_STARTING: types.CommandState.Starting,
             STATE_TERMINATED: types.CommandState.Terminated,
             STATE_TERMINATING: types.CommandState.Terminating,
+            STATE_WAITING: types.CommandState.Waiting,
           }[String(a?.state) || 'STATE_QUEUED'] || types.CommandState.Queued;
 
         return {
