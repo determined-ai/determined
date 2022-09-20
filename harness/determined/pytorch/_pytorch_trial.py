@@ -593,8 +593,7 @@ class PyTorchTrialController(det.TrialController):
                 num_inputs, num_batches = [sum(n) for n in zip(*input_counts)]
 
         else:
-            if not self._evaluate_full_dataset_defined():
-                raise RuntimeError()
+            assert self._evaluate_full_dataset_defined(), "evaluate_full_dataset not defined."
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             if self.is_chief:
                 metrics = self.trial.evaluate_full_dataset(data_loader=self.validation_loader)
