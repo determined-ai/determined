@@ -188,13 +188,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     openHyperparameterSearchModal({});
   }, [openHyperparameterSearchModal]);
 
-  const { canModifyExperimentMetadata, canViewExperimentArtifacts } = usePermissions();
-  const showExperimentArtifacts = canViewExperimentArtifacts({
-    workspace: { id: experiment.workspaceId },
-  });
-  const editableNotes = canModifyExperimentMetadata({
-    workspace: { id: experiment.workspaceId },
-  });
+  const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
+    usePermissions();
+  const workspace = { id: experiment.workspaceId };
+  const editableNotes = canModifyExperimentMetadata({ workspace });
+  const showCreateExperiment = canCreateExperiment({ workspace });
+  const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
 
   return (
     <TrialLogPreview
@@ -204,7 +203,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       <Tabs
         activeKey={tabKey}
         tabBarExtraContent={
-          tabKey === 'hyperparameters' ? (
+          tabKey === 'hyperparameters' && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
               <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
             </div>

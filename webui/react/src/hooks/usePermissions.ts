@@ -28,8 +28,8 @@ interface ProjectPermissionsArgs {
 
 interface PermissionsHook {
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
-  canCreateWorkspace: boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateWorkspace: boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
@@ -69,9 +69,9 @@ const usePermissions = (): PermissionsHook => {
   return {
     canAssignRoles: (args: WorkspacePermissionsArgs) =>
       canAssignRoles(args.workspace, user, userAssignments, userRoles),
-    canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
     canCreateExperiment: (args: WorkspacePermissionsArgs) =>
       canCreateExperiment(args.workspace, userAssignments, userRoles),
+    canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
     canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
       canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
     canDeleteModel: (args: ModelPermissionsArgs) =>
