@@ -71,11 +71,6 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     }
   }
 
-  // RBAC 501 errors skip notification, log, telemetry.
-  if (e.srcError.status === 501) {
-    return e;
-  }
-
   // TODO add support for checking, saving, and dismissing class of errors as a user preference
   // using id.
   const skipNotification = e.silent || (e.level === ErrorLevel.Warn && !e.publicMessage);
