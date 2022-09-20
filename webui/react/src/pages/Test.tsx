@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 
-import useWebSettings, { UserWebSettingsKeys } from 'recoil/userSettings/useWebSettings';
+import useWebSettings, { UserWebSettingsDomain } from 'recoil/userSettings/useWebSettings';
 
 const Test: React.FC = () => {
-  const [ count, setCount ] = useState<number>(0);
-  const [ pinned, setPinned ] = useWebSettings(UserWebSettingsKeys.PG_Pinned);
+  const [count, setCount] = useState<number>(0);
+  const [projectDetail, setProjectDetail] = useWebSettings(
+    UserWebSettingsDomain.ProjectDetail,
+    'each',
+  );
 
   const onClick = () => {
-    setPinned({ pd_pinned: { 1: [ 1, 2, count + 1 ] } });
+    setProjectDetail({ ...projectDetail });
     setCount((prev) => prev + 1);
   };
   return (
     <>
       <button onClick={onClick}>button {count}</button>
-      <div>{JSON.stringify(pinned.pd_pinned)}</div>
+      <div>{JSON.stringify(projectDetail)}</div>
     </>
   );
 };

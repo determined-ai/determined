@@ -1,19 +1,22 @@
 import React from 'react';
 
-import useWebSettings, { UserWebSettingsKeys } from 'recoil/userSettings/useWebSettings';
+import useWebSettings, { UserWebSettingsDomain } from 'recoil/userSettings/useWebSettings';
 
 const Test2: React.FC = () => {
-  const [ archived, setArchived ] = useWebSettings(UserWebSettingsKeys.PG_Archived);
-  const [ tableLimit, setTabeLimit ] = useWebSettings(UserWebSettingsKeys.PG_TableLimit);
+  const [projectDetail, setProjectDetail] = useWebSettings(
+    UserWebSettingsDomain.ProjectDetail,
+    'each',
+  );
+  const [global, setGlobal] = useWebSettings(UserWebSettingsDomain.Global, 'theme');
   const onClick = () => {
-    setTabeLimit({ pd_tableLimit: 20 });
-    setArchived({ pd_archived: !archived.pd_archived });
+    setGlobal('dark');
+    setProjectDetail({ ...projectDetail });
   };
   return (
     <>
       <button onClick={onClick}>button</button>
-      <div>{archived.pd_archived ? 'true!!' : 'false!!'}</div>
-      <div>{tableLimit.pd_tableLimit}</div>
+      <div>{JSON.stringify(projectDetail)}</div>
+      <div>{JSON.stringify(global)}</div>
     </>
   );
 };

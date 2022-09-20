@@ -130,16 +130,6 @@ module.exports = {
     ],
     'react/jsx-wrap-multilines': ['error', { assignment: false, declaration: false }],
     'react/prop-types': 'off',
-<<<<<<< HEAD
-    'react/self-closing-comp': [ 'error', {
-      component: true,
-      html: true,
-    } ],
-    'react-hooks/exhaustive-deps': [
-      'warn', { additionalHooks: '(useRecoilCallback|useRecoilTransaction_UNSTABLE)' },
-    ],
-    'react-hooks/rules-of-hooks': 'error',
-=======
     'react/self-closing-comp': [
       'error',
       {
@@ -147,7 +137,10 @@ module.exports = {
         html: true,
       },
     ],
->>>>>>> master
+    'react-hooks/exhaustive-deps': [
+      'warn',
+      { additionalHooks: '(useRecoilCallback|useRecoilTransaction_UNSTABLE)' },
+    ],
     'require-await': 'error',
     'semi': ['error', 'always'],
     'sort-imports': [
