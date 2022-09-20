@@ -281,7 +281,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
           // Store or clear setting if `storageKey` is available.
           if (config.storageKey && isValid) {
             const persistedSetting: V1UserWebSetting = { key: config.storageKey };
-            if (value === undefined || isDefault) {
+            if (value == null || isDefault) {
               storage.remove(config.storageKey);
             } else {
               storage.set(config.storageKey, value);
