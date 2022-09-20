@@ -130,7 +130,7 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    def test_xor_nonscalar_validation(self) -> None:
+    def test_nonscalar_validation(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -138,11 +138,11 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             for metrics in validation_metrics:
-                assert "binary_error" in metrics
+                assert "mse" in metrics
                 assert "predictions" in metrics
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialWithNonScalarValidation,
+            trial_class=pytorch_onevar_model.OneVarTrialWithNonScalarValidation,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,

@@ -199,48 +199,6 @@ class XORTrialWithMultiValidation(XORTrialMulti):
         return {"accuracy": accuracy, "binary_error": binary_error}
 
 
-class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
-    _searcher_metric = "binary_error"
-
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        self.context = context
-
-        self.model = self.context.wrap_model(XORNetMulti(self.context))
-        self.optimizer = self.context.wrap_optimizer(
-            torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
-        )
-
-    def build_training_data_loader(self) -> pytorch.DataLoader:
-        return xor_data_loader(self.context.get_per_slot_batch_size())
-
-    def build_validation_data_loader(self) -> pytorch.DataLoader:
-        return xor_data_loader(self.context.get_per_slot_batch_size())
-
-    def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        data, labels = batch
-        output = self.model(data)
-        loss = nn.functional.binary_cross_entropy(output["output"], labels.contiguous().view(-1, 1))
-
-        self.context.backward(loss)
-        self.context.step_optimizer(self.optimizer)
-        return {"loss": loss}
-
-    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
-        predictions = []
-        binary_error_sum = 0.0
-        for data, labels in iter(data_loader):
-            if torch.cuda.is_available():
-                data, labels = data.cuda(), labels.cuda()
-            output = self.model(data)
-            predictions.append(output)
-            binary_error_sum += binary_error_rate(output["output"], labels)
-
-        binary_error = binary_error_sum / len(data_loader)
-        return {"predictions": predictions, "binary_error": binary_error}
-
-
 class XORTrialWithLRScheduler(XORTrialMulti):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context

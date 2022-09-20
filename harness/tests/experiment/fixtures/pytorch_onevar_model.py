@@ -514,6 +514,42 @@ class OneVarTrialGradClipping(OneVarTrial):
         return {"loss": loss}
 
 
+class OneVarTrialWithNonScalarValidation(BaseOneVarTrial):
+    _searcher_metric = "val_loss"
+
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        super().__init__(context)
+
+        self.model = self.context.wrap_model(get_onevar_model())
+        self.opt = self.context.wrap_optimizer(
+            torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
+        )
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        data, labels = batch
+        output = self.model(data)
+        loss = self.loss_fn(output, labels)
+
+        self.context.backward(loss)
+        self.context.step_optimizer(self.opt)
+        return {"loss": loss}
+
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
+        predictions = []
+        mse_sum = 0.0
+        for data, labels in iter(data_loader):
+            if torch.cuda.is_available():
+                data, labels = data.cuda(), labels.cuda()
+            output = self.model(data)
+            predictions.append(output)
+            mse_sum += torch.mean(torch.square(output - labels))
+
+        mse = mse_sum / len(data_loader)
+        return {"predictions": predictions, "mse": mse}
+
+
 if __name__ == "__main__":
     conf = yaml.safe_load(
         """
