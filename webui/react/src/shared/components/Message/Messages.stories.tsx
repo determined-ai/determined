@@ -8,9 +8,7 @@ export default {
   title: 'Shared/Message',
 } as Meta<typeof Message>;
 
-export const Default: ComponentStory<typeof Message> = (args) => (
-  <Message {...args} />
-);
+export const Default: ComponentStory<typeof Message> = (args) => <Message {...args} />;
 
 export const WarningType = (): React.ReactNode => (
   <Message title="Warning type" type={MessageType.Warning} />

@@ -7,7 +7,8 @@ export default {
     color: { control: 'color' },
     placement: {
       control: {
-        options: [ 'top',
+        options: [
+          'top',
           'left',
           'right',
           'bottom',
@@ -18,13 +19,14 @@ export default {
           'leftTop',
           'leftBottom',
           'rightTop',
-          'rightBottom' ],
+          'rightBottom',
+        ],
         type: 'inline-radio',
       },
     },
     trigger: {
       control: {
-        options: [ 'hover', 'focus', 'click', 'contextMenu' ],
+        options: ['hover', 'focus', 'click', 'contextMenu'],
         type: 'inline-check',
       },
     },
@@ -34,9 +36,7 @@ export default {
 } as Meta<typeof Tooltip>;
 
 export const Default: ComponentStory<typeof Tooltip> = (args) => (
-  <Tooltip {...args}>
-    Trigger
-  </Tooltip>
+  <Tooltip {...args}>Trigger</Tooltip>
 );
 
 Default.args = {

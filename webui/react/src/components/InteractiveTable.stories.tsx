@@ -9,7 +9,7 @@ import InteractiveTable, { InteractiveTableSettings } from './InteractiveTable';
 export default {
   argTypes: {
     numRows: { control: { max: 100, min: 0, step: 5, type: 'range' } },
-    size: { control: { options: [ 'default', 'middle', 'small' ], type: 'inline-radio' } },
+    size: { control: { options: ['default', 'middle', 'small'], type: 'inline-radio' } },
   },
   component: InteractiveTable,
   parameters: { layout: 'padded' },
@@ -57,30 +57,31 @@ const config: SettingsConfig = {
   storagePath: 'storybook',
 };
 
-type InteractiveTableProps = React.ComponentProps<typeof InteractiveTable>
+type InteractiveTableProps = React.ComponentProps<typeof InteractiveTable>;
 
-export const Default: Story<InteractiveTableProps & { numRows: number }> = (
-  { numRows, ...args },
-) => {
+export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
+  numRows,
+  ...args
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { settings, updateSettings } = useSettings<InteractiveTableSettings>(config);
 
-  const handleTableRowSelect = useCallback((rowKeys) => {
-    updateSettings({ row: rowKeys });
-  }, [ updateSettings ]);
+  const handleTableRowSelect = useCallback(
+    (rowKeys) => {
+      updateSettings({ row: rowKeys });
+    },
+    [updateSettings],
+  );
 
   const data = useMemo(() => {
-    return (
-      new Array(numRows)
-        .fill(null)
-        .map(() => {
-          const row: Record<string, string> = {};
-          columns.forEach((column) => {
-            row[column.dataIndex] = generateAlphaNumeric();
-          });
-          return row;
-        }));
-  }, [ numRows ]);
+    return new Array(numRows).fill(null).map(() => {
+      const row: Record<string, string> = {};
+      columns.forEach((column) => {
+        row[column.dataIndex] = generateAlphaNumeric();
+      });
+      return row;
+    });
+  }, [numRows]);
 
   return (
     <div ref={containerRef}>

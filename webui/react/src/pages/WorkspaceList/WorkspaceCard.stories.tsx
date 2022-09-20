@@ -15,7 +15,7 @@ export default {
 const args: Partial<Workspace> = { name: 'Workspace Name', numProjects: 1 };
 
 export const Default = (args: Partial<Workspace>): React.ReactElement => {
-  const workspace = useMemo(() => generateTestWorkspaceData(args), [ args ]);
+  const workspace = useMemo(() => generateTestWorkspaceData(args), [args]);
 
   return <WorkspaceCard workspace={workspace} />;
 };

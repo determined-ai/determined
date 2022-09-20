@@ -6,8 +6,8 @@ import SkeletonSection, { ContentType } from './SkeletonSection';
 
 export default {
   argTypes: {
-    contentType: { control: { options: [ ...Object.keys(ContentType), undefined ] } },
-    size: { control: { options: [ 'small', 'medium', 'large', 'max' ], type: 'select' } },
+    contentType: { control: { options: [...Object.keys(ContentType), undefined] } },
+    size: { control: { options: ['small', 'medium', 'large', 'max'], type: 'select' } },
   },
   component: SkeletonSection,
   parameters: { layout: 'fullscreen' },

@@ -123,9 +123,7 @@ const ClusterOverview: React.FC = () => {
         <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>
-              <ResourcePoolCard
-                resourcePool={rp}
-              />
+              <ResourcePoolCard resourcePool={rp} />
             </Link>
           ))}
         </Grid>

@@ -5,15 +5,13 @@ import React from 'react';
 export default {
   argTypes: {
     maxLength: { control: { type: 'number' } },
-    size: { control: { options: [ 'small', 'middle', 'large' ], type: 'inline-radio' } },
+    size: { control: { options: ['small', 'middle', 'large'], type: 'inline-radio' } },
   },
   component: Input,
   title: 'Ant Design/Input',
 } as Meta<typeof Input>;
 
-export const Default: ComponentStory<typeof Input> = (args) => (
-  <Input {...args} />
-);
+export const Default: ComponentStory<typeof Input> = (args) => <Input {...args} />;
 
 Default.args = {
   placeholder: 'Placeholder text',
@@ -36,9 +34,7 @@ TextArea.args = {
   size: 'middle',
 };
 
-export const Search: ComponentStory<typeof Input.Search> = (args) => (
-  <Input.Search {...args} />
-);
+export const Search: ComponentStory<typeof Input.Search> = (args) => <Input.Search {...args} />;
 
 Search.args = {
   enterButton: false,

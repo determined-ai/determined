@@ -21,9 +21,9 @@ const { Option } = Select;
 
 export default {
   argTypes: {
-    layout: { control: { options: [ 'vertical', 'horizontal', 'inline' ], type: 'inline-radio' } },
-    requiredMark: { control: { options: [ true, false, 'optional' ], type: 'inline-radio' } },
-    size: { control: { options: [ 'small', 'middle', 'large' ], type: 'inline-radio' } },
+    layout: { control: { options: ['vertical', 'horizontal', 'inline'], type: 'inline-radio' } },
+    requiredMark: { control: { options: [true, false, 'optional'], type: 'inline-radio' } },
+    size: { control: { options: ['small', 'middle', 'large'], type: 'inline-radio' } },
   },
   component: Form,
   title: 'Ant Design/Form',
@@ -42,13 +42,13 @@ export const Default: ComponentStory<typeof Form> = (args) => {
       <Form.Item
         label="Username"
         name="username"
-        rules={[ { message: 'Please input your username!', required: true } ]}>
+        rules={[{ message: 'Please input your username!', required: true }]}>
         <Input />
       </Form.Item>
       <Form.Item
         label="Password"
         name="password"
-        rules={[ { message: 'Please input your password!', required: true } ]}>
+        rules={[{ message: 'Please input your password!', required: true }]}>
         <Input.Password />
       </Form.Item>
       <Form.Item name="remember" valuePropName="checked">
@@ -61,7 +61,7 @@ export const Default: ComponentStory<typeof Form> = (args) => {
         hasFeedback
         label="Select"
         name="select"
-        rules={[ { message: 'Please select your country!', required: true } ]}>
+        rules={[{ message: 'Please select your country!', required: true }]}>
         <Select placeholder="Please select a country">
           <Option value="china">China</Option>
           <Option value="usa">U.S.A</Option>
@@ -70,11 +70,13 @@ export const Default: ComponentStory<typeof Form> = (args) => {
       <Form.Item
         label="Select[multiple]"
         name="select-multiple"
-        rules={[ {
-          message: 'Please select your favourite colors!',
-          required: true,
-          type: 'array',
-        } ]}>
+        rules={[
+          {
+            message: 'Please select your favourite colors!',
+            required: true,
+            type: 'array',
+          },
+        ]}>
         <Select mode="multiple" placeholder="Please select favourite colors">
           <Option value="red">Red</Option>
           <Option value="green">Green</Option>
@@ -112,7 +114,7 @@ export const Default: ComponentStory<typeof Form> = (args) => {
       <Form.Item
         label="Radio.Button"
         name="radio-button"
-        rules={[ { message: 'Please pick an item!', required: true } ]}>
+        rules={[{ message: 'Please pick an item!', required: true }]}>
         <Radio.Group>
           <Radio.Button value="a">item 1</Radio.Button>
           <Radio.Button value="b">item 2</Radio.Button>

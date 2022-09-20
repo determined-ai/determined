@@ -7,7 +7,8 @@ export default {
   argTypes: {
     icon: {
       control: {
-        options: [ 'arrow-down',
+        options: [
+          'arrow-down',
           'arrow-up',
           'dai-logo',
           'cluster',
@@ -27,7 +28,8 @@ export default {
           'tensor-board',
           'tensorflow',
           'user',
-          'user-small' ],
+          'user-small',
+        ],
         type: 'select',
       },
     },
@@ -36,9 +38,7 @@ export default {
   title: 'Determined/Buttons/IconButton',
 } as Meta<typeof IconButton>;
 
-export const Default: ComponentStory<typeof IconButton> = (args) => (
-  <IconButton {...args} />
-);
+export const Default: ComponentStory<typeof IconButton> = (args) => <IconButton {...args} />;
 
 Default.args = {
   icon: 'experiment',

@@ -7,16 +7,14 @@ export default {
     max: { control: { type: 'number' } },
     min: { control: { type: 'number' } },
     precision: { control: { max: 10, min: 1, step: 1, type: 'range' } },
-    size: { control: { options: [ 'small', 'middle', 'large' ], type: 'inline-radio' } },
+    size: { control: { options: ['small', 'middle', 'large'], type: 'inline-radio' } },
     step: { control: { type: 'number' } },
   },
   component: InputNumber,
   title: 'Ant Design/InputNumber',
 } as Meta<typeof InputNumber>;
 
-export const Default: ComponentStory<typeof InputNumber> = (args) => (
-  <InputNumber {...args} />
-);
+export const Default: ComponentStory<typeof InputNumber> = (args) => <InputNumber {...args} />;
 
 Default.args = {
   addonAfter: '',

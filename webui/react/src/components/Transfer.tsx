@@ -27,7 +27,9 @@ const Transfer: React.FC<Props> = ({
   reorder = true,
   onChange,
 }: Props) => {
-  const [targetEntries, setTargetEntries] = useState<string[]>(initialTargetEntries ?? defaultTargetEntries ?? []);
+  const [targetEntries, setTargetEntries] = useState<string[]>(
+    initialTargetEntries ?? defaultTargetEntries ?? [],
+  );
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = useCallback((e) => {
@@ -74,21 +76,24 @@ const Transfer: React.FC<Props> = ({
     onChange?.(targetEntries);
   }, [onChange, targetEntries]);
 
-  const renderEntry = useCallback((entryName: string) => {
-    const sentenceEntryName = entryName === 'id' ? 'ID' : camelCaseToSentence(entryName);
-    const regex = new RegExp(searchTerm, 'i');
-    if (searchTerm === '' || !regex.test(sentenceEntryName)){
-      return <span>{sentenceEntryName}</span>;
-    }
-    const searchIndex = sentenceEntryName.search(regex);
-    return (
-      <span>
-        {sentenceEntryName.slice(0, searchIndex)}
-        <mark>{sentenceEntryName.match(regex)?.[0]}</mark>
-        {sentenceEntryName.slice(searchIndex + searchTerm.length)}
-      </span>
-    );
-  }, [ searchTerm ]);
+  const renderEntry = useCallback(
+    (entryName: string) => {
+      const sentenceEntryName = entryName === 'id' ? 'ID' : camelCaseToSentence(entryName);
+      const regex = new RegExp(searchTerm, 'i');
+      if (searchTerm === '' || !regex.test(sentenceEntryName)) {
+        return <span>{sentenceEntryName}</span>;
+      }
+      const searchIndex = sentenceEntryName.search(regex);
+      return (
+        <span>
+          {sentenceEntryName.slice(0, searchIndex)}
+          <mark>{sentenceEntryName.match(regex)?.[0]}</mark>
+          {sentenceEntryName.slice(searchIndex + searchTerm.length)}
+        </span>
+      );
+    },
+    [searchTerm],
+  );
 
   const renderRow = useCallback(
     (row, style, handleClick) => {

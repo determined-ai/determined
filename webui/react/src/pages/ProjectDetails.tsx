@@ -790,40 +790,32 @@ const ProjectDetails: React.FC = () => {
     [updateSettings],
   );
 
-  const {
-    contextHolder: modalColumnsCustomizeContextHolder,
-    modalOpen: openCustomizeColumns,
-  } = useModalColumnsCustomize({
-    columns: transferColumns,
-    defaultVisibleColumns: DEFAULT_COLUMNS,
-    initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
-    onSave: (handleUpdateColumns as (columns: string[]) => void),
-  });
+  const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
+    useModalColumnsCustomize({
+      columns: transferColumns,
+      defaultVisibleColumns: DEFAULT_COLUMNS,
+      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
+      onSave: handleUpdateColumns as (columns: string[]) => void,
+    });
 
   const handleCustomizeColumnsClick = useCallback(() => {
     openCustomizeColumns({});
-  }, [ openCustomizeColumns ]);
+  }, [openCustomizeColumns]);
 
-  const switchShowArchived = useCallback((showArchived: boolean) => {
-    let newColumns: ExperimentColumnName[];
-    let newColumnWidths: number[];
+  const switchShowArchived = useCallback(
+    (showArchived: boolean) => {
+      let newColumns: ExperimentColumnName[];
+      let newColumnWidths: number[];
 
-    if (showArchived) {
-      if (settings.columns?.includes('archived')) {
-        // just some defensive coding: don't add archived twice
-        newColumns = settings.columns;
-        newColumnWidths = settings.columnWidths;
-      } else {
-        newColumns = [ ...settings.columns, 'archived' ];
-        newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
-      }
-    } else {
-      const archivedIndex = settings.columns.indexOf('archived');
-      if (archivedIndex !== -1) {
-        newColumns = [ ...settings.columns ];
-        newColumnWidths = [ ...settings.columnWidths ];
-        newColumns.splice(archivedIndex, 1);
-        newColumnWidths.splice(archivedIndex, 1);
+      if (showArchived) {
+        if (settings.columns?.includes('archived')) {
+          // just some defensive coding: don't add archived twice
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
+        } else {
+          newColumns = [...settings.columns, 'archived'];
+          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
+        }
       } else {
         const archivedIndex = settings.columns.indexOf('archived');
         if (archivedIndex !== -1) {
@@ -832,16 +824,24 @@ const ProjectDetails: React.FC = () => {
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
-          newColumns = settings.columns;
-          newColumnWidths = settings.columnWidths;
+          const archivedIndex = settings.columns.indexOf('archived');
+          if (archivedIndex !== -1) {
+            newColumns = [...settings.columns];
+            newColumnWidths = [...settings.columnWidths];
+            newColumns.splice(archivedIndex, 1);
+            newColumnWidths.splice(archivedIndex, 1);
+          } else {
+            newColumns = settings.columns;
+            newColumnWidths = settings.columnWidths;
+          }
         }
+        updateSettings({
+          archived: showArchived,
+          columns: newColumns,
+          columnWidths: newColumnWidths,
+          row: undefined,
+        });
       }
-      updateSettings({
-        archived: showArchived,
-        columns: newColumns,
-        columnWidths: newColumnWidths,
-        row: undefined,
-      });
     },
     [settings, updateSettings],
   );

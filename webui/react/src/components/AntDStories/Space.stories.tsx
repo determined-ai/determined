@@ -5,26 +5,26 @@ import React from 'react';
 export default {
   argTypes: {
     align: { table: { disable: true } },
-    direction: { control: { options: [ 'horizontal', 'vertical' ], type: 'inline-radio' } },
+    direction: { control: { options: ['horizontal', 'vertical'], type: 'inline-radio' } },
     numItems: { control: { max: 10, min: 1, step: 1, type: 'range' } },
-    size: { control: { options: [ 'small', 'middle', 'large' ], type: 'inline-radio' } },
+    size: { control: { options: ['small', 'middle', 'large'], type: 'inline-radio' } },
   },
   component: Space,
   title: 'Ant Design/Space',
 } as Meta<typeof Space>;
 
 const SpaceComponent: React.FC = () => {
-  return (
-    <div style={{ backgroundColor: 'gray', height: 100, width: 100 }} />
-  );
+  return <div style={{ backgroundColor: 'gray', height: 100, width: 100 }} />;
 };
 
-type SpaceProps = React.ComponentProps<typeof Space>
+type SpaceProps = React.ComponentProps<typeof Space>;
 
-export const Default: Story<SpaceProps & {numItems: number}> = ({ numItems, ...args }) => (
+export const Default: Story<SpaceProps & { numItems: number }> = ({ numItems, ...args }) => (
   <div style={{ width: 500 }}>
     <Space {...args}>
-      {new Array(numItems).fill(0).map((_item, idx) => <SpaceComponent key={idx} />)}
+      {new Array(numItems).fill(0).map((_item, idx) => (
+        <SpaceComponent key={idx} />
+      ))}
     </Space>
   </div>
 );

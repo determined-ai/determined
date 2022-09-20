@@ -14,9 +14,7 @@ export default {
   title: 'Determined/Logo',
 } as ComponentMeta<typeof Logo>;
 
-export const Default: ComponentStory<typeof Logo> = (args) => (
-  <Logo {...args} />
-);
+export const Default: ComponentStory<typeof Logo> = (args) => <Logo {...args} />;
 
 Default.args = {
   branding: BrandingType.Determined,

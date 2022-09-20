@@ -28,12 +28,10 @@ const useModalColumnsCustomize = ({
   onSave,
 }: Props): ModalHooks => {
   const [columnList] = useState(columns); // This is only to prevent rerendering
-  const {
-    modalOpen: openOrUpdate,
-    modalRef,
-    ...modalHook
-  } = useModal();
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(initialVisibleColumns ?? defaultVisibleColumns);
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    initialVisibleColumns ?? defaultVisibleColumns,
+  );
 
   const handleSave = useCallback(() => {
     onSave?.(visibleColumns);

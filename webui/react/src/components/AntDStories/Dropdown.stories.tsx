@@ -6,20 +6,15 @@ export default {
   argTypes: {
     placement: {
       control: {
-        options: [ 'bottom',
-          'bottomLeft',
-          'bottomRight',
-          'top',
-          'topLeft',
-          'topRight' ],
+        options: ['bottom', 'bottomLeft', 'bottomRight', 'top', 'topLeft', 'topRight'],
         type: 'select',
       },
     },
-    size: { control: { options: [ 'small', 'middle', 'large' ], type: 'inline-radio' } },
-    trigger: { control: { options: [ 'click', 'hover', 'contextMenu' ], type: 'inline-check' } },
+    size: { control: { options: ['small', 'middle', 'large'], type: 'inline-radio' } },
+    trigger: { control: { options: ['click', 'hover', 'contextMenu'], type: 'inline-check' } },
     type: {
       control: {
-        options: [ 'primary', 'dashed', 'link', 'text', 'default' ],
+        options: ['primary', 'dashed', 'link', 'text', 'default'],
         type: 'inline-radio',
       },
     },
@@ -29,20 +24,18 @@ export default {
 } as Meta<typeof Dropdown>;
 
 const content = (
-  <Menu items={
-    [ ...new Array(3).fill(null).map((_, index) => (
-      { key: index, label: `Menu Item ${index}` }
-    )),
-    { type: 'divider' },
-    { disabled: true, key: 5, label: 'Last Menu Item' } ]}
+  <Menu
+    items={[
+      ...new Array(3).fill(null).map((_, index) => ({ key: index, label: `Menu Item ${index}` })),
+      { type: 'divider' },
+      { disabled: true, key: 5, label: 'Last Menu Item' },
+    ]}
   />
 );
 
 export const Default: ComponentStory<typeof Dropdown> = (args) => (
   <Dropdown {...args} overlay={content}>
-    <a onClick={(e) => e.preventDefault()}>
-      Default Dropdown
-    </a>
+    <a onClick={(e) => e.preventDefault()}>Default Dropdown</a>
   </Dropdown>
 );
 
@@ -52,12 +45,12 @@ export const DropdownButton: ComponentStory<typeof Dropdown.Button> = (args) => 
   </Dropdown.Button>
 );
 
-Default.args = { arrow: true, disabled: false, placement: 'bottomLeft', trigger: [ 'hover' ] };
+Default.args = { arrow: true, disabled: false, placement: 'bottomLeft', trigger: ['hover'] };
 DropdownButton.args = {
   disabled: false,
   loading: false,
   placement: 'bottomLeft',
   size: 'middle',
-  trigger: [ 'hover' ],
+  trigger: ['hover'],
   type: 'default',
 };

@@ -16,11 +16,8 @@ export default {
 
 type ResourcePoolCardProps = React.ComponentProps<typeof ResourcePoolCard>;
 
-export const Default: Story<ResourcePoolCardProps & { pool: number}> = ({ pool, ...args }) => (
-  <ResourcePoolCard
-    {...args}
-    resourcePool={rps[pool]}
-  />
+export const Default: Story<ResourcePoolCardProps & { pool: number }> = ({ pool, ...args }) => (
+  <ResourcePoolCard {...args} resourcePool={rps[pool]} />
 );
 
 Default.args = { pool: 0 };

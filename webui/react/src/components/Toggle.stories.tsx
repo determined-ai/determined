@@ -8,8 +8,6 @@ export default {
   title: 'Determined/Toggle',
 } as Meta<typeof Toggle>;
 
-export const Default: ComponentStory<typeof Toggle> = (args) => (
-  <Toggle {...args} />
-);
+export const Default: ComponentStory<typeof Toggle> = (args) => <Toggle {...args} />;
 
 Default.args = { prefixLabel: 'Prefix Label', suffixLabel: '' };

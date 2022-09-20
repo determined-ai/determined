@@ -18,11 +18,14 @@ export default {
   title: 'Shared/Avatar Card',
 } as Meta<typeof AvatarCard>;
 
-type AvatarCardProps = React.ComponentProps<typeof AvatarCard>
+type AvatarCardProps = React.ComponentProps<typeof AvatarCard>;
 
-const names = [ 'Admin', 'Determined AI', 'Gold Experience Requiem' ];
+const names = ['Admin', 'Determined AI', 'Gold Experience Requiem'];
 
-export const Default: Story<AvatarCardProps & {nameLength: number}> = ({ nameLength, ...args }) => {
+export const Default: Story<AvatarCardProps & { nameLength: number }> = ({
+  nameLength,
+  ...args
+}) => {
   const { ui } = useStore();
   return <AvatarCard {...args} darkLight={ui.darkLight} displayName={names[nameLength - 1]} />;
 };

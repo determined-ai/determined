@@ -12,7 +12,7 @@ export default {
 } as Meta<typeof InlineEditor>;
 
 export const Default: ComponentStory<typeof InlineEditor> = (args) => {
-  const [ value, setValue ] = useState('Edit Me!');
+  const [value, setValue] = useState('Edit Me!');
 
   const save = useCallback((newValue: string): Promise<void> => {
     return new Promise<void>((resolve) => {
@@ -30,13 +30,7 @@ export const Default: ComponentStory<typeof InlineEditor> = (args) => {
     [save],
   );
 
-  return (
-    <InlineEditor
-      {...args}
-      value={value}
-      onSave={handleSave}
-    />
-  );
+  return <InlineEditor {...args} value={value} onSave={handleSave} />;
 };
 
 export const LargeText: ComponentStory<typeof InlineEditor> = (args) => (

@@ -16,9 +16,7 @@ export const WithVariableColumns = (): React.ReactNode => (
 );
 
 export const Custom: ComponentStory<typeof SkeletonTable> = (args) => {
-  return (
-    <SkeletonTable {...args} />
-  );
+  return <SkeletonTable {...args} />;
 };
 
 Custom.args = {

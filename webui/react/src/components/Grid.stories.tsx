@@ -31,9 +31,11 @@ const GridElements: React.ReactNodeArray = new Array(27)
 
 type GridProps = React.ComponentProps<typeof Grid>;
 
-export const Default: Story<GridProps & { gridElements: number}> = ({ gridElements, ...args }) => (
+export const Default: Story<GridProps & { gridElements: number }> = ({ gridElements, ...args }) => (
   <Grid {...args}>
-    {new Array(gridElements).fill(0).map((_, idx) => <GridElement key={idx} />)}
+    {new Array(gridElements).fill(0).map((_, idx) => (
+      <GridElement key={idx} />
+    ))}
   </Grid>
 );
 

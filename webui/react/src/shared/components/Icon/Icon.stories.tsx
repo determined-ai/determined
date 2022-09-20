@@ -7,7 +7,8 @@ export default {
   argTypes: {
     name: {
       control: {
-        options: [ 'arrow-down',
+        options: [
+          'arrow-down',
           'arrow-up',
           'dai-logo',
           'cluster',
@@ -27,13 +28,15 @@ export default {
           'tensor-board',
           'tensorflow',
           'user',
-          'user-small' ],
+          'user-small',
+        ],
         type: 'select',
       },
     },
     size: {
       control: {
-        options: [ 'tiny',
+        options: [
+          'tiny',
           'small',
           'medium',
           'large',
@@ -43,7 +46,8 @@ export default {
           'enormous',
           'giant',
           'jumbo',
-          'mega' ],
+          'mega',
+        ],
         type: 'inline-radio',
       },
     },

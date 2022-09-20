@@ -20,8 +20,10 @@ export default {
 const args: Partial<Project> = { name: 'Project Name', numExperiments: 1 };
 
 export const Default = (args: Partial<Project>): React.ReactElement => {
-  const { auth: { user } } = useStore();
-  const project = useMemo(() => generateTestProjectData(args), [ args ]);
+  const {
+    auth: { user },
+  } = useStore();
+  const project = useMemo(() => generateTestProjectData(args), [args]);
 
   return <ProjectCard curUser={user} project={project} />;
 };

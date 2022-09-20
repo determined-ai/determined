@@ -18,9 +18,7 @@ export default {
   title: 'Determined/Badges/BadgeTag',
 } as Meta<typeof BadgeTag>;
 
-export const Default: ComponentStory<typeof BadgeTag> = (args) => (
-  <BadgeTag {...args} />
-);
+export const Default: ComponentStory<typeof BadgeTag> = (args) => <BadgeTag {...args} />;
 
 Default.args = {
   children: 'a4fdb98',

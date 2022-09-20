@@ -15,8 +15,6 @@ export default {
   title: 'Determined/Badges/Badge',
 } as Meta<typeof Badge>;
 
-export const Default: ComponentStory<typeof Badge> = (args) => (
-  <Badge {...args} />
-);
+export const Default: ComponentStory<typeof Badge> = (args) => <Badge {...args} />;
 
 Default.args = { children: 'a4fdb98', state: CommandState.Running, type: BadgeType.Default };

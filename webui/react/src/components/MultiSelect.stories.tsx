@@ -15,19 +15,14 @@ export default {
 
 type MultiSelectProps = React.ComponentProps<typeof MultiSelect>;
 
-export const Default: Story<MultiSelectProps & { count: number }> = (
-  { count, ...args },
-) => {
-  const [ value, setValue ] = useState<string[]>([]);
+export const Default: Story<MultiSelectProps & { count: number }> = ({ count, ...args }) => {
+  const [value, setValue] = useState<string[]>([]);
   const onChange = useCallback((value: SelectValue) => {
     setValue(value as string[]);
   }, []);
 
   return (
-    <MultiSelect
-      {...args}
-      value={value}
-      onChange={onChange}>
+    <MultiSelect {...args} value={value} onChange={onChange}>
       {new Array(count).fill(null).map((v, index) => (
         <Option key={index} value={String.fromCharCode(65 + index)}>
           Option {String.fromCharCode(65 + index)}

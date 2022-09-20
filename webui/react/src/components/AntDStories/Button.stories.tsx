@@ -4,11 +4,11 @@ import React from 'react';
 
 export default {
   argTypes: {
-    shape: { control: { options: [ 'default', 'circle', 'round' ], type: 'inline-radio' } },
-    size: { control: { options: [ 'small', 'middle', 'large' ], type: 'inline-radio' } },
+    shape: { control: { options: ['default', 'circle', 'round'], type: 'inline-radio' } },
+    size: { control: { options: ['small', 'middle', 'large'], type: 'inline-radio' } },
     type: {
       control: {
-        options: [ 'primary', 'dashed', 'link', 'text', 'default' ],
+        options: ['primary', 'dashed', 'link', 'text', 'default'],
         type: 'inline-radio',
       },
     },
@@ -17,9 +17,7 @@ export default {
   title: 'Ant Design/Button',
 } as Meta<typeof Button>;
 
-export const Default: ComponentStory<typeof Button> = (args) => (
-  <Button {...args} />
-);
+export const Default: ComponentStory<typeof Button> = (args) => <Button {...args} />;
 
 Default.args = {
   children: 'Button Text',

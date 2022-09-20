@@ -16,10 +16,7 @@ const batchOptions = [
 ];
 
 export const Default: ComponentStory<typeof TableBatch> = (args) => (
-  <TableBatch
-    actions={batchOptions}
-    {...args}
-  />
+  <TableBatch actions={batchOptions} {...args} />
 );
 
 Default.args = { selectedRowCount: 1 };

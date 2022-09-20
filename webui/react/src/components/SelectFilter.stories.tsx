@@ -18,9 +18,7 @@ export const Default: Story<SelectFilterProps & { count: number }> = ({ count, .
   return (
     <SelectFilter {...args}>
       <OptGroup key="roup" label="Optional Grouping">
-        <Option value="A">
-          Option A
-        </Option>
+        <Option value="A">Option A</Option>
       </OptGroup>
       {new Array(count - 1).fill(null).map((v, index) => (
         <Option key={index + 1} value={String.fromCharCode(65 + index + 1)}>

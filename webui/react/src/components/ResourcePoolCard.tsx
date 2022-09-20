@@ -81,8 +81,7 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
 };
 
 const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
-
-  const descriptionClasses = [ css.description ];
+  const descriptionClasses = [css.description];
 
   if (!pool.description) descriptionClasses.push(css.empty);
 

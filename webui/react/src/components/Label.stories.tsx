@@ -8,8 +8,6 @@ export default {
   title: 'Determined/Label',
 };
 
-export const Default: ComponentStory<typeof Label> = (args) => (
-  <Label {...args} />
-);
+export const Default: ComponentStory<typeof Label> = (args) => <Label {...args} />;
 
 Default.args = { children: 'Default Label' };

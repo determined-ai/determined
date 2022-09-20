@@ -6,7 +6,7 @@ export default {
   argTypes: {
     type: {
       control: {
-        options: [ 'success', 'info', 'warning', 'error' ],
+        options: ['success', 'info', 'warning', 'error'],
         type: 'inline-radio',
       },
     },
@@ -15,9 +15,7 @@ export default {
   title: 'Ant Design/Alert',
 } as Meta<typeof Alert>;
 
-export const Default: ComponentStory<typeof Alert> = (args) => (
-  <Alert {...args} />
-);
+export const Default: ComponentStory<typeof Alert> = (args) => <Alert {...args} />;
 
 Default.args = {
   banner: false,

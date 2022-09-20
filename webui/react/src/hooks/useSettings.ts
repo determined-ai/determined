@@ -370,7 +370,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         }
       }
     });
-  }, [configMap, storage, userSettings]);
+  }, [configMap, options?.store, storage, userSettings]);
 
   useEffect(() => {
     decodeUserSettings();

@@ -20,14 +20,9 @@ export default {
   title: 'Determined/ResourcePoolDetails',
 } as Meta<typeof ResourcePoolDetails>;
 
-export const Default: Story<ResourcePoolDetailsProps & { poolNumber: number }> = (
-  { poolNumber, ...args },
-) => (
-  <ResourcePoolDetails
-    {...args}
-    resourcePool={resourcePools[poolNumber]}
-    visible={true}
-  />
-);
+export const Default: Story<ResourcePoolDetailsProps & { poolNumber: number }> = ({
+  poolNumber,
+  ...args
+}) => <ResourcePoolDetails {...args} resourcePool={resourcePools[poolNumber]} visible={true} />;
 
 Default.args = { poolNumber: 0 };

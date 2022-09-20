@@ -9,7 +9,8 @@ import {
   RunState,
   TrialDetails,
   Workspace,
-  WorkspaceState } from 'types';
+  WorkspaceState,
+} from 'types';
 import { generateExperiment } from 'utils/task';
 
 export const generateTestExperimentData = (): {

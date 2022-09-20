@@ -13,7 +13,9 @@ export default {
 export const Default: ComponentStory<typeof TaskBar> = (args) => (
   <TaskBar
     {...args}
-    handleViewLogsClick={() => { return; }}
+    handleViewLogsClick={() => {
+      return;
+    }}
     id="task id"
     name="task name"
     resourcePool="task-resource-pool"

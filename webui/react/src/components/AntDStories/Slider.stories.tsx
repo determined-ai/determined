@@ -4,7 +4,7 @@ import { SliderSingleProps } from 'antd/lib/slider';
 import React from 'react';
 
 export default {
-  argTypes: { size: { control: { options: [ 'small', 'default' ], type: 'inline-radio' } } },
+  argTypes: { size: { control: { options: ['small', 'default'], type: 'inline-radio' } } },
   component: Slider,
   title: 'Ant Design/Slider',
 } as Meta<typeof Slider>;

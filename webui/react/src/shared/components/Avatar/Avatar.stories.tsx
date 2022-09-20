@@ -16,11 +16,11 @@ export default {
   title: 'Shared/Avatar',
 } as Meta<typeof Avatar>;
 
-type AvatarProps = React.ComponentProps<typeof Avatar>
+type AvatarProps = React.ComponentProps<typeof Avatar>;
 
-const names = [ 'Admin', 'Determined AI', 'Gold Experience Requiem' ];
+const names = ['Admin', 'Determined AI', 'Gold Experience Requiem'];
 
-export const Default: Story<AvatarProps & {nameLength: number}> = ({ nameLength, ...args }) => {
+export const Default: Story<AvatarProps & { nameLength: number }> = ({ nameLength, ...args }) => {
   const { ui } = useStore();
   return <Avatar {...args} darkLight={ui.darkLight} displayName={names[nameLength - 1]} />;
 };
