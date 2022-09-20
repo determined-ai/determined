@@ -150,16 +150,13 @@ official [Stable Diffusion Discord Server](https://www.diffusion.gg).
 
 A very incomplete list:
 
-* The above cat example can be much improved. Quick and dirty example currently.
 * The current `entrypoint`
   is `python -m determined.launch.torch_distributed accelerate launch main.py` which uses
   the [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate) launcher on top of
   our own `torch_distributed` launcher. This is probably a hack? Maybe write our own `accelerate`
   launcher?
 * Should also support distributed inference for faster generation.
-* Still struggling with getting a great image using the DAI logo.
 * fp16 training
-* Log images to tensorboard rather than "abuse" the checkpoint directory, in Ryan's words
 * Test training at 256 * 256 and image generation at other scales. Separate the `img_size` args for
   training and inference here.
 * lr scheduler
