@@ -80,11 +80,6 @@ class XORNetMulti(XORNet):
         return {"output": self.main_net(model_input)}
 
 
-class StepableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
-    def get_lr(self) -> List[float]:
-        return [self._step_count for _ in self.base_lrs]
-
-
 class ModifyableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
     def __init__(self, *args, **kwargs):
         self.lr = float(0)
@@ -197,38 +192,6 @@ class XORTrialWithMultiValidation(XORTrialMulti):
         binary_error = binary_error_rate(output["output"], labels)
 
         return {"accuracy": accuracy, "binary_error": binary_error}
-
-
-class XORTrialWithLRScheduler(XORTrialMulti):
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        self.context = context
-
-        # Same as XORTrial but with multi-output net XORNetMulti.
-        self.model = self.context.wrap_model(XORNetMulti(self.context))
-        self.optimizer = self.context.wrap_optimizer(
-            torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
-        )
-
-        self.lr_scheduler = self.context.wrap_lr_scheduler(
-            StepableLRSchedule(self.optimizer),
-            step_mode=pytorch.LRScheduler.StepMode(
-                self.context.get_hparam("lr_scheduler_step_mode")
-            ),
-        )
-
-    def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        metrics = super().train_batch(batch, epoch_idx, batch_idx)
-        lr = self.lr_scheduler.get_last_lr()[0]
-        metrics["lr"] = lr
-
-        if (
-            self.context.get_hparam("lr_scheduler_step_mode")
-            == pytorch.LRScheduler.StepMode.MANUAL_STEP
-        ):
-            self.lr_scheduler.step()
-        return metrics
 
 
 class XORTrialPerMetricReducers(XORTrialWithMultiValidation):

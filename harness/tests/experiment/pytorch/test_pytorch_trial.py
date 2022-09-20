@@ -162,7 +162,7 @@ class TestPyTorchTrial:
                 **self.hparams,
             }
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialWithLRScheduler,
+                trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
                 hparams=updated_hparams,
                 workloads=workloads,
                 trial_seed=self.trial_seed,

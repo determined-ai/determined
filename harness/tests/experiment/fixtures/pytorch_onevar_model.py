@@ -42,7 +42,6 @@ import yaml
 
 from determined import experimental, pytorch
 from determined.pytorch import samplers
-from tests.experiment.fixtures.pytorch_xor_model import StepableLRSchedule
 
 try:
     import apex
@@ -95,6 +94,11 @@ def triangle_label_sum(updates: List) -> Any:
         else:
             out += update_idx * label_sum
     return out
+
+
+class StepableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
+    def get_lr(self) -> List[float]:
+        return [self._step_count for _ in self.base_lrs]
 
 
 def get_onevar_model() -> torch.nn.Module:
@@ -548,6 +552,37 @@ class OneVarTrialWithNonScalarValidation(BaseOneVarTrial):
 
         mse = mse_sum / len(data_loader)
         return {"predictions": predictions, "mse": mse}
+
+
+class OneVarTrialWithLRScheduler(OneVarTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        super().__init__(context)
+
+        self.model = self.context.wrap_model(get_onevar_model())
+        self.opt = self.context.wrap_optimizer(
+            torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
+        )
+
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
+            StepableLRSchedule(self.opt),
+            step_mode=pytorch.LRScheduler.StepMode(
+                self.context.get_hparam("lr_scheduler_step_mode")
+            ),
+        )
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        lr = self.lr_scheduler.get_last_lr()[0]
+        metrics["lr"] = lr
+
+        if (
+            self.context.get_hparam("lr_scheduler_step_mode")
+            == pytorch.LRScheduler.StepMode.MANUAL_STEP
+        ):
+            self.lr_scheduler.step()
+        return metrics
 
 
 if __name__ == "__main__":
