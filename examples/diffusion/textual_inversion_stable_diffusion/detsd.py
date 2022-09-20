@@ -4,6 +4,7 @@ import pathlib
 import uuid
 import warnings
 from contextlib import nullcontext
+from datetime import datetime
 from PIL import Image
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
@@ -668,6 +669,9 @@ class DetSDTextualInversionPipeline:
         uuids: Union[str, Sequence[str]],
         learned_embeddings_filename: str = "learned_embeddings_dict.pt",
         scheduler_name: str = "pndm",
+        beta_start: float = 0.00085,
+        beta_end: float = 0.012,
+        beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         other_scheduler_kwargs: Optional[Dict[str, Any]] = None,
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
@@ -686,14 +690,17 @@ class DetSDTextualInversionPipeline:
             checkpoint_paths.append(pathlib.Path(checkpoint.download()))
 
         return cls(
-            checkpoint_paths,
-            learned_embeddings_filename,
-            scheduler_name,
-            other_scheduler_kwargs,
-            pretrained_model_name_or_path,
-            device,
-            use_autocast,
-            use_fp16,
+            checkpoint_paths=checkpoint_paths,
+            learned_embeddings_filename=learned_embeddings_filename,
+            scheduler_name=scheduler_name,
+            beta_start=beta_start,
+            beta_end=beta_end,
+            beta_schedule=beta_schedule,
+            other_scheduler_kwargs=other_scheduler_kwargs,
+            pretrained_model_name_or_path=pretrained_model_name_or_path,
+            device=device,
+            use_autocast=use_autocast,
+            use_fp16=use_fp16,
         )
 
     def _build_models(self) -> None:
@@ -774,6 +781,10 @@ class DetSDTextualInversionPipeline:
                 text_encoder=self.text_encoder,
             )
             self.placeholder_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
+        print(
+            "Successfullly loaded checkpoints with available concepts:"
+            f" {list(self.placeholder_to_dummy_tokens_map.keys())}"
+        )
 
     def _build_pipeline(self) -> None:
         print("Building the pipeline...")
@@ -843,20 +854,14 @@ class DetSDTextualInversionPipeline:
                     continue
                 images.append(image)
                 generated_samples += 1
-                if saved_img_dir is not None:
-                    # TODO: Currently using short uuids to ensure unique file name. Use a better system.
-                    file_suffix = (
-                        f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_{uuid}.png"
-                    )
-                    filename = prompt[: 255 - len(file_suffix)] + file_suffix
-                    filename = "_".join(filename.split())
-                    self._save_image(image, filename, saved_img_dir)
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
-        if num_samples > 1 and saved_img_dir is not None:
+        if saved_img_dir is not None:
             # TODO: Clean up repeated code
-            file_suffix = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_{str(uuid.uuid4())}_GRID.png"
-            filename = prompt[: 255 - len(file_suffix)] + file_suffix
-            filename = "_".join(filename.split())
+            generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
+            timestamp = "_".join(f"_{datetime.now().strftime('%c')}.png".split())
+            file_suffix = generation_details + timestamp + ".png"
+            joined_split_prompt = "_".join(prompt.split())
+            filename = joined_split_prompt[: 255 - len(file_suffix)] + file_suffix
             self._save_image(image_grid, filename, saved_img_dir)
         return image_grid
 
