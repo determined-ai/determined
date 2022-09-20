@@ -54,7 +54,6 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { danger: true },
       okText: 'Add Member',
       title: 'Add Member',
     };
