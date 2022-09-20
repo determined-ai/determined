@@ -118,7 +118,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }),
     [experiment.state],
   );
-  const disabled = experiment?.parentArchived || experiment?.archived;
+  const disabled = experiment?.parentArchived || experiment?.archived ||
+    !expPermissions.canModifyExperimentMetadata({ workspace: { id: experiment?.workspaceId } });
 
   const handlePauseClick = useCallback(async () => {
     setIsChangingState(true);

@@ -189,7 +189,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     openHyperparameterSearchModal({});
   }, [openHyperparameterSearchModal]);
 
-  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+  const { canModifyExperimentMetadata, canViewExperimentArtifacts } = usePermissions();
+  const showExperimentArtifacts = canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
+  const editableNotes = canModifyExperimentMetadata({
     workspace: { id: experiment.workspaceId },
   });
 
@@ -233,6 +237,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         ) : null}
         <TabPane key="notes" tab="Notes">
           <NotesCard
+            disabled={!editableNotes}
             notes={experiment.notes ?? ''}
             style={{ border: 0, height: '100%' }}
             onSave={handleNotesUpdate}
@@ -241,9 +246,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <TabPane key="profiler" tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="logs" tab="Logs">
-          <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <TabPane key="logs" tab="Logs">
+            <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+          </TabPane>
+        ) : null}
       </Tabs>
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>

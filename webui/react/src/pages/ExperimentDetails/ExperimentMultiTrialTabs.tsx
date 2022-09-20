@@ -89,7 +89,11 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
-  const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
+  const { canModifyExperimentMetadata, canViewExperimentArtifacts } = usePermissions();
+  const showExperimentArtifacts = canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
+  const editableNotes = canModifyExperimentMetadata({
     workspace: { id: experiment.workspaceId },
   });
 
@@ -125,6 +129,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       ) : null}
       <TabPane key="notes" tab="Notes">
         <NotesCard
+          disabled={!editableNotes}
           notes={experiment.notes ?? ''}
           style={{ border: 0 }}
           onSave={handleNotesUpdate}

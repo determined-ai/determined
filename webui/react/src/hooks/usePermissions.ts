@@ -36,7 +36,9 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canGetPermissions: boolean;
-  canModifyGroups: boolean;
+  canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyGroups: () => boolean;
   canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyUsers: boolean;
@@ -80,8 +82,12 @@ const usePermissions = (): PermissionsHook => {
       canDeleteWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
     canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
       canDeleteWorkspace(args.workspace, user, userAssignments, userRoles),
-    canGetPermissions: canAdministrateUsers(user, userAssignments, userRoles),
-    canModifyGroups: canModifyGroups(user, userAssignments, userRoles),
+    canGetPermissions: canGetPermissions(user, userAssignments, userRoles),
+    canModifyExperiment: (args: WorkspacePermissionsArgs) =>
+      canModifyExperiment(args.workspace, userAssignments, userRoles),
+    canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
+      canModifyExperimentMetadata(args.workspace, userAssignments, userRoles),
+    canModifyGroups: () => canModifyGroups(user, userAssignments, userRoles),
     canModifyPermissions: canAdministrateUsers(user, userAssignments, userRoles),
     canModifyProjects: (args: ProjectPermissionsArgs) =>
       canModifyWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
@@ -191,6 +197,30 @@ const canDeleteExperiment = (
     (permitted.has('oss_user')
       ? user.isAdmin || user.id === experiment.userId
       : permitted.has('delete_experiment'))
+  );
+};
+
+const canModifyExperiment = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!workspace &&
+    (permitted.has('oss_user') || permitted.has('update_experiments'))
+  );
+};
+
+const canModifyExperimentMetadata = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!workspace &&
+    (permitted.has('oss_user') || permitted.has('update_experiment_metadata'))
   );
 };
 

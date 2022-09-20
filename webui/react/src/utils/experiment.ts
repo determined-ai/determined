@@ -37,6 +37,7 @@ type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) =
 type ExperimentPermissionSet = {
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
+  canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
 }
@@ -188,15 +189,29 @@ export const getActionsForExperiment = (
     .filter((action) => {
       switch (action) {
         case ExperimentAction.ContinueTrial:
+        case ExperimentAction.Fork:
+        case ExperimentAction.HyperparameterSearch:
           return permissions.canViewExperimentArtifacts({ workspace }) &&
             permissions.canCreateExperiment({ workspace });
+
         case ExperimentAction.Delete:
           return permissions.canDeleteExperiment({ experiment });
-        case ExperimentAction.Fork:
-          return permissions.canViewExperimentArtifacts({ workspace }) &&
-            permissions.canCreateExperiment({ workspace });
+
+        case ExperimentAction.DownloadCode:
+        case ExperimentAction.OpenTensorBoard:
+          return permissions.canViewExperimentArtifacts({ workspace });
+
         case ExperimentAction.Move:
           return permissions.canMoveExperiment({ experiment });
+
+        case ExperimentAction.Activate:
+        case ExperimentAction.Archive:
+        case ExperimentAction.Cancel:
+        case ExperimentAction.Kill:
+        case ExperimentAction.Pause:
+        case ExperimentAction.Unarchive:
+          return permissions.canModifyExperiment({ workspace });
+
         default:
           return true;
       }
