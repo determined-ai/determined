@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/uptrace/bun"
 
@@ -139,9 +140,9 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 			Permissions: Permissions(a.Role.Permissions).Proto(),
 		}
 
-		var scopeWorkspaceID *int32 = nil
+		var scopeWorkspaceID *wrappers.Int32Value
 		if a.Scope != nil && a.Scope.WorkspaceID.Valid {
-			scopeWorkspaceID = &a.Scope.WorkspaceID.Int32
+			scopeWorkspaceID = wrapperspb.Int32(a.Scope.WorkspaceID.Int32)
 		}
 
 		if a.Group.OwnerID == 0 {
@@ -149,7 +150,7 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 				GroupId: int32(a.GroupID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             protoRole,
-					ScopeWorkspaceId: &wrappers.Int32Value{Value: *scopeWorkspaceID},
+					ScopeWorkspaceId: scopeWorkspaceID,
 				},
 			})
 		} else {
@@ -157,7 +158,7 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 				UserId: int32(a.Group.OwnerID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             protoRole,
-					ScopeWorkspaceId: &wrappers.Int32Value{Value: *scopeWorkspaceID},
+					ScopeWorkspaceId: scopeWorkspaceID,
 				},
 			})
 		}
