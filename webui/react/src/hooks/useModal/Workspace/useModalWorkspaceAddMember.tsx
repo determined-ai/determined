@@ -23,7 +23,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   // Mock Data for potential roles
-  const roles = [ 'Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin' ];
+  const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 
   const members: Member[] = [];
 
@@ -44,29 +44,34 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   // Mock table row data
   const membersAndGroups = groups.concat(members);
 
-  const handleFilter = useCallback((search: string, option) => {
-    const label = option.label as string;
-    const memberOrGroup = membersAndGroups.find((m) => {
-      if (isMember(m)){
-        const member = m as Member;
-        return member?.displayName === label || member?.username === label;
-      } else {
-        const g: unknown = m;
-        const group = g as Group;
-        return group.name === label;
-      }
-    });
-    if (!memberOrGroup) return false;
-    if (isMember(memberOrGroup)){
+  const handleFilter = useCallback(
+    (search: string, option) => {
+      const label = option.label as string;
+      const memberOrGroup = membersAndGroups.find((m) => {
+        if (isMember(m)) {
+          const member = m as Member;
+          return member?.displayName === label || member?.username === label;
+        } else {
+          const g: unknown = m;
+          const group = g as Group;
+          return group.name === label;
+        }
+      });
+      if (!memberOrGroup) return false;
+      if (isMember(memberOrGroup)) {
         const memberOption = memberOrGroup as Member;
-        return memberOption?.displayName?.includes(search) || memberOption?.username?.includes(search);
+        return (
+          memberOption?.displayName?.includes(search) || memberOption?.username?.includes(search)
+        );
       } else {
         const gOption: unknown = memberOrGroup;
         const groupOption = gOption as Group;
         return groupOption?.name?.includes(search);
       }
-    }, [membersAndGroups]);
-  
+    },
+    [membersAndGroups],
+  );
+
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
@@ -76,13 +81,12 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
           placeholder="Find user or group by display name or username"
           showSearch
         />
-        <Select
-        placeholder="Role">
+        <Select placeholder="Role">
           {roles.map((r) => (
             <Select.Option key={r} value={r}>
               {r}
             </Select.Option>
-            ))}
+          ))}
         </Select>
       </div>
     );
@@ -96,11 +100,14 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
       okText: 'Add Member',
       title: 'Add Member',
     };
-  }, [ modalContent ]);
+  }, [modalContent]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    openOrUpdate({ ...getModalProps(), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      openOrUpdate({ ...getModalProps(), ...initialModalProps });
+    },
+    [getModalProps, openOrUpdate],
+  );
 
   /**
    * When modal props changes are detected, such as modal content
@@ -108,9 +115,9 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps());
-  }, [ getModalProps, modalRef, openOrUpdate ]);
+  }, [getModalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };
 
-export default useModalWorkspaceAddMember ;
+export default useModalWorkspaceAddMember;

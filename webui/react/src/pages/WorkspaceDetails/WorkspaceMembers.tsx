@@ -2,8 +2,7 @@ import { Button, Dropdown, Menu, Select } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useMemo } from 'react';
 
-import InteractiveTable, { ColumnDef,
-  InteractiveTableSettings } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import { getFullPaginationConfig } from 'components/Table';
 import TableFilterSearch from 'components/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
@@ -11,17 +10,17 @@ import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWork
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
-import {
-  alphaNumericSorter,
-} from 'shared/utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { DetailedUser, Group, Member, MemberOrGroup, Workspace } from 'types';
 import { getName, isMember } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  WorkspaceMembersSettings } from './WorkspaceMembers.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  WorkspaceMembersSettings,
+} from './WorkspaceMembers.settings';
 
-const roles = [ 'Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin' ];
+const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 interface Props {
   pageRef: React.RefObject<HTMLElement>;
   users: DetailedUser[];
@@ -39,7 +38,6 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   workspace,
   name,
 }) => {
-
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
@@ -47,10 +45,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
   const menuItems = (
     <Menu>
-      <Menu.Item
-        danger
-        key="delete"
-        onClick={() => openWorkspaceRemoveMemberModal()}>
+      <Menu.Item danger key="delete" onClick={() => openWorkspaceRemoveMemberModal()}>
         Delete
       </Menu.Item>
       {openWorkspaceRemoveMemberContextHolder}
@@ -59,10 +54,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
   return (
     <div>
-      <Dropdown
-        overlay={menuItems}
-        placement="bottomRight"
-        trigger={[ 'click' ]}>
+      <Dropdown overlay={menuItems} placement="bottomRight" trigger={['click']}>
         <Button type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -72,7 +64,6 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 };
 
 const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props) => {
-
   const members: Member[] = [];
 
   // Assign a mock role to users
@@ -92,34 +83,36 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
   // Mock table row data
   const membersAndGroups = groups.concat(members);
 
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<WorkspaceMembersSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
 
-  const handleNameSearchApply = useCallback((newSearch: string) => {
-    updateSettings({ name: newSearch || undefined });
-  }, [ updateSettings ]);
+  const handleNameSearchApply = useCallback(
+    (newSearch: string) => {
+      updateSettings({ name: newSearch || undefined });
+    },
+    [updateSettings],
+  );
 
   const handleNameSearchReset = useCallback(() => {
     updateSettings({ name: undefined });
-  }, [ updateSettings ]);
+  }, [updateSettings]);
 
-  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterSearch
-      {...filterProps}
-      value={settings.name || ''}
-      onReset={handleNameSearchReset}
-      onSearch={handleNameSearchApply}
-    />
-  ), [ handleNameSearchApply, handleNameSearchReset, settings.name ]);
+  const nameFilterSearch = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterSearch
+        {...filterProps}
+        value={settings.name || ''}
+        onReset={handleNameSearchReset}
+        onSearch={handleNameSearchApply}
+      />
+    ),
+    [handleNameSearchApply, handleNameSearchReset, settings.name],
+  );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
   const columns = useMemo(() => {
-
     const nameRenderer = (value: string, record: MemberOrGroup) => {
-      if (isMember(record)){
+      if (isMember(record)) {
         const member = record as Member;
         return (
           <>
@@ -138,7 +131,6 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
             </div>
           </>
         );
-
       }
       const group = record as Group;
       return (
@@ -155,15 +147,12 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
 
     const roleRenderer = (value: string, record: Member) => {
       return (
-        <Select
-          className={css.selectContainer}
-          value={record.role}>{
-            roles.map((role) => (
-              <Select.Option key={role} value={role}>
-                {role}
-              </Select.Option>
-            ))
-          }
+        <Select className={css.selectContainer} value={record.role}>
+          {roles.map((role) => (
+            <Select.Option key={role} value={role}>
+              {role}
+            </Select.Option>
+          ))}
         </Select>
       );
     };
@@ -203,7 +192,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
         title: '',
       },
     ] as ColumnDef<MemberOrGroup>[];
-  }, [ nameFilterSearch, tableSearchIcon, workspace ]);
+  }, [nameFilterSearch, tableSearchIcon, workspace]);
 
   return (
     <div className={css.membersContainer}>
@@ -211,10 +200,13 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
         columns={columns}
         containerRef={pageRef}
         dataSource={membersAndGroups}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, membersAndGroups.length)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          membersAndGroups.length,
+        )}
         rowKey="id"
         settings={settings}
         showSorterTooltip={false}

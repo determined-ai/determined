@@ -28,17 +28,17 @@ interface Params {
 
 export enum WorkspaceDetailsTab {
   Members = 'members',
-  Projects = 'projects'
+  Projects = 'projects',
 }
 
 const WorkspaceDetails: React.FC = () => {
   const { users } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');
   const { workspaceId } = useParams<Params>();
-  const [ workspace, setWorkspace ] = useState<Workspace>();
-  const [ pageError, setPageError ] = useState<Error>();
-  const [ canceler ] = useState(new AbortController());
-  const [ tabKey, setTabKey ] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
+  const [workspace, setWorkspace] = useState<Workspace>();
+  const [pageError, setPageError] = useState<Error>();
+  const [canceler] = useState(new AbortController());
+  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
   const pageRef = useRef<HTMLElement>(null);
   const id = parseInt(workspaceId);
   const history = useHistory();
@@ -58,24 +58,28 @@ const WorkspaceDetails: React.FC = () => {
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([ fetchWorkspace(), fetchUsers() ]);
-  }, [ fetchWorkspace, fetchUsers ]);
+    await Promise.allSettled([fetchWorkspace(), fetchUsers()]);
+  }, [fetchWorkspace, fetchUsers]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  const handleTabChange = useCallback((activeTab) => {
-    const tab = activeTab as WorkspaceDetailsTab;
-    history.replace(`${basePath}/${tab}`);
-    setTabKey(tab);
-  }, [ basePath, history ]);
+  const handleTabChange = useCallback(
+    (activeTab) => {
+      const tab = activeTab as WorkspaceDetailsTab;
+      history.replace(`${basePath}/${tab}`);
+      setTabKey(tab);
+    },
+    [basePath, history],
+  );
 
   useEffect(() => {
-
     // Set the correct pathname to ensure
     // that user settings will save.
 
-    if (!location.pathname.includes(WorkspaceDetailsTab.Projects) &&
-    !location.pathname.includes(WorkspaceDetailsTab.Members))
+    if (
+      !location.pathname.includes(WorkspaceDetailsTab.Projects) &&
+      !location.pathname.includes(WorkspaceDetailsTab.Members)
+    )
       history.replace(`${basePath}/${tabKey}`);
   }, [basePath, history, location.pathname, tabKey]);
 
@@ -103,27 +107,18 @@ const WorkspaceDetails: React.FC = () => {
       containerRef={pageRef}
       headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
       id="workspaceDetails">
-      {
-        rbacEnabled ? (
-          <Tabs
-            activeKey={tabKey}
-            destroyInactiveTabPane
-            onChange={handleTabChange}>
-            <Tabs.TabPane
-              destroyInactiveTabPane
-              key={WorkspaceDetailsTab.Projects}
-              tab="Projects">
-              <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              destroyInactiveTabPane
-              key={WorkspaceDetailsTab.Members}
-              tab="Members">
-              <WorkspaceMembers pageRef={pageRef} users={users} workspace={workspace} />
-            </Tabs.TabPane>
-          </Tabs>
-        ) : (<WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />)
-      }
+      {rbacEnabled ? (
+        <Tabs activeKey={tabKey} destroyInactiveTabPane onChange={handleTabChange}>
+          <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Projects} tab="Projects">
+            <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
+          </Tabs.TabPane>
+          <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
+            <WorkspaceMembers pageRef={pageRef} users={users} workspace={workspace} />
+          </Tabs.TabPane>
+        </Tabs>
+      ) : (
+        <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
+      )}
     </Page>
   );
 };

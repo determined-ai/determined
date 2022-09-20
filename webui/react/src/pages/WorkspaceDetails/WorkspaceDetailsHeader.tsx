@@ -27,9 +27,10 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
     workspaceId: workspace.id,
   });
 
-  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } = useModalWorkspaceAddMember({
-    workspace: workspace,
-  });
+  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
+    useModalWorkspaceAddMember({
+      workspace: workspace,
+    });
 
   const rbacEnabled = useFeature().isOn('rbac');
 
@@ -97,10 +98,10 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         )}
       </Space>
       <div className={css.headerButton}>
-        {(rbacEnabled && !workspace.immutable && !workspace.archived) && (
+        {rbacEnabled && !workspace.immutable && !workspace.archived && (
           <Button onClick={handleAddMembersClick}> Add Members</Button>
         )}
-        {(!workspace.immutable && !workspace.archived) && (
+        {!workspace.immutable && !workspace.archived && (
           <Button onClick={handleProjectCreateClick}>New Project</Button>
         )}
       </div>

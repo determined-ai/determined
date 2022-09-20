@@ -1,14 +1,13 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export type MembersColumnName = | 'name' | 'role' | 'action';
+export type MembersColumnName = 'name' | 'role' | 'action';
 
 enum WorkspaceMembersSortBy {
-  USERNAME = 'username'
+  USERNAME = 'username',
 }
 
-export const DEFAULT_COLUMNS: MembersColumnName[] =
-[ 'name', 'role' ];
+export const DEFAULT_COLUMNS: MembersColumnName[] = ['name', 'role'];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<MembersColumnName, number> = {
   action: 50,
