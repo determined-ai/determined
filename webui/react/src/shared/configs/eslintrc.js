@@ -98,7 +98,13 @@ module.exports = {
     'quote-props': ['error', 'consistent-as-needed'],
     'quotes': ['error', 'single', { avoidEscape: true }],
     'react/display-name': 'off',
-    'react/jsx-closing-bracket-location': 'off',
+    'react/jsx-closing-bracket-location': [
+      'error',
+      {
+        nonEmpty: 'after-props',
+        selfClosing: 'tag-aligned',
+      },
+    ],
     'react/jsx-closing-tag-location': ['error'],
     'react/jsx-curly-spacing': ['error', { children: false, when: 'never' }],
     'react/jsx-equals-spacing': ['error', 'never'],
