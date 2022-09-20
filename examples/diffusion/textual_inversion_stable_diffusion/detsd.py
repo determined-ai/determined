@@ -884,10 +884,7 @@ def add_new_tokens(
     dummy_placeholder_tokens = [
         f"<{placeholder_token}_" + str(uuid.uuid4()) + ">" for _ in non_special_initializer_ids
     ]
-    print("TOKENIZER LENGTH", len(tokenizer))
     num_added_tokens = tokenizer.add_tokens(dummy_placeholder_tokens)
-    print("TOKENIZER LENGTH", len(tokenizer))
-    print("ADDED TOKENS", num_added_tokens)
     if num_added_tokens != len(dummy_placeholder_tokens):
         raise ValueError(f"Subset of {dummy_placeholder_tokens} tokens already exist in tokenizer.")
     # Get the ids of the new placeholders.
