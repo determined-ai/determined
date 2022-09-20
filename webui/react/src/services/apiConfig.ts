@@ -288,10 +288,12 @@ export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse,
   {
     name: 'listRoles',
     postProcess: (response) => response.roles.map(decoder.mapV1Role),
-    request: (params) =>
-      detApi.RBAC.listRoles({
-        limit: params.limit || 0,
-        offset: params.offset || 0,
+    request: () =>
+      new Promise((resolve) => {
+        resolve({
+          pagination: {},
+          roles: new Array<Api.V1Role>(),
+        });
       }),
   };
 
