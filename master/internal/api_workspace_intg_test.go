@@ -159,6 +159,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
 }
 
