@@ -31,7 +31,10 @@ def _simple_reduce_metrics(
     if reducer == Reducer.AVG:
         if num_batches:
             if len(metrics) != len(num_batches):
-                raise RuntimeError("Lengths of metrics and num_batches are not equal.")
+                raise RuntimeError(
+                    "Lengths of metrics and num_batches are not equal: "
+                    f"{len(metrics)} != {len(num_batches)}."
+                )
         return np.average(metrics, weights=num_batches)
     elif reducer == Reducer.SUM:
         return np.sum(metrics)

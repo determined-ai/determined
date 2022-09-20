@@ -558,13 +558,15 @@ class PyTorchTrialController(det.TrialController):
                 else:
                     if keys != vld_metrics.keys():
                         raise ValueError(
-                            "Validation metric names must match across all batches of data.",
+                            "Validation metric names must match across all batches of data: "
+                            f"{keys} != {vld_metrics.keys()}.",
                         )
                 if not isinstance(vld_metrics, dict):
                     raise TypeError(
                         "validation_metrics() must return a "
                         "dictionary of string names to Tensor "
-                        "metrics.",
+                        "metrics; "
+                        f"got {vld_metrics}.",
                     )
                 # TODO: For performance perform -> cpu() only at the end of validation.
                 batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
@@ -598,7 +600,9 @@ class PyTorchTrialController(det.TrialController):
                 metrics = self.trial.evaluate_full_dataset(data_loader=self.validation_loader)
 
                 if not isinstance(metrics, dict):
-                    raise TypeError(f"eval() must return a dictionary, got {type(metrics)}.")
+                    raise TypeError(
+                        f"eval() must return a dictionary, got {type(metrics).__name__}."
+                    )
 
                 metrics = pytorch._convert_metrics_to_numpy(metrics)
                 num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)

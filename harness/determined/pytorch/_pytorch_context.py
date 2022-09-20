@@ -233,7 +233,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 )
             if backward_passes_per_step < 1:
                 raise det.errors.InvalidExperimentException(
-                    "backward_passes_per_step for local gradient aggregation must be >= 1.",
+                    "backward_passes_per_step for local gradient aggregation must be >= 1; "
+                    f"got {backward_passes_per_step}.",
                 )
 
             if self.distributed.size > 1 and self._distributed_backend.use_horovod():
@@ -372,7 +373,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if not HAVE_AMP:
             raise det.errors.InvalidExperimentException(
-                "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.",
+                "Using context.wrap_scaler() requires PyTorch >= 1.6.",
             )
 
         if self._use_apex:
@@ -480,19 +481,19 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self.distributed.size > 1:
             if num_losses != 1:
                 raise det.errors.InvalidExperimentException(
-                    "When using parallel/distributed training, "
+                    "When using distributed training, "
                     "Determined only supports configure_apex_amp with num_losses = 1.",
                 )
             if self._aggregation_frequency > 1:
                 raise det.errors.InvalidExperimentException(
-                    "Mixed precision training (AMP) is not supported with "
+                    "context.configure_apex_amp is not supported with "
                     "distributed training and "
                     "aggregation frequency > 1.",
                 )
 
         if not torch.cuda.is_available():
             raise det.errors.InvalidExperimentException(
-                "Mixed precision training (AMP) is supported only on GPU slots.",
+                "context.configure_apex_amp is supported only on GPU slots.",
             )
 
         self._use_apex = True

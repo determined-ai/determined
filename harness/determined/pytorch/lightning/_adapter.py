@@ -170,9 +170,11 @@ class LightningAdapter(PyTorchTrial):
         """
 
         if precision not in {16, 32}:
-            raise ValueError("Only precisions 16 & 32 are supported.")
+            raise ValueError(f"Only precisions 16 & 32 are supported; got {precision}.")
         if amp_backend not in {"native", "apex"}:
-            raise ValueError('Only "native" and "apex" AMP-backends are supported.')
+            raise ValueError(
+                f'Only "native" and "apex" AMP-backends are supported; got "{amp_backend}"'
+            )
 
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)

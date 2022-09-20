@@ -97,7 +97,7 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
         if rank < 0:
             raise ValueError("rank must be non-negative.")
         if num_workers < 1:
-            raise ValueError("num_workers must be strictly positive.")
+            raise ValueError("num_workers must be greater than zero.")
         if rank >= num_workers:
             raise ValueError("rank must be less than num_workers.")
 
