@@ -1,10 +1,12 @@
-import {Select} from 'antd';
+import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
+
 import { useStore } from 'contexts/Store';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { MemberOrGroup, Workspace } from 'types';
+import { Workspace } from 'types';
 import { getDisplayName } from 'utils/user';
+
 import css from './useModalWorkspaceAddMember.module.scss';
 
 interface Props {
@@ -15,7 +17,7 @@ interface Props {
 // Adding this lint rule to keep the reference to the workspace
 // which will be needed when calling the API.
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const useModalWorkspaceAddMember = ({ onClose, workspace}: Props): ModalHooks => {
+const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks => {
   const { users } = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -23,12 +25,12 @@ const useModalWorkspaceAddMember = ({ onClose, workspace}: Props): ModalHooks =>
     return (
       <div className={css.base}>
         <Select
-          placeholder='Find user or group by display name or username'
+          placeholder="Find user or group by display name or username"
           showSearch>
           {users.map((u) => (
-              <Select.Option key={u.id} value={u.id}>
-                {getDisplayName(u)}
-              </Select.Option>
+            <Select.Option key={u.id} value={u.id}>
+              {getDisplayName(u)}
+            </Select.Option>
             ))}
         </Select>
       </div>
@@ -44,7 +46,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace}: Props): ModalHooks =>
       okText: 'Add Member',
       title: 'Add Member',
     };
-  }, [ modalContent, name ]);
+  }, [ modalContent ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...getModalProps(), ...initialModalProps });
@@ -56,7 +58,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace}: Props): ModalHooks =>
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps());
-  }, [ getModalProps, modalRef, name, openOrUpdate ]);
+  }, [ getModalProps, modalRef, openOrUpdate ]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

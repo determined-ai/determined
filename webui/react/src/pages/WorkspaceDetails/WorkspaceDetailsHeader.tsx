@@ -27,7 +27,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
     workspaceId: workspace.id,
   });
 
-  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember} = useModalWorkspaceAddMember({
+  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } = useModalWorkspaceAddMember({
     workspace: workspace,
   });
 
@@ -41,7 +41,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
 
   const handleAddMembersClick = useCallback(() => {
     openWorkspaceAddMember();
-  }, [openProjectCreate]);
+  }, [openWorkspaceAddMember]);
 
   const handleNameChange = useCallback(
     async (name: string) => {
