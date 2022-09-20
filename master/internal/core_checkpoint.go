@@ -379,7 +379,7 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 }
 
 func (m *Master) getCheckpointImpl(
-	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) error {
+	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) (retErr error) {
 	// Assume a checkpoint always has experiment configs
 	storageConfig, err := m.getCheckpointStorageConfig(id)
 	if err != nil {
@@ -396,6 +396,13 @@ func (m *Master) getCheckpointImpl(
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	defer func() {
+		if err := writerPipe.Close(); err != nil && retErr == nil {
+			// Only surface this error if there has been none.
+			retErr = echo.NewHTTPError(http.StatusInternalServerError,
+				fmt.Sprintf("failed to complete checkpoint download: %s", err.Error()))
+		}
+	}()
 
 	downloader, err := newDownloader(storageConfig, writerPipe, id.String())
 	if err != nil {
@@ -406,12 +413,6 @@ func (m *Master) getCheckpointImpl(
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to download checkpoint %s: %s", id.String(), err.Error()))
-	}
-
-	err = writerPipe.Close()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError,
-			fmt.Sprintf("checkpoint download interrupted due to error: %s", err.Error()))
 	}
 
 	return nil
