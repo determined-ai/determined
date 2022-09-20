@@ -4,17 +4,17 @@ import { glasbeyColor } from 'shared/utils/color';
 
 import css from './tooltipsPlugin.module.scss';
 
-export type ChartTooltip = string|null;
+export type ChartTooltip = string | null;
 
 interface Props {
-  getXTooltipHeader?: (xIndex: number) => ChartTooltip,
+  getXTooltipHeader?: (xIndex: number) => ChartTooltip;
   getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
 }
 
 export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props = {}): Plugin => {
-  let barEl: HTMLDivElement|null = null;
-  let displayedIdx: number|null = null;
-  let tooltipEl: HTMLDivElement|null = null;
+  let barEl: HTMLDivElement | null = null;
+  let displayedIdx: number | null = null;
+  let tooltipEl: HTMLDivElement | null = null;
 
   const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
     let html = '';
@@ -29,12 +29,15 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
     }
 
     const xSerie = uPlot.series[0];
-    const xValue = (typeof xSerie.value === 'function' ?
-      xSerie.value(uPlot, uPlot.data[0][idx], 0, idx) : uPlot.data[0][idx]);
-    html += `<div class="${css.valueX}">`
-      + (header ? header + '<br />' : '')
-      + `${xSerie.label}: ${xValue}`
-      + '</div>';
+    const xValue =
+      typeof xSerie.value === 'function'
+        ? xSerie.value(uPlot, uPlot.data[0][idx], 0, idx)
+        : uPlot.data[0][idx];
+    html +=
+      `<div class="${css.valueX}">` +
+      (header ? header + '<br />' : '') +
+      `${xSerie.label}: ${xValue}` +
+      '</div>';
 
     uPlot.series.forEach((serie, i) => {
       if (serie.scale === 'x' || !serie.show) return;
@@ -43,11 +46,12 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
       const valueRaw = uPlot.data[i][idx];
 
       const cssClass = valueRaw != null ? css.valueY : css.valueYEmpty;
-      html += `<div class="${cssClass}">`
-        + `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>`
-        + (label ? label + '<br />' : '')
-        + `${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}`
-        + '</div>';
+      html +=
+        `<div class="${cssClass}">` +
+        `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>` +
+        (label ? label + '<br />' : '') +
+        `${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}` +
+        '</div>';
     });
 
     return html;
@@ -62,7 +66,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
 
     // right
     if (chartWidth && idxLeft + tooltipWidth >= chartWidth) {
-      return (idxLeft - tooltipWidth);
+      return idxLeft - tooltipWidth;
     }
 
     // left
@@ -74,7 +78,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
 
     const chartHeight = uPlot.root.querySelector('.u-over')?.getBoundingClientRect().height;
 
-    const vPos = (chartHeight && cursorTop > (chartHeight / 2)) ? 'top' : 'bottom';
+    const vPos = chartHeight && cursorTop > chartHeight / 2 ? 'top' : 'bottom';
 
     tooltipEl.style.bottom = vPos === 'bottom' ? '0px' : 'auto';
     tooltipEl.style.top = vPos === 'top' ? '0px' : 'auto';
@@ -122,9 +126,10 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
         }
 
         if (idx !== displayedIdx) {
-          const hasXValue = !!uPlot.series.find((serie, serieId) => (
-            serie.scale !== 'x' && serie.show && uPlot.data[serieId][idx] != null
-          ));
+          const hasXValue = !!uPlot.series.find(
+            (serie, serieId) =>
+              serie.scale !== 'x' && serie.show && uPlot.data[serieId][idx] != null,
+          );
           if (hasXValue) {
             showIdx(uPlot, idx);
           } else {

@@ -10,10 +10,10 @@ import LogViewerFilters, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewer
 const DEFAULT_FILTER_OPTIONS = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),
   allocationIds: new Array(2).fill('').map((_, i) => `${generateUUID()}.${i}`),
-  containerIds: [ '', ...new Array(2).fill('').map(() => generateUUID()) ],
-  rankIds: [ 0, 1, 2 ],
-  sources: [ 'agent', 'master' ],
-  stdtypes: [ 'stdout', 'stderr' ],
+  containerIds: ['', ...new Array(2).fill('').map(() => generateUUID())],
+  rankIds: [0, 1, 2],
+  sources: ['agent', 'master'],
+  stdtypes: ['stdout', 'stderr'],
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
@@ -46,11 +46,11 @@ describe('LogViewerFilter', () => {
 
   it('should render select filters with selected options', async () => {
     const values: Filters = {
-      agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ],
-      allocationIds: [ DEFAULT_FILTER_OPTIONS.allocationIds[1] ],
-      containerIds: [ DEFAULT_FILTER_OPTIONS.containerIds[1] ],
-      levels: [ LogLevelFromApi.Info ],
-      rankIds: [ DEFAULT_FILTER_OPTIONS.rankIds[1] ],
+      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]],
+      allocationIds: [DEFAULT_FILTER_OPTIONS.allocationIds[1]],
+      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds[1]],
+      levels: [LogLevelFromApi.Info],
+      rankIds: [DEFAULT_FILTER_OPTIONS.rankIds[1]],
     };
     setup(DEFAULT_FILTER_OPTIONS, values);
 
@@ -71,7 +71,7 @@ describe('LogViewerFilter', () => {
       allocationIds: [],
       containerIds: [],
       levels: [],
-      rankIds: [ 0, undefined ],
+      rankIds: [0, undefined],
     };
     const { user } = setup(values, { ...values, rankIds: [] });
 
@@ -103,8 +103,8 @@ describe('LogViewerFilter', () => {
        * Since value is not getting updated with the selected options,
        * the results returned by `onChange` do not compound.
        */
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [ agentOptionText1 ] });
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [ agentOptionText2 ] });
+      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText1] });
+      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText2] });
     });
   });
 
@@ -115,15 +115,15 @@ describe('LogViewerFilter', () => {
 
   it('should show reset button when filters are set', () => {
     const values = {
-      agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ],
-      containerIds: [ DEFAULT_FILTER_OPTIONS.containerIds[1] ],
+      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]],
+      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds[1]],
     };
     setup(DEFAULT_FILTER_OPTIONS, values);
     expect(screen.queryByText(ARIA_LABEL_RESET)).toBeInTheDocument();
   });
 
   it('should call onReset when reset button is clicked', async () => {
-    const values = { agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ] };
+    const values = { agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]] };
     const { handleOnReset, user } = setup(DEFAULT_FILTER_OPTIONS, values);
 
     await user.click(screen.getByText(ARIA_LABEL_RESET));

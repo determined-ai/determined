@@ -5,7 +5,7 @@ import SkeletonTable from './SkeletonTable';
 
 export default {
   component: SkeletonTable,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   parameters: { layout: 'fullscreen' },
   title: 'Skeleton/SkeletonTable',
 };
@@ -13,14 +13,7 @@ export default {
 export const Default = (): React.ReactNode => <SkeletonTable />;
 
 export const WithVariableColumns = (): React.ReactNode => (
-  <SkeletonTable
-    columns={[
-      { flexGrow: 0.5 },
-      { flexGrow: 4 },
-      { flexGrow: 2 },
-      { flexGrow: 1 },
-    ]}
-  />
+  <SkeletonTable columns={[{ flexGrow: 0.5 }, { flexGrow: 4 }, { flexGrow: 2 }, { flexGrow: 1 }]} />
 );
 
 export const WithTitleAndFilters = (): React.ReactNode => (
@@ -28,10 +21,5 @@ export const WithTitleAndFilters = (): React.ReactNode => (
 );
 
 export const Custom = (): React.ReactNode => {
-  return (
-    <SkeletonTable
-      columns={number('columns', 10)}
-      rows={number('rows', 10)}
-    />
-  );
+  return <SkeletonTable columns={number('columns', 10)} rows={number('rows', 10)} />;
 };

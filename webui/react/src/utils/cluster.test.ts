@@ -6,7 +6,7 @@ const AGENTS = [
   {
     id: 'Calebs-MacBook-Pro.local',
     registeredTime: 1637797899,
-    resourcePools: [ 'aux-pool' ],
+    resourcePools: ['aux-pool'],
     resources: [
       {
         container: {
@@ -24,7 +24,7 @@ const AGENTS = [
   {
     id: 'i-05caeddde60b7bb2a',
     registeredTime: 1638250166,
-    resourcePools: [ 'compute-pool' ],
+    resourcePools: ['compute-pool'],
     resources: [
       {
         container: {
@@ -42,7 +42,7 @@ const AGENTS = [
   {
     id: 'i-08c04ab8ca93366c4',
     registeredTime: 1638250636,
-    resourcePools: [ 'compute-pool' ],
+    resourcePools: ['compute-pool'],
     resources: [
       {
         container: {
@@ -63,25 +63,25 @@ describe('Cluster Utilities', () => {
   describe('getSlotContainerStates', () => {
     it('should convert all agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.ALL);
-      const expected = [ Type.ResourceState.Assigned, Type.ResourceState.Running ];
+      const expected = [Type.ResourceState.Assigned, Type.ResourceState.Running];
       expect(result).toStrictEqual(expected);
     });
 
     it('should convert enabled CPU agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CPU);
-      const expected = [ Type.ResourceState.Assigned ];
+      const expected = [Type.ResourceState.Assigned];
       expect(result).toStrictEqual(expected);
     });
 
     it('should convert enabled GPU agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CUDA);
-      const expected = [ Type.ResourceState.Running ];
+      const expected = [Type.ResourceState.Running];
       expect(result).toStrictEqual(expected);
     });
 
     it('should convert specified resource pool agents into container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CUDA, 'compute-pool');
-      const expected = [ Type.ResourceState.Running ];
+      const expected = [Type.ResourceState.Running];
       expect(result).toStrictEqual(expected);
     });
   });

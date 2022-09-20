@@ -26,7 +26,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     const redirect = encodeURIComponent(window.location.href);
     const authUrl = `${info.externalLoginUri}?redirect=${redirect}`;
     routeAll(authUrl);
-  }, [ info.externalLoginUri ]);
+  }, [info.externalLoginUri]);
 
   const checkAuth = useCallback(async (): Promise<void> => {
     /*

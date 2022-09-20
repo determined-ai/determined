@@ -41,126 +41,145 @@ const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const ModelVersionDetails: React.FC = () => {
-  const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
+  const [modelVersion, setModelVersion] = useState<ModelVersion>();
   const { modelId, versionId, tab } = useParams<Params>();
-  const [ pageError, setPageError ] = useState<Error>();
+  const [pageError, setPageError] = useState<Error>();
   const history = useHistory();
-  const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+  const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const basePath = paths.modelVersionDetails(modelId, versionId);
 
   const fetchModelVersion = useCallback(async () => {
     try {
-      const versionData = await getModelVersion(
-        { modelName: modelId, versionId: parseInt(versionId) },
-      );
+      const versionData = await getModelVersion({
+        modelName: modelId,
+        versionId: parseInt(versionId),
+      });
       /**
        * TODO: can this compare againt prev instead of modelVersion, so that
        * modelVersion can be remove from deps? would need to get modelVersion
        * out of deps in order to repoll on change fn
        */
-      setModelVersion((prev) => !isEqual(versionData, modelVersion) ? versionData : prev);
+      setModelVersion((prev) => (!isEqual(versionData, modelVersion) ? versionData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [ modelId, modelVersion, pageError, versionId ]);
+  }, [modelId, modelVersion, pageError, versionId]);
 
   usePolling(fetchModelVersion);
 
-  const handleTabChange = useCallback((key) => {
-    setTabKey(key);
-    history.replace(`${basePath}/${key}`);
-  }, [ basePath, history ]);
+  const handleTabChange = useCallback(
+    (key) => {
+      setTabKey(key);
+      history.replace(`${basePath}/${key}`);
+    },
+    [basePath, history],
+  );
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
       history.replace(`${basePath}/${tabKey}`);
     }
-  }, [ basePath, history, tab, tabKey ]);
+  }, [basePath, history, tab, tabKey]);
 
-  const saveMetadata = useCallback(async (editedMetadata) => {
-    try {
-      await patchModelVersion({
-        body: { metadata: editedMetadata, modelName: modelId },
-        modelName: modelId,
-        versionId: parseInt(versionId),
-      });
-      await fetchModelVersion();
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to save metadata.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ fetchModelVersion, modelId, versionId ]);
+  const saveMetadata = useCallback(
+    async (editedMetadata) => {
+      try {
+        await patchModelVersion({
+          body: { metadata: editedMetadata, modelName: modelId },
+          modelName: modelId,
+          versionId: parseInt(versionId),
+        });
+        await fetchModelVersion();
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to save metadata.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    [fetchModelVersion, modelId, versionId],
+  );
 
-  const saveNotes = useCallback(async (editedNotes: string) => {
-    try {
-      const versionResponse = await patchModelVersion({
-        body: { modelName: modelId, notes: editedNotes },
-        modelName: modelId,
-        versionId: parseInt(versionId),
-      });
-      setModelVersion(versionResponse);
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to update notes.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ modelId, versionId ]);
+  const saveNotes = useCallback(
+    async (editedNotes: string) => {
+      try {
+        const versionResponse = await patchModelVersion({
+          body: { modelName: modelId, notes: editedNotes },
+          modelName: modelId,
+          versionId: parseInt(versionId),
+        });
+        setModelVersion(versionResponse);
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to update notes.',
+          silent: true,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    [modelId, versionId],
+  );
 
-  const saveDescription = useCallback(async (editedDescription: string) => {
-    try {
-      await patchModelVersion({
-        body: { comment: editedDescription, modelName: modelId },
-        modelName: modelId,
-        versionId: parseInt(versionId),
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to save description.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ modelId, versionId ]);
+  const saveDescription = useCallback(
+    async (editedDescription: string) => {
+      try {
+        await patchModelVersion({
+          body: { comment: editedDescription, modelName: modelId },
+          modelName: modelId,
+          versionId: parseInt(versionId),
+        });
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to save description.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    [modelId, versionId],
+  );
 
-  const saveName = useCallback(async (editedName: string) => {
-    try {
-      await patchModelVersion({
-        body: { modelName: modelId, name: editedName },
-        modelName: modelId,
-        versionId: parseInt(versionId),
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to save name.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ modelId, versionId ]);
+  const saveName = useCallback(
+    async (editedName: string) => {
+      try {
+        await patchModelVersion({
+          body: { modelName: modelId, name: editedName },
+          modelName: modelId,
+          versionId: parseInt(versionId),
+        });
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to save name.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    [modelId, versionId],
+  );
 
-  const saveVersionTags = useCallback(async (newTags) => {
-    try {
-      await patchModelVersion({
-        body: { labels: newTags, modelName: modelId },
-        modelName: modelId,
-        versionId: parseInt(versionId),
-      });
-      fetchModelVersion();
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to save tags.',
-        silent: false,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ fetchModelVersion, modelId, versionId ]);
+  const saveVersionTags = useCallback(
+    async (newTags) => {
+      try {
+        await patchModelVersion({
+          body: { labels: newTags, modelName: modelId },
+          modelName: modelId,
+          versionId: parseInt(versionId),
+        });
+        fetchModelVersion();
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to save tags.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    [fetchModelVersion, modelId, versionId],
+  );
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
@@ -205,9 +224,7 @@ const ModelVersionDetails: React.FC = () => {
           </Breadcrumb>
         ) : (
           <Breadcrumb>
-            <Breadcrumb.Item>
-              Task {modelVersion.checkpoint.taskId}
-            </Breadcrumb.Item>
+            <Breadcrumb.Item>Task {modelVersion.checkpoint.taskId}</Breadcrumb.Item>
           </Breadcrumb>
         ),
         label: 'Source',
@@ -220,8 +237,9 @@ const ModelVersionDetails: React.FC = () => {
       {
         content: resources.map((resource) => renderResource(resource.name, resource.size)),
         label: 'Code',
-      } ];
-  }, [ modelVersion?.checkpoint ]);
+      },
+    ];
+  }, [modelVersion?.checkpoint]);
 
   const validationMetrics = useMemo(() => {
     if (!modelVersion?.checkpoint) return [];
@@ -230,7 +248,7 @@ const ModelVersionDetails: React.FC = () => {
       content: metric[1],
       label: metric[0],
     }));
-  }, [ modelVersion?.checkpoint ]);
+  }, [modelVersion?.checkpoint]);
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
@@ -238,8 +256,7 @@ const ModelVersionDetails: React.FC = () => {
     return <Message title={`Invalid Version ID ${versionId}`} />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
-    const message =
-      `Unable to fetch model ${modelId} version ${versionId}`;
+    const message = `Unable to fetch model ${modelId} version ${versionId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion) {
     return <Spinner tip={`Loading model ${modelId} version ${versionId} details...`} />;
@@ -249,14 +266,14 @@ const ModelVersionDetails: React.FC = () => {
     <Page
       bodyNoPadding
       docTitle="Model Version Details"
-      headerComponent={(
+      headerComponent={
         <ModelVersionHeader
           modelVersion={modelVersion}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onUpdateTags={saveVersionTags}
         />
-      )}
+      }
       id="modelDetails">
       <Tabs
         defaultActiveKey="overview"

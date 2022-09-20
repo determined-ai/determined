@@ -27,13 +27,15 @@ const breadCrumbRender = (route: BreadCrumbRoute, params: unknown, routes: Bread
         <Tooltip title={route.breadcrumbTooltip}>
           <span>{route.breadcrumbName}</span>
         </Tooltip>
-      ) : route.breadcrumbName}
+      ) : (
+        route.breadcrumbName
+      )}
     </Link>
   );
 };
 
 const PageHeader: React.FC<Props> = (props: Props) => {
-  const classes = [ css.base, props.className ];
+  const classes = [css.base, props.className];
 
   const showHeader = props.title || props.subTitle || props.options;
 

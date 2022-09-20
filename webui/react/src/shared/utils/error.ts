@@ -81,21 +81,23 @@ export class DetError extends Error implements DetErrorOptions {
   sourceErr: unknown;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
-    const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
+    const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
-    const eOpts: DetErrorOptions = isDetError(e) ? {
-      id: e.id,
-      isUserTriggered: e.isUserTriggered,
-      level: e.level,
-      logger: e.logger,
-      payload: e.payload,
-      publicMessage: e.publicMessage,
-      publicSubject: e.publicSubject,
-      silent: e.silent,
-      type: e.type,
-    } : {};
+    const eOpts: DetErrorOptions = isDetError(e)
+      ? {
+          id: e.id,
+          isUserTriggered: e.isUserTriggered,
+          level: e.level,
+          logger: e.logger,
+          payload: e.payload,
+          publicMessage: e.publicMessage,
+          publicSubject: e.publicSubject,
+          silent: e.silent,
+          type: e.type,
+        }
+      : {};
 
     this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
     this.isHandled = false;

@@ -1,20 +1,20 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
-import { useLocation } from 'react-router-dom';
+import React, { useCallback, useState } from 'react';
+import { useParams } from 'react-router';
 
 import Page from 'components/Page';
+import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
-import { paths } from 'routes/utils';
 
 const { TabPane } = Tabs;
 
 export enum TabType {
   Account = 'Account',
   UserManagement = 'User Management',
-  GroupManagement = 'Group Management'
+  GroupManagement = 'Group Management',
 }
 
 interface Params {
@@ -30,27 +30,16 @@ const DEFAULT_TAB_KEY = TAB_KEYS[TabType.Account];
 
 const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
-  const location = useLocation();
-  const [ tabKey, setTabKey ] = useState<string>(tab || DEFAULT_TAB_KEY);
-  const history = useHistory();
+  const [tabKey, setTabKey] = useState<string>(tab || DEFAULT_TAB_KEY);
 
-  const rbacEnabled = location.pathname.search('rbac-enabled') > 0;
-
-  const showTabs = useMemo(() => {
-    // TODO: Enable tabs for admin once user management finishes.
-    return rbacEnabled;
-  }, [ rbacEnabled ]);
+  const rbacEnabled = useFeature().isOn('rbac');
+  const canViewUsers = usePermissions().canViewUsers();
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
   }, []);
 
-  useEffect(() => {
-    const basePath = paths.settings(tabKey);
-    history.replace(`${basePath}/${rbacEnabled ? 'rbac-enabled' : ''}`);
-  }, [ tabKey, history, rbacEnabled ]);
-
-  return showTabs ? (
+  return (
     <Tabs
       className="no-padding"
       defaultActiveKey={tabKey}
@@ -59,24 +48,22 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
-        <UserManagement />
-      </TabPane>
-      <TabPane key={TAB_KEYS[TabType.GroupManagement]} tab={TabType.GroupManagement}>
-        <GroupManagement />
-      </TabPane>
+      {(rbacEnabled || canViewUsers) && (
+        <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
+          <UserManagement />
+        </TabPane>
+      )}
+      {rbacEnabled && (
+        <TabPane key={TAB_KEYS[TabType.GroupManagement]} tab={TabType.GroupManagement}>
+          <GroupManagement />
+        </TabPane>
+      )}
     </Tabs>
-  ) : (
-    <SettingsAccount />
   );
 };
 
 const Settings: React.FC = () => (
-  <Page
-    bodyNoPadding
-    id="cluster"
-    stickyHeader
-    title="Settings">
+  <Page bodyNoPadding id="cluster" stickyHeader title="Settings">
     <SettingsContent />
   </Page>
 );

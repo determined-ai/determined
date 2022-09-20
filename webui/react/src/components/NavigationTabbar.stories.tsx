@@ -15,7 +15,7 @@ const NavigationTabbarLoggedIn = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return <NavigationTabbar />;
 };
