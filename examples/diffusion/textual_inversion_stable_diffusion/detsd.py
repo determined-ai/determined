@@ -45,7 +45,7 @@ DEFAULT_SCHEDULER_KWARGS_DICT = {
 }
 
 
-class DetStableDiffusionTITrainer:
+class DetSDTextualnversionTrainer:
     """Class for training a textual inversion model."""
 
     def __init__(
@@ -74,11 +74,11 @@ class DetStableDiffusionTITrainer:
         center_crop: bool = False,
         generate_training_images: bool = True,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
-        inference_noise_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "ddim",
+        inference_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "ddim",
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
         generator_seed: int = 2147483647,
-        other_inference_noise_scheduler_kwargs: Optional[dict] = None,
+        other_inference_scheduler_kwargs: Optional[dict] = None,
         latest_checkpoint: Optional[str] = None,
     ) -> None:
         # We assume that the Huggingface User Access token has been stored as a HF_AUTH_TOKEN
@@ -130,9 +130,9 @@ class DetStableDiffusionTITrainer:
         self.train_img_dirs = train_img_dirs
         self.train_seed = train_seed
 
-        assert inference_noise_scheduler_name in NOISE_SCHEDULER_DICT, (
-            f"inference_noise_scheduler must be one {list(NOISE_SCHEDULER_DICT.keys())},"
-            f" but got {inference_noise_scheduler_name}"
+        assert inference_scheduler_name in NOISE_SCHEDULER_DICT, (
+            f"inference_scheduler must be one {list(NOISE_SCHEDULER_DICT.keys())},"
+            f" but got {inference_scheduler_name}"
         )
         if not generate_training_images and inference_prompts is not None:
             self.logger.warning(
@@ -142,17 +142,17 @@ class DetStableDiffusionTITrainer:
         self.generate_training_images = generate_training_images
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
-        self.inference_noise_scheduler_name = inference_noise_scheduler_name
+        self.inference_scheduler_name = inference_scheduler_name
         self.inference_prompts = inference_prompts
         self.num_inference_steps = num_inference_steps
         self.guidance_scale = guidance_scale
         self.generator_seed = generator_seed
 
-        if other_inference_noise_scheduler_kwargs is None:
-            other_inference_noise_scheduler_kwargs = DEFAULT_SCHEDULER_KWARGS_DICT[
-                self.inference_noise_scheduler_name
+        if other_inference_scheduler_kwargs is None:
+            other_inference_scheduler_kwargs = DEFAULT_SCHEDULER_KWARGS_DICT[
+                self.inference_scheduler_name
             ]
-        self.other_inference_noise_scheduler_kwargs = other_inference_noise_scheduler_kwargs
+        self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
 
         self.steps_completed = 0
         self.loss_history = []
@@ -183,7 +183,7 @@ class DetStableDiffusionTITrainer:
         self.train_dataset = None
         self.train_dataloader = None
         self.optimizer = None
-        self.train_noise_scheduler = None
+        self.train_scheduler = None
         self.original_embedding_idxs = None
         self.original_embedding_tensors = None
         self.placeholder_to_init_tokens_map = {}
@@ -195,15 +195,15 @@ class DetStableDiffusionTITrainer:
         self._freeze_layers()
         self._build_dataset_and_dataloader()
         self._build_optimizer()
-        self._build_train_noise_scheduler()
+        self._build_train_scheduler()
         self._wrap_and_prepare()
 
         # Pipeline construction is deferred until the _save call
-        self.inference_noise_scheduler_kwargs = None
+        self.inference_scheduler_kwargs = None
         self.pipeline = None
 
     @classmethod
-    def init_on_cluster(cls) -> "DetStableDiffusionTITrainer":
+    def init_on_cluster(cls) -> "DetSDTextualnversionTrainer":
         """Creates a DetStableDiffusion instance on the cluster, drawing hyperparameters and other
         needed information from the Determined master."""
         info = det.get_cluster_info()
@@ -288,7 +288,7 @@ class DetStableDiffusionTITrainer:
 
         # Add noise to the latents according to the noise magnitude at each timestep. This is the
         # forward diffusion process.
-        noisy_latents = self.train_noise_scheduler.add_noise(latents, noise, rand_timesteps)
+        noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
 
         # Get the text embedding for the prompt.
         encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
@@ -443,8 +443,8 @@ class DetStableDiffusionTITrainer:
             **self.other_optimzer_kwargs,
         )
 
-    def _build_train_noise_scheduler(self) -> None:
-        self.train_noise_scheduler = DDPMScheduler(
+    def _build_train_scheduler(self) -> None:
+        self.train_scheduler = DDPMScheduler(
             beta_start=self.beta_start,
             beta_end=self.beta_end,
             beta_schedule="scaled_linear",
@@ -530,19 +530,19 @@ class DetStableDiffusionTITrainer:
     def _build_pipeline(self) -> None:
         """Build the pipeline for the chief worker only."""
         if self.accelerator.is_main_process:
-            inference_noise_scheduler = NOISE_SCHEDULER_DICT[self.inference_noise_scheduler_name]
-            self.inference_noise_scheduler_kwargs = {
+            inference_scheduler = NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
+            self.inference_scheduler_kwargs = {
                 "beta_start": self.beta_start,
                 "beta_end": self.beta_end,
                 "beta_schedule": self.beta_schedule,
-                **self.other_inference_noise_scheduler_kwargs,
+                **self.other_inference_scheduler_kwargs,
             }
             self.pipeline = StableDiffusionPipeline(
                 text_encoder=self.accelerator.unwrap_model(self.text_encoder),
                 vae=self.vae,
                 unet=self.unet,
                 tokenizer=self.tokenizer,
-                scheduler=inference_noise_scheduler(**self.inference_noise_scheduler_kwargs),
+                scheduler=inference_scheduler(**self.inference_scheduler_kwargs),
                 safety_checker=self.safety_checker,
                 feature_extractor=self.feature_extractor,
             ).to(self.accelerator.device)
@@ -601,7 +601,7 @@ class DetStableDiffusionTITrainer:
         return token_embeddings
 
 
-class DetStableDiffusionTIGenerator:
+class DetSDTextualnversionPipeline:
     """Class for generating images from a Stable Diffusion checkpoint pre-trained using Determined
     AI.  Initialize with no arguments in order to run plan Stable Diffusion without any trained
     textual inversion embeddings.
@@ -612,7 +612,10 @@ class DetStableDiffusionTIGenerator:
         checkpoint_paths: Optional[List[Union[str, pathlib.Path]]] = None,
         learned_embeddings_filename: str = "learned_embeddings_dict.pt",
         scheduler_name: str = "pndm",
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        beta_start: float = 0.00085,
+        beta_end: float = 0.012,
+        beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
+        other_scheduler_kwargs: Optional[Dict[str, Any]] = None,
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
         use_autocast: bool = True,
@@ -629,7 +632,9 @@ class DetStableDiffusionTIGenerator:
         self.checkpoint_paths = checkpoint_paths or []
         self.learned_embeddings_filename = learned_embeddings_filename
         self.scheduler_name = scheduler_name
-        self.scheduler_kwargs = scheduler_kwargs or DEFAULT_SCHEDULER_KWARGS_DICT[scheduler_name]
+        self.other_scheduler_kwargs = (
+            other_scheduler_kwargs or DEFAULT_SCHEDULER_KWARGS_DICT[scheduler_name]
+        )
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.device = device
         assert not (
@@ -638,7 +643,13 @@ class DetStableDiffusionTIGenerator:
         self.use_autocast = use_autocast
         self.use_fp16 = use_fp16
 
-        self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**self.scheduler_kwargs)
+        scheduler_kwargs = {
+            "beta_start": beta_start,
+            "beta_end": beta_end,
+            "beta_schedule": beta_schedule,
+            **other_scheduler_kwargs,
+        }
+        self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
 
         # The below attrs are non-trivially instantiated as necessary through private methods.
         self.learned_embeddings_dict = {}
@@ -646,7 +657,6 @@ class DetStableDiffusionTIGenerator:
 
         self._build_models()
         self._load_from_checkpoints()
-        self._add_learned_concepts()
         self._build_pipeline()
 
     @classmethod
@@ -655,12 +665,12 @@ class DetStableDiffusionTIGenerator:
         uuids: Union[str, Sequence[str]],
         learned_embeddings_filename: str = "learned_embeddings_dict.pt",
         scheduler_name: str = "pndm",
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        other_scheduler_kwargs: Optional[Dict[str, Any]] = None,
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
         use_autocast: bool = True,
         use_fp16: bool = True,
-    ) -> "DetStableDiffusionTIGenerator":
+    ) -> "DetSDTextualnversionPipeline":
         """Creates a DetStableDiffusion instance from one or more Determined checkpoint uuids.
         Must be logged into the Determined cluster to use this method.  If not logged-in, call
         determined.experimental.client.login first.
@@ -676,7 +686,7 @@ class DetStableDiffusionTIGenerator:
             checkpoint_paths,
             learned_embeddings_filename,
             scheduler_name,
-            scheduler_kwargs,
+            other_scheduler_kwargs,
             pretrained_model_name_or_path,
             device,
             use_autocast,
@@ -718,12 +728,9 @@ class DetStableDiffusionTIGenerator:
         )
 
         for model in (
-            self.tokenizer,
             self.text_encoder,
             self.vae,
             self.unet,
-            self.safety_checker,
-            self.feature_extractor,
         ):
             model.to(self.device)
             model.eval()
@@ -818,7 +825,7 @@ class DetStableDiffusionTIGenerator:
         dummy_prompt = self._replace_placeholders_with_dummies(prompt)
         generator = torch.Generator(device="cuda").manual_seed(generator_seed)
         while generated_samples < num_samples:
-            context = torch.autocast("cuda") if self.use_autocast else nullcontext
+            context = torch.autocast("cuda") if self.use_autocast else nullcontext()
             with context:
                 out = self.pipeline(
                     [dummy_prompt] * parallelize_factor,

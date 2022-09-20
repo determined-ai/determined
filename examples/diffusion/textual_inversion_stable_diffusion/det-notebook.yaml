@@ -1,5 +1,0 @@
-description: detsd-notebook
-resources:
-    slots: 1
-    shm_size: 17179869184 # 16 GiB
-idle_timeout: 2h
