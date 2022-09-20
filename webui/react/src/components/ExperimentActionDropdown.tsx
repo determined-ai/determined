@@ -242,8 +242,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         overlay={menu}
         placement="bottomLeft"
         trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}
-      >
+        onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
       {modalExperimentMoveContextHolder}

@@ -187,8 +187,7 @@ const Row: Row = ({
           if (rowHovered) setRowHovered(false);
         }}
         {...props}
-        style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}
-      >
+        style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
         {React.Children.map(
           // Avoiding using context here reduces significantly the number of re-renders
           children,
@@ -314,8 +313,7 @@ const HeaderCell = ({
         onStop={(e, data) => {
           setShadowVisibility('none');
           onResizeStop(e, data);
-        }}
-      >
+        }}>
         <span
           className={css.columnResizeHandle}
           ref={resizingRef}

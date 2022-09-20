@@ -407,8 +407,7 @@ const ProjectDetails: React.FC = () => {
           settings={settings}
           updateSettings={updateSettings}
           onComplete={handleActionComplete}
-          onVisibleChange={onVisibleChange}
-        >
+          onVisibleChange={onVisibleChange}>
           {children}
         </ExperimentActionDropdown>
       );
@@ -972,8 +971,7 @@ const ProjectDetails: React.FC = () => {
           <Dropdown
             overlay={<Menu {...getMenuProps()} />}
             placement="bottomRight"
-            trigger={['click']}
-          >
+            trigger={['click']}>
             <div>
               <Icon name="overflow-vertical" />
             </div>
@@ -1104,8 +1102,7 @@ const ProjectDetails: React.FC = () => {
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails"
-    >
+      id="projectDetails">
       <ProjectDetailsTabs
         curUser={user}
         fetchProject={fetchProject}
