@@ -17,7 +17,7 @@ const defaultResizeInfo = {
 export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
 
 const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
-  const [ resizeInfo, setResizeInfo ] = useState<ResizeInfo>(defaultResizeInfo);
+  const [resizeInfo, setResizeInfo] = useState<ResizeInfo>(defaultResizeInfo);
   const timeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -58,7 +58,7 @@ const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
     }, DEFAULT_RESIZE_THROTTLE_TIME);
 
     return (): void => resizeObserver.unobserve(element);
-  }, [ ref ]);
+  }, [ref]);
 
   return resizeInfo;
 };

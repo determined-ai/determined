@@ -140,11 +140,11 @@ const Row: Row = ({
   numOfPinned,
   ...props
 }) => {
-  const classes = [ className, css.row ];
+  const classes = [className, css.row];
 
-  const [ rowHovered, setRowHovered ] = useState(false);
-  const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
-  const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
+  const [rowHovered, setRowHovered] = useState(false);
+  const [rightClickableCellHovered, setRightClickableCellHovered] = useState(false);
+  const [contextMenuOpened, setContextMenuOpened] = useState(false);
   const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
 
   if (areRowsSelected) {
@@ -156,7 +156,7 @@ const Row: Row = ({
   }
 
   const rightClickableCellProps: RightClickableCellProps = {
-    onContextMenu: (e : React.MouseEvent) => e.stopPropagation(),
+    onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
     onMouseEnter: () => {
       if (!rightClickableCellHovered) setRightClickableCellHovered(true);
     },
@@ -176,7 +176,7 @@ const Row: Row = ({
     classes.push(css.lastPinnedRow);
   }
 
-  return (record && ContextMenu) ? (
+  return record && ContextMenu ? (
     <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
       <tr
         className={classes.join(' ')}
@@ -187,13 +187,14 @@ const Row: Row = ({
           if (rowHovered) setRowHovered(false);
         }}
         {...props}
-        style={isPinned ? { position: 'sticky', top: 60 * (index), zIndex: 10 } : undefined}>
+        style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}
+      >
         {React.Children.map(
           // Avoiding using context here reduces significantly the number of re-renders
           children,
           (child) =>
-            React.isValidElement(child)
-            && React.cloneElement(child, { ...child.props, rightClickableCellProps }),
+            React.isValidElement(child) &&
+            React.cloneElement(child, { ...child.props, rightClickableCellProps }),
         )}
       </tr>
     </ContextMenu>
@@ -204,29 +205,28 @@ const Row: Row = ({
   );
 };
 
-const Cell = React.memo(({
-  children,
-  className,
-  isCellRightClickable,
-  rightClickableCellProps,
-  ...props
-}: CellProps) => {
-  const classes = [ className, css.cell ];
-  if (!isCellRightClickable) return <td className={classes.join(' ')} {...props}>{children}</td>;
-  return (
-    <td className={classes.join(' ')} {...props}>
-      <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
-        {children}
-      </div>
-    </td>
-  );
-});
-
-const ResizeShadow: React.FC<{ display: 'none' | 'block'; x: number; }> = React.memo(
-  ({ x, display }) => {
+const Cell = React.memo(
+  ({ children, className, isCellRightClickable, rightClickableCellProps, ...props }: CellProps) => {
+    const classes = [className, css.cell];
+    if (!isCellRightClickable)
+      return (
+        <td className={classes.join(' ')} {...props}>
+          {children}
+        </td>
+      );
     return (
-      <span className={css.resizeShadow} style={{ display, left: x, position: 'absolute' }} />
+      <td className={classes.join(' ')} {...props}>
+        <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
+          {children}
+        </div>
+      </td>
     );
+  },
+);
+
+const ResizeShadow: React.FC<{ display: 'none' | 'block'; x: number }> = React.memo(
+  ({ x, display }) => {
+    return <span className={css.resizeShadow} style={{ display, left: x, position: 'absolute' }} />;
   },
 );
 
@@ -248,19 +248,19 @@ const HeaderCell = ({
   ...props
 }: HeaderCellProps) => {
   const resizingRef = useRef<HTMLDivElement>(null);
-  const [ xValue, setXValue ] = useState(0);
-  const [ shadowVisibility, setShadowVisibility ] = useState<'none' | 'block'>('none');
+  const [xValue, setXValue] = useState(0);
+  const [shadowVisibility, setShadowVisibility] = useState<'none' | 'block'>('none');
 
-  const headerCellClasses = [ css.headerCell ];
-  const dropTargetClasses = [ css.dropTarget ];
+  const headerCellClasses = [css.headerCell];
+  const dropTargetClasses = [css.dropTarget];
 
-  const [ , drag ] = useDrag({
+  const [, drag] = useDrag({
     canDrag: () => !isResizing,
     item: { index },
     type: SOURCE_TYPE,
   });
 
-  const [ { isOver }, drop ] = useDrop({
+  const [{ isOver }, drop] = useDrop({
     accept: SOURCE_TYPE,
     canDrop: (_, monitor) => {
       const dragItem = monitor.getItem() || {};
@@ -314,7 +314,8 @@ const HeaderCell = ({
         onStop={(e, data) => {
           setShadowVisibility('none');
           onResizeStop(e, data);
-        }}>
+        }}
+      >
         <span
           className={css.columnResizeHandle}
           ref={resizingRef}
@@ -329,8 +330,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? dropRightStyle
             : dragState === 'draggingLeft'
-              ? dropLeftStyle
-              : {}
+            ? dropLeftStyle
+            : {}
         }
       />
       <span
@@ -339,8 +340,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? { right: '-3px' }
             : dragState === 'draggingLeft'
-              ? { left: '-3px' }
-              : {}
+            ? { left: '-3px' }
+            : {}
         }
       />
     </th>
@@ -366,18 +367,18 @@ const InteractiveTable: InteractiveTable = ({
       columns
         ?.map((col) => ({ [col.dataIndex as string]: col }))
         .reduce((a, b) => ({ ...a, ...b })),
-    [ columns ],
+    [columns],
   ) as ColumnDefs<string, UnknownRecord>;
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
-  const [ widthData, setWidthData ] = useState({
+  const [widthData, setWidthData] = useState({
     dropLeftStyles: settings?.columnWidths?.map(() => ({})) ?? [],
     dropRightStyles: settings?.columnWidths?.map(() => ({})) ?? [],
     widths: settings?.columnWidths ?? [],
   });
 
-  const [ isResizing, setIsResizing ] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
   const { dragState } = useDragLayer((monitor) => {
     const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
@@ -400,7 +401,7 @@ const InteractiveTable: InteractiveTable = ({
       }
       return newWidths.map(Math.round);
     },
-    [ pageWidth ],
+    [pageWidth],
   );
 
   const handleChange = useCallback(
@@ -424,20 +425,20 @@ const InteractiveTable: InteractiveTable = ({
 
       updateSettings(newSettings, shouldPush);
     },
-    [ settings, updateSettings, columnDefs ],
+    [settings, updateSettings, columnDefs],
   );
 
   const moveColumn = useCallback(
     (fromIndex, toIndex) => {
-      const reorderedColumns = [ ...settings.columns ];
-      const reorderedWidths = [ ...settings.columnWidths ];
+      const reorderedColumns = [...settings.columns];
+      const reorderedWidths = [...settings.columnWidths];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
     },
-    [ settings.columns, settings.columnWidths, updateSettings ],
+    [settings.columns, settings.columnWidths, updateSettings],
   );
 
   const handleResize = useCallback(
@@ -464,12 +465,13 @@ const InteractiveTable: InteractiveTable = ({
             if (shortage > 0) {
               const compensatingPortion = shortage / (prevWidths.length - 1);
               targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
-                targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion);
+                targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion,
+              );
             }
 
             const widths = getUpscaledWidths(targetWidths);
             const dropRightStyles = widths.map((width, idx) => ({
-              left: `${(width / 2)}px`,
+              left: `${width / 2}px`,
               width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
             }));
             const dropLeftStyles = widths.map((width, idx) => ({
@@ -482,30 +484,31 @@ const InteractiveTable: InteractiveTable = ({
         }, DEFAULT_RESIZE_THROTTLE_TIME);
       };
     },
-    [ settings.columns, pageWidth, columnDefs, getUpscaledWidths ],
+    [settings.columns, pageWidth, columnDefs, getUpscaledWidths],
   );
 
   const handleResizeStart = useCallback(
-    (index) => (e: Event, { x }: DraggableData) => {
-      setIsResizing(true);
+    (index) =>
+      (e: Event, { x }: DraggableData) => {
+        setIsResizing(true);
 
-      setWidthData(({ widths, ...rest }) => {
-        const column = settings.columns[index];
-        const startWidth = widths[index];
-        const minWidth = columnDefs[column].defaultWidth;
-        const deltaX = startWidth - minWidth;
-        const minX = x - deltaX;
-        return { minX, widths, ...rest };
-      });
-    },
-    [ settings.columns, columnDefs ],
+        setWidthData(({ widths, ...rest }) => {
+          const column = settings.columns[index];
+          const startWidth = widths[index];
+          const minWidth = columnDefs[column].defaultWidth;
+          const deltaX = startWidth - minWidth;
+          const minX = x - deltaX;
+          return { minX, widths, ...rest };
+        });
+      },
+    [settings.columns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
 
     updateSettings({ columnWidths: widthData.widths.map(Math.round) });
-  }, [ updateSettings, widthData ]);
+  }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(
     (index, columnDef) => {
@@ -540,8 +543,8 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const renderColumns = useMemo(() => {
-    const columns = settings.columns
-      .reduce<ColumnsType<UnknownRecord>>((acc, columnName, index) => {
+    const columns = settings.columns.reduce<ColumnsType<UnknownRecord>>(
+      (acc, columnName, index) => {
         if (!columnDefs[columnName]) return acc;
 
         const column = columnDefs[columnName];
@@ -557,21 +560,16 @@ const InteractiveTable: InteractiveTable = ({
         });
 
         return acc;
-      }, []);
+      },
+      [],
+    );
 
     if (columnDefs.action) {
       columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
     }
 
     return columns;
-  }, [
-    settings.columns,
-    widthData,
-    settings.sortKey,
-    settings.sortDesc,
-    columnDefs,
-    onHeaderCell,
-  ]);
+  }, [settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell]);
 
   const components = {
     body: {
