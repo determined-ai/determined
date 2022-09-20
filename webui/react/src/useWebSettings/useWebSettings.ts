@@ -2,68 +2,17 @@ import { atomFamily, selector, selectorFamily, SetterOrUpdater, useRecoilState }
 
 import { getUserWebSetting, updateUserWebSetting } from 'services/api';
 
-export const UserWebSettingsDomain = {
-  Global: 'global',
-  ProjectDetail: 'projectDetail',
-} as const;
-
-export const GlobalKeys = {
-  Global_Theme: 'theme',
-} as const;
-
-export const ProjectDetailKeys = {
-  Columns: 'columns',
-  ColumnWidths: 'columnWidths',
-  Each: 'each',
-  TableLimit: 'tableLimit',
-} as const;
-
-type GlobalKeys = typeof GlobalKeys[keyof typeof GlobalKeys];
-type ProjectDetailKeys = typeof ProjectDetailKeys[keyof typeof ProjectDetailKeys];
-type UserWebSettingsSubDomainName = GlobalKeys | ProjectDetailKeys;
-
-type UserWebSettingsDomainName = typeof UserWebSettingsDomain[keyof typeof UserWebSettingsDomain];
-
-export type ProjectDetailData = {
-  [ProjectDetailKeys.ColumnWidths]: number[];
-  [ProjectDetailKeys.Columns]: string[];
-  [ProjectDetailKeys.Each]: Record<
-    number,
-    {
-      archived: boolean;
-      pinned: number[];
-      sortKey: string;
-      userFilter: number[];
-    }
-  >;
-  [ProjectDetailKeys.TableLimit]: number;
-};
-
-export type GlobalData = {
-  [GlobalKeys.Global_Theme]: 'dark' | 'light' | 'system';
-};
-
-export type UserWebSettings = {
-  [UserWebSettingsDomain.Global]: GlobalData;
-  [UserWebSettingsDomain.ProjectDetail]: ProjectDetailData;
-};
-
-const defaultUserWebSettings: UserWebSettings = {
-  [UserWebSettingsDomain.Global]: { [GlobalKeys.Global_Theme]: 'system' },
-  [UserWebSettingsDomain.ProjectDetail]: {
-    [ProjectDetailKeys.Columns]: ['id', 'name'],
-    [ProjectDetailKeys.ColumnWidths]: [],
-    [ProjectDetailKeys.Each]: {
-      1: {
-        archived: false,
-        pinned: [],
-        sortKey: '',
-        userFilter: [],
-      },
-    },
-    [ProjectDetailKeys.TableLimit]: 20,
-  },
-};
+import type {
+  GlobalData,
+  GlobalKeys,
+  Param,
+  ProjectDetailData,
+  ProjectDetailKeys,
+  UserWebSettings,
+  UserWebSettingsDomainName,
+  UserWebSettingsSubDomainName,
+} from './useWebSettings.settings';
+import { defaultUserWebSettings, UserWebSettingsDomain } from './useWebSettings.settings';
 
 const allUserSettingsState = selector<UserWebSettings>({
   get: async () => {
@@ -78,11 +27,6 @@ const allUserSettingsState = selector<UserWebSettings>({
   },
   key: 'allUserSettingsState',
 });
-
-type Param<T extends keyof UserWebSettings, S extends UserWebSettingsSubDomainName> = {
-  domain: T;
-  subDomain: S;
-};
 
 const userSettingsDomainState = atomFamily<
   any,
@@ -105,12 +49,9 @@ const userSettingsDomainState = atomFamily<
       },
     key: 'userSettingsDomainQuery',
   }),
-  effects: [
-    ({ onSet, node }) => {
+  effects: (param) => [
+    ({ onSet }) => {
       onSet((newValue) => {
-        const param: Param<UserWebSettingsDomainName, UserWebSettingsSubDomainName> = JSON.parse(
-          node.key.replace('userSettingsDomainState__', ''),
-        );
         updateUserWebSetting({
           setting: { value: { [param.domain]: { [param.subDomain]: newValue } } },
         });

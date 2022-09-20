@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-import useWebSettings, { UserWebSettingsDomain } from 'recoil/userSettings/useWebSettings';
+import useWebSettings from 'useWebSettings/useWebSettings';
+import { UserWebSettingsDomain } from 'useWebSettings/useWebSettings.settings';
 
 const Test: React.FC = () => {
   const [count, setCount] = useState<number>(0);
