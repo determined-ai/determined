@@ -205,6 +205,7 @@
       devices: []
       native_parallel: false
       shm_size: null
+      slots_per_node: 1
       slots_per_trial: 1
       weight: 1
       max_slots: null

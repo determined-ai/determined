@@ -35,6 +35,7 @@ func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 		RawSlots:          ptrs.Ptr(r.Slots),
 		RawMaxSlots:       r.MaxSlots,
 		RawSlotsPerTrial:  ptrs.Ptr(1),
+		RawSlotsPerNode:   ptrs.Ptr(1),
 		RawWeight:         ptrs.Ptr(r.Weight),
 		RawNativeParallel: ptrs.Ptr(r.NativeParallel),
 		RawShmSize:        shm,

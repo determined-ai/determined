@@ -30,6 +30,7 @@ class ResourcesConfigV0(schemas.SchemaBase):
     priority: Optional[int] = None
     resource_pool: Optional[str] = None
     shm_size: Optional[int] = None
+    slots_per_node: Optional[int] = None
     slots_per_trial: Optional[int] = None
     weight: Optional[float] = None
 
@@ -43,6 +44,7 @@ class ResourcesConfigV0(schemas.SchemaBase):
         priority: Optional[int] = None,
         resource_pool: Optional[str] = None,
         shm_size: Optional[int] = None,
+        slots_per_node: Optional[int] = None,
         slots_per_trial: Optional[int] = None,
         weight: Optional[float] = None,
     ) -> None:

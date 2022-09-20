@@ -34,10 +34,11 @@ type TaskContainerDefaultsConfig struct {
 	DropCapabilities []string      `json:"drop_capabilities"`
 	Devices          DevicesConfig `json:"devices"`
 
-	BindMounts BindMountsConfig `json:"bind_mounts"`
-	WorkDir    *string          `json:"work_dir"`
-	Slurm      []string         `json:"slurm"`
-	Pbs        []string         `json:"pbs"`
+	BindMounts   BindMountsConfig `json:"bind_mounts"`
+	WorkDir      *string          `json:"work_dir"`
+	Slurm        []string         `json:"slurm"`
+	Pbs          []string         `json:"pbs"`
+	SlotsPerNode int              `json:"slots_per_node"`
 }
 
 // DefaultTaskContainerDefaults returns the default for TaskContainerDefaultsConfig.

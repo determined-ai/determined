@@ -2085,6 +2085,14 @@ schemas = {
             ],
             "default": null
         },
+        "slots_per_node": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 1
+        },
         "slots_per_trial": {
             "type": [
                 "integer",
