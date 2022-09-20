@@ -52,7 +52,7 @@ class DetSDTextualInversionTrainer:
     def __init__(
         self,
         train_img_dirs: Union[str, Sequence[str]],
-        placeholder_tokens: Union[str, Sequence[str]],
+        concept_tokens: Union[str, Sequence[str]],
         initializer_tokens: Union[str, Sequence[str]],
         learnable_properties: Sequence[Literal["object", "style"]],
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
@@ -98,9 +98,9 @@ class DetSDTextualInversionTrainer:
         if isinstance(learnable_properties, str):
             learnable_properties = [learnable_properties]
         self.learnable_properties = learnable_properties
-        if isinstance(placeholder_tokens, str):
-            placeholder_tokens = [placeholder_tokens]
-        self.placeholder_tokens = placeholder_tokens
+        if isinstance(concept_tokens, str):
+            concept_tokens = [concept_tokens]
+        self.concept_tokens = concept_tokens
         if isinstance(initializer_tokens, str):
             initializer_tokens = [initializer_tokens]
         self.initializer_tokens = initializer_tokens
@@ -187,9 +187,9 @@ class DetSDTextualInversionTrainer:
         self.train_scheduler = None
         self.original_embedding_idxs = None
         self.original_embedding_tensors = None
-        self.placeholder_to_init_tokens_map = {}
-        self.placeholder_to_dummy_tokens_map = {}
-        self.placeholder_to_dummy_ids_map = {}
+        self.concept_to_init_tokens_map = {}
+        self.concept_to_dummy_tokens_map = {}
+        self.concept_to_dummy_ids_map = {}
 
         self._build_models()
         self._add_new_tokens()
@@ -356,22 +356,22 @@ class DetSDTextualInversionTrainer:
         Add new concept tokens to the tokenizer and the corresponding embedding tensors to the
         text encoder.
         """
-        for p_token, init_tokens in zip(self.placeholder_tokens, self.initializer_tokens):
+        for p_token, init_tokens in zip(self.concept_tokens, self.initializer_tokens):
             dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
-                placeholder_token=p_token,
+                concept_token=p_token,
                 initializer_tokens=init_tokens,
                 tokenizer=self.tokenizer,
                 text_encoder=self.text_encoder,
             )
-            self.placeholder_to_init_tokens_map[p_token] = init_tokens
-            self.placeholder_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
-            self.placeholder_to_dummy_ids_map[p_token] = dummy_placeholder_ids
+            self.concept_to_init_tokens_map[p_token] = init_tokens
+            self.concept_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
+            self.concept_to_dummy_ids_map[p_token] = dummy_placeholder_ids
             self.logger.info(f"Added {len(dummy_placeholder_tokens)} new tokens for {p_token}.")
 
         # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
         all_dummy_placeholder_token_ids = []
-        for ids in self.placeholder_to_dummy_ids_map.values():
+        for ids in self.concept_to_dummy_ids_map.values():
             all_dummy_placeholder_token_ids.extend(ids)
         self.original_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
@@ -402,7 +402,7 @@ class DetSDTextualInversionTrainer:
 
     def _tokenizer_fn(self, text: str) -> torch.Tensor:
         """Helper function for turning text directly into a tensor."""
-        dummy_text = self._replace_placeholders_with_dummies(text)
+        dummy_text = self._replace_concepts_with_dummies(text)
         tokenized_dummy_text = self.tokenizer(
             dummy_text,
             padding="max_length",
@@ -412,9 +412,9 @@ class DetSDTextualInversionTrainer:
         ).input_ids[0]
         return tokenized_dummy_text
 
-    def _replace_placeholders_with_dummies(self, text: str) -> str:
-        """Helper function for replacing placeholders with dummy placeholders."""
-        for p_token, d_tokens in self.placeholder_to_dummy_tokens_map.items():
+    def _replace_concepts_with_dummies(self, text: str) -> str:
+        """Helper function for replacing concepts with dummy placeholders."""
+        for p_token, d_tokens in self.concept_to_dummy_tokens_map.items():
             text = text.replace(p_token, " ".join(d_tokens))
         return text
 
@@ -423,7 +423,7 @@ class DetSDTextualInversionTrainer:
         self.train_dataset = data.TextualInversionDataset(
             train_img_dirs=self.train_img_dirs,
             tokenizer_fn=self._tokenizer_fn,
-            placeholder_tokens=self.placeholder_tokens,
+            concept_tokens=self.concept_tokens,
             learnable_properties=self.learnable_properties,
             img_size=self.img_size,
             interpolation=self.interpolation,
@@ -483,7 +483,7 @@ class DetSDTextualInversionTrainer:
                         path.joinpath("learned_embeddings_dict.pt")
                     )
                     token_embeddings = self._get_token_embeddings()
-                    for p_token, d_ids in self.placeholder_to_dummy_ids_map.items():
+                    for p_token, d_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[p_token]["learned_embeddings"]
                         # Sanity check on length.
                         # TODO: replace with strict=True in zip after upgrade to py >= 3.10
@@ -518,10 +518,10 @@ class DetSDTextualInversionTrainer:
 
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
-        for p_token, d_ids in self.placeholder_to_dummy_ids_map.items():
+        for p_token, d_ids in self.concept_to_dummy_ids_map.items():
             token_embeddings = self._get_token_embeddings()
             learned_embeddings = token_embeddings[d_ids].detach().cpu()
-            initializer_tokens = self.placeholder_to_init_tokens_map[p_token]
+            initializer_tokens = self.concept_to_init_tokens_map[p_token]
             learned_embeddings_dict[p_token] = {
                 "initializer_tokens": initializer_tokens,
                 "learned_embeddings": learned_embeddings,
@@ -554,7 +554,7 @@ class DetSDTextualInversionTrainer:
         tb_dir = core_context.train.get_tensorboard_path()
         tb_writer = SummaryWriter(log_dir=tb_dir)
         for prompt in self.inference_prompts:
-            dummy_prompt = self._replace_placeholders_with_dummies(prompt)
+            dummy_prompt = self._replace_concepts_with_dummies(prompt)
             # Fix generator for reproducibility.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
@@ -657,7 +657,7 @@ class DetSDTextualInversionPipeline:
 
         # The below attrs are non-trivially instantiated as necessary through private methods.
         self.learned_embeddings_dict = {}
-        self.placeholder_to_dummy_tokens_map = {}
+        self.concept_to_dummy_tokens_map = {}
 
         self._build_models()
         self._load_from_checkpoints()
@@ -768,23 +768,23 @@ class DetSDTextualInversionPipeline:
             for key in learned_embeddings_dict:
                 assert (
                     key not in all_learned_embeddings_dict
-                ), f"Checkpoint placeholder conflict: {key} already exists."
+                ), f"Checkpoint concept conflict: {key} already exists."
             all_learned_embeddings_dict = {**all_learned_embeddings_dict, **learned_embeddings_dict}
         self.learned_embeddings_dict = all_learned_embeddings_dict
 
         for p_token, map in self.learned_embeddings_dict.items():
             init_tokens = map["initializer_tokens"]
             dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
-                placeholder_token=p_token,
+                concept_token=p_token,
                 initializer_tokens=init_tokens,
                 tokenizer=self.tokenizer,
                 text_encoder=self.text_encoder,
             )
-            self.placeholder_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
+            self.concept_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
             print(
                 80 * "-",
                 "Successfully loaded checkpoints with available concepts:",
-                f" {list(self.placeholder_to_dummy_tokens_map.keys())}",
+                f" {list(self.concept_to_dummy_tokens_map.keys())}",
                 80 * "-",
                 sep="\n",
             )
@@ -807,8 +807,8 @@ class DetSDTextualInversionPipeline:
         ).to(self.device)
         print("Done!")
 
-    def _replace_placeholders_with_dummies(self, text: str) -> str:
-        for p_token, d_tokens in self.placeholder_to_dummy_tokens_map.items():
+    def _replace_concepts_with_dummies(self, text: str) -> str:
+        for p_token, d_tokens in self.concept_to_dummy_tokens_map.items():
             text = text.replace(p_token, " ".join(d_tokens))
         return text
 
@@ -845,7 +845,7 @@ class DetSDTextualInversionPipeline:
         images = []
         generated_samples = 0
         # The dummy prompts are what actually get fed into the pipeline
-        dummy_prompt = self._replace_placeholders_with_dummies(prompt)
+        dummy_prompt = self._replace_concepts_with_dummies(prompt)
         generator = torch.Generator(device="cuda").manual_seed(seed)
         while generated_samples < num_samples:
             context = torch.autocast("cuda") if self.use_autocast else nullcontext()
@@ -876,13 +876,13 @@ class DetSDTextualInversionPipeline:
 
 
 def add_new_tokens(
-    placeholder_token: str,
+    concept_token: str,
     initializer_tokens: Sequence[str],
     tokenizer: nn.Module,
     text_encoder: nn.Module,
 ) -> Tuple[List[str], List[int]]:
     """Helper function for adding new tokens to the tokenizer and extending the corresponding
-    embeddings appropriately, given a single placeholder token and its sequence of corresponding
+    embeddings appropriately, given a single concept token and its sequence of corresponding
     initializer tokens.  Returns the dummy representation of the initializer tokens and their
     ids."""
     initializer_ids = tokenizer(
@@ -906,9 +906,9 @@ def add_new_tokens(
         len(non_special_initializer_ids) > 0
     ), f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
 
-    # Add a new randomly generated placeholder token for every token in the initializer.
+    # Add a new randomly generated dummy placeholder token for every token in the initializer.
     dummy_placeholder_tokens = [
-        f"<{placeholder_token}_" + str(uuid.uuid4()) + ">" for _ in non_special_initializer_ids
+        f"<{concept_token}_" + str(uuid.uuid4()) + ">" for _ in non_special_initializer_ids
     ]
     num_added_tokens = tokenizer.add_tokens(dummy_placeholder_tokens)
     if num_added_tokens != len(dummy_placeholder_tokens):
@@ -918,7 +918,7 @@ def add_new_tokens(
     # Sanity check
     assert len(dummy_placeholder_ids) == len(
         non_special_initializer_ids
-    ), "placeholder token ids and non-special initializer token count doesn't match"
+    ), "dummy placeholder token ids and non-special initializer token count doesn't match"
 
     text_encoder.resize_token_embeddings(len(tokenizer))
     try:
