@@ -34,7 +34,7 @@ Finally, we can calculate the updated weight (w') in terms of w0:
 TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
 import torch
@@ -251,6 +251,21 @@ class OneVarTrialWithMultiValidation(OneVarTrial):
 class OneVarTrialPerMetricReducers(OneVarTrialWithMultiValidation):
     def evaluation_reducer(self) -> Dict[str, pytorch.Reducer]:
         return {"val_loss": pytorch.Reducer.AVG, "mse": pytorch.Reducer.AVG}
+
+
+class OneVarTrialWithTrainingMetrics(OneVarTrial):
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        data, labels = batch
+        output = self.model(data)
+        labels = cast(torch.Tensor, labels)
+        loss = self.loss_fn(output, labels)
+        mse = torch.mean(torch.square(output - labels))
+
+        self.context.backward(loss)
+        self.context.step_optimizer(self.opt)
+        return {"loss": loss, "mse": mse}
 
 
 class AMPTestDataset(OnesDataset):

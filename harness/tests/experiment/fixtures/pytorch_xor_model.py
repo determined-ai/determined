@@ -1,6 +1,6 @@
 # type: ignore
 import logging
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import numpy as np
 import torch
@@ -153,21 +153,6 @@ class XORTrialMulti(XORTrial):
         error = binary_error_rate(output["output"], labels)
 
         return {"binary_error": error}
-
-
-class XORTrialWithTrainingMetrics(XORTrialMulti):
-    def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        data, labels = batch
-        output = self.model(data)
-        labels = cast(torch.Tensor, labels)
-        loss = nn.functional.binary_cross_entropy(output["output"], labels.contiguous().view(-1, 1))
-        accuracy = error_rate(output["output"], labels)
-
-        self.context.backward(loss)
-        self.context.step_optimizer(self.optimizer)
-        return {"loss": loss, "accuracy": accuracy}
 
 
 class EphemeralLegacyCallbackCounter(det.pytorch.PyTorchCallback):
