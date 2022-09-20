@@ -45,7 +45,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
     useModalCreateUser({ groups, onClose: fetchUsers, user });
 
-  const canModifyUsers = usePermissions().canModifyGroups();
+  const canModifyUsers = usePermissions().canModifyGroups;
 
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
@@ -109,7 +109,7 @@ const UserManagement: React.FC = () => {
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
   const canViewUsers = usePermissions().canViewUsers();
-  const canModifyUsers = usePermissions().canModifyGroups();
+  const canModifyUsers = usePermissions().canModifyGroups;
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {

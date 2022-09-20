@@ -1,6 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router';
+import { useHistory } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
@@ -8,6 +9,7 @@ import usePermissions from 'hooks/usePermissions';
 import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
+import { paths } from 'routes/utils';
 
 const { TabPane } = Tabs;
 
@@ -26,18 +28,20 @@ const TAB_KEYS = {
   [TabType.UserManagement]: 'user-management',
   [TabType.GroupManagement]: 'group-management',
 };
-const DEFAULT_TAB_KEY = TAB_KEYS[TabType.Account];
+const DEFAULT_TAB_KEY = TabType.Account;
 
 const SettingsContent: React.FC = () => {
+  const history = useHistory();
   const { tab } = useParams<Params>();
-  const [tabKey, setTabKey] = useState<string>(tab || DEFAULT_TAB_KEY);
+  const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
   const rbacEnabled = useFeature().isOn('rbac');
   const canViewUsers = usePermissions().canViewUsers();
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
-  }, []);
+    history.replace(paths.settings(key));
+  }, [history]);
 
   return (
     <Tabs

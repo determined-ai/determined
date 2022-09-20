@@ -1,6 +1,5 @@
 import { Form, Input, message, Select, Switch, Table } from 'antd';
 import Button from 'antd/es/button';
-import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -100,7 +99,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       });
     }
     return columns;
-  }, [canEditPermissions]);
+  }, [canEditPermissions, viewOnly]);
 
   return (
     <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>

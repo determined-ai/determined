@@ -41,9 +41,10 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canGetPermissions: boolean;
-  canModifyGroups: () => boolean;
+  canModifyGroups: boolean;
+  canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
-  canModifyUsers: () => boolean;
+  canModifyUsers: boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -77,11 +78,12 @@ const usePermissions = (): PermissionsHook => {
       canDeleteWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
     canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
       canDeleteWorkspace(args.workspace, user, userAssignments, userRoles),
-    canGetPermissions: canGetPermissions(user, userAssignments, userRoles),
-    canModifyGroups: () => canModifyGroups(user, userAssignments, userRoles),
+    canGetPermissions: canAdministrateUsers(user, userAssignments, userRoles),
+    canModifyGroups: canModifyGroups(user, userAssignments, userRoles),
+    canModifyPermissions: canAdministrateUsers(user, userAssignments, userRoles),
     canModifyProjects: (args: ProjectPermissionsArgs) =>
       canModifyWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
-    canModifyUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+    canModifyUsers: canAdministrateUsers(user, userAssignments, userRoles),
     canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
       canModifyWorkspace(args.workspace, user, userAssignments, userRoles),
     canMoveExperiment: (args: ExperimentPermissionsArgs) =>
@@ -191,16 +193,6 @@ const canMoveExperiment = (
       ? user.isAdmin || user.id === experiment.userId
       : permitted.has('move_experiment'))
   );
-};
-
-// User actions
-const canGetPermissions = (
-  user?: DetailedUser,
-  userAssignments?: UserAssignment[],
-  userRoles?: UserRole[],
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!user && (permitted.has('oss_user') ? user.isAdmin : permitted.has('view_permissions'));
 };
 
 // Model and ModelVersion actions
