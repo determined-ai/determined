@@ -48,8 +48,7 @@ class LRScheduler:
 
                 2. ``STEP_EVERY_BATCH``: Determined will call scheduler.step() after every
                    ``frequency`` training batch(es). No arguments will be passed to step().
-                   This option does not take into account gradient aggregation;
-                   ``STEP_EVERY_OPTIMIZER_STEP`` which is recommended.
+                   This option does not take into account gradient aggregation.
 
                 3. ``STEP_EVERY_OPTIMIZER_STEP``: Determined will call scheduler.step() in sync
                    with optimizer steps. With ``optimizations.aggregation_frequency`` unset, this
