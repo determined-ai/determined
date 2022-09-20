@@ -773,8 +773,8 @@ class DetSDTextualInversionPipeline:
             all_learned_embeddings_dict = {**all_learned_embeddings_dict, **learned_embeddings_dict}
         self.learned_embeddings_dict = all_learned_embeddings_dict
 
-        for c_token, map in self.learned_embeddings_dict.items():
-            init_tokens = map["initializer_tokens"]
+        for c_token, maps in self.learned_embeddings_dict.items():
+            init_tokens, learned_embeddings = maps["initializer_tokens"], maps["learned_embeddings"]
             dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
                 concept_token=c_token,
                 initializer_tokens=init_tokens,
@@ -782,6 +782,15 @@ class DetSDTextualInversionPipeline:
                 text_encoder=self.text_encoder,
             )
             self.concept_to_dummy_tokens_map[c_token] = dummy_placeholder_tokens
+            token_embeddings = self.text_encoder.get_input_embeddings().weight.data
+            # Sanity check on length.
+            # TODO: replace with strict=True in zip after upgrade to py >= 3.10
+            assert len(dummy_placeholder_ids) == len(
+                learned_embeddings
+            ), "dummy_placeholder_ids and learned_embeddings must have the same length"
+            for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
+                token_embeddings[d_id] = tensor
+
         self.concepts = list(self.concept_to_dummy_tokens_map.keys())
         print(
             80 * "-",
