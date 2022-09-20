@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -235,19 +236,35 @@ func (a *apiServer) PostWorkspace(
 			"name '%s' must be at most 80 character long", req.Name)
 	}
 
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
 	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
-	_, err = db.Bun().NewInsert().Model(w).Exec(ctx)
+	_, err = tx.NewInsert().Model(w).Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 	}
 
 	pin := &model.WorkspacePin{WorkspaceID: w.ID, UserID: w.UserID}
-	_, err = db.Bun().NewInsert().Model(pin).Exec(ctx)
+	_, err = tx.NewInsert().Model(pin).Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 	}
 
-	// TODO call add workspace admin
+	if err = a.AssignWorkspaceAdminToUser(ctx, tx, w.ID, w.UserID); err != nil {
+		return nil, errors.Wrap(err, "error assigning workspace admin")
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, "could not commit create workspace transcation")
+	}
 
 	protoWorkspace := w.ToProto()
 	protoWorkspace.Username = curUser.Username

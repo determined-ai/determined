@@ -46,6 +46,7 @@ const (
 	WorkspaceStateDeleted WorkspaceState = "DELETED"
 )
 
+// ToProto converts a WorkspaceState to a proto workspacev1.Workspace state.
 func (s *WorkspaceState) ToProto() workspacev1.WorkspaceState {
 	if s == nil {
 		return workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED

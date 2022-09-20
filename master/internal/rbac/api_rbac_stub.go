@@ -3,9 +3,12 @@ package rbac
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -63,4 +66,11 @@ func (s *rbacAPIServerStub) RemoveAssignments(ctx context.Context,
 	req *apiv1.RemoveAssignmentsRequest,
 ) (*apiv1.RemoveAssignmentsResponse, error) {
 	return nil, UnimplementedError
+}
+
+func (s *rbacAPIServerStub) AssignWorkspaceAdminToUser(
+	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
+) error {
+	return nil
+	// return UnimplementedError
 }
