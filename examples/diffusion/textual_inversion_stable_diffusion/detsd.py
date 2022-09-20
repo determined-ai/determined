@@ -356,17 +356,17 @@ class DetSDTextualInversionTrainer:
         Add new concept tokens to the tokenizer and the corresponding embedding tensors to the
         text encoder.
         """
-        for p_token, init_tokens in zip(self.concept_tokens, self.initializer_tokens):
+        for c_token, init_tokens in zip(self.concept_tokens, self.initializer_tokens):
             dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
-                concept_token=p_token,
+                concept_token=c_token,
                 initializer_tokens=init_tokens,
                 tokenizer=self.tokenizer,
                 text_encoder=self.text_encoder,
             )
-            self.concept_to_init_tokens_map[p_token] = init_tokens
-            self.concept_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
-            self.concept_to_dummy_ids_map[p_token] = dummy_placeholder_ids
-            self.logger.info(f"Added {len(dummy_placeholder_tokens)} new tokens for {p_token}.")
+            self.concept_to_init_tokens_map[c_token] = init_tokens
+            self.concept_to_dummy_tokens_map[c_token] = dummy_placeholder_tokens
+            self.concept_to_dummy_ids_map[c_token] = dummy_placeholder_ids
+            self.logger.info(f"Added {len(dummy_placeholder_tokens)} new tokens for {c_token}.")
 
         # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
@@ -414,8 +414,8 @@ class DetSDTextualInversionTrainer:
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         """Helper function for replacing concepts with dummy placeholders."""
-        for p_token, d_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(p_token, " ".join(d_tokens))
+        for c_token, d_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(c_token, " ".join(d_tokens))
         return text
 
     def _build_dataset_and_dataloader(self) -> None:
@@ -483,8 +483,8 @@ class DetSDTextualInversionTrainer:
                         path.joinpath("learned_embeddings_dict.pt")
                     )
                     token_embeddings = self._get_token_embeddings()
-                    for p_token, d_ids in self.concept_to_dummy_ids_map.items():
-                        learned_embeddings = learned_embeddings_dict[p_token]["learned_embeddings"]
+                    for c_token, d_ids in self.concept_to_dummy_ids_map.items():
+                        learned_embeddings = learned_embeddings_dict[c_token]["learned_embeddings"]
                         # Sanity check on length.
                         # TODO: replace with strict=True in zip after upgrade to py >= 3.10
                         assert len(d_ids) == len(
@@ -518,11 +518,11 @@ class DetSDTextualInversionTrainer:
 
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
-        for p_token, d_ids in self.concept_to_dummy_ids_map.items():
+        for c_token, d_ids in self.concept_to_dummy_ids_map.items():
             token_embeddings = self._get_token_embeddings()
             learned_embeddings = token_embeddings[d_ids].detach().cpu()
-            initializer_tokens = self.concept_to_init_tokens_map[p_token]
-            learned_embeddings_dict[p_token] = {
+            initializer_tokens = self.concept_to_init_tokens_map[c_token]
+            learned_embeddings_dict[c_token] = {
                 "initializer_tokens": initializer_tokens,
                 "learned_embeddings": learned_embeddings,
             }
@@ -658,6 +658,7 @@ class DetSDTextualInversionPipeline:
         # The below attrs are non-trivially instantiated as necessary through private methods.
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
+        self.concepts = None
 
         self._build_models()
         self._load_from_checkpoints()
@@ -772,22 +773,22 @@ class DetSDTextualInversionPipeline:
             all_learned_embeddings_dict = {**all_learned_embeddings_dict, **learned_embeddings_dict}
         self.learned_embeddings_dict = all_learned_embeddings_dict
 
-        for p_token, map in self.learned_embeddings_dict.items():
+        for c_token, map in self.learned_embeddings_dict.items():
             init_tokens = map["initializer_tokens"]
             dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
-                concept_token=p_token,
+                concept_token=c_token,
                 initializer_tokens=init_tokens,
                 tokenizer=self.tokenizer,
                 text_encoder=self.text_encoder,
             )
-            self.concept_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
-            print(
-                80 * "-",
-                "Successfully loaded checkpoints with available concepts:",
-                f" {list(self.concept_to_dummy_tokens_map.keys())}",
-                80 * "-",
-                sep="\n",
-            )
+            self.concept_to_dummy_tokens_map[c_token] = dummy_placeholder_tokens
+        self.concepts = list(self.concept_to_dummy_tokens_map.keys())
+        print(
+            80 * "-",
+            f"Successfully loaded checkpoints with available concepts: {self.concepts}",
+            80 * "-",
+            sep="\n",
+        )
 
     def _build_pipeline(self) -> None:
         print(
@@ -808,8 +809,8 @@ class DetSDTextualInversionPipeline:
         print("Done!")
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
-        for p_token, d_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(p_token, " ".join(d_tokens))
+        for c_token, d_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(c_token, " ".join(d_tokens))
         return text
 
     def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:

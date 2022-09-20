@@ -26,7 +26,7 @@ class TextualInversionDataset(Dataset):
         self,
         train_img_dirs: Sequence[str],
         tokenizer_fn: Callable,
-        placeholder_tokens: Sequence[str],
+        concept_tokens: Sequence[str],
         learnable_properties: Sequence[str],
         img_size: int = 512,
         interpolation: str = "bicubic",
@@ -34,8 +34,8 @@ class TextualInversionDataset(Dataset):
         center_crop: bool = False,
     ):
         assert (
-            len(train_img_dirs) == len(placeholder_tokens) == len(learnable_properties)
-        ), "train_img_dirs, placeholder_tokens, and learnable_properties must have equal lens."
+            len(train_img_dirs) == len(concept_tokens) == len(learnable_properties)
+        ), "train_img_dirs, concept_tokens, and learnable_properties must have equal lens."
 
         assert (
             interpolation in INTERPOLATION_DICT
@@ -50,7 +50,7 @@ class TextualInversionDataset(Dataset):
         self.tokenizer_fn = tokenizer_fn
         self.learnable_properties = learnable_properties
         self.img_size = img_size
-        self.placeholder_tokens = placeholder_tokens
+        self.concept_tokens = concept_tokens
         self.center_crop = center_crop
         self.flip_p = flip_p
 
@@ -64,7 +64,7 @@ class TextualInversionDataset(Dataset):
 
         self.records = []
         for dir_path, token, prop in zip(
-            self.train_img_dirs, placeholder_tokens, self.learnable_properties
+            self.train_img_dirs, concept_tokens, self.learnable_properties
         ):
             templates = TEMPLATE_DICT[prop]
             imgs = self._get_imgs_from_dir_path(dir_path)
