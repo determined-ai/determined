@@ -25,24 +25,14 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   // Mock Data for potential roles
   const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 
-  const members: Member[] = [];
+  const membersAndGroups: MemberOrGroup[] = [];
 
   // Assign a mock role to users
   users.forEach((u) => {
     const m: Member = u;
     m.role = roles[2];
-    members.push(m);
+    membersAndGroups.push(m);
   });
-
-  // Create mock groups to show the UI renders correctly
-  const groups: MemberOrGroup[] = [
-    { id: 999, name: 'Group One', role: roles[0] },
-    { id: 1000, name: 'Group Two', role: roles[1] },
-    { id: 1001 * 1000, name: 'Group Three', role: roles[5] },
-  ];
-
-  // Mock table row data
-  const membersAndGroups = groups.concat(members);
 
   const handleFilter = useCallback(
     (search: string, option) => {
