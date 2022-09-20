@@ -704,7 +704,7 @@ class DetSDTextualInversionPipeline:
         )
 
     def _build_models(self) -> None:
-        print("Downloading pre-trained models...")
+        print(80 * "-", "Downloading pre-trained models...", 80 * "-", sep="\n")
         revision = "fp16" if self.use_fp16 else "main"
         self.tokenizer = CLIPTokenizer.from_pretrained(
             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
@@ -781,13 +781,21 @@ class DetSDTextualInversionPipeline:
                 text_encoder=self.text_encoder,
             )
             self.placeholder_to_dummy_tokens_map[p_token] = dummy_placeholder_tokens
-        print(
-            "Successfullly loaded checkpoints with available concepts:"
-            f" {list(self.placeholder_to_dummy_tokens_map.keys())}"
-        )
+            print(
+                80 * "-",
+                "Successfully loaded checkpoints with available concepts:",
+                f" {list(self.placeholder_to_dummy_tokens_map.keys())}",
+                80 * "-",
+                sep="\n",
+            )
 
     def _build_pipeline(self) -> None:
-        print("Building the pipeline...")
+        print(
+            80 * "-",
+            "Building the pipeline...",
+            80 * "-",
+            sep="\n",
+        )
         self.pipeline = StableDiffusionPipeline(
             text_encoder=self.text_encoder,
             vae=self.vae,
@@ -797,6 +805,7 @@ class DetSDTextualInversionPipeline:
             safety_checker=self.safety_checker,
             feature_extractor=self.feature_extractor,
         ).to(self.device)
+        print("Done!")
 
     def _replace_placeholders_with_dummies(self, text: str) -> str:
         for p_token, d_tokens in self.placeholder_to_dummy_tokens_map.items():
