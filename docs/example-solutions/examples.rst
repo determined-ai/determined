@@ -306,9 +306,9 @@ For an introduction to using the training API, please see the Training APIs sect
       -  MNIST
       -  :download:`hp_constraints_mnist_pytorch.tgz </examples/hp_constraints_mnist_pytorch.tgz>`
 
-*********************************
+********************************
  Features: Custom Search Method
-*********************************
+********************************
 
 .. list-table::
    :header-rows: 1
