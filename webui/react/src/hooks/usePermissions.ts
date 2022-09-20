@@ -1,4 +1,5 @@
 import { useStore } from 'contexts/Store';
+import { boolean } from 'fp-ts';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -34,6 +35,7 @@ interface WorkspacePermissionsArgs {
 }
 
 interface PermissionsHook {
+  canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
@@ -47,6 +49,7 @@ interface PermissionsHook {
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canUpdateRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: () => boolean;
   canViewUsers: () => boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -66,6 +69,7 @@ const usePermissions = (): PermissionsHook => {
     relevantPermissions(userAssignments, userRoles).has('view_workspaces');
 
   return {
+    canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(args.workspace, user, userAssignments, userRoles),
     canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
     canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
       canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
@@ -88,6 +92,7 @@ const usePermissions = (): PermissionsHook => {
       canMoveExperiment(args.experiment, user, userAssignments, userRoles),
     canMoveProjects: (args: ProjectPermissionsArgs) =>
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
+    canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(args.workspace, user, userAssignments, userRoles), 
     canViewGroups: () => canViewGroups(user, userAssignments, userRoles),
     canViewUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>
@@ -340,6 +345,38 @@ const canViewWorkspace = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !!workspace && (permitted.has('oss_user') || permitted.has('view_workspace'));
+};
+
+const canUpdateRoles = (
+  workspace?: PermissionWorkspace,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!workspace &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === workspace.userId
+      : permitted.has('update_roles'))
+  );
+};
+
+const canAssignRoles = (
+  workspace?: PermissionWorkspace,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!workspace &&
+    !!user &&
+    (permitted.has('oss_user')
+      ? user.isAdmin || user.id === workspace.userId
+      : permitted.has('assign_roles'))
+  );
 };
 
 export default usePermissions;

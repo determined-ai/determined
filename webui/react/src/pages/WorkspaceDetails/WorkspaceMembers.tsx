@@ -19,6 +19,7 @@ import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
+import usePermissions from 'hooks/usePermissions';
 
 const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 interface Props {
@@ -64,26 +65,10 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 };
 
 const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props) => {
-  const members: Member[] = [];
 
-  // Assign a mock role to users
-  users.forEach((u) => {
-    const m: Member = u;
-    m.role = 'Editor';
-    members.push(m);
-  });
-
-  // Create mock groups to show the UI renders correctly
-  const groups: MemberOrGroup[] = [
-    { id: 999, name: 'Group One', role: roles[0] },
-    { id: 1000, name: 'Group Two', role: roles[1] },
-    { id: 1001 * 1000, name: 'Group Three', role: roles[5] },
-  ];
-
-  // Mock table row data
-  const membersAndGroups = groups.concat(members);
-
+  const  { canUpdateRoles } = usePermissions();
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
+  const userCanAssignRoles = canUpdateRoles({workspace})
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -147,7 +132,10 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
 
     const roleRenderer = (value: string, record: Member) => {
       return (
-        <Select className={css.selectContainer} value={record.role}>
+        <Select 
+          disabled={!userCanAssignRoles}
+          className={css.selectContainer} 
+          value={record.role}>
           {roles.map((role) => (
             <Select.Option key={role} value={role}>
               {role}
@@ -158,13 +146,13 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
     };
 
     const actionRenderer = (value: string, record: MemberOrGroup) => {
-      return (
+      return userCanAssignRoles ? (
         <GroupOrMemberActionDropdown
           memberOrGroup={record}
           name={getName(record)}
           workspace={workspace}
         />
-      );
+      ) : (<></>)
     };
 
     return [
@@ -193,6 +181,25 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
       },
     ] as ColumnDef<MemberOrGroup>[];
   }, [nameFilterSearch, tableSearchIcon, workspace]);
+
+  const members: Member[] = [];
+
+  // Assign a mock role to users
+  users.forEach((u) => {
+    const m: Member = u;
+    m.role = 'Editor';
+    members.push(m);
+  });
+
+  // Create mock groups to show the UI renders correctly
+  const groups: MemberOrGroup[] = [
+    { id: 999, name: 'Group One', role: roles[0] },
+    { id: 1000, name: 'Group Two', role: roles[1] },
+    { id: 1001 * 1000, name: 'Group Three', role: roles[5] },
+  ];
+
+  // Mock table row data
+  const membersAndGroups = groups.concat(members);
 
   return (
     <div className={css.membersContainer}>
