@@ -41,7 +41,7 @@ const config: hook.SettingsConfig = {
       type: { baseType: hook.BaseType.Float },
     },
     {
-      defaultValue: [-5, 0, 1e10],
+      defaultValue: [ -5, 0, 1e10 ],
       key: 'numberArray',
       type: { baseType: hook.BaseType.Integer, isArray: true },
     },
@@ -82,11 +82,11 @@ describe('useSettings helper functions', () => {
         { type: hook.BaseType.Float, value: 1.5e-10 },
         { type: hook.BaseType.Float, value: -52.8 },
         { type: hook.BaseType.Float, value: -0.00321 },
-        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: 0 },
-        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: 123 },
-        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: -123 },
-        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: 5e12 },
-        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: -5e12 },
+        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: 0 },
+        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: 123 },
+        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: -123 },
+        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: 5e12 },
+        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: -5e12 },
         { type: hook.BaseType.String, value: 'hello' },
         { type: hook.BaseType.String, value: 'The quick fox jumped over the lazy dog.' },
       ];
@@ -110,20 +110,20 @@ describe('useSettings helper functions', () => {
       const tests = [
         { config: configs[hook.BaseType.Boolean], value: true },
         { config: configs[hook.BaseType.Boolean], value: false },
-        { config: configs[hook.BaseType.Boolean + arraySuffix], value: [true, false, true] },
+        { config: configs[hook.BaseType.Boolean + arraySuffix], value: [ true, false, true ] },
         { config: configs[hook.BaseType.Float], value: 3.14159 },
         { config: configs[hook.BaseType.Float], value: -1.2e-52 },
-        { config: configs[hook.BaseType.Float + arraySuffix], value: [3.14159, -1e-52, 0] },
+        { config: configs[hook.BaseType.Float + arraySuffix], value: [ 3.14159, -1e-52, 0 ] },
         {
-          config: [configs[hook.BaseType.Float], configs[hook.BaseType.Integer]],
+          config: [ configs[hook.BaseType.Float], configs[hook.BaseType.Integer] ],
           value: 0,
         },
         {
-          config: [configs[hook.BaseType.Float], configs[hook.BaseType.Integer]],
+          config: [ configs[hook.BaseType.Float], configs[hook.BaseType.Integer] ],
           value: 1024,
         },
         {
-          config: [configs[hook.BaseType.Float], configs[hook.BaseType.Integer]],
+          config: [ configs[hook.BaseType.Float], configs[hook.BaseType.Integer] ],
           value: -2048,
         },
         {
@@ -131,10 +131,10 @@ describe('useSettings helper functions', () => {
             configs[hook.BaseType.Float + arraySuffix],
             configs[hook.BaseType.Integer + arraySuffix],
           ],
-          value: [1024, 0, -2048],
+          value: [ 1024, 0, -2048 ],
         },
         { config: configs[hook.BaseType.String], value: 'Hello' },
-        { config: configs[hook.BaseType.String + arraySuffix], value: ['Hello', 'Jumping Dog'] },
+        { config: configs[hook.BaseType.String + arraySuffix], value: [ 'Hello', 'Jumping Dog' ] },
       ];
       Object.keys(configs).forEach((key) => {
         const config = configs[key];
@@ -154,7 +154,7 @@ describe('useSettings helper functions', () => {
       boolean: true,
       booleanArray: undefined,
       number: undefined,
-      numberArray: [-5, 0, 1e10],
+      numberArray: [ -5, 0, 1e10 ],
       string: 'foo bar',
       stringArray: undefined,
     };
@@ -165,7 +165,7 @@ describe('useSettings helper functions', () => {
     });
 
     it('should get settings from storage', () => {
-      const storageStringArrayValue = ['hello', 'world'];
+      const storageStringArrayValue = [ 'hello', 'world' ];
       testStorage.set('stringArray', storageStringArrayValue);
 
       const defaultSettings = hook.getDefaultSettings<Settings>(config, testStorage);
@@ -181,11 +181,11 @@ describe('useSettings helper functions', () => {
 describe('useSettings', () => {
   const newSettings = {
     boolean: false,
-    booleanArray: [false, true],
+    booleanArray: [ false, true ],
     number: 3.14e-12,
-    numberArray: [0, 100, -5280],
+    numberArray: [ 0, 100, -5280 ],
     string: 'Hello World',
-    stringArray: ['abc', 'def', 'ghi'],
+    stringArray: [ 'abc', 'def', 'ghi' ],
   };
   const newExtraSettings = { extra: 'fancy' };
   let result: RenderResult<hook.SettingsHook<Settings>>;
@@ -198,9 +198,7 @@ describe('useSettings', () => {
       </StoreProvider>
     );
     const hookResult = renderHook(() => useSettings<Settings>(config), { wrapper: RouterWrapper });
-    const extraHookResult = renderHook(() => useSettings<ExtraSettings>(extraConfig), {
-      wrapper: RouterWrapper,
-    });
+    const extraHookResult = renderHook(() => useSettings<ExtraSettings>(extraConfig), { wrapper: RouterWrapper });
     result = hookResult.result;
     extraResult = extraHookResult.result;
   });
@@ -236,7 +234,9 @@ describe('useSettings', () => {
     });
   });
 
-  it('should keep track of active settings', () => {
+  it('should keep track of active settings', async () => {
+    await waitFor(() => result.current.updateSettings(newSettings));
+
     expect(result.current.activeSettings()).toStrictEqual(Object.keys(newSettings));
   });
 
@@ -281,7 +281,8 @@ describe('useSettings', () => {
     expect(history.location.search).toContain('extra=fancy');
   });
 
-  it('should pick up query param changes and read new settings', () => {
+  it('should pick up query param changes and read new settings', async () => {
+    console.log('first');
     const newQueryParams = {
       boolean: true,
       extra: 'donut',
@@ -289,10 +290,9 @@ describe('useSettings', () => {
     };
     const newQuery = queryString.stringify(newQueryParams);
 
-    act(() => {
-      result.current.resetSettings();
-      history.replace(`${history.location.pathname}?${newQuery}`);
-    });
+    await waitFor(() => result.current.resetSettings());
+
+    act(() => history.replace(`${history.location.pathname}?${newQuery}`));
 
     expect(result.current.settings.boolean).toBe(newQueryParams.boolean);
     expect(result.current.settings.number).toBe(newQueryParams.number);
