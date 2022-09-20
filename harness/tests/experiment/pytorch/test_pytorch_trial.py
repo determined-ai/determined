@@ -93,7 +93,7 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    def test_xor_multi_validation(self) -> None:
+    def test_multi_validation(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -101,11 +101,11 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             for metrics in validation_metrics:
-                assert "binary_error" in metrics
-                assert "accuracy" in metrics
+                assert "mse" in metrics
+                assert "val_loss" in metrics
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialWithMultiValidation,
+            trial_class=pytorch_onevar_model.OneVarTrialWithMultiValidation,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -369,7 +369,7 @@ class TestPyTorchTrial:
             yield from trainer.send(steps=2, validation_freq=1, scheduling_unit=1)
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialPerMetricReducers,
+            trial_class=pytorch_onevar_model.OneVarTrialPerMetricReducers,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,

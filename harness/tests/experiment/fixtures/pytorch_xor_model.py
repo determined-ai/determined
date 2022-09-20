@@ -1,6 +1,6 @@
 # type: ignore
 import logging
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, cast
 
 import numpy as np
 import torch
@@ -168,23 +168,6 @@ class XORTrialWithTrainingMetrics(XORTrialMulti):
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
         return {"loss": loss, "accuracy": accuracy}
-
-
-class XORTrialWithMultiValidation(XORTrialMulti):
-    _searcher_metric = "accuracy"
-
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
-        data, labels = batch
-        output = self.model(data)
-        accuracy = error_rate(output["output"], labels)
-        binary_error = binary_error_rate(output["output"], labels)
-
-        return {"accuracy": accuracy, "binary_error": binary_error}
-
-
-class XORTrialPerMetricReducers(XORTrialWithMultiValidation):
-    def evaluation_reducer(self) -> Dict[str, det.pytorch.Reducer]:
-        return {"accuracy": det.pytorch.Reducer.AVG, "binary_error": det.pytorch.Reducer.AVG}
 
 
 class EphemeralLegacyCallbackCounter(det.pytorch.PyTorchCallback):

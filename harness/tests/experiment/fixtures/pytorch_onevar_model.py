@@ -238,6 +238,21 @@ class OneVarTrial(BaseOneVarTrial):
         return {"val_loss": loss}
 
 
+class OneVarTrialWithMultiValidation(OneVarTrial):
+    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+        data, labels = batch
+        output = self.model(data)
+        val_loss = self.loss_fn(output, labels)
+        mse = torch.mean(torch.square(output - labels))
+
+        return {"val_loss": val_loss, "mse": mse}
+
+
+class OneVarTrialPerMetricReducers(OneVarTrialWithMultiValidation):
+    def evaluation_reducer(self) -> Dict[str, pytorch.Reducer]:
+        return {"val_loss": pytorch.Reducer.AVG, "mse": pytorch.Reducer.AVG}
+
+
 class AMPTestDataset(OnesDataset):
     STAGE_DATUM = {
         "one": 1.0,
