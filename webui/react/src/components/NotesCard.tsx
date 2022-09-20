@@ -23,45 +23,43 @@ interface Props {
   title?: string;
 }
 
-const NotesCard: React.FC<Props> = (
-  {
-    disabled = false,
-    notes,
-    onSave,
-    onSaveTitle,
-    style,
-    title = 'Notes',
-    extra,
-    onChange,
-    noteChangeSignal,
-  }: Props,
-) => {
-  const [ isEditing, setIsEditing ] = useState(false);
-  const [ isLoading, setIsLoading ] = useState(false);
-  const [ editedNotes, setEditedNotes ] = useState(notes);
+const NotesCard: React.FC<Props> = ({
+  disabled = false,
+  notes,
+  onSave,
+  onSaveTitle,
+  style,
+  title = 'Notes',
+  extra,
+  onChange,
+  noteChangeSignal,
+}: Props) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editedNotes, setEditedNotes] = useState(notes);
   const location = useLocation();
 
   const existingNotes = useRef(notes);
 
   useEffect(() => {
     existingNotes.current = notes;
-  }, [ notes ]);
+  }, [notes]);
 
   useEffect(() => {
     setIsEditing(false);
     setIsLoading(false);
     setEditedNotes(existingNotes.current);
-  }, [ noteChangeSignal ]);
+  }, [noteChangeSignal]);
 
   const editNotes = useCallback(() => {
     if (disabled) return;
     setIsEditing(true);
-  }, [ disabled ]);
+  }, [disabled]);
 
   const cancelEdit = useCallback(() => {
     setIsEditing(false);
     setEditedNotes(notes);
-  }, [ notes ]);
+  }, [notes]);
 
   const saveNotes = useCallback(async () => {
     try {
@@ -76,21 +74,27 @@ const NotesCard: React.FC<Props> = (
       });
     }
     setIsLoading(false);
-  }, [ editedNotes, onSave ]);
+  }, [editedNotes, onSave]);
 
-  const handleEditedNotes = useCallback((newNotes: string) => {
-    setEditedNotes(newNotes);
-    onChange?.(newNotes);
-  }, [ onChange ]);
+  const handleEditedNotes = useCallback(
+    (newNotes: string) => {
+      setEditedNotes(newNotes);
+      onChange?.(newNotes);
+    },
+    [onChange],
+  );
 
-  const handleNotesClick = useCallback((e: React.MouseEvent) => {
-    if (e.detail > 1 || notes === '') editNotes();
-  }, [ editNotes, notes ]);
+  const handleNotesClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.detail > 1 || notes === '') editNotes();
+    },
+    [editNotes, notes],
+  );
 
   useEffect(() => {
     setEditedNotes(notes);
     setIsEditing(false);
-  }, [ notes ]);
+  }, [notes]);
 
   return (
     <Card
@@ -101,24 +105,30 @@ const NotesCard: React.FC<Props> = (
         padding: 0,
       }}
       className={css.base}
-      extra={isEditing ? (
-        <Space size="small">
-          <Button size="small" onClick={cancelEdit}>Cancel</Button>
-          <Button size="small" type="primary" onClick={saveNotes}>Save</Button>
-        </Space>
-      ) : (
-        disabled || (
-          <Space size="middle">
-            <Tooltip title="Edit">
-              <EditOutlined onClick={editNotes} />
-            </Tooltip>
-            {extra}
+      extra={
+        isEditing ? (
+          <Space size="small">
+            <Button size="small" onClick={cancelEdit}>
+              Cancel
+            </Button>
+            <Button size="small" type="primary" onClick={saveNotes}>
+              Save
+            </Button>
           </Space>
+        ) : (
+          disabled || (
+            <Space size="middle">
+              <Tooltip title="Edit">
+                <EditOutlined onClick={editNotes} />
+              </Tooltip>
+              {extra}
+            </Space>
+          )
         )
-      )}
+      }
       headStyle={{ minHeight: 'fit-content', paddingInline: '16px' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
-      title={(
+      title={
         <InlineEditor
           disabled={!onSaveTitle || disabled}
           focusSignal={noteChangeSignal}
@@ -126,7 +136,7 @@ const NotesCard: React.FC<Props> = (
           value={title}
           onSave={onSaveTitle}
         />
-      )}>
+      }>
       <Spinner spinning={isLoading}>
         <Markdown
           editing={isEditing}
@@ -137,13 +147,12 @@ const NotesCard: React.FC<Props> = (
       </Spinner>
       <Prompt
         message={(newLocation) => {
-          const isSameExperiment = location.pathname.split('/')[0] === 'experiment' &&
-             newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
-          return (
-            isSameExperiment ?
-              true :
-              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
-          );
+          const isSameExperiment =
+            location.pathname.split('/')[0] === 'experiment' &&
+            newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
+          return isSameExperiment
+            ? true
+            : 'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.';
         }}
         when={editedNotes !== notes}
       />

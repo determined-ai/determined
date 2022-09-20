@@ -20,7 +20,7 @@ const Reload: React.FC = () => {
     if (queryParams.path) {
       history.replace(queryParams.path as string);
     }
-  }, [ history, location.search ]);
+  }, [history, location.search]);
 
   return null;
 };

@@ -14,8 +14,8 @@ export interface BreadCrumbRoute {
 export interface Props extends CommonProps {
   bodyNoPadding?: boolean;
   breadcrumb?: BreadCrumbRoute[];
-  containerRef?: MutableRefObject<HTMLElement | null>,
-  headerComponent?: React.ReactNode,
+  containerRef?: MutableRefObject<HTMLElement | null>;
+  headerComponent?: React.ReactNode;
   id?: string;
   loading?: boolean;
   options?: React.ReactNode;
@@ -26,7 +26,7 @@ export interface Props extends CommonProps {
 }
 
 const Page: React.FC<Props> = (props: Props) => {
-  const classes = [ props.className, css.base ];
+  const classes = [props.className, css.base];
 
   const showHeader = !props.headerComponent && (props.breadcrumb || props.title);
 

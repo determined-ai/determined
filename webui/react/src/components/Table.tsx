@@ -13,8 +13,15 @@ import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
-  CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
-  Project, StartEndTimes, TrialItem, Workspace,
+  CommandTask,
+  CommandType,
+  ExperimentItem,
+  ModelItem,
+  ModelVersion,
+  Project,
+  StartEndTimes,
+  TrialItem,
+  Workspace,
 } from 'types';
 import { canBeOpened } from 'utils/task';
 
@@ -37,7 +44,9 @@ export interface TablePaginationConfig {
 export type Renderer<T = unknown> = (text: string, record: T, index: number) => React.ReactNode;
 
 export type GenericRenderer<T extends TableRecord> = (
-  text: string, record: T, index: number,
+  text: string,
+  record: T,
+  index: number,
 ) => React.ReactNode;
 
 export type ExperimentRenderer = (
@@ -79,15 +88,16 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
   );
 };
 
-export const stateRenderer: Renderer<{ state: StateOfUnion}> =
-(_, record) => (
+export const stateRenderer: Renderer<{ state: StateOfUnion }> = (_, record) => (
   <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
     <Badge state={record.state} type={BadgeType.State} />
   </div>
 );
 
 export const tooltipRenderer: Renderer = (text) => (
-  <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
+  <Tooltip placement="topLeft" title={text}>
+    <span>{text}</span>
+  </Tooltip>
 );
 
 export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
@@ -103,11 +113,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
-        wrapper={(children) => (
-          <Link path={paths.interactive(record)}>
-            {children}
-          </Link>
-        )}>
+        wrapper={(children) => <Link path={paths.interactive(record)}>{children}</Link>}>
         <Badge type={BadgeType.Id}>{record.id.split('-')[0]}</Badge>
       </ConditionalWrapper>
     </div>
@@ -126,11 +132,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
-      wrapper={(ch) => (
-        <Link path={paths.interactive(record)}>
-          {ch}
-        </Link>
-      )}>
+      wrapper={(ch) => <Link path={paths.interactive(record)}>{ch}</Link>}>
       <span>{record.name}</span>
     </ConditionalWrapper>
   </div>
@@ -193,8 +195,11 @@ export const modelVersionNumberRenderer = (
  */
 export const isAlternativeAction = (event: React.MouseEvent): boolean => {
   const target = event.target as Element;
-  if (target.className.includes('ant-checkbox-wrapper') ||
-      target.className.includes('ignoreTableRowClick')) return true;
+  if (
+    target.className.includes('ant-checkbox-wrapper') ||
+    target.className.includes('ignoreTableRowClick')
+  )
+    return true;
   return false;
 };
 
@@ -202,8 +207,8 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
  * Default clickable row class name for Table components.
  */
 export const defaultRowClassName = (options?: {
-  clickable?: boolean,
-  highlighted?: boolean,
+  clickable?: boolean;
+  highlighted?: boolean;
 }): string => {
   const classes = [];
   if (options?.clickable) classes.push('clickable');

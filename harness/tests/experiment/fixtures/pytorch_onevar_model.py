@@ -237,14 +237,15 @@ class AMPTestDataset(OnesDataset):
         "large": 2e4,
     }
 
-    def __init__(self, stages: Iterable[str]) -> None:
+    def __init__(self, stages: Iterable[str], aggregation_freq: int = 1) -> None:
         self.stages = stages
+        self._agg_freq = aggregation_freq
 
     def __len__(self) -> int:
-        return len(self.stages)
+        return len(self.stages) * self._agg_freq
 
     def __getitem__(self, index: int) -> Tuple:
-        x = self.STAGE_DATUM[self.stages[index]]
+        x = self.STAGE_DATUM[self.stages[index // self._agg_freq]]
         return torch.Tensor([float(x)]), torch.Tensor([float(x)])
 
 
@@ -262,9 +263,16 @@ class OneVarAMPBaseTrial(OneVarTrial):
         + []
     )
 
+    def __init__(self, context: pytorch.PyTorchTrialContext):
+        super().__init__(context)
+        self._agg_freq = self.context.env.experiment_config.get_optimizations_config()[
+            "aggregation_frequency"
+        ]
+
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         return pytorch.DataLoader(
-            AMPTestDataset(self._stages), batch_size=self.context.get_per_slot_batch_size()
+            AMPTestDataset(self._stages, self._agg_freq),
+            batch_size=self.context.get_per_slot_batch_size(),
         )
 
 
@@ -286,7 +294,7 @@ class OneVarApexAMPTrial(OneVarAMPBaseTrial):
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale_before"] = scale_before
         metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
-        metrics["stage"] = self._stages[batch_idx]
+        metrics["stage"] = self._stages[batch_idx // self._agg_freq]
         return metrics
 
 
@@ -312,7 +320,7 @@ class OneVarAutoAMPTrial(OneVarAMPBaseTrial):
         metrics = super().train_batch(batch, epoch_idx, batch_idx)
         metrics["scale_before"] = scale_before
         # self.scaler.update() gets called after this method returns
-        metrics["stage"] = self._stages[batch_idx]
+        metrics["stage"] = self._stages[batch_idx // self._agg_freq]
         return metrics
 
 
@@ -349,14 +357,15 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
         scaled_loss = self.scaler.scale(loss)
         self.context.backward(scaled_loss)
         self.context.step_optimizer(self.opt, scaler=self.scaler)
-        self.scaler.update()
+        if (batch_idx + 1) % self._agg_freq == 0:
+            self.scaler.update()
 
         # Measure the weight after the update.
         w_after = self.model.weight.data.item()
 
         # Return values that we can compare as part of the tests.
         return {
-            "stage": self._stages[batch_idx],
+            "stage": self._stages[batch_idx // self._agg_freq],
             "scale_before": scale_before,
             "scale": self.scaler.get_scale(),
             "loss": loss,
@@ -373,6 +382,29 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
             output = self.model(data)
             loss = self.loss_fn(output, label)
         return {"val_loss": loss}
+
+
+class OneVarApexAMPWithNoopScalerTrial(OneVarApexAMPTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        self.scaler = context.wrap_scaler(
+            torch.cuda.amp.GradScaler(
+                init_scale=self._init_scale,
+                growth_interval=self._growth_interval,
+                enabled=False,
+            )
+        )
+        super().__init__(context)
+
+
+class OneVarManualAMPWithNoopApexTrial(OneVarManualAMPTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        super().__init__(context)
+        self.model, self.optimizer = self.context.configure_apex_amp(
+            models=self.model,
+            optimizers=self.opt,
+            opt_level="O2",
+            enabled=False,
+        )
 
 
 if __name__ == "__main__":

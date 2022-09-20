@@ -11,7 +11,7 @@ export const isSuperset = <T>(set: Set<T>, subset: Set<T>): boolean => {
   return true;
 };
 
-export const union = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
+export const union = <T>(setA: Set<T>, setB: Set<T>): Set<T> => {
   const _union = new Set(setA);
   for (const elem of setB) {
     _union.add(elem);
@@ -19,7 +19,7 @@ export const union = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
   return _union;
 };
 
-export const intersection = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
+export const intersection = <T>(setA: Set<T>, setB: Set<T>): Set<T> => {
   const _intersection = new Set<T>();
   for (const elem of setB) {
     if (setA.has(elem)) {
@@ -28,7 +28,7 @@ export const intersection = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
   }
   return _intersection;
 };
-export const symmetricDifference = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
+export const symmetricDifference = <T>(setA: Set<T>, setB: Set<T>): Set<T> => {
   const _difference = new Set(setA);
   for (const elem of setB) {
     if (_difference.has(elem)) {
@@ -40,7 +40,7 @@ export const symmetricDifference = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
   return _difference;
 };
 
-export const difference = <T>(setA: Set<T>, setB: Set<T>) : Set<T> => {
+export const difference = <T>(setA: Set<T>, setB: Set<T>): Set<T> => {
   const _difference = new Set(setA);
   for (const elem of setB) {
     _difference.delete(elem);

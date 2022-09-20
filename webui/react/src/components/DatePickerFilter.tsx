@@ -8,7 +8,7 @@ import css from './SelectFilter.module.scss';
 
 type Props = PickerProps<Dayjs> & {
   label: string;
-}
+};
 
 const DatePickerFilter: React.FC<Props> = ({ label, ...props }: Props) => {
   return (

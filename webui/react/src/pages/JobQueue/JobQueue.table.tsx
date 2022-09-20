@@ -50,9 +50,11 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
     case JobType.NOTEBOOK:
     case JobType.TENSORBOARD:
       return (
-        <Link onClick={() => {
-          routeToTask(job.entityId, job.type);
-        }}>{label}
+        <Link
+          onClick={() => {
+            routeToTask(job.entityId, job.type);
+          }}>
+          {label}
         </Link>
       );
     default:
@@ -103,15 +105,18 @@ export const columns: ColumnDef<Job>[] = [
       switch (record.type) {
         case JobType.EXPERIMENT:
           label = (
-            <div>{record.name}
-              <Tooltip title="Experiment ID">
-                {` (${record.entityId})`}
-              </Tooltip>
+            <div>
+              {record.name}
+              <Tooltip title="Experiment ID">{` (${record.entityId})`}</Tooltip>
             </div>
           );
           break;
         default:
-          label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+          label = (
+            <span>
+              {jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}
+            </span>
+          );
           break;
       }
 
@@ -160,7 +165,7 @@ export const columns: ColumnDef<Job>[] = [
       return (
         <div className={css.state}>
           <Badge state={record.summary.state} type={BadgeType.State} />
-          {(!!record?.progress) && <span> {floatToPercent(record.progress, 1)}</span>}
+          {!!record?.progress && <span> {floatToPercent(record.progress, 1)}</span>}
         </div>
       );
     },

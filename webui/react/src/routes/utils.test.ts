@@ -57,7 +57,6 @@ describe('Routing Utilities', () => {
       expect(findReactRoute(reactHostAddress() + '/experiments/1')).toBeUndefined();
       expect(findReactRoute(reactHostAddress() + '/experiments/1/xyz')).toBeUndefined();
     });
-
   });
 
   describe('reactHostAddress', () => {

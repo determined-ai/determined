@@ -1,7 +1,13 @@
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { StateOfUnion } from 'themes';
 import {
-  CheckpointState, CommandState, CommandType, CompoundRunState, JobState, ResourceState, RunState,
+  CheckpointState,
+  CommandState,
+  CommandType,
+  CompoundRunState,
+  JobState,
+  ResourceState,
+  RunState,
   SlotState,
 } from 'types';
 
@@ -15,24 +21,21 @@ export const activeCommandStates = [
 
 export const activeRunStates: Array<
   'STATE_ACTIVE' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
-> = [
-  'STATE_ACTIVE',
-  'STATE_STOPPING_CANCELED',
-  'STATE_STOPPING_COMPLETED',
-  'STATE_STOPPING_ERROR',
-];
+> = ['STATE_ACTIVE', 'STATE_STOPPING_CANCELED', 'STATE_STOPPING_COMPLETED', 'STATE_STOPPING_ERROR'];
 
 const jobStates: Array<JobState> = [
-  JobState.QUEUED, JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED,
+  JobState.QUEUED,
+  JobState.SCHEDULED,
+  JobState.SCHEDULEDBACKFILLED,
 ];
-export const killableRunStates: CompoundRunState[] =
-  [ RunState.Active,
-    RunState.Paused,
-    RunState.StoppingCanceled,
-    ...jobStates,
-  ];
+export const killableRunStates: CompoundRunState[] = [
+  RunState.Active,
+  RunState.Paused,
+  RunState.StoppingCanceled,
+  ...jobStates,
+];
 
-export const pausableRunStates: Set<CompoundRunState> = new Set([ RunState.Active, ...jobStates ]);
+export const pausableRunStates: Set<CompoundRunState> = new Set([RunState.Active, ...jobStates]);
 
 export const cancellableRunStates: Set<CompoundRunState> = new Set([
   RunState.Active,
@@ -91,7 +94,7 @@ export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } 
   [V1ResourcePoolType.K8S]: 'Kubernetes',
 };
 
-export const V1SchedulerTypeToLabel : { [key in V1SchedulerType]: string } = {
+export const V1SchedulerTypeToLabel: { [key in V1SchedulerType]: string } = {
   [V1SchedulerType.FAIRSHARE]: 'Fairshare',
   [V1SchedulerType.KUBERNETES]: 'Kubernetes',
   [V1SchedulerType.PRIORITY]: 'Priority',
@@ -150,14 +153,14 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
   [SlotState.Potential]: 'Potential',
 };
 
-export function stateToLabel(
-  state: StateOfUnion,
-): string {
-  return runStateToLabel[state as RunState]
-    || commandStateToLabel[state as CommandState]
-    || resourceStateToLabel[state as ResourceState]
-    || checkpointStateToLabel[state as CheckpointState]
-    || jobStateToLabel[state as JobState]
-    || slotStateToLabel[state as SlotState]
-    || state as string;
+export function stateToLabel(state: StateOfUnion): string {
+  return (
+    runStateToLabel[state as RunState] ||
+    commandStateToLabel[state as CommandState] ||
+    resourceStateToLabel[state as ResourceState] ||
+    checkpointStateToLabel[state as CheckpointState] ||
+    jobStateToLabel[state as JobState] ||
+    slotStateToLabel[state as SlotState] ||
+    (state as string)
+  );
 }

@@ -38,77 +38,85 @@ const TableFilterDropdown: React.FC<Props> = ({
   width = 160,
 }: Props) => {
   const inputRef = useRef<InputRef>(null);
-  const [ search, setSearch ] = useState('');
-  const [ selectedMap, setSelectedMap ] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState('');
+  const [selectedMap, setSelectedMap] = useState<Record<string, boolean>>({});
   const prevVisible = usePrevious(visible, undefined);
 
   const filteredOptions = useMemo(() => {
     const searchString = search.toLocaleLowerCase();
     return (filters || []).filter((filter) => {
-      return filter.value?.toString().toLocaleLowerCase().includes(searchString) ||
-        filter.text?.toString().toLocaleLowerCase().includes(searchString);
+      return (
+        filter.value?.toString().toLocaleLowerCase().includes(searchString) ||
+        filter.text?.toString().toLocaleLowerCase().includes(searchString)
+      );
     });
-  }, [ filters, search ]);
+  }, [filters, search]);
 
   const listHeight = useMemo(() => {
     if (filteredOptions.length < 10) return ITEM_HEIGHT * filteredOptions.length;
     return ITEM_HEIGHT * 9;
-  }, [ filteredOptions.length ]);
+  }, [filteredOptions.length]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
   }, []);
 
-  const handleOptionClick = useCallback((e: React.MouseEvent) => {
-    const value = (e.target as HTMLDivElement).getAttribute('data-value');
-    if (!value) return;
+  const handleOptionClick = useCallback(
+    (e: React.MouseEvent) => {
+      const value = (e.target as HTMLDivElement).getAttribute('data-value');
+      if (!value) return;
 
-    setSelectedMap((prev) => {
-      if (multiple) {
-        // Support for using CMD + Click to select every option EXCEPT the selected option.
-        if (e.metaKey && filters) {
-          return filters.reduce((acc, filter) => {
-            if (filter.value !== value) acc[filter.value as string] = true;
-            return acc;
-          }, {} as Record<string, boolean>);
-        } else {
-          const newMap = { ...prev };
-          if (newMap[value]) delete newMap[value];
-          else newMap[value] = true;
-          return newMap;
+      setSelectedMap((prev) => {
+        if (multiple) {
+          // Support for using CMD + Click to select every option EXCEPT the selected option.
+          if (e.metaKey && filters) {
+            return filters.reduce((acc, filter) => {
+              if (filter.value !== value) acc[filter.value as string] = true;
+              return acc;
+            }, {} as Record<string, boolean>);
+          } else {
+            const newMap = { ...prev };
+            if (newMap[value]) delete newMap[value];
+            else newMap[value] = true;
+            return newMap;
+          }
         }
-      }
-      return prev[value] ? {} : { [value]: true };
-    });
-  }, [ filters, multiple ]);
+        return prev[value] ? {} : { [value]: true };
+      });
+    },
+    [filters, multiple],
+  );
 
   const handleReset = useCallback(() => {
     setSelectedMap({});
     if (onReset) onReset();
     if (clearFilters) clearFilters();
-  }, [ clearFilters, onReset ]);
+  }, [clearFilters, onReset]);
 
   const handleFilter = useCallback(() => {
     if (onFilter) onFilter(Object.keys(selectedMap));
     confirm();
-  }, [ confirm, onFilter, selectedMap ]);
+  }, [confirm, onFilter, selectedMap]);
 
-  const OptionRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
-    const classes = [ css.option ];
-    const isSelected = selectedMap[data[index].value];
-    const isJSX = typeof data[index].text !== 'string';
-    if (isSelected) classes.push(css.selected);
-    return (
-      <div
-        className={classes.join(' ')}
-        data-value={data[index].value}
-        style={style}
-        onClick={handleOptionClick}>
-        {isJSX ? data[index].text : <span>{data[index].text}</span>}
-        <Icon name="checkmark" />
-      </div>
-    );
-  }, [ handleOptionClick, selectedMap ]);
+  const OptionRow: React.FC<ListChildComponentProps> = useCallback(
+    ({ data, index, style }) => {
+      const classes = [css.option];
+      const isSelected = selectedMap[data[index].value];
+      const isJSX = typeof data[index].text !== 'string';
+      if (isSelected) classes.push(css.selected);
+      return (
+        <div
+          className={classes.join(' ')}
+          data-value={data[index].value}
+          style={style}
+          onClick={handleOptionClick}>
+          {isJSX ? data[index].text : <span>{data[index].text}</span>}
+          <Icon name="checkmark" />
+        </div>
+      );
+    },
+    [handleOptionClick, selectedMap],
+  );
 
   /*
    * Detect when filter dropdown is being shown and
@@ -119,17 +127,19 @@ const TableFilterDropdown: React.FC<Props> = ({
     if (prevVisible !== visible && visible) {
       setSearch('');
 
-      const valuesAsList = Array.isArray(values) ? values : [ values ];
-      setSelectedMap(valuesAsList.reduce((acc, value) => {
-        acc[value] = true;
-        return acc;
-      }, {} as Record<string, boolean>));
+      const valuesAsList = Array.isArray(values) ? values : [values];
+      setSelectedMap(
+        valuesAsList.reduce((acc, value) => {
+          acc[value] = true;
+          return acc;
+        }, {} as Record<string, boolean>),
+      );
 
       setTimeout(() => {
         if (inputRef.current) inputRef.current.focus({ cursor: 'all' });
       }, 0);
     }
-  }, [ prevVisible, values, visible ]);
+  }, [prevVisible, values, visible]);
 
   return (
     <div aria-label={ARIA_LABEL_CONTAINER} className={css.base} style={{ width }}>
@@ -164,11 +174,7 @@ const TableFilterDropdown: React.FC<Props> = ({
           onClick={handleReset}>
           Reset
         </Button>
-        <Button
-          aria-label={ARIA_LABEL_APPLY}
-          size="small"
-          type="primary"
-          onClick={handleFilter}>
+        <Button aria-label={ARIA_LABEL_APPLY} size="small" type="primary" onClick={handleFilter}>
           Ok
         </Button>
       </div>

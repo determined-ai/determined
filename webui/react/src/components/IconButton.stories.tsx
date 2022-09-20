@@ -5,7 +5,7 @@ import IconButton from './IconButton';
 
 export default {
   component: IconButton,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'IconButton',
 };
 

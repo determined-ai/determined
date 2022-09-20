@@ -12,15 +12,15 @@ interface DocumentHidden {
 const usePageVisibility = (): void => {
   const storeDispatch = useStoreDispatch();
 
-  const [ hidden, visibilityChange ] = useMemo(() => {
+  const [hidden, visibilityChange] = useMemo(() => {
     if (typeof (document as DocumentHidden).hidden !== 'undefined') {
-      return [ 'hidden', 'visibilitychange' ];
+      return ['hidden', 'visibilitychange'];
     } else if (typeof (document as DocumentHidden).msHidden !== 'undefined') {
-      return [ 'msHidden', 'msvisibilitychange' ];
+      return ['msHidden', 'msvisibilitychange'];
     } else if (typeof (document as DocumentHidden).webkitHidden !== 'undefined') {
-      return [ 'webkitHidden', 'webkitvisibilitychange' ];
+      return ['webkitHidden', 'webkitvisibilitychange'];
     }
-    return [ undefined, undefined ];
+    return [undefined, undefined];
   }, []);
 
   const handleVisibilityChange = useCallback(() => {
@@ -29,7 +29,7 @@ const usePageVisibility = (): void => {
       type: StoreActionUI.SetPageVisibility,
       value: !!(document as DocumentHidden)[hidden as keyof DocumentHidden],
     });
-  }, [ hidden, storeDispatch ]);
+  }, [hidden, storeDispatch]);
 
   useEffect(() => {
     if (visibilityChange) {
@@ -41,7 +41,7 @@ const usePageVisibility = (): void => {
         document.removeEventListener(visibilityChange, handleVisibilityChange);
       }
     };
-  }, [ handleVisibilityChange, visibilityChange ]);
+  }, [handleVisibilityChange, visibilityChange]);
 };
 
 export default usePageVisibility;

@@ -16,19 +16,19 @@ interface Params {
   taskId: string;
   taskName: string;
   taskResourcePool: string;
-  taskType: CommandType
+  taskType: CommandType;
   taskUrl: string;
 }
 
 enum PageView {
-  IFRAME= 'Iframe',
-  TASK_LOGS = 'Task Logs'
+  IFRAME = 'Iframe',
+  TASK_LOGS = 'Task Logs',
 }
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 
 const getTitleState = (commandState?: CommandState, taskName?: string): string => {
-  if (!commandState){
+  if (!commandState) {
     return DEFAULT_PAGE_TITLE;
   }
   const commandStateTitleMap = {
@@ -41,25 +41,23 @@ const getTitleState = (commandState?: CommandState, taskName?: string): string =
     [CommandState.Starting]: 'Starting',
   };
   const title = commandStateTitleMap[commandState];
-  if (commandState !== CommandState.Terminated && commandState !== CommandState.Running){
+  if (commandState !== CommandState.Terminated && commandState !== CommandState.Running) {
     return title + '...';
   }
   return title;
-
 };
 
 export const InteractiveTask: React.FC = () => {
-
-  const [ pageView, setPageView ] = useState<PageView>(PageView.IFRAME);
+  const [pageView, setPageView] = useState<PageView>(PageView.IFRAME);
   const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
-  const [ taskState, setTaskState ] = useState<CommandState>();
+  const [taskState, setTaskState] = useState<CommandState>();
   const storeDispatch = useStoreDispatch();
   const { ui } = useStore();
 
   useEffect(() => {
     storeDispatch({ type: StoreActionUI.HideUIChrome });
     return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   useEffect(() => {
     const queryTask = setInterval(async () => {
@@ -68,23 +66,21 @@ export const InteractiveTask: React.FC = () => {
         if (response?.allocations?.length) {
           const lastRunState = response.allocations[0]?.state;
           setTaskState(lastRunState);
-          if (lastRunState === CommandState.Terminated){
+          if (lastRunState === CommandState.Terminated) {
             clearInterval(queryTask);
           }
         }
       } catch (e) {
-        handleError(
-          {
-            error: e,
-            message: 'failed querying for command state',
-            silent: true,
-          },
-        );
+        handleError({
+          error: e,
+          message: 'failed querying for command state',
+          silent: true,
+        });
         clearInterval(queryTask);
       }
     }, 2000);
     return () => clearInterval(queryTask);
-  }, [ taskId ]);
+  }, [taskId]);
 
   const title = ui.isPageHidden ? getTitleState(taskState, taskName) : taskName;
 
@@ -105,11 +101,7 @@ export const InteractiveTask: React.FC = () => {
         </div>
         <div className={css.contentContainer}>
           {pageView === PageView.IFRAME && (
-            <iframe
-              allowFullScreen
-              src={decodeURIComponent(taskUrl)}
-              title="Interactive Task"
-            />
+            <iframe allowFullScreen src={decodeURIComponent(taskUrl)} title="Interactive Task" />
           )}
           {pageView === PageView.TASK_LOGS && (
             <TaskLogs
