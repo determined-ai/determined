@@ -7,10 +7,10 @@ The development of [Latent Diffusive Models](https://arxiv.org/abs/2112.10752) h
 it possible to run (and fine-tune) diffusion-based models on consumer-grade GPUs. Such tasks are
 made even easier by the release
 of [Stable Diffusion](https://stability.ai/blog/stable-diffusion-announcement) and the
-development of the [Huggingface Diffuser](https://huggingface.co/docs/diffusers/index) library.
+development of the 🤗 [Huggingface Diffusers](https://huggingface.co/docs/diffusers/index) library.
 
-The present code uses Determined's Core API to seamlessly incorporate Diffusers
-(and the [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate)) into the
+The present code uses Determined's Core API to seamlessly incorporate 🧨 Diffusers
+(and the 🚀 [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate)) into the
 Determined framework with minimal code changes.
 
 ## Walkthrough: Basic Usage
@@ -34,20 +34,20 @@ environment:
 a ready-to-go fine-tuning experiment can be run by executing the following in the present directory:
 
 ```bash
-det -m MASTER_URL e create const.yaml .
+det -m MASTER_URL_WITH_PORT e create const.yaml .
 ```
 
-with the appropriate url (with port number) for your Determined cluster substituted in
-for `MASTER_URL`. Using four
+with the appropriate urlfor your Determined cluster substituted in
+for `MASTER_URL_WITH_PORT`. Using four
 V100s, the Experiment should take about ~10 minutes to complete.
 (The `slots_per_trial` field will need to be reduced, and other hyperparmaeters modified, if you
 have fewer than four GPUs on your cluster.)
 
 This will submit an experiment which introduces a new embedding vector into the world of Stable
-Diffusion which we will train to correspond to the concept of our toy cat, as represented through
-training images (from the original Textual Inversion paper) such as the one found below:
+Diffusion which we will train to correspond to the concept of the Determined AI logo, as represented through
+training images found in `/det_logos`, such as the example found below
 
-![cat-toy](./readme_imgs/2.jpeg)
+![det-logo](./det_logos/det_1.png)
 
 A corresponding token, chosen to be `<cat-toy>` as specified in the `placeholder_tokens` field
 in the config, will then be available for use in our prompts to signify the concept of this cat.
