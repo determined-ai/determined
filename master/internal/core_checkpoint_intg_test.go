@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	dets3 "github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -57,7 +58,7 @@ func genLongString(approxLength int) string {
 }
 
 func createMockCheckpointS3(bucket string, prefix string) error {
-	region, err := getS3BucketRegion(context.TODO(), bucket)
+	region, err := dets3.GetS3BucketRegion(context.TODO(), bucket)
 	if err != nil {
 		return err
 	}
