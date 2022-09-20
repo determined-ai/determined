@@ -253,21 +253,6 @@ func (a *apiServer) PostWorkspace(
 	protoWorkspace.Username = curUser.Username
 	protoWorkspace.Pinned = true
 	return &apiv1.PostWorkspaceResponse{Workspace: protoWorkspace}, nil
-
-	/*
-		w := &workspacev1.Workspace{}
-		err = a.m.db.QueryProto("insert_workspace", w, req.Name, curUser.ID)
-		if err == nil && w.Id > 0 {
-			holder := &workspacev1.Workspace{}
-			err = a.m.db.QueryProto("pin_workspace", holder, w.Id, curUser.ID)
-			if err == nil {
-				w.Pinned = true
-			}
-		}
-
-		return &apiv1.PostWorkspaceResponse{Workspace: w},
-			errors.Wrapf(err, "error creating workspace %s in database", req.Name)
-	*/
 }
 
 func (a *apiServer) PatchWorkspace(
