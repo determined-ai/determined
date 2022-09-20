@@ -21,6 +21,9 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   const { users } = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
+  // Mock Data for potential roles
+  const roles = [ 'Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin' ];
+
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
@@ -30,6 +33,15 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
           {users.map((u) => (
             <Select.Option key={u.id} value={u.id}>
               {getDisplayName(u)}
+            </Select.Option>
+            ))}
+        </Select>
+        <Select
+        placeholder="Role"
+        >
+        {roles.map((r) => (
+            <Select.Option key={r} value={r}>
+              {r}
             </Select.Option>
             ))}
         </Select>
