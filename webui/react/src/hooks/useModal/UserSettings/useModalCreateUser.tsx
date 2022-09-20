@@ -1,5 +1,5 @@
 import { Form, Input, message, Select, Switch, Table } from 'antd';
-import Button from 'antd/es/button';
+import { Button } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
