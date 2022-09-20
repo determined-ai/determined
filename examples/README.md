@@ -78,7 +78,13 @@
 
 ## HP Search Constraints
 
-
 | Example                                                                  | Dataset | Framework  |
 |:------------------------------------------------------------------------:|:-------:|:----------:|
 | [hp\_constraints\_mnist\_pytorch](features/hp_constraints_mnist_pytorch) | MNIST   | PyTorch    |
+
+## Custom SearchMethod
+
+| Example                                                                  | Dataset | Framework  |
+|:------------------------------------------------------------------------:|:-------:|:----------:|
+| [local\_search\_runner](custom_search_method/local_search_runner)        | MNIST   | PyTorch    |
+| [core\_search\_runner](custom_search_method/core_search_runner)          | MNIST   | PyTorch    |
