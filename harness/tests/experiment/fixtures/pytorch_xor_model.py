@@ -80,18 +80,6 @@ class XORNetMulti(XORNet):
         return {"output": self.main_net(model_input)}
 
 
-class ModifyableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
-    def __init__(self, *args, **kwargs):
-        self.lr = float(0)
-        super().__init__(*args, **kwargs)
-
-    def get_lr(self) -> List[float]:
-        return [self.lr for _ in self.base_lrs]
-
-    def set_lr(self, lr: float) -> None:
-        self.lr = lr
-
-
 class BaseXORTrial(pytorch.PyTorchTrial):
     """
     Models a lightweight neural network model with one hidden layer to

@@ -96,7 +96,7 @@ def triangle_label_sum(updates: List) -> Any:
     return out
 
 
-class StepableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
+class StepableLRScheduler(torch.optim.lr_scheduler._LRScheduler):
     def get_lr(self) -> List[float]:
         return [self._step_count for _ in self.base_lrs]
 
@@ -446,13 +446,13 @@ class OneVarTrialAccessContext(BaseOneVarTrial):
             torch.optim.SGD(self.model_b.parameters(), self.context.get_hparam("learning_rate"))
         )
         self.lrs_a = self.context.wrap_lr_scheduler(
-            StepableLRSchedule(self.opt_a),
+            StepableLRScheduler(self.opt_a),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
             ),
         )
         self.lrs_b = self.context.wrap_lr_scheduler(
-            StepableLRSchedule(self.opt_b),
+            StepableLRScheduler(self.opt_b),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
             ),
@@ -564,7 +564,7 @@ class OneVarTrialWithLRScheduler(OneVarTrial):
         )
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
-            StepableLRSchedule(self.opt),
+            StepableLRScheduler(self.opt),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
             ),
