@@ -303,35 +303,3 @@ class XORTrialCallbacks(XORTrialMulti):
 
     def build_callbacks(self) -> Dict[str, det.pytorch.PyTorchCallback]:
         return {"counter": self.counter, "legacyCounter": self.legacy_counter}
-
-
-class XORTrialGradClipping(XORTrial):
-    def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        data, labels = batch
-        output = self.model(data)
-        loss = torch.nn.functional.binary_cross_entropy(output, labels.contiguous().view(-1, 1))
-
-        self.context.backward(loss)
-
-        if "gradient_clipping_l2_norm" in self.context.get_hparams():
-            self.context.step_optimizer(
-                self.optimizer,
-                clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
-                    params, self.context.get_hparam("gradient_clipping_l2_norm")
-                ),
-            )
-
-        elif "gradient_clipping_value" in self.context.get_hparams():
-            self.context.step_optimizer(
-                self.optimizer,
-                clip_grads=lambda params: torch.nn.utils.clip_grad_value_(
-                    params, self.context.get_hparam("gradient_clipping_value")
-                ),
-            )
-
-        else:
-            self.context.step_optimizer(self.optimizer)
-
-        return {"loss": loss}

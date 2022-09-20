@@ -8,6 +8,7 @@ import pytest
 import torch
 
 import determined as det
+import tests.experiment.fixtures.pytorch_onevar_model
 from determined import pytorch, workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
@@ -323,7 +324,7 @@ class TestPyTorchTrial:
             validation_metrics[tag] = vm
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialGradClipping,
+            trial_class=tests.experiment.fixtures.pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=self.hparams,
             workloads=make_workloads("original"),
             trial_seed=self.trial_seed,
@@ -332,7 +333,7 @@ class TestPyTorchTrial:
 
         updated_hparams = {"gradient_clipping_l2_norm": 0.0001, **self.hparams}
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialGradClipping,
+            trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=updated_hparams,
             workloads=make_workloads("clipped_by_norm"),
             trial_seed=self.trial_seed,
@@ -348,7 +349,7 @@ class TestPyTorchTrial:
 
         updated_hparams = {"gradient_clipping_value": 0.0001, **self.hparams}
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialGradClipping,
+            trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=updated_hparams,
             workloads=make_workloads("clipped_by_val"),
             trial_seed=self.trial_seed,

@@ -482,6 +482,38 @@ class OneVarTrialAccessContext(BaseOneVarTrial):
         return {"val_loss": loss}
 
 
+class OneVarTrialGradClipping(OneVarTrial):
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        data, labels = batch
+        output = self.model(data)
+        loss = self.loss_fn(output, labels)
+
+        self.context.backward(loss)
+
+        if "gradient_clipping_l2_norm" in self.context.get_hparams():
+            self.context.step_optimizer(
+                self.opt,
+                clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                    params, self.context.get_hparam("gradient_clipping_l2_norm")
+                ),
+            )
+
+        elif "gradient_clipping_value" in self.context.get_hparams():
+            self.context.step_optimizer(
+                self.opt,
+                clip_grads=lambda params: torch.nn.utils.clip_grad_value_(
+                    params, self.context.get_hparam("gradient_clipping_value")
+                ),
+            )
+
+        else:
+            self.context.step_optimizer(self.opt)
+
+        return {"loss": loss}
+
+
 if __name__ == "__main__":
     conf = yaml.safe_load(
         """
