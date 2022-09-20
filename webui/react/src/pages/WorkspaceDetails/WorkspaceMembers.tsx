@@ -15,22 +15,11 @@ import {
   alphaNumericSorter,
 } from 'shared/utils/sort';
 import { DetailedUser, Group, Member, MemberOrGroup, Workspace } from 'types';
-import { getDisplayName } from 'utils/user';
+import { getName, isMember } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings } from './WorkspaceMembers.settings';
-
-const isMember = (obj: MemberOrGroup) => {
-  const member = obj as Member;
-  return member?.username || member?.displayName;
-};
-
-const getName = (obj: MemberOrGroup): string => {
-  const member = obj as Member;
-  const group = obj as Group;
-  return isMember(obj) ? getDisplayName(member) : group.name;
-};
 
 const roles = [ 'Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin' ];
 interface Props {
