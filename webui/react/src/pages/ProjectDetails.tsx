@@ -420,7 +420,7 @@ const ProjectDetails: React.FC = () => {
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
       <TextEditorModal
         disabled={record.archived || !canEditExperiment}
-        placeholder={record.archived ? 'Archived' : 'Add description...'}
+        placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
