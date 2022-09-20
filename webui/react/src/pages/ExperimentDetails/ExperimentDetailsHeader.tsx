@@ -94,6 +94,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const isMovable =
     canActionExperiment(Action.Move, experiment) &&
     expPermissions.canMoveExperiment({ experiment });
+  const canPausePlay = expPermissions.canModifyExperiment({
+    workspace: { id: experiment.workspaceId },
+  });
 
   const { contextHolder: modalExperimentStopContextHolder, modalOpen: openModalStop } =
     useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
@@ -405,6 +408,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isPausable && (
                   <Button
                     className={css.buttonPause}
+                    disabled={!canPausePlay}
                     icon={<Icon name="pause" size="large" />}
                     shape="circle"
                     onClick={handlePauseClick}
@@ -413,6 +417,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isPaused && (
                   <Button
                     className={css.buttonPlay}
+                    disabled={!canPausePlay}
                     icon={<Icon name="play" size="large" />}
                     shape="circle"
                     onClick={handlePlayClick}
@@ -421,6 +426,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {!isTerminated && (
                   <Button
                     className={css.buttonStop}
+                    disabled={!canPausePlay}
                     icon={<Icon name="stop" size="large" />}
                     shape="circle"
                     onClick={handleStopClick}
