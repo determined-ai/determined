@@ -121,7 +121,7 @@ func (aw *zipArchiveWriter) Write(p []byte) (int, error) {
 	return w.Write(p)
 }
 
-// delayWriter wraps bufio.Writer to provide Close()
+// delayWriter wraps bufio.Writer and add Close().
 type delayWriter struct {
 	next *bufio.Writer
 }
@@ -374,49 +374,33 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 	return ptrs.Ptr(legacyConfig.CheckpointStorage()), nil
 }
 
-func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
-	args := struct {
-		CheckpointUUID string `path:"checkpoint_uuid"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"invalid checkpoint_uuid: "+err.Error())
-	}
-
-	checkpointUUID, err := uuid.Parse(args.CheckpointUUID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
-				args.CheckpointUUID, err))
-	}
-
+func (m *Master) getCheckpointImpl(ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) error {
 	// Assume a checkpoint always has experiment configs
-	storageConfig, err := m.getCheckpointStorageConfig(checkpointUUID)
+	storageConfig, err := m.getCheckpointStorageConfig(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to retrieve experiment config for checkpoint %s: %s",
-				args.CheckpointUUID, err.Error()))
+				id.String(), err.Error()))
 	}
 	if storageConfig == nil {
 		return echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("checkpoint %s does not exist", args.CheckpointUUID))
+			fmt.Sprintf("checkpoint %s does not exist", id.String()))
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, mimeType)
-	writerPipe, err := buildWriterPipeline(c.Response(), mimeType)
+	writerPipe, err := buildWriterPipeline(content, mimeType)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	downloader, err := newDownloader(storageConfig, writerPipe, args.CheckpointUUID)
+	downloader, err := newDownloader(storageConfig, writerPipe, id.String())
 	if err != nil {
 		return err
 	}
 
-	err = downloader.download(c.Request().Context())
+	err = downloader.download(ctx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
-			fmt.Sprintf("unable to download checkpoint %s: %s", args.CheckpointUUID, err.Error()))
+			fmt.Sprintf("unable to download checkpoint %s: %s", id.String(), err.Error()))
 	}
 
 	err = writerPipe.Close()
@@ -424,33 +408,40 @@ func (m *Master) getCheckpoint(c echo.Context, mimeType string) error {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("checkpoint download interrupted due to error: %s", err.Error()))
 	}
-	c.Response().Flush()
 
 	return nil
 }
 
-// @Summary Get a tarball of checkpoint contents.
+// @Summary Get a checkpoint's contents in a tgz or zip file.
 // @Tags Checkpoints
-// @ID get-checkpoint-tgz
+// @ID get-checkpoint
 // @Accept  json
-// @Produce  application/gzip; charset=utf-8
+// @Produce  application/gzip,application/zip
 // @Param   checkpoint_uuid path string  true  "Checkpoint UUID"
 // @Success 200 {} string ""
 //nolint:godot
-// @Router /checkpoints/{checkpoint_uuid}/tgz [get]
-func (m *Master) getCheckpointTgz(c echo.Context) error {
-	return m.getCheckpoint(c, MIMEApplicationGZip)
-}
+// @Router /checkpoints/{checkpoint_uuid} [get]
+func (m *Master) getCheckpoint(c echo.Context) error {
+	// Get the MIME type. Only a single type is accepted.
+	mimeType := c.Request().Header.Get("Accept")
+	if mimeType != MIMEApplicationGZip && mimeType != MIMEApplicationZip {
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType,
+			fmt.Sprintf("unsupported media type to download a checkpoint: '%s'", mimeType))
+	}
 
-// @Summary Get a zip of checkpoint contents.
-// @Tags Checkpoints
-// @ID get-checkpoint-zip
-// @Accept  json
-// @Produce  application/zip; charset=utf-8
-// @Param   checkpoint_uuid path string  true  "Checkpoint UUID"
-// @Success 200 {} string ""
-//nolint:godot
-// @Router /checkpoints/{checkpoint_uuid}/zip [get]
-func (m *Master) getCheckpointZip(c echo.Context) error {
-	return m.getCheckpoint(c, MIMEApplicationZip)
+	args := struct {
+		CheckpointUUID string `path:"checkpoint_uuid"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid checkpoint_uuid: "+err.Error())
+	}
+	id, err := uuid.Parse(args.CheckpointUUID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
+				args.CheckpointUUID, err))
+	}
+
+	c.Response().Header().Set(echo.HeaderContentType, mimeType)
+	return m.getCheckpointImpl(c.Request().Context(), id, mimeType, c.Response())
 }

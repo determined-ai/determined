@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	detcontext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -147,6 +146,15 @@ func newEchoContext() (echo.Context, *httptest.ResponseRecorder) {
 	return e.NewContext(nil, rec), rec
 }
 
+func SetupCheckpointTestEcho(t *testing.T) (
+	*apiServer, echo.Context, *httptest.ResponseRecorder,
+) {
+	api, _, _ := SetupAPITest(t)
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	return api, e.NewContext(nil, rec), rec
+}
+
 func TestGetCheckpointEcho(t *testing.T) {
 	gitBranch := os.Getenv("CIRCLE_BRANCH")
 	if strings.HasPrefix(gitBranch, "pull/") {
@@ -160,31 +168,31 @@ func TestGetCheckpointEcho(t *testing.T) {
 		Params       []any
 	}{
 		{"CanGetCheckpointTgz", func(id string) error {
-			api, _, _ := SetupCheckpointTestEcho(t)
+			api, ctx, rec := SetupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
 				return err
 			}
-			ctx, rec := newEchoContext()
 			ctx.SetParamNames("checkpoint_uuid")
 			ctx.SetParamValues(id)
-			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/tgz", nil))
-			err = api.m.getCheckpointTgz(ctx)
+			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+			ctx.Request().Header.Set("Accept", MIMEApplicationGZip)
+			err = api.m.getCheckpoint(ctx)
 			require.NoError(t, err, "API call returns error")
 			checkTgz(t, rec.Body, id)
 			return err
 		}, []any{mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func(id string) error {
-			api, _, _ := SetupCheckpointTestEcho(t)
+			api, ctx, rec := SetupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
 				return err
 			}
-			ctx, rec := newEchoContext()
 			ctx.SetParamNames("checkpoint_uuid")
 			ctx.SetParamValues(id)
-			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/zip", nil))
-			err = api.m.getCheckpointZip(ctx)
+			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+			ctx.Request().Header.Set("Accept", MIMEApplicationZip)
+			err = api.m.getCheckpoint(ctx)
 			require.NoError(t, err, "API call returns error")
 			checkZip(t, rec.Body.String(), id)
 			return err
@@ -196,19 +204,6 @@ func TestGetCheckpointEcho(t *testing.T) {
 	}
 }
 
-func SetupCheckpointTestEcho(t *testing.T) (
-	*apiServer, model.User, echo.Context,
-) {
-	api, user, _ := SetupAPITest(t)
-
-	e := echo.New()
-	c := e.NewContext(nil, nil)
-	ctx := &detcontext.DetContext{Context: c}
-	ctx.SetUser(user)
-
-	return api, user, ctx
-}
-
 // TestGetCheckpointEchoExpErr expects specific errors are returned for each check
 func TestGetCheckpointEchoExpErr(t *testing.T) {
 
@@ -218,26 +213,28 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 		Params       []any
 	}{
 		{"CanGetCheckpointTgz", func(id string) error {
-			api, _, ctx := SetupCheckpointTestEcho(t)
+			api, ctx, _ := SetupCheckpointTestEcho(t)
 			ctx.SetParamNames("checkpoint_uuid")
 			ctx.SetParamValues(id)
-			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/tgz", nil))
-			return api.m.getCheckpointTgz(ctx)
+			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+			ctx.Request().Header.Set("Accept", MIMEApplicationGZip)
+			return api.m.getCheckpoint(ctx)
 		}, []any{mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func(id string) error {
-			api, _, ctx := SetupCheckpointTestEcho(t)
+			api, ctx, _ := SetupCheckpointTestEcho(t)
 			ctx.SetParamNames("checkpoint_uuid")
 			ctx.SetParamValues(id)
-			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/zip", nil))
-			return api.m.getCheckpointZip(ctx)
+			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+			ctx.Request().Header.Set("Accept", MIMEApplicationZip)
+			return api.m.getCheckpoint(ctx)
 		}, []any{mock.Anything, mock.Anything}},
 	}
 
 	for _, curCase := range cases {
 		// Checkpoint not found
 		require.Equal(t,
-			echo.NewHTTPError(http.StatusNotFound, "checkpoint 7e0bad2c-b3f6-4988-916c-eb5581b19db0 does not exist"),
-			curCase.IDToReqCall("7e0bad2c-b3f6-4988-916c-eb5581b19db0"))
+			echo.NewHTTPError(http.StatusNotFound, "checkpoint 7e0bad2c-b3f6-4988-916c-eb3081b19db0 does not exist"),
+			curCase.IDToReqCall("7e0bad2c-b3f6-4988-916c-eb3081b19db0"))
 
 		// Invalid checkpoint UUID
 		require.Equal(t,

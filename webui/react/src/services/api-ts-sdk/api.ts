@@ -8275,54 +8275,17 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get a tarball of checkpoint contents.
+         * @summary Get a checkpoint's contents in a tgz or zip file.
          * @param {string} checkpointUuid Checkpoint UUID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpointTgz(checkpointUuid: string, options: any = {}): FetchArgs {
+        getCheckpoint_1(checkpointUuid: string, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
-                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpointTgz.');
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpoint_1.');
             }
-            const localVarPath = `/checkpoints/{checkpoint_uuid}/tgz`
-                .replace(`{${"checkpoint_uuid"}}`, encodeURIComponent(String(checkpointUuid)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get a zip of checkpoint contents.
-         * @param {string} checkpointUuid Checkpoint UUID
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCheckpointZip(checkpointUuid: string, options: any = {}): FetchArgs {
-            // verify required parameter 'checkpointUuid' is not null or undefined
-            if (checkpointUuid === null || checkpointUuid === undefined) {
-                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpointZip.');
-            }
-            const localVarPath = `/checkpoints/{checkpoint_uuid}/zip`
+            const localVarPath = `/checkpoints/{checkpoint_uuid}`
                 .replace(`{${"checkpoint_uuid"}}`, encodeURIComponent(String(checkpointUuid)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -8442,32 +8405,13 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a tarball of checkpoint contents.
+         * @summary Get a checkpoint's contents in a tgz or zip file.
          * @param {string} checkpointUuid Checkpoint UUID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpointTgz(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpointTgz(checkpointUuid, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response;
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get a zip of checkpoint contents.
-         * @param {string} checkpointUuid Checkpoint UUID
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCheckpointZip(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpointZip(checkpointUuid, options);
+        getCheckpoint_1(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint_1(checkpointUuid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -8529,23 +8473,13 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get a tarball of checkpoint contents.
+         * @summary Get a checkpoint's contents in a tgz or zip file.
          * @param {string} checkpointUuid Checkpoint UUID
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpointTgz(checkpointUuid: string, options?: any) {
-            return CheckpointsApiFp(configuration).getCheckpointTgz(checkpointUuid, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get a zip of checkpoint contents.
-         * @param {string} checkpointUuid Checkpoint UUID
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCheckpointZip(checkpointUuid: string, options?: any) {
-            return CheckpointsApiFp(configuration).getCheckpointZip(checkpointUuid, options)(fetch, basePath);
+        getCheckpoint_1(checkpointUuid: string, options?: any) {
+            return CheckpointsApiFp(configuration).getCheckpoint_1(checkpointUuid, options)(fetch, basePath);
         },
         /**
          * 
@@ -8594,26 +8528,14 @@ export class CheckpointsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get a tarball of checkpoint contents.
+     * @summary Get a checkpoint's contents in a tgz or zip file.
      * @param {string} checkpointUuid Checkpoint UUID
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public getCheckpointTgz(checkpointUuid: string, options?: any) {
-        return CheckpointsApiFp(this.configuration).getCheckpointTgz(checkpointUuid, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get a zip of checkpoint contents.
-     * @param {string} checkpointUuid Checkpoint UUID
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof CheckpointsApi
-     */
-    public getCheckpointZip(checkpointUuid: string, options?: any) {
-        return CheckpointsApiFp(this.configuration).getCheckpointZip(checkpointUuid, options)(this.fetch, this.basePath);
+    public getCheckpoint_1(checkpointUuid: string, options?: any) {
+        return CheckpointsApiFp(this.configuration).getCheckpoint_1(checkpointUuid, options)(this.fetch, this.basePath);
     }
 
     /**
