@@ -341,8 +341,6 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             device = torch.device("cuda", 0)
         else:
             device = torch.device("cpu")
-        if device is None:
-            raise Exception("Error initializing torch.device")
         return device
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
@@ -656,8 +654,6 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     @staticmethod
     def _average_gradients(parameters: Any, divisor: int) -> None:
-        if divisor < 1:
-            raise ValueError("divisor < 1")
         if divisor == 1:
             return
 

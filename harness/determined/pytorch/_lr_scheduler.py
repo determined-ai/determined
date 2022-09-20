@@ -65,8 +65,6 @@ class LRScheduler:
             frequency:
                 Sets the frequency at which the batch and epoch step modes get triggered.
         """
-        if scheduler is None:
-            raise ValueError("scheduler must not be None.")
         if not isinstance(step_mode, LRScheduler.StepMode):
             raise TypeError(f"step_mode must be an LRScheduler.StepMode. Got {type(step_mode)}.")
 

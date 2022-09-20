@@ -377,8 +377,6 @@ class PyTorchTrialController(det.TrialController):
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Metrics:
         self.prof.set_training(True)
-        if step_id <= 0:
-            raise RuntimeError(f"step_id={step_id}")
         step_start_time = time.time()
         self.context.reset_reducers()
 
