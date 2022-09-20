@@ -560,7 +560,7 @@ class DetSDTextualInversionTrainer:
                 self.generator_seed
             )
             # Need to set output_type to anything other than `pil` to get numpy arrays out. Needed
-            # for tensorboard logging.s
+            # for tensorboard logging.
             generated_img = self.pipeline(
                 prompt=dummy_prompt,
                 num_inference_steps=self.num_inference_steps,
