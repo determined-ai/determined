@@ -24,8 +24,8 @@ interface Props {
 
 const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
 
-  const {canAssignRoles } = usePermissions();
-  
+  const { canAssignRoles } = usePermissions();
+
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
@@ -101,7 +101,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         )}
       </Space>
       <div className={css.headerButton}>
-        {rbacEnabled && canAssignRoles({workspace}) && !workspace.immutable && !workspace.archived && (
+        {rbacEnabled && canAssignRoles({ workspace }) && !workspace.immutable && !workspace.archived && (
           <Button onClick={handleAddMembersClick}> Add Members</Button>
         )}
         {!workspace.immutable && !workspace.archived && (

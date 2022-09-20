@@ -1,5 +1,4 @@
 import { useStore } from 'contexts/Store';
-import { boolean } from 'fp-ts';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -92,7 +91,7 @@ const usePermissions = (): PermissionsHook => {
       canMoveExperiment(args.experiment, user, userAssignments, userRoles),
     canMoveProjects: (args: ProjectPermissionsArgs) =>
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
-    canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(args.workspace, user, userAssignments, userRoles), 
+    canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(args.workspace, user, userAssignments, userRoles),
     canViewGroups: () => canViewGroups(user, userAssignments, userRoles),
     canViewUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>

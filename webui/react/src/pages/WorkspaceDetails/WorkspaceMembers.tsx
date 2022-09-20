@@ -7,6 +7,7 @@ import { getFullPaginationConfig } from 'components/Table';
 import TableFilterSearch from 'components/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
@@ -19,7 +20,6 @@ import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
-import usePermissions from 'hooks/usePermissions';
 
 const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 interface Props {
@@ -66,9 +66,9 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
 const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props) => {
 
-  const  { canUpdateRoles } = usePermissions();
+  const { canUpdateRoles } = usePermissions();
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
-  const userCanAssignRoles = canUpdateRoles({workspace})
+  const userCanAssignRoles = canUpdateRoles({ workspace });
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -132,9 +132,9 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
 
     const roleRenderer = (value: string, record: Member) => {
       return (
-        <Select 
+        <Select
+          className={css.selectContainer}
           disabled={!userCanAssignRoles}
-          className={css.selectContainer} 
           value={record.role}>
           {roles.map((role) => (
             <Select.Option key={role} value={role}>
@@ -152,7 +152,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
           name={getName(record)}
           workspace={workspace}
         />
-      ) : (<></>)
+      ) : (<></>);
     };
 
     return [
@@ -180,7 +180,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
         title: '',
       },
     ] as ColumnDef<MemberOrGroup>[];
-  }, [nameFilterSearch, tableSearchIcon, workspace]);
+  }, [nameFilterSearch, tableSearchIcon, workspace, userCanAssignRoles]);
 
   const membersAndGroups: MemberOrGroup[] = [];
 

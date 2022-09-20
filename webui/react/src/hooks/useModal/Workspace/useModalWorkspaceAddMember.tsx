@@ -22,17 +22,15 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   const { users } = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
-  // Mock Data for potential roles
-  const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
-
-  const membersAndGroups: MemberOrGroup[] = [];
-
-  // Assign a mock role to users
-  users.forEach((u) => {
-    const m: Member = u;
-    m.role = roles[2];
-    membersAndGroups.push(m);
-  });
+  const membersAndGroups: MemberOrGroup[] = useMemo(() => {
+    const membersAndGroupData: MemberOrGroup[] = [];
+    users.forEach((u) => {
+      const m: Member = u;
+      m.role = 'Basic';
+      membersAndGroupData.push(m);
+    });
+    return membersAndGroupData;
+  }, [users]);
 
   const handleFilter = useCallback(
     (search: string, option) => {
@@ -63,6 +61,9 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   );
 
   const modalContent = useMemo(() => {
+
+  // Mock Data for potential roles
+  const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
     return (
       <div className={css.base}>
         <Select
@@ -80,7 +81,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
         </Select>
       </div>
     );
-  }, []);
+  }, [handleFilter, membersAndGroups]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
