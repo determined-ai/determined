@@ -226,18 +226,48 @@ func (a *apiServer) PostWorkspace(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	w := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("insert_workspace", w, req.Name, curUser.ID)
-	if err == nil && w.Id > 0 {
-		holder := &workspacev1.Workspace{}
-		err = a.m.db.QueryProto("pin_workspace", holder, w.Id, curUser.ID)
-		if err == nil {
-			w.Pinned = true
-		}
+	if len(req.Name) < 1 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"name '%s' must be at least 1 character long", req.Name)
+	}
+	if len(req.Name) > 80 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"name '%s' must be at most 80 character long", req.Name)
 	}
 
-	return &apiv1.PostWorkspaceResponse{Workspace: w},
-		errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
+	_, err = db.Bun().NewInsert().Model(w).Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+	}
+
+	pin := &model.WorkspacePin{WorkspaceID: w.ID, UserID: w.UserID}
+	_, err = db.Bun().NewInsert().Model(pin).Exec(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+	}
+
+	// TODO call add workspace admin
+
+	protoWorkspace := w.ToProto()
+	protoWorkspace.Username = curUser.Username
+	protoWorkspace.Pinned = true
+	return &apiv1.PostWorkspaceResponse{Workspace: protoWorkspace}, nil
+
+	/*
+		w := &workspacev1.Workspace{}
+		err = a.m.db.QueryProto("insert_workspace", w, req.Name, curUser.ID)
+		if err == nil && w.Id > 0 {
+			holder := &workspacev1.Workspace{}
+			err = a.m.db.QueryProto("pin_workspace", holder, w.Id, curUser.ID)
+			if err == nil {
+				w.Pinned = true
+			}
+		}
+
+		return &apiv1.PostWorkspaceResponse{Workspace: w},
+			errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+	*/
 }
 
 func (a *apiServer) PatchWorkspace(
