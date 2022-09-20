@@ -305,61 +305,6 @@ class XORTrialCallbacks(XORTrialMulti):
         return {"counter": self.counter, "legacyCounter": self.legacy_counter}
 
 
-class XORTrialAccessContext(BaseXORTrial):
-    _searcher_metric = "loss"
-
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        self.context = context
-
-        self.model_a = self.context.wrap_model(XORNet(self.context))
-        self.model_b = self.context.wrap_model(XORNet(self.context))
-        self.opt_a = self.context.wrap_optimizer(
-            torch.optim.SGD(self.model_a.parameters(), self.context.get_hparam("learning_rate"))
-        )
-        self.opt_b = self.context.wrap_optimizer(
-            torch.optim.SGD(self.model_b.parameters(), self.context.get_hparam("learning_rate"))
-        )
-        self.lrs_a = self.context.wrap_lr_scheduler(
-            StepableLRSchedule(self.opt_a),
-            step_mode=pytorch.LRScheduler.StepMode(
-                self.context.get_hparam("lr_scheduler_step_mode")
-            ),
-        )
-        self.lrs_b = self.context.wrap_lr_scheduler(
-            StepableLRSchedule(self.opt_b),
-            step_mode=pytorch.LRScheduler.StepMode(
-                self.context.get_hparam("lr_scheduler_step_mode")
-            ),
-        )
-
-    def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        assert self.context.models
-        assert self.context.optimizers
-        assert self.context.lr_schedulers
-
-        data, labels = batch
-        output = self.model_a(data)
-        loss = torch.nn.functional.binary_cross_entropy(output, labels.contiguous().view(-1, 1))
-
-        self.context.backward(loss)
-        self.context.step_optimizer(self.opt_a)
-
-        return {"loss": loss}
-
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
-        assert self.context.models
-        assert self.context.optimizers
-        assert self.context.lr_schedulers
-
-        data, labels = batch
-        output = self.model_a(data)
-        loss = error_rate(output, labels)
-
-        return {"loss": loss}
-
-
 class XORTrialGradClipping(XORTrial):
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int

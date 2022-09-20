@@ -501,7 +501,7 @@ class TestPyTorchTrial:
         hparams["lr_scheduler_step_mode"] = lr_scheduler_step_mode
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialAccessContext,
+            trial_class=pytorch_onevar_model.OneVarTrialAccessContext,
             hparams=hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
