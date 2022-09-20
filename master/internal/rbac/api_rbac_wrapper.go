@@ -69,9 +69,9 @@ func (s *RBACAPIServerWrapper) RemoveAssignments(ctx context.Context,
 	return rbacAPIServer.RemoveAssignments(ctx, req)
 }
 
-// AssignWorkspaceAdminToUser is a wrapper the same function the RBACAPIServer interface.
-func (s *RBACAPIServerWrapper) AssignWorkspaceAdminToUser(
+// AssignWorkspaceAdminToUserTx is a wrapper the same function the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) AssignWorkspaceAdminToUserTx(
 	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
 ) error {
-	return rbacAPIServer.AssignWorkspaceAdminToUser(ctx, idb, workspaceID, userID)
+	return rbacAPIServer.AssignWorkspaceAdminToUserTx(ctx, idb, workspaceID, userID)
 }

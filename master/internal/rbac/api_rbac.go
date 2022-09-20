@@ -29,7 +29,7 @@ type RBACAPIServer interface {
 		*apiv1.AssignRolesResponse, error)
 	RemoveAssignments(context.Context, *apiv1.RemoveAssignmentsRequest) (
 		*apiv1.RemoveAssignmentsResponse, error)
-	AssignWorkspaceAdminToUser(
+	AssignWorkspaceAdminToUserTx(
 		ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
 	) error
 }

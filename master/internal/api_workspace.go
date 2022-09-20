@@ -258,7 +258,7 @@ func (a *apiServer) PostWorkspace(
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 	}
 
-	if err = a.AssignWorkspaceAdminToUser(ctx, tx, w.ID, w.UserID); err != nil {
+	if err = a.AssignWorkspaceAdminToUserTx(ctx, tx, w.ID, w.UserID); err != nil {
 		return nil, errors.Wrap(err, "error assigning workspace admin")
 	}
 

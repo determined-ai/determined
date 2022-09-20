@@ -68,9 +68,8 @@ func (s *rbacAPIServerStub) RemoveAssignments(ctx context.Context,
 	return nil, UnimplementedError
 }
 
-func (s *rbacAPIServerStub) AssignWorkspaceAdminToUser(
+func (s *rbacAPIServerStub) AssignWorkspaceAdminToUserTx(
 	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
 ) error {
 	return nil
-	// return UnimplementedError
 }
