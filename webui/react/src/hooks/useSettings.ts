@@ -371,7 +371,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       // Store or clear setting if `storageKey` is available.
       if (config.storageKey && isValid) {
         const currentSetting = storage.get(config.storageKey);
-        
+
         // avoiding re-setting it with the same value from last updates at setting state
         if (!isEqual(currentSetting, jsonValue)) {
           if (jsonValue === undefined || isDefault) {
