@@ -478,22 +478,30 @@ class v1AgentUserGroup:
         self,
         *,
         agentGid: "typing.Optional[int]" = None,
+        agentGroup: "typing.Optional[str]" = None,
         agentUid: "typing.Optional[int]" = None,
+        agentUser: "typing.Optional[str]" = None,
     ):
         self.agentUid = agentUid
         self.agentGid = agentGid
+        self.agentUser = agentUser
+        self.agentGroup = agentGroup
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AgentUserGroup":
         return cls(
             agentUid=obj.get("agentUid", None),
             agentGid=obj.get("agentGid", None),
+            agentUser=obj.get("agentUser", None),
+            agentGroup=obj.get("agentGroup", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "agentUid": self.agentUid if self.agentUid is not None else None,
             "agentGid": self.agentGid if self.agentGid is not None else None,
+            "agentUser": self.agentUser if self.agentUser is not None else None,
+            "agentGroup": self.agentGroup if self.agentGroup is not None else None,
         }
 
 class v1AggregateQueueStats:
