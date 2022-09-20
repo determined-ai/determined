@@ -33,7 +33,7 @@ def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str
     )
 
 
-def main(ready: Pattern, waiting: Optional[Pattern]):
+def main(ready: Pattern, waiting: Optional[Pattern] = None):
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
