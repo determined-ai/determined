@@ -45,7 +45,7 @@ DEFAULT_SCHEDULER_KWARGS_DICT = {
 }
 
 
-class DetSDTextualnversionTrainer:
+class DetSDTextualInversionTrainer:
     """Class for training a textual inversion model."""
 
     def __init__(
@@ -203,7 +203,7 @@ class DetSDTextualnversionTrainer:
         self.pipeline = None
 
     @classmethod
-    def init_on_cluster(cls) -> "DetSDTextualnversionTrainer":
+    def init_on_cluster(cls) -> "DetSDTextualInversionTrainer":
         """Creates a DetStableDiffusion instance on the cluster, drawing hyperparameters and other
         needed information from the Determined master."""
         info = det.get_cluster_info()
@@ -601,7 +601,7 @@ class DetSDTextualnversionTrainer:
         return token_embeddings
 
 
-class DetSDTextualnversionPipeline:
+class DetSDTextualInversionPipeline:
     """Class for generating images from a Stable Diffusion checkpoint pre-trained using Determined
     AI.  Initialize with no arguments in order to run plan Stable Diffusion without any trained
     textual inversion embeddings.
@@ -632,6 +632,9 @@ class DetSDTextualnversionPipeline:
         self.checkpoint_paths = checkpoint_paths or []
         self.learned_embeddings_filename = learned_embeddings_filename
         self.scheduler_name = scheduler_name
+        self.beta_start = beta_start
+        self.beta_end = beta_end
+        self.beta_schedule = beta_schedule
         self.other_scheduler_kwargs = (
             other_scheduler_kwargs or DEFAULT_SCHEDULER_KWARGS_DICT[scheduler_name]
         )
@@ -644,10 +647,10 @@ class DetSDTextualnversionPipeline:
         self.use_fp16 = use_fp16
 
         scheduler_kwargs = {
-            "beta_start": beta_start,
-            "beta_end": beta_end,
-            "beta_schedule": beta_schedule,
-            **other_scheduler_kwargs,
+            "beta_start": self.beta_start,
+            "beta_end": self.beta_end,
+            "beta_schedule": self.beta_schedule,
+            **self.other_scheduler_kwargs,
         }
         self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
 
@@ -670,7 +673,7 @@ class DetSDTextualnversionPipeline:
         device: str = "cuda",
         use_autocast: bool = True,
         use_fp16: bool = True,
-    ) -> "DetSDTextualnversionPipeline":
+    ) -> "DetSDTextualInversionPipeline":
         """Creates a DetStableDiffusion instance from one or more Determined checkpoint uuids.
         Must be logged into the Determined cluster to use this method.  If not logged-in, call
         determined.experimental.client.login first.
@@ -810,7 +813,7 @@ class DetSDTextualnversionPipeline:
         num_inference_steps: int = 50,
         guidance_scale: int = 7.5,
         saved_img_dir: Optional[str] = None,
-        generator_seed: int = 2147483647,
+        seed: int = 2147483647,
         parallelize_factor: int = 1,
         other_pipeline_call_kwargs: Optional[dict] = None,
     ) -> Image.Image:
@@ -823,7 +826,7 @@ class DetSDTextualnversionPipeline:
         generated_samples = 0
         # The dummy prompts are what actually get fed into the pipeline
         dummy_prompt = self._replace_placeholders_with_dummies(prompt)
-        generator = torch.Generator(device="cuda").manual_seed(generator_seed)
+        generator = torch.Generator(device="cuda").manual_seed(seed)
         while generated_samples < num_samples:
             context = torch.autocast("cuda") if self.use_autocast else nullcontext()
             with context:
@@ -842,14 +845,16 @@ class DetSDTextualnversionPipeline:
                 generated_samples += 1
                 if saved_img_dir is not None:
                     # TODO: Currently using short uuids to ensure unique file name. Use a better system.
-                    file_suffix = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{generator_seed}_seed_{uuid}.png"
+                    file_suffix = (
+                        f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_{uuid}.png"
+                    )
                     filename = prompt[: 255 - len(file_suffix)] + file_suffix
                     filename = "_".join(filename.split())
                     self._save_image(image, filename, saved_img_dir)
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if num_samples > 1 and saved_img_dir is not None:
             # TODO: Clean up repeated code
-            file_suffix = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{generator_seed}_seed_{str(uuid.uuid4())}_GRID.png"
+            file_suffix = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_{str(uuid.uuid4())}_GRID.png"
             filename = prompt[: 255 - len(file_suffix)] + file_suffix
             filename = "_".join(filename.split())
             self._save_image(image_grid, filename, saved_img_dir)
