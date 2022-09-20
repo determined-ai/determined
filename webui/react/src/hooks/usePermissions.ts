@@ -206,10 +206,7 @@ const canModifyExperiment = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    !!workspace &&
-    (permitted.has('oss_user') || permitted.has('update_experiments'))
-  );
+  return !!workspace && (permitted.has('oss_user') || permitted.has('update_experiments'));
 };
 
 const canModifyExperimentMetadata = (
@@ -218,10 +215,7 @@ const canModifyExperimentMetadata = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    !!workspace &&
-    (permitted.has('oss_user') || permitted.has('update_experiment_metadata'))
-  );
+  return !!workspace && (permitted.has('oss_user') || permitted.has('update_experiment_metadata'));
 };
 
 const canMoveExperiment = (

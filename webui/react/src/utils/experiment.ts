@@ -40,7 +40,7 @@ type ExperimentPermissionSet = {
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
-}
+};
 
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
@@ -185,14 +185,17 @@ export const getActionsForExperiment = (
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
   const workspace = { id: experiment.workspaceId };
-  return targets.filter((action) => canActionExperiment(action, experiment))
+  return targets
+    .filter((action) => canActionExperiment(action, experiment))
     .filter((action) => {
       switch (action) {
         case ExperimentAction.ContinueTrial:
         case ExperimentAction.Fork:
         case ExperimentAction.HyperparameterSearch:
-          return permissions.canViewExperimentArtifacts({ workspace }) &&
-            permissions.canCreateExperiment({ workspace });
+          return (
+            permissions.canViewExperimentArtifacts({ workspace }) &&
+            permissions.canCreateExperiment({ workspace })
+          );
 
         case ExperimentAction.Delete:
           return permissions.canDeleteExperiment({ experiment });
@@ -215,7 +218,7 @@ export const getActionsForExperiment = (
         default:
           return true;
       }
-  });
+    });
 };
 
 export const getActionsForExperimentsUnion = (

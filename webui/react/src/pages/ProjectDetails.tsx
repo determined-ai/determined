@@ -165,11 +165,7 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(
-      experiments,
-      batchActions,
-      expPermissions,
-    );
+    return getActionsForExperimentsUnion(experiments, batchActions, expPermissions);
   }, [experimentMap, expPermissions, settings.row]);
 
   const fetchProject = useCallback(async () => {
@@ -679,14 +675,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [
-      expPermissions,
-      settings.row,
-      openMoveModal,
-      project?.workspaceId,
-      project?.id,
-      experimentMap,
-    ],
+    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(
@@ -1088,8 +1077,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
-  if (!canViewWorkspaces) return <NoPermissions />;
-  if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
+  if (project && !expPermissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }
 

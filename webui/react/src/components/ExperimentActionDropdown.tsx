@@ -183,15 +183,16 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-    .map((action) => {
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
+    (action) => {
       if (action === Action.SwitchPin) {
         const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';
         return { key: action, label };
       } else {
         return { danger: action === Action.Delete, key: action, label: action };
       }
-    });
+    },
+  );
 
   if (menuItems.length === 0) {
     return (
