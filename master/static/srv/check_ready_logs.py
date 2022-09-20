@@ -43,7 +43,6 @@ def main(ready: Pattern, waiting: Optional[Pattern] = None):
             return
         if waiting and waiting.match(line):
             post_ready(master_url, cert, allocation_id, "waiting")
-            return
 
 
 if __name__ == "__main__":
