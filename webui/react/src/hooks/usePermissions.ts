@@ -48,8 +48,8 @@ interface PermissionsHook {
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
-  canViewGroups: () => boolean;
-  canViewUsers: () => boolean;
+  canViewGroups: boolean;
+  canViewUsers: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
 }
@@ -90,8 +90,8 @@ const usePermissions = (): PermissionsHook => {
       canMoveExperiment(args.experiment, user, userAssignments, userRoles),
     canMoveProjects: (args: ProjectPermissionsArgs) =>
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
-    canViewGroups: () => canViewGroups(user, userAssignments, userRoles),
-    canViewUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+    canViewGroups: canViewGroups(user, userAssignments, userRoles),
+    canViewUsers: canAdministrateUsers(user, userAssignments, userRoles),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>
       canViewWorkspace(args.workspace, userAssignments, userRoles),
     canViewWorkspaces,

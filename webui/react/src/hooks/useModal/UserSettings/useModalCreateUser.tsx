@@ -11,7 +11,7 @@ import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, DetailedUser, Permission } from 'types';
+import { DetailedUser, Permission } from 'types';
 import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
@@ -31,7 +31,6 @@ export const ROLE_LABEL = 'Roles';
 export const ROLE_NAME = 'roles';
 
 interface Props {
-  branding: BrandingType;
   form: FormInstance;
   groups: V1GroupSearchResult[];
   user?: DetailedUser;
@@ -45,20 +44,19 @@ interface FormValues {
   USER_NAME_NAME: string;
 }
 
-const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
+const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
   const [ permissions, setPermissions ] = useState<Permission[]>([]);
 
   const rbacEnabled = useFeature().isOn('rbac');
-  const canSeePermissions = usePermissions().canGetPermissions;
-  const canEditPermissions = usePermissions().canModifyPermissions;
+  const { canGetPermissions, canModifyPermissions } = usePermissions();
   const { knownRoles } = useStore();
 
   const updatePermissions = useCallback(async () => {
-    if (user && canSeePermissions) {
+    if (user && canGetPermissions) {
       const viewPermissions = await getUserPermissions({ userId: user.id });
       setPermissions(viewPermissions);
     }
-  }, [canSeePermissions, user]);
+  }, [canGetPermissions, user]);
 
   useEffect(() => {
     form.setFieldsValue({
@@ -90,7 +88,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
         title: 'Workspaces?',
       },
     ];
-    if (canEditPermissions && !viewOnly) {
+    if (canModifyPermissions && !viewOnly) {
       columns.push({
         dataIndex: 'action',
         key: 'name',
@@ -99,7 +97,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       });
     }
     return columns;
-  }, [canEditPermissions, viewOnly]);
+  }, [canModifyPermissions, viewOnly]);
 
   return (
     <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
@@ -120,11 +118,11 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
       <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
         <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
-      {branding === BrandingType.Determined ? (
+      {!rbacEnabled && (
         <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
           <Switch disabled={viewOnly} />
         </Form.Item>
-      ) : null}
+      )}
       {!user && rbacEnabled && (
         <Form.Item label={GROUP_LABEL} name={GROUP_NAME}>
           <Select
@@ -140,7 +138,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
           </Select>
         </Form.Item>
       )}
-      {rbacEnabled && canEditPermissions && !viewOnly && (
+      {rbacEnabled && canModifyPermissions && !viewOnly && (
         <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
           <Select
           mode="multiple"
@@ -156,7 +154,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
           </Select>
         </Form.Item>
       )}
-      {!!user && rbacEnabled && canSeePermissions && (
+      {!!user && rbacEnabled && canGetPermissions && (
         <Table
           columns={permissionTableColumn}
           dataSource={permissions}
@@ -180,7 +178,6 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
-  const { info } = useStore();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => {
@@ -232,7 +229,6 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         // passing a default brandind due to changes on the initial state
         content: (
           <ModalForm
-            branding={info.branding || BrandingType.Determined}
             form={form}
             groups={groups}
             user={user}
@@ -246,7 +242,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
       });
     },
-    [form, handleCancel, handleOk, openOrUpdate, info, user, groups],
+    [form, handleCancel, handleOk, openOrUpdate, user, groups],
   );
 
   return { modalOpen, ...modalHook };

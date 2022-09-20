@@ -36,7 +36,7 @@ const SettingsContent: React.FC = () => {
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
   const rbacEnabled = useFeature().isOn('rbac');
-  const canViewUsers = usePermissions().canViewUsers();
+  const { canViewUsers } = usePermissions();
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);

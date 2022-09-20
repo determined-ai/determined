@@ -93,8 +93,7 @@ const GroupManagement: React.FC = () => {
 
   const { settings, updateSettings } = useSettings<GroupManagementSettings>(settingsConfig);
 
-  const canModifyGroups = usePermissions().canModifyGroups;
-  const canViewGroups = usePermissions().canViewGroups();
+  const { canModifyGroups, canViewGroups } = usePermissions();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
