@@ -20,7 +20,7 @@
     flex-direction: row;
     padding-block: 8px;
     padding-inline: 16px;
-    
+
     .spacer {
       flex-grow: 1;
     }
@@ -46,12 +46,15 @@
     flex-direction: row;
     padding-block: 8px;
     padding-inline: 16px;
-    
+
     .spacer {
       flex-grow: 1;
     }
   }
 }
-.noFooterModal:global(.ant-modal) > :global(.ant-modal-content) > :global(.ant-modal-body) :global(.ant-modal-confirm-btns) {
-    display: none;
+.noFooterModal:global(.ant-modal)
+  > :global(.ant-modal-content)
+  > :global(.ant-modal-body)
+  :global(.ant-modal-confirm-btns) {
+  display: none;
 }
