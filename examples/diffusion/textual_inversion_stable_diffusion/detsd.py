@@ -33,7 +33,7 @@ from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
 
-# TODO: defaults for ddim and lms-discrete
+# TODO: aditional default kwargs for ddim and lms-discrete
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,
     "lms-discrete": LMSDiscreteScheduler,
@@ -47,7 +47,7 @@ DEFAULT_SCHEDULER_KWARGS_DICT = {
 
 
 class DetSDTextualInversionTrainer:
-    """Class for training a textual inversion model."""
+    """Class for training a textual inversion model on a Determined cluster."""
 
     def __init__(
         self,
@@ -60,7 +60,7 @@ class DetSDTextualInversionTrainer:
         gradient_accumulation_steps: int = 4,
         optimizer_name: Literal["adam", "adamw", "sgd"] = "adamw",
         learning_rate: float = 5e-04,
-        other_optimzer_kwargs: Optional[dict] = None,
+        other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
         checkpoint_freq: int = 100,
         metric_report_freq: int = 100,
@@ -118,7 +118,7 @@ class DetSDTextualInversionTrainer:
         ), "Optimizer must be one of 'adam', 'adamw' or 'sgd'."
         self.optimizer_name = optimizer_name
         self.learning_rate = learning_rate
-        self.other_optimzer_kwargs = other_optimzer_kwargs or {}
+        self.other_optimizer_kwargs = other_optimizer_kwargs or {}
         self.scale_lr = scale_lr
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
@@ -441,7 +441,7 @@ class DetSDTextualInversionTrainer:
         self.optimizer = optim_dict[self.optimizer_name](
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
-            **self.other_optimzer_kwargs,
+            **self.other_optimizer_kwargs,
         )
 
     def _build_train_scheduler(self) -> None:

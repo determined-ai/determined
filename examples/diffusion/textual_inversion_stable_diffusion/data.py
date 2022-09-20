@@ -87,7 +87,7 @@ class TextualInversionDataset(Dataset):
                     img = img.convert("RGB")
                 imgs.append(img)
             except PIL.UnidentifiedImageError:
-                print(f"Image at {path} raised UnidentifiedImageError")
+                print(f"File at {path} raised UnidentifiedImageError and will be skipped.")
         return imgs
 
     def _convert_imgs_to_tensors(self, imgs: List[Image.Image]) -> List[torch.Tensor]:
