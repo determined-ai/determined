@@ -363,23 +363,26 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     userSettings.forEach((setting) => {
       const { key, value, storagePath } = setting;
       const jsonValue = JSON.parse(value ?? '');
-      const currentSetting = settings[key as keyof T];
       const config = configMap[key];
       if (!config) return;
       const isValid = validateSetting(config, jsonValue);
       const isDefault = isEqual(config.defaultValue, jsonValue);
 
       // Store or clear setting if `storageKey` is available.
-      // avoiding re-setting it with the same value from last updates at setting state
-      if (config.storageKey && isValid && !isEqual(currentSetting, jsonValue)) {
-        if (jsonValue === undefined || isDefault) {
-          storage.remove(config.storageKey, storagePath);
-        } else {
-          storage.set(config.storageKey, jsonValue, storagePath);
+      if (config.storageKey && isValid) {
+        const currentSetting = storage.get(config.storageKey);
+        
+        // avoiding re-setting it with the same value from last updates at setting state
+        if (!isEqual(currentSetting, jsonValue)) {
+          if (jsonValue === undefined || isDefault) {
+            storage.remove(config.storageKey, storagePath);
+          } else {
+            storage.set(config.storageKey, jsonValue, storagePath);
+          }
         }
       }
     });
-  }, [configMap, storage, userSettings, settings]);
+  }, [configMap, storage, userSettings]);
 
   useEffect(() => {
     decodeUserSettings();
@@ -409,22 +412,22 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       const newQueries = [currentQuery];
       if (locationSearch) newQueries.unshift(locationSearch);
       history.replace(`${location.pathname}?${newQueries.join('&')}`);
-    }
+    } else {
+      const defaultSettings = getDefaultSettings<T>(config, storage);
+      const hasUnsetQuery = Object.keys(searchSettings)
+        .filter(Boolean)
+        .find((key) => {
+          // can stop at the first occurence
+          return !isEqual(searchSettings[key as keyof T], settings[key as keyof T]);
+        });
+      // Avoid re-setting the state with the same values;
+      if (isEqual(settings, defaultSettings) && !hasUnsetQuery) return;
 
-    const defaultSettings = getDefaultSettings<T>(config, storage);
-    const hasUnsetQuery = Object.keys(searchSettings)
-      .filter(Boolean)
-      .find((key) => {
-        // can stop at the first occurence
-        return !isEqual(searchSettings[key as keyof T], settings[key as keyof T]);
+      // Otherwise read settings from the query string.
+      setSettings((prevSettings) => {
+        return { ...prevSettings, ...defaultSettings, ...searchSettings };
       });
-    // Avoid re-setting the state with the same values;
-    if (isEqual(settings, defaultSettings) && !hasUnsetQuery) return;
-
-    // Otherwise read settings from the query string.
-    setSettings((prevSettings) => {
-      return { ...prevSettings, ...defaultSettings, ...searchSettings };
-    });
+    }
   }, [config, history, location.pathname, location.search, prevSearch, settings, storage]);
 
   useEffect(() => {
