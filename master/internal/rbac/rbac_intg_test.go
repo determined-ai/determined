@@ -31,12 +31,8 @@ var (
 		ID:   10001,
 		Name: "testGroupStatic",
 	}
-	testGroupOwnedByUser = usergroup.Group{
-		ID:      9999,
-		Name:    "testGroupUser",
-		OwnerID: 1217651234,
-	}
-	testUser = model.User{
+	testGroupOwnedByUser = usergroup.Group{} // Auto created upon user creation.
+	testUser             = model.User{
 		ID:       1217651234,
 		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
 		Admin:    false,
@@ -493,9 +489,9 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	_, _, err = usergroup.AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
 	require.NoError(t, err, "failure creating static test group")
 
-	testGroupOwnedByUser.OwnerID = testUser.ID
-	_, _, err = usergroup.AddGroupWithMembers(ctx, testGroupOwnedByUser, testUser.ID)
-	require.NoError(t, err, "failure creating test user group")
+	err = db.Bun().NewSelect().Model(&testGroupOwnedByUser).
+		Where("user_id = ?", testUser.ID).Scan(ctx)
+	require.NoError(t, err, "failure getting test user personal group")
 
 	_, err = db.Bun().NewInsert().Model(&testPermissions).Exec(ctx)
 	require.NoError(t, err, "failure creating permission in setup")
