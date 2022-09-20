@@ -204,7 +204,8 @@ class DetStableDiffusionTITrainer:
 
     @classmethod
     def init_on_cluster(cls) -> "DetStableDiffusionTITrainer":
-        """Creates a DetStableDiffusion instance on the cluster."""
+        """Creates a DetStableDiffusion instance on the cluster, drawing hyperparameters and other
+        needed information from the Determined master."""
         info = det.get_cluster_info()
         hparams = attrdict.AttrDict(info.trial.hparams)
         latest_checkpoint = info.latest_checkpoint
@@ -715,6 +716,17 @@ class DetStableDiffusionTIGenerator:
         self.feature_extractor = CLIPFeatureExtractor.from_pretrained(
             pretrained_model_name_or_path="openai/clip-vit-base-patch32"
         )
+
+        for model in (
+            self.tokenizer,
+            self.text_encoder,
+            self.vae,
+            self.unet,
+            self.safety_checker,
+            self.feature_extractor,
+        ):
+            model.to(self.device)
+            model.eval()
 
     def _load_from_checkpoints(self) -> None:
         """Loads the learned embeddings from the checkpoints."""

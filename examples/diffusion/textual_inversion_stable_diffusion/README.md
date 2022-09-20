@@ -15,12 +15,15 @@ Determined framework with minimal code changes.
 
 ## Walkthrough: Basic Usage
 
+Below we walk through the Textual Inversion workflow, training on a few images of a specific toy cat
+and then incorporating the object into our Stable-Diffusion-generated art.
+
 ### Training
 
 The use of Stable Diffusion requires
 a [Huggingface User Access Token](https://huggingface.co/docs/hub/security-tokens).
-After including your user access token in the `const.yaml` config file, modifying the final part of
-the lines which read
+After including your user access token in the `const.yaml` config file and modifying the final part
+of the lines which read
 
 ```yaml
 environment:
@@ -34,15 +37,20 @@ a ready-to-go fine-tuning experiment can be run by executing the following in th
 det -m MASTER_URL e create const.yaml .
 ```
 
-with the appropriate url (with port number) for your Determined cluster substituted in. Using four
+with the appropriate url (with port number) for your Determined cluster substituted in
+for `MASTER_URL`. Using four
 V100s, the Experiment should take about ~10 minutes to complete.
 (The `slots_per_trial` field will need to be reduced, and other hyperparmaeters modified, if you
 have fewer than four GPUs on your cluster.)
 
-This will submit an experiment which fine-tunes Stable Diffusion on images of a toy cat (from the
-original Textual Inversion paper), such as the one found below:
+This will submit an experiment which introduces a new embedding vector into the world of Stable
+Diffusion which we will train to correspond to the concept of our toy cat, as represented through
+training images (from the original Textual Inversion paper) such as the one found below:
 
-![cat-toy](./cat_imgs/2.jpeg)
+![cat-toy](./readme_imgs/2.jpeg)
+
+A corresponding token, chosen to be `<cat-toy>` as specified in the `placeholder_tokens` field
+in the config, will then be available for use in our prompts to signify the concept of this cat.
 
 ### Inference
 
@@ -52,17 +60,19 @@ of the final Determined checkpoint for the experiment and set the `CHECKPOINT_UU
 notebook accordingly (along with the `HF_AUTH_TOKEN` user access token variable, again).
 
 Running the notebook and fiddling with the various parameters therein, one can generate images such
-as:
-![generated cats](./generated_cats.png)
+as the following, which correspond to the
+prompt `a painting of <cat-toy> on the moon, stars, outer space, trending on artstation, incredible composition`
+![generated cats](./readme_imgs/generated_cats.png)
 
 By default, the script also writes periodically generated images to checkpoint directory which can
-also be viewed in the notebook. Here is an example of the model's progression (left-to-right) when
-generating based on the prompt `a photo of a <cat-toy>`, `<cat-toy>` being the chosen token to
-represent
-the concept of this toy cat:
-![cat-toy-progression](./all_cat-toy_imgs.png)
+also be viewed in the notebook. These serve as useful visual checks on the training process.
+
+Here is an example of the model's progression (left-to-right) when generating based on the
+prompt `a photo of a <cat-toy>`:
+![cat-toy-progression](./readme_imgs/all_cat-toy_imgs.png)
 Initially, the `<cat-toy>` embedding was chosen to coincide with the embedding of the token `cat`
-and the above visualizes the evoluation of this embedding away from its initialization.
+(as specified in the `initialization_tokens` config field) and the above visualizes the evolution of
+this embedding away from the concept of `cat` and towards our concept of `<cat-toy>`.
 
 ### Customization
 
@@ -90,8 +100,9 @@ hyperparameters:
 
 To train on a new concept:
 
-1) Add your training images in a new directory and point `train_img_dirs` at the relevant directory.
-2) Set `learnable_properties` to `object` or `style` depending on which facet of the images you wish
+1) Add your training images in a new directory and list it under `train_img_dirs`.
+2) Set `learnable_properties` to `object` or `style`, according to which facet of the images you
+   wish
    to capture.
 3) Choose an entry for `placeholder_tokens`, which is the stand-in for your object in prompts,
    replacing `<cat-toy>` above.
@@ -100,9 +111,11 @@ To train on a new concept:
    to the checkpoint directory.
 
 The script also allows you to train on multiple concepts at once. When doing so, simply add the
-relevant entries to each of
-`train_img_dirs`, `learnable_properties`, `placeholder_tokens`, and `initializer_tokens`, keeping
-the corresponding entries in the same order across these fields.
+relevant entries under the
+`train_img_dirs`, `learnable_properties`, `placeholder_tokens`, and `initializer_tokens` fields,
+keeping the same relative ordering across each.
+
+More advanced customizations can be made by modifying the `const_advanced.yaml` config file.
 
 ## The Code
 
@@ -122,3 +135,9 @@ A very incomplete list:
   launcher?
 * Should also support distributed inference for faster generation.
 * Still struggling with getting a great image using the DAI logo.
+* fp16 training
+* Log images to tensorboard rather than "abuse" the checkpoint directory, in Ryan's words
+* Test training at 256 * 256 and image generation at other scales. Separate the `img_size` args for
+  training and inference here.
+* lr scheduler
+* `accelerate --config` support/example
