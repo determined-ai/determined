@@ -314,11 +314,22 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         },
       );
 
+      // Update internal settings state for when skipping url encoding of settings.
+      setSettings((prev) => ({ ...clone(prev), ...internalSettings }));
+
+      // Mark to trigger side effect of updating path.
+      setPathChange({
+        querySettings,
+        type: push ? PathChangeType.Push : PathChangeType.Replace,
+      });
+
       // Update user settings via API.
       if (updates.length !== 0) {
         try {
           // Persist storage to backend.
-          await Promise.allSettled(updates.map((update) => updateUserSetting(update)));
+          await Promise.allSettled(updates.map((update) => {
+            updateUserSetting(update);
+          }));
         } catch (e) {
           handleError(e, {
             isUserTriggered: false,
@@ -329,15 +340,6 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
           });
         }
       }
-
-      // Update internal settings state for when skipping url encoding of settings.
-      setSettings((prev) => ({ ...clone(prev), ...internalSettings }));
-
-      // Mark to trigger side effect of updating path.
-      setPathChange({
-        querySettings,
-        type: push ? PathChangeType.Push : PathChangeType.Replace,
-      });
     },
     [config.applicableRoutespace, location.pathname, configMap, options?.store, user?.id, storage],
   );
@@ -359,13 +361,15 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     userSettings.forEach((setting) => {
       const { key, value, storagePath } = setting;
       const jsonValue = JSON.parse(value ?? '');
+      const currentSetting = settings[key as keyof T];
       const config = configMap[key];
       if (!config) return;
       const isValid = validateSetting(config, jsonValue);
       const isDefault = isEqual(config.defaultValue, jsonValue);
 
       // Store or clear setting if `storageKey` is available.
-      if (config.storageKey && isValid && options?.store !== false) {
+      // avoiding re-setting it with the same value from last updates at setting state
+      if (config.storageKey && isValid && !isEqual(currentSetting, jsonValue)) {
         if (jsonValue === undefined || isDefault) {
           storage.remove(config.storageKey, storagePath);
         } else {
@@ -373,7 +377,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         }
       }
     });
-  }, [ configMap, storage, userSettings ]);
+  }, [ configMap, storage, userSettings, settings ]);
 
   useEffect(() => {
     decodeUserSettings();
@@ -403,10 +407,19 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       if (locationSearch) newQueries.unshift(locationSearch);
       history.replace(`${location.pathname}?${newQueries.join('&')}`);
     } else {
+      const defaultSettings = getDefaultSettings<T>(config, storage);
+      const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
+      const hasUnsetQuery = Object.keys(querySettings)
+        .filter(Boolean)
+        .find((key) => { // can stop at the first occurence
+          !isEqual(querySettings[key as keyof T], settings[key as keyof T]);
+        });
+
+      // Avoid re-setting the state with the same values;
+      if (isEqual(settings, defaultSettings) && !hasUnsetQuery) return;
+
       // Otherwise read settings from the query string.
       setSettings((prevSettings) => {
-        const defaultSettings = getDefaultSettings<T>(config, storage);
-        const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }

@@ -18,6 +18,7 @@ import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, UnknownRecord } from 'shared/types';
+import { isEqual } from 'shared/utils/data';
 
 import css from './InteractiveTable.module.scss';
 import SkeletonTable from './Skeleton/SkeletonTable';
@@ -49,7 +50,7 @@ export interface InteractiveTableSettings {
 }
 
 export const WIDGET_COLUMN_WIDTH = 46;
-const DEFAULT_RESIZE_THROTTLE_TIME = 200;
+const DEFAULT_RESIZE_THROTTLE_TIME = 100;
 const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
@@ -418,6 +419,9 @@ const InteractiveTable: InteractiveTable = ({
       }
 
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+
+      if (isEqual(newSettings, settings)) return;
+
       updateSettings(newSettings, shouldPush);
     },
     [ settings, updateSettings, columnDefs ],
