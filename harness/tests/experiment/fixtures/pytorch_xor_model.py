@@ -241,21 +241,6 @@ class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
         return {"predictions": predictions, "binary_error": binary_error}
 
 
-class XORTrialCustomEval(BaseXORTrial):
-    _searcher_metric = "loss"
-
-    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
-        loss_sum = 0.0
-        for data, labels in iter(data_loader):
-            if torch.cuda.is_available():
-                data, labels = data.cuda(), labels.cuda()
-            output = self.model(data)
-            loss_sum += error_rate(output, labels)
-
-        loss = loss_sum / len(data_loader)
-        return {"loss": loss}
-
-
 class XORTrialWithLRScheduler(XORTrialMulti):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context

@@ -96,9 +96,7 @@ def triangle_label_sum(updates: List) -> Any:
     return out
 
 
-class OneVarTrial(pytorch.PyTorchTrial):
-    _searcher_metric = "val_loss"
-
+class BaseOneVarTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
@@ -176,15 +174,6 @@ class OneVarTrial(pytorch.PyTorchTrial):
                     m_a, m_b, atol=atol
                 ), f"Metrics {k_a}={m_a} and {k_b}={m_b} do not match at batch {batch_idx}"
 
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
-        data, label = batch
-
-        self.cls_reducer.update(sum(label), None)
-        self.fn_reducer.update((sum(label), None))
-
-        loss = self.loss_fn(self.model(data), label)
-        return {"val_loss": loss}
-
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         if self.hparams["dataloader_type"] == "determined":
             return pytorch.DataLoader(
@@ -227,6 +216,19 @@ class OneVarTrial(pytorch.PyTorchTrial):
             return torch.utils.data.DataLoader(dataset, batch_sampler=batch_sampler)
         else:
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
+
+
+class OneVarTrial(BaseOneVarTrial):
+    _searcher_metric = "val_loss"
+
+    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+        data, label = batch
+
+        self.cls_reducer.update(sum(label), None)
+        self.fn_reducer.update((sum(label), None))
+
+        loss = self.loss_fn(self.model(data), label)
+        return {"val_loss": loss}
 
 
 class AMPTestDataset(OnesDataset):
@@ -405,6 +407,21 @@ class OneVarManualAMPWithNoopApexTrial(OneVarManualAMPTrial):
             opt_level="O2",
             enabled=False,
         )
+
+
+class OneVarTrialCustomEval(BaseOneVarTrial):
+    _searcher_metric = "loss"
+
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
+        loss_sum = 0.0
+        for data, labels in iter(data_loader):
+            if torch.cuda.is_available():
+                data, labels = data.cuda(), labels.cuda()
+            output = self.model(data)
+            loss_sum += self.loss_fn(output, labels)
+
+        loss = loss_sum / len(data_loader)
+        return {"val_loss": loss}
 
 
 if __name__ == "__main__":

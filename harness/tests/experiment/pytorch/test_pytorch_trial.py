@@ -3,6 +3,7 @@ import os
 import pathlib
 import typing
 
+import numpy as np
 import pytest
 import torch
 
@@ -287,7 +288,7 @@ class TestPyTorchTrial:
             validation_metrics[tag] = vm
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads("A"),
             trial_seed=self.trial_seed,
@@ -295,7 +296,7 @@ class TestPyTorchTrial:
         controller.run()
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCustomEval,
+            trial_class=pytorch_onevar_model.OneVarTrialCustomEval,
             hparams=self.hparams,
             workloads=make_workloads("B"),
             trial_seed=self.trial_seed,
@@ -304,10 +305,10 @@ class TestPyTorchTrial:
         controller.run()
 
         for original, custom_eval in zip(training_metrics["A"], training_metrics["B"]):
-            assert original["loss"] == custom_eval["loss"]
+            assert np.allclose(original["loss"], custom_eval["loss"], atol=1e-6)
 
         for original, custom_eval in zip(validation_metrics["A"], validation_metrics["B"]):
-            assert original["loss"] == custom_eval["loss"]
+            assert np.allclose(original["val_loss"], custom_eval["val_loss"], atol=1e-6)
 
     def test_grad_clipping(self) -> None:
         training_metrics = {}
