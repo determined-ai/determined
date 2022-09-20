@@ -1,6 +1,19 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Alert, Button, Checkbox, Form, Input, InputNumber, ModalFuncProps,
-  Radio, RadioChangeEvent, Select, Space, Tooltip, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Form,
+  Input,
+  InputNumber,
+  ModalFuncProps,
+  Radio,
+  RadioChangeEvent,
+  Select,
+  Space,
+  Tooltip,
+  Typography,
+} from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -20,8 +33,16 @@ import { DetError, isDetError } from 'shared/utils/error';
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
-import { ExperimentItem, ExperimentSearcherName, Hyperparameter,
-  HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters, TrialItem } from 'types';
+import {
+  ExperimentItem,
+  ExperimentSearcherName,
+  Hyperparameter,
+  HyperparameterType,
+  ResourcePool,
+  TrialDetails,
+  TrialHyperparameters,
+  TrialItem,
+} from 'types';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
@@ -68,10 +89,10 @@ const DEFAULT_LOG_BASE = 10;
 
 interface HyperparameterRowValues {
   count?: number;
-  max?: number,
-  min?: number
-  type: HyperparameterType,
-  value?: number | string,
+  max?: number;
+  min?: number;
+  type: HyperparameterType;
+  value?: number | string;
 }
 
 const useModalHyperparameterSearch = ({
@@ -80,28 +101,28 @@ const useModalHyperparameterSearch = ({
   trial: trialIn,
 }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
-  const [ trial, setTrial ] = useState(trialIn);
-  const [ modalError, setModalError ] = useState<string>();
-  const [ searcher, setSearcher ] = useState(
+  const [trial, setTrial] = useState(trialIn);
+  const [modalError, setModalError] = useState<string>();
+  const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
-    SEARCH_METHODS.ASHA,
+      SEARCH_METHODS.ASHA,
   );
   const { resourcePools } = useStore();
   const canceler = useRef<AbortController>();
   const fetchResourcePools = useFetchResourcePools(canceler.current);
-  const [ resourcePool, setResourcePool ] = useState<ResourcePool>(
+  const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );
-  const [ form ] = Form.useForm();
-  const [ currentPage, setCurrentPage ] = useState(0);
-  const [ validationError, setValidationError ] = useState(false);
+  const [form] = Form.useForm();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
 
   useEffect(() => {
     if (resourcePools == null) {
       fetchResourcePools();
     }
-  }, [ fetchResourcePools, resourcePools ]);
+  }, [fetchResourcePools, resourcePools]);
 
   useEffect(() => {
     canceler.current = new AbortController();
@@ -114,21 +135,20 @@ const useModalHyperparameterSearch = ({
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
     const continueFn = (value: unknown) => value === 'object';
-    return flattenObject<TrialHyperparameters>(
-      trial.hyperparameters,
-      { continueFn },
-    ) as unknown as Record<string, Primitive>;
-  }, [ trial ]);
+    return flattenObject<TrialHyperparameters>(trial.hyperparameters, {
+      continueFn,
+    }) as unknown as Record<string, Primitive>;
+  }, [trial]);
 
   const hyperparameters = useMemo(() => {
     return Object.entries(experiment.hyperparameters).map((hp) => {
-      const hpObject = ({ hyperparameter: hp[1], name: hp[0] });
+      const hpObject = { hyperparameter: hp[1], name: hp[0] };
       if (trialHyperparameters?.[hp[0]]) {
         hpObject.hyperparameter.val = trialHyperparameters[hp[0]];
       }
       return hpObject;
     });
-  }, [ experiment.hyperparameters, trialHyperparameters ]);
+  }, [experiment.hyperparameters, trialHyperparameters]);
 
   const submitExperiment = useCallback(async () => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
@@ -139,8 +159,8 @@ const useModalHyperparameterSearch = ({
     // Replacing fields from orginial config with user-selected values
     baseConfig.name = (fields.name as string).trim();
     baseConfig.searcher.name = fields.searcher;
-    baseConfig.searcher.max_trials = fields.searcher === SEARCH_METHODS.Grid.name ?
-      undefined : fields.max_trials;
+    baseConfig.searcher.max_trials =
+      fields.searcher === SEARCH_METHODS.Grid.name ? undefined : fields.max_trials;
     baseConfig.searcher.max_length = {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
@@ -173,7 +193,7 @@ const useModalHyperparameterSearch = ({
           if (!hpInfo.value) return;
           let parsedVal;
           try {
-            if (typeof hpInfo.value === 'string'){
+            if (typeof hpInfo.value === 'string') {
               // Parse hyperparameter value in case it's not a string or number
               parsedVal = JSON.parse(hpInfo.value);
             } else {
@@ -189,15 +209,16 @@ const useModalHyperparameterSearch = ({
         } else {
           const prevBase: number | undefined = baseConfig.hyperparameters[hpName]?.base;
           baseConfig.hyperparameters[hpName] = {
-            base: hpInfo.type === HyperparameterType.Log ?
-              (prevBase ?? DEFAULT_LOG_BASE) : undefined,
+            base: hpInfo.type === HyperparameterType.Log ? prevBase ?? DEFAULT_LOG_BASE : undefined,
             count: fields.searcher === SEARCH_METHODS.Grid.name ? hpInfo.count : undefined,
-            maxval: hpInfo.type === HyperparameterType.Int ?
-              roundToPrecision(hpInfo.max ?? 0, 0) :
-              hpInfo.max,
-            minval: hpInfo.type === HyperparameterType.Int ?
-              roundToPrecision(hpInfo.min ?? 0, 0) :
-              hpInfo.min,
+            maxval:
+              hpInfo.type === HyperparameterType.Int
+                ? roundToPrecision(hpInfo.max ?? 0, 0)
+                : hpInfo.max,
+            minval:
+              hpInfo.type === HyperparameterType.Int
+                ? roundToPrecision(hpInfo.min ?? 0, 0)
+                : hpInfo.min,
             type: hpInfo.type,
           };
         }
@@ -209,12 +230,15 @@ const useModalHyperparameterSearch = ({
     const newConfig = yaml.dump(baseConfig);
 
     try {
-      const { id: newExperimentId } = await createExperiment({
-        activate: true,
-        experimentConfig: newConfig,
-        parentId: experiment.id,
-        projectId: experiment.projectId,
-      }, { signal: canceler.current?.signal });
+      const { id: newExperimentId } = await createExperiment(
+        {
+          activate: true,
+          experimentConfig: newConfig,
+          parentId: experiment.id,
+          projectId: experiment.projectId,
+        },
+        { signal: canceler.current?.signal },
+      );
 
       // Route to reload path to forcibly remount experiment page.
       const newPath = paths.experimentDetails(newExperimentId);
@@ -230,7 +254,7 @@ const useModalHyperparameterSearch = ({
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [ experiment.configRaw, experiment.id, experiment.projectId, form ]);
+  }, [experiment.configRaw, experiment.id, experiment.projectId, form]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
@@ -238,7 +262,7 @@ const useModalHyperparameterSearch = ({
     } else {
       submitExperiment();
     }
-  }, [ currentPage, submitExperiment ]);
+  }, [currentPage, submitExperiment]);
 
   const handleBack = useCallback(() => {
     setCurrentPage((prev) => prev - 1);
@@ -246,75 +270,101 @@ const useModalHyperparameterSearch = ({
 
   const handleCancel = useCallback(() => {
     modalClose(ModalCloseReason.Cancel);
-  }, [ modalClose ]);
+  }, [modalClose]);
 
-  const handleSelectPool = useCallback((value: SelectValue) => {
-    setResourcePool(resourcePools.find((pool) => pool.name === value) ?? resourcePools[0]);
-  }, [ resourcePools ]);
-
-  const maxSlots = useMemo(
-    () => resourcePool ? maxPoolSlotCapacity(resourcePool) : 0,
-    [ resourcePool ],
+  const handleSelectPool = useCallback(
+    (value: SelectValue) => {
+      setResourcePool(resourcePools.find((pool) => pool.name === value) ?? resourcePools[0]);
+    },
+    [resourcePools],
   );
 
-  const [ maxLengthUnit, maxLength ] = useMemo(() => {
-    return (Object.entries(
-      experiment.config.searcher.max_length ?? { batches: 1 },
-    )[0] ?? [ 'batches', 1 ]) as ['batches' | 'records' | 'epochs', number];
-  }, [ experiment.config.searcher.max_length ]);
+  const maxSlots = useMemo(
+    () => (resourcePool ? maxPoolSlotCapacity(resourcePool) : 0),
+    [resourcePool],
+  );
+
+  const [maxLengthUnit, maxLength] = useMemo(() => {
+    return (Object.entries(experiment.config.searcher.max_length ?? { batches: 1 })[0] ?? [
+      'batches',
+      1,
+    ]) as ['batches' | 'records' | 'epochs', number];
+  }, [experiment.config.searcher.max_length]);
 
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
     setResourcePool(resourcePools[0]);
-  }, [ resourcePool, resourcePools ]);
+  }, [resourcePool, resourcePools]);
 
   const validateForm = useCallback(() => {
     if (!formValues) return;
     if (currentPage === 1) {
       // Validating hyperparameters page
       const hyperparameters = formValues as Record<string, HyperparameterRowValues>;
-      setValidationError(!Object.values(hyperparameters).every((hp) => {
-        switch (hp.type) {
-          case HyperparameterType.Categorical:
-            return true;
-          case HyperparameterType.Constant:
-            return hp.value != null;
-          default:
-            return hp.min != null && hp.max != null && hp.max >= hp.min &&
-              (searcher !== SEARCH_METHODS.Grid || (hp.count != null && hp.count > 0));
-        }
-      }));
+      setValidationError(
+        !Object.values(hyperparameters).every((hp) => {
+          switch (hp.type) {
+            case HyperparameterType.Categorical:
+              return true;
+            case HyperparameterType.Constant:
+              return hp.value != null;
+            default:
+              return (
+                hp.min != null &&
+                hp.max != null &&
+                hp.max >= hp.min &&
+                (searcher !== SEARCH_METHODS.Grid || (hp.count != null && hp.count > 0))
+              );
+          }
+        }),
+      );
     } else if (currentPage === 0) {
       // Validating searcher page
       const {
-        searcher, name, pool, slots_per_trial, max_trials, max_length,
-        length_units, mode, stop_once, max_concurrent_trials,
+        searcher,
+        name,
+        pool,
+        slots_per_trial,
+        max_trials,
+        max_length,
+        length_units,
+        mode,
+        stop_once,
+        max_concurrent_trials,
       } = formValues;
 
       const validName = validateLength(name ?? '');
-      const validSlotsPerTrial = slots_per_trial != null && slots_per_trial >= 0 &&
-        slots_per_trial <= maxSlots;
+      const validSlotsPerTrial =
+        slots_per_trial != null && slots_per_trial >= 0 && slots_per_trial <= maxSlots;
       const validMaxLength = max_length != null && max_length > 0;
       const validMaxConcurrentTrials = max_concurrent_trials != null && max_concurrent_trials >= 0;
-      const validMaxTrials = (searcher === SEARCH_METHODS.Grid.name ||
-        (max_trials != null && max_trials > 0));
+      const validMaxTrials =
+        searcher === SEARCH_METHODS.Grid.name || (max_trials != null && max_trials > 0);
 
-      setValidationError(!(validName && validSlotsPerTrial && validMaxLength &&
-        validMaxConcurrentTrials && validMaxTrials && pool != null && length_units != null &&
-        (searcher !== SEARCH_METHODS.ASHA.name || (mode != null && isBoolean(stop_once)))
-      ));
+      setValidationError(
+        !(
+          validName &&
+          validSlotsPerTrial &&
+          validMaxLength &&
+          validMaxConcurrentTrials &&
+          validMaxTrials &&
+          pool != null &&
+          length_units != null &&
+          (searcher !== SEARCH_METHODS.ASHA.name || (mode != null && isBoolean(stop_once)))
+        ),
+      );
     }
-  }, [ currentPage, formValues, maxSlots, searcher ]);
+  }, [currentPage, formValues, maxSlots, searcher]);
 
   useEffect(() => {
     validateForm();
-  }, [ validateForm ]);
+  }, [validateForm]);
 
   const handleSelectSearcher = useCallback((e: RadioChangeEvent) => {
     const value = e.target.value;
     setSearcher(
-      Object.values(SEARCH_METHODS)
-        .find((searcher) => searcher.name === value) ?? SEARCH_METHODS.ASHA,
+      Object.values(SEARCH_METHODS).find((searcher) => searcher.name === value) ??
+        SEARCH_METHODS.ASHA,
     );
   }, []);
 
@@ -338,23 +388,33 @@ const useModalHyperparameterSearch = ({
             gridTemplateColumns: `180px minmax(100px, 1.4fr) 
               repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(60px, 1fr))`,
           }}>
-          <label id="hyperparameter"><h2>Hyperparameter</h2></label>
-          <label id="type"><h2>Type</h2></label>
-          <label id="current-value"><h2>Current</h2></label>
-          <label id="min-value"><h2>Min value</h2></label>
-          <label id="max-value"><h2>Max value</h2></label>
-          {searcher === SEARCH_METHODS.Grid && <label id="count"><h2>Grid Count</h2></label>}
+          <label id="hyperparameter">
+            <h2>Hyperparameter</h2>
+          </label>
+          <label id="type">
+            <h2>Type</h2>
+          </label>
+          <label id="current-value">
+            <h2>Current</h2>
+          </label>
+          <label id="min-value">
+            <h2>Min value</h2>
+          </label>
+          <label id="max-value">
+            <h2>Max value</h2>
+          </label>
+          {searcher === SEARCH_METHODS.Grid && (
+            <label id="count">
+              <h2>Grid Count</h2>
+            </label>
+          )}
           {hyperparameters.map((hp) => (
-            <HyperparameterRow
-              key={hp.name}
-              searcher={searcher}
-              {...hp}
-            />
+            <HyperparameterRow key={hp.name} searcher={searcher} {...hp} />
           ))}
         </div>
       </div>
     );
-  }, [ hyperparameters, modalError, searcher ]);
+  }, [hyperparameters, modalError, searcher]);
 
   const searcherPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -363,27 +423,26 @@ const useModalHyperparameterSearch = ({
         {modalError && <Alert className={css.error} message={modalError} type="error" />}
         <Form.Item
           initialValue={searcher.name}
-          label={(
+          label={
             <div className={css.labelWithLink}>
               <p>Select search method</p>
               <Link
                 external
-                path={paths.
-                  docs('/training-hyperparameter/index.html#specifying-the-search-algorithm')}
+                path={paths.docs(
+                  '/training-hyperparameter/index.html#specifying-the-search-algorithm',
+                )}
                 popout>
                 Learn more
               </Link>
             </div>
-          )}
+          }
           name="searcher">
           <Radio.Group
             className={css.searcherGroup}
             optionType="button"
             onChange={handleSelectSearcher}>
             {Object.values(SEARCH_METHODS).map((searcher) => (
-              <Radio.Button
-                key={searcher.name}
-                value={searcher.name}>
+              <Radio.Button key={searcher.name} value={searcher.name}>
                 <div className={css.searcherButton}>
                   {searcher.icon}
                   <p>{searcher.displayName}</p>
@@ -396,7 +455,7 @@ const useModalHyperparameterSearch = ({
           initialValue={experiment.name}
           label="New experiment name"
           name="name"
-          rules={[ { required: true } ]}>
+          rules={[{ required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
         <div className={css.poolContainer}>
@@ -404,10 +463,8 @@ const useModalHyperparameterSearch = ({
             initialValue={resourcePool?.name}
             label="Resource pool"
             name="pool"
-            rules={[ { required: true } ]}>
-            <SelectFilter
-              showSearch={false}
-              onChange={handleSelectPool}>
+            rules={[{ required: true }]}>
+            <SelectFilter showSearch={false} onChange={handleSelectPool}>
               {resourcePools.map((pool) => (
                 <Select.Option key={pool.name} value={pool.name}>
                   {pool.name}
@@ -423,25 +480,19 @@ const useModalHyperparameterSearch = ({
             initialValue={maxLength}
             label="Max length"
             name="max_length"
-            rules={[ { min: 1, required: true, type: 'number' } ]}>
+            rules={[{ min: 1, required: true, type: 'number' }]}>
             <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
             initialValue={maxLengthUnit}
             label="Units"
             name="length_units"
-            rules={[ { required: true } ]}>
+            rules={[{ required: true }]}>
             <SelectFilter showSearch={false}>
-              <Select.Option value="records">
-                records
-              </Select.Option>
-              <Select.Option value="batches">
-                batches
-              </Select.Option>
+              <Select.Option value="records">records</Select.Option>
+              <Select.Option value="batches">batches</Select.Option>
               {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
-                <Select.Option value="epochs">
-                  epochs
-                </Select.Option>
+                <Select.Option value="epochs">epochs</Select.Option>
               )}
             </SelectFilter>
           </Form.Item>
@@ -449,37 +500,32 @@ const useModalHyperparameterSearch = ({
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
             label="Slots per trial"
             name="slots_per_trial"
-            rules={[ { max: maxSlots, min: 1, required: true, type: 'number' } ]}
+            rules={[{ max: maxSlots, min: 1, required: true, type: 'number' }]}
             validateStatus={
-              (formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 1) ?
-                'error' : 'success'}>
+              formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 1
+                ? 'error'
+                : 'success'
+            }>
             <InputNumber max={maxSlots} min={0} precision={0} />
           </Form.Item>
         </div>
         {searcher.name === 'adaptive_asha' && (
           <Form.Item
             initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
-            label={(
+            label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
-                <Tooltip
-                  title="How aggressively to perform early stopping of underperforming trials">
+                <Tooltip title="How aggressively to perform early stopping of underperforming trials">
                   <InfoCircleOutlined />
                 </Tooltip>
               </div>
-            )}
+            }
             name="mode"
-            rules={[ { required: true } ]}>
+            rules={[{ required: true }]}>
             <SelectFilter showSearch={false}>
-              <Select.Option value="aggressive">
-                Aggressive
-              </Select.Option>
-              <Select.Option value="standard">
-                Standard
-              </Select.Option>
-              <Select.Option value="conservative">
-                Conservative
-              </Select.Option>
+              <Select.Option value="aggressive">Aggressive</Select.Option>
+              <Select.Option value="standard">Standard</Select.Option>
+              <Select.Option value="conservative">Conservative</Select.Option>
             </SelectFilter>
           </Form.Item>
         )}
@@ -487,11 +533,11 @@ const useModalHyperparameterSearch = ({
           <Form.Item
             initialValue={experiment.configRaw.searcher?.stop_once ?? true}
             name="stop_once"
-            rules={[ { required: true } ]}
+            rules={[{ required: true }]}
             valuePropName="checked">
             <Checkbox>
-              Stop once - Only stop trials one time when there is enough evidence to
-              terminate training (recommended for faster search)
+              Stop once - Only stop trials one time when there is enough evidence to terminate
+              training (recommended for faster search)
             </Checkbox>
           </Form.Item>
         )}
@@ -502,27 +548,28 @@ const useModalHyperparameterSearch = ({
             initialValue={experiment.config.searcher.max_trials ?? 1}
             label="Max trials"
             name="max_trials"
-            rules={[ { min: 1, required: true, type: 'number' } ]}>
+            rules={[{ min: 1, required: true, type: 'number' }]}>
             <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
             initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 0}
-            label={(
+            label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
                 <Tooltip title="Use 0 for max possible parallelism">
                   <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
                 </Tooltip>
               </div>
-            )}
+            }
             name="max_concurrent_trials"
-            rules={[ { min: 0, required: true, type: 'number' } ]}>
+            rules={[{ min: 0, required: true, type: 'number' }]}>
             <InputNumber min={0} precision={0} />
           </Form.Item>
         </div>
       </div>
     );
-  }, [ experiment.config.searcher.max_trials,
+  }, [
+    experiment.config.searcher.max_trials,
     experiment.configRaw?.records_per_epoch,
     experiment.configRaw?.resources?.slots_per_trial,
     experiment.configRaw.searcher.max_concurrent_trials,
@@ -538,11 +585,12 @@ const useModalHyperparameterSearch = ({
     modalError,
     resourcePool?.name,
     resourcePools,
-    searcher ]);
+    searcher,
+  ]);
 
   const pages = useMemo(
-    () => ([ searcherPage, hyperparameterPage ]),
-    [ hyperparameterPage, searcherPage ],
+    () => [searcherPage, hyperparameterPage],
+    [hyperparameterPage, searcherPage],
   );
 
   const footer = useMemo(() => {
@@ -558,7 +606,7 @@ const useModalHyperparameterSearch = ({
         </Space>
       </div>
     );
-  }, [ currentPage, handleBack, handleCancel, handleOk, validationError ]);
+  }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
@@ -568,20 +616,24 @@ const useModalHyperparameterSearch = ({
         <Form form={form} layout="vertical" requiredMark={false}>
           {pages[currentPage]}
           {footer}
-        </Form>),
+        </Form>
+      ),
       icon: null,
       maskClosable: false,
       title: 'Hyperparameter Search',
       width: 700,
     };
-  }, [ form, pages, currentPage, footer ]);
+  }, [form, pages, currentPage, footer]);
 
-  const modalOpen = useCallback((props?: ShowModalProps) => {
-    setCurrentPage(0);
-    form.resetFields();
-    if (props?.trial) setTrial(props?.trial);
-    openOrUpdate({ ...modalProps, ...props?.initialModalProps });
-  }, [ form, modalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (props?: ShowModalProps) => {
+      setCurrentPage(0);
+      form.resetFields();
+      if (props?.trial) setTrial(props?.trial);
+      openOrUpdate({ ...modalProps, ...props?.initialModalProps });
+    },
+    [form, modalProps, openOrUpdate],
+  );
 
   /*
    * When modal props changes are detected, such as modal content
@@ -589,7 +641,7 @@ const useModalHyperparameterSearch = ({
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
-  }, [ modalProps, modalRef, openOrUpdate ]);
+  }, [modalProps, modalRef, openOrUpdate]);
 
   return { modalClose, modalOpen, modalRef, ...modalHook };
 };
@@ -600,19 +652,17 @@ interface RowProps {
   searcher: SearchMethod;
 }
 
-const HyperparameterRow: React.FC<RowProps> = (
-  { hyperparameter, name, searcher }: RowProps,
-) => {
-  const type: HyperparameterType | undefined = Form.useWatch([ name, 'type' ]);
+const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher }: RowProps) => {
+  const type: HyperparameterType | undefined = Form.useWatch([name, 'type']);
   const typeRef = useRef<RefSelectProps>(null);
-  const [ active, setActive ] = useState(hyperparameter.type !== HyperparameterType.Constant);
-  const min: number | undefined = Form.useWatch([ name, 'min' ]);
-  const max: number | undefined = Form.useWatch([ name, 'max' ]);
-  const [ valError, setValError ] = useState<string>();
-  const [ minError, setMinError ] = useState<string>();
-  const [ maxError, setMaxError ] = useState<string>();
-  const [ rangeError, setRangeError ] = useState<string>();
-  const [ countError, setCountError ] = useState<string>();
+  const [active, setActive] = useState(hyperparameter.type !== HyperparameterType.Constant);
+  const min: number | undefined = Form.useWatch([name, 'min']);
+  const max: number | undefined = Form.useWatch([name, 'max']);
+  const [valError, setValError] = useState<string>();
+  const [minError, setMinError] = useState<string>();
+  const [maxError, setMaxError] = useState<string>();
+  const [rangeError, setRangeError] = useState<string>();
+  const [countError, setCountError] = useState<string>();
 
   const handleTypeChange = useCallback((value: HyperparameterType) => {
     setActive(value !== HyperparameterType.Constant);
@@ -623,32 +673,38 @@ const HyperparameterRow: React.FC<RowProps> = (
     setValError(value === '' ? 'Current value is required.' : undefined);
   }, []);
 
-  const validateMin = useCallback((value: number | string | null) => {
-    if (value == null) {
-      setMinError('Minimum value is required.');
-    } else if (typeof value === 'string') {
-      setMinError('Minimum value must be a number.');
-    } else if (max != null && value > max) {
-      setRangeError('Maximum value must be greater or equal to than minimum value.');
-      setMinError(undefined);
-    } else {
-      setMinError(undefined);
-      setRangeError(undefined);
-    }
-  }, [ max ]);
+  const validateMin = useCallback(
+    (value: number | string | null) => {
+      if (value == null) {
+        setMinError('Minimum value is required.');
+      } else if (typeof value === 'string') {
+        setMinError('Minimum value must be a number.');
+      } else if (max != null && value > max) {
+        setRangeError('Maximum value must be greater or equal to than minimum value.');
+        setMinError(undefined);
+      } else {
+        setMinError(undefined);
+        setRangeError(undefined);
+      }
+    },
+    [max],
+  );
 
-  const validateMax = useCallback((value: number | string | null) => {
-    if (value == null) {
-      setMaxError('Maximum value is required.');
-    } else if (typeof value === 'string') {
-      setMaxError('Maximum value must be a number.');
-    } else if (min != null && value < min) {
-      setRangeError('Maximum value must be greater or equal to than minimum value.');
-    } else {
-      setMaxError(undefined);
-      setRangeError(undefined);
-    }
-  }, [ min ]);
+  const validateMax = useCallback(
+    (value: number | string | null) => {
+      if (value == null) {
+        setMaxError('Maximum value is required.');
+      } else if (typeof value === 'string') {
+        setMaxError('Maximum value must be a number.');
+      } else if (min != null && value < min) {
+        setRangeError('Maximum value must be greater or equal to than minimum value.');
+      } else {
+        setMaxError(undefined);
+        setRangeError(undefined);
+      }
+    },
+    [min],
+  );
 
   const validateCount = useCallback((value: number | string | null) => {
     if (value == null) {
@@ -665,19 +721,18 @@ const HyperparameterRow: React.FC<RowProps> = (
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
+        <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>
+          {name}
+        </Typography.Title>
       </div>
-      <Form.Item
-        initialValue={hyperparameter.type}
-        name={[ name, 'type' ]}
-        noStyle>
+      <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
         <Select
           aria-labelledby="type"
           getPopupContainer={(triggerNode) => triggerNode}
           ref={typeRef}
           onChange={handleTypeChange}>
-          {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>)
-            .map((type) => (
+          {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
+            (type) => (
               <Select.Option
                 disabled={HyperparameterType[type] === HyperparameterType.Categorical}
                 key={HyperparameterType[type]}
@@ -685,13 +740,14 @@ const HyperparameterRow: React.FC<RowProps> = (
                 {type}
                 {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
               </Select.Option>
-            ))}
+            ),
+          )}
         </Select>
       </Form.Item>
       <Form.Item
         initialValue={hyperparameter.val}
-        name={[ name, 'value' ]}
-        rules={[ { required: !active } ]}
+        name={[name, 'value']}
+        rules={[{ required: !active }]}
         validateStatus={valError ? 'error' : 'success'}>
         <Input
           aria-labelledby="current-value"
@@ -702,21 +758,13 @@ const HyperparameterRow: React.FC<RowProps> = (
       </Form.Item>
       {type === HyperparameterType.Categorical ? (
         <>
-          <Form.Item
-            initialValue={hyperparameter.minval}
-            name={[ name, 'min' ]}
-            noStyle>
+          <Form.Item initialValue={hyperparameter.minval} name={[name, 'min']} noStyle>
             <Input aria-labelledby="min-value" disabled />
           </Form.Item>
-          <Form.Item
-            initialValue={hyperparameter.maxval}
-            name={[ name, 'max' ]}
-            noStyle>
+          <Form.Item initialValue={hyperparameter.maxval} name={[name, 'max']} noStyle>
             <Input aria-labelledby="max-value" disabled />
           </Form.Item>
-          <Form.Item
-            hidden={searcher !== SEARCH_METHODS.Grid}
-            name={[ name, 'count' ]}>
+          <Form.Item hidden={searcher !== SEARCH_METHODS.Grid} name={[name, 'count']}>
             <InputNumber aria-labelledby="count" disabled />
           </Form.Item>
         </>
@@ -724,13 +772,15 @@ const HyperparameterRow: React.FC<RowProps> = (
         <>
           <Form.Item
             initialValue={hyperparameter.minval}
-            name={[ name, 'min' ]}
-            rules={[ {
-              max: max,
-              required: active,
-              type: 'number',
-            } ]}
-            validateStatus={((minError || rangeError) && active) ? 'error' : undefined}>
+            name={[name, 'min']}
+            rules={[
+              {
+                max: max,
+                required: active,
+                type: 'number',
+              },
+            ]}
+            validateStatus={(minError || rangeError) && active ? 'error' : undefined}>
             <InputNumber
               aria-labelledby="min-value"
               className={type === HyperparameterType.Int ? undefined : css.disableArrows}
@@ -742,13 +792,15 @@ const HyperparameterRow: React.FC<RowProps> = (
           </Form.Item>
           <Form.Item
             initialValue={hyperparameter.maxval}
-            name={[ name, 'max' ]}
-            rules={[ {
-              min: min,
-              required: active,
-              type: 'number',
-            } ]}
-            validateStatus={((maxError || rangeError) && active) ? 'error' : undefined}>
+            name={[name, 'max']}
+            rules={[
+              {
+                min: min,
+                required: active,
+                type: 'number',
+              },
+            ]}
+            validateStatus={(maxError || rangeError) && active ? 'error' : undefined}>
             <InputNumber
               aria-labelledby="max-value"
               className={type === HyperparameterType.Int ? undefined : css.disableArrows}
@@ -761,14 +813,16 @@ const HyperparameterRow: React.FC<RowProps> = (
           <Form.Item
             hidden={searcher !== SEARCH_METHODS.Grid}
             initialValue={hyperparameter.count}
-            name={[ name, 'count' ]}
-            rules={[ {
-              min: 0,
-              required: active && searcher === SEARCH_METHODS.Grid,
-              type: 'number',
-            } ]}
+            name={[name, 'count']}
+            rules={[
+              {
+                min: 0,
+                required: active && searcher === SEARCH_METHODS.Grid,
+                type: 'number',
+              },
+            ]}
             validateStatus={
-              (countError && searcher === SEARCH_METHODS.Grid && active) ? 'error' : undefined
+              countError && searcher === SEARCH_METHODS.Grid && active ? 'error' : undefined
             }>
             <InputNumber
               aria-labelledby="count"
@@ -780,18 +834,16 @@ const HyperparameterRow: React.FC<RowProps> = (
           </Form.Item>
         </>
       )}
-      {type === HyperparameterType.Categorical &&
-        <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>}
-      {(!active && valError) &&
-        <p className={css.error}>{valError}</p>}
-      {(active && minError) &&
-        <p className={css.error}>{minError}</p>}
-      {(active && maxError) &&
-        <p className={css.error}>{maxError}</p>}
-      {(active && rangeError) &&
-        <p className={css.error}>{rangeError}</p>}
-      {(active && countError && searcher === SEARCH_METHODS.Grid) &&
-        <p className={css.error}>{countError}</p>}
+      {type === HyperparameterType.Categorical && (
+        <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>
+      )}
+      {!active && valError && <p className={css.error}>{valError}</p>}
+      {active && minError && <p className={css.error}>{minError}</p>}
+      {active && maxError && <p className={css.error}>{maxError}</p>}
+      {active && rangeError && <p className={css.error}>{rangeError}</p>}
+      {active && countError && searcher === SEARCH_METHODS.Grid && (
+        <p className={css.error}>{countError}</p>
+      )}
     </>
   );
 };

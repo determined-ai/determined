@@ -43,10 +43,8 @@ describe('Job Utilities', () => {
     });
 
     it('should throw given invalid position input', () => {
-      expect(() => utils.moveJobToPositionUpdate(jobs, jobId, -1))
-        .toThrow('Moving job failed');
-      expect(() => utils.moveJobToPositionUpdate(jobs, jobId, 0.3))
-        .toThrow('Moving job failed');
+      expect(() => utils.moveJobToPositionUpdate(jobs, jobId, -1)).toThrow('Moving job failed');
+      expect(() => utils.moveJobToPositionUpdate(jobs, jobId, 0.3)).toThrow('Moving job failed');
     });
 
     it('should work on middle of the job queue for moving up', () => {
@@ -66,6 +64,5 @@ describe('Job Utilities', () => {
       };
       expect(utils.moveJobToPositionUpdate(jobs, id, 3)).toEqual(expected);
     });
-
   });
 });

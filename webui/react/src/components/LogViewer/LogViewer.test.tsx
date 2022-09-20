@@ -36,12 +36,14 @@ const DEFAULT_CHAR_SIZE = { height: 18, width: 7 };
 
 const user = userEvent.setup();
 
-const generateMessage = (options: {
-  maxWordCount?: number,
-  maxWordLength?: number,
-  minWordCount?: number,
-  minWordLength?: number,
-} = {}): string => {
+const generateMessage = (
+  options: {
+    maxWordCount?: number;
+    maxWordLength?: number;
+    minWordCount?: number;
+    minWordLength?: number;
+  } = {},
+): string => {
   const minWordCount = options.minWordCount ?? DEFAULT_MIN_WORD_COUNT;
   const maxWordCount = options.maxWordCount ?? DEFAULT_MAX_WORD_COUNT;
   const minWordLength = options.minWordLength ?? DEFAULT_MIN_WORD_LENGTH;
@@ -57,7 +59,7 @@ const generateMessage = (options: {
 const generateLogs = (
   count = 1,
   startIndex = 0,
-  nowIndex?: number,      // when undefined, assumed the last generated log is now
+  nowIndex?: number, // when undefined, assumed the last generated log is now
 ): TestLog[] => {
   const dateIndex = nowIndex != null ? nowIndex : count - 1;
   return new Array(count).fill(null).map((_, i) => {
@@ -87,47 +89,48 @@ const setup = (props: src.Props) => {
  * skipStreaming -   Disables the streaming portion of the mocked `readStream` function.
  * streamingRounds - How many rounds of stream chunks to simulate.
  */
-const mockOnFetch = (mockOptions: {
-  canceler?: AbortController,
-  existingLogs?: TestLog[],
-  logsReference?: TestLog[],
-  skipStreaming?: boolean,
-  streamingRounds?: number,
-} = {}) => (
-  config: src.FetchConfig,
-  type: src.FetchType,
-): FetchArgs => {
-  const options = {
-    existingLogs: mockOptions.existingLogs,
-    follow: false,
-    limit: config.limit,
-    logsReference: mockOptions.logsReference,
-    orderBy: 'ORDER_BY_UNSPECIFIED',
-    signal: mockOptions.canceler?.signal,
-    skipStreaming: mockOptions.skipStreaming,
-    streamingRounds: mockOptions.streamingRounds,
-    timestampAfter: '',
-    timestampBefore: '',
+const mockOnFetch =
+  (
+    mockOptions: {
+      canceler?: AbortController;
+      existingLogs?: TestLog[];
+      logsReference?: TestLog[];
+      skipStreaming?: boolean;
+      streamingRounds?: number;
+    } = {},
+  ) =>
+  (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
+    const options = {
+      existingLogs: mockOptions.existingLogs,
+      follow: false,
+      limit: config.limit,
+      logsReference: mockOptions.logsReference,
+      orderBy: 'ORDER_BY_UNSPECIFIED',
+      signal: mockOptions.canceler?.signal,
+      skipStreaming: mockOptions.skipStreaming,
+      streamingRounds: mockOptions.streamingRounds,
+      timestampAfter: '',
+      timestampBefore: '',
+    };
+
+    if (type === src.FetchType.Initial) {
+      options.orderBy =
+        config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+    } else if (type === src.FetchType.Newer) {
+      options.orderBy = 'ORDER_BY_ASC';
+      if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
+    } else if (type === src.FetchType.Older) {
+      options.orderBy = 'ORDER_BY_DESC';
+      if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
+    } else if (type === src.FetchType.Stream) {
+      options.follow = true;
+      options.limit = 0;
+      options.orderBy = 'ORDER_BY_ASC';
+      options.timestampAfter = new Date(NOW).toISOString();
+    }
+
+    return { options, url: 'byTime' };
   };
-
-  if (type === src.FetchType.Initial) {
-    options.orderBy = config.fetchDirection === src.FetchDirection.Older
-      ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-  } else if (type === src.FetchType.Newer) {
-    options.orderBy = 'ORDER_BY_ASC';
-    if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-  } else if (type === src.FetchType.Older) {
-    options.orderBy = 'ORDER_BY_DESC';
-    if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-  } else if (type === src.FetchType.Stream) {
-    options.follow = true;
-    options.limit = 0;
-    options.orderBy = 'ORDER_BY_ASC';
-    options.timestampAfter = new Date(NOW).toISOString();
-  }
-
-  return { options, url: 'byTime' };
-};
 
 const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   const timestamp = new Date(timeString).getTime().toString();
@@ -152,7 +155,7 @@ jest.mock('services/utils', () => ({
     const desc = options.orderBy === 'ORDER_BY_DESC';
 
     if (!options.follow) {
-      const range = [ 0, existingLogs.length - 1 ];
+      const range = [0, existingLogs.length - 1];
       if (desc) {
         if (options.timestampBefore) {
           const before = findTimeLogIndex(existingLogs, options.timestampBefore);
@@ -237,7 +240,9 @@ describe('LogViewer', () => {
     });
 
     it('should show log close button when prop is supplied', async () => {
-      const handleCloseLogs = () => { return; };
+      const handleCloseLogs = () => {
+        return;
+      };
       setup({ decoder, handleCloseLogs });
 
       await waitFor(() => {

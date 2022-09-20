@@ -8,13 +8,11 @@ import Logo, { Orientation } from './Logo';
 
 export default {
   component: Logo,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   parameters: {
     backgrounds: {
       default: 'dark background',
-      values: [
-        { name: 'dark background', value: '#111' },
-      ],
+      values: [{ name: 'dark background', value: '#111' }],
     },
   },
   title: 'Logo',

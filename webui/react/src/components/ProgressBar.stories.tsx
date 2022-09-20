@@ -8,7 +8,7 @@ import ProgressBar, { Props as ProgressBarProps } from './ProgressBar';
 
 export default {
   component: ProgressBar,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   title: 'ProgressBar',
 };
 

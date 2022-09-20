@@ -31,7 +31,7 @@ const poolAttributes = [
   {
     key: 'accelerator',
     label: 'Accelerator',
-    render: (x: ResourcePool) => x.accelerator ? x.accelerator : '--',
+    render: (x: ResourcePool) => (x.accelerator ? x.accelerator : '--'),
   },
   {
     key: 'type',
@@ -57,7 +57,7 @@ const poolAttributes = [
 type SafeRawJson = Record<string, unknown>;
 
 /** Resource pool logo based on resource pool type */
-export const PoolLogo: React.FC<{type: V1ResourcePoolType}> = ({ type }) => {
+export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   const { ui } = useStore();
 
   let iconSrc = '';
@@ -81,14 +81,13 @@ export const PoolLogo: React.FC<{type: V1ResourcePoolType}> = ({ type }) => {
 };
 
 const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) => {
-
-  const descriptionClasses = [ css.description ];
+  const descriptionClasses = [css.description];
 
   if (!pool.description) descriptionClasses.push(css.empty);
 
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
-  }, [ pool ]);
+  }, [pool]);
 
   const processedPool = useMemo(() => {
     const newPool = clone(pool);
@@ -98,13 +97,13 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
       if (key === 'schedulerType') newPool[key] = V1SchedulerTypeToLabel[value as V1SchedulerType];
     });
     return newPool;
-  }, [ pool ]);
+  }, [pool]);
 
   const shortDetails = useMemo(() => {
     return poolAttributes.reduce((acc, attribute) => {
-      const value = attribute.render ?
-        attribute.render(processedPool) :
-        processedPool[attribute.key as keyof ResourcePool];
+      const value = attribute.render
+        ? attribute.render(processedPool)
+        : processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
       if (pool.type === V1ResourcePoolType.K8S && attribute.key !== 'type') {
@@ -112,7 +111,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
       }
       return acc;
     }, {} as SafeRawJson);
-  }, [ processedPool, isAux, pool ]);
+  }, [processedPool, isAux, pool]);
 
   return (
     <div className={css.base}>
@@ -122,7 +121,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
         </div>
         <div className={css.default}>
           {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
-          {pool.description && <Icon name="info" title={pool.description} /> }
+          {pool.description && <Icon name="info" title={pool.description} />}
         </div>
       </div>
       <div className={css.body}>
@@ -136,17 +135,15 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
   );
 };
 
-export const RenderAllocationBarResourcePool: React.FC<Props> = (
-  {
-    poolStats,
-    resourcePool: pool,
-    size = ShirtSize.large,
-  }: Props,
-) => {
+export const RenderAllocationBarResourcePool: React.FC<Props> = ({
+  poolStats,
+  resourcePool: pool,
+  size = ShirtSize.large,
+}: Props) => {
   const { agents } = useStore();
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
-  }, [ pool ]);
+  }, [pool]);
   return (
     <section>
       <SlotAllocationBar
@@ -157,9 +154,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
         hideHeader
         poolName={pool.name}
         poolType={pool.type}
-        resourceStates={
-          getSlotContainerStates(agents || [], pool.slotType, pool.name)
-        }
+        resourceStates={getSlotContainerStates(agents || [], pool.slotType, pool.name)}
         size={size}
         slotsPotential={maxPoolSlotCapacity(pool)}
         title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
@@ -174,9 +169,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
           hideHeader
           isAux={true}
           poolType={pool.type}
-          resourceStates={
-            getSlotContainerStates(agents || [], pool.slotType, pool.name)
-          }
+          resourceStates={getSlotContainerStates(agents || [], pool.slotType, pool.name)}
           size={size}
           title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
           totalSlots={maxPoolSlotCapacity(pool)}

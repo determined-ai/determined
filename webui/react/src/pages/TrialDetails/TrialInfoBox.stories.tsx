@@ -1,7 +1,12 @@
 import React from 'react';
 
 import {
-  CheckpointState, ExperimentBase, ExperimentOld, RunState, TrialDetails, TrialItem,
+  CheckpointState,
+  ExperimentBase,
+  ExperimentOld,
+  RunState,
+  TrialDetails,
+  TrialItem,
 } from 'types';
 import { generateOldExperiment } from 'utils/task';
 

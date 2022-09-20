@@ -6,8 +6,21 @@ import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
-import { Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo,
-  PoolOverview, ResourcePool, ResourceType, UserAssignment, UserRole, Workspace } from 'types';
+import {
+  Agent,
+  Auth,
+  ClusterOverview,
+  ClusterOverviewResource,
+  DetailedUser,
+  DeterminedInfo,
+  PoolOverview,
+  ResourcePool,
+  ResourceType,
+  UserAssignment,
+  UserRole,
+  Workspace,
+} from 'types';
+import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
 
@@ -26,7 +39,7 @@ interface State {
     notebooks: number;
     shells: number;
     tensorboards: number;
-  },
+  };
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
@@ -89,32 +102,35 @@ export enum StoreAction {
   SetUserRoles = 'SetUserRoles',
 }
 type Action =
-| { type: StoreAction.Reset }
-| { type: StoreAction.SetAgents; value: Agent[] }
-| { type: StoreAction.ResetAuth }
-| { type: StoreAction.ResetAuthCheck }
-| { type: StoreAction.SetAuth; value: Auth }
-| { type: StoreAction.SetAuthCheck }
-| { type: StoreAction.SetInfo; value: DeterminedInfo }
-| { type: StoreAction.SetInfoCheck }
-| { type: StoreAction.SetUsers; value: DetailedUser[] }
-| { type: StoreAction.SetCurrentUser; value: DetailedUser }
-| { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
-| { type: StoreAction.SetResourcePools; value: ResourcePool[] }
-| { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
-| { type: StoreAction.HideOmnibar }
-| { type: StoreAction.ShowOmnibar }
-| { type: StoreAction.SetActiveTasks, value: {
-  commands: number;
-  notebooks: number;
-  shells: number;
-  tensorboards: number;
-}}
-| { type: StoreAction.SetActiveExperiments, value: number }
-| { type: StoreAction.SetKnownRoles, value: UserRole[] }
-| { type: StoreAction.SetUserRoles, value: UserRole[] }
-| { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
-| ActionUI;
+  | { type: StoreAction.Reset }
+  | { type: StoreAction.SetAgents; value: Agent[] }
+  | { type: StoreAction.ResetAuth }
+  | { type: StoreAction.ResetAuthCheck }
+  | { type: StoreAction.SetAuth; value: Auth }
+  | { type: StoreAction.SetAuthCheck }
+  | { type: StoreAction.SetInfo; value: DeterminedInfo }
+  | { type: StoreAction.SetInfoCheck }
+  | { type: StoreAction.SetUsers; value: DetailedUser[] }
+  | { type: StoreAction.SetCurrentUser; value: DetailedUser }
+  | { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
+  | { type: StoreAction.SetResourcePools; value: ResourcePool[] }
+  | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
+  | { type: StoreAction.HideOmnibar }
+  | { type: StoreAction.ShowOmnibar }
+  | {
+      type: StoreAction.SetActiveTasks;
+      value: {
+        commands: number;
+        notebooks: number;
+        shells: number;
+        tensorboards: number;
+      };
+    }
+  | { type: StoreAction.SetActiveExperiments; value: number }
+  | { type: StoreAction.SetKnownRoles; value: UserRole[] }
+  | { type: StoreAction.SetUserRoles; value: UserRole[] }
+  | { type: StoreAction.SetUserAssignments; value: UserAssignment[] }
+  | ActionUI;
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -137,6 +153,7 @@ const initInfo: DeterminedInfo = {
   clusterName: '',
   isTelemetryEnabled: false,
   masterId: '',
+  rbacEnabled: false,
   version: process.env.VERSION || '',
 };
 
@@ -157,19 +174,25 @@ const initState: State = {
   pool: {},
   resourcePools: [],
   ui: { ...initUI, omnibar: { isShowing: false } },
-  userAssignments: [ {
-    cluster: true,
-    name: 'OSS User',
-  } ],
-  userRoles: [ {
-    id: -1,
-    name: 'OSS User',
-    permissions: [ {
+  userAssignments: [
+    {
+      cluster: true,
+      name: 'OSS User',
+    },
+  ],
+  userRoles: [
+    {
       id: -1,
-      isGlobal: true,
-      name: 'oss_user',
-    } ],
-  } ],
+      name: 'OSS User',
+      permissions: [
+        {
+          id: -1,
+          isGlobal: true,
+          name: 'oss_user',
+        },
+      ],
+    },
+  ],
   users: [],
   userSettings: [],
 };
@@ -179,6 +202,14 @@ const DispatchContext = React.createContext<Dispatch<Action> | undefined>(undefi
 
 const clearAuthCookie = (): void => {
   document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
+/**
+ * set the auth cookie if it's not already set.
+ * @param token auth token
+ */
+const ensureAuthCookieSet = (token: string): void => {
+  if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
 };
 
 export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
@@ -200,8 +231,10 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 
   for (const key in overview) {
     const rt = key as ResourceType;
-    overview[rt].allocation = overview[rt].total !== 0 ?
-      percent((overview[rt].total - overview[rt].available) / overview[rt].total) : 0;
+    overview[rt].allocation =
+      overview[rt].total !== 0
+        ? percent((overview[rt].total - overview[rt].available) / overview[rt].total)
+        : 0;
   }
 
   return overview;
@@ -224,8 +257,10 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   });
 
   for (const key in overview) {
-    overview[key].allocation = overview[key].total !== 0 ?
-      percent((overview[key].total - overview[key].available) / overview[key].total) : 0;
+    overview[key].allocation =
+      overview[key].total !== 0
+        ? percent((overview[key].total - overview[key].available) / overview[key].total)
+        : 0;
   }
 
   return overview;
@@ -251,6 +286,12 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, auth: { ...state.auth, checked: false } };
     case StoreAction.SetAuth:
       if (action.value.token) {
+        /**
+         * project Samuel provisioned auth doesn't set a cookie
+         * like our other auth methods do.
+         *
+         */
+        ensureAuthCookieSet(action.value.token);
         globalStorage.authToken = action.value.token;
       }
       return { ...state, auth: { ...action.value, checked: true } };
@@ -267,7 +308,7 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
       if (isEqual(action.value, state.auth.user)) return state;
-      const users = [ ...state.users ];
+      const users = [...state.users];
       const userIdx = users.findIndex((user) => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
@@ -324,7 +365,7 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 };
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
-  const [ state, dispatch ] = useReducer((state: State, action: Action) => {
+  const [state, dispatch] = useReducer((state: State, action: Action) => {
     const newState = reducer(state, action);
     if (isEqual(state, newState)) return state;
     logger.debug('store state updated', action.type);
@@ -332,9 +373,7 @@ const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   }, initState);
   return (
     <StateContext.Provider value={state}>
-      <DispatchContext.Provider value={dispatch}>
-        {children}
-      </DispatchContext.Provider>
+      <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
     </StateContext.Provider>
   );
 };

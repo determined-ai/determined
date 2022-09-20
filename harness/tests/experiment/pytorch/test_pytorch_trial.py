@@ -667,19 +667,66 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    def test_gradient_aggregation(self) -> None:
+        AGG_FREQ = 2
+        exp_config = utils.make_default_exp_config(
+            self.hparams,
+            scheduling_unit=1,
+            searcher_metric=pytorch_onevar_model.OneVarTrial._searcher_metric,
+        )
+        exp_config["optimizations"].update(
+            {
+                "aggregation_frequency": AGG_FREQ,
+                "average_aggregated_gradients": True,
+            }
+        )
+
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=100, validation_freq=10)
+            training_metrics, validation_metrics = trainer.result()
+
+            # Check the gradient update at every step.
+            for idx, batch_metrics in enumerate(training_metrics):
+                if (idx + 1) % AGG_FREQ != 0:
+                    # Only test batches which land on aggregation_frequency boundaries.
+                    continue
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
+
+            for older, newer in zip(training_metrics, training_metrics[1:]):
+                assert newer["loss"] <= older["loss"]
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            exp_config=exp_config,
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
-            (pytorch_onevar_model.OneVarApexAMPTrial),
-            (pytorch_onevar_model.OneVarAutoAMPTrial),
-            (pytorch_onevar_model.OneVarManualAMPTrial),
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPWithNoopApexTrial,
+            pytorch_onevar_model.OneVarApexAMPWithNoopScalerTrial,
         ],
         ids=[
             "apex",
             "autocast",
             "manual",
+            "manual-with-noop-apex",
+            "apex-with-noop-scaler",
         ],
     )
     def test_amp(self, trial_class) -> None:
@@ -715,6 +762,63 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics)
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.gpu
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_amp_with_gradient_aggregation(self, trial_class) -> None:
+        """Similar to test_amp but with gradient aggregation."""
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
+
+        # The assertions logic in make_amp_workloads require a batch size of one
+        hparams = dict(self.hparams)
+        hparams["global_batch_size"] = 1
+
+        AGG_FREQ = 2
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric=trial_class._searcher_metric,
+        )
+        exp_config["optimizations"].update(
+            {
+                "aggregation_frequency": AGG_FREQ,
+                "average_aggregated_gradients": True,
+            }
+        )
+
+        training_metrics = {}
+
+        def make_amp_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=20 * AGG_FREQ, validation_freq=1, scheduling_unit=1)
+            nonlocal training_metrics
+            training_metrics, _ = trainer.result()
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            exp_config=exp_config,
+            trial_class=trial_class,
+            hparams=hparams,
+            workloads=make_amp_workloads(),
+            trial_seed=self.trial_seed,
+            expose_gpus=True,
+        )
+        controller.run()
+
+        amp_metrics_test(trial_class, training_metrics, agg_freq=AGG_FREQ)
+
 
 @pytest.mark.parametrize(
     "ckpt,istrial",
@@ -734,7 +838,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, torch.nn.Module), type(trial)
 
 
-def amp_metrics_test(trial_class, training_metrics):
+def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
@@ -742,6 +846,9 @@ def amp_metrics_test(trial_class, training_metrics):
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
     for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
+        if (idx + 1) % agg_freq != 0:
+            # Only test batches which land on aggregation_frequency boundaries.
+            continue
         # Because the scaler is updated during the optimizer step, which occurs after training from
         #  a batch, the metrics dictionary may not have the updated scale, but we can get it
         #  from the next step.

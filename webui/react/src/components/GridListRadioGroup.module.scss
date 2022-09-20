@@ -1,11 +1,13 @@
 .base {
   display: flex;
-  
+
   .option {
     align-items: center;
     display: inline-flex;
     justify-content: center;
     width: 32px;
   }
-  .option > span:last-child { height: 24px; }
+  .option > span:last-child {
+    height: 24px;
+  }
 }

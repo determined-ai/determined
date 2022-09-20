@@ -46,12 +46,12 @@ export const durationInEnglish = humanizeDuration.humanizer({
   round: true,
   spacer: '',
   unitMeasures: DURATION_UNIT_MEASURES,
-  units: [ 'y', 'mo', 'w', 'd', 'h', 'm', 's', 'ms' ],
+  units: ['y', 'mo', 'w', 'd', 'h', 'm', 's', 'ms'],
 });
 
 export const formatDatetime = (
   datetime: string,
-  options: { format?: string, inputUTC?: boolean, outputUTC?: boolean, } = {},
+  options: { format?: string; inputUTC?: boolean; outputUTC?: boolean } = {},
 ): string => {
   const config = {
     format: DEFAULT_DATETIME_FORMAT,

@@ -6,7 +6,7 @@ import SkeletonSection, { ContentType } from './SkeletonSection';
 
 export default {
   component: SkeletonSection,
-  decorators: [ withKnobs ],
+  decorators: [withKnobs],
   parameters: { layout: 'fullscreen' },
   title: 'Skeleton/SkeletonSection',
 };
@@ -20,14 +20,7 @@ export const WithTitleProperties = (): React.ReactNode => (
 );
 
 export const WithFilterProperties = (): React.ReactNode => (
-  <SkeletonSection
-    filters={[
-      { width: 100 },
-      { width: 200 },
-      { width: 300 },
-    ]}
-    title
-  />
+  <SkeletonSection filters={[{ width: 100 }, { width: 200 }, { width: 300 }]} title />
 );
 
 export const WithCustomChildren = (): React.ReactNode => (
@@ -50,7 +43,7 @@ export const Custom = (): React.ReactNode => {
           undefined,
         )}
         filters={number('number of filters', 2)}
-        size={select('size', [ 'small', 'medium', 'large', 'max' ], 'medium')}
+        size={select('size', ['small', 'medium', 'large', 'max'], 'medium')}
         title={boolean('show title', true)}
       />
     </div>

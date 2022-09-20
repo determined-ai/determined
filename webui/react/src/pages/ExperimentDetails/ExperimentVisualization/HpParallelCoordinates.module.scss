@@ -2,7 +2,7 @@ $tooltip-offset: 5px;
 
 .base {
   height: 100%;
-  
+
   .container {
     min-height: 200px;
     position: relative;
@@ -39,4 +39,6 @@ $tooltip-offset: 5px;
     }
   }
 }
-.waiting { height: 300px; }
+.waiting {
+  height: 300px;
+}
