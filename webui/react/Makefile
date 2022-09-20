@@ -75,7 +75,12 @@ fmt-misc:
 	npm run  format:misc
 .PHONY: fmt-package-lock
 fmt-package-lock:
-	sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
+	# check if we're running on MacOS
+	if [ "$(shell uname)" = "Darwin" ]; then \
+		sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json \
+	else \
+		sed -i -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json \
+	fi
 .PHONY: fmt
 fmt: fmt-js fmt-css fmt-misc fmt-package-lock
 
