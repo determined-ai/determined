@@ -1176,7 +1176,9 @@ jobs:
           command: |
             go install github.com/goreleaser/goreleaser@v1.1.0
             git clean -df
-            PATH=$HOME/go/bin:$PATH make -C helm release
+            gobin="$(go env GOBIN)"
+            gopath="$(go env GOPATH)"
+            PATH="${gobin:-${gopath}/bin}:$PATH" make -C helm release
 
   publish-python-package:
     parameters:
