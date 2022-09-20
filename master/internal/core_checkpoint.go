@@ -313,10 +313,14 @@ func newDownloader(
 ) (checkpointDownloader, error) {
 	switch storage := storageConfig.GetUnionMember().(type) {
 	case expconf.S3Config:
+		prefix := ""
+		if storage.Prefix() != nil {
+			prefix = *storage.Prefix()
+		}
 		return &s3Downloader{
 			aw:     aw,
 			bucket: storage.Bucket(),
-			prefix: strings.TrimLeft(*storage.Prefix()+"/"+id, "/"),
+			prefix: strings.TrimLeft(prefix+"/"+id, "/"),
 		}, nil
 	default:
 		return nil, echo.NewHTTPError(http.StatusNotImplemented,
@@ -374,7 +378,8 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 	return ptrs.Ptr(legacyConfig.CheckpointStorage()), nil
 }
 
-func (m *Master) getCheckpointImpl(ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) error {
+func (m *Master) getCheckpointImpl(
+	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) error {
 	// Assume a checkpoint always has experiment configs
 	storageConfig, err := m.getCheckpointStorageConfig(id)
 	if err != nil {
