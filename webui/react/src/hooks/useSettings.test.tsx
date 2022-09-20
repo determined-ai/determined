@@ -282,7 +282,6 @@ describe('useSettings', () => {
   });
 
   it('should pick up query param changes and read new settings', async () => {
-    console.log('first');
     const newQueryParams = {
       boolean: true,
       extra: 'donut',
