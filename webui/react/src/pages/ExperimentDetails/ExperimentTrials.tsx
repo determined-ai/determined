@@ -67,11 +67,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
-  const canCreateExperiment = usePermissions().canCreateExperiment({
-    workspace: {
-      id: experiment.workspaceId,
-    },
-  });
+  const workspace = { id: experiment.workspaceId };
+  const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
+  const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -134,12 +132,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
-      if (!canCreateExperiment) {
+      if (!canHparam) {
         delete opts[TrialAction.HyperparameterSearch];
       }
       return opts;
     },
-    [canCreateExperiment, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
   );
 
   const columns = useMemo(() => {

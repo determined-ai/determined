@@ -234,7 +234,7 @@ const canMoveExperiment = (
   );
 };
 
-// experiment artifacts (usually checkpoints)
+// experiment artifacts (checkpoints, metrics, etc.)
 const canViewExperimentArtifacts = (
   workspace?: PermissionWorkspace,
   userAssignments?: UserAssignment[],

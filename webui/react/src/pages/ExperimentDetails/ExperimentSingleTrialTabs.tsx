@@ -192,8 +192,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     usePermissions();
   const workspace = { id: experiment.workspaceId };
   const editableNotes = canModifyExperimentMetadata({ workspace });
-  const showCreateExperiment = canCreateExperiment({ workspace });
   const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
+  const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
 
   return (
     <TrialLogPreview
