@@ -1,6 +1,6 @@
 import { string } from 'fp-ts';
 import * as Api from 'services/api-ts-sdk';
-import { V1Role } from 'services/api-ts-sdk';
+import { V1Group, V1Role } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
@@ -830,6 +830,8 @@ export interface ExperimentPermissionsArgs {
 export interface UserWithRole extends User{
   role: V1Role; 
 }
+
+export type UserOrGroup = User | V1Group; 
 
 export interface GroupDetailsWithRole extends Api.V1GroupDetails{
   role: V1Role; 

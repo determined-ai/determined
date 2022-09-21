@@ -16,13 +16,15 @@ import { Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
+import { V1Group } from 'services/api-ts-sdk';
 
 interface Props {
   fetchWorkspace: () => void;
+  groups: V1Group[];
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
+const WorkspaceDetailsHeader: React.FC<Props> = ({ groups, workspace, fetchWorkspace }: Props) => {
 
   const { canAssignRoles } = usePermissions();
 
@@ -32,7 +34,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
 
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
-      workspace: workspace,
+      workspace,
+      groups
     });
 
   const rbacEnabled = useFeature().isOn('rbac');

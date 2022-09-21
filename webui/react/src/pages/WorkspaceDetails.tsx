@@ -10,15 +10,18 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { getWorkspace } from 'services/api';
+import { getWorkspace, getGroups } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isNotFound } from 'shared/utils/service';
 import { Workspace } from 'types';
+import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import { isEqual } from 'shared/utils/data';
+import handleError from 'utils/error';
 
 interface Params {
   tab: string;
@@ -34,6 +37,7 @@ const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { workspaceId } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
+  const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [pageError, setPageError] = useState<Error>();
   const [canceler] = useState(new AbortController());
   const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
@@ -55,9 +59,22 @@ const WorkspaceDetails: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
+  const fetchGroups = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getGroups({}, { signal: canceler.signal });
+
+      setGroups((prev) => {
+        if (isEqual(prev, response.groups)) return prev;
+        return response.groups || [];
+      });
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler.signal]);
+
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchWorkspace(), fetchUsers()]);
-  }, [fetchWorkspace, fetchUsers]);
+    await Promise.allSettled([fetchWorkspace(), fetchUsers(), fetchGroups()]);
+  }, [fetchWorkspace, fetchUsers, fetchGroups]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -99,11 +116,12 @@ const WorkspaceDetails: React.FC = () => {
     return <PageNotFound />;
   }
 
+  const groupsList = groups?.map(group => group.group) || [] 
   return (
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
+      headerComponent={<WorkspaceDetailsHeader groups={groupsList} fetchWorkspace={fetchAll} workspace={workspace} />}
       id="workspaceDetails">
       {rbacEnabled ? (
         <Tabs activeKey={tabKey} destroyInactiveTabPane onChange={handleTabChange}>
@@ -111,7 +129,7 @@ const WorkspaceDetails: React.FC = () => {
             <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
           </Tabs.TabPane>
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
-            <WorkspaceMembers pageRef={pageRef} workspace={workspace} />
+            <WorkspaceMembers pageRef={pageRef} workspace={workspace} groups={groupsList}/>
           </Tabs.TabPane>
         </Tabs>
       ) : (

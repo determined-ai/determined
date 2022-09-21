@@ -2,12 +2,12 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { MemberOrGroup, Workspace } from 'types';
+import { UserOrGroup, Workspace } from 'types';
 
 import css from './useModalWorkspaceRemoveMember.module.scss';
 
 interface Props {
-  member: MemberOrGroup;
+  userOrGroup: UserOrGroup;
   name: string;
   onClose?: () => void;
   workspace: Workspace;
@@ -16,7 +16,7 @@ interface Props {
 // Adding this lint rule to keep the reference to the member and workspace
 // which will be needed when calling the API.
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const useModalWorkspaceRemoveMember = ({ onClose, member, workspace, name }: Props): ModalHooks => {
+const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspace, name }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {

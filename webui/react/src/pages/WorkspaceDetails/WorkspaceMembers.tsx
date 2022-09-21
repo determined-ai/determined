@@ -13,7 +13,7 @@ import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { DetailedUser, GroupDetailsWithRole, User, UserWithRole, UserOrGroupDetails, Workspace } from 'types';
-import {V1GroupDetails, V1RoleWithAssignments} from 'services/api-ts-sdk';
+import {V1Group, V1GroupDetails, V1RoleWithAssignments} from 'services/api-ts-sdk';
 import { getName, isUser } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
@@ -24,8 +24,8 @@ import settingsConfig, {
 
 const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 interface Props {
+  groups: V1Group[];
   pageRef: React.RefObject<HTMLElement>;
-  users: DetailedUser[];
   workspace: Workspace;
 }
 
@@ -43,7 +43,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
-  } = useModalWorkspaceRemoveMember({ member: userOrGroupDetails, name, workspace });
+  } = useModalWorkspaceRemoveMember({ userOrGroup: userOrGroupDetails, name, workspace });
 
   const menuItems = (
     <Menu>
@@ -65,22 +65,31 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   );
 };
 
-const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace }: Props) => {
+const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props) => {
 
   const users: User[] = [];
-  const groups: V1GroupDetails[] = [];
   const rolesWithAssignments: V1RoleWithAssignments[] = []
 
   const usersWithRoles: UserWithRole[] = users.map(user => {
-    const userWithRole: UserWithRole = user;
-    rolesWithAssignments.forEach(role => {
-      if(role) userWithRole.role = role;
-    })
-  }
+    const userWithRole = user as UserWithRole;
+    rolesWithAssignments.forEach(roleWithAssignment => {
+      roleWithAssignment?.userRoleAssignments?.forEach(userRole => {
+        if( userRole.userId === user.id && roleWithAssignment.role) userWithRole.role = roleWithAssignment.role;
+    })});
+    return userWithRole;
+  });
 
-  const usersAndGroupDetails: UserOrGroupDetails[] = [...users, ...groups];
+  const groupsWithRoles: GroupDetailsWithRole[] = groups.map(group => {
+    const groupDetailsWithRole = group as GroupDetailsWithRole;
+    rolesWithAssignments.forEach(roleWithAssignment => {
+      roleWithAssignment?.groupRoleAssignments?.forEach(groupRole => {
+        if( groupRole.groupId === group.groupId && roleWithAssignment.role) groupDetailsWithRole.role = roleWithAssignment.role;
+    })});
+    return groupDetailsWithRole;
+  });
 
-  const usersAndGroupDetailWithRoles:  = usersAndGroupDetails.map()
+  const usersAndGroupDetails: UserOrGroupDetails[] = [...usersWithRoles, ...groupsWithRoles];
+
   const { canUpdateRoles } = usePermissions();
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });

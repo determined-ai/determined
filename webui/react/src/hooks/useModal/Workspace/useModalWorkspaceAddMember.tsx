@@ -5,59 +5,58 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { UserOrGroup, Workspace, DetailedUser } from 'types';
-import { getName, isMember } from 'utils/user';
+import { UserOrGroup, Workspace, User } from 'types';
+import { V1Group, V1GroupDetails } from 'services/api-ts-sdk';
+import { getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
+const getId = (obj: UserOrGroup | V1GroupDetails) => {
+ if(isUser(obj)){
+   const user = obj as User;
+   return user.id
+ }
+ const group = obj as V1Group;
+ return group.groupId;
+}
 interface Props {
   onClose?: () => void;
   workspace: Workspace;
+  groups: V1Group[];
 }
 
 // Adding this lint rule to keep the reference to the workspace
 // which will be needed when calling the API.
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks => {
-  const { users } = useStore();
+const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): ModalHooks => {
+  const {users} = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
-
-  const membersAndGroups: UserOrGroup[] = useMemo(() => {
-    const membersAndGroupData: UserOrGroup[] = [];
-    users.forEach((u) => {
-      const user: DetailedUser = u;
-      user.role = 'Basic';
-      membersAndGroupData.push(user);
-    });
-    return membersAndGroupData;
-  }, [users]);
-
+  const usersAndGroups = [...users, ...groups];
   const handleFilter = useCallback(
     (search: string, option) => {
       const label = option.label as string;
-      const memberOrGroup = membersAndGroups.find((m) => {
-        if (isMember(m)) {
-          const member = m as Member;
+      const userOrGroup = usersAndGroups.find((u) => {
+        if (isUser(u)) {
+          const member = u as User;
           return member?.displayName === label || member?.username === label;
         } else {
-          const g: unknown = m;
-          const group = g as Group;
+          const group = u as Group;
           return group.name === label;
         }
       });
-      if (!memberOrGroup) return false;
-      if (isMember(memberOrGroup)) {
-        const memberOption = memberOrGroup as Member;
+      if (!userOrGroup) return false;
+      if (isUser(userOrGroup)) {
+        const userOption = userOrGroup as User;
         return (
-          memberOption?.displayName?.includes(search) || memberOption?.username?.includes(search)
+          userOption?.displayName?.includes(search) || userOption?.username?.includes(search)
         );
       } else {
-        const gOption: unknown = memberOrGroup;
+        const gOption: unknown = userOrGroup;
         const groupOption = gOption as Group;
         return groupOption?.name?.includes(search);
       }
     },
-    [membersAndGroups],
+    [usersAndGroups],
   );
 
   const modalContent = useMemo(() => {
@@ -68,7 +67,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
       <div className={css.base}>
         <Select
           filterOption={handleFilter}
-          options={membersAndGroups.map((option) => ({ label: getName(option), value: option.id }))}
+          options={usersAndGroups.map((option) => ({ label: getName(option), value: getId(option) }))}
           placeholder="Find user or group by display name or username"
           showSearch
         />
@@ -81,7 +80,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
         </Select>
       </div>
     );
-  }, [handleFilter, membersAndGroups]);
+  }, [handleFilter, usersAndGroups]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
