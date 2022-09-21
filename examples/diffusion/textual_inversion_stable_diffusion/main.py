@@ -11,4 +11,4 @@ logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
 if __name__ == "__main__":
     trainer = DetSDTextualInversionTrainer.init_on_cluster()
-    trainer.train()
+    trainer.train_on_cluster()

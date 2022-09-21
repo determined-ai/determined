@@ -1,7 +1,6 @@
 import json
 import os
 import pathlib
-import uuid
 import warnings
 from contextlib import nullcontext
 from datetime import datetime
@@ -219,7 +218,7 @@ class DetSDTextualInversionTrainer:
             **hparams.inference,
         )
 
-    def train(self) -> None:
+    def train_on_cluster(self) -> None:
         """Run the full textual inversion training loop. Training must be performed on a
         Determined cluster."""
         self.logger.info("--------------- Starting Training ---------------")
@@ -356,17 +355,19 @@ class DetSDTextualInversionTrainer:
         Add new concept tokens to the tokenizer and the corresponding embedding tensors to the
         text encoder.
         """
-        for c_token, init_tokens in zip(self.concept_tokens, self.initializer_tokens):
+        for concept_token, initializer_tokens in zip(self.concept_tokens, self.initializer_tokens):
             dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
-                concept_token=c_token,
-                initializer_tokens=init_tokens,
+                concept_token=concept_token,
+                initializer_tokens=initializer_tokens,
                 tokenizer=self.tokenizer,
                 text_encoder=self.text_encoder,
             )
-            self.concept_to_init_tokens_map[c_token] = init_tokens
-            self.concept_to_dummy_tokens_map[c_token] = dummy_placeholder_tokens
-            self.concept_to_dummy_ids_map[c_token] = dummy_placeholder_ids
-            self.logger.info(f"Added {len(dummy_placeholder_tokens)} new tokens for {c_token}.")
+            self.concept_to_initializer_tokens_map[concept_token] = initializer_tokens
+            self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
+            self.concept_to_dummy_ids_map[concept_token] = dummy_placeholder_ids
+            self.logger.info(
+                f"Added {len(dummy_placeholder_tokens)} new tokens for {concept_token}."
+            )
 
         # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
@@ -414,8 +415,8 @@ class DetSDTextualInversionTrainer:
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         """Helper function for replacing concepts with dummy placeholders."""
-        for c_token, d_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(c_token, " ".join(d_tokens))
+        for concept_token, d_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(concept_token, " ".join(d_tokens))
         return text
 
     def _build_dataset_and_dataloader(self) -> None:
@@ -483,8 +484,10 @@ class DetSDTextualInversionTrainer:
                         path.joinpath("learned_embeddings_dict.pt")
                     )
                     token_embeddings = self._get_token_embeddings()
-                    for c_token, d_ids in self.concept_to_dummy_ids_map.items():
-                        learned_embeddings = learned_embeddings_dict[c_token]["learned_embeddings"]
+                    for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
+                        learned_embeddings = learned_embeddings_dict[concept_token][
+                            "learned_embeddings"
+                        ]
                         # Sanity check on length.
                         # TODO: replace with strict=True in zip after upgrade to py >= 3.10
                         assert len(d_ids) == len(
@@ -518,11 +521,11 @@ class DetSDTextualInversionTrainer:
 
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
-        for c_token, d_ids in self.concept_to_dummy_ids_map.items():
+        for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
             token_embeddings = self._get_token_embeddings()
             learned_embeddings = token_embeddings[d_ids].detach().cpu()
-            initializer_tokens = self.concept_to_init_tokens_map[c_token]
-            learned_embeddings_dict[c_token] = {
+            initializer_tokens = self.concept_to_init_tokens_map[concept_token]
+            learned_embeddings_dict[concept_token] = {
                 "initializer_tokens": initializer_tokens,
                 "learned_embeddings": learned_embeddings,
             }
@@ -610,7 +613,6 @@ class DetSDTextualInversionPipeline:
 
     def __init__(
         self,
-        checkpoint_paths: Optional[List[Union[str, pathlib.Path]]] = None,
         learned_embeddings_filename: str = "learned_embeddings_dict.pt",
         scheduler_name: str = "pndm",
         beta_start: float = 0.00085,
@@ -630,7 +632,6 @@ class DetSDTextualInversionPipeline:
             raise KeyError(
                 "Please set your HF User Access token as the HF_AUTH_TOKEN environment variable."
             )
-        self.checkpoint_paths = checkpoint_paths or []
         self.learned_embeddings_filename = learned_embeddings_filename
         self.scheduler_name = scheduler_name
         self.beta_start = beta_start
@@ -656,31 +657,69 @@ class DetSDTextualInversionPipeline:
         self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
 
         # The below attrs are non-trivially instantiated as necessary through private methods.
+        self.all_checkpoint_paths = []
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
-        self.concepts = None
+        self.all_added_concepts = None
 
         self._build_models()
-        self._load_from_checkpoints()
         self._build_pipeline()
 
-    @classmethod
-    def from_uuids(
-        cls,
+    def load_from_checkpoint_paths(
+        self, checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]]
+    ) -> None:
+        """Load concepts from one or more checkpoint paths, each of which is expected contain a."""
+        # Get data from all checkpoints.
+        if isinstance(checkpoint_paths, str):
+            checkpoint_paths = [pathlib.Path(checkpoint_paths)]
+        if isinstance(checkpoint_paths, pathlib.Path):
+            checkpoint_paths = [checkpoint_paths]
+
+        new_learned_embeddings_dicts = {}
+        for path in checkpoint_paths:
+            if isinstance(path, str):
+                path = pathlib.Path(path)
+            self.all_checkpoint_paths.append(path)
+            # TODO: Check that the same pretrained_model_name_or_path is used for all ckpts.
+            learned_embeddings_dict = torch.load(path.joinpath("learned_embeddings_dict.pt"))
+            # Update embedding matrix and attrs.
+            for concept_token, embedding_dict in learned_embeddings_dict.items():
+                assert (
+                    concept_token not in self.learned_embeddings_dict
+                ), f"Checkpoint concept conflict: {concept_token} already exists."
+                initializer_tokens = embedding_dict["initializer_tokens"]
+                learned_embeddings = embedding_dict["learned_embeddings"]
+                dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
+                    concept_token=concept_token,
+                    initializer_tokens=initializer_tokens,
+                    tokenizer=self.tokenizer,
+                    text_encoder=self.text_encoder,
+                )
+                self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
+                token_embeddings = self.text_encoder.get_input_embeddings().weight.data
+                # Sanity check on length.
+                # TODO: replace with strict=True in zip after upgrade to py >= 3.10
+                assert len(dummy_placeholder_ids) == len(
+                    learned_embeddings
+                ), "dummy_placeholder_ids and learned_embeddings must have the same length"
+                for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
+                    token_embeddings[d_id] = tensor
+                self.learned_embeddings_dict[concept_token] = embedding_dict
+
+        self.all_added_concepts = list(self.concept_to_dummy_tokens_map.keys())
+        print(
+            80 * "-",
+            f"Successfully loaded checkpoints. All loaded concepts: {self.all_added_concepts}",
+            80 * "-",
+            sep="\n",
+        )
+
+    def load_from_uuids(
+        self,
         uuids: Union[str, Sequence[str]],
-        learned_embeddings_filename: str = "learned_embeddings_dict.pt",
-        scheduler_name: str = "pndm",
-        beta_start: float = 0.00085,
-        beta_end: float = 0.012,
-        beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
-        other_scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
-        device: str = "cuda",
-        use_autocast: bool = True,
-        use_fp16: bool = True,
-    ) -> "DetSDTextualInversionPipeline":
-        """Creates a DetStableDiffusion instance from one or more Determined checkpoint uuids.
-        Must be logged into the Determined cluster to use this method.  If not logged-in, call
+    ) -> None:
+        """Load concepts from one or more Determined checkpoint uuids. Must be logged into the
+        Determined cluster to use this method.  If not logged-in, call
         determined.experimental.client.login first.
         """
         if isinstance(uuids, str):
@@ -689,20 +728,7 @@ class DetSDTextualInversionPipeline:
         for u in uuids:
             checkpoint = client.get_checkpoint(u)
             checkpoint_paths.append(pathlib.Path(checkpoint.download()))
-
-        return cls(
-            checkpoint_paths=checkpoint_paths,
-            learned_embeddings_filename=learned_embeddings_filename,
-            scheduler_name=scheduler_name,
-            beta_start=beta_start,
-            beta_end=beta_end,
-            beta_schedule=beta_schedule,
-            other_scheduler_kwargs=other_scheduler_kwargs,
-            pretrained_model_name_or_path=pretrained_model_name_or_path,
-            device=device,
-            use_autocast=use_autocast,
-            use_fp16=use_fp16,
-        )
+        self.load_from_checkpoint_paths(checkpoint_paths)
 
     def _build_models(self) -> None:
         print(80 * "-", "Downloading pre-trained models...", 80 * "-", sep="\n")
@@ -746,59 +772,6 @@ class DetSDTextualInversionPipeline:
             model.to(self.device)
             model.eval()
 
-    def _load_from_checkpoints(self) -> None:
-        """Loads the learned embeddings from the checkpoints."""
-        all_learned_embeddings_dict = {}
-        last_pretrained_model_name_or_path = None
-        for path in self.checkpoint_paths:
-            if isinstance(path, str):
-                path = pathlib.Path(path)
-            with open(path.joinpath("metadata.json"), "r") as f:
-                new_last_pretrained_model_name_or_path = json.load(f)[
-                    "pretrained_model_name_or_path"
-                ]
-            if (
-                last_pretrained_model_name_or_path is not None
-                and last_pretrained_model_name_or_path != new_last_pretrained_model_name_or_path
-            ):
-                warnings.warn(
-                    'Checkpoints trained with different "pretrained_model_name_or_path" values!'
-                )
-            last_pretrained_model_name_or_path = new_last_pretrained_model_name_or_path
-            learned_embeddings_dict = torch.load(path.joinpath("learned_embeddings_dict.pt"))
-            for key in learned_embeddings_dict:
-                assert (
-                    key not in all_learned_embeddings_dict
-                ), f"Checkpoint concept conflict: {key} already exists."
-            all_learned_embeddings_dict = {**all_learned_embeddings_dict, **learned_embeddings_dict}
-        self.learned_embeddings_dict = all_learned_embeddings_dict
-
-        for c_token, maps in self.learned_embeddings_dict.items():
-            init_tokens, learned_embeddings = maps["initializer_tokens"], maps["learned_embeddings"]
-            dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
-                concept_token=c_token,
-                initializer_tokens=init_tokens,
-                tokenizer=self.tokenizer,
-                text_encoder=self.text_encoder,
-            )
-            self.concept_to_dummy_tokens_map[c_token] = dummy_placeholder_tokens
-            token_embeddings = self.text_encoder.get_input_embeddings().weight.data
-            # Sanity check on length.
-            # TODO: replace with strict=True in zip after upgrade to py >= 3.10
-            assert len(dummy_placeholder_ids) == len(
-                learned_embeddings
-            ), "dummy_placeholder_ids and learned_embeddings must have the same length"
-            for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
-                token_embeddings[d_id] = tensor
-
-        self.concepts = list(self.concept_to_dummy_tokens_map.keys())
-        print(
-            80 * "-",
-            f"Successfully loaded checkpoints with available concepts: {self.concepts}",
-            80 * "-",
-            sep="\n",
-        )
-
     def _build_pipeline(self) -> None:
         print(
             80 * "-",
@@ -818,8 +791,8 @@ class DetSDTextualInversionPipeline:
         print("Done!")
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
-        for c_token, d_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(c_token, " ".join(d_tokens))
+        for concept_token, d_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(concept_token, " ".join(d_tokens))
         return text
 
     def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:
@@ -875,7 +848,6 @@ class DetSDTextualInversionPipeline:
                 generated_samples += 1
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
-            # TODO: Clean up repeated code
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
             timestamp = "_".join(f"_{datetime.now().strftime('%c')}.png".split())
             file_suffix = generation_details + timestamp + ".png"
@@ -918,7 +890,7 @@ def add_new_tokens(
 
     # Add a new randomly generated dummy placeholder token for every token in the initializer.
     dummy_placeholder_tokens = [
-        f"<{concept_token}_" + str(uuid.uuid4()) + ">" for _ in non_special_initializer_ids
+        f"<{concept_token}+{n}" for n in range(len(non_special_initializer_ids))
     ]
     num_added_tokens = tokenizer.add_tokens(dummy_placeholder_tokens)
     if num_added_tokens != len(dummy_placeholder_tokens):
