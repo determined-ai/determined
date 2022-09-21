@@ -66,7 +66,7 @@ analogously to above, and then run the following command in the root of
 this repo:
 
 ```bash
-det -m MASTER_URL_WITH_PORT notebook start --config detsd-notebook.yaml --context .
+det -m MASTER_URL_WITH_PORT notebook start --config-file detsd-notebook.yaml --context .
 ```
 
 replacing `MASTER_URL_WITH_PORT` as before. A new notebook window will be launched in which
