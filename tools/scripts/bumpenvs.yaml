@@ -90,15 +90,15 @@ pytorch10_tf27_rocm50_0_hashed:
 pytorch10_tf27_rocm50_0_versioned:
   new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4
 pytorch19_tf25_rocm_0_hashed:
-  new: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-9119094
+  new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730
   old: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-ecee7c1
 pytorch19_tf25_rocm_0_versioned:
-  new: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1
+  new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4
   old: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5
 pytorch19_tf25_rocm_1_hashed:
-  new: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-9119094
+  new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730
 pytorch19_tf25_rocm_1_versioned:
-  new: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1
+  new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4
 tf1_cpu_0_hashed:
   new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-096d730
   old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-69f397f

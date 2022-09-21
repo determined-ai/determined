@@ -24,7 +24,7 @@ by default in this version of Determined are described below.
 +-------------+-------------------------------------------------------------------------+
 | Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730`` |
 +-------------+-------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-9119094``  |
+| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730`` |
 +-------------+-------------------------------------------------------------------------+
 
 See :doc:`/training/setup-guide/set-environment-images` for the images Docker Hub location and add
