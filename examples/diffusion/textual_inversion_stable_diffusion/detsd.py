@@ -304,7 +304,7 @@ class DetSDTextualInversionTrainer:
         loss = F.mse_loss(noise_pred, noise)
         print("MSE LOSS: ", loss)
         new_token_embeddings_norms = torch.linalg.vector_norm(
-            self._get_new_token_embeddings(), dim=0
+            self._get_new_token_embeddings(return_data=False), dim=0
         )
         print(
             80 * "$",
@@ -313,15 +313,14 @@ class DetSDTextualInversionTrainer:
             80 * "$",
             sep="\n",
         )
-        # TODO: Clean this up
+        # Add a norm penalty to the loss
+        # TODO: Clean this up.
         norm_loss = (
             self.norm_penalty
             * ((new_token_embeddings_norms - self.original_embedding_tensors_mean_norm) ** 2).mean()
         )
-
         print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
-        # Add a norm penality to the loss
         self.accelerator.backward(loss)
         self.loss_history.append(loss.detach())
 
@@ -627,19 +626,22 @@ class DetSDTextualInversionTrainer:
                 metrics={"loss": self.last_mean_loss},
             )
 
-    def _get_token_embeddings(self) -> torch.Tensor:
+    def _get_token_embeddings(self, return_data: bool = True) -> torch.Tensor:
         """Returns the tensor of token embeddings, accounting for the possible insertion of a
         .module attr insertion due to the .prepare() call.
         """
         try:
-            token_embeddings = self.text_encoder.module.get_input_embeddings().weight.data
+            token_embeddings = self.text_encoder.module.get_input_embeddings().weight
         except AttributeError:
-            token_embeddings = self.text_encoder.get_input_embeddings().weight.data
-        return token_embeddings
+            token_embeddings = self.text_encoder.get_input_embeddings().weight
+        if not return_data:
+            return token_embeddings
+        else:
+            return token_embeddings.data
 
-    def _get_new_token_embeddings(self) -> torch.Tensor:
+    def _get_new_token_embeddings(self, return_data: bool = True) -> torch.Tensor:
         """Returns the tensor of newly-added token embeddings."""
-        token_embeddings = self._get_token_embeddings()
+        token_embeddings = self._get_token_embeddings(return_data=return_data)
         new_token_embeddings = token_embeddings[self.new_embedding_idxs]
         return new_token_embeddings
 
