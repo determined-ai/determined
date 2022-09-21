@@ -1040,7 +1040,7 @@ workloads for this experiment. For more information on customizing the trial env
 
    -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
    -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1`` for ROCm.
+   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
 
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
