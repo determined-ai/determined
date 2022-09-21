@@ -2312,9 +2312,9 @@ class v1GetGroupsAndUsersAssignedToWorkspaceResponse:
     def __init__(
         self,
         *,
+        assignments: "typing.Sequence[v1RoleWithAssignments]",
         groups: "typing.Sequence[v1GroupDetails]",
-        assignments: "typing.Optional[typing.Sequence[v1RoleWithAssignments]]" = None,
-        usersAssignedDirectly: "typing.Optional[typing.Sequence[v1User]]" = None,
+        usersAssignedDirectly: "typing.Sequence[v1User]",
     ):
         self.groups = groups
         self.usersAssignedDirectly = usersAssignedDirectly
@@ -2324,15 +2324,15 @@ class v1GetGroupsAndUsersAssignedToWorkspaceResponse:
     def from_json(cls, obj: Json) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
         return cls(
             groups=[v1GroupDetails.from_json(x) for x in obj["groups"]],
-            usersAssignedDirectly=[v1User.from_json(x) for x in obj["usersAssignedDirectly"]] if obj.get("usersAssignedDirectly", None) is not None else None,
-            assignments=[v1RoleWithAssignments.from_json(x) for x in obj["assignments"]] if obj.get("assignments", None) is not None else None,
+            usersAssignedDirectly=[v1User.from_json(x) for x in obj["usersAssignedDirectly"]],
+            assignments=[v1RoleWithAssignments.from_json(x) for x in obj["assignments"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "groups": [x.to_json() for x in self.groups],
-            "usersAssignedDirectly": [x.to_json() for x in self.usersAssignedDirectly] if self.usersAssignedDirectly is not None else None,
-            "assignments": [x.to_json() for x in self.assignments] if self.assignments is not None else None,
+            "usersAssignedDirectly": [x.to_json() for x in self.usersAssignedDirectly],
+            "assignments": [x.to_json() for x in self.assignments],
         }
 
 class v1GetGroupsRequest:

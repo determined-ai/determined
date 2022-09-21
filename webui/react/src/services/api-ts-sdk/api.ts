@@ -2901,13 +2901,13 @@ export interface V1GetGroupsAndUsersAssignedToWorkspaceResponse {
      * @type {Array<V1User>}
      * @memberof V1GetGroupsAndUsersAssignedToWorkspaceResponse
      */
-    usersAssignedDirectly?: Array<V1User>;
+    usersAssignedDirectly: Array<V1User>;
     /**
-     * Roles assigned to workspace with what groups / users_assigned_directly roles are assigned to.
+     * Roles assigned to workspace with associations between groups and users_assigned_directly with roles.
      * @type {Array<V1RoleWithAssignments>}
      * @memberof V1GetGroupsAndUsersAssignedToWorkspaceResponse
      */
-    assignments?: Array<V1RoleWithAssignments>;
+    assignments: Array<V1RoleWithAssignments>;
 }
 
 /**
@@ -20503,7 +20503,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get groups and users assigned to a given workspace with what roles are assigned.
-         * @param {number} workspaceId 
+         * @param {number} workspaceId ID of workspace getting groups and users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20833,7 +20833,7 @@ export const RBACApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get groups and users assigned to a given workspace with what roles are assigned.
-         * @param {number} workspaceId 
+         * @param {number} workspaceId ID of workspace getting groups and users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -21003,7 +21003,7 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
         /**
          * 
          * @summary Get groups and users assigned to a given workspace with what roles are assigned.
-         * @param {number} workspaceId 
+         * @param {number} workspaceId ID of workspace getting groups and users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -21104,7 +21104,7 @@ export class RBACApi extends BaseAPI {
     /**
      * 
      * @summary Get groups and users assigned to a given workspace with what roles are assigned.
-     * @param {number} workspaceId 
+     * @param {number} workspaceId ID of workspace getting groups and users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RBACApi
