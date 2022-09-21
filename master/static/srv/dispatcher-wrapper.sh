@@ -234,8 +234,8 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                     for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do 
                         if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
                             log "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
-                        fi 
-                    done        
+                        fi
+                    done
                 else
                     log "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
                 fi
