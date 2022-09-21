@@ -857,6 +857,22 @@ class DetSDTextualInversionPipeline:
             self._save_image(image_grid, filename, saved_img_dir)
         return image_grid
 
+    def __repr__(self) -> str:
+        attr_dict = {
+            "scheduler_name": self.scheduler_name,
+            "beta_start": self.beta_start,
+            "beta_end": self.beta_end,
+            "beta_schedule": self.beta_schedule,
+            "other_scheduler_kwargs": self.other_scheduler_kwargs,
+            "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
+            "device": self.device,
+            "use_autocast": self.use_autocast,
+            "use_fp16": self.use_fp16,
+            "all_added_concepts": self.all_added_concepts,
+        }
+        attr_dict_str = ", ".join([f"{key}={value}" for key, value in attr_dict.items()])
+        return f"{self.__class__.__name__}({attr_dict_str})"
+
 
 def add_new_tokens(
     concept_token: str,
