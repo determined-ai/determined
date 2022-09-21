@@ -670,8 +670,11 @@ class PyTorchTrialController(det.TrialController):
             # Backward compatible with older checkpoint format.
             if "models_state_dict" in checkpoint:
                 raise RuntimeError("Both model_state_dict and models_state_dict in checkpoint.")
-            if len(self.context.models) != 1:
-                raise RuntimeError()
+            if len(self.context.models) > 1:
+                raise RuntimeError(
+                    "Old-format checkpoint cannot be loaded into a context with more than one "
+                    "model."
+                )
             self.context.models[0].load_state_dict(checkpoint["model_state_dict"])
         else:
             for idx, model in enumerate(self.context.models):
@@ -699,8 +702,11 @@ class PyTorchTrialController(det.TrialController):
                 raise RuntimeError(
                     "Both optimizer_state_dict and optimizers_state_dict in checkpoint."
                 )
-            if len(self.context.optimizers) != 1:
-                raise RuntimeError()
+            if len(self.context.optimizers) > 1:
+                raise RuntimeError(
+                    "Old-format checkpoint cannot be loaded into a context with more than one "
+                    "optimizer."
+                )
             self.context.optimizers[0].load_state_dict(checkpoint["optimizer_state_dict"])
         else:
             for idx, optimizer in enumerate(self.context.optimizers):
@@ -710,8 +716,11 @@ class PyTorchTrialController(det.TrialController):
             # Backward compatible with older checkpoint format.
             if "lr_schedulers_state_dict" in checkpoint:
                 raise RuntimeError("Both lr_scheduler and lr_schedulers_state_dict in checkpoint.")
-            if len(self.context.lr_schedulers) != 1:
-                raise RuntimeError()
+            if len(self.context.lr_schedulers) > 1:
+                raise RuntimeError(
+                    "Old-format checkpoint cannot be loaded into a context with more than one LR "
+                    "scheduler."
+                )
             self.context.lr_schedulers[0].load_state_dict(checkpoint["lr_scheduler"])
         else:
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
