@@ -668,7 +668,14 @@ class DetSDTextualInversionPipeline:
     def load_from_checkpoint_paths(
         self, checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]]
     ) -> None:
-        """Load concepts from one or more checkpoint paths, each of which is expected contain a."""
+        """Load concepts from one or more checkpoint paths, each of which is expected contain a
+        file with the name specified by the `learned_embeddings_filename` init arg. The file is
+        expected to contain a dictionary whose keys are concept_token names and whose values are
+        dictionaries containing an `initializer_token` key and a `learned_embeddings` whose
+        corresponding values are the initializer string and learned embedding tensors, respectively.
+        """
+        if not checkpoint_paths:
+            return
         # Get data from all checkpoints.
         if isinstance(checkpoint_paths, str):
             checkpoint_paths = [pathlib.Path(checkpoint_paths)]
@@ -681,7 +688,7 @@ class DetSDTextualInversionPipeline:
                 path = pathlib.Path(path)
             self.all_checkpoint_paths.append(path)
             # TODO: Check that the same pretrained_model_name_or_path is used for all ckpts.
-            learned_embeddings_dict = torch.load(path.joinpath("learned_embeddings_dict.pt"))
+            learned_embeddings_dict = torch.load(path.joinpath(self.learned_embeddings_filename))
             # Update embedding matrix and attrs.
             for concept_token, embedding_dict in learned_embeddings_dict.items():
                 assert (
@@ -707,12 +714,7 @@ class DetSDTextualInversionPipeline:
                 self.learned_embeddings_dict[concept_token] = embedding_dict
 
         self.all_added_concepts = list(self.concept_to_dummy_tokens_map.keys())
-        print(
-            80 * "-",
-            f"Successfully loaded checkpoints. All loaded concepts: {self.all_added_concepts}",
-            80 * "-",
-            sep="\n",
-        )
+        print(f"Successfully loaded checkpoints. All loaded concepts: {self.all_added_concepts}")
 
     def load_from_uuids(
         self,
