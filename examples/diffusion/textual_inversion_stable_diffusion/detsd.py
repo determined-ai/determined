@@ -187,6 +187,11 @@ class DetSDTextualInversionTrainer:
         self.train_scheduler = None
         self.original_embedding_idxs = None
         self.original_embedding_tensors = None
+        self.original_embedding_tensors_mean_norm = None
+        self.new_embedding_idxs = None
+        # TODO: Don't hard code
+        self.NORM_PENALTY = 10.0
+
         self.concept_to_initializer_tokens_map = {}
         self.concept_to_dummy_tokens_map = {}
         self.concept_to_dummy_ids_map = {}
@@ -297,6 +302,16 @@ class DetSDTextualInversionTrainer:
         # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         loss = F.mse_loss(noise_pred, noise)
+        # TODO: Clean this up
+        loss = (
+            loss
+            + self.NORM_PENALTY
+            * (
+                torch.linalg.vector_norm(self._get_new_token_embeddings(), dim=0)
+                - self.original_embedding_tensors_mean_norm
+            ).mean()
+        )
+        # Add a norm penality to the loss
         self.accelerator.backward(loss)
         self.loss_history.append(loss.detach())
 
@@ -386,6 +401,14 @@ class DetSDTextualInversionTrainer:
             .detach()
             .clone()
             .to(self.accelerator.device)
+        )
+        with torch.no_grad():
+            self.original_embedding_tensors_mean_norm = (
+                torch.linalg.vector_norm(self.original_embedding_tensors, dim=0).mean().item()
+            )
+        self.new_embedding_idxs = torch.isin(
+            torch.arange(len(self.tokenizer)),
+            torch.tensor(all_dummy_placeholder_token_ids),
         )
 
     def _freeze_layers(self) -> None:
@@ -603,6 +626,12 @@ class DetSDTextualInversionTrainer:
         except AttributeError:
             token_embeddings = self.text_encoder.get_input_embeddings().weight.data
         return token_embeddings
+
+    def _get_new_token_embeddings(self) -> torch.Tensor:
+        """Returns the tensor of newly-added token embeddings."""
+        token_embeddings = self._get_token_embeddings()
+        new_token_embeddings = token_embeddings[self.new_embedding_idxs]
+        return new_token_embeddings
 
 
 class DetSDTextualInversionPipeline:
