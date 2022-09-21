@@ -970,7 +970,6 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
-    if (!canViewWorkspaces) return <NoPermissions />;
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -1106,6 +1105,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
+  if (!canViewWorkspaces) return <NoPermissions />;
   if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }
