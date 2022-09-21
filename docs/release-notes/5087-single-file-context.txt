@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+-  Support single-file contexts in the CLI.  Users who want to upload a single file into a notebook
+   or shell may  now specify a single file as the ``--context`` argument, like ``det notebook start
+   --context MY_FILE``.  Previously accomplishing the same required creating an empty directory,
+   copying the file into that directory, and specifying the directory as the ``--context``.

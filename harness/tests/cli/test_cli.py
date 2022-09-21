@@ -1,3 +1,4 @@
+import base64
 import os
 import tempfile
 import uuid
@@ -288,6 +289,16 @@ def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
     ) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "subdir", "subdir/A.py"}
+
+
+def test_single_file_context(tmp_path: Path) -> None:
+    name = "the-itsy-bitsy-spider"
+    content = "went up the water spout"
+    with FileTree(tmp_path, {name: content}) as tree:
+        model_def = context.read_v1_context(tree)
+        assert {f.path for f in model_def} == {name}, {f.path for f in model_def}
+        got_content = base64.b64decode(model_def[0].content).decode("utf8")
+        assert got_content == content, got_content
 
 
 def test_cli_args_exist() -> None:

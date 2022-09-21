@@ -35,12 +35,12 @@ def v1File_to_dict(f: bindings.v1File) -> Dict[str, Any]:
     return d
 
 
-def v1File_from_local_file(path: str, local_path: pathlib.Path) -> bindings.v1File:
-    with local_path.open("rb") as f:
+def v1File_from_local_file(archive_path: str, path: pathlib.Path) -> bindings.v1File:
+    with path.open("rb") as f:
         content = base64.b64encode(f.read()).decode("utf8")
-    st = local_path.stat()
+    st = path.stat()
     return bindings.v1File(
-        path=path,
+        path=archive_path,
         type=ord(tarfile.REGTYPE),
         content=content,
         # Protobuf expects string-encoded int64
@@ -51,10 +51,10 @@ def v1File_from_local_file(path: str, local_path: pathlib.Path) -> bindings.v1Fi
     )
 
 
-def v1File_from_local_dir(path: str, local_path: pathlib.Path) -> bindings.v1File:
-    st = local_path.stat()
+def v1File_from_local_dir(archive_path: str, path: pathlib.Path) -> bindings.v1File:
+    st = path.stat()
     return bindings.v1File(
-        path=path,
+        path=archive_path,
         type=ord(tarfile.DIRTYPE),
         content="",
         # Protobuf expects string-encoded int64
@@ -66,16 +66,23 @@ def v1File_from_local_dir(path: str, local_path: pathlib.Path) -> bindings.v1Fil
 
 
 def read_v1_context(
-    local_path: pathlib.Path,
+    root_path: pathlib.Path,
     limit: int = constants.MAX_CONTEXT_SIZE,
 ) -> List[bindings.v1File]:
     """
     Return a list of v1Files suitable for submitting a context directory over the v1 REST API.
 
+    If root_path refers to a file, a context directory is created containing only that file.
+
     A .detignore file in the directory, if specified, indicates the wildcard paths
     that should be ignored. File paths are represented as relative paths (relative to
     the root directory).
     """
+
+    root_path = root_path.resolve()
+
+    if not root_path.exists():
+        raise Exception(f"Path '{root_path}' doesn't exist")
 
     items = []
     size = 0
@@ -84,16 +91,33 @@ def read_v1_context(
         nonlocal size
         items.append(f)
         size += v1File_size(f)
+        if size > limit:
+            print()
+            raise ValueError(
+                f"Directory '{root_path}' exceeds the maximum allowed size "
+                f"{sizeof_fmt(constants.MAX_CONTEXT_SIZE)}.\n"
+                "Consider using a .detignore file to specify that certain files "
+                "or directories should be omitted from the context directory."
+            )
 
-    local_path = local_path.resolve()
+    msg = f"Preparing files (in {root_path}) to send to master... {sizeof_fmt(0)} and {0} files"
+    print(msg, end="\r", flush=True)
 
-    if not local_path.exists():
-        raise Exception(f"Path '{local_path}' doesn't exist")
+    def update_msg() -> None:
+        nonlocal msg
+        print(" " * len(msg), end="\r")
+        msg = (
+            f"Preparing files ({root_path}) to send to master... "
+            f"{sizeof_fmt(size)} and {len(items)} files"
+        )
+        print(msg, end="\r", flush=True)
 
-    if local_path.is_file():
-        raise ValueError(f"Path '{local_path}' must be a directory")
-
-    root_path = local_path
+    if root_path.is_file():
+        # Single-file context case.
+        add_item(v1File_from_local_file(root_path.name, root_path))
+        update_msg()
+        print()
+        return items
 
     ignore = list(constants.DEFAULT_DETIGNORE)
     ignore_path = root_path.joinpath(".detignore")
@@ -101,9 +125,6 @@ def read_v1_context(
         with ignore_path.open("r") as detignore_file:
             ignore.extend(detignore_file)
     ignore_spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore)
-
-    msg = f"Preparing files (in {root_path}) to send to master... {sizeof_fmt(0)} and {0} files"
-    print(msg, end="\r", flush=True)
 
     # We could use pathlib.Path.rglob for scanning the directory;
     # however, the Python documentation claims a warning that rglob may be
@@ -151,27 +172,13 @@ def read_v1_context(
                 continue
 
             add_item(entry)
-            if size > limit:
-                print()
-                raise ValueError(
-                    f"Directory '{root_path}' exceeds the maximum allowed size "
-                    f"{sizeof_fmt(constants.MAX_CONTEXT_SIZE)}.\n"
-                    "Consider using a .detignore file to specify that certain files "
-                    "or directories should be omitted from the context directory."
-                )
-
-            print(" " * len(msg), end="\r")
-            msg = (
-                f"Preparing files ({root_path}) to send to master... "
-                f"{sizeof_fmt(size)} and {len(items)} files"
-            )
-            print(msg, end="\r", flush=True)
+            update_msg()
     print()
     return items
 
 
 def read_legacy_context(
-    local_path: pathlib.Path,
+    root_path: pathlib.Path,
     limit: int = constants.MAX_CONTEXT_SIZE,
 ) -> LegacyContext:
-    return [v1File_to_dict(f) for f in read_v1_context(local_path, limit)]
+    return [v1File_to_dict(f) for f in read_v1_context(root_path, limit)]
