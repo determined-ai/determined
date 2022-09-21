@@ -40,6 +40,7 @@ import handleError from 'utils/error';
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
   Settings,
 } from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
@@ -228,7 +229,7 @@ const ModelDetails: React.FC = () => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        sortKey: columnKey as Settings['sortKey'],
+        sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelVersionsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

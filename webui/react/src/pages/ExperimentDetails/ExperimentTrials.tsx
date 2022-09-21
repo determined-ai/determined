@@ -42,7 +42,7 @@ import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import settingsConfig, { Settings } from './ExperimentTrials.settings';
+import settingsConfig, { isOfSortKey, Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
@@ -232,7 +232,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        sortKey: columnKey as Settings['sortKey'],
+        sortKey: isOfSortKey(columnKey)
+          ? columnKey
+          : V1GetExperimentTrialsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
