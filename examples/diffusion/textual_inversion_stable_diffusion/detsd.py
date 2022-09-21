@@ -31,7 +31,7 @@ from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
 
-# TODO: aditional default kwargs for ddim and lms-discrete
+# TODO: additional default kwargs for ddim and lms-discrete
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,
     "lms-discrete": LMSDiscreteScheduler,
@@ -69,7 +69,7 @@ class DetSDTextualInversionTrainer:
         train_seed: int = 2147483647,
         img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
-        flip_p: float = 0.5,
+        flip_p: float = 0.0,
         center_crop: bool = False,
         generate_training_images: bool = True,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
@@ -277,7 +277,7 @@ class DetSDTextualInversionTrainer:
         scale_factor = 0.18215
         latents = latents * scale_factor
 
-        # Sample noise that we'll add to the latents
+        # Sample noise that we'll add to the latents.
         noise = torch.randn(latents.shape).to(self.accelerator.device)
         # Sample a random timestep for each image in the batch.
         rand_timesteps = torch.randint(
@@ -294,7 +294,7 @@ class DetSDTextualInversionTrainer:
         # Get the text embedding for the prompt.
         encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
 
-        # Predict the noise residual
+        # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         loss = F.mse_loss(noise_pred, noise)
         self.accelerator.backward(loss)
@@ -552,7 +552,7 @@ class DetSDTextualInversionTrainer:
             ).to(self.accelerator.device)
 
     def _generate_and_write_tb_imgs(self, core_context: det.core.Context) -> None:
-        """Generates images using the current pipeline and logs them to tensorboard."""
+        """Generates images using the current pipeline and logs them to Tensorboard."""
         self.logger.info("Generating sample images")
         tb_dir = core_context.train.get_tensorboard_path()
         tb_writer = SummaryWriter(log_dir=tb_dir)
@@ -562,7 +562,7 @@ class DetSDTextualInversionTrainer:
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed
             )
-            # Need to set output_type to anything other than `pil` to get numpy arrays out. Needed
+            # Set output_type to anything other than `pil` to get numpy arrays out. Needed
             # for tensorboard logging.
             generated_img = self.pipeline(
                 prompt=dummy_prompt,
@@ -681,7 +681,6 @@ class DetSDTextualInversionPipeline:
         if isinstance(checkpoint_paths, pathlib.Path):
             checkpoint_paths = [checkpoint_paths]
 
-        new_learned_embeddings_dicts = {}
         for path in checkpoint_paths:
             if isinstance(path, str):
                 path = pathlib.Path(path)
@@ -826,7 +825,7 @@ class DetSDTextualInversionPipeline:
         other_pipeline_call_kwargs = other_pipeline_call_kwargs or {}
         num_samples = rows * cols
         # Could insert a check that num_samples % parallelize_factor == 0, else wasting compute
-        # Generate images sequentially, as parallel computation may induce OOM
+
         images = []
         generated_samples = 0
         # The dummy prompts are what actually get fed into the pipeline
