@@ -60,6 +60,7 @@ class DetSDTextualInversionTrainer:
         learning_rate: float = 5e-04,
         other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
+        norm_penalty: float = 1.0,
         checkpoint_freq: int = 100,
         metric_report_freq: int = 100,
         beta_start: float = 0.00085,
@@ -120,6 +121,7 @@ class DetSDTextualInversionTrainer:
         self.learning_rate = learning_rate
         self.other_optimizer_kwargs = other_optimizer_kwargs or {}
         self.scale_lr = scale_lr
+        self.norm_penalty = norm_penalty
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
         self.beta_start = beta_start
@@ -189,8 +191,6 @@ class DetSDTextualInversionTrainer:
         self.original_embedding_tensors = None
         self.original_embedding_tensors_mean_norm = None
         self.new_embedding_idxs = None
-        # TODO: Don't hard code
-        self.NORM_PENALTY = 10.0
 
         self.concept_to_initializer_tokens_map = {}
         self.concept_to_dummy_tokens_map = {}
@@ -315,7 +315,7 @@ class DetSDTextualInversionTrainer:
         )
         # TODO: Clean this up
         norm_loss = (
-            self.NORM_PENALTY
+            self.norm_penalty
             * ((new_token_embeddings_norms - self.original_embedding_tensors_mean_norm) ** 2).mean()
         )
 
