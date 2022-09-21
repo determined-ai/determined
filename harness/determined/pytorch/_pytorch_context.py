@@ -655,8 +655,6 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     @staticmethod
     def _average_gradients(parameters: Any, divisor: int) -> None:
-        if divisor < 1:
-            raise ValueError(f"Bad divisor in _average_gradients: {divisor} < 1.")
         if divisor == 1:
             return
 

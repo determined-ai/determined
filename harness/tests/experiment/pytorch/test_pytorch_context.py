@@ -31,8 +31,6 @@ class TestPyTorchContext:
             metrics = trial.evaluate_batch(batch)
 
     def test_average_gradients(self) -> None:
-        with pytest.raises(ValueError):
-            self.context._average_gradients(None, 0)
         assert self.context._average_gradients(None, 1) is None
 
     def test_training_not_started(self) -> None:
