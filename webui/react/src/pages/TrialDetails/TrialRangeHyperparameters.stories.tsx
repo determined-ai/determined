@@ -15,7 +15,7 @@ import TrialRangeHyperparameters from './TrialRangeHyperparameters';
 
 export default {
   component: TrialRangeHyperparameters,
-  title: 'TrialRangeHyperparameters',
+  title: 'Determined/TrialRangeHyperparameters',
 };
 
 const TrialRangeHyperparametersContainer = () => {

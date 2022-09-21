@@ -4,7 +4,7 @@ import GalleryModal from './GalleryModal';
 
 export default {
   component: GalleryModal,
-  title: 'GalleryModal',
+  title: 'Determined/GalleryModal',
 };
 
 const GALLERY_CONTENT = [

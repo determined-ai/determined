@@ -7,7 +7,7 @@ import NavigationTabbar from './NavigationTabbar';
 export default {
   component: NavigationTabbar,
   parameters: { layout: 'fullscreen' },
-  title: 'NavigationTabbar',
+  title: 'Determined/Navigation/NavigationTabbar',
 };
 
 const NavigationTabbarLoggedIn = () => {
