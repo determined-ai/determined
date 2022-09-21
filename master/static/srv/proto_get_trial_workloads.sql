@@ -70,7 +70,7 @@ page_info AS (
 )
 SELECT (
   SELECT jsonb_agg(w) FROM (SELECT validation, training, checkpoint FROM workloads
-    ORDER BY (%s)::float %s NULLS LAST, (%s)::float %s NULLS LAST, total_batches %s, end_time %s
+    ORDER BY (%s)::float %s NULLS LAST, total_batches %s, end_time %s
     OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
     LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
   ) w

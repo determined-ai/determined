@@ -755,18 +755,14 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 	}
 
 	sortCode := "total_batches"
-	extraSortCode := sortCode
 	if req.SortKey != "" && req.SortKey != "batches" {
-		sortCode = fmt.Sprintf("metrics->>'%s'", strings.ReplaceAll(req.SortKey, "'", ""))
-		extraSortCode = strings.Replace(sortCode, "metrics->>", "metrics->'avg_metrics'->>", 1)
+		sortCode = fmt.Sprintf("metrics->'avg_metrics'->>'%s'", strings.ReplaceAll(req.SortKey, "'", ""))
 	}
 
 	switch err := a.m.db.QueryProtof(
 		"proto_get_trial_workloads",
 		[]interface{}{
 			sortCode,
-			db.OrderByToSQL(req.OrderBy),
-			extraSortCode,
 			db.OrderByToSQL(req.OrderBy),
 			db.OrderByToSQL(req.OrderBy),
 			db.OrderByToSQL(req.OrderBy),
