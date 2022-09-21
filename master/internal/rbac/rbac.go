@@ -41,6 +41,20 @@ func (p *Permission) Proto() *rbacv1.Permission {
 // Permissions is a list of permissions.
 type Permissions []Permission
 
+// IDs plucks the ids out of the permissions and returns them.
+func (p Permissions) IDs() []int {
+	if len(p) == 0 {
+		return nil
+	}
+
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+
+	return ids
+}
+
 // Proto turns a Permissions object into a list of rbac representations.
 func (p Permissions) Proto() []*rbacv1.Permission {
 	result := make([]*rbacv1.Permission, 0, len(p))
