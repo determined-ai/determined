@@ -190,7 +190,7 @@ class DetSDTextualInversionTrainer:
         self.original_embedding_tensors_mean_norm = None
         self.new_embedding_idxs = None
         # TODO: Don't hard code
-        self.NORM_PENALTY = 0.01
+        self.NORM_PENALTY = 1.0
 
         self.concept_to_initializer_tokens_map = {}
         self.concept_to_dummy_tokens_map = {}
@@ -313,10 +313,9 @@ class DetSDTextualInversionTrainer:
             sep="\n",
         )
         # TODO: Clean this up
-        loss = (
-            loss
-            + self.NORM_PENALTY
-            * (new_token_embeddings_norms - self.original_embedding_tensors_mean_norm).mean()
+        loss = loss + self.NORM_PENALTY * (
+            (new_token_embeddings_norms ** 2).mean()
+            - self.original_embedding_tensors_mean_norm ** 2
         )
         # Add a norm penality to the loss
         self.accelerator.backward(loss)
