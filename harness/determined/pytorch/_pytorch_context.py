@@ -391,7 +391,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if not torch.cuda.is_available():
             raise det.errors.InvalidExperimentException(
-                "Mixed precision training (AMP) is supported only on GPU slots.",
+                "Using context.wrap_scaler() is supported only on GPU slots.",
             )
 
         self._scaler = scaler
