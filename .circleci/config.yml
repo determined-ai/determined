@@ -178,11 +178,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-69f397f
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-096d730
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-69f397f
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
 
   login-docker:
     parameters:
@@ -1171,7 +1171,14 @@ jobs:
       - helm/install-helm-client
       - run: helm plugin install https://github.com/chartmuseum/helm-push.git
       - login-helm
-      - run: make -C helm release
+      - run:
+          name: Publish built helm chart
+          command: |
+            go install github.com/goreleaser/goreleaser@v1.1.0
+            git clean -df
+            gobin="$(go env GOBIN)"
+            gopath="$(go env GOPATH)"
+            PATH="${gobin:-${gopath}/bin}:$PATH" make -C helm release
 
   publish-python-package:
     parameters:
@@ -1641,8 +1648,6 @@ jobs:
       - run: python -m pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
-      # Avoid a version of pyzmq that was missing wheels when it was released.
-      - run: pip install "pyzmq!=24.0.0"
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all

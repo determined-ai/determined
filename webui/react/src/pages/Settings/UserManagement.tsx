@@ -13,6 +13,7 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table';
+import useFeature from 'hooks/useFeature';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -45,7 +46,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
     useModalCreateUser({ groups, onClose: fetchUsers, user });
 
-  const canModifyUsers = usePermissions().canModifyGroups();
+  const { canModifyUsers } = usePermissions();
 
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
@@ -108,8 +109,8 @@ const UserManagement: React.FC = () => {
 
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
-  const canViewUsers = usePermissions().canViewUsers();
-  const canModifyUsers = usePermissions().canModifyGroups();
+  const rbacEnabled = useFeature().isOn('rbac');
+  const { canModifyUsers, canViewUsers } = usePermissions();
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
@@ -172,7 +173,7 @@ const UserManagement: React.FC = () => {
     const actionRenderer = (_: string, record: DetailedUser) => {
       return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
     };
-    return [
+    const columns = [
       {
         dataIndex: 'displayName',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
@@ -227,7 +228,8 @@ const UserManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [fetchUsers, groups]);
+    return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
+  }, [fetchUsers, groups, rbacEnabled]);
 
   const table = useMemo(() => {
     return (

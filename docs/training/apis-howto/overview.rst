@@ -77,7 +77,7 @@ images.
 Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
 includes ROCm 4.2, PyTorch 1.9 and Tensorflow 2.5:
 
--  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1``
+-  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4``
 
 Known limitations:
 
