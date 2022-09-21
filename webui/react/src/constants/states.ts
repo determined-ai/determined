@@ -23,17 +23,19 @@ export const activeRunStates: Array<
   'STATE_ACTIVE' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
 > = ['STATE_ACTIVE', 'STATE_STOPPING_CANCELED', 'STATE_STOPPING_COMPLETED', 'STATE_STOPPING_ERROR'];
 
-const jobStates: Array<JobState> = [
-  JobState.QUEUED,
-  JobState.SCHEDULED,
-  JobState.SCHEDULEDBACKFILLED,
-];
+/* activeStates are sub-states which replace the previous Active RunState,
+  and Active for backward compatibility  */
 const activeStates: Array<RunState> = [
   RunState.Active,
   RunState.Pulling,
   RunState.Queued,
   RunState.Running,
   RunState.Starting,
+];
+const jobStates: Array<JobState> = [
+  JobState.QUEUED,
+  JobState.SCHEDULED,
+  JobState.SCHEDULEDBACKFILLED,
 ];
 export const killableRunStates: CompoundRunState[] = [
   ...activeStates,
