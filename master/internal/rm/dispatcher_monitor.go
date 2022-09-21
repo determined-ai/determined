@@ -83,6 +83,7 @@ func newDispatchWatcher(
 }
 
 // monitorJob adds the specified job to the collection of jobs whose status is monitored.
+// payload name may be empty (when reconnecting), monitor will retrieve if necessary.
 func (m *launcherMonitor) monitorJob(user string, dispatchID string, payloadName string) {
 	m.newLauncherJob <- launcherJob{
 		user:         user,
@@ -406,6 +407,22 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	}
 	// The number of lines from error/output logs to display on failure.
 	logRange := fmt.Sprintf("lines=-%d", linesToShow)
+
+	// If we re-connect to a running job, we've lost the payload name
+	// So in the rare case that we fail to start and need to display
+	// the log file content, read the payload name from the launcher.
+	if len(job.payloadName) == 0 {
+		manifest, _, err := m.apiClient.MonitoringApi.GetEnvironmentDetails(
+			m.authContext(ctx), job.user, dispatchID).Execute()
+		if err != nil {
+			ctx.Log().WithError(err).Warnf(
+				"Unable to access environment details for dispatch %s", dispatchID)
+			return []string{}, err
+		}
+		for _, p := range *manifest.Payloads {
+			job.payloadName = *p.Name
+		}
+	}
 
 	// Compose the file name
 	logFileName := fmt.Sprintf("%s-%s", job.payloadName, baseLogName)
