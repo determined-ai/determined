@@ -1,3 +1,4 @@
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { generateAlphaNumeric, generateLetters } from 'shared/utils/string';
@@ -6,9 +7,12 @@ import ResponsiveTable from './ResponsiveTable';
 
 export default {
   component: ResponsiveTable,
-  parameters: { layout: 'padded' },
-  title: 'ResponsiveTable',
-};
+  parameters: {
+    docs: { description: { component: 'Depricated. Prefer using InteractiveTable instead.' } },
+    layout: 'padded',
+  },
+  title: 'Determined/Tables/ResponsiveTable',
+} as Meta<typeof ResponsiveTable>;
 
 const columns = new Array(20).fill(null).map(() => {
   const str = generateLetters();

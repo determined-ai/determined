@@ -28,7 +28,12 @@ const IconButton: React.FC<Props> = ({
 
   return (
     <Tooltip placement={tooltipPlacement} title={label}>
-      <Button aria-label={label} className={className} type={type} onClick={handleClick}>
+      <Button
+        aria-label={label}
+        className={className}
+        style={{ height: 'fit-content', paddingBottom: 0 }}
+        type={type}
+        onClick={handleClick}>
         <Icon name={icon} size={iconSize} />
       </Button>
     </Tooltip>

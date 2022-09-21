@@ -4,7 +4,7 @@ import ActionDropdown from './ActionDropdown';
 
 export default {
   component: ActionDropdown,
-  title: 'ActionDropdown',
+  title: 'Shared/ActionDropdown',
 };
 
 const FIRST_ACTION = 'First Action';

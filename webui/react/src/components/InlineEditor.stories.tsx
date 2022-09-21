@@ -1,4 +1,4 @@
-import { boolean, number, text, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React, { useCallback, useState } from 'react';
 
 import loremIpsum from 'storybook/loremIpsum';
@@ -6,12 +6,12 @@ import loremIpsum from 'storybook/loremIpsum';
 import InlineEditor from './InlineEditor';
 
 export default {
+  argTypes: { allowNewline: { description: 'allow newline (use [shift] + [enter])' } },
   component: InlineEditor,
-  decorators: [withKnobs],
-  title: 'InlineEditor',
-};
+  title: 'Determined/InlineEditor',
+} as Meta<typeof InlineEditor>;
 
-export const Default = (): React.ReactNode => {
+export const Default: ComponentStory<typeof InlineEditor> = (args) => {
   const [value, setValue] = useState('Edit Me!');
 
   const save = useCallback((newValue: string): Promise<void> => {
@@ -30,15 +30,11 @@ export const Default = (): React.ReactNode => {
     [save],
   );
 
-  return (
-    <InlineEditor
-      allowNewline={boolean('allow newline (use <shift> + <enter>)', false)}
-      maxLength={number('max length', 100)}
-      placeholder={text('placeholder', 'placeholder text')}
-      value={value}
-      onSave={handleSave}
-    />
-  );
+  return <InlineEditor {...args} value={value} onSave={handleSave} />;
 };
 
-export const LargeText = (): React.ReactNode => <InlineEditor value={loremIpsum} />;
+export const LargeText: ComponentStory<typeof InlineEditor> = (args) => (
+  <InlineEditor {...args} value={loremIpsum} />
+);
+
+Default.args = { allowNewline: false, maxLength: 100, placeholder: 'placeholder text' };
