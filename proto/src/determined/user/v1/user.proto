@@ -47,6 +47,10 @@ message AgentUserGroup {
   int32 agent_uid = 1;
   // The group id on the agent.
   int32 agent_gid = 2;
+  // User name.
+  string agent_user = 3;
+  // Group name.
+  string agent_group = 4;
 }
 
 // UserWebSetting represents user web setting.

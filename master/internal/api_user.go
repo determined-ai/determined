@@ -25,10 +25,12 @@ var errUserNotFound = status.Error(codes.NotFound, "user not found")
 
 func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	var agentUserGroup *userv1.AgentUserGroup
-	if user.AgentUID.Valid || user.AgentGID.Valid {
+	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
 		agentUserGroup = &userv1.AgentUserGroup{
-			AgentUid: int32(user.AgentUID.ValueOrZero()),
-			AgentGid: int32(user.AgentGID.ValueOrZero()),
+			AgentUid:   int32(user.AgentUID.ValueOrZero()),
+			AgentGid:   int32(user.AgentGID.ValueOrZero()),
+			AgentUser:  user.AgentUser.ValueOrZero(),
+			AgentGroup: user.AgentGroup.ValueOrZero(),
 		}
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
@@ -166,8 +168,16 @@ func (a *apiServer) PostUser(
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
 		agentUserGroup = &model.AgentUserGroup{
-			UID: int(req.User.AgentUserGroup.AgentUid),
-			GID: int(req.User.AgentUserGroup.AgentGid),
+			UID:   int(req.User.AgentUserGroup.AgentUid),
+			GID:   int(req.User.AgentUserGroup.AgentGid),
+			User:  req.User.AgentUserGroup.AgentUser,
+			Group: req.User.AgentUserGroup.AgentGroup,
+		}
+		if agentUserGroup.User == "" || agentUserGroup.Group == "" {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				"AgentUser and AgentGroup names cannot be empty",
+			)
 		}
 	}
 
@@ -334,8 +344,10 @@ func (a *apiServer) PatchUser(
 	var ug *model.AgentUserGroup
 	if pug := req.User.AgentUserGroup; pug != nil {
 		ug = &model.AgentUserGroup{
-			UID: int(req.User.AgentUserGroup.AgentUid),
-			GID: int(req.User.AgentUserGroup.AgentGid),
+			UID:   int(req.User.AgentUserGroup.AgentUid),
+			GID:   int(req.User.AgentUserGroup.AgentGid),
+			User:  req.User.AgentUserGroup.AgentUser,
+			Group: req.User.AgentUserGroup.AgentGroup,
 		}
 		if err = user.AuthZProvider.Get().
 			CanSetUsersAgentUserGroup(*curUser, targetUser, *ug); err != nil {
@@ -346,6 +358,13 @@ func (a *apiServer) PatchUser(
 				return nil, errUserNotFound
 			}
 			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		if ug.User == "" || ug.Group == "" {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				"AgentUser and AgentGroup names cannot be empty",
+			)
 		}
 	}
 

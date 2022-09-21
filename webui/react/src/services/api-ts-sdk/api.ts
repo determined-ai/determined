@@ -908,6 +908,18 @@ export interface V1AgentUserGroup {
      * @memberof V1AgentUserGroup
      */
     agentGid?: number;
+    /**
+     * User name.
+     * @type {string}
+     * @memberof V1AgentUserGroup
+     */
+    agentUser?: string;
+    /**
+     * Group name.
+     * @type {string}
+     * @memberof V1AgentUserGroup
+     */
+    agentGroup?: string;
 }
 
 /**
