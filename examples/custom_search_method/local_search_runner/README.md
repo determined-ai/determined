@@ -1,19 +1,25 @@
 # Custom SearchMethod with LocalSearchRunner
 
-This example shows how to implement a custom hyperparameter SearchMethod that enables fault tolerance.
-To run the custom SearchMethod, in this example we use LocalSearchRunner that executes the custom SearchMethod 
-on your local machine. 
+This example shows how to implement a custom SearchMethod that enables fault tolerance, and how to run an experiment
+with the custom SearchMethod on a Determined cluster. In this example, we use LocalSearchRunner, which executes the 
+custom SearchMethod on your local machine and orchestrates a multi-trial experiment on the cluster by passing 
+operations from the custom SearchMethod to the experiment.
+
 For an example of running the custom SearchMethod on a cluster, see `examples/custom_searcher/core_search_runner`.
 
 ## Files
+Custom SearchMethod:
 * **asha.py**: The code for ASHA implemented as a custom SearchMethod.
 * **run_experiment.py**: The code for running a custom SearchMethod locally with LocalSearchRunner.
-* **context_dir/model_def.py**: The core code for the model. This includes building and compiling the model.
-* **context_dir/data.py**: The data loading and preparation code for the model.
-* **context_dir/layers.py**: Defines the convolutional layers that the model uses. 
+
+Multi-trial experiment:
+* **experiment_files/model_def.py**: The core code for the model. This includes building and compiling the model.
+* **experiment_files/data.py**: The data loading and preparation code for the model.
+* **experiment_files/layers.py**: Defines the convolutional layers that the model uses. 
 
 ### Configuration Files
-* **custom_config.yaml**: Configuration for running `model_def.py` with a custom SearchMethod. 
+Multi-trial experiment:
+* **experiment_files/custom_config.yaml**: Configuration for running `model_def.py` with a custom SearchMethod. 
 Note `searcher.name: custom`.
 
 ## Data
@@ -25,7 +31,7 @@ under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.ht
 
 1. Set the `DET_MASTER` environment variable, which is the network address of the Determined master.
 For instance, `export DET_MASTER=<master_host:port>`.
-2. Run the following command to start the local search runner `python run_experiment.py`.
+2. Run the following command to start LocalSearchRunner: `python run_experiment.py`.
 
 ## Result
 LocalSearchRunner executes the custom SearchMethod on your local machine, 

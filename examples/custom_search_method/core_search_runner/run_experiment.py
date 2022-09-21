@@ -2,8 +2,8 @@
 This script runs a custom SearchMethod with CoreSearchRunner on a Determined cluster.
 
 CoreSearchRunner is responsible for:
- -> creating a multi-trial hyperparameter search experiment in the Determined cluster,
- -> executing the custom SearchMethod as a single trial experiment in the Determined cluster,
+ -> executing the custom SearchMethod as a single trial experiment on the Determined cluster,
+ -> creating a multi-trial experiment on the Determined cluster,
  -> handling communication between the multi-trial experiment and the custom SearchMethod,
  -> enabling fault tolerance for SearchMethods that implement save_method_state() and
     load_method_state().
@@ -21,8 +21,17 @@ from determined.searcher.core_search_runner import CoreSearchRunner
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
-    # Path to the .yaml file with the multi-trial experiment configuration
-    model_config = 'custom_config.yaml'
+
+    ########################################################################
+    # Multi-trial experiment
+    # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #
+    # The content of the following directory is uploaded to Determined cluster.
+    # It should include all files necessary to run the experiment (as usual).
+    model_context_dir = 'experiment_files'
+
+    # Path to the .yaml file with the multi-trial experiment configuration.
+    model_config = "experiment_files/custom_config.yaml"
 
     ########################################################################
     # Fault Tolerance for CoreSearchRunner
@@ -55,4 +64,4 @@ if __name__ == "__main__":
         #      -> otherwise, new experiment is created.
         # 2) Handles communication between the multi-trial experiment and the custom SearchMethod
         # 3) Exits when the experiment is completed.
-        search_runner.run(model_config)
+        search_runner.run(model_config, context_dir=model_context_dir)

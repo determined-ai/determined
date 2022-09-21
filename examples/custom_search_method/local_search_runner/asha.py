@@ -27,16 +27,15 @@ save_method_state() and load_method_state() are called by LocalSearchRunner as a
 LocalSearchRunner.load() to ensure that LocalSearchRunner state and SearchMethod state can be restored if
 LocalSearchRunner is terminated or interrupted.
 To provide fault tolerance, LocalSearchRunner calls save() and save_method_state() after processing
-each SearcherEvent and before sending the list of Operation to the multi-trial experiment.
+each SearcherEvent and before sending the list of Operations to the multi-trial experiment.
 On resumption, LocalSearchRunner calls load() and load_method_state(), and gets SearcherEvents from the multi-trial
 experiment. If a SearcherEvent has already been processed, then LocalSearchRunner re-sends the operations.
 Otherwise, it continues to process SearcherEvents. That is, LocalSearchRunner invokes the SearchMethod methods
-corresponding to the Searcher Event, gets the operations, saves the state and send the operations.
+corresponding to the Searcher Event, gets the operations, saves the state, and sends the operations.
 
 While implementation of save_method_state() and load_method_state() depends on the user,
-in this example we propose to encapsulate all variables required by ASHASearchMethod in a new class,
-ASHASearchMethodState. Having ASHASearchMethodState as a separate object, we propose to save and load
-ASHASearchMethodState object wth pickle for convenience.
+in this example we chose to encapsulate all variables required by ASHASearchMethod in a new class,
+ASHASearchMethodState. We elected to use pickle as the storage format for convenience.
 '''
 
 import dataclasses

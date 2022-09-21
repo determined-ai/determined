@@ -1,11 +1,11 @@
 """
 This script runs a custom SearchMethod and LocalSearchRunner on
 your local machine, while the multi-trial experiment for hyperparameter
-search is executed in a Determined cluster.
+search is executed on a Determined cluster.
 
 LocalSearchRunner is responsible for:
- -> creating a multi-trial hyperparameter search experiment in the Determined cluster,
- -> executing the custom SearchMethod implementation on a local machine,
+ -> executing the custom SearchMethod on a local machine,
+ -> creating a multi-trial experiment on the Determined cluster,
  -> handling communication between the multi-trial experiment and your local SearchMethod,
  -> enabling fault tolerance for SearchMethods that implement save_method_state() and
     load_method_state().
@@ -24,15 +24,16 @@ from determined.searcher.search_runner import LocalSearchRunner
 if __name__ == "__main__":
 
     ########################################################################
-    # Context directory for LocalSearchRunner
+    # Multi-trial experiment
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     #
-    # The content of context directory is uploaded to Determined cluster.
+    # The content of the following directory is uploaded to Determined cluster.
     # It should include all files necessary to run the experiment (as usual).
-    context_dir = 'context_dir'
+    model_context_dir = 'experiment_files'
 
-    # Path to the .yaml file with the multi-trial experiment configuration
-    model_config = "custom_config.yaml"
+    # Path to the .yaml file with the multi-trial experiment configuration.
+    model_config = "experiment_files/custom_config.yaml"
+
 
     ########################################################################
     # Fault Tolerance for LocalSearchRunner
@@ -65,6 +66,6 @@ if __name__ == "__main__":
     #      -> otherwise, new experiment is created.
     # 2) Handle communication between the remote experiment and the custom SearchMethod
     # 3) Exits when the experiment is completed.
-    experiment_id = search_runner.run(model_config, context_dir=context_dir)
+    experiment_id = search_runner.run(model_config, context_dir=model_context_dir)
     logging.info(f"Experiment {experiment_id} has been completed.")
 

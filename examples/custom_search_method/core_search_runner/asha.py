@@ -27,19 +27,18 @@ save_method_state() and load_method_state() are called by CoreSearchRunner as a 
 CoreSearchRunner.load() to ensure that CoreSearchRunner state and SearchMethod state can be restored if
 CoreSearchRunner is terminated or interrupted.
 To provide fault tolerance, CoreSearchRunner calls save() and save_method_state() after processing
-each SearcherEvent and before sending the list of Operation to the multi-trial experiment.
+each SearcherEvent and before sending the list of Operations to the multi-trial experiment.
 On resumption, CoreSearchRunner calls load() and load_method_state(), and gets SearcherEvents from the multi-trial
 experiment. If a SearcherEvent has already been processed by SearchMethod, then CoreSearchRunner re-sends the
 operations. Otherwise, it continues to process SearcherEvents as usual. That is, CoreSearchRunner invokes
-the methods corresponding to the SearcherEvent, gets the operations, saves the state and send the operations.
+the methods corresponding to the SearcherEvent, gets the operations, saves the state, and sends the operations.
 
 To ensure that CoreSearchRunner process is resumed automatically in the case of failure,
 make sure to set `max_restarts` in the `searcher.yaml` file to a number greater than 0.
 
 While implementation of save_method_state() and load_method_state() depends on the user,
-in this example we propose to encapsulate all variables required by ASHASearchMethod in a new class,
-ASHASearchMethodState. Having ASHASearchMethodState as a separate object, we propose to save and load
-ASHASearchMethodState object wth pickle for convenience.
+in this example we chose to encapsulate all variables required by ASHASearchMethod in a new class,
+ASHASearchMethodState. We elected to use pickle as the storage format for convenience.
 """
 
 import dataclasses
