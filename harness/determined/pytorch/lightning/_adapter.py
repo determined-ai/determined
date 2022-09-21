@@ -304,8 +304,8 @@ class LightningAdapter(PyTorchTrial):
 
             if not isinstance(lrs["scheduler"].optimizer, Optimizer):
                 raise TypeError(
-                    "A returned LRScheduler from `configure_optimizers` is "
-                    "missing the optimizer attribute.",
+                    "A returned LRScheduler from `configure_optimizers` has an optimizer with the "
+                    f"wrong type: got {type(lrs['scheduler'].optimizer).__name__}."
                 )
 
             # switch the user's unwrapped optimizer with the wrapped version.
