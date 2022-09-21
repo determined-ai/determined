@@ -190,7 +190,7 @@ class DetSDTextualInversionTrainer:
         self.original_embedding_tensors_mean_norm = None
         self.new_embedding_idxs = None
         # TODO: Don't hard code
-        self.NORM_PENALTY = 0.001
+        self.NORM_PENALTY = 0.01
 
         self.concept_to_initializer_tokens_map = {}
         self.concept_to_dummy_tokens_map = {}
