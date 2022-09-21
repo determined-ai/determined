@@ -1,7 +1,6 @@
 import json
 import os
 import pathlib
-import warnings
 from contextlib import nullcontext
 from datetime import datetime
 from PIL import Image
@@ -188,7 +187,7 @@ class DetSDTextualInversionTrainer:
         self.train_scheduler = None
         self.original_embedding_idxs = None
         self.original_embedding_tensors = None
-        self.concept_to_init_tokens_map = {}
+        self.concept_to_initializer_tokens_map = {}
         self.concept_to_dummy_tokens_map = {}
         self.concept_to_dummy_ids_map = {}
 
@@ -525,7 +524,7 @@ class DetSDTextualInversionTrainer:
         for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
             token_embeddings = self._get_token_embeddings()
             learned_embeddings = token_embeddings[d_ids].detach().cpu()
-            initializer_tokens = self.concept_to_init_tokens_map[concept_token]
+            initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
             learned_embeddings_dict[concept_token] = {
                 "initializer_tokens": initializer_tokens,
                 "learned_embeddings": learned_embeddings,
