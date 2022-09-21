@@ -110,11 +110,13 @@ class DetSDTextualInversionTrainer:
 
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
-        assert optimizer_name in (
-            "adam",
-            "adamw",
-            "sgd",
-        ), "Optimizer must be one of 'adam', 'adamw' or 'sgd'."
+        self._optim_dict = {
+            "adam": torch.optim.Adam,
+            "adamw": torch.optim.AdamW,
+            "sgd": torch.optim.SGD,
+        }
+        if optimizer_name not in self._optim_dict:
+            raise ValueError(f"Optimizer must be one of {list(self._optim_dict.keys())}.")
         self.optimizer_name = optimizer_name
         self.learning_rate = learning_rate
         self.other_optimizer_kwargs = other_optimizer_kwargs or {}
@@ -438,8 +440,7 @@ class DetSDTextualInversionTrainer:
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
         embedding_params = self.text_encoder.get_input_embeddings().parameters()
-        optim_dict = {"adam": torch.optim.Adam, "adamw": torch.optim.AdamW, "sgd": torch.optim.SGD}
-        self.optimizer = optim_dict[self.optimizer_name](
+        self.optimizer = self._optim_dict[self.optimizer_name](
             embedding_params,  # only optimize the embeddings
             lr=self.learning_rate,
             **self.other_optimizer_kwargs,
@@ -642,9 +643,8 @@ class DetSDTextualInversionPipeline:
         )
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.device = device
-        assert not (
-            use_fp16 and not use_autocast
-        ), "use_autocast must be True when use_fp16 is also True"
+        if use_fp16 and not use_autocast:
+            raise ValueError("If use_fp16 is True, use_autocast must also be True.")
         self.use_autocast = use_autocast
         self.use_fp16 = use_fp16
 
@@ -887,10 +887,10 @@ def add_new_tokens(
         initializer_ids, torch.tensor(special_token_ids), invert=True
     )
     non_special_initializer_ids = initializer_ids[non_special_initializer_locations]
-    assert (
-        len(non_special_initializer_ids) > 0
-    ), f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
-
+    if len(non_special_initializer_ids) == 0:
+        raise ValueError(
+            f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
+        )
     # Add a new randomly generated dummy placeholder token for every token in the initializer.
     dummy_placeholder_tokens = [
         f"<{concept_token}+{n}" for n in range(len(non_special_initializer_ids))
