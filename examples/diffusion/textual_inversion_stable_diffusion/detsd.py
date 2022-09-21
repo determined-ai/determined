@@ -686,7 +686,6 @@ class DetSDTextualInversionPipeline:
         for path in checkpoint_paths:
             if isinstance(path, str):
                 path = pathlib.Path(path)
-            self.all_checkpoint_paths.append(path)
             # TODO: Check that the same pretrained_model_name_or_path is used for all ckpts.
             learned_embeddings_dict = torch.load(path.joinpath(self.learned_embeddings_filename))
             # Update embedding matrix and attrs.
@@ -713,6 +712,7 @@ class DetSDTextualInversionPipeline:
                 for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
                     token_embeddings[d_id] = tensor
                 self.learned_embeddings_dict[concept_token] = embedding_dict
+            self.all_checkpoint_paths.append(path)
 
         self.all_added_concepts = list(self.concept_to_dummy_tokens_map.keys())
         print(f"Successfully loaded checkpoints. All loaded concepts: {self.all_added_concepts}")
