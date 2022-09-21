@@ -28,17 +28,24 @@ const jobStates: Array<JobState> = [
   JobState.SCHEDULED,
   JobState.SCHEDULEDBACKFILLED,
 ];
-export const killableRunStates: CompoundRunState[] = [
+const activeStates: Array<RunState> = [
   RunState.Active,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.Running,
+  RunState.Starting,
+];
+export const killableRunStates: CompoundRunState[] = [
+  ...activeStates,
   RunState.Paused,
   RunState.StoppingCanceled,
   ...jobStates,
 ];
 
-export const pausableRunStates: Set<CompoundRunState> = new Set([RunState.Active, ...jobStates]);
+export const pausableRunStates: Set<CompoundRunState> = new Set([...activeStates, ...jobStates]);
 
 export const cancellableRunStates: Set<CompoundRunState> = new Set([
-  RunState.Active,
+  ...activeStates,
   RunState.Paused,
   ...jobStates,
 ]);
