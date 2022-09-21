@@ -200,7 +200,7 @@ class DetSDTextualInversionTrainer:
         self._add_new_tokens()
         with torch.no_grad():
             init_norm = torch.linalg.vector_norm(
-                self._get_new_token_embeddings(return_data=False), dim=0
+                self._get_new_token_embeddings(return_data=False), dim=1
             ).mean()
             print("NEW NORMS AT INIT", init_norm)
         self._freeze_layers()
@@ -312,7 +312,7 @@ class DetSDTextualInversionTrainer:
         # Add a norm penalty to the loss
         # TODO: Clean this up.
         new_token_embeddings_norms = torch.linalg.vector_norm(
-            self._get_new_token_embeddings(return_data=False), dim=0
+            self._get_new_token_embeddings(return_data=False), dim=1
         )
         print(
             80 * "$",
@@ -426,7 +426,7 @@ class DetSDTextualInversionTrainer:
         )
         with torch.no_grad():
             self.original_embedding_tensors_mean_norm = (
-                torch.linalg.vector_norm(self.original_embedding_tensors, dim=0).mean().item()
+                torch.linalg.vector_norm(self.original_embedding_tensors, dim=1).mean().item()
             )
         self.new_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
