@@ -691,9 +691,10 @@ class DetSDTextualInversionPipeline:
             learned_embeddings_dict = torch.load(path.joinpath(self.learned_embeddings_filename))
             # Update embedding matrix and attrs.
             for concept_token, embedding_dict in learned_embeddings_dict.items():
-                assert (
-                    concept_token not in self.learned_embeddings_dict
-                ), f"Checkpoint concept conflict: {concept_token} already exists."
+                if concept_token in self.learned_embeddings_dict:
+                    raise ValueError(
+                        f"Checkpoint concept conflict: {concept_token} already exists."
+                    )
                 initializer_tokens = embedding_dict["initializer_tokens"]
                 learned_embeddings = embedding_dict["learned_embeddings"]
                 dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
