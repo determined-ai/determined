@@ -276,6 +276,7 @@ const commandStateSortOrder: CommandState[] = [
   CommandState.Pulling,
   CommandState.Starting,
   CommandState.Running,
+  CommandState.Waiting,
   CommandState.Terminating,
   CommandState.Terminated,
 ];
