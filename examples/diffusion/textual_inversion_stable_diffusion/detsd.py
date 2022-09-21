@@ -198,6 +198,11 @@ class DetSDTextualInversionTrainer:
 
         self._build_models()
         self._add_new_tokens()
+        with torch.no_grad():
+            init_norm = torch.linalg.vector_norm(
+                self._get_new_token_embeddings(return_data=False), dim=0
+            ).mean()
+            print("NEW NORMS AT INIT", init_norm)
         self._freeze_layers()
         self._build_dataset_and_dataloader()
         self._build_optimizer()
@@ -303,24 +308,26 @@ class DetSDTextualInversionTrainer:
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         loss = F.mse_loss(noise_pred, noise)
         print("MSE LOSS: ", loss)
+
+        # Add a norm penalty to the loss
+        # TODO: Clean this up.
         new_token_embeddings_norms = torch.linalg.vector_norm(
             self._get_new_token_embeddings(return_data=False), dim=0
         )
         print(
             80 * "$",
             "MEAN NEW EMBEDDING NORM",
-            new_token_embeddings_norms.mean().item(),
+            new_token_embeddings_norms.detach().mean().item(),
             80 * "$",
             sep="\n",
         )
-        # Add a norm penalty to the loss
-        # TODO: Clean this up.
         norm_loss = (
             self.norm_penalty
             * ((new_token_embeddings_norms - self.original_embedding_tensors_mean_norm) ** 2).mean()
         )
         print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
+
         self.accelerator.backward(loss)
         self.loss_history.append(loss.detach())
 
@@ -329,7 +336,6 @@ class DetSDTextualInversionTrainer:
         # out their gradients, as L2 regularization (for instance) will still modify weights whose
         # gradient is zero. See link below for a discussion:
         # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
-        # An extra .module attr may be needed due to the accelerator.prepare call.
         self.optimizer.step()
         # Only overwrite after the step has actually been taken:
         if self.accelerator.sync_gradients:
@@ -620,6 +626,7 @@ class DetSDTextualInversionTrainer:
             / self.accelerator.num_processes
         )
         self.loss_history = []
+        print("self.last_mean_loss", self.last_mean_loss)
         if self.accelerator.is_main_process:
             core_context.train.report_training_metrics(
                 steps_completed=self.steps_completed,
