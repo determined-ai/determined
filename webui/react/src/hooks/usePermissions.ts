@@ -42,15 +42,16 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canGetPermissions: boolean;
-  canModifyGroups: () => boolean;
+  canModifyGroups: boolean;
+  canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
-  canModifyUsers: () => boolean;
+  canModifyUsers: boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
-  canUpdateRoles: (arg0: WorkspacePermissionsArgs) => boolean;
-  canViewGroups: () => boolean;
-  canViewUsers: () => boolean;
+  canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
+  canViewGroups: boolean;
+  canViewUsers: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
 }
@@ -64,7 +65,8 @@ const usePermissions = (): PermissionsHook => {
 
   // Determine if the user has access to any workspaces
   // Should be updated to check user assignments and roles once available
-  const canViewWorkspaces = relevantPermissions(userAssignments, userRoles).has('oss_user') ||
+  const canViewWorkspaces =
+    relevantPermissions(userAssignments, userRoles).has('oss_user') ||
     relevantPermissions(userAssignments, userRoles).has('view_workspaces');
 
   return {
@@ -80,20 +82,21 @@ const usePermissions = (): PermissionsHook => {
       canDeleteWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
     canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
       canDeleteWorkspace(args.workspace, user, userAssignments, userRoles),
-    canGetPermissions: canGetPermissions(user, userAssignments, userRoles),
-    canModifyGroups: () => canModifyGroups(user, userAssignments, userRoles),
+    canGetPermissions: canAdministrateUsers(user, userAssignments, userRoles),
+    canModifyGroups: canModifyGroups(user, userAssignments, userRoles),
+    canModifyPermissions: canAdministrateUsers(user, userAssignments, userRoles),
     canModifyProjects: (args: ProjectPermissionsArgs) =>
       canModifyWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
-    canModifyUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+    canModifyUsers: canAdministrateUsers(user, userAssignments, userRoles),
     canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
       canModifyWorkspace(args.workspace, user, userAssignments, userRoles),
     canMoveExperiment: (args: ExperimentPermissionsArgs) =>
       canMoveExperiment(args.experiment, user, userAssignments, userRoles),
     canMoveProjects: (args: ProjectPermissionsArgs) =>
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
-    canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(args.workspace, user, userAssignments, userRoles),
-    canViewGroups: () => canViewGroups(user, userAssignments, userRoles),
-    canViewUsers: () => canAdministrateUsers(user, userAssignments, userRoles),
+      canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(args.workspace, user, userAssignments, userRoles),
+    canViewGroups: canViewGroups(user, userAssignments, userRoles),
+    canViewUsers: canAdministrateUsers(user, userAssignments, userRoles),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>
       canViewWorkspace(args.workspace, userAssignments, userRoles),
     canViewWorkspaces,
@@ -195,16 +198,6 @@ const canMoveExperiment = (
       ? user.isAdmin || user.id === experiment.userId
       : permitted.has('move_experiment'))
   );
-};
-
-// User actions
-const canGetPermissions = (
-  user?: DetailedUser,
-  userAssignments?: UserAssignment[],
-  userRoles?: UserRole[],
-): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles);
-  return !!user && (permitted.has('oss_user') ? user.isAdmin : permitted.has('view_permissions'));
 };
 
 // Model and ModelVersion actions

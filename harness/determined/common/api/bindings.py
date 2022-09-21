@@ -203,6 +203,7 @@ class determinedtaskv1State(enum.Enum):
     STATE_RUNNING = "STATE_RUNNING"
     STATE_TERMINATED = "STATE_TERMINATED"
     STATE_TERMINATING = "STATE_TERMINATING"
+    STATE_WAITING = "STATE_WAITING"
     STATE_QUEUED = "STATE_QUEUED"
 
 class protobufAny:
@@ -478,22 +479,30 @@ class v1AgentUserGroup:
         self,
         *,
         agentGid: "typing.Optional[int]" = None,
+        agentGroup: "typing.Optional[str]" = None,
         agentUid: "typing.Optional[int]" = None,
+        agentUser: "typing.Optional[str]" = None,
     ):
         self.agentUid = agentUid
         self.agentGid = agentGid
+        self.agentUser = agentUser
+        self.agentGroup = agentGroup
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AgentUserGroup":
         return cls(
             agentUid=obj.get("agentUid", None),
             agentGid=obj.get("agentGid", None),
+            agentUser=obj.get("agentUser", None),
+            agentGroup=obj.get("agentGroup", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "agentUid": self.agentUid if self.agentUid is not None else None,
             "agentGid": self.agentGid if self.agentGid is not None else None,
+            "agentUser": self.agentUser if self.agentUser is not None else None,
+            "agentGroup": self.agentGroup if self.agentGroup is not None else None,
         }
 
 class v1AggregateQueueStats:
@@ -682,6 +691,25 @@ class v1AllocationRendezvousInfoResponse:
     def to_json(self) -> typing.Any:
         return {
             "rendezvousInfo": self.rendezvousInfo.to_json(),
+        }
+
+class v1AllocationWaitingRequest:
+    def __init__(
+        self,
+        *,
+        allocationId: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationWaitingRequest":
+        return cls(
+            allocationId=obj.get("allocationId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId if self.allocationId is not None else None,
         }
 
 class v1AssignRolesRequest:
@@ -6366,20 +6394,24 @@ class v1Task:
         *,
         allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None,
         taskId: "typing.Optional[str]" = None,
+        taskType: "typing.Optional[str]" = None,
     ):
         self.taskId = taskId
+        self.taskType = taskType
         self.allocations = allocations
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
         return cls(
             taskId=obj.get("taskId", None),
+            taskType=obj.get("taskType", None),
             allocations=[v1Allocation.from_json(x) for x in obj["allocations"]] if obj.get("allocations", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "taskId": self.taskId if self.taskId is not None else None,
+            "taskType": self.taskType if self.taskType is not None else None,
             "allocations": [x.to_json() for x in self.allocations] if self.allocations is not None else None,
         }
 
@@ -7343,6 +7375,27 @@ def get_AllocationRendezvousInfo(
     if _resp.status_code == 200:
         return v1AllocationRendezvousInfoResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationRendezvousInfo", _resp)
+
+def post_AllocationWaiting(
+    session: "api.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationWaitingRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/waiting",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AllocationWaiting", _resp)
 
 def post_ArchiveExperiment(
     session: "api.Session",

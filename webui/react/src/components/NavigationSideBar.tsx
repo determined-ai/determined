@@ -49,7 +49,12 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }: ItemProps) => {
+export const NavigationItem: React.FC<ItemProps> = ({
+  path,
+  status,
+  action,
+  ...props
+}: ItemProps) => {
   const location = useLocation();
   const [isActive, setIsActive] = useState(false);
   const classes = [css.navItem];
@@ -226,13 +231,11 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
-                  {canCreateWorkspace
-                    ? (
-                      <Button type="text" onClick={handleCreateWorkspace}>
-                        <Icon name="add-small" size="tiny" />
-                      </Button>
-                    )
-                    : null}
+                  {canCreateWorkspace ? (
+                    <Button type="text" onClick={handleCreateWorkspace}>
+                      <Icon name="add-small" size="tiny" />
+                    </Button>
+                  ) : null}
                 </div>
               }
               icon="workspaces"

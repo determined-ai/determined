@@ -4,7 +4,7 @@ import NotesCard from './NotesCard';
 
 export default {
   component: NotesCard,
-  title: 'NotesCard',
+  title: 'Determined/Cards/NotesCard',
 };
 
 const markdown = `# h1 Heading 8-)

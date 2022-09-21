@@ -105,6 +105,7 @@ export const V1SchedulerTypeToLabel: { [key in V1SchedulerType]: string } = {
 };
 
 export const commandStateToLabel: { [key in CommandState]: string } = {
+  [CommandState.Waiting]: 'Waiting',
   [CommandState.Pulling]: 'Pulling',
   [CommandState.Queued]: 'Queued',
   [CommandState.Starting]: 'Starting',

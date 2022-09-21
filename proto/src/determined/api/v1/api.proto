@@ -571,6 +571,17 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Set allocation to waiting state.
+  rpc AllocationWaiting(AllocationWaitingRequest)
+      returns (AllocationWaitingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/waiting"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Stream task logs.
   rpc TaskLogs(TaskLogsRequest) returns (stream TaskLogsResponse) {
     option (google.api.http) = {

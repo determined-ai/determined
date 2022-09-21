@@ -5,7 +5,7 @@ import Section from './Section';
 
 export default {
   component: Section,
-  title: 'Section',
+  title: 'Determined/Section',
 };
 
 export const Default = (): React.ReactNode => (
