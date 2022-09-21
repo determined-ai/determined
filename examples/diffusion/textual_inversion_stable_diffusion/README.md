@@ -154,3 +154,4 @@ A very incomplete list:
 * `accelerate --config` support/example
 * Multi-experiment visualizations currently showing no data for some reason.
 * Link to blog post, when published.
+* Short section on tips
