@@ -538,7 +538,7 @@ class PyTorchTrialController(det.TrialController):
             keys = None
             batch_metrics = []
 
-            self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
+            assert isinstance(self.validation_loader, torch.utils.data.DataLoader)
             if len(self.validation_loader) == 0:
                 raise RuntimeError("validation_loader is empty.")
             for callback in self.callbacks.values():
