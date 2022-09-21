@@ -167,6 +167,24 @@ func (d *DispatcherResourceManager) ValidateResourcePool(ctx actor.Messenger, na
 	}
 }
 
+// IsReattachEnabled is always true for dispatcher-based job schedulers.
+func (d *DispatcherResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
+	return true
+}
+
+// IsReattachableOnlyAfterStarted is always false for dispatcher-based job schedulers
+// as the start_time is not set on our allocations.
+func (d *DispatcherResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) bool {
+	return false
+}
+
+// IsReattachEnabledForRP returns true for all resource pools.
+func (d *DispatcherResourceManager) IsReattachEnabledForRP(
+	ctx actor.Messenger, rpName string,
+) bool {
+	return true
+}
+
 // NewDispatcherResourceManager returns a new dispatcher resource manager.
 func NewDispatcherResourceManager(
 	system *actor.System,
@@ -276,7 +294,7 @@ func (m *dispatcherResourceManager) authContext(ctx *actor.Context) context.Cont
 func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		m.killAllActiveDispatches(ctx, ctx.Self())
+		m.debugKillAllInactiveDispatches(ctx, ctx.Self())
 		go m.jobWatcher.watch(ctx)
 		// SLURM Resource Manager always fulfills requests for resource pool details using the
 		// value from the cache. This call will ensure there is an initial value in the cache at
@@ -1292,9 +1310,37 @@ func (m *dispatcherResourceManager) receiveSetTaskName(
 func (m *dispatcherResourceManager) assignResources(
 	ctx *actor.Context, req *sproto.AllocateRequest,
 ) {
+	var dispatchID string
+	var impersonatedUser string
+	var rID sproto.ResourcesID
+
+	if req.Restore {
+		// Find the Dispatch IDs associated with the allocation ID. We'll need the
+		// Dispatch ID to reconnect with the existing allocation.
+		dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), req.AllocationID)
+		if err != nil {
+			ctx.Log().WithError(err).Errorf(
+				"Failed to retrieve the DispatchIDs associated with AllocationID %s",
+				req.AllocationID)
+			return
+		}
+
+		ctx.Log().Debug(fmt.Sprintf("Restore: Found %d jobs associated with AllocationID %s",
+			len(dispatches), req.AllocationID))
+
+		for _, dispatch := range dispatches {
+			dispatchID = dispatch.DispatchID
+			impersonatedUser = dispatch.ImpersonatedUser
+			rID = dispatch.ResourceID
+			break
+		}
+	}
+
 	m.slotsUsedPerGroup[m.groups[req.Group]] += req.SlotsNeeded
 
-	rID := sproto.ResourcesID(uuid.NewString())
+	if len(rID) == 0 {
+		rID = sproto.ResourcesID(uuid.NewString())
+	}
 	allocations := sproto.ResourceList{
 		rID: &DispatcherResources{
 			id:                     rID,
@@ -1310,10 +1356,33 @@ func (m *dispatcherResourceManager) assignResources(
 	m.reqList.SetAllocationsRaw(req.AllocationRef, &assigned)
 	req.AllocationRef.System().Tell(req.AllocationRef, assigned)
 
-	ctx.Log().
-		WithField("allocation-id", req.AllocationID).
-		WithField("task-handler", req.AllocationRef.Address()).
-		Infof("resources assigned")
+	if req.Restore {
+		if len(dispatchID) == 0 {
+			ctx.Log().Infof("Restore request with no active DispatchID found.  Fail the allocation request.")
+			var unknownExit sproto.ExitCode = -1
+			failed := sproto.NewResourcesFailure(sproto.ResourcesAborted,
+				"Unable to locate HPC job on restart.", &unknownExit)
+			stopped := sproto.ResourcesStopped{}
+			stopped.Failure = failed
+			ctx.Tell(req.AllocationRef, sproto.ResourcesStateChanged{
+				ResourcesID:      rID,
+				ResourcesState:   sproto.Terminated,
+				ResourcesStopped: &stopped,
+			})
+		} else {
+			// Simulate portions of Start() which will not be called on restore.
+			ctx.Log().Infof("Reconnecting ResourceID %s, DispatchID %s, ImpersontatedUser: %s",
+				rID, dispatchID, impersonatedUser)
+
+			m.dispatchIDToAllocationID[dispatchID] = req.AllocationID
+			m.jobWatcher.monitorJob(impersonatedUser, dispatchID, "")
+		}
+	} else {
+		ctx.Log().
+			WithField("allocation-id", req.AllocationID).
+			WithField("task-handler", req.AllocationRef.Address()).
+			Infof("resources assigned")
+	}
 }
 
 func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
@@ -1327,12 +1396,22 @@ func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handle
 	}
 }
 
-// Used on startup, to queue terminate and delete all dispatches in the DB
-// such that we do not get duplicate tasks queued on the system.
-func (m *dispatcherResourceManager) killAllActiveDispatches(
+// Used on DEBUG startup, to queue a terminate and delete all dispatches in the DB
+// that are no-longer associated with an active experiment/task.
+// All active tasks, will get reconnected via AllocationRequest{Restore:true}
+// events.   This path is currently used only for debug mode where we defer
+// cleanup of dispatches until the restart to enable debugging of job
+// logs -- TODO:  Currently it terminates all dispatches as we do
+// not yet know how to identify active allocations during startup.
+func (m *dispatcherResourceManager) debugKillAllInactiveDispatches(
 	ctx *actor.Context, handler *actor.Ref,
 ) {
-	ctx.Log().Infof("Releasing all resources due to master restart")
+	if ctx.Log().Logger.Level < logrus.DebugLevel {
+		return
+	}
+
+	ctx.Log().Infof("Releasing all resources due to master restart in DEBUG mode. " +
+		"Jobs will not be restored, but may restart.")
 
 	// Find the Dispatch IDs associated with the allocation ID. We'll need the
 	// Dispatch ID to cancel the job on the launcher side.
