@@ -268,7 +268,7 @@ class TestPyTorchTrial:
     def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrial,
+                trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=self.hparams,
                 workloads=workloads,
                 trial_seed=self.trial_seed,
@@ -531,7 +531,7 @@ class TestPyTorchTrial:
                 total_batches_processed += num_batches
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
