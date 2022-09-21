@@ -794,14 +794,13 @@ const ProjectDetails: React.FC = () => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
+      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
-    });
-  }, [openCustomizeColumns, settings.columns, transferColumns]);
+    openCustomizeColumns({});
+  }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -825,16 +824,24 @@ const ProjectDetails: React.FC = () => {
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
-          newColumns = settings.columns;
-          newColumnWidths = settings.columnWidths;
+          const archivedIndex = settings.columns.indexOf('archived');
+          if (archivedIndex !== -1) {
+            newColumns = [...settings.columns];
+            newColumnWidths = [...settings.columnWidths];
+            newColumns.splice(archivedIndex, 1);
+            newColumnWidths.splice(archivedIndex, 1);
+          } else {
+            newColumns = settings.columns;
+            newColumnWidths = settings.columnWidths;
+          }
         }
+        updateSettings({
+          archived: showArchived,
+          columns: newColumns,
+          columnWidths: newColumnWidths,
+          row: undefined,
+        });
       }
-      updateSettings({
-        archived: showArchived,
-        columns: newColumns,
-        columnWidths: newColumnWidths,
-        row: undefined,
-      });
     },
     [settings, updateSettings],
   );

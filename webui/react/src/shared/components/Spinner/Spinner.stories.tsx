@@ -6,7 +6,7 @@ import Spinner from './Spinner';
 
 export default {
   component: Spinner,
-  title: 'Spinner',
+  title: 'Shared/Spinner',
 };
 
 export const Default = (): React.ReactNode => <Spinner />;
