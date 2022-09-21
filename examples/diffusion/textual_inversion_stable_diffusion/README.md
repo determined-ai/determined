@@ -40,7 +40,7 @@ det -m MASTER_URL_WITH_PORT e create const.yaml .
 with the appropriate urlfor your Determined cluster substituted in
 for `MASTER_URL_WITH_PORT`. Using four
 V100s, the Experiment should take about ~10 minutes to complete.
-(The `slots_per_trial` field will need to be reduced, and other hyperparmaeters modified, if you
+(The `slots_per_trial` field will need to be reduced, and other hyperparameters modified, if you
 have fewer than four GPUs on your cluster.)
 
 This will submit an experiment which introduces a new embedding vector into the world of Stable
@@ -152,7 +152,7 @@ A very incomplete list:
 
 * The current `entrypoint`
   is `python -m determined.launch.torch_distributed accelerate launch main.py` which uses
-  the [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate) launcher on top of
+  the [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate) on top of
   our own `torch_distributed` launcher. This is probably a hack? Maybe write our own `accelerate`
   launcher?
 * Should also support distributed inference for faster generation.
