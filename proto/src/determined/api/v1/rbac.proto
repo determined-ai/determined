@@ -34,7 +34,9 @@ message GetGroupsAndUsersAssignedToWorkspaceRequest {
 // Response object for GetGroupsAndUsersAssignedToWorkspace.
 message GetGroupsAndUsersAssignedToWorkspaceResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "groups", "users", "roles" ] }
+    json_schema: {
+      required: [ "groups", "users_assigned_directly", "assignments" ]
+    }
   };
 
   // Groups with a role assigned to the given workspace scope.
