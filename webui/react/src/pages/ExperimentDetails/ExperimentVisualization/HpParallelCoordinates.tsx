@@ -14,7 +14,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, Range } from 'shared/types';
-import { clone, flattenObject } from 'shared/utils/data';
+import { clone, flattenObject, isPrimitive } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
 import {
@@ -159,7 +159,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
         return {
-          categories: hp.vals?.map((val) => JSON.stringify(val)) ?? [],
+          categories: hp.vals?.map((val) => isPrimitive(val) ? val :  JSON.stringify(val)) ?? [],
           key,
           label: key,
           type: DimensionType.Categorical,
@@ -233,7 +233,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           Object.keys(flatHParams).forEach((hpKey) => {
             const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
-            trialHpMap[hpKey][id] = JSON.stringify(hpValue);
+            trialHpMap[hpKey][id] = isPrimitive(hpValue) ? hpValue :  JSON.stringify(hpValue);
           });
 
           trialHpTableMap[id] = {
