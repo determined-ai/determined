@@ -159,7 +159,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
         return {
-          categories: hp.vals?.map((val) => isPrimitive(val) ? val :  JSON.stringify(val)) ?? [],
+          categories: hp.vals?.map((val) => (isPrimitive(val) ? val : JSON.stringify(val))) ?? [],
           key,
           label: key,
           type: DimensionType.Categorical,
@@ -233,7 +233,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           Object.keys(flatHParams).forEach((hpKey) => {
             const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
-            trialHpMap[hpKey][id] = isPrimitive(hpValue) ? hpValue :  JSON.stringify(hpValue);
+            trialHpMap[hpKey][id] = isPrimitive(hpValue) ? hpValue : JSON.stringify(hpValue);
           });
 
           trialHpTableMap[id] = {
