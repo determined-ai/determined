@@ -42,8 +42,8 @@ message GetGroupsAndUsersAssignedToWorkspaceResponse {
   repeated determined.group.v1.GroupDetails groups = 1;
   // Only contains users assigned directly to roles on the workspace scope.
   repeated determined.user.v1.User users_assigned_directly = 2;
-  // Roles assigned to workspace with what groups / users_assigned_directly
-  // roles are assigned to.
+  // Roles assigned to workspace with associations between
+  // groups and users_assigned_directly with roles.
   repeated determined.rbac.v1.RoleWithAssignments assignments = 3;
 }
 
