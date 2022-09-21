@@ -7,11 +7,11 @@ The development of [Latent Diffusive Models](https://arxiv.org/abs/2112.10752) h
 it possible to run (and fine-tune) diffusion-based models on consumer-grade GPUs. Such tasks are
 made even easier by the release
 of [Stable Diffusion](https://stability.ai/blog/stable-diffusion-announcement) and the
-development of the 🤗 [Huggingface Diffusers](https://huggingface.co/docs/diffusers/index) library.
+development of the 🤗 [Huggingface 🧨 Diffusers](https://huggingface.co/docs/diffusers/index) library.
 
 The present code uses Determined's Core API to seamlessly incorporate 🧨 Diffusers
-(and the 🚀 [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate)) into the
-Determined framework with minimal code changes.
+(and the 🚀 [Accelerate](https://huggingface.co/docs/transformers/accelerate)) launcher into the
+Determined framework.
 
 ## Walkthrough: Basic Usage
 
@@ -22,7 +22,7 @@ and then incorporating the object into our Stable-Diffusion-generated art.
 
 The use of Stable Diffusion requires
 a [Huggingface User Access Token](https://huggingface.co/docs/hub/security-tokens).
-After including your user access token in the `const.yaml` config file and modifying the final part
+After including your user access token in the `const.yaml` config file by modifying the final part
 of the lines which read
 
 ```yaml
@@ -37,11 +37,8 @@ a ready-to-go fine-tuning experiment can be run by executing the following in th
 det -m MASTER_URL_WITH_PORT e create const.yaml .
 ```
 
-with the appropriate urlfor your Determined cluster substituted in
-for `MASTER_URL_WITH_PORT`. Using four
-V100s, the Experiment should take about ~10 minutes to complete.
-(The `slots_per_trial` field will need to be reduced, and other hyperparameters modified, if you
-have fewer than four GPUs on your cluster.)
+with the appropriate url for your Determined cluster substituted in
+for `MASTER_URL_WITH_PORT`.
 
 This will submit an experiment which introduces a new embedding vector into the world of Stable
 Diffusion which we will train to correspond to the concept of the Determined AI logo, as represented
@@ -52,7 +49,15 @@ improved training results):
 ![det-logo](./det_logos/det_1.png)
 
 A corresponding concept token, chosen to be `<det-logo>` as specified in the `concept_tokens` field
-in the config, will then be available for use in our prompts to signify the concept of this cat.
+in the config, will then be available for use in our prompts to signify the concept of this logo.
+
+By default, sample images are generated during training which can be viewed by launching a
+Tensorboard instance from the experiment in the WebUI. Here is an example of the model's
+progression (left-to-right) when asked to generate `a photo of a <det-logo>`:
+![cat-toy-progression](./readme_imgs/all_cat-toy_imgs.png)
+Initially, the `<det-logo>` embedding was chosen to coincide with the embedding of the tokens
+`orange brain logo, connected circles, concept art` (as specified in the `initialization_tokens`
+config field) and the above visualizes the evolution of the model's understanding of the concept.
 
 ### Notebook Inference
 
@@ -62,7 +67,7 @@ Once training has completed, interactive inference can be run by using the inclu
 In order to launch the
 notebook with the requisite files included in its context, first modify
 the `HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE` line in the `detsd-notebook.yaml` config file,
-analogously to above, and then run the following command in the root of
+analogously to the above, and then run the following command in the root of
 this repo:
 
 ```bash
@@ -77,13 +82,12 @@ Determined checkpoints trained via the steps above to the `uuids` list under the
 Checkpoints_ section. Then simply run the notebook from top to bottom. Further instructions may be
 found in the notebook itself.
 
+#### Typical Results
+
 Running the notebook and fiddling with the various parameters therein, one can generate images such
 as the following, which correspond to the
 prompt `a painting of <cat-toy> on the moon, stars, outer space, trending on artstation, incredible composition`
 ![generated cats](./readme_imgs/generated_cats.png)
-
-By default, the script also writes periodically generated images to checkpoint directory which can
-also be viewed in the notebook. These serve as useful visual checks on the training process.
 
 Here is an example of the model's progression (left-to-right) when generating based on the
 prompt `a photo of a <cat-toy>`:
@@ -161,4 +165,3 @@ A very incomplete list:
   training and inference here.
 * lr scheduler
 * `accelerate --config` support/example
-* Highlight the fact that images generated during training can be viewed in tensorboard
