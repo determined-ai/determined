@@ -301,7 +301,7 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 			// few lines of the error and output logs into the failure message.
 			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, &job, "error.log")
 			outputMessages, _ := m.getTaskLogsFromDispatcher(ctx, &job, "output.log")
-			exitMessages = append(exitMessages, outputMessages...)
+			exitMessages = append(outputMessages, exitMessages...)
 		}
 
 		ctx.Log().Debugf("Send status to DAI: %d, messages %s", exitStatus, exitMessages)
