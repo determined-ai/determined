@@ -2308,6 +2308,33 @@ class v1GetGroupResponse:
             "group": self.group.to_json(),
         }
 
+class v1GetGroupsAndUsersAssignedToWorkspaceResponse:
+    def __init__(
+        self,
+        *,
+        groups: "typing.Sequence[v1GroupDetails]",
+        assignments: "typing.Optional[typing.Sequence[v1RoleWithAssignments]]" = None,
+        usersAssignedDirectly: "typing.Optional[typing.Sequence[v1User]]" = None,
+    ):
+        self.groups = groups
+        self.usersAssignedDirectly = usersAssignedDirectly
+        self.assignments = assignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
+        return cls(
+            groups=[v1GroupDetails.from_json(x) for x in obj["groups"]],
+            usersAssignedDirectly=[v1User.from_json(x) for x in obj["usersAssignedDirectly"]] if obj.get("usersAssignedDirectly", None) is not None else None,
+            assignments=[v1RoleWithAssignments.from_json(x) for x in obj["assignments"]] if obj.get("assignments", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groups": [x.to_json() for x in self.groups],
+            "usersAssignedDirectly": [x.to_json() for x in self.usersAssignedDirectly] if self.usersAssignedDirectly is not None else None,
+            "assignments": [x.to_json() for x in self.assignments] if self.assignments is not None else None,
+        }
+
 class v1GetGroupsRequest:
     def __init__(
         self,
@@ -9057,6 +9084,26 @@ def post_GetGroups(
     if _resp.status_code == 200:
         return v1GetGroupsResponse.from_json(_resp.json())
     raise APIHttpError("post_GetGroups", _resp)
+
+def get_GetGroupsAndUsersAssignedToWorkspace(
+    session: "api.Session",
+    *,
+    workspaceId: int,
+) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/roles/workspace/{workspaceId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGroupsAndUsersAssignedToWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGroupsAndUsersAssignedToWorkspace", _resp)
 
 def get_GetHPImportance(
     session: "api.Session",
