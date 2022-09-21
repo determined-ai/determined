@@ -190,7 +190,7 @@ class DetSDTextualInversionTrainer:
         self.original_embedding_tensors_mean_norm = None
         self.new_embedding_idxs = None
         # TODO: Don't hard code
-        self.NORM_PENALTY = 10.0
+        self.NORM_PENALTY = 0.001
 
         self.concept_to_initializer_tokens_map = {}
         self.concept_to_dummy_tokens_map = {}
@@ -302,14 +302,21 @@ class DetSDTextualInversionTrainer:
         # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         loss = F.mse_loss(noise_pred, noise)
+        new_token_embeddings_norms = torch.linalg.vector_norm(
+            self._get_new_token_embeddings(), dim=0
+        )
+        print(
+            80 * "$",
+            "MEAN NEW EMBEDDING NORM",
+            new_token_embeddings_norms.mean().item(),
+            80 * "$",
+            sep="\n",
+        )
         # TODO: Clean this up
         loss = (
             loss
             + self.NORM_PENALTY
-            * (
-                torch.linalg.vector_norm(self._get_new_token_embeddings(), dim=0)
-                - self.original_embedding_tensors_mean_norm
-            ).mean()
+            * (new_token_embeddings_norms - self.original_embedding_tensors_mean_norm).mean()
         )
         # Add a norm penality to the loss
         self.accelerator.backward(loss)
