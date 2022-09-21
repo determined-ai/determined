@@ -97,52 +97,67 @@ commands:
       - run: git submodule sync
       - run: git submodule update --init
 
+  skip-based-on-diff-scope:
+    parameters:
+      path: # directory. include the trailing slash
+        type: string 
+      only-changes-path:
+        type: boolean
+        default: false
+      not-changes-path:
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: stop/go based on if << parameters.path >> is changed
+          command: |
+            DIFFS="$(bash .circleci/scripts/diff-against-base.sh)"
+            set +e
+            has_path_changes=$(echo "${DIFFS}" | grep "^<< parameters.path >>" > /dev/null && echo "true" || echo "false")
+            has_other_change=$(echo "${DIFFS}" | grep -v "^<< parameters.path >>" > /dev/null && echo "true" || echo "false")
+            set -e
+
+            echo "has_path_changes: ${has_path_changes}"
+            echo "has_other_change: ${has_other_change}"
+            echo "only-changes-path: << parameters.only-changes-path >>"
+            echo "not-changes-path: << parameters.not-changes-path >>"
+            echo "DIFFS:"
+            echo "${DIFFS}"
+
+            if [ "<< parameters.only-changes-path >>" == "true" ]; then
+              if [ "${has_path_changes}" == "true" ] && [ "${has_other_change}" == "false" ]; then
+                echo "Skipping job: changes are limited to << parameters.path >>"
+                circleci-agent step halt
+              else
+                echo "Continuing job: changes are NOT limited to << parameters.path >>"
+              fi
+            fi
+            if [ "<< parameters.not-changes-path >>" == "true" ]; then
+              if [ "${has_path_changes}" == "false" ]; then
+                echo "Skipping job: << parameters.path >> is NOT being changed."
+                circleci-agent step halt
+              else
+                echo "Continuing job: << parameters.path >> is being changed."
+              fi
+            fi
+
   skip-if-docs-only:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: git fetch upstream
-      - run:
-          name: check for docs-only changes
-          command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
-            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = "docs" ] ; then
-              echo "docs-only change detected, halting job now"
-              circleci-agent step halt
-            else
-              echo "detected non-docs-only changes: $DIFF_DIRS"
-            fi
+      - skip-based-on-diff-scope:
+          path: "docs/"
+          only-changes-path: true
 
   skip-if-webui-only:
     steps:
-      - run: git fetch upstream
-      - run:
-          name: check for webui-only changes  # must be run after skip-if-docs-only
-          command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
-            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = "webui" ] ; then
-              echo "webui-only change detected, halting job now"
-              circleci-agent step halt
-            else
-              echo "detected non-webui-only changes: $DIFF_DIRS"
-            fi
+      - skip-based-on-diff-scope:
+          path: "webui/"
+          only-changes-path: true
 
   skip-if-not-shared:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: git fetch upstream
-      - run:
-          name: check for shared changes
-          command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
-            DIFF_DIRS="$(git diff --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
-            if [ "$DIFF_DIRS" = "shared" ] ; then
-              echo "shared code changed, running downstream test"
-            else
-              echo "shared code not affected, halting job now"
-              circleci-agent step halt
-            fi
+      - skip-based-on-diff-scope:
+          path: "webui/react/src/shared/"
+          not-changes-path: true
 
   set-slack-user-id:
     steps:
