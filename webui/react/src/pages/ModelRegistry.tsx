@@ -461,8 +461,7 @@ const ModelRegistry: React.FC = () => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: columnKey as Settings['sortKey'],
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

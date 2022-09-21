@@ -87,8 +87,8 @@ export const Default: ComponentStory<typeof Tree> = (args) => {
         item.children.unshift(dragObj);
       });
     } else if (
-      ((info.node as any).props.children || []).length > 0 && // Has children
-      (info.node as any).props.expanded && // Is expanded
+      (info.node.children || []).length > 0 && // Has children
+      info.node.expanded && // Is expanded
       dropPosition === 1 // On the bottom gap
     ) {
       loop(data, dropKey, (item) => {

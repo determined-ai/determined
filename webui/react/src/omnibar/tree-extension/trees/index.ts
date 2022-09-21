@@ -16,6 +16,7 @@ import {
   openOrCreateTensorBoard,
   pauseExperiment,
 } from 'services/api';
+import { GetExperimentsParams } from 'services/types';
 import { launchJupyterLab } from 'utils/jupyter';
 
 const root: NonLeafNode = {
@@ -55,8 +56,9 @@ const root: NonLeafNode = {
         const { experiments: exps } = await getExperiments({
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_END_TIME',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          states: Array.from(terminalRunStates).map((s) => 'STATE_' + s) as any,
+          states: Array.from(terminalRunStates).map(
+            (s) => 'STATE_' + s,
+          ) as GetExperimentsParams['states'],
         });
         const options: Children = exps.map((exp) => ({
           onAction: (): unknown => archiveExperiment({ experimentId: exp.id }),

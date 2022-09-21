@@ -25,6 +25,7 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import { RecordKey } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
@@ -149,10 +150,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       );
     };
 
-    const validationRenderer = (key: string) => {
+    const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        const value = getMetricValue((record as any)[key], metric);
+        const value = getMetricValue(
+          record[key] as { metrics?: Record<RecordKey, number> },
+          metric,
+        );
         return <HumanReadableNumber num={value} />;
       };
     };
@@ -229,8 +232,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: columnKey as Settings['sortKey'],
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
