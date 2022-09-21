@@ -12150,15 +12150,15 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get list of SearcherEvents.
+         * @summary Get list of SearcherEvents with long polling.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
+        getSearcherEventsLongPolling(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEventsLongPolling.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -13147,13 +13147,13 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get list of SearcherEvents.
+         * @summary Get list of SearcherEvents with long polling.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
+        getSearcherEventsLongPolling(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEventsLongPolling(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13634,13 +13634,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get list of SearcherEvents.
+         * @summary Get list of SearcherEvents with long polling.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSearcherEvents(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
+        getSearcherEventsLongPolling(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getSearcherEventsLongPolling(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14026,14 +14026,14 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get list of SearcherEvents.
+     * @summary Get list of SearcherEvents with long polling.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getSearcherEvents(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath);
+    public getSearcherEventsLongPolling(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getSearcherEventsLongPolling(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**

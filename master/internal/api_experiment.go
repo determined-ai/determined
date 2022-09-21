@@ -230,6 +230,12 @@ func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearche
 	}
 }
 
+func (a *apiServer) GetSearcherEventsLongPolling(ctx context.Context, req *apiv1.GetSearcherEventsRequest) (
+	resp *apiv1.GetSearcherEventsResponse, err error,
+) {
+	return nil, nil
+}
+
 func (a *apiServer) PostSearcherOperations(ctx context.Context,
 	req *apiv1.PostSearcherOperationsRequest) (
 	resp *apiv1.PostSearcherOperationsResponse, err error,

@@ -9939,7 +9939,7 @@ def post_GetRolesByID(
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
 
-def get_GetSearcherEvents(
+def get_GetSearcherEventsLongPolling(
     session: "api.Session",
     *,
     experimentId: int,
@@ -9957,7 +9957,7 @@ def get_GetSearcherEvents(
     )
     if _resp.status_code == 200:
         return v1GetSearcherEventsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetSearcherEvents", _resp)
+    raise APIHttpError("get_GetSearcherEventsLongPolling", _resp)
 
 def get_GetShell(
     session: "api.Session",
