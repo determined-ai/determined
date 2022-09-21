@@ -314,10 +314,11 @@ class DetSDTextualInversionTrainer:
             sep="\n",
         )
         # TODO: Clean this up
-        norm_loss = self.NORM_PENALTY * (
-            (new_token_embeddings_norms ** 2).mean()
-            - self.original_embedding_tensors_mean_norm ** 2
+        norm_loss = (
+            self.NORM_PENALTY
+            * ((new_token_embeddings_norms - self.original_embedding_tensors_mean_norm) ** 2).mean()
         )
+
         print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
         # Add a norm penality to the loss
