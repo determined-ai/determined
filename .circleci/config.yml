@@ -1,7 +1,7 @@
 # Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-orbs:
+orbs: # hello
   win: circleci/windows@5.0.0
   slack: circleci/slack@3.4.2
   kubernetes: circleci/kubernetes@0.11.0
