@@ -1,4 +1,4 @@
-name: stable_diffusion_textual_inversion
+name: textual_inversion_stable_diffusion
 entrypoint: python -m determined.launch.torch_distributed accelerate launch main.py
 searcher:
   name: single
