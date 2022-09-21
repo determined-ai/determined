@@ -79,10 +79,7 @@ found in the notebook itself.
 
 #### Typical Results
 
-Running the notebook and fiddling with the various parameters therein, one can generate images such
-as the following, which correspond to the
-prompt `a painting of <det-logo> on the moon, stars, outer space, trending on artstation, incredible composition`
-![generated cats](./readme_imgs/generated_cats.png)
+***To be added!***
 
 ## Customization
 
@@ -128,6 +125,22 @@ keeping the same relative ordering across each.
 
 More advanced customizations can be made by modifying the `const_advanced.yaml` config file.
 
+## Some Tips
+
+Generating results of the desired quality is often a balancing act:
+
+* The provided config files only run for 100 SGD steps and are intended for quick demonstration.
+  Increase the `max_length` field, and other training hyperparameters, for more finely tuned
+  results.
+* There is generally a tradeoff between how faithfully the training images are reproduced and how
+  well they can be incorporated into the desired scene.
+* Prompts are very sensitive to word order. Stable Diffusion pays much more attention to words at
+  the
+  beginning of a prompt than it does to words at the end.
+* Longer prompts often result in better results. See
+  the [Prompt Development](https://www.reddit.com/r/StableDiffusion/comments/xcq819/dreamers_guide_to_getting_started_w_stable/)
+  section of this link for more detailed tips on prompt-engineering.
+
 ## The Code
 
 The code for this example based on a mix of
@@ -141,6 +154,7 @@ official [Stable Diffusion Discord Server](https://www.diffusion.gg).
 
 A very incomplete list:
 
+* Still tuning the ready-to-go experiment, trying to find a balance between results and speed.
 * The current `entrypoint`
   is `python -m determined.launch.torch_distributed accelerate launch main.py` which uses
   the [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate) on top of
@@ -159,4 +173,3 @@ A very incomplete list:
   restart it to see new images.
 * Images generated towards the end of training are inconsistently uploaded at all to TB.
 * Link to blog post, when published.
-* Short section on tips

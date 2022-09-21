@@ -3,7 +3,7 @@ entrypoint: python -m determined.launch.torch_distributed accelerate launch main
 searcher:
   name: single
   metric: loss
-  max_length: 250 # Number of SGD steps.
+  max_length: 100 # Number of SGD steps.
 resources:
   slots_per_trial: 2
 max_restarts: 0
@@ -29,8 +29,8 @@ hyperparameters:
         train_batch_size: 1
         optimizer_name: adam
         learning_rate: 1e-1
-        checkpoint_freq: 50
-        metric_report_freq: 50
+        checkpoint_freq: 25
+        metric_report_freq: 25
     inference:
         generate_training_images: True
         inference_prompts:

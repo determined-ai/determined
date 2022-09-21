@@ -3,7 +3,7 @@ entrypoint: python -m determined.launch.torch_distributed accelerate launch main
 searcher:
   name: single
   metric: loss
-  max_length: 250 # Number of SGD steps.
+  max_length: 100 # Number of SGD steps.
 resources:
   slots_per_trial: 2
 max_restarts: 0
@@ -35,8 +35,8 @@ hyperparameters:
         optimizer_name: adam
         learning_rate: 1e-1
         scale_lr: True
-        checkpoint_freq: 50
-        metric_report_freq: 50
+        checkpoint_freq: 25
+        metric_report_freq: 25
         beta_start: 0.00085
         beta_end: .012
         beta_schedule: scaled_linear # One of "linear", "scaled_linear", or "squaredcos_cap_v2".
