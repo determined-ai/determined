@@ -173,3 +173,4 @@ A very incomplete list:
   restart it to see new images.
 * Images generated towards the end of training are inconsistently uploaded at all to TB.
 * Link to blog post, when published.
+* Hitting some CUDA OOM errors when resuming training with ADAM or ADAM4 on T4 GPUs.
