@@ -72,7 +72,7 @@ det -m MASTER_URL_WITH_PORT notebook start --config-file detsd-notebook.yaml --c
 replacing `MASTER_URL_WITH_PORT` as before. A new notebook window will be launched in which
 `textual_inversion.ipynb` can be opened and run.
 
-Your newly trained concepts can be loaded into the notebook by specifying the `uuid`s of their 
+Your newly trained concepts can be loaded into the notebook by specifying the `uuid`s of their
 corresponding Determined checkpoints in the relevant `uuids` list under the _Load Determined
 Checkpoints_ section. Then simply run the notebook from top to bottom. Further instructions may be
 found in the notebook itself.
@@ -153,5 +153,10 @@ A very incomplete list:
 * lr scheduler
 * `accelerate --config` support/example
 * Multi-experiment visualizations currently showing no data for some reason.
+* Trial stats are only uploaded upon trial completion due to some change between 0.19.0 and 0.19.2,
+  for unclear reasons
+* Tensorboard doesn't seem to update when new images are generated. Need to kill TB agent and
+  restart it to see new images.
+* Images generated towards the end of training are inconsistently uploaded at all to TB.
 * Link to blog post, when published.
 * Short section on tips
