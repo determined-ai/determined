@@ -15,6 +15,9 @@ var rbacAPIServer RBACAPIServer = &rbacAPIServerStub{}
 type RBACAPIServer interface {
 	GetPermissionsSummary(context.Context, *apiv1.GetPermissionsSummaryRequest) (
 		*apiv1.GetPermissionsSummaryResponse, error)
+	GetGroupsAndUsersAssignedToWorkspace(
+		context.Context, *apiv1.GetGroupsAndUsersAssignedToWorkspaceRequest,
+	) (*apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse, error)
 	GetRolesByID(context.Context, *apiv1.GetRolesByIDRequest) (
 		*apiv1.GetRolesByIDResponse, error)
 	GetRolesAssignedToUser(context.Context, *apiv1.GetRolesAssignedToUserRequest) (

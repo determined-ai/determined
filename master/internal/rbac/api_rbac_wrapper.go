@@ -19,6 +19,13 @@ func (s *RBACAPIServerWrapper) GetPermissionsSummary(
 	return rbacAPIServer.GetPermissionsSummary(ctx, req)
 }
 
+// GetGroupsAndUsersAssignedToWorkspace is a wrapper the same function the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) GetGroupsAndUsersAssignedToWorkspace(
+	ctx context.Context, req *apiv1.GetGroupsAndUsersAssignedToWorkspaceRequest,
+) (*apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse, error) {
+	return rbacAPIServer.GetGroupsAndUsersAssignedToWorkspace(ctx, req)
+}
+
 // GetRolesByID is a wrapper the same function the RBACAPIServer interface.
 func (s *RBACAPIServerWrapper) GetRolesByID(ctx context.Context, req *apiv1.GetRolesByIDRequest) (
 	resp *apiv1.GetRolesByIDResponse, err error,
