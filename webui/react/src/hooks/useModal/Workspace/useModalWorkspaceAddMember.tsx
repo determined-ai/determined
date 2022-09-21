@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { Member, MemberOrGroup, Workspace } from 'types';
+import { UserOrGroup, Workspace, DetailedUser } from 'types';
 import { getName, isMember } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
@@ -22,12 +22,12 @@ const useModalWorkspaceAddMember = ({ onClose, workspace }: Props): ModalHooks =
   const { users } = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
-  const membersAndGroups: MemberOrGroup[] = useMemo(() => {
-    const membersAndGroupData: MemberOrGroup[] = [];
+  const membersAndGroups: UserOrGroup[] = useMemo(() => {
+    const membersAndGroupData: UserOrGroup[] = [];
     users.forEach((u) => {
-      const m: Member = u;
-      m.role = 'Basic';
-      membersAndGroupData.push(m);
+      const user: DetailedUser = u;
+      user.role = 'Basic';
+      membersAndGroupData.push(user);
     });
     return membersAndGroupData;
   }, [users]);

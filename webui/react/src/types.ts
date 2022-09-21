@@ -1,4 +1,6 @@
+import { string } from 'fp-ts';
 import * as Api from 'services/api-ts-sdk';
+import { V1Role } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
@@ -825,14 +827,12 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
-// Mock types and functions for Workspace Members and Groups
-export interface Group {
-  id: number;
-  name: string;
-  role: string;
-}
-export interface Member extends DetailedUser {
-  role?: string;
+export interface UserWithRole extends User{
+  role: V1Role; 
 }
 
-export type MemberOrGroup = Member | Group;
+export interface GroupDetailsWithRole extends Api.V1GroupDetails{
+  role: V1Role; 
+}
+
+export type UserOrGroupDetails = UserWithRole | GroupDetailsWithRole;

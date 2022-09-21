@@ -1,4 +1,5 @@
-import { DetailedUser, Group, Member, MemberOrGroup, User } from 'types';
+import { V1GroupDetails } from 'services/api-ts-sdk';
+import { DetailedUser, UserOrGroupDetails, User } from 'types';
 
 interface UserNameFields {
   displayName?: string;
@@ -9,13 +10,13 @@ export function getDisplayName(user: DetailedUser | User | UserNameFields | unde
   return user?.displayName || user?.username || 'Unavailable';
 }
 
-export function isMember(obj: MemberOrGroup): string | undefined {
-  const member = obj as Member;
-  return member?.username || member?.displayName;
+export function isUser(obj: UserOrGroupDetails): string | undefined {
+  const user = obj as User;
+  return user?.username || user?.displayName;
 }
 
-export function getName(obj: MemberOrGroup): string {
-  const member = obj as Member;
-  const group = obj as Group;
-  return isMember(obj) ? getDisplayName(member) : group.name;
+export function getName(obj: UserOrGroupDetails): string {
+  const user = obj as User;
+  const group = obj as V1GroupDetails;
+  return isUser(obj) ? getDisplayName(user) : group.name ? group.name : '';
 }

@@ -15,7 +15,6 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isNotFound } from 'shared/utils/service';
 import { Workspace } from 'types';
-
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
@@ -32,7 +31,6 @@ export enum WorkspaceDetailsTab {
 }
 
 const WorkspaceDetails: React.FC = () => {
-  const { users } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');
   const { workspaceId } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
@@ -113,7 +111,7 @@ const WorkspaceDetails: React.FC = () => {
             <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
           </Tabs.TabPane>
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
-            <WorkspaceMembers pageRef={pageRef} users={users} workspace={workspace} />
+            <WorkspaceMembers pageRef={pageRef} workspace={workspace} />
           </Tabs.TabPane>
         </Tabs>
       ) : (

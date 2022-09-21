@@ -12,8 +12,9 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { DetailedUser, Group, Member, MemberOrGroup, Workspace } from 'types';
-import { getName, isMember } from 'utils/user';
+import { DetailedUser, GroupDetailsWithRole, User, UserWithRole, UserOrGroupDetails, Workspace } from 'types';
+import {V1GroupDetails, V1RoleWithAssignments} from 'services/api-ts-sdk';
+import { getName, isUser } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
@@ -29,20 +30,20 @@ interface Props {
 }
 
 interface GroupOrMemberActionDropdownProps {
-  memberOrGroup: MemberOrGroup;
+  userOrGroupDetails: UserOrGroupDetails;
   name: string;
   workspace: Workspace;
 }
 
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
-  memberOrGroup,
+  userOrGroupDetails,
   workspace,
   name,
 }) => {
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
-  } = useModalWorkspaceRemoveMember({ member: memberOrGroup, name, workspace });
+  } = useModalWorkspaceRemoveMember({ member: userOrGroupDetails, name, workspace });
 
   const menuItems = (
     <Menu>
@@ -64,8 +65,22 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   );
 };
 
-const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props) => {
+const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace }: Props) => {
 
+  const users: User[] = [];
+  const groups: V1GroupDetails[] = [];
+  const rolesWithAssignments: V1RoleWithAssignments[] = []
+
+  const usersWithRoles: UserWithRole[] = users.map(user => {
+    const userWithRole: UserWithRole = user;
+    rolesWithAssignments.forEach(role => {
+      if(role) userWithRole.role = role;
+    })
+  }
+
+  const usersAndGroupDetails: UserOrGroupDetails[] = [...users, ...groups];
+
+  const usersAndGroupDetailWithRoles:  = usersAndGroupDetails.map()
   const { canUpdateRoles } = usePermissions();
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
@@ -96,9 +111,9 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: MemberOrGroup) => {
-      if (isMember(record)) {
-        const member = record as Member;
+    const nameRenderer = (value: string, record: UserOrGroupDetails) => {
+      if (isUser(record)) {
+        const member = record as User;
         return (
           <>
             <div className={css.userAvatarRowItem}>
@@ -117,7 +132,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
           </>
         );
       }
-      const group = record as Group;
+      const group = record as V1GroupDetails;
       return (
         <>
           <div className={css.userAvatarRowItem}>
@@ -130,7 +145,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
       );
     };
 
-    const roleRenderer = (value: string, record: Member) => {
+    const roleRenderer = (value: string, record: UserOrGroupDetails) => {
       return (
         <Select
           className={css.selectContainer}
@@ -145,10 +160,10 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
       );
     };
 
-    const actionRenderer = (value: string, record: MemberOrGroup) => {
+    const actionRenderer = (value: string, record: UserOrGroupDetails) => {
       return userCanAssignRoles ? (
         <GroupOrMemberActionDropdown
-          memberOrGroup={record}
+          userOrGroupDetails={record}
           name={getName(record)}
           workspace={workspace}
         />
@@ -162,7 +177,7 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         render: nameRenderer,
-        sorter: (a: MemberOrGroup, b: MemberOrGroup) => alphaNumericSorter(getName(a), getName(b)),
+        sorter: (a: UserOrGroupDetails, b: UserOrGroupDetails) => alphaNumericSorter(getName(a), getName(b)),
         title: 'Name',
       },
       {
@@ -179,17 +194,10 @@ const WorkspaceMembers: React.FC<Props> = ({ users, pageRef, workspace }: Props)
         render: actionRenderer,
         title: '',
       },
-    ] as ColumnDef<MemberOrGroup>[];
+    ] as ColumnDef<UserOrGroupDetails>[];
   }, [nameFilterSearch, tableSearchIcon, workspace, userCanAssignRoles]);
 
-  const membersAndGroups: MemberOrGroup[] = [];
-
-  // Assign a mock role to users
-  users.forEach((u) => {
-    const m: Member = u;
-    m.role = 'Editor';
-    membersAndGroups.push(m);
-  });
+  const membersAndGroups: UserOrGroupDetails[] = [];
 
   return (
     <div className={css.membersContainer}>
