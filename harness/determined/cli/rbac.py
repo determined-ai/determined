@@ -104,10 +104,6 @@ def list_users_roles(args: Namespace) -> None:
         return
     for r in resp.roles:
         print(f"user is assigned to role '{r.name}' with ID {r.roleId}")
-        if r.permissions is None:
-            continue
-        for p in r.permissions:
-            print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
 
 
 @authentication.required
@@ -125,10 +121,6 @@ def list_groups_roles(args: Namespace) -> None:
         return
     for r in resp.roles:
         print(f"group is assigned to role '{r.name}' with ID {r.roleId}")
-        if r.permissions is None:
-            continue
-        for p in r.permissions:
-            print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
 
 
 @authentication.required
@@ -157,30 +149,31 @@ def describe_role(args: Namespace) -> None:
     print()
 
     group_assignments = resp.roles[0].groupRoleAssignments
-    if group_assignments is None:
-        group_assignments = []
-    for group_assignment in group_assignments:
-        scope = "globally"
-        workspace_id = group_assignment.roleAssignment.scopeWorkspaceId
-        if workspace_id is not None:
-            workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
-            scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
+    if group_assignments is not None:
+        for group_assignment in group_assignments:
+            scope = "globally"
+            workspace_id = group_assignment.roleAssignment.scopeWorkspaceId
+            if workspace_id is not None:
+                workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
+                scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
 
-        group_name = bindings.get_GetGroup(session, groupId=group_assignment.groupId).group.name
-        print(f"\tassigned to group '{group_name}' with ID {group_assignment.groupId} {scope}")
+                group_name = bindings.get_GetGroup(session,
+                                                   groupId=group_assignment.groupId).group.name
+                print(f"\tassigned to group '{group_name}' with ID " +
+                      f"{group_assignment.groupId} {scope}")
 
     user_assignments = resp.roles[0].userRoleAssignments
-    if user_assignments is None:
-        user_assignments = []
-    for user_assignment in user_assignments:
-        scope = "globally"
-        workspace_id = user_assignment.roleAssignment.scopeWorkspaceId
-        if workspace_id is not None:
-            workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
-            scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
+    if user_assignments is not None:
+        for user_assignment in user_assignments:
+            scope = "globally"
+            workspace_id = user_assignment.roleAssignment.scopeWorkspaceId
+            if workspace_id is not None:
+                workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
+                scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
 
-        username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username
-        print(f"\tassigned directly to user '{username}' with ID {user_assignment.userId} {scope}")
+                username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username
+                print(f"\tassigned directly to user '{username}' with ID " +
+                      f"{user_assignment.userId} {scope}")
 
 
 def create_assignment_request(
@@ -310,7 +303,7 @@ args_description = [
                 list_groups_roles,
                 "list group's roles",
                 [
-                    Arg("group_name", help="name of group to list role's assigned to"),
+                    Arg("group_name", help="name of the group for which to list assigned roles"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -332,7 +325,7 @@ args_description = [
                     Arg(
                         "--workspace-name",
                         default=None,
-                        help="workspace name of the scope of the role assignment",
+                        help="name of the workspace the role is assigned to",
                     ),
                     Arg(
                         "--username-to-assign", default=None, help="username to assign the role to"
@@ -340,7 +333,7 @@ args_description = [
                     Arg(
                         "--group-name-to-assign",
                         default=None,
-                        help="group name to assign the role to",
+                        help="name of the group the role is assigned to",
                     ),
                 ],
             ),
@@ -353,17 +346,17 @@ args_description = [
                     Arg(
                         "--workspace-name",
                         default=None,
-                        help="workspace name of the scope of the role assignment",
+                        help="name of the workspace the role is unassigned from",
                     ),
                     Arg(
                         "--username-to-assign",
                         default=None,
-                        help="username to unassign the role to",
+                        help="username the role is unassigned from",
                     ),
                     Arg(
                         "--group-name-to-assign",
                         default=None,
-                        help="group name to unassign the role to",
+                        help="name of the group the role is unassigned from",
                     ),
                 ],
             ),
