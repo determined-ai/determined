@@ -251,37 +251,24 @@ func (m *launcherMonitor) ReloadAuthToken() {
 	}
 }
 
+/*
+ Processes the job state and sends DispatchStateChange on each call.
+ updateJobStatus returns true when the job has finished or no longer exists,
+ and monitoring should stop.
+*/
 func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) bool {
 	removeJob := false
 	dispatchID := job.dispatcherID
 	owner := job.user
 	ctx.Log().Debugf("Checking status of launcher job %s", dispatchID)
 
-	resp, r, err := m.apiClient.MonitoringApi.
-		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
-		Refresh(true).
-		Execute()
-	if err != nil {
-		if r != nil && r.StatusCode == 404 {
-			ctx.Log().Infof("DispatchID %s is either COMPLETE or TERMINATED", dispatchID)
-			return true
-		}
-
-		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
-			r.StatusCode == http.StatusForbidden) {
-			ctx.Log().WithError(err).Infof("Failed to `GetEnvironmentStatus` for %s due to error {%v}. "+
-				"Reloaded the auth token file {%s}. If this error persists, restart "+
-				"the launcher service followed by a restart of the determined-master service.",
-				dispatchID, err, m.authFile)
-			m.ReloadAuthToken()
-		} else {
-			ctx.Log().WithError(err).Infof("error when calling `GetEnvironmentStatus` for %s:\n%v",
-				dispatchID, r)
-		}
-		return removeJob
+	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID)
+	if doesNotExist {
+		return true
 	}
-
-	ctx.Log().Infof("DispatchID %s state: %s", dispatchID, *resp.State)
+	if _, gotResponse := resp.GetStateOk(); !gotResponse {
+		return false
+	}
 
 	if exitStatus, exitMessages, ok := calculateJobExitStatus(resp); ok {
 		// Try to filter out messages that offer no value to the user, leaving only the
@@ -329,6 +316,46 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 	return removeJob
 }
 
+/*
+ Return the DispatchInfo (possibly invalid/empty), caller must check fields for
+ existence (e.g. GetStateOk()) before use.   A second value indicates if the dispatch
+ is reported as no longer  existing at all (i.e. 404).
+*/
+func (m *launcherMonitor) getDispatchStatus(
+	ctx *actor.Context, owner string,
+	dispatchID string,
+) (dispatchInfo launcher.DispatchInfo, doesNotExist bool) {
+	resp, r, err := m.apiClient.MonitoringApi.
+		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
+		Refresh(true).
+		Execute()
+	if err != nil {
+		if r != nil && r.StatusCode == 404 {
+			ctx.Log().Infof("DispatchID %s is either COMPLETE or TERMINATED", dispatchID)
+			// No details, but we know dispatch does not exist
+			return launcher.DispatchInfo{}, true
+		}
+
+		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
+			r.StatusCode == http.StatusForbidden) {
+			ctx.Log().WithError(err).Infof("Failed to `GetEnvironmentStatus` for %s due to error {%v}. "+
+				"Reloaded the auth token file {%s}. If this error persists, restart "+
+				"the launcher service followed by a restart of the determined-master service.",
+				dispatchID, err, m.authFile)
+			m.ReloadAuthToken()
+		} else {
+			ctx.Log().WithError(err).Infof("error when calling `GetEnvironmentStatus` for %s:\n%v",
+				dispatchID, r)
+		}
+		// No details, but job may still exist
+		return launcher.DispatchInfo{}, false
+	}
+
+	ctx.Log().Infof("DispatchID %s state: %s", dispatchID, *resp.State)
+	// We have details, need to process them
+	return resp, false
+}
+
 // shouldSkip returns true if we should not get the status of the specified job
 // this time around the polling loop. The skip is computed on the time elapsed since
 // either the time the job was added to the list of those to monitor, or the time
@@ -356,11 +383,6 @@ func calculateJobExitStatus(
 	if ok {
 		// TODO(HAL-2813): Track and send more of these state changes with sendStatusToDetermined.
 		switch *state {
-		case "UNKNOWN":
-		case "PENDING": // Successfully launched; pending Slurm scheduling
-		case "RUNNING": // Job is executing
-		case "TERMINATING": // User-initiated termination in process
-			return 0, nil, false
 		case "TERMINATED": // User-initiated termination complete
 			return 1, getJobExitMessages(resp), true
 		case "FAILED":
@@ -468,4 +490,21 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 		return nil, err
 	}
 	return strings.Split(string(buffer), "\n"), nil
+}
+
+/*
+Return true if the specified dispatch is in a non-terminal (still running) state.
+*/
+func (m *launcherMonitor) isDispatchInProgress(
+	ctx *actor.Context,
+	owner string,
+	dispatchID string,
+) bool {
+	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID)
+	if doesNotExist {
+		// We know it does not exist so not in progress
+		return false
+	}
+	_, _, exited := calculateJobExitStatus(resp)
+	return !exited
 }
