@@ -32,17 +32,13 @@ const Navigation: React.FC<Props> = ({ children }) => {
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
   usePolling(fetchUserSettings, { interval: 60000 });
+  usePolling(fetchKnownRoles);
 
   useEffect(() => {
     fetchResourcePools();
 
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
-
-  useEffect(() => {
-    fetchKnownRoles();
-    return () => canceler.abort();
-  }, [canceler, fetchKnownRoles]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

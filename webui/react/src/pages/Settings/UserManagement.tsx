@@ -79,7 +79,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const menuItems: MenuProps['items'] = canModifyUsers
     ? [
         { key: MenuKey.VIEW, label: 'View Profile' },
-        { key: MenuKey.EDIT, label: 'Edit' },
+        { key: MenuKey.EDIT, label: 'Edit user/roles' },
         { key: MenuKey.STATE, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
       ]
     : [{ key: MenuKey.VIEW, label: 'View Profile' }];

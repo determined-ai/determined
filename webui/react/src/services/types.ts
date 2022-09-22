@@ -363,10 +363,22 @@ export interface AssignRolesToGroupParams {
   roleIds: number[];
 }
 
-export interface ListRolesParams {
+export interface AssignRolesToUserParams {
+  roleIds: number[];
+  userId: number;
+}
+
+export interface RemoveRoleFromUserParams {
+  roleId: number;
+  userId: number;
+}
+
+export interface ListRolesParams extends PaginationParams {
   isGlobal?: boolean;
-  limit?: number;
-  offset?: number;
+}
+
+export interface ListWorlspaceRolesParams extends PaginationParams {
+  workspaceId: number;
 }
 
 export interface GetProjectParams {
