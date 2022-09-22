@@ -1,9 +1,11 @@
 import json
 from argparse import Namespace
+from collections import namedtuple
 from typing import Any, Dict, List, Set, Tuple
 
 from determined.cli import (
     default_pagination_args,
+    render,
     require_feature_flag,
     setup_session,
     user_groups,
@@ -17,6 +19,27 @@ from determined.common.experimental import session
 rbac_flag_disabled_message = (
     "RBAC commands require the Determined Enterprise Edition "
     + "and the Master Configuration option security.authz.rbac_ui_enabled."
+)
+
+v1RoleHeaders = namedtuple(
+    "v1RoleHeaders",
+    ["roleId", "name"],
+)
+
+v1PermissionHeaders = namedtuple(
+    "v1PermissionHeaders",
+    ["id", "name", "isGlobal"],
+)
+
+groupAssignmentHeaders = namedtuple(
+    "groupAssignmentHeaders",
+    ["groupID", "groupName", "workspaceID", "workspaceName", "assignedGlobally"],
+)
+
+
+userAssignmentHeaders = namedtuple(
+    "userAssignmentHeaders",
+    ["userID", "username", "workspaceID", "workspaceName", "assignedGlobally"],
 )
 
 
@@ -60,8 +83,10 @@ def my_permissions(args: Namespace) -> None:
         else:
             workspace_name = bindings.get_GetWorkspace(session, id=wid).workspace.name
             print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
-        for p in perms:
-            print(f"\tpermission '{p.name}' with type {p.id}")
+
+        render.render_objects(
+            v1PermissionHeaders, [render.unmarshal(v1PermissionHeaders, p.to_json()) for p in perms]
+        )
         print()
 
 
@@ -82,11 +107,16 @@ def list_roles(args: Namespace) -> None:
         print("no roles found")
         return
     for r in resp.roles:
-        print(f"role '{r.name}' with ID {r.roleId}")
+        print(f"role '{r.name}' with ID {r.roleId} with permissions")
         if r.permissions is None:
+            print("role has no permissions assigned")
             continue
-        for p in r.permissions:
-            print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
+
+        render.render_objects(
+            v1PermissionHeaders,
+            [render.unmarshal(v1PermissionHeaders, p.to_json()) for p in r.permissions],
+        )
+        print()
 
 
 @authentication.required
@@ -102,8 +132,9 @@ def list_users_roles(args: Namespace) -> None:
     if resp.roles is None or len(resp.roles) == 0:
         print("user has no role assignments")
         return
-    for r in resp.roles:
-        print(f"user is assigned to role '{r.name}' with ID {r.roleId}")
+    render.render_objects(
+        v1RoleHeaders, [render.unmarshal(v1RoleHeaders, r.to_json()) for r in resp.roles]
+    )
 
 
 @authentication.required
@@ -119,8 +150,9 @@ def list_groups_roles(args: Namespace) -> None:
     if resp.roles is None or len(resp.roles) == 0:
         print("group has no role assignments")
         return
-    for r in resp.roles:
-        print(f"group is assigned to role '{r.name}' with ID {r.roleId}")
+    render.render_objects(
+        v1RoleHeaders, [render.unmarshal(v1RoleHeaders, r.to_json()) for r in resp.roles]
+    )
 
 
 @authentication.required
@@ -141,39 +173,70 @@ def describe_role(args: Namespace) -> None:
     if role is None:
         raise api.errors.BadResponseException("expected role to be provided")
 
-    print(f"role '{role.name}' with ID {role.roleId}")
+    print(f"role '{role.name}' with ID {role.roleId} with permissions")
     if role.permissions is None:
-        role.permissions = []
-    for p in role.permissions:
-        print(f"\twith{' global' if p.isGlobal else ''} permission '{p.name}' with type {p.id}")
-    print()
+        print("role has no permissions assigned")
+    else:
+        render.render_objects(
+            v1PermissionHeaders,
+            [render.unmarshal(v1PermissionHeaders, p.to_json()) for p in role.permissions],
+        )
+        print()
 
     group_assignments = resp.roles[0].groupRoleAssignments
-    if group_assignments is not None:
+    if group_assignments is None or len(group_assignments) == 0:
+        print("role is not assigned to any group")
+    else:
+        print("role is assigned to groups")
+        output = []
         for group_assignment in group_assignments:
-            scope = "globally"
             workspace_id = group_assignment.roleAssignment.scopeWorkspaceId
+            workspace_name = None
+            group_name = bindings.get_GetGroup(session, groupId=group_assignment.groupId).group.name
             if workspace_id is not None:
                 workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
-                scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
 
-                group_name = bindings.get_GetGroup(session,
-                                                   groupId=group_assignment.groupId).group.name
-                print(f"\tassigned to group '{group_name}' with ID " +
-                      f"{group_assignment.groupId} {scope}")
+            output.append(
+                {
+                    "groupID": group_assignment.groupId,
+                    "groupName": group_name,
+                    "workspaceID": workspace_id,
+                    "workspaceName": workspace_name,
+                    "assignedGlobally": workspace_id is None,
+                }
+            )
+        render.render_objects(
+            groupAssignmentHeaders, [render.unmarshal(groupAssignmentHeaders, o) for o in output]
+        )
+        print()
 
     user_assignments = resp.roles[0].userRoleAssignments
-    if user_assignments is not None:
+    if user_assignments is None or len(user_assignments) == 0:
+        print("role is not assigned to any users")
+    else:
+        print("role is assigned to users")
+        output = []
         for user_assignment in user_assignments:
-            scope = "globally"
             workspace_id = user_assignment.roleAssignment.scopeWorkspaceId
+            workspace_name = None
+            username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username
             if workspace_id is not None:
                 workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
-                scope = f"over workspace '{workspace_name}' with ID {workspace_id}"
 
-                username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username
-                print(f"\tassigned directly to user '{username}' with ID " +
-                      f"{user_assignment.userId} {scope}")
+                output.append(
+                    {
+                        "userID": user_assignment.userId,
+                        "username": username,
+                        "workspaceID": workspace_id,
+                        "workspaceName": workspace_name,
+                        "assignedGlobally": workspace_id is None,
+                    }
+                )
+
+        render.render_objects(
+            userAssignmentHeaders, [render.unmarshal(userAssignmentHeaders, o) for o in output]
+        )
+        print()
 
 
 def create_assignment_request(
