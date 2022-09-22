@@ -133,6 +133,11 @@ class DetSDTextualInversionTrainer:
         self.train_img_dirs = train_img_dirs
         self.train_seed = train_seed
 
+        self.accelerator = accelerate.Accelerator(
+            gradient_accumulation_steps=self.gradient_accumulation_steps,
+        )
+        accelerate.utils.set_seed(self.train_seed)
+
         assert inference_scheduler_name in NOISE_SCHEDULER_DICT, (
             f"inference_scheduler must be one {list(NOISE_SCHEDULER_DICT.keys())},"
             f" but got {inference_scheduler_name}"
@@ -160,11 +165,6 @@ class DetSDTextualInversionTrainer:
         self.steps_completed = 0
         self.loss_history = []
         self.last_mean_loss = None
-
-        self.accelerator = accelerate.Accelerator(
-            gradient_accumulation_steps=self.gradient_accumulation_steps,
-        )
-        accelerate.utils.set_seed(self.train_seed)
 
         self.effective_global_batch_size = (
             self.gradient_accumulation_steps
