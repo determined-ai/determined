@@ -761,7 +761,7 @@ class DetSDTextualInversionPipeline:
                     tokenizer=self.tokenizer,
                     text_encoder=self.text_encoder,
                 )
-                self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
+
                 token_embeddings = self.text_encoder.get_input_embeddings().weight.data
                 # Sanity check on length.
                 # TODO: replace with strict=True in zip after upgrade to py >= 3.10
@@ -771,9 +771,10 @@ class DetSDTextualInversionPipeline:
                 for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
                     token_embeddings[d_id] = tensor
                 self.learned_embeddings_dict[concept_token] = embedding_dict
+                self.all_added_concepts.append(concept_token)
+                self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
             self.all_checkpoint_paths.append(path)
 
-        self.all_added_concepts = list(self.concept_to_dummy_tokens_map.keys())
         print(f"Successfully loaded checkpoints. All loaded concepts: {self.all_added_concepts}")
 
     def load_from_uuids(
