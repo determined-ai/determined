@@ -110,3 +110,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expEvents[2:], queue.events)
 }
+
+func TestCustomSearchWatcher(t *testing.T) {
+
+}

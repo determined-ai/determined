@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/pkg/errors"
@@ -17,11 +18,16 @@ type (
 	SearcherEventQueue struct {
 		events     []*experimentv1.SearcherEvent
 		eventCount int32 // stores the number of events in the queue.
+		watchers   map[uuid.UUID]chan<- []*experimentv1.SearcherEvent
 	}
 
 	searcherEventQueueJSON struct {
 		EventsJSON []json.RawMessage `json:"custom_searcher_events"`
 		EventCount int32             `json:"custom_searcher_event_count"`
+	}
+
+	eventsWatcher struct {
+		C <-chan []*experimentv1.SearcherEvent
 	}
 )
 
@@ -30,11 +36,32 @@ func newSearcherEventQueue() *SearcherEventQueue {
 	return &SearcherEventQueue{events: events, eventCount: 0}
 }
 
+// Create a Watcher. If events are available add events and close it.
+func (q *SearcherEventQueue) Watch(id uuid.UUID) (eventsWatcher, error) {
+	w := make(chan []*experimentv1.SearcherEvent)
+	q.watchers[id] = w
+
+	// We don't want to block.
+	if len(q.events) > 0 {
+		w <- q.events
+		close(w)
+		delete(q.watchers, id)
+	}
+	return eventsWatcher{C: w}, nil
+}
+
 // Enqueue an event.
 func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 	q.eventCount++
 	event.Id = q.eventCount
 	q.events = append(q.events, event)
+
+	// add events to all watcher channels.
+	for id, w := range q.watchers {
+		w <- q.events
+		close(w)
+		delete(q.watchers, id)
+	}
 }
 
 // GetEvents returns all the events.
