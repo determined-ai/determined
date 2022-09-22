@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import pytest
 
 from determined.common.api import authentication, bindings, errors
-from determined.common.experimental import session
 from tests import api_utils as utils
 from tests import config as conf
 from tests import experiment as exp
