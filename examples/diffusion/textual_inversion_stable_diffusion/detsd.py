@@ -646,6 +646,7 @@ class DetSDTextualInversionTrainer:
             token_embeddings = self.text_encoder.module.get_input_embeddings().weight.data
         except AttributeError:
             token_embeddings = self.text_encoder.get_input_embeddings().weight.data
+        return token_embeddings
 
     def _get_new_token_embeddings(self) -> torch.Tensor:
         """Returns the tensor of newly-added token embeddings."""
