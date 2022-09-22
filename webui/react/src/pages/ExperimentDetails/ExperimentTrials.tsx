@@ -25,7 +25,6 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
-import { RecordKey } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
@@ -34,6 +33,7 @@ import {
   CheckpointWorkloadExtended,
   CommandTask,
   ExperimentBase,
+  MetricsWorkload,
   RunState,
   TrialItem,
 } from 'types';
@@ -152,10 +152,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
     const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
-        const value = getMetricValue(
-          record[key] as { metrics?: Record<RecordKey, number> },
-          metric,
-        );
+        const hasMetric = (obj: TrialItem[keyof TrialItem]): obj is MetricsWorkload => {
+          return typeof obj === 'object' && 'metrics' in obj;
+        };
+
+        const item: TrialItem[keyof TrialItem] = record[key];
+        const value = getMetricValue(hasMetric(item) ? item : undefined, metric);
         return <HumanReadableNumber num={value} />;
       };
     };
