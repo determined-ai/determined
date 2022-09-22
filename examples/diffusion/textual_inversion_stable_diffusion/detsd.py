@@ -913,7 +913,7 @@ class DetSDTextualInversionPipeline:
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
-            timestamp = "_".join(f"_{datetime.now().strftime('%c')}.png".split())
+            timestamp = "_".join(f"_{datetime.now().strftime('%c')}".split())
             file_suffix = generation_details + timestamp + ".png"
             joined_split_prompt = "_".join(prompt.split())
             filename = joined_split_prompt[: 255 - len(file_suffix)] + file_suffix
