@@ -314,14 +314,9 @@ class DetSDTextualInversionTrainer:
         )
         print(
             80 * "$",
-            "MEAN NEW EMBEDDING NORM",
+            f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}",
             new_token_embeddings_norms.detach().mean().item(),
-            80 * "$",
-            sep="\n",
-        )
-        print(
-            80 * "$",
-            "MAX NEW EMBEDDING NORM",
+            f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
             new_token_embeddings_norms.detach().max().item(),
             80 * "$",
             sep="\n",
