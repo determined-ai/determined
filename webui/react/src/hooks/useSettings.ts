@@ -161,7 +161,10 @@ export const queryToSettings = <T>(config: SettingsConfig, query: string): T => 
        * Example - 'PULLING' => [ 'PULLING' ]
        */
       const normalizedValue =
-        (prop.type.isArray && queryValue !== null && queryValue !== undefined && !Array.isArray(queryValue))
+        prop.type.isArray &&
+        queryValue !== null &&
+        queryValue !== undefined &&
+        !Array.isArray(queryValue)
           ? [queryValue]
           : queryValue;
 
