@@ -3,14 +3,14 @@ This example shows ASHA (Asynchronous Successive Halving Algorithm) implemented 
 For details related to ASHA see https://docs.determined.ai/latest/training/hyperparameter/search-methods/hp-adaptive-asha.html
 
 ASHASearchMethod provides implementation for abstract methods from SearchMethod class, which
-are invoked by CoreSearchRunner in response to the SearcherEvents received
-from the multi-trial experiment. The methods return a list of Operations to CoreSearchRunner
+are invoked by SearchRunner in response to the SearcherEvents received
+from the multi-trial experiment. The methods return a list of Operations to SearchRunner
 which sends them to the multi-trial experiment for execution, as depicted below.
 
-Multi-trial experiment  --- (SearcherEvent1) ----> CoreSearchRunner  --- (SearcherEvent1) ---> SearchMethod
-Multi-trial experiment <---   (Operations1)  ----  CoreSearchRunner <---   (Operations1)  ---  SearchMethod
-Multi-trial experiment  --- (SearcherEvent2) ----> CoreSearchRunner  --- (SearcherEvent2) ---> SearchMethod
-Multi-trial experiment <---   (Operations2)  ----  CoreSearchRunner <---   (Operations2)  ---  SearchMethod
+Multi-trial experiment  --- (SearcherEvent1) ----> SearchRunner  --- (SearcherEvent1) ---> SearchMethod
+Multi-trial experiment <---   (Operations1)  ----  SearchRunner <---   (Operations1)  ---  SearchMethod
+Multi-trial experiment  --- (SearcherEvent2) ----> SearchRunner  --- (SearcherEvent2) ---> SearchMethod
+Multi-trial experiment <---   (Operations2)  ----  SearchRunner <---   (Operations2)  ---  SearchMethod
 and so on.
 
 Currently, we support the following operations:
@@ -23,12 +23,9 @@ Currently, we support the following operations:
 To support fault tolerance, a custom SearchMethod has to implement save_method_state() and load_method_state(), which
 provide logic for saving and loading any information internal to the SearchMethod,
 such as variables, structures, or models, that are modified as the SearchMethod progresses.
-save_method_state() and load_method_state() are called by CoreSearchRunner as a part of CoreSearchRunner.save() and
-CoreSearchRunner.load() to ensure that CoreSearchRunner state and SearchMethod state can be restored if
-CoreSearchRunner is terminated or interrupted.
-
-To ensure that CoreSearchRunner process is resumed automatically in the case of failure,
-make sure to set `max_restarts` in the `searcher.yaml` file to a number greater than 0.
+save_method_state() and load_method_state() are called by SearchRunner as a part of SearchRunner.save() and
+SearchRunner.load() to ensure that SearchRunner state and SearchMethod state can be restored if
+SearchRunner is terminated or interrupted.
 
 While implementation of save_method_state() and load_method_state() depends on the user,
 in this example we chose to encapsulate all variables required by ASHASearchMethod in a new class,
@@ -273,7 +270,7 @@ class ASHASearchMethod(SearchMethod):
 
     ############################################################################
     # User-defined method for saving information related to the current state of
-    # the search. This method is invoked by CoreSearchRunner to save SearchMethod
+    # the search. This method is invoked by SearchRunner to save SearchMethod
     # state to support fault tolerance.
     # In this example, all information related to ASHA are stored in ASHASearchMethodState,
     # so we use pickle.dump to save the asha_search_state object.
@@ -287,7 +284,7 @@ class ASHASearchMethod(SearchMethod):
 
     ############################################################################
     # User-defined method for loading SearchMethod related information.
-    # This method is invoked by CoreSearchRunner when resuming the search after
+    # This method is invoked by SearchRunner when resuming the search after
     # the search process was terminated or interrupted.
     # In this example, we simply load ASHASearchMethodState object that was
     # previously saved in save_method_state().

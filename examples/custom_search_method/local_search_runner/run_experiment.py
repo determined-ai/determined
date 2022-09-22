@@ -15,6 +15,8 @@ the events to your custom SearchMethod, which, in turn, produces a list of Opera
 response to the events. LocalSearchRunner sends the operations to the remote experiment
 for execution.
 """
+import sys
+sys.path.append('.')
 
 import logging
 from asha import ASHASearchMethod
@@ -32,7 +34,7 @@ if __name__ == "__main__":
     model_context_dir = "experiment_files"
 
     # Path to the .yaml file with the multi-trial experiment configuration.
-    model_config = "experiment_files/custom_config.yaml"
+    model_config = "experiment_files/config.yaml"
 
     ########################################################################
     # Fault Tolerance for LocalSearchRunner
@@ -47,7 +49,7 @@ if __name__ == "__main__":
     # load() methods when necessary, a user is responsible for implementing
     # SearchMethod.save_method_state() and SearchMethod.load_method_state() to ensure correct
     # resumption of the SearchMethod.
-    searcher_dir = Path("searcher_dir")
+    searcher_dir = Path("local_search_runner/searcher_dir")
 
     # Instantiate your implementation of SearchMethod
     search_method = ASHASearchMethod(

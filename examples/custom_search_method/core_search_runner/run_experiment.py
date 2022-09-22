@@ -12,6 +12,8 @@ CoreSearchRunner receives SearcherEvents from the multi-trial experiment, and pa
 the events to your custom SearchMethod, which, in turn, produces a list of Operations.
 Next, CoreSearchRunner sends the operations to the multi-trial experiment for execution.
 """
+import sys
+sys.path.append('.')
 
 import logging
 import determined as det
@@ -31,7 +33,7 @@ if __name__ == "__main__":
     model_context_dir = "experiment_files"
 
     # Path to the .yaml file with the multi-trial experiment configuration.
-    model_config = "experiment_files/custom_config.yaml"
+    model_config = "experiment_files/config.yaml"
 
     ########################################################################
     # Fault Tolerance for CoreSearchRunner
@@ -47,6 +49,10 @@ if __name__ == "__main__":
     # load() methods when necessary, a user is responsible for implementing
     # SearchMethod.save_method_state() and SearchMethod.load_method_state() to ensure correct
     # resumption of the SearchMethod.
+    #
+    # To ensure that SearchRunner process is resumed automatically in the case of failure,
+    # make sure to set `max_restarts` in the `searcher.yaml` file to a number greater than 0.
+
     with det.core.init() as core_context:
 
         info = det.get_cluster_info()
