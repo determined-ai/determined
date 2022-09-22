@@ -346,7 +346,7 @@ class DetSDTextualInversionTrainer:
         self.optimizer.step()
         # Only overwrite after the step has actually been taken:
         if self.accelerator.sync_gradients:
-            token_embeddings = self._get_token_embeddings()
+            token_embeddings = self._get_token_embedding_weight_data()
             token_embeddings[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
@@ -417,7 +417,7 @@ class DetSDTextualInversionTrainer:
             torch.tensor(all_dummy_placeholder_token_ids),
             invert=True,
         )
-        token_embeddings = self._get_token_embeddings()
+        token_embeddings = self._get_token_embedding_weight_data()
         self.original_embedding_tensors = (
             token_embeddings[self.original_embedding_idxs]
             .detach()
@@ -528,7 +528,7 @@ class DetSDTextualInversionTrainer:
                     learned_embeddings_dict = torch.load(
                         path.joinpath("learned_embeddings_dict.pt")
                     )
-                    token_embeddings = self._get_token_embeddings()
+                    token_embeddings = self._get_token_embedding_weight_data()
                     for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[concept_token][
                             "learned_embeddings"
@@ -567,7 +567,7 @@ class DetSDTextualInversionTrainer:
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
         for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
-            token_embeddings = self._get_token_embeddings()
+            token_embeddings = self._get_token_embedding_weight_data()
             learned_embeddings = token_embeddings[d_ids].detach().cpu()
             initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
             learned_embeddings_dict[concept_token] = {
@@ -640,24 +640,20 @@ class DetSDTextualInversionTrainer:
                 metrics={"loss": self.last_mean_loss},
             )
 
-    def _get_token_embeddings(self, return_data: bool = True) -> torch.Tensor:
-        """Returns the tensor of token embeddings, accounting for the possible insertion of a
-        .module attr insertion due to the .prepare() call.
+    def _get_token_embedding_weight_data(self) -> torch.Tensor:
+        """Returns the data tensor from the `weight` parameter of the embedding matrix, accounting
+        for the possible insertion of a .module attr insertion due to the .prepare() call.
         """
         try:
-            token_embeddings = self.text_encoder.module.get_input_embeddings().weight
+            token_embeddings = self.text_encoder.module.get_input_embeddings().weight.data
         except AttributeError:
-            token_embeddings = self.text_encoder.get_input_embeddings().weight
-        if not return_data:
-            return token_embeddings
-        else:
-            return token_embeddings.data
+            token_embeddings = self.text_encoder.get_input_embeddings().weight.data
 
-    def _get_new_token_embeddings(self, return_data: bool = True) -> torch.Tensor:
+    def _get_new_token_embeddings(self) -> torch.Tensor:
         """Returns the tensor of newly-added token embeddings."""
-        token_embeddings = self._get_token_embeddings(return_data=return_data)
-        new_token_embeddings = token_embeddings[self.new_embedding_idxs]
-        return new_token_embeddings
+        all_concept_tokens = " ".join(list(self.concept_tokens))
+        all_dummy_concept_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
+        pass
 
 
 class DetSDTextualInversionPipeline:
