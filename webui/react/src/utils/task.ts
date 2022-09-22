@@ -1,8 +1,8 @@
 import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
 import { LaunchTensorBoardParams } from 'services/types';
 import { isEqual } from 'shared/utils/data';
-import type * as Type from 'types';
-import { ALL_VALUE, CommandState, CommandType, RunState, State, TaskType } from 'types';
+import * as Type from 'types';
+import { CommandState, RunState, State } from 'types';
 
 import { runStateSortValues } from './experiment';
 
@@ -42,7 +42,7 @@ function generateTask(idx: number): Type.Task & Type.RecentEvent {
 }
 
 export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
-  const state = getRandomElementOfEnum(RunState);
+  const state = getRandomElementOfEnum(Type.RunState);
   const task = generateTask(idx);
   const progress = Math.random();
   const user = sampleUsers.random();
@@ -61,14 +61,14 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
 }
 
 export function generateCommandTask(idx: number): Type.RecentCommandTask {
-  const state = getRandomElementOfEnum(CommandState);
+  const state = getRandomElementOfEnum(Type.CommandState);
   const task = generateTask(idx);
   const user = sampleUsers.random();
   return {
     ...task,
     displayName: user.displayName,
     state: state as Type.CommandState,
-    type: getRandomElementOfEnum(CommandType),
+    type: getRandomElementOfEnum(Type.CommandType),
     userId: user.id,
   };
 }
@@ -198,7 +198,7 @@ const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T,
   states: string[],
 ): boolean => {
-  if (!Array.isArray(states) || states.length === 0 || states[0] === ALL_VALUE) return true;
+  if (!Array.isArray(states) || states.length === 0 || states[0] === Type.ALL_VALUE) return true;
   return states.includes(task.state as string);
 };
 
@@ -206,7 +206,7 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T,
   users?: string[],
 ): boolean => {
-  if (!Array.isArray(users) || users.length === 0 || users[0] === ALL_VALUE) return true;
+  if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
   return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
 };
 
@@ -222,7 +222,7 @@ export const filterTasks = <
   return tasks
     .filter((task) => {
       const isExperiment = isExperimentTask(task);
-      const type = isExperiment ? TaskType.Experiment : (task as Type.CommandTask).type;
+      const type = isExperiment ? Type.TaskType.Experiment : (task as Type.CommandTask).type;
       return (
         (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
@@ -292,11 +292,11 @@ export const commandStateSorter = (a: CommandState, b: CommandState): number => 
 export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?
-  const aValue = Object.values(RunState).includes(a as Type.RunState)
-    ? runStateSortValues.get(a as Type.RunState) || 0
+  const aValue = Object.values(RunState).includes(a as RunState)
+    ? runStateSortValues.get(a as RunState) || 0
     : commandStateSortValues.get(a as CommandState) || 0;
-  const bValue = Object.values(RunState).includes(b as Type.RunState)
-    ? runStateSortValues.get(b as Type.RunState) || 0
+  const bValue = Object.values(RunState).includes(b as RunState)
+    ? runStateSortValues.get(b as RunState) || 0
     : commandStateSortValues.get(b as CommandState) || 0;
   return aValue - bValue;
 };
