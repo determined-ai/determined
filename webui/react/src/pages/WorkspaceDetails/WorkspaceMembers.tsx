@@ -13,14 +13,17 @@ import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { GroupDetailsWithRole, User, UserWithRole, UserOrGroupDetails, Workspace } from 'types';
-import {V1Group, V1GroupDetails, V1RoleWithAssignments} from 'services/api-ts-sdk';
-import { getName, getIdFromUserOrGroup, isUser } from 'utils/user';
-
+import {V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments} from 'services/api-ts-sdk';
+import { getName, getIdFromUserOrGroup, isUser, createAssignmentRequest } from 'utils/user';
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
+import { RawValueType } from 'rc-select/lib/BaseSelect';
+import { BaseOptionType } from 'antd/lib/select';
+import { LabelInValueType } from 'rc-select/lib/Select';
+import { assignRoles, removeAssignments } from 'services/api';
 
 const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
 interface Props {
@@ -66,7 +69,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 };
 
 const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props) => {
-
+  
   const users: User[] = [];
   const rolesWithAssignments: V1RoleWithAssignments[] = []
 
@@ -118,7 +121,7 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
   );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
-
+  
   const columns = useMemo(() => {
     const nameRenderer = (value: string, record: UserOrGroupDetails) => {
       if (isUser(record)) {
@@ -159,7 +162,27 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
         <Select
           className={css.selectContainer}
           disabled={!userCanAssignRoles}
-          value={record.role}>
+          value={record.role}
+          onSelect={async (value: RawValueType | LabelInValueType, option: BaseOptionType) => {
+            const assignmentToRemove = createAssignmentRequest(
+              record,
+              getIdFromUserOrGroup(record),
+              0,
+              workspace.id
+            )
+            const AssignmentToAdd = createAssignmentRequest(
+              record,
+              getIdFromUserOrGroup(record),
+              1,
+              workspace.id
+            )
+            // Remove the old role
+            await removeAssignments(assignmentToRemove)
+
+            // Add the new role
+            await assignRoles(AssignmentToAdd)
+          }}
+          >
           {roles.map((role) => (
             <Select.Option key={role} value={role}>
               {role}
@@ -206,20 +229,19 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
     ] as ColumnDef<UserOrGroupDetails>[];
   }, [nameFilterSearch, tableSearchIcon, workspace, userCanAssignRoles]);
 
-  const membersAndGroups: UserOrGroupDetails[] = [];
 
   return (
     <div className={css.membersContainer}>
       <InteractiveTable
         columns={columns}
         containerRef={pageRef}
-        dataSource={membersAndGroups}
+        dataSource={usersAndGroupDetails}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          membersAndGroups.length,
+          usersAndGroupDetails.length,
         )}
         rowKey="id"
         settings={settings}
