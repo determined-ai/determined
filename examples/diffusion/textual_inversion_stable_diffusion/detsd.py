@@ -199,9 +199,7 @@ class DetSDTextualInversionTrainer:
         self._build_models()
         self._add_new_tokens()
         with torch.no_grad():
-            init_norm = torch.linalg.vector_norm(
-                self._get_new_token_embeddings(return_data=False), dim=1
-            ).mean()
+            init_norm = torch.linalg.vector_norm(self._get_new_token_embeddings(), dim=1).mean()
             print("NEW NORMS AT INIT", init_norm)
         self._freeze_layers()
         self._build_dataset_and_dataloader()
@@ -312,7 +310,7 @@ class DetSDTextualInversionTrainer:
         # Add a norm penalty to the loss
         # TODO: Clean this up.
         new_token_embeddings_norms = torch.linalg.vector_norm(
-            self._get_new_token_embeddings(return_data=False), dim=1
+            self._get_new_token_embeddings(), dim=1
         )
         print(
             80 * "$",
@@ -330,7 +328,7 @@ class DetSDTextualInversionTrainer:
         )
         norm_loss = (
             self.norm_penalty
-            * (new_token_embeddings_norms.mean() - self.original_embedding_tensors_mean_norm) ** 2
+            * (new_token_embeddings_norms - self.original_embedding_tensors_mean_norm).mean() ** 2
         )
         print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
@@ -652,8 +650,14 @@ class DetSDTextualInversionTrainer:
     def _get_new_token_embeddings(self) -> torch.Tensor:
         """Returns the tensor of newly-added token embeddings."""
         all_concept_tokens = " ".join(list(self.concept_tokens))
-        all_dummy_concept_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
-        pass
+        all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
+        all_dummy_tokens_t = torch.tensor(
+            self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False), device=self.device
+        )
+        new_token_embeddings = self.text_encoder.text_model.embeddings.token_embedding(
+            all_dummy_tokens_t
+        )
+        return new_token_embeddings
 
 
 class DetSDTextualInversionPipeline:
@@ -958,7 +962,7 @@ def add_new_tokens(
         )
     # Add a new randomly generated dummy placeholder token for every token in the initializer.
     dummy_placeholder_tokens = [
-        f"<{concept_token}+{n}" for n in range(len(non_special_initializer_ids))
+        f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
     ]
     num_added_tokens = tokenizer.add_tokens(dummy_placeholder_tokens)
     if num_added_tokens != len(dummy_placeholder_tokens):
