@@ -30,7 +30,7 @@ class TextualInversionDataset(Dataset):
         learnable_properties: Sequence[str],
         img_size: int = 512,
         interpolation: str = "bicubic",
-        flip_p: float = 0.5,
+        flip_p: float = 0.0,
         center_crop: bool = False,
     ):
         assert (
