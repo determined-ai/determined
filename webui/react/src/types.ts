@@ -333,12 +333,15 @@ export const RunState = {
   STOPPING_CANCELED: 'STOPPING_CANCELED',
   STOPPING_COMPLETED: 'STOPPING_COMPLETED',
   STOPPING_ERROR: 'STOPPING_ERROR',
+  STOPPING_KILLED: 'STOPPING_KILLED',
   UNSPECIFIED: 'UNSPECIFIED',
 } as const;
 
 export type RunState = typeof RunState;
 
-export type RunStateNew = keyof RunState;
+export type RunStateKey = keyof RunState;
+
+export type RunStateValue = typeof RunState[RunStateKey];
 
 export interface ValidationHistory {
   endTime: string;
@@ -468,7 +471,7 @@ export interface TrialItem extends StartEndTimes {
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
-  state: keyof RunState;
+  state: RunStateValue;
   totalBatchesProcessed: number;
 }
 
@@ -622,9 +625,7 @@ export interface Task {
 }
 
 // CompoundRunState adds more information about a job's state to RunState.
-export type CompoundRunState = keyof RunState | JobState;
-
-export type CompoundRunStateNew = RunStateNew | keyof typeof JobState;
+export type CompoundRunState = RunStateKey | JobState;
 
 export interface ExperimentTask extends Task {
   archived: boolean;

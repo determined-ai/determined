@@ -27,6 +27,7 @@ import {
   Project,
   ProjectExperiment,
   RunState,
+  RunStateValue,
   TrialDetails,
   TrialHyperparameters,
 } from 'types';
@@ -222,7 +223,7 @@ export const getProjectExperimentForExperimentItem = (
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);
 
-const runStateSortOrder: (keyof RunState)[] = [
+const runStateSortOrder: (RunStateValue)[] = [
   RunState.ACTIVE,
   RunState.RUNNING,
   RunState.PAUSED,
@@ -241,7 +242,7 @@ const runStateSortOrder: (keyof RunState)[] = [
   RunState.UNSPECIFIED,
 ];
 
-export const runStateSortValues: Map<keyof RunState, number> = new Map(
+export const runStateSortValues: Map<RunStateValue, number> = new Map(
   runStateSortOrder.map((state, idx) => [state, idx]),
 );
 
@@ -253,6 +254,6 @@ export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImporta
   return 0;
 };
 
-export const runStateSorter = (a: keyof RunState, b: keyof RunState): number => {
+export const runStateSorter = (a: RunStateValue, b: RunStateValue): number => {
   return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
 };

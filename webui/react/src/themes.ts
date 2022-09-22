@@ -14,6 +14,7 @@ import {
   JobState,
   ResourceState,
   RunState,
+  RunStateValue,
   SlotState,
   WorkspaceState,
 } from 'types';
@@ -40,6 +41,7 @@ const stateColorMapping = {
   [RunState.STOPPING_CANCELED]: 'inactive',
   [RunState.STOPPING_COMPLETED]: 'success',
   [RunState.STOPPING_ERROR]: 'critical',
+  [RunState.STOPPING_KILLED]: 'killed',
   [RunState.UNSPECIFIED]: 'inactive',
   [RunState.QUEUED]: 'warning',
   [RunState.PULLING]: 'pending',
@@ -67,7 +69,7 @@ const stateColorMapping = {
 };
 
 export type StateOfUnion =
-  | keyof RunState
+  | RunStateValue
   | CommandState
   | ResourceState
   | CheckpointState

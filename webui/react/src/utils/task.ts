@@ -2,7 +2,7 @@ import { killableCommandStates, killableRunStates, terminalCommandStates } from 
 import { LaunchTensorBoardParams } from 'services/types';
 import { isEqual } from 'shared/utils/data';
 import * as Type from 'types';
-import { CommandState, RunState, State } from 'types';
+import { CommandState, RunState, RunStateValue, State } from 'types';
 
 import { runStateSortValues } from './experiment';
 
@@ -292,11 +292,11 @@ export const commandStateSorter = (a: CommandState, b: CommandState): number => 
 export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?
-  const aValue = Object.values(RunState).includes(a as keyof RunState)
-    ? runStateSortValues.get(a as keyof RunState) || 0
+  const aValue = Object.values(RunState).includes(a as RunStateValue)
+    ? runStateSortValues.get(a as RunStateValue) || 0
     : commandStateSortValues.get(a as CommandState) || 0;
-  const bValue = Object.values(RunState).includes(b as keyof RunState)
-    ? runStateSortValues.get(b as keyof RunState) || 0
+  const bValue = Object.values(RunState).includes(b as RunStateValue)
+    ? runStateSortValues.get(b as RunStateValue) || 0
     : commandStateSortValues.get(b as CommandState) || 0;
   return aValue - bValue;
 };

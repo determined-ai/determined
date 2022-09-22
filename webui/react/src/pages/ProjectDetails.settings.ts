@@ -2,7 +2,7 @@ import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
-import { RunState } from 'types';
+import { RunStateValue } from 'types';
 
 export type ExperimentColumnName =
   | 'action'
@@ -59,7 +59,7 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
   row?: number[];
   search?: string;
   sortKey: V1GetExperimentsRequestSortBy;
-  state?: (keyof RunState)[];
+  state?: RunStateValue[];
   user?: string[];
 }
 

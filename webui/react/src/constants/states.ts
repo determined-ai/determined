@@ -8,6 +8,7 @@ import {
   JobState,
   ResourceState,
   RunState,
+  RunStateValue,
   SlotState,
 } from 'types';
 
@@ -42,7 +43,7 @@ export const activeRunStates: Array<
 
 /* activeStates are sub-states which replace the previous Active RunState,
   and Active for backward compatibility  */
-const activeStates: Array<keyof RunState> = [
+const activeStates: Array<RunStateValue> = [
   RunState.ACTIVE,
   RunState.PULLING,
   RunState.QUEUED,
@@ -81,12 +82,14 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-const runStateList = [RunState.CANCELED, RunState.COMPLETED, RunState.ERROR] as const;
-
-export const deletableRunStates: Set<CompoundRunState> = new Set([
-  ...runStateList,
+const runStateList = [
+  RunState.CANCELED,
+  RunState.COMPLETED,
+  RunState.ERROR,
   RunState.DELETE_FAILED,
-]);
+] as const;
+
+export const deletableRunStates: Set<CompoundRunState> = new Set(runStateList);
 
 export const terminalRunStates: Set<CompoundRunState> = new Set([
   ...deletableRunStates,
@@ -98,7 +101,7 @@ export const terminalRunStatesKeys = keysOf({
   ...pick(RunState, RunState.DELETED),
 });
 
-export const runStateToLabel: { [key in keyof RunState]: string } = {
+export const runStateToLabel: { [key in RunStateValue]: string } = {
   [RunState.ACTIVE]: 'Active',
   [RunState.RUNNING]: 'Running',
   [RunState.CANCELED]: 'Canceled',
@@ -111,6 +114,7 @@ export const runStateToLabel: { [key in keyof RunState]: string } = {
   [RunState.STOPPING_CANCELED]: 'Canceling',
   [RunState.STOPPING_COMPLETED]: 'Completing',
   [RunState.STOPPING_ERROR]: 'Erroring',
+  [RunState.STOPPING_KILLED]: 'Killed',
   [RunState.UNSPECIFIED]: 'Unspecified',
   [RunState.QUEUED]: 'Queued',
   [RunState.PULLING]: 'Pulling Image',
@@ -186,7 +190,7 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
 
 export function stateToLabel(state: StateOfUnion): string {
   return (
-    runStateToLabel[state as keyof RunState] ||
+    runStateToLabel[state as RunStateValue] ||
     commandStateToLabel[state as CommandState] ||
     resourceStateToLabel[state as ResourceState] ||
     checkpointStateToLabel[state as CheckpointState] ||

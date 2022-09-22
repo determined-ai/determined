@@ -34,7 +34,7 @@ import {
   CheckpointWorkloadExtended,
   CommandTask,
   ExperimentBase,
-  RunState,
+  RunStateValue,
   TrialItem,
 } from 'types';
 import handleError from 'utils/error';
@@ -78,7 +78,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     (states: string[]) => {
       updateSettings({
         row: undefined,
-        state: states.length !== 0 ? (states as (keyof RunState)[]) : undefined,
+        state: states.length !== 0 ? (states as RunStateValue[]) : undefined,
       });
     },
     [updateSettings],
@@ -203,7 +203,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.isFiltered = (settings) => !!(settings as Settings).state;
-        column.filters = (['ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR'] as (keyof RunState)[]).map(
+        column.filters = (['ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR'] as RunStateValue[]).map(
           (value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
@@ -247,7 +247,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const fetchExperimentTrials = useCallback(async () => {
     try {
       const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as keyof RunState),
+        encodeExperimentState(state as RunStateValue),
       );
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {

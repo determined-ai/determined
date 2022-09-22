@@ -86,6 +86,7 @@ import {
   Project,
   ProjectExperiment,
   RunState,
+  RunStateValue,
 } from 'types';
 import handleError from 'utils/error';
 import {
@@ -330,7 +331,7 @@ const ProjectDetails: React.FC = () => {
     (states: string[]) => {
       updateSettings({
         row: undefined,
-        state: states.length !== 0 ? (states as (keyof RunState)[]) : undefined,
+        state: states.length !== 0 ? (states as RunStateValue[]) : undefined,
       });
     },
     [updateSettings],

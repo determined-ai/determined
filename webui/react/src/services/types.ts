@@ -2,13 +2,13 @@ import { Dayjs } from 'dayjs';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
 import {
-  CompoundRunStateNew,
   DetailedUser,
   Job,
   Metadata,
   MetricName,
   MetricType,
   Note,
+  RunStateValue,
   Scale,
   TrialWorkloadFilter,
 } from 'types';
@@ -69,20 +69,6 @@ export interface GetTemplatesParams extends PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME';
 }
 
-type StateType = Extract<
-  CompoundRunStateNew,
-  | 'UNSPECIFIED'
-  | 'ACTIVE'
-  | 'PAUSED'
-  | 'STOPPING_COMPLETED'
-  | 'STOPPING_CANCELED'
-  | 'STOPPING_ERROR'
-  | 'COMPLETED'
-  | 'CANCELED'
-  | 'ERROR'
-  | 'DELETED'
->;
-
 export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
@@ -105,7 +91,7 @@ export interface GetExperimentsParams extends PaginationParams {
     | 'SORT_BY_PROGRESS'
     | 'SORT_BY_USER'
     | 'SORT_BY_NAME';
-  states?: Array<`STATE_${StateType}`>;
+  states?: Array<`STATE_${RunStateValue}`>;
   userIds?: Array<number>;
   users?: Array<string>;
 }
