@@ -721,7 +721,7 @@ class DetSDTextualInversionPipeline:
         self.all_checkpoint_paths = []
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
-        self.all_added_concepts = None
+        self.all_added_concepts = []
 
         self._build_models()
         self._build_pipeline()
