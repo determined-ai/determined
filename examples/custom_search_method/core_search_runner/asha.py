@@ -26,12 +26,6 @@ such as variables, structures, or models, that are modified as the SearchMethod 
 save_method_state() and load_method_state() are called by CoreSearchRunner as a part of CoreSearchRunner.save() and
 CoreSearchRunner.load() to ensure that CoreSearchRunner state and SearchMethod state can be restored if
 CoreSearchRunner is terminated or interrupted.
-To provide fault tolerance, CoreSearchRunner calls save() and save_method_state() after processing
-each SearcherEvent and before sending the list of Operations to the multi-trial experiment.
-On resumption, CoreSearchRunner calls load() and load_method_state(), and gets SearcherEvents from the multi-trial
-experiment. If a SearcherEvent has already been processed by SearchMethod, then CoreSearchRunner re-sends the
-operations. Otherwise, it continues to process SearcherEvents as usual. That is, CoreSearchRunner invokes
-the methods corresponding to the SearcherEvent, gets the operations, saves the state, and sends the operations.
 
 To ensure that CoreSearchRunner process is resumed automatically in the case of failure,
 make sure to set `max_restarts` in the `searcher.yaml` file to a number greater than 0.
@@ -63,12 +57,12 @@ from determined.searcher.search_method import (
 
 class ASHASearchMethod(SearchMethod):
     def __init__(
-            self,
-            max_length: int,
-            max_trials: int,
-            num_rungs: int,
-            divisor: int,
-            max_concurrent_trials: int = 0
+        self,
+        max_length: int,
+        max_trials: int,
+        num_rungs: int,
+        divisor: int,
+        max_concurrent_trials: int = 0,
     ) -> None:
         super().__init__()
 
@@ -136,7 +130,9 @@ class ASHASearchMethod(SearchMethod):
     #    (2) start a new trial,
     #    (3) close experiment if all trials are completed and maximum number of
     #        trials is reached.
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1
@@ -155,8 +151,9 @@ class ASHASearchMethod(SearchMethod):
         self.asha_search_state.closed_trials.add(request_id)
 
         if (
-                self.asha_search_state.pending_trials == 0
-                and self.asha_search_state.completed_trials == self.asha_search_state.max_trials
+            self.asha_search_state.pending_trials == 0
+            and self.asha_search_state.completed_trials
+            == self.asha_search_state.max_trials
         ):
             return [Shutdown()]
 
@@ -173,7 +170,7 @@ class ASHASearchMethod(SearchMethod):
     # Next, ASHA invoked _promote_async function to decided whether to promote
     # existing trial, start a new trial or close the experiment.
     def on_trial_exited_early(
-            self, request_id: uuid.UUID, exited_reason: ExitedReason
+        self, request_id: uuid.UUID, exited_reason: ExitedReason
     ) -> List[Operation]:
         self.asha_search_state.pending_trials -= 1
 
@@ -196,7 +193,9 @@ class ASHASearchMethod(SearchMethod):
 
             for rung_idx in range(0, highest_rung_index + 1):
                 rung = self.asha_search_state.rungs[rung_idx]
-                rung.metrics = list(filter(lambda x: x.request_id != request_id, rung.metrics))
+                rung.metrics = list(
+                    filter(lambda x: x.request_id != request_id, rung.metrics)
+                )
 
             create = Create(
                 request_id=uuid.uuid4(),
@@ -230,14 +229,19 @@ class ASHASearchMethod(SearchMethod):
     # In this example, progress computation is based on the number of completed trials
     # in rung 0 to the total number of trials.
     def progress(self) -> float:
-        if 0 < self.asha_search_state.max_concurrent_trials < self.asha_search_state.pending_trials:
+        if (
+            0
+            < self.asha_search_state.max_concurrent_trials
+            < self.asha_search_state.pending_trials
+        ):
             raise RuntimeError("Pending trial is greater than max concurrent trials")
         all_trials = len(self.asha_search_state.rungs[0].metrics)
 
         progress = all_trials / (1.2 * self.asha_search_state.max_trials)
         if all_trials == self.asha_search_state.max_trials:
             num_valid_trials = (
-                    self.asha_search_state.completed_trials - self.asha_search_state.invalid_trials
+                self.asha_search_state.completed_trials
+                - self.asha_search_state.invalid_trials
             )
             progress_no_overhead = num_valid_trials / self.asha_search_state.max_trials
             progress = max(progress_no_overhead, progress)
@@ -262,7 +266,7 @@ class ASHASearchMethod(SearchMethod):
             "n_filters2": random.randint(8, 72),
             "learning_rate": random.uniform(0.0001, 1.0),
             "dropout1": random.uniform(0.2, 0.8),
-            "dropout2": random.uniform(0.2, 0.8)
+            "dropout2": random.uniform(0.2, 0.8),
         }
         logging.info(f"hparams={hparams}")
         return hparams
@@ -298,16 +302,24 @@ class ASHASearchMethod(SearchMethod):
 
     ############################################################################
     # ASHA internal implementation details. You can skip this part.
+    # If you want to learn more about ASHA, see
+    # https://docs.determined.ai/latest/training/hyperparameter/search-methods/hp-adaptive-asha.html
     def _get_max_concurrent_trials(self):
         if self.asha_search_state.max_concurrent_trials > 0:
             max_concurrent_trials = min(
-                self.asha_search_state.max_concurrent_trials, self.asha_search_state.max_trials
+                self.asha_search_state.max_concurrent_trials,
+                self.asha_search_state.max_trials,
             )
         else:
             max_concurrent_trials = max(
                 1,
                 min(
-                    int(pow(self.asha_search_state.divisor, self.asha_search_state.num_rungs - 1)),
+                    int(
+                        pow(
+                            self.asha_search_state.divisor,
+                            self.asha_search_state.num_rungs - 1,
+                        )
+                    ),
                     self.asha_search_state.max_trials,
                 ),
             )
@@ -332,7 +344,7 @@ class ASHASearchMethod(SearchMethod):
             next_rung = self.asha_search_state.rungs[rung_idx + 1]
             logging.info(f"Promoting in rung {rung_idx}")
             for promoted_request_id in rung.promotions_async(
-                    request_id, metric, self.asha_search_state.divisor
+                request_id, metric, self.asha_search_state.divisor
             ):
                 self.asha_search_state.trial_rungs[promoted_request_id] = rung_idx + 1
                 next_rung.outstanding_trials += 1
@@ -345,7 +357,10 @@ class ASHASearchMethod(SearchMethod):
                 else:
                     return self._promote_async(promoted_request_id, sys.float_info.max)
 
-        all_trials = len(self.asha_search_state.trial_rungs) - self.asha_search_state.invalid_trials
+        all_trials = (
+            len(self.asha_search_state.trial_rungs)
+            - self.asha_search_state.invalid_trials
+        )
         if not added_train_workload and all_trials < self.asha_search_state.max_trials:
             logging.info("Creating new trial instead of promoting")
             self.asha_search_state.pending_trials += 1
@@ -364,7 +379,10 @@ class ASHASearchMethod(SearchMethod):
             )
             self.asha_search_state.trial_rungs[create.request_id] = 0
 
-        if len(self.asha_search_state.rungs[0].metrics) == self.asha_search_state.max_trials:
+        if (
+            len(self.asha_search_state.rungs[0].metrics)
+            == self.asha_search_state.max_trials
+        ):
             ops.extend(self._get_close_rungs_ops())
 
         return ops
@@ -377,13 +395,19 @@ class ASHASearchMethod(SearchMethod):
                 break
             for trial_metric in rung.metrics:
                 if (
-                        not trial_metric.promoted
-                        and trial_metric.request_id not in self.asha_search_state.closed_trials
+                    not trial_metric.promoted
+                    and trial_metric.request_id
+                    not in self.asha_search_state.closed_trials
                 ):
-                    if trial_metric.request_id not in self.asha_search_state.early_exit_trials:
+                    if (
+                        trial_metric.request_id
+                        not in self.asha_search_state.early_exit_trials
+                    ):
                         logging.info(f"Closing trial {trial_metric.request_id}")
                         ops.append(Close(trial_metric.request_id))
-                        self.asha_search_state.closed_trials.add(trial_metric.request_id)
+                        self.asha_search_state.closed_trials.add(
+                            trial_metric.request_id
+                        )
         return ops
 
 
@@ -396,12 +420,12 @@ class ASHASearchMethod(SearchMethod):
 # related to the state of the search (e.g., pending trials).
 class ASHASearchMethodState:
     def __init__(
-            self,
-            max_length: int,
-            max_trials: int,
-            num_rungs: int,
-            divisor: int,
-            max_concurrent_trials: int = 0,
+        self,
+        max_length: int,
+        max_trials: int,
+        num_rungs: int,
+        divisor: int,
+        max_concurrent_trials: int = 0,
     ) -> None:
         # ASHA params
         self.max_length = max_length
@@ -450,7 +474,7 @@ class Rung:
     outstanding_trials: int = 0
 
     def promotions_async(
-            self, request_id: uuid.UUID, metric: float, divisor: int
+        self, request_id: uuid.UUID, metric: float, divisor: int
     ) -> List[uuid.UUID]:
         logging.info(f"Rung {self.idx}")
 
@@ -459,12 +483,17 @@ class Rung:
 
         index = self._search_metric_index(metric)
         promote_now = index < num_promote
-        trial_metric = TrialMetric(request_id=request_id, metric=metric, promoted=promote_now)
+        trial_metric = TrialMetric(
+            request_id=request_id, metric=metric, promoted=promote_now
+        )
         self.metrics.insert(index, trial_metric)
 
         if promote_now:
             return [request_id]
-        if num_promote != old_num_promote and not self.metrics[old_num_promote].promoted:
+        if (
+            num_promote != old_num_promote
+            and not self.metrics[old_num_promote].promoted
+        ):
             self.metrics[old_num_promote].promoted = True
             return [self.metrics[old_num_promote].request_id]
 

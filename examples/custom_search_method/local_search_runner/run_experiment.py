@@ -29,11 +29,10 @@ if __name__ == "__main__":
     #
     # The content of the following directory is uploaded to Determined cluster.
     # It should include all files necessary to run the experiment (as usual).
-    model_context_dir = 'experiment_files'
+    model_context_dir = "experiment_files"
 
     # Path to the .yaml file with the multi-trial experiment configuration.
     model_config = "experiment_files/custom_config.yaml"
-
 
     ########################################################################
     # Fault Tolerance for LocalSearchRunner
@@ -48,10 +47,12 @@ if __name__ == "__main__":
     # load() methods when necessary, a user is responsible for implementing
     # SearchMethod.save_method_state() and SearchMethod.load_method_state() to ensure correct
     # resumption of the SearchMethod.
-    searcher_dir = Path('searcher_dir')
+    searcher_dir = Path("searcher_dir")
 
     # Instantiate your implementation of SearchMethod
-    search_method = ASHASearchMethod(max_length=1000, max_trials=16, num_rungs=3, divisor=4)
+    search_method = ASHASearchMethod(
+        max_length=1000, max_trials=16, num_rungs=3, divisor=4
+    )
 
     # Instantiate LocalSearchRunner
     search_runner = LocalSearchRunner(search_method, searcher_dir=searcher_dir)
@@ -68,4 +69,3 @@ if __name__ == "__main__":
     # 3) Exits when the experiment is completed.
     experiment_id = search_runner.run(model_config, context_dir=model_context_dir)
     logging.info(f"Experiment {experiment_id} has been completed.")
-

@@ -1,5 +1,10 @@
 name: core-search-runner
 entrypoint: python3 run_experiment.py
+hyperparameters:
+  max_length: 1000
+  max_trials: 16
+  num_rungs: 3
+  divisor: 4
 searcher:
   metric: validation_error
   smaller_is_better: true

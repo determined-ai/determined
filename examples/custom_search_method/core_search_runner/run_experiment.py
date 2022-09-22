@@ -16,11 +16,11 @@ Next, CoreSearchRunner sends the operations to the multi-trial experiment for ex
 import logging
 import determined as det
 from asha import ASHASearchMethod
+from attrdict import AttrDict
 from determined.searcher.core_search_runner import CoreSearchRunner
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
-
 
     ########################################################################
     # Multi-trial experiment
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     #
     # The content of the following directory is uploaded to Determined cluster.
     # It should include all files necessary to run the experiment (as usual).
-    model_context_dir = 'experiment_files'
+    model_context_dir = "experiment_files"
 
     # Path to the .yaml file with the multi-trial experiment configuration.
     model_config = "experiment_files/custom_config.yaml"
@@ -49,8 +49,17 @@ if __name__ == "__main__":
     # resumption of the SearchMethod.
     with det.core.init() as core_context:
 
+        info = det.get_cluster_info()
+        assert info is not None
+        args = AttrDict(info.trial.hparams)
+
         # Instantiate your implementation of SearchMethod
-        search_method = ASHASearchMethod(max_length=1000, max_trials=16, num_rungs=3, divisor=4)
+        search_method = ASHASearchMethod(
+            max_length=args.max_length,
+            max_trials=args.max_trials,
+            num_rungs=args.num_rungs,
+            divisor=args.divisor,
+        )
 
         # Instantiate CoreSearchRunner
         search_runner = CoreSearchRunner(search_method, context=core_context)
