@@ -807,10 +807,8 @@ const ProjectDetails: React.FC = () => {
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
-    });
-  }, [openCustomizeColumns, settings.columns, transferColumns]);
+    openCustomizeColumns({});;
+  }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
