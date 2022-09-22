@@ -64,9 +64,14 @@ check-prettier: check-prettier-js check-prettier-css check-prettier-misc
 check: check-eslint check-stylelint check-prettier check-package-lock
 
 
-.PHONY: fmt-js
-fmt-js:
+.PHONY: fmt-js-eslint
+fmt-js-eslint:
+	npm run eslint -- --fix
+.PHONY: fmt-js-prettier
+fmt-js-prettier:
 	npm run format:js
+.PHONY: fmt-js
+fmt-js: fmt-js-eslint fmt-js-prettier
 .PHONY: fmt-css
 fmt-css:
 	npm run  format:css
