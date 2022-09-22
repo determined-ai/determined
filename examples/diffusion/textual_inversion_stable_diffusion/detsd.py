@@ -430,6 +430,7 @@ class DetSDTextualInversionTrainer:
             self.original_embedding_mean_norm = (
                 torch.linalg.vector_norm(self.original_embedding_tensors, dim=1).mean().item()
             )
+            print("ORIGINAL EMBEDDING MEAN NORM: ", self.original_embedding_mean_norm)
         self.new_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
             torch.tensor(all_dummy_placeholder_token_ids),
