@@ -524,7 +524,7 @@ service Determined {
     };
   }
 
-  // Update tags for trials by IDs or filters. 
+  // Update tags for trials by IDs or filters.
   rpc UpdateTrialTags(UpdateTrialTagsRequest)
       returns (UpdateTrialTagsResponse) {
     option (google.api.http) = {
