@@ -302,6 +302,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         onCancel: handleCancel,
         onOk: () => handleOk(viewOnly),
         title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
+        width: 550,
       });
     },
     [form, handleCancel, handleOk, openOrUpdate, user, groups],
