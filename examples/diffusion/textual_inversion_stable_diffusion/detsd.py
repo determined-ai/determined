@@ -329,7 +329,7 @@ class DetSDTextualInversionTrainer:
         # Introduce a squared-loss for the size of the new embedding norms, otherwise they are
         # driven to be much larger than the original embedding norms by SGD and dominate the art.
         # We take the sum rather than the mean, as this should make the optimal norm_penalty value
-        # less sensitive to the number of newly added tokens..
+        # less sensitive to the number of newly added tokens.
         norm_loss = (
             self.norm_penalty
             * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
@@ -660,9 +660,11 @@ class DetSDTextualInversionTrainer:
             token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
+        # TODO: Can change the device call to self.accelerator.device after deleting print statement
+        # checks.
         all_dummy_tokens_t = torch.tensor(
             self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
-            device=token_embedding_layer.device,
+            device=token_embedding_layer.weight.device,
         )
         new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
         return new_token_embeddings
