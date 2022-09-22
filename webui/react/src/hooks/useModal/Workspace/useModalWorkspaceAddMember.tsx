@@ -30,9 +30,6 @@ interface FormInputs {
   id: number;
 }
 
-// Adding this lint rule to keep the reference to the workspace
-// which will be needed when calling the API.
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): ModalHooks => {
   const {users} = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
