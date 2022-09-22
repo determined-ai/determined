@@ -624,6 +624,7 @@ class DetSDTextualInversionTrainer:
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         """Report training metrics to the Determined master."""
+        self.accelerator.wait_for_everyone()
         local_mean_loss = torch.tensor(self.loss_history, device=self.accelerator.device).mean()
         # reduction = 'mean' seems to return the sum rather than the mean:
         self.last_mean_loss = (
