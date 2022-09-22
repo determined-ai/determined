@@ -389,10 +389,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "Please call wrap_scaler before wrap_model.",
             )
 
-        if not torch.cuda.is_available():
-            raise det.errors.InvalidExperimentException(
-                "Using context.wrap_scaler() is supported only on GPU slots.",
-            )
+        # We don't need to check if CUDA is available because if it is not, a GradScaler is
+        #  disabled when initialized, and we allow for disabled scalers to exist.
 
         self._scaler = scaler
 
