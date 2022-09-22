@@ -5,7 +5,7 @@ import { useStore } from 'contexts/Store';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { clone } from 'shared/utils/data';
-import { RunStateValue } from 'types';
+import { RunState } from 'types';
 
 import { MetricsAggregateInterface, MetricType, ProfilerMetricsResponse } from './types';
 
@@ -30,7 +30,7 @@ const getIndexForTimestamp = (initialTimestamp: number, timestamp: number) =>
 
 export const useFetchProfilerMetrics = (
   trialId: number,
-  trialState: RunStateValue,
+  trialState: RunState,
   labelsMetricType: MetricType,
   labelsName: string | undefined = undefined,
   labelsAgentId: string | undefined = undefined,

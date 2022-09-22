@@ -23,7 +23,7 @@ import {
   Hyperparameter,
   MetricName,
   metricTypeParamMap,
-  RunStateValue,
+  RunState,
   Scale,
 } from 'types';
 import handleError from 'utils/error';
@@ -65,7 +65,7 @@ const LearningCurve: React.FC<Props> = ({
   const [showCompareTrials, setShowCompareTrials] = useState(false);
 
   const hasTrials = trialHps.length !== 0;
-  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunStateValue);
+  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {

@@ -18,7 +18,7 @@ describe('Experiment Utilities', () => {
         resourcePool: 'gpu-pool',
         searcherType: 'single',
         startTime: '2021-11-29T00:00:00Z',
-        state: Type.RunState.ACTIVE,
+        state: Type.RunState.Active,
         userId: 345,
       };
       expect(utils.isExperiment(experimentTask)).toBe(true);

@@ -86,7 +86,6 @@ import {
   Project,
   ProjectExperiment,
   RunState,
-  RunStateValue,
 } from 'types';
 import handleError from 'utils/error';
 import {
@@ -331,7 +330,7 @@ const ProjectDetails: React.FC = () => {
     (states: string[]) => {
       updateSettings({
         row: undefined,
-        state: states.length !== 0 ? (states as RunStateValue[]) : undefined,
+        state: states.length !== 0 ? (states as RunState[]) : undefined,
       });
     },
     [updateSettings],
@@ -516,11 +515,11 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
         filters: [
-          RunState.ACTIVE,
-          RunState.PAUSED,
-          RunState.CANCELED,
-          RunState.COMPLETED,
-          RunState.ERROR,
+          RunState.Active,
+          RunState.Paused,
+          RunState.Canceled,
+          RunState.Completed,
+          RunState.Error,
         ].map((value) => ({
           text: <Badge state={value} type={BadgeType.State} />,
           value,

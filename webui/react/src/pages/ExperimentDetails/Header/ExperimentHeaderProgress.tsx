@@ -15,7 +15,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
   const status =
     experiment.state === JobState.SCHEDULED ||
     experiment.state === JobState.SCHEDULEDBACKFILLED ||
-    experiment.state === RunState.ACTIVE
+    experiment.state === RunState.Active
       ? 'active'
       : undefined;
 

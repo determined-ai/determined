@@ -348,23 +348,23 @@ const checkpointStateMap = {
 };
 
 const experimentStateMap = {
-  [Sdk.Determinedexperimentv1State.UNSPECIFIED]: types.RunState.UNSPECIFIED,
-  [Sdk.Determinedexperimentv1State.ACTIVE]: types.RunState.ACTIVE,
-  [Sdk.Determinedexperimentv1State.PAUSED]: types.RunState.PAUSED,
-  [Sdk.Determinedexperimentv1State.STOPPINGCANCELED]: types.RunState.STOPPING_CANCELED,
-  [Sdk.Determinedexperimentv1State.STOPPINGCOMPLETED]: types.RunState.STOPPING_COMPLETED,
-  [Sdk.Determinedexperimentv1State.STOPPINGERROR]: types.RunState.STOPPING_ERROR,
-  [Sdk.Determinedexperimentv1State.CANCELED]: types.RunState.CANCELED,
-  [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.COMPLETED,
-  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.ERROR,
-  [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.DELETED,
-  [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.DELETING,
-  [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DELETE_FAILED,
-  [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.STOPPING_CANCELED,
-  [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.QUEUED,
-  [Sdk.Determinedexperimentv1State.PULLING]: types.RunState.PULLING,
-  [Sdk.Determinedexperimentv1State.STARTING]: types.RunState.STARTING,
-  [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.RUNNING,
+  [Sdk.Determinedexperimentv1State.UNSPECIFIED]: types.RunState.Unspecified,
+  [Sdk.Determinedexperimentv1State.ACTIVE]: types.RunState.Active,
+  [Sdk.Determinedexperimentv1State.PAUSED]: types.RunState.Paused,
+  [Sdk.Determinedexperimentv1State.STOPPINGCANCELED]: types.RunState.StoppingCanceled,
+  [Sdk.Determinedexperimentv1State.STOPPINGCOMPLETED]: types.RunState.StoppingCompleted,
+  [Sdk.Determinedexperimentv1State.STOPPINGERROR]: types.RunState.StoppingError,
+  [Sdk.Determinedexperimentv1State.CANCELED]: types.RunState.Canceled,
+  [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.Completed,
+  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Error,
+  [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
+  [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
+  [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
+  [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
+  [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.Queued,
+  [Sdk.Determinedexperimentv1State.PULLING]: types.RunState.Pulling,
+  [Sdk.Determinedexperimentv1State.STARTING]: types.RunState.Starting,
+  [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.Running,
 };
 
 export const decodeCheckpointState = (
@@ -383,15 +383,11 @@ export const encodeCheckpointState = (
   return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
 };
 
-export const decodeExperimentState = (
-  data: Sdk.Determinedexperimentv1State,
-): keyof types.RunState => {
+export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): types.RunState => {
   return experimentStateMap[data];
 };
 
-export const encodeExperimentState = (
-  state: keyof types.RunState,
-): Sdk.Determinedexperimentv1State => {
+export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexperimentv1State => {
   const stateKey = Object.keys(experimentStateMap).find(
     (key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state,
   );

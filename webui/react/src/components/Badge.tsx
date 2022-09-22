@@ -25,7 +25,7 @@ export interface BadgeProps {
 }
 
 const Badge: React.FC<BadgeProps> = ({
-  state = RunState.ACTIVE,
+  state = RunState.Active,
   tooltip,
   type = BadgeType.Default,
   ...props

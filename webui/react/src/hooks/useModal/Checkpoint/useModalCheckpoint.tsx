@@ -16,7 +16,7 @@ import {
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
   ExperimentConfig,
-  RunStateValue,
+  RunState,
 } from 'types';
 import { checkpointSize } from 'utils/workload';
 
@@ -116,7 +116,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
 
-    const state = checkpoint.state as RunStateValue;
+    const state = checkpoint.state as RunState;
     const totalSize = humanReadableBytes(checkpointSize(checkpoint));
 
     const searcherMetric = props.searcherValidation;

@@ -73,7 +73,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
   const [isRunningUnarchive, setIsRunningUnarchive] = useState<boolean>(false);
   const [isRunningDelete, setIsRunningDelete] = useState<boolean>(
-    experiment.state === RunState.DELETING,
+    experiment.state === RunState.Deleting,
   );
   const classes = [css.state];
 
@@ -81,7 +81,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const autoRestarts = trial?.autoRestarts ?? 0;
 
   const isPausable = pausableRunStates.has(experiment.state);
-  const isPaused = experiment.state === RunState.PAUSED;
+  const isPaused = experiment.state === RunState.Paused;
   const isTerminated = terminalRunStates.has(experiment.state);
 
   if (isTerminated) classes.push(css.terminated);
@@ -193,7 +193,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   }, [experiment.archived]);
 
   useEffect(() => {
-    setIsRunningDelete(experiment.state === RunState.DELETING);
+    setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
 
   const handleDescriptionUpdate = useCallback(

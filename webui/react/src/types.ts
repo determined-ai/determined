@@ -150,7 +150,7 @@ export enum CommandState {
   Queued = 'QUEUED',
 }
 
-export type State = CommandState | RunState;
+export type State = CommandState | typeof RunState;
 
 export interface CommandAddress {
   containerIp: string;
@@ -318,30 +318,26 @@ export interface ExperimentPagination extends WithPagination {
 }
 
 export const RunState = {
-  ACTIVE: 'ACTIVE',
-  CANCELED: 'CANCELED',
-  COMPLETED: 'COMPLETED',
-  DELETE_FAILED: 'DELETE_FAILED',
-  DELETED: 'DELETED',
-  DELETING: 'DELETING',
-  ERROR: 'ERROR',
-  PAUSED: 'PAUSED',
-  PULLING: 'PULLING',
-  QUEUED: 'QUEUED',
-  RUNNING: 'RUNNING',
-  STARTING: 'STARTING',
-  STOPPING_CANCELED: 'STOPPING_CANCELED',
-  STOPPING_COMPLETED: 'STOPPING_COMPLETED',
-  STOPPING_ERROR: 'STOPPING_ERROR',
-  STOPPING_KILLED: 'STOPPING_KILLED',
-  UNSPECIFIED: 'UNSPECIFIED',
+  Active: 'ACTIVE',
+  Canceled: 'CANCELED',
+  Completed: 'COMPLETED',
+  Deleted: 'DELETED',
+  DeleteFailed: 'DELETE_FAILED',
+  Deleting: 'DELETING',
+  Error: 'ERROR',
+  Paused: 'PAUSED',
+  Pulling: 'PULLING',
+  Queued: 'QUEUED',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  StoppingCanceled: 'STOPPING_CANCELED',
+  StoppingCompleted: 'STOPPING_COMPLETED',
+  StoppingError: 'STOPPING_ERROR',
+  StoppingKilled: 'STOPPING_KILLED',
+  Unspecified: 'UNSPECIFIED',
 } as const;
 
-export type RunState = typeof RunState;
-
-export type RunStateKey = keyof RunState;
-
-export type RunStateValue = typeof RunState[RunStateKey];
+export type RunState = typeof RunState[keyof typeof RunState];
 
 export interface ValidationHistory {
   endTime: string;
@@ -471,7 +467,7 @@ export interface TrialItem extends StartEndTimes {
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
-  state: RunStateValue;
+  state: RunState;
   totalBatchesProcessed: number;
 }
 
@@ -625,7 +621,7 @@ export interface Task {
 }
 
 // CompoundRunState adds more information about a job's state to RunState.
-export type CompoundRunState = RunStateKey | JobState;
+export type CompoundRunState = RunState | JobState;
 
 export interface ExperimentTask extends Task {
   archived: boolean;

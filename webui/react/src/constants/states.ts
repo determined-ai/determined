@@ -8,26 +8,8 @@ import {
   JobState,
   ResourceState,
   RunState,
-  RunStateValue,
   SlotState,
 } from 'types';
-
-// TODO: probably its a good idea to add library like underscore or similar one
-const pick = <T, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K> => {
-  const ret: Pick<T, K> = {} as Pick<T, K>;
-  keys.forEach((key) => {
-    ret[key] = obj[key];
-  });
-  return ret;
-};
-
-const keysOf = <T>(obj: T): Array<keyof T> => {
-  const ret = [];
-  for (const key in obj) {
-    ret.push(key);
-  }
-  return ret;
-};
 
 export const activeCommandStates = [
   CommandState.Pulling,
@@ -43,12 +25,12 @@ export const activeRunStates: Array<
 
 /* activeStates are sub-states which replace the previous Active RunState,
   and Active for backward compatibility  */
-const activeStates: Array<RunStateValue> = [
-  RunState.ACTIVE,
-  RunState.PULLING,
-  RunState.QUEUED,
-  RunState.RUNNING,
-  RunState.STARTING,
+const activeStates: Array<RunState> = [
+  RunState.Active,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.Running,
+  RunState.Starting,
 ];
 const jobStates: Array<JobState> = [
   JobState.QUEUED,
@@ -57,8 +39,8 @@ const jobStates: Array<JobState> = [
 ];
 export const killableRunStates: CompoundRunState[] = [
   ...activeStates,
-  RunState.PAUSED,
-  RunState.STOPPING_CANCELED,
+  RunState.Paused,
+  RunState.StoppingCanceled,
   ...jobStates,
 ];
 
@@ -66,7 +48,7 @@ export const pausableRunStates: Set<CompoundRunState> = new Set([...activeStates
 
 export const cancellableRunStates: Set<CompoundRunState> = new Set([
   ...activeStates,
-  RunState.PAUSED,
+  RunState.Paused,
   ...jobStates,
 ]);
 
@@ -83,42 +65,39 @@ export const terminalCommandStates: Set<CommandState> = new Set([
 ]);
 
 const runStateList = [
-  RunState.CANCELED,
-  RunState.COMPLETED,
-  RunState.ERROR,
-  RunState.DELETE_FAILED,
+  RunState.Canceled,
+  RunState.Completed,
+  RunState.Error,
+  RunState.DeleteFailed,
 ] as const;
 
 export const deletableRunStates: Set<CompoundRunState> = new Set(runStateList);
 
 export const terminalRunStates: Set<CompoundRunState> = new Set([
   ...deletableRunStates,
-  RunState.DELETED,
+  RunState.Deleted,
 ]);
 
-export const terminalRunStatesKeys = keysOf({
-  ...pick(RunState, ...runStateList),
-  ...pick(RunState, RunState.DELETED),
-});
+export const terminalRunStatesKeys = [...runStateList, RunState.Deleted];
 
-export const runStateToLabel: { [key in RunStateValue]: string } = {
-  [RunState.ACTIVE]: 'Active',
-  [RunState.RUNNING]: 'Running',
-  [RunState.CANCELED]: 'Canceled',
-  [RunState.COMPLETED]: 'Completed',
-  [RunState.DELETED]: 'Deleted',
-  [RunState.DELETING]: 'Deleting',
-  [RunState.DELETE_FAILED]: 'Delete Failed',
-  [RunState.ERROR]: 'Errored',
-  [RunState.PAUSED]: 'Paused',
-  [RunState.STOPPING_CANCELED]: 'Canceling',
-  [RunState.STOPPING_COMPLETED]: 'Completing',
-  [RunState.STOPPING_ERROR]: 'Erroring',
-  [RunState.STOPPING_KILLED]: 'Killed',
-  [RunState.UNSPECIFIED]: 'Unspecified',
-  [RunState.QUEUED]: 'Queued',
-  [RunState.PULLING]: 'Pulling Image',
-  [RunState.STARTING]: 'Running (preparing env)',
+export const runStateToLabel: { [key in RunState]: string } = {
+  [RunState.Active]: 'Active',
+  [RunState.Running]: 'Running',
+  [RunState.Canceled]: 'Canceled',
+  [RunState.Completed]: 'Completed',
+  [RunState.Deleted]: 'Deleted',
+  [RunState.Deleting]: 'Deleting',
+  [RunState.DeleteFailed]: 'Delete Failed',
+  [RunState.Error]: 'Errored',
+  [RunState.Paused]: 'Paused',
+  [RunState.StoppingCanceled]: 'Canceling',
+  [RunState.StoppingCompleted]: 'Completing',
+  [RunState.StoppingError]: 'Erroring',
+  [RunState.StoppingKilled]: 'Killed',
+  [RunState.Unspecified]: 'Unspecified',
+  [RunState.Queued]: 'Queued',
+  [RunState.Pulling]: 'Pulling Image',
+  [RunState.Starting]: 'Running (preparing env)',
 };
 
 export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } = {
@@ -190,7 +169,7 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
 
 export function stateToLabel(state: StateOfUnion): string {
   return (
-    runStateToLabel[state as RunStateValue] ||
+    runStateToLabel[state as RunState] ||
     commandStateToLabel[state as CommandState] ||
     resourceStateToLabel[state as ResourceState] ||
     checkpointStateToLabel[state as CheckpointState] ||

@@ -27,7 +27,6 @@ import {
   Project,
   ProjectExperiment,
   RunState,
-  RunStateValue,
   TrialDetails,
   TrialHyperparameters,
 } from 'types';
@@ -125,7 +124,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
    * are defined for every ExperimentAction
    * we expose the functions below as convenient wrappers
    */
-  [ExperimentAction.Activate]: (experiment) => experiment.state === RunState.PAUSED,
+  [ExperimentAction.Activate]: (experiment) => experiment.state === RunState.Paused,
 
   [ExperimentAction.Archive]: (experiment) =>
     !experiment.parentArchived && !experiment.archived && terminalRunStates.has(experiment.state),
@@ -223,26 +222,26 @@ export const getProjectExperimentForExperimentItem = (
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);
 
-const runStateSortOrder: (RunStateValue)[] = [
-  RunState.ACTIVE,
-  RunState.RUNNING,
-  RunState.PAUSED,
-  RunState.STARTING,
-  RunState.PULLING,
-  RunState.QUEUED,
-  RunState.STOPPING_ERROR,
-  RunState.ERROR,
-  RunState.STOPPING_COMPLETED,
-  RunState.COMPLETED,
-  RunState.STOPPING_CANCELED,
-  RunState.CANCELED,
-  RunState.DELETE_FAILED,
-  RunState.DELETING,
-  RunState.DELETED,
-  RunState.UNSPECIFIED,
+const runStateSortOrder: RunState[] = [
+  RunState.Active,
+  RunState.Running,
+  RunState.Paused,
+  RunState.Starting,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.StoppingError,
+  RunState.Error,
+  RunState.StoppingCompleted,
+  RunState.Completed,
+  RunState.StoppingCanceled,
+  RunState.Canceled,
+  RunState.DeleteFailed,
+  RunState.Deleting,
+  RunState.Deleted,
+  RunState.Unspecified,
 ];
 
-export const runStateSortValues: Map<RunStateValue, number> = new Map(
+export const runStateSortValues: Map<RunState, number> = new Map(
   runStateSortOrder.map((state, idx) => [state, idx]),
 );
 
@@ -254,6 +253,6 @@ export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImporta
   return 0;
 };
 
-export const runStateSorter = (a: RunStateValue, b: RunStateValue): number => {
+export const runStateSorter = (a: RunState, b: RunState): number => {
   return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
 };

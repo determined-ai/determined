@@ -12,7 +12,7 @@ import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { formatDatetime } from 'shared/utils/datetime';
-import { LogLevel, RunState, RunStateValue, TrialDetails } from 'types';
+import { LogLevel, RunState, TrialDetails } from 'types';
 
 import css from './TrialLogPreview.module.scss';
 
@@ -69,7 +69,7 @@ const TrialLogPreview: React.FC<Props> = ({
   }, []);
 
   const fetchLatestTrialLog = useCallback(
-    (trialId: number, trialState: RunStateValue, canceler: AbortController) => {
+    (trialId: number, trialState: RunState, canceler: AbortController) => {
       readStream(
         detApi.StreamingExperiments.trialLogs(
           trialId,
@@ -110,7 +110,7 @@ const TrialLogPreview: React.FC<Props> = ({
   }, [onViewLogs]);
 
   useEffect(() => {
-    if (!trial?.id || trial?.state === RunState.COMPLETED) return;
+    if (!trial?.id || trial?.state === RunState.Completed) return;
 
     const canceler = new AbortController();
     fetchLatestTrialLog(trial.id, trial.state, canceler);

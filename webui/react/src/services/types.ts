@@ -8,7 +8,7 @@ import {
   MetricName,
   MetricType,
   Note,
-  RunStateValue,
+  RunState,
   Scale,
   TrialWorkloadFilter,
 } from 'types';
@@ -91,7 +91,7 @@ export interface GetExperimentsParams extends PaginationParams {
     | 'SORT_BY_PROGRESS'
     | 'SORT_BY_USER'
     | 'SORT_BY_NAME';
-  states?: Array<`STATE_${RunStateValue}`>;
+  states?: Array<`STATE_${RunState}`>;
   userIds?: Array<number>;
   users?: Array<string>;
 }

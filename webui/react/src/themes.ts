@@ -14,7 +14,6 @@ import {
   JobState,
   ResourceState,
   RunState,
-  RunStateValue,
   SlotState,
   WorkspaceState,
 } from 'types';
@@ -30,23 +29,23 @@ export enum ShirtSize {
 }
 
 const stateColorMapping = {
-  [RunState.ACTIVE]: 'active',
-  [RunState.CANCELED]: 'inactive',
-  [RunState.COMPLETED]: 'success',
-  [RunState.DELETED]: 'critical',
-  [RunState.DELETING]: 'critical',
-  [RunState.DELETE_FAILED]: 'critical',
-  [RunState.ERROR]: 'critical',
-  [RunState.PAUSED]: 'warning',
-  [RunState.STOPPING_CANCELED]: 'inactive',
-  [RunState.STOPPING_COMPLETED]: 'success',
-  [RunState.STOPPING_ERROR]: 'critical',
-  [RunState.STOPPING_KILLED]: 'killed',
-  [RunState.UNSPECIFIED]: 'inactive',
-  [RunState.QUEUED]: 'warning',
-  [RunState.PULLING]: 'pending',
-  [RunState.STARTING]: 'pending',
-  [RunState.RUNNING]: 'active',
+  [RunState.Active]: 'active',
+  [RunState.Canceled]: 'inactive',
+  [RunState.Completed]: 'success',
+  [RunState.Deleted]: 'critical',
+  [RunState.Deleting]: 'critical',
+  [RunState.DeleteFailed]: 'critical',
+  [RunState.Error]: 'critical',
+  [RunState.Paused]: 'warning',
+  [RunState.StoppingCanceled]: 'inactive',
+  [RunState.StoppingCompleted]: 'success',
+  [RunState.StoppingError]: 'critical',
+  [RunState.StoppingKilled]: 'killed',
+  [RunState.Unspecified]: 'inactive',
+  [RunState.Queued]: 'warning',
+  [RunState.Pulling]: 'pending',
+  [RunState.Starting]: 'pending',
+  [RunState.Running]: 'active',
   [CommandState.Waiting]: 'inactive',
   [CommandState.Pulling]: 'active',
   [CommandState.Starting]: 'active',
@@ -69,7 +68,7 @@ const stateColorMapping = {
 };
 
 export type StateOfUnion =
-  | RunStateValue
+  | RunState
   | CommandState
   | ResourceState
   | CheckpointState

@@ -22,5 +22,5 @@ export const Default: ComponentStory<typeof ProgressBar> = (args) => (
 
 Default.args = {
   percent: 50,
-  state: RunState.ACTIVE,
+  state: RunState.Active,
 };

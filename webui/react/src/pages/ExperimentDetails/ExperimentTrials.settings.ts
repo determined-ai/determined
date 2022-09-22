@@ -2,7 +2,7 @@ import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
-import { RunStateValue } from 'types';
+import { RunState } from 'types';
 
 export type TrialColumnName =
   | 'action'
@@ -51,7 +51,7 @@ export interface Settings extends InteractiveTableSettings {
   row?: number[];
   sortDesc: boolean;
   sortKey: V1GetExperimentTrialsRequestSortBy;
-  state?: RunStateValue[];
+  state?: RunState[];
   tableLimit: number;
   tableOffset: number;
 }
