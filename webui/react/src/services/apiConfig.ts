@@ -313,6 +313,17 @@ export const assignRolesToGroup: DetApi<
     }),
 };
 
+export const assignRoles: DetApi<
+  Api.V1AssignRolesRequest,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+> = {
+  name: 'assignRoles',
+  postProcess: (response) => response,
+  request: (params) =>detApi.RBAC.assignRoles(params)
+};
+
+
 /* Info */
 
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo> = {
