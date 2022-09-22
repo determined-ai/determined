@@ -8286,7 +8286,7 @@ def post_CreateTrialsCollection(
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/trials/trial-comparison/collections",
+        path="/api/v1/trial-comparison/collections",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -8467,7 +8467,7 @@ def delete_DeleteTrialsCollection(
     }
     _resp = session._do_request(
         method="DELETE",
-        path="/api/v1/trials/trial-comparison/collections",
+        path="/api/v1/trial-comparison/collections",
         params=_params,
         json=None,
         data=None,
@@ -9939,7 +9939,7 @@ def get_GetTrialsCollections(
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/trials/trial-comparison/collections",
+        path="/api/v1/trial-comparison/collections",
         params=_params,
         json=None,
         data=None,
@@ -10644,7 +10644,7 @@ def patch_PatchTrialsCollection(
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path="/api/v1/trials/trial-comparison/collections",
+        path="/api/v1/trial-comparison/collections",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -11013,7 +11013,7 @@ def post_QueryTrials(
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/trials/trial-comparison/query",
+        path="/api/v1/trial-comparison/query",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -11768,15 +11768,15 @@ def post_UpdateJobQueue(
         return
     raise APIHttpError("post_UpdateJobQueue", _resp)
 
-def patch_UpdateTrialTags(
+def post_UpdateTrialTags(
     session: "api.Session",
     *,
     body: "v1UpdateTrialTagsRequest",
 ) -> "v1UpdateTrialTagsResponse":
     _params = None
     _resp = session._do_request(
-        method="PATCH",
-        path="/api/v1/trials/trial-comparison/update-trial-tags",
+        method="POST",
+        path="/api/v1/trial-comparison/update-trial-tags",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -11786,7 +11786,7 @@ def patch_UpdateTrialTags(
     )
     if _resp.status_code == 200:
         return v1UpdateTrialTagsResponse.from_json(_resp.json())
-    raise APIHttpError("patch_UpdateTrialTags", _resp)
+    raise APIHttpError("post_UpdateTrialTags", _resp)
 
 # Paginated is a union type of objects whose .pagination
 # attribute is a v1Pagination-type object.

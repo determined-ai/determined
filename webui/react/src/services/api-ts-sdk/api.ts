@@ -1252,7 +1252,7 @@ export interface V1AssignRolesResponse {
 }
 
 /**
- * 
+ * Augmented Trial struct to service trial comparison functionality.
  * @export
  * @interface V1AugmentedTrial
  */
@@ -1858,7 +1858,7 @@ export interface V1CreateGroupResponse {
 }
 
 /**
- * 
+ * Request body for CeateTrials request which includes TrialFilters.
  * @export
  * @interface V1CreateTrialsCollectionRequest
  */
@@ -1890,13 +1890,13 @@ export interface V1CreateTrialsCollectionRequest {
 }
 
 /**
- * 
+ * Response message to CreateTrialCollection.
  * @export
  * @interface V1CreateTrialsCollectionResponse
  */
 export interface V1CreateTrialsCollectionResponse {
     /**
-     * 
+     * The collection of trials.
      * @type {V1TrialsCollection}
      * @memberof V1CreateTrialsCollectionResponse
      */
@@ -2014,7 +2014,7 @@ export interface V1DeleteTemplateResponse {
 }
 
 /**
- * 
+ * Empty response for DeleteTrialsCollection.
  * @export
  * @interface V1DeleteTrialsCollectionResponse
  */
@@ -3715,7 +3715,7 @@ export interface V1GetTrialWorkloadsResponse {
 }
 
 /**
- * 
+ * Response message for GetTrialsCollection.
  * @export
  * @interface V1GetTrialsCollectionsResponse
  */
@@ -5311,7 +5311,7 @@ export interface V1PatchProjectResponse {
 }
 
 /**
- * 
+ * Request message to PatchTrialsCollection.
  * @export
  * @interface V1PatchTrialsCollectionRequest
  */
@@ -6012,7 +6012,7 @@ export interface V1PutTemplateResponse {
 }
 
 /**
- * 
+ * Request to QueryTrials includes pagination parameters and TrialFilters.
  * @export
  * @interface V1QueryTrialsRequest
  */
@@ -6044,7 +6044,7 @@ export interface V1QueryTrialsRequest {
 }
 
 /**
- * 
+ * Response for QueryTrials.
  * @export
  * @interface V1QueryTrialsResponse
  */
@@ -7931,19 +7931,19 @@ export interface V1TrialMetrics {
 }
 
 /**
- * 
+ * Specifies whether a tag should be added or removed.
  * @export
  * @interface V1TrialPatch
  */
 export interface V1TrialPatch {
     /**
-     * 
+     * Specifies that a tag will be added.
      * @type {Array<V1TrialTag>}
      * @memberof V1TrialPatch
      */
     addTag?: Array<V1TrialTag>;
     /**
-     * 
+     * Specifies that a tag will be removed.
      * @type {Array<V1TrialTag>}
      * @memberof V1TrialPatch
      */
@@ -8371,7 +8371,7 @@ export interface V1UpdateTrialTagsRequest {
 }
 
 /**
- * 
+ * Response message to PatchTrials.
  * @export
  * @interface V1UpdateTrialTagsResponse
  */
@@ -22826,7 +22826,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
     return {
         /**
          * 
-         * @summary Create a Trial Collection for a set of TrialFilters
+         * @summary Create a Trial Collection for a set of TrialFilters.
          * @param {V1CreateTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -22836,7 +22836,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
             }
-            const localVarPath = `/api/v1/trials/trial-comparison/collections`;
+            const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -22866,13 +22866,13 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
         },
         /**
          * 
-         * @summary Removes a TrialCollection
+         * @summary Removes a TrialCollection.
          * @param {number} [id] The id for the TrialsCollection.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         deleteTrialsCollection(id?: number, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/trial-comparison/collections`;
+            const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
             const localVarHeaderParameter = {} as any;
@@ -22902,13 +22902,13 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
         },
         /**
          * 
-         * @summary Return all collectiions for a specific project
+         * @summary Return all collectiions for a specific project.
          * @param {number} [projectId] The id of the project for which to retrieve all collections.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/trial-comparison/collections`;
+            const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -22938,7 +22938,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
         },
         /**
          * 
-         * @summary Add tags to a TrialCollection
+         * @summary Modify collection attributes: name, filters, etc.
          * @param {V1PatchTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -22948,7 +22948,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
             }
-            const localVarPath = `/api/v1/trials/trial-comparison/collections`;
+            const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -22978,7 +22978,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
         },
         /**
          * 
-         * @summary Return trials matching a set of TrialFilters
+         * @summary Return trials matching a set of TrialFilters.
          * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -22988,7 +22988,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
             }
-            const localVarPath = `/api/v1/trials/trial-comparison/query`;
+            const localVarPath = `/api/v1/trial-comparison/query`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -23018,7 +23018,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
         },
         /**
          * 
-         * @summary Update tags for trials by the trial ID
+         * @summary Update tags for trials by IDs or filters.
          * @param {V1UpdateTrialTagsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23028,9 +23028,9 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateTrialTags.');
             }
-            const localVarPath = `/api/v1/trials/trial-comparison/update-trial-tags`;
+            const localVarPath = `/api/v1/trial-comparison/update-trial-tags`;
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -23067,7 +23067,7 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Create a Trial Collection for a set of TrialFilters
+         * @summary Create a Trial Collection for a set of TrialFilters.
          * @param {V1CreateTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23086,7 +23086,7 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Removes a TrialCollection
+         * @summary Removes a TrialCollection.
          * @param {number} [id] The id for the TrialsCollection.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23105,7 +23105,7 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Return all collectiions for a specific project
+         * @summary Return all collectiions for a specific project.
          * @param {number} [projectId] The id of the project for which to retrieve all collections.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23124,7 +23124,7 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Add tags to a TrialCollection
+         * @summary Modify collection attributes: name, filters, etc.
          * @param {V1PatchTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23143,7 +23143,7 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Return trials matching a set of TrialFilters
+         * @summary Return trials matching a set of TrialFilters.
          * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23162,7 +23162,7 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update tags for trials by the trial ID
+         * @summary Update tags for trials by IDs or filters.
          * @param {V1UpdateTrialTagsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23190,7 +23190,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
     return {
         /**
          * 
-         * @summary Create a Trial Collection for a set of TrialFilters
+         * @summary Create a Trial Collection for a set of TrialFilters.
          * @param {V1CreateTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23200,7 +23200,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Removes a TrialCollection
+         * @summary Removes a TrialCollection.
          * @param {number} [id] The id for the TrialsCollection.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23210,7 +23210,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Return all collectiions for a specific project
+         * @summary Return all collectiions for a specific project.
          * @param {number} [projectId] The id of the project for which to retrieve all collections.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23220,7 +23220,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Add tags to a TrialCollection
+         * @summary Modify collection attributes: name, filters, etc.
          * @param {V1PatchTrialsCollectionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23230,7 +23230,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Return trials matching a set of TrialFilters
+         * @summary Return trials matching a set of TrialFilters.
          * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23240,7 +23240,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Update tags for trials by the trial ID
+         * @summary Update tags for trials by IDs or filters.
          * @param {V1UpdateTrialTagsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -23260,7 +23260,7 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
 export class TrialComparisonApi extends BaseAPI {
     /**
      * 
-     * @summary Create a Trial Collection for a set of TrialFilters
+     * @summary Create a Trial Collection for a set of TrialFilters.
      * @param {V1CreateTrialsCollectionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -23272,7 +23272,7 @@ export class TrialComparisonApi extends BaseAPI {
 
     /**
      * 
-     * @summary Removes a TrialCollection
+     * @summary Removes a TrialCollection.
      * @param {number} [id] The id for the TrialsCollection.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -23284,7 +23284,7 @@ export class TrialComparisonApi extends BaseAPI {
 
     /**
      * 
-     * @summary Return all collectiions for a specific project
+     * @summary Return all collectiions for a specific project.
      * @param {number} [projectId] The id of the project for which to retrieve all collections.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -23296,7 +23296,7 @@ export class TrialComparisonApi extends BaseAPI {
 
     /**
      * 
-     * @summary Add tags to a TrialCollection
+     * @summary Modify collection attributes: name, filters, etc.
      * @param {V1PatchTrialsCollectionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -23308,7 +23308,7 @@ export class TrialComparisonApi extends BaseAPI {
 
     /**
      * 
-     * @summary Return trials matching a set of TrialFilters
+     * @summary Return trials matching a set of TrialFilters.
      * @param {V1QueryTrialsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -23320,7 +23320,7 @@ export class TrialComparisonApi extends BaseAPI {
 
     /**
      * 
-     * @summary Update tags for trials by the trial ID
+     * @summary Update tags for trials by IDs or filters.
      * @param {V1UpdateTrialTagsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
