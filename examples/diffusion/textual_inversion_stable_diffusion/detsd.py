@@ -326,9 +326,13 @@ class DetSDTextualInversionTrainer:
             80 * "$",
             sep="\n",
         )
+        # Introduce a squared-loss for the size of the new embedding norms, otherwise they are
+        # driven to be much larger than the original embedding norms by SGD and dominate the art.
+        # We take the sum rather than the mean, as this should make the optimal norm_penalty value
+        # less sensitive to the number of newly added tokens..
         norm_loss = (
             self.norm_penalty
-            * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).mean()
+            * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
         )
         print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
