@@ -51,7 +51,6 @@ message ColumnFilter {
   string name = 1;
   // The filter to apply to the given column
   determined.common.v1.DoubleFieldFilter filter = 2;
-
 }
 
 // Tag for trials. Implemented in such a way to allow easy

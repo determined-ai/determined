@@ -525,7 +525,8 @@ service Determined {
   }
 
   // Update tags for trials by the trial ID
-  rpc UpdateTrialTags(UpdateTrialTagsRequest) returns (UpdateTrialTagsResponse) {
+  rpc UpdateTrialTags(UpdateTrialTagsRequest)
+      returns (UpdateTrialTagsResponse) {
     option (google.api.http) = {
       patch: "/api/v1/trials/trial-comparison/update-trial-tags"
       body: "*"
