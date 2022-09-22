@@ -1014,6 +1014,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-webui-only
       - helm/install-helm-client
       - setup-python-venv:
           install-python: false
