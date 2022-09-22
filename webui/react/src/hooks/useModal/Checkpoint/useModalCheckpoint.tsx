@@ -116,7 +116,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
 
-    const state = checkpoint.state as unknown as RunState;
+    const state = checkpoint.state as unknown as keyof RunState;
     const totalSize = humanReadableBytes(checkpointSize(checkpoint));
 
     const searcherMetric = props.searcherValidation;

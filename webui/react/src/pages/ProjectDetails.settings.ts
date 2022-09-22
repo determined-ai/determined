@@ -59,7 +59,7 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
   row?: number[];
   search?: string;
   sortKey: V1GetExperimentsRequestSortBy;
-  state?: RunState[];
+  state?: (keyof RunState)[];
   user?: string[];
 }
 

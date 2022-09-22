@@ -69,7 +69,7 @@ const TrialLogPreview: React.FC<Props> = ({
   }, []);
 
   const fetchLatestTrialLog = useCallback(
-    (trialId: number, trialState: RunState, canceler: AbortController) => {
+    (trialId: number, trialState: keyof RunState, canceler: AbortController) => {
       readStream(
         detApi.StreamingExperiments.trialLogs(
           trialId,
@@ -110,7 +110,7 @@ const TrialLogPreview: React.FC<Props> = ({
   }, [onViewLogs]);
 
   useEffect(() => {
-    if (!trial?.id || trial?.state === RunState.Completed) return;
+    if (!trial?.id || trial?.state === RunState.COMPLETED) return;
 
     const canceler = new AbortController();
     fetchLatestTrialLog(trial.id, trial.state, canceler);

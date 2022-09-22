@@ -73,7 +73,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         metrics={metrics}
         trialId={trial?.id}
         trialTerminated={
-          trial ? [RunState.Completed, RunState.Errored].includes(trial.state) : false
+          trial ? trial.state === RunState.COMPLETED || trial.state === RunState.ERROR : false
         }
         onMetricChange={handleMetricChange}
       />

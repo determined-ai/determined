@@ -1,4 +1,4 @@
-import { activeRunStates, terminalCommandStates, terminalRunStates } from 'constants/states';
+import { activeRunStates, terminalCommandStates, terminalRunStatesKeys } from 'constants/states';
 import { displayHelp, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
 import dev from 'omnibar/tree-extension/trees/dev';
 import locations from 'omnibar/tree-extension/trees/goto';
@@ -16,7 +16,6 @@ import {
   openOrCreateTensorBoard,
   pauseExperiment,
 } from 'services/api';
-import { GetExperimentsParams } from 'services/types';
 import { launchJupyterLab } from 'utils/jupyter';
 
 const root: NonLeafNode = {
@@ -56,9 +55,7 @@ const root: NonLeafNode = {
         const { experiments: exps } = await getExperiments({
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_END_TIME',
-          states: Array.from(terminalRunStates).map(
-            (s) => 'STATE_' + s,
-          ) as GetExperimentsParams['states'],
+          states: terminalRunStatesKeys.map((key) => `STATE_${key}` as const),
         });
         const options: Children = exps.map((exp) => ({
           onAction: (): unknown => archiveExperiment({ experimentId: exp.id }),

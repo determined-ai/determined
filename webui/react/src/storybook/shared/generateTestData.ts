@@ -235,7 +235,7 @@ export const generateTestExperimentData = (): {
     projectOwnerId: 1,
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
-    state: RunState.Completed,
+    state: RunState.COMPLETED,
     userId: 2,
     workspaceId: 1,
     workspaceName: 'workspace',
@@ -257,7 +257,7 @@ export const generateTestExperimentData = (): {
     id: 1,
     runnerState: 'Active',
     startTime: '1',
-    state: RunState.Active,
+    state: RunState.ACTIVE,
     totalBatchesProcessed: 1,
     totalCheckpointSize: 0,
   };

@@ -30,7 +30,7 @@ const getIndexForTimestamp = (initialTimestamp: number, timestamp: number) =>
 
 export const useFetchProfilerMetrics = (
   trialId: number,
-  trialState: RunState,
+  trialState: keyof RunState,
   labelsMetricType: MetricType,
   labelsName: string | undefined = undefined,
   labelsAgentId: string | undefined = undefined,

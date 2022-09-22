@@ -189,9 +189,7 @@ const ProjectDetails: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+      const states = (settings.state || []).map((state) => encodeExperimentState(state));
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
@@ -332,7 +330,7 @@ const ProjectDetails: React.FC = () => {
     (states: string[]) => {
       updateSettings({
         row: undefined,
-        state: states.length !== 0 ? (states as RunState[]) : undefined,
+        state: states.length !== 0 ? (states as (keyof RunState)[]) : undefined,
       });
     },
     [updateSettings],
@@ -516,20 +514,16 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filters: Object.values(RunState)
-          .filter((value) =>
-            [
-              RunState.Active,
-              RunState.Paused,
-              RunState.Canceled,
-              RunState.Completed,
-              RunState.Errored,
-            ].includes(value),
-          )
-          .map((value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
-            value,
-          })),
+        filters: [
+          RunState.ACTIVE,
+          RunState.PAUSED,
+          RunState.CANCELED,
+          RunState.COMPLETED,
+          RunState.ERROR,
+        ].map((value) => ({
+          text: <Badge state={value} type={BadgeType.State} />,
+          value,
+        })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,

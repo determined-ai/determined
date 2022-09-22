@@ -29,22 +29,22 @@ export enum ShirtSize {
 }
 
 const stateColorMapping = {
-  [RunState.Active]: 'active',
-  [RunState.Canceled]: 'inactive',
-  [RunState.Completed]: 'success',
-  [RunState.Deleted]: 'critical',
-  [RunState.Deleting]: 'critical',
-  [RunState.DeleteFailed]: 'critical',
-  [RunState.Errored]: 'critical',
-  [RunState.Paused]: 'warning',
-  [RunState.StoppingCanceled]: 'inactive',
-  [RunState.StoppingCompleted]: 'success',
-  [RunState.StoppingError]: 'critical',
-  [RunState.Unspecified]: 'inactive',
-  [RunState.Queued]: 'warning',
-  [RunState.Pulling]: 'pending',
-  [RunState.Starting]: 'pending',
-  [RunState.Running]: 'active',
+  [RunState.ACTIVE]: 'active',
+  [RunState.CANCELED]: 'inactive',
+  [RunState.COMPLETED]: 'success',
+  [RunState.DELETED]: 'critical',
+  [RunState.DELETING]: 'critical',
+  [RunState.DELETE_FAILED]: 'critical',
+  [RunState.ERROR]: 'critical',
+  [RunState.PAUSED]: 'warning',
+  [RunState.STOPPING_CANCELED]: 'inactive',
+  [RunState.STOPPING_COMPLETED]: 'success',
+  [RunState.STOPPING_ERROR]: 'critical',
+  [RunState.UNSPECIFIED]: 'inactive',
+  [RunState.QUEUED]: 'warning',
+  [RunState.PULLING]: 'pending',
+  [RunState.STARTING]: 'pending',
+  [RunState.RUNNING]: 'active',
   [CommandState.Waiting]: 'inactive',
   [CommandState.Pulling]: 'active',
   [CommandState.Starting]: 'active',
@@ -67,7 +67,7 @@ const stateColorMapping = {
 };
 
 export type StateOfUnion =
-  | RunState
+  | keyof RunState
   | CommandState
   | ResourceState
   | CheckpointState

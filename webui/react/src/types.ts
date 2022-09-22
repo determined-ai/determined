@@ -317,24 +317,28 @@ export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }
 
-export enum RunState {
-  Active = 'ACTIVE',
-  Paused = 'PAUSED',
-  StoppingCanceled = 'STOPPING_CANCELED',
-  Canceled = 'CANCELED',
-  StoppingCompleted = 'STOPPING_COMPLETED',
-  Completed = 'COMPLETED',
-  StoppingError = 'STOPPING_ERROR',
-  Errored = 'ERROR',
-  Deleted = 'DELETED',
-  Deleting = 'DELETING',
-  DeleteFailed = 'DELETE_FAILED',
-  Unspecified = 'UNSPECIFIED',
-  Queued = 'QUEUED',
-  Pulling = 'PULLING',
-  Starting = 'STARTING',
-  Running = 'RUNNING',
-}
+export const RunState = {
+  ACTIVE: 'ACTIVE',
+  CANCELED: 'CANCELED',
+  COMPLETED: 'COMPLETED',
+  DELETE_FAILED: 'DELETE_FAILED',
+  DELETED: 'DELETED',
+  DELETING: 'DELETING',
+  ERROR: 'ERROR',
+  PAUSED: 'PAUSED',
+  PULLING: 'PULLING',
+  QUEUED: 'QUEUED',
+  RUNNING: 'RUNNING',
+  STARTING: 'STARTING',
+  STOPPING_CANCELED: 'STOPPING_CANCELED',
+  STOPPING_COMPLETED: 'STOPPING_COMPLETED',
+  STOPPING_ERROR: 'STOPPING_ERROR',
+  UNSPECIFIED: 'UNSPECIFIED',
+} as const;
+
+export type RunState = typeof RunState;
+
+export type RunStateNew = keyof RunState;
 
 export interface ValidationHistory {
   endTime: string;
@@ -464,7 +468,7 @@ export interface TrialItem extends StartEndTimes {
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
-  state: RunState;
+  state: keyof RunState;
   totalBatchesProcessed: number;
 }
 
@@ -618,7 +622,9 @@ export interface Task {
 }
 
 // CompoundRunState adds more information about a job's state to RunState.
-export type CompoundRunState = RunState | JobState;
+export type CompoundRunState = keyof RunState | JobState;
+
+export type CompoundRunStateNew = RunStateNew | keyof typeof JobState;
 
 export interface ExperimentTask extends Task {
   archived: boolean;

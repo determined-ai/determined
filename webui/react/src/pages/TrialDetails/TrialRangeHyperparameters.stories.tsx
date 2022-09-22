@@ -236,7 +236,7 @@ const TrialRangeHyperparametersContainer = () => {
     projectOwnerId: 1,
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
-    state: RunState.Completed,
+    state: RunState.COMPLETED,
     userId: 2,
 
     workspaceId: 1,
@@ -254,7 +254,7 @@ const TrialRangeHyperparametersContainer = () => {
     },
     id: 1,
     startTime: '2021-06-09T15:26:58.003220Z',
-    state: RunState.Completed,
+    state: RunState.COMPLETED,
     totalBatchesProcessed: 58,
     totalCheckpointSize: 13700356,
   };

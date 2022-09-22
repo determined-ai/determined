@@ -52,7 +52,7 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
     parentArchived: false,
     progress,
     projectId: 1,
-    state: state as Type.RunState,
+    state: state as keyof Type.RunState,
     url: '#',
     userId: user.id,
     username: user.username,
@@ -181,7 +181,7 @@ export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTas
 
 export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
   return (
-    killableRunStates.includes(task.state as Type.RunState) ||
+    killableRunStates.includes(task.state as keyof Type.RunState) ||
     killableCommandStates.includes(task.state as Type.CommandState)
   );
 };
@@ -292,11 +292,11 @@ export const commandStateSorter = (a: CommandState, b: CommandState): number => 
 export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?
-  const aValue = Object.values(RunState).includes(a as RunState)
-    ? runStateSortValues.get(a as RunState) || 0
+  const aValue = Object.values(RunState).includes(a as keyof RunState)
+    ? runStateSortValues.get(a as keyof RunState) || 0
     : commandStateSortValues.get(a as CommandState) || 0;
-  const bValue = Object.values(RunState).includes(b as RunState)
-    ? runStateSortValues.get(b as RunState) || 0
+  const bValue = Object.values(RunState).includes(b as keyof RunState)
+    ? runStateSortValues.get(b as keyof RunState) || 0
     : commandStateSortValues.get(b as CommandState) || 0;
   return aValue - bValue;
 };

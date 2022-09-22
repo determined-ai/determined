@@ -51,7 +51,7 @@ export interface Settings extends InteractiveTableSettings {
   row?: number[];
   sortDesc: boolean;
   sortKey: V1GetExperimentTrialsRequestSortBy;
-  state?: RunState[];
+  state?: (keyof RunState)[];
   tableLimit: number;
   tableOffset: number;
 }

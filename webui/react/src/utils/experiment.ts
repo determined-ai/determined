@@ -124,7 +124,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
    * are defined for every ExperimentAction
    * we expose the functions below as convenient wrappers
    */
-  [ExperimentAction.Activate]: (experiment) => experiment.state === RunState.Paused,
+  [ExperimentAction.Activate]: (experiment) => experiment.state === RunState.PAUSED,
 
   [ExperimentAction.Archive]: (experiment) =>
     !experiment.parentArchived && !experiment.archived && terminalRunStates.has(experiment.state),
@@ -222,26 +222,26 @@ export const getProjectExperimentForExperimentItem = (
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);
 
-const runStateSortOrder: RunState[] = [
-  RunState.Active,
-  RunState.Running,
-  RunState.Paused,
-  RunState.Starting,
-  RunState.Pulling,
-  RunState.Queued,
-  RunState.StoppingError,
-  RunState.Errored,
-  RunState.StoppingCompleted,
-  RunState.Completed,
-  RunState.StoppingCanceled,
-  RunState.Canceled,
-  RunState.DeleteFailed,
-  RunState.Deleting,
-  RunState.Deleted,
-  RunState.Unspecified,
+const runStateSortOrder: (keyof RunState)[] = [
+  RunState.ACTIVE,
+  RunState.RUNNING,
+  RunState.PAUSED,
+  RunState.STARTING,
+  RunState.PULLING,
+  RunState.QUEUED,
+  RunState.STOPPING_ERROR,
+  RunState.ERROR,
+  RunState.STOPPING_COMPLETED,
+  RunState.COMPLETED,
+  RunState.STOPPING_CANCELED,
+  RunState.CANCELED,
+  RunState.DELETE_FAILED,
+  RunState.DELETING,
+  RunState.DELETED,
+  RunState.UNSPECIFIED,
 ];
 
-export const runStateSortValues: Map<RunState, number> = new Map(
+export const runStateSortValues: Map<keyof RunState, number> = new Map(
   runStateSortOrder.map((state, idx) => [state, idx]),
 );
 
@@ -253,6 +253,6 @@ export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImporta
   return 0;
 };
 
-export const runStateSorter = (a: RunState, b: RunState): number => {
+export const runStateSorter = (a: keyof RunState, b: keyof RunState): number => {
   return (runStateSortValues.get(a) || 0) - (runStateSortValues.get(b) || 0);
 };

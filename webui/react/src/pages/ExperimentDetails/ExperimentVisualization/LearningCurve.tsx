@@ -65,7 +65,7 @@ const LearningCurve: React.FC<Props> = ({
   const [showCompareTrials, setShowCompareTrials] = useState(false);
 
   const hasTrials = trialHps.length !== 0;
-  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+  const isExperimentTerminal = terminalRunStates.has(experiment.state as keyof RunState);
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
