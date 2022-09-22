@@ -111,8 +111,8 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
       {
         dataIndex: 'permissions',
         key: 'permissions',
-        title: 'Permissions',
         render: (p) => p.length,
+        title: 'Permissions',
       },
     ] as ColumnDef<UserRole>[];
     if (canModifyPermissions && !viewOnly && rbacEnabled) {
