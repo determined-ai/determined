@@ -27,7 +27,7 @@ release:
 
 .PHONY: release-gh
 release-gh: export GORELEASER_CURRENT_TAG := $(VERSION)
-release-gh: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc" | grep "v$(VERSION)" -A1 | sed -n '2 p')
+release-gh: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | egrep '^[0-9.]+$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release-gh:
 	go install github.com/goreleaser/goreleaser@v1.1.0
 	git clean -df
