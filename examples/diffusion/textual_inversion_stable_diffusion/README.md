@@ -18,11 +18,14 @@ Determined framework.
 Below we walk through the Textual Inversion workflow, training on a few images of a specific toy cat
 and then incorporating the object into our Stable-Diffusion-generated art.
 
-### Access Token and License
+### HF Account, Access Token, and License
 
-The use of Stable Diffusion requires
-a [Huggingface User Access Token](https://huggingface.co/docs/hub/security-tokens) and the 
-acceptance of the [license](https://huggingface.co/spaces/CompVis/stable-diffusion-license).
+In order to use this repository's implementation of Stable Diffusion, you must:
+
+* Have a [Huggingface account](https://huggingface.co/join).
+* Have a [Huggingface User Access Token](https://huggingface.co/docs/hub/security-tokens).
+* Accept the Stable Diffusion license (click on _Access
+  repository_  [in this link)](https://huggingface.co/CompVis/stable-diffusion-v1-4).
 
 ### Training
 
