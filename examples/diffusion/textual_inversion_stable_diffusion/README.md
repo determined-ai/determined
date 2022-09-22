@@ -13,12 +13,7 @@ The present code uses Determined's Core API to seamlessly incorporate 🧨 Diffu
 (and the 🚀 [Accelerate](https://huggingface.co/docs/transformers/accelerate)) launcher into the
 Determined framework.
 
-## Walkthrough: Basic Usage
-
-Below we walk through the Textual Inversion workflow, training on a few images of a specific toy cat
-and then incorporating the object into our Stable-Diffusion-generated art.
-
-### HF Account, Access Token, and License
+## Before You Start: 🤗 Account, Access Token, and License
 
 In order to use this repository's implementation of Stable Diffusion, you must:
 
@@ -26,6 +21,12 @@ In order to use this repository's implementation of Stable Diffusion, you must:
 * Have a [Huggingface User Access Token](https://huggingface.co/docs/hub/security-tokens).
 * Accept the Stable Diffusion license (click on _Access
   repository_  [in this link)](https://huggingface.co/CompVis/stable-diffusion-v1-4).
+
+## Walkthrough: Basic Usage
+
+Below we walk through the Textual Inversion workflow, training on a few images of a specific toy cat
+and then incorporating the object into our Stable-Diffusion-generated art.
+
 
 ### Training
 
