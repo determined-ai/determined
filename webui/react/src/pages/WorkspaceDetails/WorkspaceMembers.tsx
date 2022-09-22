@@ -12,9 +12,9 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { DetailedUser, GroupDetailsWithRole, User, UserWithRole, UserOrGroupDetails, Workspace } from 'types';
+import { GroupDetailsWithRole, User, UserWithRole, UserOrGroupDetails, Workspace } from 'types';
 import {V1Group, V1GroupDetails, V1RoleWithAssignments} from 'services/api-ts-sdk';
-import { getName, isUser } from 'utils/user';
+import { getName, getIdFromUserOrGroup, isUser } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
@@ -43,7 +43,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
-  } = useModalWorkspaceRemoveMember({ userOrGroup: userOrGroupDetails, name, workspace });
+  } = useModalWorkspaceRemoveMember({ userOrGroup: userOrGroupDetails, name, workspaceId: workspace.id, userOrGroupId: getIdFromUserOrGroup(userOrGroupDetails) });
 
   const menuItems = (
     <Menu>

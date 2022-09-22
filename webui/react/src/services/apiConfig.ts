@@ -323,6 +323,15 @@ export const assignRoles: DetApi<
   request: (params) =>detApi.RBAC.assignRoles(params)
 };
 
+export const removeAssignments: DetApi<
+  Api.V1RemoveAssignmentsRequest,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeAssignments',
+  postProcess: (response) => response,
+  request: (params) =>detApi.RBAC.removeAssignments(params)
+};
 
 /* Info */
 

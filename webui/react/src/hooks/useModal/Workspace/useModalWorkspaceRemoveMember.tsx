@@ -2,21 +2,22 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { UserOrGroup, Workspace } from 'types';
-
+import { UserOrGroup } from 'types';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
+import { createAssignmentRequest } from 'utils/user';
+import { removeAssignments } from 'services/api';
 import css from './useModalWorkspaceRemoveMember.module.scss';
 
 interface Props {
+  userOrGroupId: number;
   userOrGroup: UserOrGroup;
   name: string;
   onClose?: () => void;
-  workspace: Workspace;
+  workspaceId: number;
 }
 
-// Adding this lint rule to keep the reference to the member and workspace
-// which will be needed when calling the API.
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspace, name }: Props): ModalHooks => {
+const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspaceId, name, userOrGroupId }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
@@ -30,6 +31,38 @@ const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspace, name }
     );
   }, [name]);
 
+  const handleOk = useCallback(
+    async () => {
+      try {
+          await removeAssignments(createAssignmentRequest(
+            userOrGroup,
+            userOrGroupId,
+            0,
+            workspaceId
+          ));
+      } catch (e) {
+        if (e instanceof DetError) {
+          handleError(e, {
+            level: e.level,
+            publicMessage: e.publicMessage,
+            publicSubject: 'Unable to remove user or group from workspace.',
+            silent: false,
+            type: e.type,
+          });
+        } else {
+          handleError(e, {
+            level: ErrorLevel.Error,
+            publicMessage: 'Please try again later.',
+            publicSubject: 'Unable to remove user or group.',
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
+      }
+    return;},
+    [userOrGroup],
+  );
+
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
       closable: true,
@@ -37,6 +70,7 @@ const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspace, name }
       icon: null,
       okButtonProps: { danger: true },
       okText: 'Remove',
+      onOk: handleOk,
       title: `Remove ${name}`,
     };
   }, [modalContent, name]);

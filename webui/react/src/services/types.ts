@@ -373,11 +373,6 @@ export interface AssignRolesToGroupParams {
   roleIds: number[];
 }
 
-export interface AssignRoles{
-  groupId: number;
-  roleIds: number[];
-}
-
 export interface ListRolesParams {
   isGlobal?: boolean;
   limit?: number;

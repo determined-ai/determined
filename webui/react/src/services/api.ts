@@ -141,6 +141,13 @@ export const assignRoles= generateDetApi<
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse
 >(Config.assignRoles);
+
+export const removeAssignments = generateDetApi<
+  Api.V1RemoveAssignmentsRequest,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeAssignments);
+
 /* Info */
 
 export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo>(
