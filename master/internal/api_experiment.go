@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/pkg/errors"
 
@@ -975,16 +976,23 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
+	if req.Experiment.GroupId != nil && exp.GroupId.Value != req.Experiment.GroupId.Value  {
+		madeChanges = true
+		exp.GroupId = wrapperspb.Int32(req.Experiment.GroupId.Value)
+	}
+
 	if madeChanges {
 		type experimentPatch struct {
 			Labels      []string `json:"labels"`
 			Description string   `json:"description"`
 			Name        string   `json:"name"`
+			GroupId			int32		 `json:"group_id"`
 		}
 		patches := experimentPatch{
 			Labels:      exp.Labels,
 			Description: exp.Description,
 			Name:        exp.Name,
+			GroupId: 		 exp.GroupId.Value,
 		}
 		marshalledPatches, patchErr := json.Marshal(patches)
 		if patchErr != nil {

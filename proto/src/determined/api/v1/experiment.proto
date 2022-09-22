@@ -211,7 +211,7 @@ message UnarchiveExperimentRequest {
 message UnarchiveExperimentResponse {}
 
 // Patch an experiment by providing the updated attributes. Only description,
-// label, name, and notes fields will be updated through this endpoint, and
+// label, name, notes, and group_id fields will be updated through this endpoint, and
 // others will be ignored.
 message PatchExperimentRequest {
   // Patched experiment attributes.
