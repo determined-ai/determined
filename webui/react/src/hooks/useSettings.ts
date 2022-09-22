@@ -121,7 +121,7 @@ export const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage):
 };
 
 export const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
-  if (param === null) return undefined;
+  if (param === null || param === undefined) return undefined;
   if (type === BaseType.Boolean) return param === 'true';
   if (type === BaseType.Float || type === BaseType.Integer) {
     const value = type === BaseType.Float ? parseFloat(param) : parseInt(param);
