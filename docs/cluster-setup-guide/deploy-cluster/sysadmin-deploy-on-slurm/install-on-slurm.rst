@@ -17,8 +17,11 @@ After the node has been selected and the
 :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-slurm/slurm-requirements` have been
 fulfilled and configured, install and configure the Determined master:
 
-#. Install the on-premises Determined master component as described in the
+#. Install the on-premises Determined master component (not including the Determined agent) as
+   described in the
    :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/linux-packages` document.
+   Perform the installation and configuration steps, but stop before starting the
+   ``determined-master`` service, and continue with the steps below.
 
 #. Install the launcher.
 
@@ -28,11 +31,18 @@ fulfilled and configured, install and configure the Determined master:
 
       sudo rpm -ivh hpe-hpc-launcher-<version>.rpm
 
+   On Debian distributions, instead run:
+
+   .. code:: bash
+
+      sudo apt install ./hpe-hpc-launcher-<version>.deb
+
    The installation configures and enables the ``systemd`` ``launcher`` service, which provides
    Slurm management capabilities.
 
    If launcher dependencies are not satisfied, warning messages are displayed. Install or update
-   missing dependencies or adjust the ``path`` in the next step to locate the dependencies.
+   missing dependencies or adjust the ``path`` and ``ld_libary_path`` in the next step to locate the
+   dependencies.
 
 .. _using_slurm:
 
@@ -106,7 +116,7 @@ fulfilled and configured, install and configure the Determined master:
 
 #. Verify successful launcher startup using the ``systemctl status launcher`` command. If the
    launcher fails to start, check system log diagnostics, such as ``/var/log/messages`` or
-   ``journalctl --since=yesterday -u launcher``, make the needed changes to the
+   ``journalctl --since=10m -u launcher``, make the needed changes to the
    ``/etc/determined/master.yaml`` file, and restart the launcher.
 
    If the installer reported incorrect dependencies, verify that they have been resolved by changes
@@ -121,6 +131,11 @@ fulfilled and configured, install and configure the Determined master:
    .. code:: bash
 
       sudo systemctl restart determined-master
+
+#. Verify successful determined-master startup using the ``systemctl status determined-master``
+   command. If the launcher fails to start, check system log diagnostics, such as
+   ``/var/log/messages`` or ``journalctl --since=10m -u determined-master``, make the needed changes
+   to the ``/etc/determined/master.yaml`` file, and restart the determined-master.
 
 #. If the compute nodes of your cluster do not have internet connectivity to download Docker images,
    see :ref:`slurm-image-config`.

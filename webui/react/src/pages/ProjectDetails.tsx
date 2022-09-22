@@ -139,7 +139,8 @@ const ProjectDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment, canViewWorkspaces } = usePermissions();
+  const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
+    usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -793,14 +794,13 @@ const ProjectDetails: React.FC = () => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
+      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
-    });
-  }, [openCustomizeColumns, settings.columns, transferColumns]);
+    openCustomizeColumns({});
+  }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -1096,6 +1096,10 @@ const ProjectDetails: React.FC = () => {
     return (
       <Spinner tip={projectId === '1' ? 'Loading...' : `Loading project ${projectId} details...`} />
     );
+  }
+
+  if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
+    return <PageNotFound />;
   }
 
   return (

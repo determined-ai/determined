@@ -64,7 +64,7 @@ export const readStream = async <T = unknown>(
         // JSON parsing error occurred, no-op.
       }
     };
-    const handleStreamRead = (result: ReadableStreamDefaultReadResult<ArrayBuffer>): unknown => {
+    const handleStreamRead = (result: ReadableStreamReadResult<ArrayBuffer>): unknown => {
       if (isCancelled) return;
       if (result.done) {
         // Process any data buffer remainder.

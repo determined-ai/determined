@@ -194,7 +194,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     )
     .map((action) => {
       if (action === Action.SwitchPin) {
-        const label = settings.pinned[experiment.projectId].includes(id) ? 'Unpin' : 'Pin';
+        const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';
         return { key: action, label };
       } else {
         return { danger: action === Action.Delete, key: action, label: action };

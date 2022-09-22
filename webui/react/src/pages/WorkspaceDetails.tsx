@@ -25,6 +25,7 @@ import {
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
+import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -69,6 +70,7 @@ const WorkspaceDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const { canViewWorkspace } = usePermissions();
 
   const id = parseInt(workspaceId);
 
@@ -394,6 +396,10 @@ const WorkspaceDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
     return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
+  }
+
+  if (!canViewWorkspace({ workspace: { id } })) {
+    return <PageNotFound />;
   }
 
   return (

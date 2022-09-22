@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { CreateExperimentParams } from 'services/types';
-import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ResourceType } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';

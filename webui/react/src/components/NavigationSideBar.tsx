@@ -10,6 +10,7 @@ import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
@@ -48,7 +49,12 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }: ItemProps) => {
+export const NavigationItem: React.FC<ItemProps> = ({
+  path,
+  status,
+  action,
+  ...props
+}: ItemProps) => {
   const location = useLocation();
   const [isActive, setIsActive] = useState(false);
   const classes = [css.navItem];
@@ -147,6 +153,8 @@ const NavigationSideBar: React.FC = () => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
 
+  const { canCreateWorkspace } = usePermissions();
+
   if (!showNavigation) return null;
 
   return (
@@ -223,9 +231,11 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
-                  <Button type="text" onClick={handleCreateWorkspace}>
-                    <Icon name="add-small" size="tiny" />
-                  </Button>
+                  {canCreateWorkspace ? (
+                    <Button type="text" onClick={handleCreateWorkspace}>
+                      <Icon name="add-small" size="tiny" />
+                    </Button>
+                  ) : null}
                 </div>
               }
               icon="workspaces"

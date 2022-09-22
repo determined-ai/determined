@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';

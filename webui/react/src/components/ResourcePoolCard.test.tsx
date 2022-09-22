@@ -5,7 +5,7 @@ import StoreProvider from 'contexts/Store';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { ResourcePool } from 'types';
 
-import { RenderAllocationBarResourcePool } from './ResourcePoolCardLight';
+import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
 
 const rps = resourcePools as unknown as ResourcePool[];
 
