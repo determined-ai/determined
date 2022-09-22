@@ -47,11 +47,11 @@ check-eslint:
 check-stylelint:
 	npm run stylelint
 check-prettier-js:
-	npm run format-check:js
+	npm run format-check:js > /dev/null
 check-prettier-css:
-	npm run format-check:css
+	npm run format-check:css > /dev/null
 check-prettier-misc:
-	npm run format-check:misc
+	npm run format-check:misc > /dev/null
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
@@ -69,15 +69,15 @@ fmt-js-eslint:
 	npm run eslint -- --fix
 .PHONY: fmt-js-prettier
 fmt-js-prettier:
-	npm run format:js
+	npm run format:js > /dev/null
 .PHONY: fmt-js
 fmt-js: fmt-js-eslint fmt-js-prettier
 .PHONY: fmt-css
 fmt-css:
-	npm run  format:css
+	npm run  format:css > /dev/null
 .PHONY: fmt-misc
 fmt-misc:
-	npm run  format:misc
+	npm run  format:misc > /dev/null
 .PHONY: fmt-package-lock
 fmt-package-lock:
 	sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
