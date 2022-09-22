@@ -13,7 +13,6 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
 
-from determined.common import check
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import (
@@ -170,8 +169,12 @@ class LightningAdapter(PyTorchTrial):
 
         """
 
-        check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
-        check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')
+        if precision not in {16, 32}:
+            raise ValueError(f"Only precisions 16 & 32 are supported; got {precision}.")
+        if amp_backend not in {"native", "apex"}:
+            raise ValueError(
+                f'Only "native" and "apex" AMP-backends are supported; got "{amp_backend}"'
+            )
 
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
@@ -288,7 +291,7 @@ class LightningAdapter(PyTorchTrial):
             if wrapped_opt is None:
                 raise InvalidModelException(
                     "An LRScheduler is returned in `configure_optimizers` without having "
-                    "returned the optimizer itself. Please follow PyTorchLightning's documenation"
+                    "returned the optimizer itself. Please follow PyTorchLightning's documentation"
                     "to make sure you're returning one of the expected values."
                     "- Single optimizer.\n"
                     "- List or Tuple - List of optimizers.\n"
@@ -299,12 +302,11 @@ class LightningAdapter(PyTorchTrial):
                     "- Tuple of dictionaries as described, with an optional ‘frequency’ key.\n"
                 )
 
-            check.check_isinstance(
-                lrs["scheduler"].optimizer,
-                Optimizer,
-                "A returned LRScheduler from `configure_optimizers` is "
-                "missing the optimizer attribute.",
-            )
+            if not isinstance(lrs["scheduler"].optimizer, Optimizer):
+                raise TypeError(
+                    "A returned LRScheduler from `configure_optimizers` has an optimizer with the "
+                    f"wrong type: got {type(lrs['scheduler'].optimizer).__name__}."
+                )
 
             # switch the user's unwrapped optimizer with the wrapped version.
             lrs["scheduler"].optimizer = wrapped_opt
@@ -410,7 +412,7 @@ class LightningAdapter(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         """
-        evaluate_batch implements the evalute_batch interface from PyTorchTrial using user provided
+        evaluate_batch implements the evaluate_batch interface from PyTorchTrial using user provided
         lightning_module.
 
         """
