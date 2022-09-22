@@ -650,15 +650,17 @@ class DetSDTextualInversionTrainer:
 
     def _get_new_token_embeddings(self) -> torch.Tensor:
         """Returns the tensor of newly-added token embeddings."""
+        try:
+            token_embedding_layer = self.text_encoder.module.text_model.embeddings.token_embedding
+        except AttributeError:
+            token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
         all_dummy_tokens_t = torch.tensor(
             self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
-            device=self.accelerator.device,
+            device=token_embedding_layer.device,
         )
-        new_token_embeddings = self.text_encoder.text_model.embeddings.token_embedding(
-            all_dummy_tokens_t
-        )
+        new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
         return new_token_embeddings
 
 
