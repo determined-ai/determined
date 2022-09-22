@@ -27,8 +27,8 @@ class TestPyTorchContext:
                 )
 
         eval_ds = trial.build_validation_data_loader()
-        for batch in eval_ds:
-            metrics = trial.evaluate_batch(batch)
+        for batch_idx, batch in enumerate(eval_ds):
+            _ = trial.evaluate_batch(batch, batch_idx)
 
     def test_average_gradients(self) -> None:
         assert self.context._average_gradients(None, 1) is None

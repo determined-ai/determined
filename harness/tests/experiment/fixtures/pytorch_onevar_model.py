@@ -231,7 +231,7 @@ class BaseOneVarTrial(pytorch.PyTorchTrial):
 class OneVarTrial(BaseOneVarTrial):
     _searcher_metric = "val_loss"
 
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         data, label = batch
 
         self.cls_reducer.update(sum(label), None)
@@ -242,7 +242,7 @@ class OneVarTrial(BaseOneVarTrial):
 
 
 class OneVarTrialWithMultiValidation(OneVarTrial):
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         data, labels = batch
         output = self.model(data)
         val_loss = self.loss_fn(output, labels)
@@ -279,7 +279,7 @@ class AMPTestDataset(OnesDataset):
         "large": 2e4,
     }
 
-    def __init__(self, stages: Iterable[str], aggregation_freq: int = 1) -> None:
+    def __init__(self, stages: List[str], aggregation_freq: int = 1) -> None:
         self.stages = stages
         self._agg_freq = aggregation_freq
 
@@ -418,7 +418,7 @@ class OneVarManualAMPTrial(OneVarAMPBaseTrial):
             "output": output,
         }
 
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         data, label = batch
         with torch.cuda.amp.autocast():
             output = self.model(data)
