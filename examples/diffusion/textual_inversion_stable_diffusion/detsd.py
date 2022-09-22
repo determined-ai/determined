@@ -653,7 +653,8 @@ class DetSDTextualInversionTrainer:
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
         all_dummy_tokens_t = torch.tensor(
-            self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False), device=self.device
+            self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
+            device=self.accelerator.device,
         )
         new_token_embeddings = self.text_encoder.text_model.embeddings.token_embedding(
             all_dummy_tokens_t
