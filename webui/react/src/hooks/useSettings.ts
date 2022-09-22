@@ -121,7 +121,7 @@ export const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage):
 };
 
 export const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
-  if (param == null) return undefined;
+  if (param === null || param === undefined) return undefined;
   if (type === BaseType.Boolean) return param === 'true';
   if (type === BaseType.Float || type === BaseType.Integer) {
     const value = type === BaseType.Float ? parseFloat(param) : parseInt(param);
@@ -161,7 +161,10 @@ export const queryToSettings = <T>(config: SettingsConfig, query: string): T => 
        * Example - 'PULLING' => [ 'PULLING' ]
        */
       const normalizedValue =
-        prop.type.isArray && queryValue != null && !Array.isArray(queryValue)
+        prop.type.isArray &&
+        queryValue !== null &&
+        queryValue !== undefined &&
+        !Array.isArray(queryValue)
           ? [queryValue]
           : queryValue;
 
@@ -274,14 +277,14 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
           acc.querySettings[key] = undefined;
 
           // If the settings value is invalid, set to undefined.
-          const value = partialSettings[key];
+          const value = partialSettings[key] !== null ? partialSettings[key] : undefined;
           const isValid = validateSetting(config, value);
           const isDefault = isEqual(config.defaultValue, value);
 
           // Store or clear setting if `storageKey` is available.
-          if (config.storageKey && isValid) {
+          if (config.storageKey && isValid && options?.store !== false) {
             const persistedSetting: V1UserWebSetting = { key: config.storageKey };
-            if (value == null || isDefault) {
+            if (value === undefined || isDefault) {
               storage.remove(config.storageKey);
             } else {
               storage.set(config.storageKey, value);
@@ -336,7 +339,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         type: push ? PathChangeType.Push : PathChangeType.Replace,
       });
     },
-    [location.pathname, config.applicableRoutespace, configMap, user?.id, storage],
+    [config.applicableRoutespace, location.pathname, configMap, options?.store, user?.id, storage],
   );
 
   const resetSettings = useCallback(
