@@ -189,7 +189,7 @@ class DetSDTextualInversionTrainer:
         self.train_scheduler = None
         self.original_embedding_idxs = None
         self.original_embedding_tensors = None
-        self.original_embedding_tensors_mean_norm = None
+        self.original_embedding_mean_norm = None
         self.new_embedding_idxs = None
 
         self.concept_to_initializer_tokens_map = {}
@@ -328,7 +328,7 @@ class DetSDTextualInversionTrainer:
         )
         norm_loss = (
             self.norm_penalty
-            * (new_token_embeddings_norms - self.original_embedding_tensors_mean_norm).mean() ** 2
+            * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).mean()
         )
         print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
@@ -423,7 +423,7 @@ class DetSDTextualInversionTrainer:
             .to(self.accelerator.device)
         )
         with torch.no_grad():
-            self.original_embedding_tensors_mean_norm = (
+            self.original_embedding_mean_norm = (
                 torch.linalg.vector_norm(self.original_embedding_tensors, dim=1).mean().item()
             )
         self.new_embedding_idxs = torch.isin(
