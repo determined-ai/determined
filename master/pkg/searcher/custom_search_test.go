@@ -4,12 +4,12 @@ package searcher
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // Testing a few methods (not all because they are similar)
@@ -112,5 +112,51 @@ func TestCustomSearchMethod(t *testing.T) {
 }
 
 func TestCustomSearchWatcher(t *testing.T) {
+	config := expconf.SearcherConfig{
+		RawCustomConfig: &expconf.CustomConfig{},
+	}
 
+	customSearchMethod := NewSearchMethod(config)
+	rand := nprand.New(0)
+	ctx := context{rand: rand}
+
+	var queue *SearcherEventQueue
+	queue = customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
+	id := uuid.New()
+	w, err := queue.Watch(id)
+	require.NoError(t, err)
+
+	// should immediately receive initial status.
+	select {
+	case <-w.C:
+		t.Fatal("received a non-empty channel but should not have")
+	default:
+	}
+
+	expEvents := make([]*experimentv1.SearcherEvent, 0)
+	// Add initialOperations
+	_, err = customSearchMethod.initialOperations(ctx)
+	require.NoError(t, err)
+	var expEventCount int32
+	initOpsEvent := experimentv1.SearcherEvent_InitialOperations{
+		InitialOperations: &experimentv1.InitialOperations{},
+	}
+	expEventCount++
+	searcherEvent := experimentv1.SearcherEvent{
+		Event: &initOpsEvent,
+		Id:    expEventCount,
+	}
+	expEvents = append(expEvents, &searcherEvent)
+	require.Equal(t, expEvents, queue.GetEvents())
+
+	// add events and then you should recieve events in the watcher channel.
+	eventsInWatcher := <-w.C
+	select {
+	case <-w.C:
+		require.Equal(t, queue.GetEvents(), eventsInWatcher)
+	default:
+		t.Fatal("did not receive events")
+	}
+
+	// call Unwatch
 }

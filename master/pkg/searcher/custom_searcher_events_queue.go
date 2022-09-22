@@ -38,10 +38,12 @@ func newSearcherEventQueue() *SearcherEventQueue {
 
 // Create a Watcher. If events are available add events and close it.
 func (q *SearcherEventQueue) Watch(id uuid.UUID) (eventsWatcher, error) {
-	w := make(chan []*experimentv1.SearcherEvent)
+	// buffer size is 1 because we don't want to block
+	//  until another goroutine recieves from this channel.
+	// and only one event list can be sent to a channel.
+	w := make(chan []*experimentv1.SearcherEvent, 1)
 	q.watchers[id] = w
 
-	// We don't want to block.
 	if len(q.events) > 0 {
 		w <- q.events
 		close(w)
