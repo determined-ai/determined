@@ -607,8 +607,10 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 					// If we are here, then we are likely being called from
 					// startup, as opposed to a user explicitly canceling
 					// a job. It's OK to remove the environment in this case
-					// because we aren't actively monitoring any jobs.
-
+					// because we aren't actively monitoring any jobs, but we need to wait
+					// for the terminate request above to complete, before we can actually
+					// do the delete of the environment to avoid a 500 error response.
+					m.waitForDispatchTerminalState(ctx, impersonatedUser, dispatchID)
 					m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
 				}
 			}
@@ -728,6 +730,20 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+// Wait up to 2mins for the dispatch to be in a terminal state.
+func (m *dispatcherResourceManager) waitForDispatchTerminalState(ctx *actor.Context,
+	impersonatedUser string, dispatchID string) {
+	for i := 0; i < 20; i++ {
+		if m.jobWatcher.isDispatchInProgress(ctx, impersonatedUser, dispatchID) {
+			ctx.Log().Debugf("Dispatch %s still active, waiting for termination.", dispatchID)
+			time.Sleep(6 * time.Second)
+		} else {
+			return
+		}
+	}
+	ctx.Log().Warnf("Dispatch %s still active, but wait time exceeded.  Continuing...", dispatchID)
 }
 
 // Log the failure, and send a ResourcesStateChanged describing the failure.
@@ -1359,9 +1375,8 @@ func (m *dispatcherResourceManager) assignResources(
 	if req.Restore {
 		if len(dispatchID) == 0 {
 			ctx.Log().Infof("Restore request with no active DispatchID found.  Fail the allocation request.")
-			var unknownExit sproto.ExitCode = -1
 			failed := sproto.NewResourcesFailure(sproto.ResourcesAborted,
-				"Unable to locate HPC job on restart.", &unknownExit)
+				"Unable to locate HPC job on restart.", nil)
 			stopped := sproto.ResourcesStopped{}
 			stopped.Failure = failed
 			ctx.Tell(req.AllocationRef, sproto.ResourcesStateChanged{
