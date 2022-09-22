@@ -30,8 +30,6 @@ gradient update:
 Finally, we can calculate the updated weight (w') in terms of w0:
 
 (4)     w' = w0 + update = w0 + 2 * R * data * (label - (data * w0))
-
-TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
 import logging
