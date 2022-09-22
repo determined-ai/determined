@@ -112,7 +112,7 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 ) (*apiv1.UpdateTrialTagsResponse, error) {
 	_, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials %w", err)
+		return nil, fmt.Errorf("failed to update trial tags %w", err)
 	}
 
 	// check user is authorized for modifying project? after RBAC?
@@ -121,7 +121,7 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 
 	q, err := BuildTrialPatchQuery(req.Patch)
 	if err != nil {
-		return nil, fmt.Errorf("error constructing set clause for trial patch %w", err)
+		return nil, fmt.Errorf("failed to construct set clause for trial tags %w", err)
 	}
 
 	switch targetType := req.Target.(type) {
@@ -135,7 +135,7 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 		subQ, subQerr := BuildFilterTrialsQuery(filters, false)
 
 		if subQerr != nil {
-			return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
+			return nil, fmt.Errorf("failed to update trial tags %w", err)
 		}
 
 		subQ.Column("trial_id")
@@ -144,7 +144,7 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 	case *apiv1.UpdateTrialTagsRequest_Trial:
 		trialIds := req.GetTrial().Ids
 		if len(trialIds) == 0 {
-			return nil, fmt.Errorf("no trial ids provided to patch")
+			return nil, fmt.Errorf("no trial ids provided to update trial tags")
 		}
 		q.Where("id IN (?)", bun.In(trialIds))
 	default:
@@ -153,7 +153,7 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 
 	res, err := q.Exec(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("couldnt bulk patch trials %w", err)
+		return nil, fmt.Errorf("failed to update trial tags %w", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
@@ -169,14 +169,6 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 func (a *TrialsAPIServer) GetTrialsCollections(
 	ctx context.Context, req *apiv1.GetTrialsCollectionsRequest,
 ) (*apiv1.GetTrialsCollectionsResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("couldnt get trials collections %w", err)
-	}
-
-	if user == nil {
-		return nil, errors.New("user not found")
-	}
 	collections := []*TrialsCollection{}
 
 	q := db.Bun().
@@ -187,7 +179,7 @@ func (a *TrialsAPIServer) GetTrialsCollections(
 		q = q.Where("project_id = ?", req.ProjectId)
 	}
 
-	err = q.Scan(context.TODO())
+	err := q.Scan(context.TODO())
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trials collections %w", err)
@@ -211,17 +203,17 @@ func (a *TrialsAPIServer) CreateTrialsCollection(
 ) (*apiv1.CreateTrialsCollectionResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt create trials collection %w", err)
+		return nil, fmt.Errorf("failed to create trials collection %w", err)
 	}
 
 	err = checkTrialFiltersEmpty(req.Filters)
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt create trials collection %w", err)
+		return nil, fmt.Errorf("failed to create trials collection %w", err)
 	}
 
 	if req.ProjectId == 0 {
-		return nil, errors.New("couldnt create trials collection: must specify project_id")
+		return nil, errors.New("failed to create trials collection: must specify project_id")
 	}
 
 	collection := TrialsCollection{
@@ -252,7 +244,7 @@ func (a *TrialsAPIServer) PatchTrialsCollection(
 ) (*apiv1.PatchTrialsCollectionResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials collection %w", err)
+		return nil, fmt.Errorf("failed to patch trials collection %w", err)
 	}
 
 	collection := TrialsCollection{
@@ -287,7 +279,7 @@ func (a *TrialsAPIServer) PatchTrialsCollection(
 	_, err = q.Exec(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt patch trials collection %w", err)
+		return nil, fmt.Errorf("failed to patch trials collection %w", err)
 	}
 	resp := &apiv1.PatchTrialsCollectionResponse{Collection: collection.Proto()}
 	return resp, nil
@@ -299,7 +291,7 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 ) (*apiv1.DeleteTrialsCollectionResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("couldnt delete trials collection %w", err)
+		return nil, fmt.Errorf("failed to delete trials collection %w", err)
 	}
 
 	collection := TrialsCollection{
@@ -314,7 +306,7 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 	_, err = q.Exec(context.TODO())
 
 	if err != nil {
-		return nil, fmt.Errorf("couldnt delete trials collection %w", err)
+		return nil, fmt.Errorf("failed to delete trials collection %w", err)
 	}
 
 	return &apiv1.DeleteTrialsCollectionResponse{}, nil

@@ -513,10 +513,10 @@ service Determined {
     };
   }
 
-  // Return trials matching a set of TrialFilters
+  // Return trials matching a set of TrialFilters.
   rpc QueryTrials(QueryTrialsRequest) returns (QueryTrialsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/trial-comparison/query"
+      post: "/api/v1/trial-comparison/query"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -524,11 +524,11 @@ service Determined {
     };
   }
 
-  // Update tags for trials by the trial ID
+  // Update tags for trials by IDs or filters. 
   rpc UpdateTrialTags(UpdateTrialTagsRequest)
       returns (UpdateTrialTagsResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/trials/trial-comparison/update-trial-tags"
+      post: "/api/v1/trial-comparison/update-trial-tags"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -536,22 +536,22 @@ service Determined {
     };
   }
 
-  // Return all collectiions for a specific project
+  // Return all collectiions for a specific project.
   rpc GetTrialsCollections(GetTrialsCollectionsRequest)
       returns (GetTrialsCollectionsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/trial-comparison/collections"
+      get: "/api/v1/trial-comparison/collections"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trial Comparison" ]
     };
   }
 
-  // Create a Trial Collection for a set of TrialFilters
+  // Create a Trial Collection for a set of TrialFilters.
   rpc CreateTrialsCollection(CreateTrialsCollectionRequest)
       returns (CreateTrialsCollectionResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/trial-comparison/collections"
+      post: "/api/v1/trial-comparison/collections"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -559,11 +559,11 @@ service Determined {
     };
   }
 
-  // Add tags to a TrialCollection
+  // Modify collection attributes: name, filters, etc.
   rpc PatchTrialsCollection(PatchTrialsCollectionRequest)
       returns (PatchTrialsCollectionResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/trials/trial-comparison/collections"
+      patch: "/api/v1/trial-comparison/collections"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -571,11 +571,11 @@ service Determined {
     };
   }
 
-  // Removes a TrialCollection
+  // Removes a TrialCollection.
   rpc DeleteTrialsCollection(DeleteTrialsCollectionRequest)
       returns (DeleteTrialsCollectionResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/trials/trial-comparison/collections"
+      delete: "/api/v1/trial-comparison/collections"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trial Comparison" ]

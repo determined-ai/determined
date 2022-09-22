@@ -1,5 +1,4 @@
--- keeping out of the migration directory for now to avoid having it run
-ALTER table trials ADD COLUMN IF NOT EXISTS tags jsonb DEFAULT '{}';
+ALTER table trials ADD COLUMN tags jsonb DEFAULT '{}';
 -- if similar data structure were to be used where the actual values of the tags
 -- was considered, index should not use jsonb_path_ops (just remove that part)
 CREATE INDEX trials_tags_index ON trials USING GIN (tags jsonb_path_ops);
@@ -72,11 +71,5 @@ CREATE OR REPLACE VIEW public.trials_augmented_view AS
   LEFT JOIN validations v ON t.id = v.trial_id AND v.id = t.best_validation_id
   LEFT JOIN steps s on t.id = s.trial_id AND v.total_batches = s.total_batches
   LEFT JOIN b on t.id = b.trial_id 
-  group by t.id;
-  -- find other subquery way to do this??
-
-
--- is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
--- does avg_metrics correspond to the actual state at that batch?
--- or an average over previous batches?
+  GROUP BY t.id;
 

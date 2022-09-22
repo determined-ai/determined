@@ -138,7 +138,7 @@ message TrialFilters {
   repeated int32 trial_ids = 16;
 }
 
-// Request to QueryTrials includes pagination parameters and TrialFilters
+// Request to QueryTrials includes pagination parameters and TrialFilters.
 message QueryTrialsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "filters" ] }
@@ -153,7 +153,7 @@ message QueryTrialsRequest {
   int32 limit = 4;
 }
 
-// Augmented Trial struct to service trail comparison functionality
+// Augmented Trial struct to service trial comparison functionality.
 message AugmentedTrial {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
@@ -224,7 +224,7 @@ message AugmentedTrial {
   double searcher_metric_loss = 21;
 }
 
-// Response for QueryTrials
+// Response for QueryTrials.
 message QueryTrialsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials" ] }
@@ -233,11 +233,11 @@ message QueryTrialsResponse {
   repeated AugmentedTrial trials = 1;
 }
 
-// Specifies whether a tag should be added or removed
+// Specifies whether a tag should be added or removed.
 message TrialPatch {
-  // Specifies that a tag will be added
+  // Specifies that a tag will be added.
   repeated TrialTag add_tag = 1;
-  // Specifies that a tag will be removed
+  // Specifies that a tag will be removed.
   repeated TrialTag remove_tag = 2;
 }
 
@@ -263,7 +263,7 @@ message UpdateTrialTagsRequest {
   TrialPatch patch = 4;
 }
 
-// Response message to PatchTrials
+// Response message to PatchTrials.
 message UpdateTrialTagsResponse {
   // The number of trials that were patched.
   int32 rows_affected = 1;
@@ -291,19 +291,19 @@ message TrialsCollection {
   TrialSorter sorter = 6;
 }
 
-// Request message for GetTrialsCollection
+// Request message for GetTrialsCollection.
 message GetTrialsCollectionsRequest {
   // The id of the project for which to retrieve all collections
   int32 project_id = 1;
 }
 
-// Response message for GetTrialsCollection
+// Response message for GetTrialsCollection.
 message GetTrialsCollectionsResponse {
   // The collections belonging to that project.
   repeated TrialsCollection collections = 1;
 }
 
-// Request body for CeateTrials request which includes TrialFilters
+// Request body for CeateTrials request which includes TrialFilters.
 message CreateTrialsCollectionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "name", "project_id", "filters", "sorter" ] }
@@ -318,13 +318,13 @@ message CreateTrialsCollectionRequest {
   TrialSorter sorter = 4;
 }
 
-//  Response message to CreateTrialCollection
+//  Response message to CreateTrialCollection.
 message CreateTrialsCollectionResponse {
-  // The collection of trials
+  // The collection of trials.
   TrialsCollection collection = 1;
 }
 
-// Request message to PatchTrialsCollection
+// Request message to PatchTrialsCollection.
 message PatchTrialsCollectionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
@@ -347,10 +347,11 @@ message PatchTrialsCollectionResponse {
 
 // Request message to PatchTrialsCollection
 message DeleteTrialsCollectionRequest {
-  // The id for the TrialsCollection
+  // The id for the TrialsCollection.
   int32 id = 1;
 }
-// Empty response for DeleteTrialsCollection
+
+// Empty response for DeleteTrialsCollection.
 message DeleteTrialsCollectionResponse {}
 
 // Stream trial logs.
