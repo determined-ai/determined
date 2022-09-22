@@ -10,7 +10,7 @@ import torch
 import determined as det
 from determined import pytorch, workload
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
+from tests.experiment.fixtures import pytorch_onevar_model
 
 # Apex is included only for GPU trials.
 try:
@@ -236,7 +236,7 @@ class TestPyTorchTrial:
             steps_completed = trainer.get_steps_completed()
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialMulti,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -249,12 +249,12 @@ class TestPyTorchTrial:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
 
-        invalid_hparams = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        invalid_hparams = {**self.hparams, "features": 2}
         assert invalid_hparams != self.hparams
 
         with pytest.raises(RuntimeError):
             invalid_controller = utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialMulti,
+                trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=invalid_hparams,
                 workloads=make_invalid_workloads(),
                 trial_seed=self.trial_seed,
@@ -382,11 +382,19 @@ class TestPyTorchTrial:
 
         controller = None
 
+        hparams1 = dict(self.hparams)
+        hparams1["global_batch_size"] = 2
+        training_epochs = 2
+        num_batches = (
+            training_epochs
+            * len(pytorch_onevar_model.OnesDataset())
+            // hparams1["global_batch_size"]
+        )
+
         def make_workloads1() -> workload.Stream:
             nonlocal controller
             assert controller.trial.counter.trial_startups == 1
-
-            yield workload.train_workload(1, 1, 0, 4), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0, num_batches), workload.ignore_workload_response
             assert controller is not None, "controller was never set!"
             assert controller.trial.counter.__dict__ == {
                 "trial_startups": 1,
@@ -403,7 +411,6 @@ class TestPyTorchTrial:
             assert controller.trial.legacy_counter.__dict__ == {
                 "legacy_on_training_epochs_start_calls": 2
             }
-
             yield workload.validation_workload(), workload.ignore_workload_response
             assert controller.trial.counter.__dict__ == {
                 "trial_startups": 1,
@@ -442,10 +449,8 @@ class TestPyTorchTrial:
                 "legacy_on_training_epochs_start_calls": 2
             }
 
-        hparams1 = dict(self.hparams)
-        hparams1["global_batch_size"] = 2
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks,
+            trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=hparams1,
             workloads=make_workloads1(),
             checkpoint_dir=str(checkpoint_dir),
@@ -454,12 +459,18 @@ class TestPyTorchTrial:
         assert controller.trial.counter.trial_shutdowns == 1
 
         # Verify the checkpoint loading callback works.
+        training_epochs = 1  # Total of 3
+        num_batches = (
+            training_epochs
+            * len(pytorch_onevar_model.OnesDataset())
+            // self.hparams["global_batch_size"]
+        )
 
         def make_workloads2() -> workload.Stream:
-            yield workload.train_workload(1, 1, 0), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0, num_batches), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks,
+            trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=self.hparams,
             workloads=make_workloads2(),
             checkpoint_dir=str(checkpoint_dir),

@@ -34,6 +34,7 @@ Finally, we can calculate the updated weight (w') in terms of w0:
 TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
+import logging
 from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
@@ -42,6 +43,7 @@ import yaml
 
 from determined import experimental, pytorch
 from determined.pytorch import samplers
+from tests.experiment.fixtures import pytorch_counter_callback
 
 try:
     import apex
@@ -101,9 +103,9 @@ class StepableLRScheduler(torch.optim.lr_scheduler._LRScheduler):
         return [self._step_count for _ in self.base_lrs]
 
 
-def get_onevar_model() -> torch.nn.Module:
-    model = torch.nn.Linear(1, 1, False)
-    # Manually initialize the one weight to 0.
+def get_onevar_model(n=1) -> torch.nn.Module:
+    model = torch.nn.Linear(n, n, False)
+    # Manually initialize the weight(s) to 0.
     model.weight.data.fill_(0)
     return model
 
@@ -112,7 +114,10 @@ class BaseOneVarTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
-        self.model = context.wrap_model(get_onevar_model())
+        # The "features" hparam is only for TestPyTorchTrial.test_restore_invalid_checkpoint
+        self.model = context.wrap_model(
+            get_onevar_model(n=self.context.get_hparams().get("features", 1))
+        )
 
         self.lr = 0.001
 
@@ -613,6 +618,31 @@ class OneVarTrialWithLRScheduler(OneVarTrial):
         ):
             self.lr_scheduler.step()
         return metrics
+
+
+class EphemeralLegacyCallbackCounter(pytorch.PyTorchCallback):
+    """
+    Callback with legacy signature for on_training_epoch_start
+    that takes no arguments. It is ephemeral: it does not implement
+    state_dict and load_state_dict.
+    """
+
+    def __init__(self) -> None:
+        self.legacy_on_training_epochs_start_calls = 0
+
+    def on_training_epoch_start(self, epoch_idx: int) -> None:
+        logging.debug(f"calling {__name__} without arguments")
+        self.legacy_on_training_epochs_start_calls += 1
+
+
+class OneVarTrialCallbacks(OneVarTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        super().__init__(context)
+        self.counter = pytorch_counter_callback.Counter()
+        self.legacy_counter = EphemeralLegacyCallbackCounter()
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"counter": self.counter, "legacyCounter": self.legacy_counter}
 
 
 if __name__ == "__main__":
