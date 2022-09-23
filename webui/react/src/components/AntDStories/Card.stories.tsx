@@ -2,7 +2,7 @@ import { ComponentStory, Meta } from '@storybook/react';
 import { Card } from 'antd';
 import React from 'react';
 
-import loremIpsum from 'storybook/loremIpsum';
+import loremIpsum from 'storybook/shared/loremIpsum';
 
 export default {
   argTypes: { size: { control: { options: ['small', 'default'], type: 'inline-radio' } } },

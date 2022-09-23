@@ -1,7 +1,7 @@
 import { ComponentStory, Meta } from '@storybook/react';
 import React, { useCallback, useState } from 'react';
 
-import loremIpsum from 'storybook/loremIpsum';
+import loremIpsum from 'storybook/shared/loremIpsum';
 
 import InlineEditor from './InlineEditor';
 
