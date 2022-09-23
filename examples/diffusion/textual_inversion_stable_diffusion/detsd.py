@@ -526,12 +526,16 @@ class DetSDTextualInversionTrainer:
                         checkpoint_metadata_dict = json.load(f)
                         self.steps_completed = checkpoint_metadata_dict["steps_completed"]
                     print("TORCH.LOAD CHECKPOINT")
-                    optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
+                    optimizer_state_dict = torch.load(
+                        path.joinpath("optimizer_state_dict.pt"),
+                        map_location=self.accelerator.device,
+                    )
                     print("LOAD CHECKPOINT INTO OPTIMIZER")
                     self.optimizer.load_state_dict(optimizer_state_dict)
                     print("LOAD CHECKPOINT INTO OPTIMIZER Completed")
                     learned_embeddings_dict = torch.load(
-                        path.joinpath("learned_embeddings_dict.pt")
+                        path.joinpath("learned_embeddings_dict.pt"),
+                        map_location=self.accelerator.device,
                     )
                     token_embeddings = self._get_token_embedding_weight_data()
                     print("LOAD Trained Embeddings")
