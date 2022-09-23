@@ -5,7 +5,7 @@ import { Primitive, RawJson, RecordKey, UnknownRecord } from '../types';
 export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isDate = (data: unknown): data is Date => data instanceof Date;
-export const isMap = (data: unknown): boolean => data instanceof Map;
+export const isMap = (data: unknown): data is Map<unknown, unknown> => data instanceof Map;
 export const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
 export const isObject = (data: unknown): boolean => {
@@ -38,7 +38,7 @@ export const isSyncFunction = (fn: unknown): boolean => {
 
 export const isEqual = (a: unknown, b: unknown): boolean => {
   if (isMap(a) && isMap(b)) {
-    return JSON.stringify(Array.from(a as any)) === JSON.stringify(Array.from(b as any));
+    return JSON.stringify(Array.from(a)) === JSON.stringify(Array.from(b));
   }
   if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
   if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);

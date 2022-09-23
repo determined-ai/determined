@@ -64,17 +64,21 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-export const deletableRunStates: Set<CompoundRunState> = new Set([
+const runStateList = [
   RunState.Canceled,
   RunState.Completed,
-  RunState.Errored,
+  RunState.Error,
   RunState.DeleteFailed,
-]);
+] as const;
+
+export const deletableRunStates: Set<CompoundRunState> = new Set(runStateList);
 
 export const terminalRunStates: Set<CompoundRunState> = new Set([
   ...deletableRunStates,
   RunState.Deleted,
 ]);
+
+export const terminalRunStatesKeys = [...runStateList, RunState.Deleted];
 
 export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.Active]: 'Active',
@@ -84,11 +88,12 @@ export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.Deleted]: 'Deleted',
   [RunState.Deleting]: 'Deleting',
   [RunState.DeleteFailed]: 'Delete Failed',
-  [RunState.Errored]: 'Errored',
+  [RunState.Error]: 'Errored',
   [RunState.Paused]: 'Paused',
   [RunState.StoppingCanceled]: 'Canceling',
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
+  [RunState.StoppingKilled]: 'Killed',
   [RunState.Unspecified]: 'Unspecified',
   [RunState.Queued]: 'Queued',
   [RunState.Pulling]: 'Pulling Image',
