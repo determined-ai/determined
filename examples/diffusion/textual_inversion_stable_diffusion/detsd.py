@@ -240,6 +240,7 @@ class DetSDTextualInversionTrainer:
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
+            print(f"MY ACCELERATOR.DEVICE: {self.accelerator.device}")
             self._restore_latest_checkpoint(core_context)
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
