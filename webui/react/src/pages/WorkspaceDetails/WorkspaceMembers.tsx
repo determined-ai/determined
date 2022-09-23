@@ -167,11 +167,14 @@ const WorkspaceMembers: React.FC<Props> = ({
             const roleIdValue = value as number;
             const userOrGroupId = getIdFromUserOrGroup(record);
 
-            // Remove the old role
-            // Add the new role
+            // Needs to be updated to get the correct old role for the user
+            // or group.
+            const oldRoleId = assignments?.[0].role?.roleId || 0;
+
+            // Remove the old role then add the new role
             if (isUser(record)) {
               await removeRoleFromUser({
-                roleId: roleIdValue,
+                roleId: oldRoleId,
                 userId: userOrGroupId,
               });
               await assignRolesToUser({
@@ -181,7 +184,7 @@ const WorkspaceMembers: React.FC<Props> = ({
             } else {
               await removeRoleFromGroup({
                 groupId: userOrGroupId,
-                roleId: roleIdValue,
+                roleId: oldRoleId,
               });
               await assignRolesToGroup({
                 groupId: userOrGroupId,
