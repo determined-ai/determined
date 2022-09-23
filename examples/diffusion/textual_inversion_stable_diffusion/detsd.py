@@ -528,10 +528,12 @@ class DetSDTextualInversionTrainer:
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
                     print("LOAD CHECKPOINT INTO OPTIMIZER")
                     self.optimizer.load_state_dict(optimizer_state_dict)
+                    print("LOAD CHECKPOINT INTO OPTIMIZER Completed")
                     learned_embeddings_dict = torch.load(
                         path.joinpath("learned_embeddings_dict.pt")
                     )
                     token_embeddings = self._get_token_embedding_weight_data()
+                    print("LOAD Trained Embeddings")
                     for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[concept_token][
                             "learned_embeddings"
