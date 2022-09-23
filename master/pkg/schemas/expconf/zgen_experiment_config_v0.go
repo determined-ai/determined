@@ -98,6 +98,17 @@ func (e *ExperimentConfigV0) SetEnvironment(val EnvironmentConfigV0) {
 	e.RawEnvironment = &val
 }
 
+func (e ExperimentConfigV0) Group() string {
+	if e.RawGroup == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Group")
+	}
+	return *e.RawGroup
+}
+
+func (e *ExperimentConfigV0) SetGroup(val string) {
+	e.RawGroup = &val
+}
+
 func (e ExperimentConfigV0) Hyperparameters() HyperparametersV0 {
 	return e.RawHyperparameters
 }

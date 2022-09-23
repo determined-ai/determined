@@ -390,6 +390,7 @@ type CreateExperimentParams struct {
 	Project       *string         `json:"project"`
 	ProjectID     *int            `json:"project_id"`
 	Workspace     *string         `json:"workspace"`
+	GroupID				*int						`json:"group_id"`
 }
 
 // ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
@@ -541,10 +542,26 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
+	var groupID *int
+	if params.GroupID == nil {
+		if config.Group() != "" {
+			*groupID, err = m.db.ProjectGroupByName(int32(projectID), config.Group())
+			if errors.Is(err, db.ErrNotFound) {
+				g := projectv1.ProjectExperimentGroup{}
+				err = m.db.Query("insert_project_group", &g, projectID, config.Group())
+				*groupID = int(g.Id)
+			} else if err != nil {
+				return nil, false, nil, errors.Wrapf(err, errors.Errorf("unable to find or create group").Error())
+			}
+		}
+	} else {
+		groupID = params.GroupID
+	}
+
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate,
-		int(project.Id),
+		int(project.Id), groupID,
 	)
 	if user != nil {
 		dbExp.OwnerID = &user.ID

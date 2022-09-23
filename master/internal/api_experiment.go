@@ -463,6 +463,7 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
 		ColumnExpr("p.user_id AS project_owner_id").
 		Column("e.config").
+		Column("e.group_id").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")

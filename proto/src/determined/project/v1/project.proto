@@ -93,3 +93,16 @@ message PatchProject {
   // The new description for the project.
   google.protobuf.StringValue description = 2;
 }
+
+// ProjectExperimentGroup is a group of experiments within a project.
+message ProjectExperimentGroup {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "name", "project_id" ] }
+  };
+  // The unique id of the group.
+  int32 id = 1;
+  // The unique name of the group.
+  string name = 2;
+  // The id of the associated project.
+  int32 project_id = 3;
+}

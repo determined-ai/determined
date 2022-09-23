@@ -26,6 +26,7 @@ type ExperimentConfigV0 struct {
 	RawDescription              *string                     `json:"description"`
 	RawEntrypoint               *EntrypointV0               `json:"entrypoint"`
 	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
+	RawGroup										*string											`json:"group"`
 	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
 	RawLabels                   LabelsV0                    `json:"labels"`
 	RawMaxRestarts              *int                        `json:"max_restarts"`

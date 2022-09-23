@@ -932,6 +932,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     description: Optional[str] = None
     entrypoint: Optional[Union[str, List[str]]] = None
     environment: Optional[EnvironmentConfigV0] = None
+    group: Optional[str] = None
     labels: Optional[str] = None
     max_restarts: Optional[int] = None
     min_checkpoint_period: Optional[LengthV0] = None
@@ -965,6 +966,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         description: Optional[str] = None,
         entrypoint: Optional[Union[str, List[str]]] = None,
         environment: Optional[EnvironmentConfigV0] = None,
+        group: Optional[str] = None,
         labels: Optional[str] = None,
         max_restarts: Optional[int] = None,
         min_checkpoint_period: Optional[LengthV0] = None,

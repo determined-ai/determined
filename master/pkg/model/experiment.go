@@ -297,6 +297,7 @@ type Experiment struct {
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
+	GroupID 						 *int				`db:"group_id"`
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
@@ -362,6 +363,7 @@ func NewExperiment(
 	gitRemote, gitCommit, gitCommitter *string,
 	gitCommitDate *time.Time,
 	projectID int,
+	groupID *int,
 ) (*Experiment, error) {
 	if len(modelDefinitionBytes) == 0 {
 		return nil, errors.New("empty model definition")
@@ -385,6 +387,7 @@ func NewExperiment(
 		GitCommitter:         gitCommitter,
 		GitCommitDate:        gitCommitDate,
 		ProjectID:            projectID,
+		GroupID: 							groupID,
 	}, nil
 }
 

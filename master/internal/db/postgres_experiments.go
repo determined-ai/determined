@@ -76,6 +76,19 @@ WHERE e.project_id = $1`, id)
 	return experiments, nil
 }
 
+// ProjectGroupByName returns a group's ID if it exists in the given project.
+func (db *PgDB) ProjectGroupByName(projectID int32, groupName string) (int, error) {
+	g := projectv1.ProjectExperimentGroup{}
+	err := db.Query("get_project_group_from_name", &g, projectID, groupName)
+	if err != nil {
+		return 1, err
+	}
+	if g.Id < 1 {
+		return 1, ErrNotFound
+	}
+	return int(g.Id), nil
+}
+
 // ExperimentLabelUsage returns a flattened and deduplicated list of all the
 // labels in use across all experiments.
 func (db *PgDB) ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error) {
@@ -842,10 +855,10 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
 	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
- 	project_id)
+ 	 project_id, group_id)
 	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived, :parent_id, 0,
 					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-					:notes, :job_id, :project_id)
+					:notes, :job_id, :project_id, :group_id)
 	RETURNING id`, experiment)
 		if err != nil {
 			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
