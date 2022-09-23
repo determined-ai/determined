@@ -26,7 +26,7 @@ import {
   WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetricValue } from 'utils/metric';
+import { extractMetricSortValue, extractMetricValue } from 'utils/metric';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';
@@ -103,8 +103,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         key: metricName.name,
         render: metricRenderer(metricName),
         sorter: (a, b) => {
-          const aVal = extractMetricValue(a, metricName),
-            bVal = extractMetricValue(b, metricName);
+          const aVal = extractMetricSortValue(a, metricName),
+            bVal = extractMetricSortValue(b, metricName);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
           } else if (aVal !== undefined && bVal === undefined) {

@@ -1022,8 +1022,9 @@ jobs:
             - harness/dist
             - model_hub/dist
             - docs/site/html
+      - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
-          path: docs/site/html
+          path: docs.tgz
 
   publish-docs:
     docker:

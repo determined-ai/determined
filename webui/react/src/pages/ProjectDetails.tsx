@@ -189,9 +189,7 @@ const ProjectDetails: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+      const states = (settings.state || []).map((state) => encodeExperimentState(state));
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
@@ -516,20 +514,16 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filters: Object.values(RunState)
-          .filter((value) =>
-            [
-              RunState.Active,
-              RunState.Paused,
-              RunState.Canceled,
-              RunState.Completed,
-              RunState.Errored,
-            ].includes(value),
-          )
-          .map((value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
-            value,
-          })),
+        filters: [
+          RunState.Active,
+          RunState.Paused,
+          RunState.Canceled,
+          RunState.Completed,
+          RunState.Error,
+        ].map((value) => ({
+          text: <Badge state={value} type={BadgeType.State} />,
+          value,
+        })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,
@@ -824,24 +818,16 @@ const ProjectDetails: React.FC = () => {
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
-          const archivedIndex = settings.columns.indexOf('archived');
-          if (archivedIndex !== -1) {
-            newColumns = [...settings.columns];
-            newColumnWidths = [...settings.columnWidths];
-            newColumns.splice(archivedIndex, 1);
-            newColumnWidths.splice(archivedIndex, 1);
-          } else {
-            newColumns = settings.columns;
-            newColumnWidths = settings.columnWidths;
-          }
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
         }
-        updateSettings({
-          archived: showArchived,
-          columns: newColumns,
-          columnWidths: newColumnWidths,
-          row: undefined,
-        });
       }
+      updateSettings({
+        archived: showArchived,
+        columns: newColumns,
+        columnWidths: newColumnWidths,
+        row: undefined,
+      });
     },
     [settings, updateSettings],
   );
@@ -970,7 +956,6 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
-    if (!canViewWorkspaces) return <NoPermissions />;
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -1106,6 +1091,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
+  if (!canViewWorkspaces) return <NoPermissions />;
   if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }

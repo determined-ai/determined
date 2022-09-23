@@ -42,7 +42,12 @@ import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } 
 import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';
+import settingsConfig, {
+  ALL_SORTKEY,
+  DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
+  Settings,
+} from './TaskList.settings';
 
 enum TensorBoardSourceType {
   Experiment = 'Experiment',
@@ -470,11 +475,9 @@ const TaskList: React.FC = () => {
 
       const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
-
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

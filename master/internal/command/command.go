@@ -194,7 +194,7 @@ func tryRestoreCommandsByType(
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) {
-	if config.IsReattachEnabled() {
+	if rm.IsReattachEnabled(ctx) {
 		err := restoreCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)

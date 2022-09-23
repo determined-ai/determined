@@ -103,7 +103,7 @@ class DataLoader:
         prefetch_factor (int, optional, keyword-only arg): Number of samples loaded
             in advance by each worker. ``2`` means there will be a total of
             2 * num_workers samples prefetched across all workers. (default: ``2``)
-        persistent_workers (bool, optional): If ``True``, the data loader will not shutdown
+        persistent_workers (bool, optional): If ``True``, the data loader will not shut down
             the worker processes after a dataset has been consumed once. This allows to
             maintain the workers `Dataset` instances alive. (default: ``False``)
     """
@@ -267,11 +267,11 @@ class DataLoader:
         )
 
     def __iter__(self) -> Iterator:
-        """Compatibiliy with the real DataLoader when using a PyTorchTrial outside of Determined."""
+        """Compatibility with the real DataLoader when using a PyTorchTrial outside Determined."""
         return iter(self.get_data_loader())
 
     def __len__(self) -> int:
-        """Compatibiliy with the real DataLoader when using a PyTorchTrial outside of Determined."""
+        """Compatibility with the real DataLoader when using a PyTorchTrial outside Determined."""
         batch_sampler = cast(BatchSampler, self.batch_sampler)
         return len(batch_sampler)
 

@@ -771,7 +771,13 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
 
         logs = trial_logs(trial.id)
         if error_str is not None:
-            assert any(error_str in line for line in logs)
+            try:
+                assert any(error_str in line for line in logs)
+            except AssertionError:
+                # Display error log for triage of this failure
+                print(f"Trial {trial.id} log did not contain expected message:  {error_str}")
+                print_trial_logs(trial.id)
+                raise
 
     return experiment_id
 
