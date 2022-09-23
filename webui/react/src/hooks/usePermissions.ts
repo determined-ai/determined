@@ -138,10 +138,7 @@ const canAdministrateUsers = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return (
-    !!user &&
-    (user.isAdmin || permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'))
-  );
+  return !!user && (user.isAdmin || permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'));
 };
 
 const canViewGroups = (
