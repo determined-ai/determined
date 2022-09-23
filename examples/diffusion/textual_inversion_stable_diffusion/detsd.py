@@ -277,6 +277,7 @@ class DetSDTextualInversionTrainer:
 
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
+        self.text_encoder.train()
         # Convert images to latent space.
         latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
         latents = latent_dist.sample().detach()
@@ -530,7 +531,6 @@ class DetSDTextualInversionTrainer:
         )
         self.vae.to(self.accelerator.device)
         self.unet.to(self.accelerator.device)
-        self.text_encoder.train()
         self.vae.eval()
         self.unet.eval()
 
@@ -863,6 +863,7 @@ class DetSDTextualInversionPipeline:
             80 * "-",
             sep="\n",
         )
+        self.text_encoder.eval()
         self.pipeline = StableDiffusionPipeline(
             text_encoder=self.text_encoder,
             vae=self.vae,
@@ -902,10 +903,10 @@ class DetSDTextualInversionPipeline:
         saved_img_dir: Optional[str] = None,
         seed: int = 2147483647,
         parallelize_factor: int = 1,
-        other_pipeline_call_kwargs: Optional[dict] = None,
+        other_hf_pipeline_call_kwargs: Optional[dict] = None,
     ) -> Image.Image:
         """Generates an image from the provided prompt and optionally writes the results to disk."""
-        other_pipeline_call_kwargs = other_pipeline_call_kwargs or {}
+        other_hf_pipeline_call_kwargs = other_hf_pipeline_call_kwargs or {}
         num_samples = rows * cols
         # Could insert a check that num_samples % parallelize_factor == 0, else wasting compute
 
@@ -922,7 +923,7 @@ class DetSDTextualInversionPipeline:
                     num_inference_steps=num_inference_steps,
                     guidance_scale=guidance_scale,
                     generator=generator,
-                    **other_pipeline_call_kwargs,
+                    **other_hf_pipeline_call_kwargs,
                 )
             for nsfw, image in zip(out["nsfw_content_detected"], out["sample"]):
                 # Re-try, if nsfw_content_detected
