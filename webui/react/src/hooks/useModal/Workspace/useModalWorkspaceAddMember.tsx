@@ -27,7 +27,7 @@ const useModalWorkspaceAddMember = ({
   workspace,
   addableUsersAndGroups,
 }: Props): ModalHooks => {
-  const { knownRoles, users } = useStore();
+  const { knownRoles } = useStore();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
