@@ -207,7 +207,8 @@ class DetSDTextualInversionTrainer:
         self._build_train_scheduler()
         self._wrap_and_prepare()
 
-        # Pipeline construction is deferred until the _save call, as it may not be required at all.
+        # Pipeline construction is deferred until the _save call, as the pipeline is not required
+        # if generate_training_images is False.
         self.inference_scheduler_kwargs = None
         self.pipeline = None
 
@@ -344,13 +345,16 @@ class DetSDTextualInversionTrainer:
             if self.accelerator.is_main_process:
                 print(
                     80 * "$",
-                    f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}",
+                    "\n",
+                    f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}: ",
                     new_token_embeddings_norms.detach().mean().item(),
-                    f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
+                    "\n",
+                    f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}: ",
                     new_token_embeddings_norms.detach().max().item(),
-                    print("NORM LOSS: ", norm_loss),
+                    "\n",
+                    f"NORM LOSS: {norm_loss}",
+                    "\n",
                     80 * "$",
-                    sep="\n",
                 )
         self.optimizer.zero_grad()
 
