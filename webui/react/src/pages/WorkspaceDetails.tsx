@@ -41,7 +41,7 @@ export enum WorkspaceDetailsTab {
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const {users } = useStore();
+  const { users } = useStore();
   const { workspaceId } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -84,30 +84,34 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [canceler.signal]);
 
-  const fetchGroupsAndUsersAssignedToWorkspace  = useCallback(async (): Promise<void> => {
+  const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
     // Mock of https://github.com/determined-ai/determined/pull/5085
     const response: RP = await Promise.resolve({
       groups: [],
       usersAssignedDirectly: [],
-      assignments: []
-    })
+      assignments: [],
+    });
 
     const newGroupIds = new Set<number>();
     setUsersAssignedDirectly(response.usersAssignedDirectly);
-    setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map(user => user.id)));
+    setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map((user) => user.id)));
     setGroupsAssignedDirectly(response.groups);
-    response.groups.forEach(group => {
-      if(group.groupId){
-        newGroupIds.add(group.groupId)
+    response.groups.forEach((group) => {
+      if (group.groupId) {
+        newGroupIds.add(group.groupId);
       }
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-
   }, [canceler.signal]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchWorkspace(), fetchUsers(), fetchGroups(), fetchGroupsAndUsersAssignedToWorkspace()]);
+    await Promise.allSettled([
+      fetchWorkspace(),
+      fetchUsers(),
+      fetchGroups(),
+      fetchGroupsAndUsersAssignedToWorkspace(),
+    ]);
   }, [fetchWorkspace, fetchUsers, fetchGroups]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
@@ -133,11 +137,15 @@ const WorkspaceDetails: React.FC = () => {
   }, [basePath, history, location.pathname, tabKey]);
 
   // Users and Groups that are not already a part of the workspace
-  const addableGroups: V1Group[] = groups ? 
-  groups?.filter(groupDetails => {
-    groupDetails.group?.groupId && !groupsAssignedDirectlyIds?.has(groupDetails.group.groupId)}
-    ).map(groupDetails => groupDetails.group) : [];
-  const addableUsers = users.filter(user=> !usersAssignedDirectlyIds?.has(user.id));
+  const addableGroups: V1Group[] = groups
+    ? groups
+        ?.filter((groupDetails) => {
+          groupDetails.group?.groupId &&
+            !groupsAssignedDirectlyIds?.has(groupDetails.group.groupId);
+        })
+        .map((groupDetails) => groupDetails.group)
+    : [];
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds?.has(user.id));
   const addableUsersAndGroups = [...addableGroups, ...addableUsers];
 
   useEffect(() => {
@@ -162,7 +170,13 @@ const WorkspaceDetails: React.FC = () => {
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader addableUsersAndGroups={addableUsersAndGroups} fetchWorkspace={fetchAll} workspace={workspace} />}
+      headerComponent={
+        <WorkspaceDetailsHeader
+          addableUsersAndGroups={addableUsersAndGroups}
+          fetchWorkspace={fetchAll}
+          workspace={workspace}
+        />
+      }
       id="workspaceDetails">
       {rbacEnabled ? (
         <Tabs activeKey={tabKey} destroyInactiveTabPane onChange={handleTabChange}>
@@ -171,11 +185,11 @@ const WorkspaceDetails: React.FC = () => {
           </Tabs.TabPane>
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
             <WorkspaceMembers
-            usersAssignedDirectly = {usersAssignedDirectly}
-            groupsAssignedDirectly = {groupsAssignedDirectly}
-            assignments = {workspaceAssignments}
-            pageRef={pageRef} 
-            workspace={workspace} 
+              usersAssignedDirectly={usersAssignedDirectly}
+              groupsAssignedDirectly={groupsAssignedDirectly}
+              assignments={workspaceAssignments}
+              pageRef={pageRef}
+              workspace={workspace}
             />
           </Tabs.TabPane>
         </Tabs>

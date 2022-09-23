@@ -17,7 +17,13 @@ interface Props {
   workspaceId: number;
 }
 
-const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspaceId, name, userOrGroupId }: Props): ModalHooks => {
+const useModalWorkspaceRemoveMember = ({
+  onClose,
+  userOrGroup,
+  workspaceId,
+  name,
+  userOrGroupId,
+}: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
@@ -31,37 +37,30 @@ const useModalWorkspaceRemoveMember = ({ onClose, userOrGroup, workspaceId, name
     );
   }, [name]);
 
-  const handleOk = useCallback(
-    async () => {
-      try {
-          await removeAssignments(createAssignmentRequest(
-            userOrGroup,
-            userOrGroupId,
-            0,
-            workspaceId
-          ));
-      } catch (e) {
-        if (e instanceof DetError) {
-          handleError(e, {
-            level: e.level,
-            publicMessage: e.publicMessage,
-            publicSubject: 'Unable to remove user or group from workspace.',
-            silent: false,
-            type: e.type,
-          });
-        } else {
-          handleError(e, {
-            level: ErrorLevel.Error,
-            publicMessage: 'Please try again later.',
-            publicSubject: 'Unable to remove user or group.',
-            silent: false,
-            type: ErrorType.Server,
-          });
-        }
+  const handleOk = useCallback(async () => {
+    try {
+      await removeAssignments(createAssignmentRequest(userOrGroup, userOrGroupId, 0, workspaceId));
+    } catch (e) {
+      if (e instanceof DetError) {
+        handleError(e, {
+          level: e.level,
+          publicMessage: e.publicMessage,
+          publicSubject: 'Unable to remove user or group from workspace.',
+          silent: false,
+          type: e.type,
+        });
+      } else {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to remove user or group.',
+          silent: false,
+          type: ErrorType.Server,
+        });
       }
-    return;},
-    [userOrGroup],
-  );
+    }
+    return;
+  }, [userOrGroup]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {

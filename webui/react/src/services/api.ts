@@ -136,7 +136,7 @@ export const assignRolesToGroup = generateDetApi<
   Api.V1AssignRolesResponse
 >(Config.assignRolesToGroup);
 
-export const assignRoles= generateDetApi<
+export const assignRoles = generateDetApi<
   Api.V1AssignRolesRequest,
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse

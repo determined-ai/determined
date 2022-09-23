@@ -827,4 +827,4 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
-export type UserOrGroup = User | V1Group; 
+export type UserOrGroup = User | V1Group;

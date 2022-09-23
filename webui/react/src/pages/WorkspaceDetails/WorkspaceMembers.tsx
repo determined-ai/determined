@@ -13,7 +13,7 @@ import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { UserOrGroup, User, Workspace } from 'types';
-import {V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments} from 'services/api-ts-sdk';
+import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { getName, getIdFromUserOrGroup, isUser, createAssignmentRequest } from 'utils/user';
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
@@ -25,7 +25,6 @@ import { BaseOptionType } from 'antd/lib/select';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import { assignRoles, removeAssignments } from 'services/api';
 import { useStore } from 'contexts/Store';
-
 
 interface Props {
   assignments: V1RoleWithAssignments[];
@@ -49,7 +48,12 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
-  } = useModalWorkspaceRemoveMember({ userOrGroup: userOrGroup, name, workspaceId: workspace.id, userOrGroupId: getIdFromUserOrGroup(userOrGroup) });
+  } = useModalWorkspaceRemoveMember({
+    userOrGroup: userOrGroup,
+    name,
+    workspaceId: workspace.id,
+    userOrGroupId: getIdFromUserOrGroup(userOrGroup),
+  });
 
   const menuItems = (
     <Menu>
@@ -71,22 +75,24 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   );
 };
 
-const WorkspaceMembers: React.FC<Props> = ({ assignments,
+const WorkspaceMembers: React.FC<Props> = ({
+  assignments,
   usersAssignedDirectly,
   groupsAssignedDirectly,
   pageRef,
-  workspace }: Props) => {
-  
-  const { knownRoles }= useStore();
+  workspace,
+}: Props) => {
+  const { knownRoles } = useStore();
 
   const { canUpdateRoles } = usePermissions();
 
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
-  
-  const usersAndGroups: UserOrGroup[] = useMemo(() => [...usersAssignedDirectly, ...groupsAssignedDirectly], [
-    groupsAssignedDirectly, usersAssignedDirectly
-  ])
+
+  const usersAndGroups: UserOrGroup[] = useMemo(
+    () => [...usersAssignedDirectly, ...groupsAssignedDirectly],
+    [groupsAssignedDirectly, usersAssignedDirectly],
+  );
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -112,7 +118,7 @@ const WorkspaceMembers: React.FC<Props> = ({ assignments,
   );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
-  
+
   const columns = useMemo(() => {
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
@@ -159,21 +165,20 @@ const WorkspaceMembers: React.FC<Props> = ({ assignments,
               record,
               getIdFromUserOrGroup(record),
               0,
-              workspace.id
-            )
+              workspace.id,
+            );
             const AssignmentToAdd = createAssignmentRequest(
               record,
               getIdFromUserOrGroup(record),
               1,
-              workspace.id
-            )
+              workspace.id,
+            );
             // Remove the old role
-            await removeAssignments(assignmentToRemove)
+            await removeAssignments(assignmentToRemove);
 
             // Add the new role
-            await assignRoles(AssignmentToAdd)
-          }}
-          >
+            await assignRoles(AssignmentToAdd);
+          }}>
           {knownRoles.map((role) => (
             <Select.Option key={role.id} value={role.id}>
               {role.name}
@@ -190,7 +195,9 @@ const WorkspaceMembers: React.FC<Props> = ({ assignments,
           name={getName(record)}
           workspace={workspace}
         />
-      ) : (<></>);
+      ) : (
+        <></>
+      );
     };
 
     return [
@@ -219,7 +226,6 @@ const WorkspaceMembers: React.FC<Props> = ({ assignments,
       },
     ] as ColumnDef<UserOrGroup>[];
   }, [nameFilterSearch, tableSearchIcon, workspace, userCanAssignRoles]);
-
 
   return (
     <div className={css.membersContainer}>

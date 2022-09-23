@@ -24,8 +24,11 @@ interface Props {
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({addableUsersAndGroups, workspace, fetchWorkspace }: Props) => {
-
+const WorkspaceDetailsHeader: React.FC<Props> = ({
+  addableUsersAndGroups,
+  workspace,
+  fetchWorkspace,
+}: Props) => {
   const { canAssignRoles } = usePermissions();
 
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
@@ -35,7 +38,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({addableUsersAndGroups, workspa
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
       workspace,
-      addableUsersAndGroups
+      addableUsersAndGroups,
     });
 
   const rbacEnabled = useFeature().isOn('rbac');
@@ -104,9 +107,10 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({addableUsersAndGroups, workspa
         )}
       </Space>
       <div className={css.headerButton}>
-        {rbacEnabled && canAssignRoles({ workspace }) && !workspace.immutable && !workspace.archived && (
-          <Button onClick={handleAddMembersClick}> Add Members</Button>
-        )}
+        {rbacEnabled &&
+          canAssignRoles({ workspace }) &&
+          !workspace.immutable &&
+          !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
         {!workspace.immutable && !workspace.archived && (
           <Button onClick={handleProjectCreateClick}>New Project</Button>
         )}

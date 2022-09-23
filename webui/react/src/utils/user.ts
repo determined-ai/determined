@@ -1,4 +1,9 @@
-import { V1Group, V1RoleAssignment, V1AssignRolesRequest, V1RemoveAssignmentsRequest } from 'services/api-ts-sdk';
+import {
+  V1Group,
+  V1RoleAssignment,
+  V1AssignRolesRequest,
+  V1RemoveAssignmentsRequest,
+} from 'services/api-ts-sdk';
 import { DetailedUser, UserOrGroup, User } from 'types';
 
 interface UserNameFields {
@@ -10,7 +15,7 @@ export function getDisplayName(user: DetailedUser | User | UserNameFields | unde
   return user?.displayName || user?.username || 'Unavailable';
 }
 
-export function isUser(obj: UserOrGroup) : string | undefined {
+export function isUser(obj: UserOrGroup): string | undefined {
   const user = obj as User;
   return user?.username || user?.displayName;
 }
@@ -22,36 +27,44 @@ export function getName(obj: UserOrGroup): string {
 }
 
 export const getIdFromUserOrGroup = (obj: UserOrGroup): number => {
-  if(isUser(obj)){
+  if (isUser(obj)) {
     const user = obj as User;
-    return user.id
+    return user.id;
   }
   const group = obj as V1Group;
 
   // THe groupId should always exist
-  return group.groupId || 0
- }
+  return group.groupId || 0;
+};
 
-export function createAssignmentRequest(userOrGroup: UserOrGroup, userOrGroupId: number, roleId: number, workspaceId: number): V1AssignRolesRequest | V1RemoveAssignmentsRequest {
+export function createAssignmentRequest(
+  userOrGroup: UserOrGroup,
+  userOrGroupId: number,
+  roleId: number,
+  workspaceId: number,
+): V1AssignRolesRequest | V1RemoveAssignmentsRequest {
   const roleAssignment: V1RoleAssignment = {
     role: {
-      roleId: 0
+      roleId: 0,
     },
-    scopeWorkspaceId: workspaceId
-  }
-  const assignment = isUser(userOrGroup) ?
-  { 
-    userRoleAssignments: 
-    [{
-    userId: userOrGroupId,
-    roleAssignment
-  }]
-} :
-  { 
-    groupRoleAssignments:[{
-    groupId: userOrGroupId,
-    roleAssignment
-  }]
-}
-return assignment
+    scopeWorkspaceId: workspaceId,
+  };
+  const assignment = isUser(userOrGroup)
+    ? {
+        userRoleAssignments: [
+          {
+            userId: userOrGroupId,
+            roleAssignment,
+          },
+        ],
+      }
+    : {
+        groupRoleAssignments: [
+          {
+            groupId: userOrGroupId,
+            roleAssignment,
+          },
+        ],
+      };
+  return assignment;
 }

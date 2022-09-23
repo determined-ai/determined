@@ -70,7 +70,8 @@ const usePermissions = (): PermissionsHook => {
     relevantPermissions(userAssignments, userRoles).has('view_workspaces');
 
   return {
-    canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(args.workspace, user, userAssignments, userRoles),
+    canAssignRoles: (args: WorkspacePermissionsArgs) =>
+      canAssignRoles(args.workspace, user, userAssignments, userRoles),
     canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
     canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
       canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
@@ -94,7 +95,8 @@ const usePermissions = (): PermissionsHook => {
       canMoveExperiment(args.experiment, user, userAssignments, userRoles),
     canMoveProjects: (args: ProjectPermissionsArgs) =>
       canMoveWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),
-      canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(args.workspace, user, userAssignments, userRoles),
+    canUpdateRoles: (args: WorkspacePermissionsArgs) =>
+      canUpdateRoles(args.workspace, user, userAssignments, userRoles),
     canViewGroups: canViewGroups(user, userAssignments, userRoles),
     canViewUsers: canAdministrateUsers(user, userAssignments, userRoles),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>

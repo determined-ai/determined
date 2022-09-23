@@ -320,7 +320,7 @@ export const assignRoles: DetApi<
 > = {
   name: 'assignRoles',
   postProcess: (response) => response,
-  request: (params) =>detApi.RBAC.assignRoles(params)
+  request: (params) => detApi.RBAC.assignRoles(params),
 };
 
 export const removeAssignments: DetApi<
@@ -330,7 +330,7 @@ export const removeAssignments: DetApi<
 > = {
   name: 'removeAssignments',
   postProcess: (response) => response,
-  request: (params) =>detApi.RBAC.removeAssignments(params)
+  request: (params) => detApi.RBAC.removeAssignments(params),
 };
 
 /* Info */
