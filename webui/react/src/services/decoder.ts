@@ -53,8 +53,8 @@ export const mapV1Assignment = (
   return {
     isGlobal: assignment.isGlobal || false,
     name: role?.name || '',
-    workspaces: assignment.scopeWorkspaceIds,
     roleId: assignment.roleId || 0,
+    workspaces: assignment.scopeWorkspaceIds,
   };
 };
 

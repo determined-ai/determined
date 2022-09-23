@@ -3,30 +3,30 @@ import { useCallback } from 'react';
 import { activeRunStates } from 'constants/states';
 import {
   agentsToOverview,
+  OSSUserAssignment,
+  OSSUserRole,
   StoreAction,
   useStore,
   useStoreDispatch,
-  OSSUserAssignment,
-  OSSUserRole,
 } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import {
   getActiveTasks,
   getAgents,
   getExperiments,
   getInfo,
+  getPermissionsSummary,
   getResourcePools,
   getUsers,
   getUserSetting,
   getWorkspaces,
   listRoles,
-  getPermissionsSummary,
 } from 'services/api';
+import * as decoder from 'services/decoder';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, Permission, ResourceType } from 'types';
+import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
-import useFeature from 'hooks/useFeature';
-import * as decoder from 'services/decoder';
 
 export const useFetchActiveExperiments = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
@@ -160,7 +160,7 @@ export const useFetchKnownRoles = (canceler: AbortController): (() => Promise<vo
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, storeDispatch]);
+  }, [canceler, storeDispatch, rbacEnabled]);
 };
 
 export const useFetchUserRoles = (canceler: AbortController): (() => Promise<void>) => {
@@ -170,7 +170,7 @@ export const useFetchUserRoles = (canceler: AbortController): (() => Promise<voi
     try {
       const { roles, assignments } = rbacEnabled
         ? await getPermissionsSummary({}, { signal: canceler.signal })
-        : { roles: [OSSUserRole], assignments: [OSSUserAssignment] };
+        : { assignments: [OSSUserAssignment], roles: [OSSUserRole] };
       storeDispatch({ type: StoreAction.SetUserRoles, value: roles.map(decoder.mapV1Role) });
       storeDispatch({
         type: StoreAction.SetUserAssignments,
@@ -179,5 +179,5 @@ export const useFetchUserRoles = (canceler: AbortController): (() => Promise<voi
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, storeDispatch]);
+  }, [canceler, storeDispatch, rbacEnabled]);
 };

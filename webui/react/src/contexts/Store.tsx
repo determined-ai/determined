@@ -1,7 +1,8 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { V1Role, V1RoleAssignmentSummary, V1UserWebSetting} from 'services/api-ts-sdk';
+import { V1Role, V1RoleAssignmentSummary, V1UserWebSetting } from 'services/api-ts-sdk';
+import * as decoder from 'services/decoder';
 import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
@@ -21,7 +22,6 @@ import {
   Workspace,
 } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
-import * as decoder from 'services/decoder';
 
 const logger = rootLogger.extend('store');
 
@@ -159,7 +159,6 @@ const initInfo: DeterminedInfo = {
 };
 
 export const OSSUserRole: V1Role = {
-  roleId: -1,
   name: 'OSS User',
   permissions: [
     {
@@ -168,6 +167,7 @@ export const OSSUserRole: V1Role = {
       name: 'oss_user',
     },
   ],
+  roleId: -1,
 };
 
 export const OSSUserAssignment: V1RoleAssignmentSummary = {
