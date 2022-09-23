@@ -130,6 +130,25 @@ const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
   return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
 };
 
+const Cell = React.memo(
+  ({ children, className, isCellRightClickable, rightClickableCellProps, ...props }: CellProps) => {
+    const classes = [className, css.cell];
+    if (!isCellRightClickable)
+      return (
+        <td className={classes.join(' ')} {...props}>
+          {children}
+        </td>
+      );
+    return (
+      <td className={classes.join(' ')} {...props}>
+        <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
+          {children}
+        </div>
+      </td>
+    );
+  },
+);
+
 const Row: Row = ({
   className,
   children,
@@ -191,9 +210,13 @@ const Row: Row = ({
         {React.Children.map(
           // Avoiding using context here reduces significantly the number of re-renders
           children,
-          (child) =>
-            React.isValidElement(child) &&
-            React.cloneElement(child, { ...child.props, rightClickableCellProps }),
+          (child) => {
+            if (!React.isValidElement(child)) return;
+
+            const combinedProps = { ...child.props, rightClickableCellProps };
+
+            return React.cloneElement(<Cell {...combinedProps} />);
+          },
         )}
       </tr>
     </ContextMenu>
@@ -203,25 +226,6 @@ const Row: Row = ({
     </tr>
   );
 };
-
-const Cell = React.memo(
-  ({ children, className, isCellRightClickable, rightClickableCellProps, ...props }: CellProps) => {
-    const classes = [className, css.cell];
-    if (!isCellRightClickable)
-      return (
-        <td className={classes.join(' ')} {...props}>
-          {children}
-        </td>
-      );
-    return (
-      <td className={classes.join(' ')} {...props}>
-        <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
-          {children}
-        </div>
-      </td>
-    );
-  },
-);
 
 const ResizeShadow: React.FC<{ display: 'none' | 'block'; x: number }> = React.memo(
   ({ x, display }) => {
