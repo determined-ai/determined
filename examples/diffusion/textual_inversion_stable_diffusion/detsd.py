@@ -519,27 +519,30 @@ class DetSDTextualInversionTrainer:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
+                print("READING CHECKPOINT FROM", path)
                 with self.accelerator.local_main_process_first():
                     with open(path.joinpath("metadata.json"), "r") as f:
                         checkpoint_metadata_dict = json.load(f)
                         self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+                    print("TORCH.LOAD CHECKPOINT")
                     optimizer_state_dict = torch.load(path.joinpath("optimizer_state_dict.pt"))
+                    print("LOAD CHECKPOINT INTO OPTIMIZER")
                     self.optimizer.load_state_dict(optimizer_state_dict)
                     learned_embeddings_dict = torch.load(
                         path.joinpath("learned_embeddings_dict.pt")
                     )
                     token_embeddings = self._get_token_embedding_weight_data()
-                    for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
+                    for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[concept_token][
                             "learned_embeddings"
                         ]
                         # Sanity check on length.
                         # TODO: replace with strict=True in zip after upgrade to py >= 3.10
-                        assert len(d_ids) == len(
+                        assert len(dummy_ids) == len(
                             learned_embeddings
-                        ), 'Length of "d_ids" and "learned_embeddings" must be equal.'
+                        ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'
                         for idx, tensor in zip(
-                            d_ids,
+                            dummy_ids,
                             learned_embeddings,
                         ):
                             token_embeddings[idx] = tensor
@@ -566,9 +569,9 @@ class DetSDTextualInversionTrainer:
 
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
-        for concept_token, d_ids in self.concept_to_dummy_ids_map.items():
+        for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
             token_embeddings = self._get_token_embedding_weight_data()
-            learned_embeddings = token_embeddings[d_ids].detach().cpu()
+            learned_embeddings = token_embeddings[dummy_ids].detach().cpu()
             initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
             learned_embeddings_dict[concept_token] = {
                 "initializer_tokens": initializer_tokens,
