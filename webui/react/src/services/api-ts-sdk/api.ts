@@ -2430,6 +2430,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     projectOwnerId: number;
+    /**
+     * The id of the group associated with this experiment.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    groupId?: number;
 }
 
 /**
@@ -5377,6 +5383,12 @@ export interface V1PatchExperiment {
      * @memberof V1PatchExperiment
      */
     notes?: string;
+    /**
+     * The experiment group id.
+     * @type {number}
+     * @memberof V1PatchExperiment
+     */
+    groupId?: number;
 }
 
 /**
