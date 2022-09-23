@@ -199,9 +199,6 @@ class DetSDTextualInversionTrainer:
 
         self._build_models()
         self._add_new_tokens()
-        with torch.no_grad():
-            init_norm = torch.linalg.vector_norm(self._get_new_token_embeddings(), dim=1).mean()
-            print("NEW NORMS AT INIT", init_norm)
         self._freeze_layers()
         self._build_dataset_and_dataloader()
         self._build_optimizer()
@@ -309,7 +306,6 @@ class DetSDTextualInversionTrainer:
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         mse_loss = F.mse_loss(noise_pred, noise)
         self.accelerator.backward(mse_loss)
-        print("MSE LOSS: ", mse_loss)
 
         # Include a norm_loss which penalizes the new embeddings for being much larger or smaller
         # than the original embedding vectors.  Without such a loss, the new vectors are typically
@@ -354,20 +350,6 @@ class DetSDTextualInversionTrainer:
             token_embeddings[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
-            if self.accelerator.is_main_process:
-                print(
-                    80 * "$",
-                    "\n",
-                    f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}: ",
-                    self.MEAN_NEW_EMBEDDING,
-                    "\n",
-                    f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}: ",
-                    self.MAX_NEW_EMBEDDING,
-                    "\n",
-                    f"NORM LOSS: {self.norm_loss}",
-                    "\n",
-                    80 * "$",
-                )
             self.norm_loss = None
         self.optimizer.zero_grad()
 
@@ -447,7 +429,6 @@ class DetSDTextualInversionTrainer:
             self.original_embedding_mean_norm = (
                 torch.linalg.vector_norm(self.original_embedding_tensors, dim=1).mean().item()
             )
-            print("ORIGINAL EMBEDDING MEAN NORM: ", self.original_embedding_mean_norm)
         self.new_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
             torch.tensor(all_dummy_placeholder_token_ids),
@@ -653,7 +634,6 @@ class DetSDTextualInversionTrainer:
             / self.accelerator.num_processes
         )
         self.loss_history = []
-        print("self.last_mean_loss", self.last_mean_loss)
         if self.accelerator.is_main_process:
             core_context.train.report_training_metrics(
                 steps_completed=self.steps_completed,
@@ -678,11 +658,9 @@ class DetSDTextualInversionTrainer:
             token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
-        # TODO: Can change the device call to self.accelerator.device after deleting print statement
-        # checks.
         all_dummy_tokens_t = torch.tensor(
             self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
-            device=token_embedding_layer.weight.device,
+            device=self.accelerator.device,
         )
         new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
         return new_token_embeddings
