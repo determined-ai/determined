@@ -16,7 +16,6 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser, UserRole } from 'types';
@@ -133,33 +132,6 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
     return columns;
   }, [canModifyPermissions, viewOnly, onClickDeleteRole, rbacEnabled]);
 
-  const expandedRowRender = useCallback((record: UserRole) => {
-    const permissionColumn = [
-      {
-        dataIndex: 'name',
-        key: 'name',
-        title: 'Name',
-        width: '70%',
-      },
-      {
-        dataIndex: 'isGlobal',
-        key: 'isGlobal',
-        render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
-        title: 'Global',
-        width: '30%',
-      },
-    ];
-
-    return (
-      <Table
-        columns={permissionColumn}
-        dataSource={record.permissions}
-        pagination={{ hideOnSinglePage: true, size: 'small' }}
-        rowKey="id"
-      />
-    );
-  }, []);
-
   return (
     <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
       <Form.Item
@@ -220,7 +192,6 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
         <Table
           columns={permissionTableColumn}
           dataSource={permissions}
-          expandable={{ expandedRowRender }}
           loading={isLoading}
           pagination={{ hideOnSinglePage: true, size: 'small' }}
           rowKey="name"
