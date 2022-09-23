@@ -1,3 +1,4 @@
+import {message} from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
@@ -40,7 +41,8 @@ const useModalWorkspaceRemoveMember = ({
 
   const handleOk = useCallback(async () => {
     try {
-      await removeAssignments(createAssignmentRequest(userOrGroup, userOrGroupId, 0, workspaceId));
+      await removeAssignments(createAssignmentRequest(0,userOrGroup, userOrGroupId, workspaceId));
+      message.success(`${name} removed from workspace`)
     } catch (e) {
       if (e instanceof DetError) {
         handleError(e, {

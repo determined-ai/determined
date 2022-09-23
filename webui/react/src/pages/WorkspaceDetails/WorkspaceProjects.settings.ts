@@ -77,7 +77,7 @@ const config: SettingsConfig = {
       },
     },
     {
-      key: 'username',
+      key: 'name',
       type: { baseType: BaseType.String },
     },
     {

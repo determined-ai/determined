@@ -1,4 +1,4 @@
-import { Form, Select } from 'antd';
+import { Form, message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -81,9 +81,10 @@ const useModalWorkspaceAddMember = ({
     try {
       const values = await form.validateFields();
       if (values && selectedOption) {
-        await assignRoles(createAssignmentRequest(selectedOption, values.id, 0, workspace.id));
+        await assignRoles(createAssignmentRequest(values.id, selectedOption, 0, workspace.id));
         form.resetFields();
         setSelectedOption(undefined);
+        message.success(`${getName(selectedOption)} added to workspace,`)
       }
     } catch (e) {
       if (e instanceof DetError) {
