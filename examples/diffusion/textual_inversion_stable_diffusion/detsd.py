@@ -31,7 +31,6 @@ from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
 
-# TODO: additional default kwargs for ddim and lms-discrete
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,
     "lms-discrete": LMSDiscreteScheduler,
@@ -39,7 +38,7 @@ NOISE_SCHEDULER_DICT = {
 }
 DEFAULT_SCHEDULER_KWARGS_DICT = {
     "pndm": {"skip_prk_steps": True},
-    "ddim": {},
+    "ddim": {"clip_sample": False},
     "lms-discrete": {},
 }
 
