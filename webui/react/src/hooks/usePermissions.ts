@@ -29,6 +29,7 @@ interface ProjectPermissionsArgs {
 interface PermissionsHook {
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
@@ -71,6 +72,8 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles(args.workspace, user, userAssignments, userRoles),
     canCreateExperiment: (args: WorkspacePermissionsArgs) =>
       canCreateExperiment(args.workspace, userAssignments, userRoles),
+    canCreateProject: (args: WorkspacePermissionsArgs) =>
+      canCreateProject(args.workspace, userAssignments, userRoles),
     canCreateWorkspace: canCreateWorkspace(userAssignments, userRoles),
     canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
       canDeleteExperiment(args.experiment, user, userAssignments, userRoles),
@@ -289,6 +292,15 @@ const canDeleteModelVersion = (
 
 // Project actions
 // Currently the smallest scope is workspace
+const canCreateProject = (
+  workspace?: PermissionWorkspace,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return permitted.has('oss_user') || permitted.has('create_project');
+};
+
 const canDeleteWorkspaceProjects = (
   workspace?: PermissionWorkspace,
   project?: Project,
