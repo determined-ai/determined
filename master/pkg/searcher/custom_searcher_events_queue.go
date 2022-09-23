@@ -27,7 +27,8 @@ type (
 	}
 
 	EventsWatcher struct {
-		C <-chan []*experimentv1.SearcherEvent
+		ID uuid.UUID
+		C  <-chan []*experimentv1.SearcherEvent
 	}
 )
 
@@ -52,7 +53,7 @@ func (q *SearcherEventQueue) Watch(id uuid.UUID) (EventsWatcher, error) {
 		close(w)
 		delete(q.watchers, id)
 	}
-	return EventsWatcher{C: w}, nil
+	return EventsWatcher{ID: id, C: w}, nil
 }
 
 // Unwatch unregisters a eventsWatcher.
@@ -75,8 +76,6 @@ func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 		close(w)
 		delete(q.watchers, id)
 	}
-	print("In enqueue")
-	print(len(q.events))
 }
 
 // GetEvents returns all the events.

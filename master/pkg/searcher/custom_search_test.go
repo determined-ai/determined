@@ -150,15 +150,38 @@ func TestCustomSearchWatcher(t *testing.T) {
 	expEvents = append(expEvents, &searcherEvent)
 	require.Equal(t, expEvents, queue.GetEvents())
 
-	// add events and then you should recieve events in the watcher channel.
+	//  Receive events in the watcher channel after it's added.
 	eventsInWatcher := <-w.C
 	select {
 	case <-w.C:
 		require.Equal(t, queue.GetEvents(), eventsInWatcher)
+		print("length")
+		print(len(queue.events))
+		print("\n")
+		print(len(eventsInWatcher))
 	default:
 		t.Fatal("did not receive events")
 	}
 
 	// unwatching should work.
 	queue.Unwatch(id)
+
+	// Recieve events when you create a new watcher after events exist.
+	id = uuid.New()
+	w2, err := queue.Watch(id)
+	eventsInWatcher2 := <-w2.C
+	select {
+	case <-w.C:
+		require.Equal(t, queue.GetEvents(), eventsInWatcher2)
+		print("length")
+		print(len(queue.events))
+		print("\n")
+		print(len(eventsInWatcher2))
+	default:
+		t.Fatal("did not receive events")
+	}
+
+	// unwatching should work.
+	queue.Unwatch(id)
+
 }

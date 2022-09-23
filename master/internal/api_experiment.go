@@ -261,16 +261,20 @@ func (a *apiServer) GetSearcherEventsLongPolling(ctx context.Context, req *apiv1
 	addr := experimentsAddr.Child(req.ExperimentId)
 
 	var w searcher.EventsWatcher
-	switch err = a.ask(addr, w, &resp); {
+
+	switch err = a.ask(addr, req, &w); {
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to get events %v", err) // failed to get eventsWatcher to be more specific. But to the user this is not relevant.
+		return nil, status.Errorf(codes.Internal, "failed to get events from actor: long polling %v", err) // failed to get eventsWatcher to be more specific. But to the user this is not relevant.
 	default:
+		msg := UnwatchEvents{w.ID}
+		a.ask(addr, msg, &w)
 		ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
 		defer cancel()
 		select {
 		case <-w.C:
+			events := <-w.C
 			resp = &apiv1.GetSearcherEventsResponse{
-				SearcherEvents: <-w.C,
+				SearcherEvents: events,
 			}
 			return resp, nil
 		case <-ctx.Done():

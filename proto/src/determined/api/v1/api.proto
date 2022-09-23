@@ -1392,7 +1392,7 @@ service Determined {
   rpc GetSearcherEventsLongPolling(GetSearcherEventsRequest) 
      returns(GetSearcherEventsResponse) {
     option(google.api.http) = {
-       get: "/api/v1/experiments/{experiment_id}/searcher_events"
+       get: "/api/v1/experiments/{experiment_id}/searcher_events_long_polling"
       }; 
        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"

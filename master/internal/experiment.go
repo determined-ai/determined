@@ -71,6 +71,10 @@ type (
 		requestID model.RequestID
 		reason    model.ExitedReason
 	}
+
+	UnwatchEvents struct {
+		id uuid.UUID
+	}
 )
 
 type (
@@ -231,6 +235,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		ops, err := e.searcher.InitialOperations()
+
 		if err != nil {
 			err = errors.Wrap(err, "failed to generate initial operations")
 			e.updateState(ctx, model.StateWithReason{
@@ -461,6 +466,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			} else {
 				ctx.Respond(w)
 			}
+		}
+
+	case UnwatchEvents:
+		queue, err := e.searcher.GetCustomSearcherEventQueue()
+		if err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
+		} else {
+			queue.Unwatch(msg.id)
 		}
 
 	/*
