@@ -628,7 +628,7 @@ class EphemeralLegacyCallbackCounter(pytorch.PyTorchCallback):
     def __init__(self) -> None:
         self.legacy_on_training_epochs_start_calls = 0
 
-    def on_training_epoch_start(self, epoch_idx: int) -> None:
+    def on_training_epoch_start(self) -> None:  # noqa # This is to test for a deprecation warning.
         logging.debug(f"calling {__name__} without arguments")
         self.legacy_on_training_epochs_start_calls += 1
 
