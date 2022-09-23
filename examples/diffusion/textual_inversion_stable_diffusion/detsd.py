@@ -330,13 +330,14 @@ class DetSDTextualInversionTrainer:
         loss = (mse_loss + norm_loss).detach()
         self.loss_history.append(loss)
 
+        self.optimizer.step()
+
         # For textual inversion, we only update the embeddings of the newly added concept tokens.
         # This is most safely implemented by copying the original embeddings, rather than zeroing
         # out their gradients, as L2 regularization (for instance) will still modify weights whose
         # gradient is zero. See link below for a discussion:
         # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
-        self.optimizer.step()
-        # Only overwrite after the step has actually been taken:
+        # Only perform the overwriting after the step has actually been taken:
         if self.accelerator.sync_gradients:
             token_embeddings = self._get_token_embedding_weight_data()
             token_embeddings[
