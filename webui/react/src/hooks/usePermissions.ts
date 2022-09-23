@@ -123,7 +123,7 @@ const relevantPermissions = (
       // but not all of its permissions?
       permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
     });
-  const permitter = new Set<string>(permissions.map((p) => p.id));
+  const permitter = new Set<string>(permissions.map((p) => p.id || p.name));
   // a cluster_admin has all permissions
   if (relevantAssigned.includes('ClusterAdmin')) {
     return { has: () => true };
