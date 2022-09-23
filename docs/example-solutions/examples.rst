@@ -319,8 +319,4 @@ For an introduction to using the training API, please see the Training APIs sect
 
    -  -  PyTorch
       -  MNIST
-      -  :download:`local_search_runner.tgz </examples/local_search_runner.tgz>`
-
-   -  -  PyTorch
-      -  MNIST
-      -  :download:`core_search_runner.tgz </examples/core_search_runner.tgz>`
+      -  :download:`asha_search_method.tgz </examples/asha_search_method.tgz>`

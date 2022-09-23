@@ -3,7 +3,8 @@
 In this example, we use LocalSearchRunner, which executes a custom SearchMethod on your local machine and 
 orchestrates a multi-trial experiment on a Determined cluster.
 
-For an example of running the custom SearchMethod on a cluster, see `examples/custom_searcher/core_search_runner`.
+For an example of running the custom SearchMethod on a cluster, 
+see `examples/custom_search_method/asha_custom_search_method/core_search_runner`.
 
 ## Files
 * **run_experiment.py**: The code for running the custom SearchMethod locally with LocalSearchRunner.

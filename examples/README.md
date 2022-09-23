@@ -86,5 +86,4 @@
 
 | Example                                                                  | Dataset | Framework  |
 |:------------------------------------------------------------------------:|:-------:|:----------:|
-| [local\_search\_runner](custom_search_method/local_search_runner)        | MNIST   | PyTorch    |
-| [core\_search\_runner](custom_search_method/core_search_runner)          | MNIST   | PyTorch    |
+| [asha\_search\_method](custom_search_method/asha_search_method)          | MNIST   | PyTorch    |

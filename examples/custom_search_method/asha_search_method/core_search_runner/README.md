@@ -4,7 +4,8 @@ In this example, we use CoreSearchRunner, which executes a custom SearchMethod a
 orchestrates a multi-trial experiment. Both the custom SearchMethod and the multi-trial experiment are executed 
 on the Determined cluster.
 
-For an example of running the custom SearchMethod locally, see `examples/custom_searcher/local_search_runner`.
+For an example of running the custom SearchMethod locally, 
+see `examples/custom_search_method/asha_custom_search_method/local_search_runner`.
 
 ## Files
 * **run_experiment.py**: The code for running a custom SearchMethod with CoreSearchRunner.
