@@ -150,7 +150,7 @@ export enum CommandState {
   Queued = 'QUEUED',
 }
 
-export type State = CommandState | RunState;
+export type State = CommandState | typeof RunState;
 
 export interface CommandAddress {
   containerIp: string;
@@ -317,24 +317,27 @@ export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }
 
-export enum RunState {
-  Active = 'ACTIVE',
-  Paused = 'PAUSED',
-  StoppingCanceled = 'STOPPING_CANCELED',
-  Canceled = 'CANCELED',
-  StoppingCompleted = 'STOPPING_COMPLETED',
-  Completed = 'COMPLETED',
-  StoppingError = 'STOPPING_ERROR',
-  Errored = 'ERROR',
-  Deleted = 'DELETED',
-  Deleting = 'DELETING',
-  DeleteFailed = 'DELETE_FAILED',
-  Unspecified = 'UNSPECIFIED',
-  Queued = 'QUEUED',
-  Pulling = 'PULLING',
-  Starting = 'STARTING',
-  Running = 'RUNNING',
-}
+export const RunState = {
+  Active: 'ACTIVE',
+  Canceled: 'CANCELED',
+  Completed: 'COMPLETED',
+  Deleted: 'DELETED',
+  DeleteFailed: 'DELETE_FAILED',
+  Deleting: 'DELETING',
+  Error: 'ERROR',
+  Paused: 'PAUSED',
+  Pulling: 'PULLING',
+  Queued: 'QUEUED',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  StoppingCanceled: 'STOPPING_CANCELED',
+  StoppingCompleted: 'STOPPING_COMPLETED',
+  StoppingError: 'STOPPING_ERROR',
+  StoppingKilled: 'STOPPING_KILLED',
+  Unspecified: 'UNSPECIFIED',
+} as const;
+
+export type RunState = typeof RunState[keyof typeof RunState];
 
 export interface ValidationHistory {
   endTime: string;

@@ -230,7 +230,7 @@ const runStateSortOrder: RunState[] = [
   RunState.Pulling,
   RunState.Queued,
   RunState.StoppingError,
-  RunState.Errored,
+  RunState.Error,
   RunState.StoppingCompleted,
   RunState.Completed,
   RunState.StoppingCanceled,
