@@ -676,7 +676,7 @@ class DetSDTextualInversionPipeline:
     def __init__(
         self,
         learned_embeddings_filename: str = "learned_embeddings_dict.pt",
-        scheduler_name: str = "pndm",
+        scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "pndm",
         beta_start: float = 0.00085,
         beta_end: float = 0.012,
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
