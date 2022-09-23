@@ -2,12 +2,12 @@ import {message} from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import { removeAssignments } from 'services/api';
+import { removeRoleFromGroup, removeRoleFromUser} from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroup } from 'types';
 import handleError from 'utils/error';
-import { createAssignmentRequest } from 'utils/user';
+import { isUser } from 'utils/user';
 
 import css from './useModalWorkspaceRemoveMember.module.scss';
 
@@ -41,7 +41,7 @@ const useModalWorkspaceRemoveMember = ({
 
   const handleOk = useCallback(async () => {
     try {
-      await removeAssignments(createAssignmentRequest(0,userOrGroup, userOrGroupId, workspaceId));
+      isUser(userOrGroup) ? await removeRoleFromUser({roleId: 0, userId: userOrGroupId}) : await removeRoleFromGroup({roleId: 0, groupId: userOrGroupId})
       message.success(`${name} removed from workspace`)
     } catch (e) {
       if (e instanceof DetError) {

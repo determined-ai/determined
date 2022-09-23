@@ -12,14 +12,13 @@ import { useStore } from 'contexts/Store';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { assignRoles, removeAssignments } from 'services/api';
+import { assignRolesToUser, assignRolesToGroup, removeRoleFromUser, removeRoleFromGroup} from 'services/api';
 import { V1Group, V1GroupDetails, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, Workspace } from 'types';
-import { createAssignmentRequest, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
-
+import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -162,23 +161,29 @@ const WorkspaceMembers: React.FC<Props> = ({
           value={assignments[0]}
           onSelect={async (value: RawValueType | LabelInValueType) => {
             const roleIdValue = value as number;
-            const assignmentToRemove = createAssignmentRequest(
-              roleIdValue,
-              record,
-              getIdFromUserOrGroup(record),
-              workspace.id,
-            );
-            const AssignmentToAdd = createAssignmentRequest(
-              roleIdValue,
-              record,
-              getIdFromUserOrGroup(record),
-              workspace.id,
-            );
+            const userOrGroupId = getIdFromUserOrGroup(record);
+            
             // Remove the old role
-            await removeAssignments(assignmentToRemove);
-
             // Add the new role
-            await assignRoles(AssignmentToAdd);
+            if(isUser(record)){
+              await removeRoleFromUser({
+                roleId:roleIdValue,
+                userId: userOrGroupId
+              })
+              await assignRolesToUser({
+                roleIds:[roleIdValue],
+                userId: userOrGroupId
+              })
+            } else {
+              await removeRoleFromGroup({
+                roleId: roleIdValue,
+                groupId: userOrGroupId
+              })
+              await assignRolesToGroup({
+                roleIds: [roleIdValue],
+                groupId: userOrGroupId
+              })
+            }
           }}>
           {knownRoles.map((role) => (
             <Select.Option key={role.id} value={role.id}>

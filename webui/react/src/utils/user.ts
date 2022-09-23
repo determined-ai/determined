@@ -36,35 +36,3 @@ export const getIdFromUserOrGroup = (obj: UserOrGroup): number => {
   // THe groupId should always exist
   return group.groupId || 0;
 };
-
-export function createAssignmentRequest(
-  roleId: number,
-  userOrGroup: UserOrGroup,
-  userOrGroupId: number,
-  workspaceId: number,
-): V1AssignRolesRequest | V1RemoveAssignmentsRequest {
-  const roleAssignment: V1RoleAssignment = {
-    role: {
-      roleId: roleId,
-    },
-    scopeWorkspaceId: workspaceId,
-  };
-  const assignment = isUser(userOrGroup)
-    ? {
-        userRoleAssignments: [
-          {
-            roleAssignment,
-            userId: userOrGroupId,
-          },
-        ],
-      }
-    : {
-        groupRoleAssignments: [
-          {
-            groupId: userOrGroupId,
-            roleAssignment,
-          },
-        ],
-      };
-  return assignment;
-}

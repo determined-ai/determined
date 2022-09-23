@@ -3,13 +3,13 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { assignRoles } from 'services/api';
+import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup, Workspace } from 'types';
 import handleError from 'utils/error';
-import { createAssignmentRequest, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
@@ -81,7 +81,16 @@ const useModalWorkspaceAddMember = ({
     try {
       const values = await form.validateFields();
       if (values && selectedOption) {
-        await assignRoles(createAssignmentRequest(values.roleId, selectedOption, values.userOrGroupId, workspace.id));
+        isUser(selectedOption) ? 
+          await assignRolesToUser({
+            roleIds: [values.roleId],
+            userId: values.userOrGroupId
+          })
+        :
+          await assignRolesToGroup({
+            roleIds: [values.roleId],
+            groupId: values.userOrGroupId
+          })
         form.resetFields();
         setSelectedOption(undefined);
         message.success(`${getName(selectedOption)} added to workspace,`)
