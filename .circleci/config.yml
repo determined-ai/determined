@@ -1213,6 +1213,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           executor: <<pipeline.parameters.docker-image>>
@@ -1338,6 +1339,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1353,6 +1355,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1385,6 +1388,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test
@@ -1400,6 +1404,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1419,6 +1424,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1437,6 +1443,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1480,6 +1487,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1503,6 +1511,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1524,6 +1533,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1543,6 +1553,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1563,6 +1574,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1583,6 +1595,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1604,6 +1617,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: false
@@ -1627,6 +1641,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1833,6 +1848,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -1926,6 +1942,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2012,6 +2029,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
