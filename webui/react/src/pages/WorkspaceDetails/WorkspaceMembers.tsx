@@ -94,7 +94,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   const userCanAssignRoles = canUpdateRoles({ workspace });
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-
+  
   knownRoles = mockWorkspaceMembers ? [{
     id: 1,
     name: 'Editor',
@@ -105,15 +105,16 @@ const WorkspaceMembers: React.FC<Props> = ({
     name: 'Viewer',
     permissions: [],
   }] : knownRoles
+
   const usersAndGroups: UserOrGroup[] = useMemo(
-    () => mockWorkspaceMembers ? [...usersAssignedDirectly, ...groupsAssignedDirectly] : [{
+    () => mockWorkspaceMembers ? [{
       displayName: 'Test User One Display Name',
       id: 1,
-      username: 'Test User One UserName',
+      username: 'TestUserOneUserName',
     },
     {
       id: 2,
-      username: 'Test User 2 UserName',
+      username: 'TestUserTwoUserName',
     },
     {
       groupId: 1,
@@ -123,7 +124,7 @@ const WorkspaceMembers: React.FC<Props> = ({
       groupId: 2,
       name: 'Test Group 2 Name',
     },
-  ],
+  ] : [...usersAssignedDirectly, ...groupsAssignedDirectly],
     [groupsAssignedDirectly, mockWorkspaceMembers, usersAssignedDirectly],
   );
 
@@ -192,7 +193,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         <Select
           className={css.selectContainer}
           disabled={!userCanAssignRoles}
-          value={assignments[0]}
+          value={mockWorkspaceMembers ? 1 : assignments[0]}
           onSelect={async (value: RawValueType | LabelInValueType) => {
             const roleIdValue = value as number;
             const userOrGroupId = getIdFromUserOrGroup(record);
