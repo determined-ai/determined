@@ -43,12 +43,9 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	err = db.SaveSnapshot(exp.ID, 2, snapshot)
 	require.NoError(t, err)
-	print("snapshot of searcher1")
-	print(string(snapshot))
 
 	// Retrieve snapshot from database.
 	restored_snapshotSearcher1, _, err1 := db.ExperimentSnapshot(exp.ID)
-	print("restored snapshot")
 	require.NoError(t, err1)
 
 	// Restore snapshot from custom searcher 1 to custom searcher 2 to
