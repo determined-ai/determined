@@ -28,6 +28,31 @@ type ArchiveWriter interface {
 	Close() error
 }
 
+// NewArchiveWriter returns a new ArchiveWriter for archiveType that writes to w.
+func NewArchiveWriter(w io.Writer, archiveType ArchiveType) (ArchiveWriter, error) {
+	closers := []io.Closer{}
+	switch archiveType {
+	case ArchiveTgz:
+		gz := gzip.NewWriter(w)
+		closers = append(closers, gz)
+
+		tw := tar.NewWriter(gz)
+		closers = append(closers, tw)
+
+		return &tarArchiveWriter{archiveClosers{closers}, tw}, nil
+
+	case ArchiveZip:
+		zw := zip.NewWriter(w)
+		closers = append(closers, zw)
+
+		return &zipArchiveWriter{archiveClosers{closers}, zw, nil}, nil
+
+	default:
+		return nil, fmt.Errorf(
+			"archive type must be %s or %s but got %s", ArchiveTgz, ArchiveZip, archiveType)
+	}
+}
+
 type archiveClosers struct {
 	closers []io.Closer
 }
@@ -82,38 +107,11 @@ func (aw *zipArchiveWriter) WriteHeader(path string, size int64) error {
 }
 
 func (aw *zipArchiveWriter) Write(p []byte) (int, error) {
-	var w io.Writer
 	// Guard against the mistake where WriteHeader() is not called before
 	// calling Write(). The AWS SDK likely will not make this mistake but
 	// zipArchiveWriter is not just limited to being used with AWS.
 	if aw.zwContent == nil {
 		return 0, nil
 	}
-	w = aw.zwContent
-	return w.Write(p)
-}
-
-// NewArchiveWriter returns a new ArchiveWriter for archiveType that writes to w.
-func NewArchiveWriter(w io.Writer, archiveType ArchiveType) (ArchiveWriter, error) {
-	closers := []io.Closer{}
-	switch archiveType {
-	case ArchiveTgz:
-		gz := gzip.NewWriter(w)
-		closers = append(closers, gz)
-
-		tw := tar.NewWriter(gz)
-		closers = append(closers, tw)
-
-		return &tarArchiveWriter{archiveClosers{closers}, tw}, nil
-
-	case ArchiveZip:
-		zw := zip.NewWriter(w)
-		closers = append(closers, zw)
-
-		return &zipArchiveWriter{archiveClosers{closers}, zw, nil}, nil
-
-	default:
-		return nil, fmt.Errorf(
-			"archive type must be %s or %s but got %s", ArchiveTgz, ArchiveZip, archiveType)
-	}
+	return aw.zwContent.Write(p)
 }

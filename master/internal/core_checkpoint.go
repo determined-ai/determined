@@ -37,8 +37,8 @@ func mimeToArchiveType(mimeType string) archive.ArchiveType {
 	}
 }
 
-// Since Echo does not send an http status code until the first write to the ResponseWriter.
-// We use delayWriter to buffer our writes, which effectively delays sending the status code
+// Since Echo does not send an http status code until the first write to the ResponseWriter,
+// we use delayWriter to buffer our writes, which effectively delays sending the status code
 // until we are more confident the download will succeed. delayWriter wraps bufio.Writer
 // and adds Close().
 type delayWriter struct {
@@ -84,12 +84,12 @@ func (m *Master) getCheckpointImpl(
 	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) (retErr error) {
 	// Assume a checkpoint always has experiment configs
 	storageConfig, err := m.getCheckpointStorageConfig(id)
-	if err != nil {
+	switch {
+	case err != nil:
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to retrieve experiment config for checkpoint %s: %s",
 				id.String(), err.Error()))
-	}
-	if storageConfig == nil {
+	case storageConfig == nil:
 		return echo.NewHTTPError(http.StatusNotFound,
 			fmt.Sprintf("checkpoint %s does not exist", id.String()))
 	}

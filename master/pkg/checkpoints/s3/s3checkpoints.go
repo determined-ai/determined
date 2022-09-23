@@ -15,18 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 )
 
-// seqWriterAt satisfies S3 APIs' io.WriterAt interface while staying sequential.
-// To use it with s3manager.Downloader, its concurrency needs be set to 1.
-// Ref: https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#Downloader
-type seqWriterAt struct {
-	next    io.Writer
-	written int64
-}
-
-func newSeqWriterAt(w io.Writer) *seqWriterAt {
-	return &seqWriterAt{next: w}
-}
-
 // WriteAt writes the content in buffer p.
 func (w *seqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 	if off != w.written {
@@ -42,64 +30,6 @@ func (w *seqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 	}
 
 	return n, err
-}
-
-// BatchDownloadIterator implements s3's BatchDownloadIterator API.
-type batchDownloadIterator struct {
-	// The objects we are writing
-	objects []*s3.Object
-	// The output we are writing to
-	aw archive.ArchiveWriter
-	// Internal states
-	err    error
-	pos    int
-	bucket string
-	prefix string
-}
-
-// Next() returns true if the next item is available.
-func (i *batchDownloadIterator) Next() bool {
-	i.pos++
-	if i.pos == len(i.objects) {
-		return false
-	}
-	pathname := strings.TrimPrefix(*i.objects[i.pos].Key, i.prefix)
-	err := i.aw.WriteHeader(pathname, *i.objects[i.pos].Size)
-	if err != nil {
-		i.err = err
-		return false
-	}
-	return true
-}
-
-// Err() returns the error if any.
-func (i *batchDownloadIterator) Err() error {
-	return i.err
-}
-
-// DownloadObject() returns a DownloadObject.
-func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
-	return s3manager.BatchDownloadObject{
-		Object: &s3.GetObjectInput{
-			Bucket: &i.bucket,
-			Key:    i.objects[i.pos].Key,
-		},
-		Writer: newSeqWriterAt(i.aw),
-	}
-}
-
-func newBatchDownloadIterator(aw archive.ArchiveWriter,
-	bucket string, prefix string, objs []*s3.Object) *batchDownloadIterator {
-	if !strings.HasSuffix(prefix, "/") {
-		prefix += "/"
-	}
-	return &batchDownloadIterator{
-		aw:      aw,
-		bucket:  bucket,
-		prefix:  prefix,
-		objects: objs,
-		pos:     -1,
-	}
 }
 
 // GetS3BucketRegion returns the region name of the specified bucket.
@@ -192,5 +122,76 @@ func NewS3Downloader(aw archive.ArchiveWriter, bucket string, prefix string) *S3
 		aw:     aw,
 		bucket: bucket,
 		prefix: prefix,
+	}
+}
+
+// seqWriterAt satisfies S3 APIs' io.WriterAt interface while staying sequential.
+// To use it with s3manager.Downloader, its concurrency needs be set to 1.
+// Ref: https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#Downloader
+type seqWriterAt struct {
+	next    io.Writer
+	written int64
+}
+
+func newSeqWriterAt(w io.Writer) *seqWriterAt {
+	return &seqWriterAt{next: w}
+}
+
+// BatchDownloadIterator implements s3's BatchDownloadIterator API.
+type batchDownloadIterator struct {
+	// S3 config
+	bucket string
+	prefix string
+	// The objects we are writing
+	objects []*s3.Object
+	// The output we are writing to
+	aw archive.ArchiveWriter
+	// Internal states
+	err error
+	pos int
+}
+
+// Next() returns true if the next item is available.
+func (i *batchDownloadIterator) Next() bool {
+	i.pos++
+	if i.pos == len(i.objects) {
+		return false
+	}
+	pathname := strings.TrimPrefix(*i.objects[i.pos].Key, i.prefix)
+	err := i.aw.WriteHeader(pathname, *i.objects[i.pos].Size)
+	if err != nil {
+		i.err = err
+		return false
+	}
+	return true
+}
+
+// Err() returns the error if any.
+func (i *batchDownloadIterator) Err() error {
+	return i.err
+}
+
+// DownloadObject() returns a DownloadObject.
+func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
+	return s3manager.BatchDownloadObject{
+		Object: &s3.GetObjectInput{
+			Bucket: &i.bucket,
+			Key:    i.objects[i.pos].Key,
+		},
+		Writer: newSeqWriterAt(i.aw),
+	}
+}
+
+func newBatchDownloadIterator(aw archive.ArchiveWriter,
+	bucket string, prefix string, objs []*s3.Object) *batchDownloadIterator {
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	return &batchDownloadIterator{
+		aw:      aw,
+		bucket:  bucket,
+		prefix:  prefix,
+		objects: objs,
+		pos:     -1,
 	}
 }

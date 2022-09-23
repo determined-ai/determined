@@ -17,23 +17,6 @@ type CheckpointDownloader interface {
 	Close() error
 }
 
-func storageConfig2Str(config any) string {
-	switch config.(type) {
-	case expconf.AzureConfig:
-		return "azure"
-	case expconf.GCSConfig:
-		return "gcs"
-	case expconf.HDFSConfig:
-		return "hdfs"
-	case expconf.S3Config:
-		return "s3"
-	case expconf.SharedFSConfig:
-		return "shared_fs"
-	default:
-		return "unknown"
-	}
-}
-
 // NewDownloader returns a new CheckpointDownloader that writes to w.
 //
 // - w: the underlying Writer that CheckpointDownloader writes to
@@ -63,5 +46,22 @@ func NewDownloader(
 	default:
 		return nil, fmt.Errorf("checkpoint download via master is only supported on S3"+
 			", but the checkpoint's storage type is %s", storageConfig2Str(storage))
+	}
+}
+
+func storageConfig2Str(config any) string {
+	switch config.(type) {
+	case expconf.AzureConfig:
+		return "azure"
+	case expconf.GCSConfig:
+		return "gcs"
+	case expconf.HDFSConfig:
+		return "hdfs"
+	case expconf.S3Config:
+		return "s3"
+	case expconf.SharedFSConfig:
+		return "shared_fs"
+	default:
+		return "unknown"
 	}
 }
