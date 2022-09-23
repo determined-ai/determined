@@ -189,7 +189,8 @@ class DetSDTextualInversionTrainer:
         self.train_scheduler = None
         self.original_embedding_idxs = None
         self.original_embedding_tensors = None
-        self.original_embedding_mean_norm = None
+        self.original_embedding_norm_mean = None
+        self.original_embedding_norm_var = None
         self.new_embedding_idxs = None
 
         self.concept_to_initializer_tokens_map = {}
@@ -325,7 +326,10 @@ class DetSDTextualInversionTrainer:
             # optimal value for norm_penalty from the number of newly added tokens.
             self.norm_loss = (
                 self.norm_penalty
-                * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
+                * (
+                    (new_token_embeddings_norms - self.original_embedding_norm_mean) ** 2
+                    / self.original_embedding_norm_var
+                ).sum()
             )
             # Scale up norm_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
@@ -425,8 +429,13 @@ class DetSDTextualInversionTrainer:
             .to(self.accelerator.device)
         )
         with torch.no_grad():
-            self.original_embedding_mean_norm = (
+            self.original_embedding_norm_mean = (
                 torch.linalg.vector_norm(self.original_embedding_tensors, dim=1).mean().item()
+            )
+            self.original_embedding_norm_var = (
+                torch.linalg.vector_norm(self.original_embedding_tensors, dim=1)
+                .var(unbiased=False)
+                .item()
             )
         self.new_embedding_idxs = torch.isin(
             torch.arange(len(self.tokenizer)),
