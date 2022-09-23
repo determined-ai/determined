@@ -7,32 +7,26 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+from determined import searcher
 from determined.common.api import bindings
-from determined.common.api.bindings import (
-    determinedexperimentv1State,
-    v1SearcherEvent,
-    v1TrialExitedEarlyExitedReason,
-)
 from determined.experimental import client
-from determined.searcher.search_method import ExitedReason, Operation, Progress, SearchMethod
 
-EXPERIMENT_ID_FILE = "experiment_id"
-STATE_FILE = "state"
+EXPERIMENT_ID_FILE = "experiment_id.txt"
 
 
 class _ExperimentInactiveException(Exception):
-    def __init__(self, exp_state: determinedexperimentv1State):
+    def __init__(self, exp_state: bindings.determinedexperimentv1State):
         self.exp_state = exp_state
 
 
 class SearchRunner:
     def __init__(
         self,
-        search_method: SearchMethod,
+        search_method: searcher.SearchMethod,
     ) -> None:
         self.search_method = search_method
 
-    def _get_operations(self, event: bindings.v1SearcherEvent) -> List[Operation]:
+    def _get_operations(self, event: bindings.v1SearcherEvent) -> List[searcher.Operation]:
         if event.initialOperations:
             logging.info("initial operations")
             operations = self.search_method.initial_operations()
@@ -58,17 +52,19 @@ class SearchRunner:
             request_id = uuid.UUID(event.trialExitedEarly.requestId)
             if (
                 event.trialExitedEarly.exitedReason
-                == v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
+                == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
             ):
                 self.search_method.searcher_state.trial_progress.pop(request_id, None)
             elif (
                 event.trialExitedEarly.exitedReason
-                == v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
+                == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
             ):
                 self.search_method.searcher_state.failures.add(request_id)
             operations = self.search_method.on_trial_exited_early(
                 request_id,
-                exited_reason=ExitedReason._from_bindings(event.trialExitedEarly.exitedReason),
+                exited_reason=searcher.ExitedReason._from_bindings(
+                    event.trialExitedEarly.exitedReason
+                ),
             )
         elif event.validationCompleted:
             # duplicate completion accounting already performed by master
@@ -92,7 +88,7 @@ class SearchRunner:
             )
             if (
                 event.experimentInactive.experimentState
-                == determinedexperimentv1State.STATE_COMPLETED
+                == bindings.determinedexperimentv1State.STATE_COMPLETED
             ):
                 self.search_method.searcher_state.experiment_completed = True
 
@@ -108,7 +104,7 @@ class SearchRunner:
                 event.trialProgress.partialUnits
             )
             progress = self.search_method.progress()
-            operations = [Progress(progress)]
+            operations = [searcher.Progress(progress)]
         else:
             raise RuntimeError(f"Unsupported event {event}")
         return operations
@@ -117,7 +113,7 @@ class SearchRunner:
         self,
         experiment_id: int,
         session: client.Session,
-        prior_operations: Optional[List[Operation]],
+        prior_operations: Optional[List[searcher.Operation]],
     ) -> None:
         experiment_is_active = True
 
@@ -143,13 +139,26 @@ class SearchRunner:
                         logging.info(f"Resubmitting operations for event.id={event.id}")
                         operations = prior_operations
                     else:
-                        try:
-                            operations = self._get_operations(event)
-                        except _ExperimentInactiveException as ex:
+                        if event.experimentInactive:
+                            logging.info(
+                                f"experiment {self.search_method.searcher_state.experiment_id} is "
+                                f"inactive; state={event.experimentInactive.experimentState}"
+                            )
+                            if (
+                                event.experimentInactive.experimentState
+                                == bindings.determinedexperimentv1State.STATE_COMPLETED
+                            ):
+                                self.search_method.searcher_state.experiment_completed = True
+
                             experiment_is_active = False
-                            if ex.exp_state == determinedexperimentv1State.STATE_PAUSED:
+                            if (
+                                event.experimentInactive.experimentState
+                                == bindings.determinedexperimentv1State.STATE_PAUSED
+                            ):
                                 experiment_is_active = not self.pause_searcher(session)
                             break
+                        else:
+                            operations = self._get_operations(event)
 
                         # save state
                         self.search_method.searcher_state.last_event_id = event.id
@@ -170,7 +179,7 @@ class SearchRunner:
         session: client.Session,
         experiment_id: int,
         event: bindings.v1SearcherEvent,
-        operations: List[Operation],
+        operations: List[searcher.Operation],
     ) -> None:
         body = bindings.v1PostSearcherOperationsRequest(
             experimentId=self.search_method.searcher_state.experiment_id,
@@ -191,7 +200,7 @@ class SearchRunner:
         events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
         return events.searcherEvents
 
-    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
+    def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
         pass
 
     def pause_searcher(self, session: client.Session) -> bool:
@@ -202,7 +211,7 @@ class SearchRunner:
         return False
 
     @staticmethod
-    def _searcher_event_as_dict(event: v1SearcherEvent) -> dict:
+    def _searcher_event_as_dict(event: bindings.v1SearcherEvent) -> dict:
         d = {}
         if event.trialExitedEarly:
             d["trialExitedEarly"] = event.trialExitedEarly.to_json()
@@ -223,9 +232,18 @@ class SearchRunner:
 
 
 class LocalSearchRunner(SearchRunner):
+    """
+    ``LocalSearchRunner`` performs a search for optimal hyperparameter values,
+    applying the provided ``SearchMethod``. It is executed locally and interacts
+    with a Determined cluster where it starts a multi-trial experiment. It then
+    reacts to event notifications coming from the running experiments by forwarding
+    them to event handler methods in your ``SearchMethod`` implementation and sending
+    the returned operations back to the experiment.
+    """
+
     def __init__(
         self,
-        search_method: SearchMethod,
+        search_method: searcher.SearchMethod,
         searcher_dir: Optional[Path] = None,
     ):
         super().__init__(search_method)
@@ -248,12 +266,11 @@ class LocalSearchRunner(SearchRunner):
         Run custom search without an experiment id
         """
         logging.info("LocalSearchRunner.run")
-        client._require_singleton(lambda: None)()
 
         if context_dir is None:
             context_dir = os.getcwd()
         experiment_id_file = self.searcher_dir.joinpath(EXPERIMENT_ID_FILE)
-        operations: Optional[List[Operation]] = None
+        operations: Optional[List[searcher.Operation]] = None
         if experiment_id_file.exists():
             with experiment_id_file.open("r") as f:
                 experiment_id = int(f.read())
@@ -272,12 +289,14 @@ class LocalSearchRunner(SearchRunner):
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
+        # make sure client is initialized
+        client._require_singleton(lambda: None)()
         assert client._determined is not None
         session = client._determined._session
         self.run_experiment(experiment_id, session, operations)
         return experiment_id
 
-    def load_state(self, experiment_id: int) -> Tuple[int, List[Operation]]:
+    def load_state(self, experiment_id: int) -> Tuple[int, List[searcher.Operation]]:
         experiment_searcher_dir = self._get_state_path(experiment_id)
         with experiment_searcher_dir.joinpath("event_id").open("r") as event_id_file:
             last_event_id = int(event_id_file.read())
@@ -290,7 +309,7 @@ class LocalSearchRunner(SearchRunner):
             operations = pickle.load(f)
         return loaded_experiment_id, operations
 
-    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
+    def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
         experiment_searcher_dir = self._get_state_path(experiment_id)
         state_path = experiment_searcher_dir.joinpath(
             f"event_{self.search_method.searcher_state.last_event_id}"

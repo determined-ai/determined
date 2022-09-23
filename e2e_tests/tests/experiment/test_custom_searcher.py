@@ -9,18 +9,13 @@ import pytest
 import yaml
 from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
+from determined import searcher
 from determined.common.api import bindings
 from determined.common.api.bindings import determinedexperimentv1State
 from determined.experimental import client
-from determined.searcher.search_method import Operation, SearchMethod
-from determined.searcher.search_runner import LocalSearchRunner
 from tests import config as conf
 from tests import experiment as exp
-from tests.fixtures.custom_searcher.searchers import (
-    ASHASearchMethod,
-    RandomSearchMethod,
-    SingleSearchMethod,
-)
+from tests.fixtures.custom_searcher import searchers
 
 TIMESTAMP = int(time.time())
 
@@ -37,8 +32,8 @@ def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
     }
     config["name"] = "single"
     config["description"] = "custom searcher"
-    search_method = SingleSearchMethod(config, 500)
-    search_runner = LocalSearchRunner(search_method, tmp_path)
+    search_method = searchers.SingleSearchMethod(config, 500)
+    search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -64,10 +59,10 @@ def test_run_random_searcher_exp() -> None:
     max_length = 500
 
     with tempfile.TemporaryDirectory() as searcher_dir:
-        search_method = RandomSearchMethod(
+        search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
         experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -381,7 +376,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                 exception_point = exceptions.pop(0)
                 # re-create RandomSearchMethod and LocalSearchRunner after every fail
                 # to simulate python process crash
-                search_method = RandomSearchMethod(
+                search_method = searchers.RandomSearchMethod(
                     max_trials,
                     max_concurrent_trials,
                     max_length,
@@ -398,10 +393,10 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
         assert failures == failures_expected
 
-        search_method = RandomSearchMethod(
+        search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
         experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert search_method.searcher_state.last_event_id == 41
@@ -436,8 +431,8 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     num_rungs = 3
     divisor = 4
 
-    search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor, test_type="noop")
-    search_runner = LocalSearchRunner(search_method, tmp_path)
+    search_method = searchers.ASHASearchMethod(max_length, max_trials, num_rungs, divisor, test_type="noop")
+    search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -606,7 +601,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
         while failures < failures_expected:
             try:
                 exception_point = exceptions.pop(0)
-                search_method = ASHASearchMethod(
+                search_method = searchers.ASHASearchMethod(
                     max_length,
                     max_trials,
                     num_rungs,
@@ -624,10 +619,10 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
 
         assert failures == failures_expected
 
-        search_method = ASHASearchMethod(
+        search_method = searchers.ASHASearchMethod(
             max_length, max_trials, num_rungs, divisor, test_type="noop"
         )
-        search_runner = LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
         experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
     assert search_method.searcher_state.experiment_completed is True
@@ -662,11 +657,11 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     assert search_method.progress() == pytest.approx(1.0)
 
 
-class FallibleSearchRunner(LocalSearchRunner):
+class FallibleSearchRunner(searcher.LocalSearchRunner):
     def __init__(
         self,
         exception_point: str,
-        search_method: SearchMethod,
+        search_method: searcher.SearchMethod,
         searcher_dir: Optional[Path] = None,
     ):
         super(FallibleSearchRunner, self).__init__(search_method, searcher_dir)
@@ -674,7 +669,7 @@ class FallibleSearchRunner(LocalSearchRunner):
         if exception_point == "after_save":
             self.fail_on_save = True
 
-    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
+    def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
         super(FallibleSearchRunner, self).save_state(experiment_id, operations)
         if self.fail_on_save:
             logging.info(

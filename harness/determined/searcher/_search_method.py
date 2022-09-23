@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
 from determined.common.api import bindings
-from determined.common.experimental import Checkpoint
+from determined.common import experimental
 
 STATE_FILE = "state"
 
@@ -67,6 +67,11 @@ class ExitedReason(Enum):
             == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_USER_REQUESTED_STOP
         ):
             return cls.USER_CANCELED
+        if (
+            bindings_exited_reason
+            == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
+        ):
+            return cls.ERRORED
         raise RuntimeError(f"Invalid exited reason: {bindings_exited_reason}")
 
 
@@ -126,7 +131,7 @@ class Create(Operation):
         self,
         request_id: uuid.UUID,
         hparams: Dict[str, Any],
-        checkpoint: Optional[Checkpoint],
+        checkpoint: Optional[experimental.Checkpoint],
     ) -> None:
         super().__init__()
         self.request_id = request_id
@@ -142,6 +147,10 @@ class Create(Operation):
 
 
 class SearchMethod:
+    """
+    Override this class to implement a custom hyperparameter search method.
+    """
+
     def __init__(self) -> None:
         self._searcher_state = SearcherState()
 
