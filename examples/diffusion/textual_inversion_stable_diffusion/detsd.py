@@ -326,7 +326,7 @@ class DetSDTextualInversionTrainer:
         self.accelerator.backward(norm_loss)
 
         # Add the total loss to the loss history for metric tracking.
-        loss = (mse_loss + norm_loss).detatch()
+        loss = (mse_loss + norm_loss).detach()
         self.loss_history.append(loss)
 
         # For textual inversion, we only update the embeddings of the newly added concept tokens.
