@@ -140,7 +140,7 @@ const canAdministrateUsers = (
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
     !!user &&
-    (permitted.has('oss_user') ? user.isAdmin : permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'))
+    (user.isAdmin || permitted.has('PERMISSION_CAN_ADMINISTRATE_USERS'))
   );
 };
 
