@@ -165,6 +165,7 @@ class DetSDTextualInversionTrainer:
         self.steps_completed = 0
         self.loss_history = []
         self.last_mean_loss = None
+        self.norm_loss = None
 
         self.effective_global_batch_size = (
             self.gradient_accumulation_steps
@@ -309,33 +310,42 @@ class DetSDTextualInversionTrainer:
         self.accelerator.backward(mse_loss)
         print("MSE LOSS: ", mse_loss)
 
-        # Add a norm penalty to the loss. It is more memory efficient to perform this computation
-        # as a separate forward and backward pass, rather than combining it with the loss above.
-        # TODO: Clean this up.
-        new_token_embeddings_norms = torch.linalg.vector_norm(
-            self._get_new_token_embeddings(), dim=1
-        )
+        # Include a norm_loss which penalizes the new embeddings for being much larger or smaller
+        # than the original embedding vectors.  Without such a loss, the new vectors are typically
+        # driven to be very large and consequently dominate the art they are used to produce.
 
-        # Introduce a squared-loss for the size of the new embedding norms, otherwise they are
-        # driven to be much larger than the original embedding norms by SGD and dominate the art.
-        # We take the sum rather than the mean, as this should make the optimal norm_penalty value
-        # less sensitive to the number of newly added tokens.
-        norm_loss = (
-            self.norm_penalty
-            * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
-        )
-        self.accelerator.backward(norm_loss)
+        # It is more memory efficient to perform this computation as a separate forward and backward
+        # pass, rather than combining it with the mse_loss computation above.  We also only need to
+        # perform this computation once per actual optimizer step, rather than once per batch:
+        if self.norm_loss is None:
+            new_token_embeddings_norms = torch.linalg.vector_norm(
+                self._get_new_token_embeddings(), dim=1
+            )
+
+            self.MEAN_NEW_EMBEDDING = new_token_embeddings_norms.detach().mean().item()
+            self.MAX_NEW_EMBEDDING = new_token_embeddings_norms.detach().max().item()
+
+            # Compute the loss with .sum() rather than .mean(), as this should help decouple the
+            # optimal value for norm_penalty from the number of newly added tokens.
+            self.norm_loss = (
+                self.norm_penalty
+                * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
+            )
+            # Scale up norm_loss by gradient_accumulation_steps since we are only doing the
+            # backward pass once every gradient_accumulation_steps steps.
+            accumulation_scaled_norm_loss = self.norm_loss * self.gradient_accumulation_steps
+            self.accelerator.backward(accumulation_scaled_norm_loss)
 
         # Add the total loss to the loss history for metric tracking.
-        loss = (mse_loss + norm_loss).detach()
+        loss = (mse_loss + self.norm_loss).detach()
         self.loss_history.append(loss)
 
         self.optimizer.step()
 
         # For textual inversion, we only update the embeddings of the newly added concept tokens.
         # This is most safely implemented by copying the original embeddings, rather than zeroing
-        # out their gradients, as L2 regularization (for instance) will still modify weights whose
-        # gradient is zero. See link below for a discussion:
+        # out their gradients, as L2 regularization will still modify weights whose gradient is zero
+        # and thus degrade the parts of the model we want frozen. See link below for a discussion:
         # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
         # Only perform the overwriting after the step has actually been taken:
         if self.accelerator.sync_gradients:
@@ -348,15 +358,16 @@ class DetSDTextualInversionTrainer:
                     80 * "$",
                     "\n",
                     f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}: ",
-                    new_token_embeddings_norms.detach().mean().item(),
+                    self.MEAN_NEW_EMBEDDING,
                     "\n",
                     f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}: ",
-                    new_token_embeddings_norms.detach().max().item(),
+                    self.MAX_NEW_EMBEDDING,
                     "\n",
-                    f"NORM LOSS: {norm_loss}",
+                    f"NORM LOSS: {self.norm_loss}",
                     "\n",
                     80 * "$",
                 )
+            self.norm_loss = None
         self.optimizer.zero_grad()
 
         return loss
