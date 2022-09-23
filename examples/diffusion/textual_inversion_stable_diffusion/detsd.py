@@ -240,7 +240,6 @@ class DetSDTextualInversionTrainer:
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            print(f"MY ACCELERATOR.DEVICE: {self.accelerator.device}")
             self._restore_latest_checkpoint(core_context)
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
@@ -520,25 +519,20 @@ class DetSDTextualInversionTrainer:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
         if self.latest_checkpoint is not None:
             with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
-                print("READING CHECKPOINT FROM", path)
                 with self.accelerator.local_main_process_first():
                     with open(path.joinpath("metadata.json"), "r") as f:
                         checkpoint_metadata_dict = json.load(f)
                         self.steps_completed = checkpoint_metadata_dict["steps_completed"]
-                    print("TORCH.LOAD CHECKPOINT")
                     optimizer_state_dict = torch.load(
                         path.joinpath("optimizer_state_dict.pt"),
                         map_location=self.accelerator.device,
                     )
-                    print("LOAD CHECKPOINT INTO OPTIMIZER")
                     self.optimizer.load_state_dict(optimizer_state_dict)
-                    print("LOAD CHECKPOINT INTO OPTIMIZER Completed")
                     learned_embeddings_dict = torch.load(
                         path.joinpath("learned_embeddings_dict.pt"),
                         map_location=self.accelerator.device,
                     )
                     token_embeddings = self._get_token_embedding_weight_data()
-                    print("LOAD Trained Embeddings")
                     for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[concept_token][
                             "learned_embeddings"
