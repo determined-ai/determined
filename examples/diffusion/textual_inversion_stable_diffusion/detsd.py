@@ -207,7 +207,7 @@ class DetSDTextualInversionTrainer:
         self._build_train_scheduler()
         self._wrap_and_prepare()
 
-        # Pipeline construction is deferred until the _save call
+        # Pipeline construction is deferred until the _save call, as it may not be required at all.
         self.inference_scheduler_kwargs = None
         self.pipeline = None
 
@@ -312,15 +312,7 @@ class DetSDTextualInversionTrainer:
         new_token_embeddings_norms = torch.linalg.vector_norm(
             self._get_new_token_embeddings(), dim=1
         )
-        print(
-            80 * "$",
-            f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}",
-            new_token_embeddings_norms.detach().mean().item(),
-            f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
-            new_token_embeddings_norms.detach().max().item(),
-            80 * "$",
-            sep="\n",
-        )
+
         # Introduce a squared-loss for the size of the new embedding norms, otherwise they are
         # driven to be much larger than the original embedding norms by SGD and dominate the art.
         # We take the sum rather than the mean, as this should make the optimal norm_penalty value
@@ -347,6 +339,15 @@ class DetSDTextualInversionTrainer:
             token_embeddings[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
+            print(
+                80 * "$",
+                f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}",
+                new_token_embeddings_norms.detach().mean().item(),
+                f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
+                new_token_embeddings_norms.detach().max().item(),
+                80 * "$",
+                sep="\n",
+            )
         self.optimizer.zero_grad()
 
         return loss
