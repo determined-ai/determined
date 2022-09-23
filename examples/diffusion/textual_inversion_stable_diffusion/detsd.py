@@ -304,10 +304,12 @@ class DetSDTextualInversionTrainer:
 
         # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
-        loss = F.mse_loss(noise_pred, noise)
-        print("MSE LOSS: ", loss)
+        mse_loss = F.mse_loss(noise_pred, noise)
+        self.accelerator.backward(mse_loss)
+        print("MSE LOSS: ", mse_loss)
 
-        # Add a norm penalty to the loss
+        # Add a norm penalty to the loss. It is more memory efficient to perform this computation
+        # as a separate forward and backward pass, rather than combining it with the loss above.
         # TODO: Clean this up.
         new_token_embeddings_norms = torch.linalg.vector_norm(
             self._get_new_token_embeddings(), dim=1
@@ -321,10 +323,11 @@ class DetSDTextualInversionTrainer:
             self.norm_penalty
             * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
         )
-        loss = loss + norm_loss
+        self.accelerator.backward(norm_loss)
 
-        self.accelerator.backward(loss)
-        self.loss_history.append(loss.detach())
+        # Add the total loss to the loss history for metric tracking.
+        loss = (mse_loss + norm_loss).detatch()
+        self.loss_history.append(loss)
 
         # For textual inversion, we only update the embeddings of the newly added concept tokens.
         # This is most safely implemented by copying the original embeddings, rather than zeroing
