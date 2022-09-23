@@ -11,7 +11,7 @@ export default {
   component: LogViewer,
   decorators: [HelmetDecorator],
   parameters: { layout: 'fullscreen' },
-  title: 'LogViewer',
+  title: 'Determined/LogViewer',
 };
 
 const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,30)>

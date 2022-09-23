@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Link from 'components/Link';
-import ResourcePoolCardLight from 'components/ResourcePoolCardLight';
+import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
@@ -123,7 +123,7 @@ const ClusterOverview: React.FC = () => {
         <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>
-              <ResourcePoolCardLight resourcePool={rp} />
+              <ResourcePoolCard resourcePool={rp} />
             </Link>
           ))}
         </Grid>

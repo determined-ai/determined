@@ -49,7 +49,9 @@ export const handleTableChange = (
     updateSettings(newSettings, shouldPush);
   };
 };
-
+/**
+ * Depricated. Prefer using InteractiveTable instead.
+ */
 const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   const [hasScrollBeenEnabled, setHasScrollBeenEnabled] = useState<boolean>(false);
   const [tableScroll, setTableScroll] = useState(scroll);

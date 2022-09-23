@@ -6,7 +6,7 @@ import { clone } from 'shared/utils/data';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { ResourcePool } from 'types';
 
-import { PoolLogo } from './ResourcePoolCardLight';
+import { PoolLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';
 
 interface Props {

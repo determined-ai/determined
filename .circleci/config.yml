@@ -1022,8 +1022,9 @@ jobs:
             - harness/dist
             - model_hub/dist
             - docs/site/html
+      - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
-          path: docs/site/html
+          path: docs.tgz
 
   publish-docs:
     docker:
@@ -1319,7 +1320,7 @@ jobs:
   build-storybook:
     docker:
       - image: cimg/node:16.14.2
-    resource_class: medium+
+    resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only

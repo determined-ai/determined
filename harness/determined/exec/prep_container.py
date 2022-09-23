@@ -9,6 +9,7 @@ import uuid
 from typing import List, Optional
 
 import psutil
+import urllib3
 
 import determined as det
 from determined import constants, gpu
@@ -24,12 +25,11 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
     model_def_resp = None
     try:
         model_def_resp = bindings.get_GetModelDef(sess, experimentId=trial_info.experiment_id)
-    except bindings.APIHttpError as e:
+    except Exception as e:
         # Since this is the very first api call in the entrypoint script, and the call is made
         # before you can debug with a startup hook, we offer an overly-detailed explanation to help
         # sysadmins debug their cluster.
-        resp = e.response
-        resp_content = str(resp and resp.content)
+        resp_content = str(e)
         noverify = info.master_cert_file == "noverify"
         cert_content = None if noverify else info.master_cert_file
         if cert_content is not None:
@@ -45,7 +45,6 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
-            f"    response code: {resp and resp.status_code}\n"
             f"    response content: {resp_content}\n"
         )
         raise
@@ -258,7 +257,10 @@ if __name__ == "__main__":
         util.get_det_username_from_env(),
         None,
         cert,
-        max_retries=util.get_max_retries_config(),
+        max_retries=urllib3.util.retry.Retry(
+            total=6,  # With backoff retries for 64 seconds
+            backoff_factor=0.5,
+        ),
     )
 
     if args.trial:

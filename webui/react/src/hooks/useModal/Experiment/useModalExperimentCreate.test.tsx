@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
 
