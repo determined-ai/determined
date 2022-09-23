@@ -10,24 +10,25 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { getWorkspace, getGroups } from 'services/api';
+import { getGroups, getWorkspace } from 'services/api';
+import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { User, Workspace } from 'types';
-import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import handleError from 'utils/error';
+
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
-import { isEqual } from 'shared/utils/data';
-import handleError from 'utils/error';
 
 // This will be removed once the generated types for the API call exists
 interface GroupsAndUsersAssignedToWorkspaceResponse {
-  usersAssignedDirectly: User[];
   assignments: V1RoleWithAssignments[];
   groups: V1Group[];
+  usersAssignedDirectly: User[];
 }
 interface Params {
   tab: string;
@@ -88,9 +89,9 @@ const WorkspaceDetails: React.FC = () => {
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
     // Mock of https://github.com/determined-ai/determined/pull/5085
     const response: GroupsAndUsersAssignedToWorkspaceResponse = await Promise.resolve({
+      assignments: [],
       groups: [],
       usersAssignedDirectly: [],
-      assignments: [],
     });
 
     const newGroupIds = new Set<number>();
@@ -104,7 +105,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, [canceler.signal]);
+  }, []);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
@@ -113,7 +114,7 @@ const WorkspaceDetails: React.FC = () => {
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
     ]);
-  }, [fetchWorkspace, fetchUsers, fetchGroups]);
+  }, [fetchWorkspace, fetchGroups, fetchUsers, fetchGroupsAndUsersAssignedToWorkspace]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -186,10 +187,10 @@ const WorkspaceDetails: React.FC = () => {
           </Tabs.TabPane>
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
             <WorkspaceMembers
-              usersAssignedDirectly={usersAssignedDirectly}
-              groupsAssignedDirectly={groupsAssignedDirectly}
               assignments={workspaceAssignments}
+              groupsAssignedDirectly={groupsAssignedDirectly}
               pageRef={pageRef}
+              usersAssignedDirectly={usersAssignedDirectly}
               workspace={workspace}
             />
           </Tabs.TabPane>

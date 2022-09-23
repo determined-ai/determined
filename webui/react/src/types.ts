@@ -1,6 +1,5 @@
-import { string } from 'fp-ts';
 import * as Api from 'services/api-ts-sdk';
-import { V1Group, V1Role } from 'services/api-ts-sdk';
+import { V1Group } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {

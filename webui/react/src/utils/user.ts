@@ -1,10 +1,10 @@
 import {
-  V1Group,
-  V1RoleAssignment,
   V1AssignRolesRequest,
+  V1Group,
   V1RemoveAssignmentsRequest,
+  V1RoleAssignment,
 } from 'services/api-ts-sdk';
-import { DetailedUser, UserOrGroup, User } from 'types';
+import { DetailedUser, User, UserOrGroup } from 'types';
 
 interface UserNameFields {
   displayName?: string;
@@ -38,9 +38,9 @@ export const getIdFromUserOrGroup = (obj: UserOrGroup): number => {
 };
 
 export function createAssignmentRequest(
+  roleId: number,
   userOrGroup: UserOrGroup,
   userOrGroupId: number,
-  roleId: number,
   workspaceId: number,
 ): V1AssignRolesRequest | V1RemoveAssignmentsRequest {
   const roleAssignment: V1RoleAssignment = {
@@ -53,8 +53,8 @@ export function createAssignmentRequest(
     ? {
         userRoleAssignments: [
           {
-            userId: userOrGroupId,
             roleAssignment,
+            userId: userOrGroupId,
           },
         ],
       }

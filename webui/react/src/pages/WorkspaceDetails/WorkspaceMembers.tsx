@@ -1,42 +1,43 @@
 import { Button, Dropdown, Menu, Select } from 'antd';
+import { BaseOptionType } from 'antd/lib/select';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import { RawValueType } from 'rc-select/lib/BaseSelect';
+import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useCallback, useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import { getFullPaginationConfig } from 'components/Table';
 import TableFilterSearch from 'components/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
+import { useStore } from 'contexts/Store';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { assignRoles, removeAssignments } from 'services/api';
+import { V1Group, V1GroupDetails, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { UserOrGroup, User, Workspace } from 'types';
-import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { getName, getIdFromUserOrGroup, isUser, createAssignmentRequest } from 'utils/user';
+import { User, UserOrGroup, Workspace } from 'types';
+import { createAssignmentRequest, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
-import { RawValueType } from 'rc-select/lib/BaseSelect';
-import { BaseOptionType } from 'antd/lib/select';
-import { LabelInValueType } from 'rc-select/lib/Select';
-import { assignRoles, removeAssignments } from 'services/api';
-import { useStore } from 'contexts/Store';
 
 interface Props {
   assignments: V1RoleWithAssignments[];
+  groupsAssignedDirectly: V1Group[];
   pageRef: React.RefObject<HTMLElement>;
   usersAssignedDirectly: User[];
-  groupsAssignedDirectly: V1Group[];
   workspace: Workspace;
 }
 
 interface GroupOrMemberActionDropdownProps {
-  userOrGroup: UserOrGroup;
   name: string;
+  userOrGroup: UserOrGroup;
   workspace: Workspace;
 }
 
@@ -49,10 +50,10 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
   } = useModalWorkspaceRemoveMember({
-    userOrGroup: userOrGroup,
     name,
-    workspaceId: workspace.id,
+    userOrGroup: userOrGroup,
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
+    workspaceId: workspace.id,
   });
 
   const menuItems = (
@@ -191,8 +192,8 @@ const WorkspaceMembers: React.FC<Props> = ({
     const actionRenderer = (value: string, record: UserOrGroup) => {
       return userCanAssignRoles ? (
         <GroupOrMemberActionDropdown
-          userOrGroup={record}
           name={getName(record)}
+          userOrGroup={record}
           workspace={workspace}
         />
       ) : (
@@ -225,7 +226,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: '',
       },
     ] as ColumnDef<UserOrGroup>[];
-  }, [nameFilterSearch, tableSearchIcon, workspace, userCanAssignRoles]);
+  }, [assignments, knownRoles, nameFilterSearch, tableSearchIcon, userCanAssignRoles, workspace]);
 
   return (
     <div className={css.membersContainer}>

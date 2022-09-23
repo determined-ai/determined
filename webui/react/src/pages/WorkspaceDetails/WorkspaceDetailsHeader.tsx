@@ -16,11 +16,10 @@ import { UserOrGroup, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
-import { V1Group } from 'services/api-ts-sdk';
 
 interface Props {
-  fetchWorkspace: () => void;
   addableUsersAndGroups: UserOrGroup[];
+  fetchWorkspace: () => void;
   workspace: Workspace;
 }
 
@@ -37,8 +36,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
 
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
-      workspace,
       addableUsersAndGroups,
+      workspace,
     });
 
   const rbacEnabled = useFeature().isOn('rbac');

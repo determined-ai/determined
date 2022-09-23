@@ -1,19 +1,20 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
+import { removeAssignments } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { UserOrGroup } from 'types';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
+import { UserOrGroup } from 'types';
 import handleError from 'utils/error';
 import { createAssignmentRequest } from 'utils/user';
-import { removeAssignments } from 'services/api';
+
 import css from './useModalWorkspaceRemoveMember.module.scss';
 
 interface Props {
-  userOrGroupId: number;
-  userOrGroup: UserOrGroup;
   name: string;
   onClose?: () => void;
+  userOrGroup: UserOrGroup;
+  userOrGroupId: number;
   workspaceId: number;
 }
 
@@ -60,7 +61,7 @@ const useModalWorkspaceRemoveMember = ({
       }
     }
     return;
-  }, [userOrGroup]);
+  }, [userOrGroup, userOrGroupId, workspaceId]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
@@ -72,7 +73,7 @@ const useModalWorkspaceRemoveMember = ({
       onOk: handleOk,
       title: `Remove ${name}`,
     };
-  }, [modalContent, name]);
+  }, [handleOk, modalContent, name]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {

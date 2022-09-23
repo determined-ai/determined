@@ -1,31 +1,32 @@
 import { Form, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { assignRoles } from 'services/api';
+
 import { useStore } from 'contexts/Store';
+import { assignRoles } from 'services/api';
+import { V1Group } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import { UserOrGroup, Workspace, User } from 'types';
-import { V1Group, V1GroupDetails } from 'services/api-ts-sdk';
-import { createAssignmentRequest, getName, getIdFromUserOrGroup, isUser } from 'utils/user';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
+import { User, UserOrGroup, Workspace } from 'types';
 import handleError from 'utils/error';
+import { createAssignmentRequest, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
 interface Props {
+  addableUsersAndGroups: UserOrGroup[];
   onClose?: () => void;
   workspace: Workspace;
-  addableUsersAndGroups: UserOrGroup[];
 }
 interface FormInputs {
-  role: string;
   id: number;
+  role: string;
 }
 
 const useModalWorkspaceAddMember = ({
+  addableUsersAndGroups,
   onClose,
   workspace,
-  addableUsersAndGroups,
 }: Props): ModalHooks => {
   const { knownRoles } = useStore();
 
@@ -63,12 +64,12 @@ const useModalWorkspaceAddMember = ({
         if (isUser(u)) {
           const user = u as User;
           return (
-            (user?.displayName == option.label || user?.username == option.label) &&
-            user.id == value
+            (user?.displayName === option.label || user?.username === option.label) &&
+            user.id === value
           );
         } else {
           const group = u as V1Group;
-          return group.name == option.label && group.groupId == value;
+          return group.name === option.label && group.groupId === value;
         }
       });
       setSelectedOption(userOrGroup);
@@ -103,7 +104,7 @@ const useModalWorkspaceAddMember = ({
         });
       }
     }
-  }, [form, selectedOption]);
+  }, [workspace.id, form, selectedOption]);
 
   const modalContent = useMemo(() => {
     return (
@@ -116,9 +117,9 @@ const useModalWorkspaceAddMember = ({
                 label: getName(option),
                 value: getIdFromUserOrGroup(option),
               }))}
-              onSelect={handleSelect}
               placeholder="Find user or group by display name or username"
               showSearch
+              onSelect={handleSelect}
             />
           </Form.Item>
           <Form.Item name="role" rules={[{ message: 'Role is required ', required: true }]}>
@@ -133,18 +134,18 @@ const useModalWorkspaceAddMember = ({
         </Form>
       </div>
     );
-  }, [handleFilter, addableUsersAndGroups]);
+  }, [addableUsersAndGroups, form, handleFilter, handleSelect, knownRoles]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
-      onOk: handleOk,
       okText: 'Add Member',
+      onOk: handleOk,
       title: 'Add Member',
     };
-  }, [modalContent]);
+  }, [handleOk, modalContent]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
