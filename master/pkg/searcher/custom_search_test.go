@@ -158,5 +158,7 @@ func TestCustomSearchWatcher(t *testing.T) {
 		t.Fatal("did not receive events")
 	}
 
-	// call Unwatch
+	// unwatching should work.
+	queue.Unwatch(id)
+
 }

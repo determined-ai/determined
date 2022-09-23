@@ -33,10 +33,11 @@ type (
 
 func newSearcherEventQueue() *SearcherEventQueue {
 	events := make([]*experimentv1.SearcherEvent, 0)
-	return &SearcherEventQueue{events: events, eventCount: 0}
+	return &SearcherEventQueue{events: events, eventCount: 0,
+		watchers: map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{}}
 }
 
-// Create a Watcher. If events are available add events and close it.
+// Create a eventsWatcher. If events are available add events and close it.
 func (q *SearcherEventQueue) Watch(id uuid.UUID) (eventsWatcher, error) {
 	// buffer size is 1 because we don't want to block
 	//  until another goroutine recieves from this channel.
@@ -52,6 +53,14 @@ func (q *SearcherEventQueue) Watch(id uuid.UUID) (eventsWatcher, error) {
 	return eventsWatcher{C: w}, nil
 }
 
+// Unwatch unregisters a eventsWatcher.
+func (p *SearcherEventQueue) Unwatch(id uuid.UUID) {
+	if p == nil {
+		return
+	}
+	delete(p.watchers, id)
+}
+
 // Enqueue an event.
 func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 	q.eventCount++
@@ -64,6 +73,8 @@ func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 		close(w)
 		delete(q.watchers, id)
 	}
+	print("In enqueue")
+	print(len(q.events))
 }
 
 // GetEvents returns all the events.
@@ -107,6 +118,7 @@ func (q *SearcherEventQueue) UnmarshalJSON(sJSON []byte) error {
 	}
 	q.events = events
 	q.eventCount = searcherEQJSON.EventCount
+	q.watchers = map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{}
 	return nil
 }
 

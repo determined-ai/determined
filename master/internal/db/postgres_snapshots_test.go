@@ -20,6 +20,8 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
 
 	config := expconf.SearcherConfig{
 		RawCustomConfig: &expconf.CustomConfig{},
@@ -39,10 +41,14 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	// Save the snapshot to database.
 	snapshot, err := cSearcher1.Snapshot()
 	require.NoError(t, err)
-	db.SaveSnapshot(1, 2, snapshot)
+	err = db.SaveSnapshot(exp.ID, 2, snapshot)
+	require.NoError(t, err)
+	print("snapshot of searcher1")
+	print(string(snapshot))
 
 	// Retrieve snapshot from database.
-	restored_snapshotSearcher1, _, err1 := db.ExperimentSnapshot(1)
+	restored_snapshotSearcher1, _, err1 := db.ExperimentSnapshot(exp.ID)
+	print("restored snapshot")
 	require.NoError(t, err1)
 
 	// Restore snapshot from custom searcher 1 to custom searcher 2 to
@@ -56,5 +62,6 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	queue2, err := cSearcher2.GetCustomSearcherEventQueue()
 	require.NoError(t, err)
 	require.Equal(t, queue1.GetEvents(), queue2.GetEvents())
-	db.DeleteSnapshotsForExperiment(1)
+	db.DeleteSnapshotsForExperiment(exp.ID)
+	db.DeleteExperiment(exp.ID)
 }
