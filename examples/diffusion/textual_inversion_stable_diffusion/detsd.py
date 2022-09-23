@@ -887,6 +887,7 @@ class DetSDTextualInversionPipeline:
         seed: int = 2147483647,
         parallelize_factor: int = 1,
         other_hf_pipeline_call_kwargs: Optional[dict] = None,
+        max_nsfw_retries: int = 10,
     ) -> Image.Image:
         """Generates an image from the provided prompt and optionally writes the results to disk."""
         other_hf_pipeline_call_kwargs = other_hf_pipeline_call_kwargs or {}
@@ -894,11 +895,11 @@ class DetSDTextualInversionPipeline:
         # Could insert a check that num_samples % parallelize_factor == 0, else wasting compute
 
         images = []
-        generated_samples = 0
+        generated_samples = retries = 0
         # The dummy prompts are what actually get fed into the pipeline
         dummy_prompt = self._replace_concepts_with_dummies(prompt)
         generator = torch.Generator(device="cuda").manual_seed(seed)
-        while generated_samples < num_samples:
+        while generated_samples < num_samples and retries < max_nsfw_retries:
             context = torch.autocast("cuda") if self.use_autocast else nullcontext()
             with context:
                 out = self.pipeline(
@@ -911,6 +912,7 @@ class DetSDTextualInversionPipeline:
             for nsfw, image in zip(out["nsfw_content_detected"], out["sample"]):
                 # Re-try, if nsfw_content_detected
                 if nsfw:
+                    retries += 1
                     continue
                 images.append(image)
                 generated_samples += 1
