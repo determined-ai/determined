@@ -13,11 +13,13 @@ the events to your custom SearchMethod, which, in turn, produces a list of Opera
 Next, CoreSearchRunner sends the operations to the multi-trial experiment for execution.
 """
 import sys
-sys.path.append('.')
+
+sys.path.append(".")
 
 import logging
 import determined as det
 from asha import ASHASearchMethod
+from utils import sample_params
 from attrdict import AttrDict
 from determined.searcher.core_search_runner import CoreSearchRunner
 
@@ -61,6 +63,7 @@ if __name__ == "__main__":
 
         # Instantiate your implementation of SearchMethod
         search_method = ASHASearchMethod(
+            search_space=sample_params,
             max_length=args.max_length,
             max_trials=args.max_trials,
             num_rungs=args.num_rungs,

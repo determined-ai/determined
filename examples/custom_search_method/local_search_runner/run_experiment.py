@@ -16,10 +16,12 @@ response to the events. LocalSearchRunner sends the operations to the remote exp
 for execution.
 """
 import sys
-sys.path.append('.')
+
+sys.path.append(".")
 
 import logging
 from asha import ASHASearchMethod
+from utils import sample_params
 from pathlib import Path
 from determined.searcher.search_runner import LocalSearchRunner
 
@@ -53,7 +55,11 @@ if __name__ == "__main__":
 
     # Instantiate your implementation of SearchMethod
     search_method = ASHASearchMethod(
-        max_length=1000, max_trials=16, num_rungs=3, divisor=4
+        search_space=sample_params,
+        max_length=1000,
+        max_trials=16,
+        num_rungs=3,
+        divisor=4,
     )
 
     # Instantiate LocalSearchRunner

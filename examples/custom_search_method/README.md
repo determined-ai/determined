@@ -12,6 +12,7 @@ We provide two implementations of SearchRunner:
 ## Files
 Custom SearchMethod:
 * **asha.py**: The code for ASHA implemented as a custom SearchMethod.
+* **utils.py**: The code to generate hyperparamters for ASHA.
 
 Multi-trial experiment:
 * **experiment_files/model_def.py**: The core code for the model. This includes building and compiling the model.
