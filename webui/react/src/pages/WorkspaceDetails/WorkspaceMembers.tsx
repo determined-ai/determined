@@ -9,6 +9,7 @@ import { getFullPaginationConfig } from 'components/Table';
 import TableFilterSearch from 'components/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -85,16 +86,45 @@ const WorkspaceMembers: React.FC<Props> = ({
   pageRef,
   workspace,
 }: Props) => {
-  const { knownRoles } = useStore();
+  let { knownRoles } = useStore();
 
   const { canUpdateRoles } = usePermissions();
 
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
 
+  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
+
+  knownRoles = mockWorkspaceMembers ? [{
+    id: 1,
+    name: 'Editor',
+    permissions: [],
+  },
+  {
+    id: 2,
+    name: 'Viewer',
+    permissions: [],
+  }] : knownRoles
   const usersAndGroups: UserOrGroup[] = useMemo(
-    () => [...usersAssignedDirectly, ...groupsAssignedDirectly],
-    [groupsAssignedDirectly, usersAssignedDirectly],
+    () => mockWorkspaceMembers ? [...usersAssignedDirectly, ...groupsAssignedDirectly] : [{
+      displayName: 'Test User One Display Name',
+      id: 1,
+      username: 'Test User One UserName',
+    },
+    {
+      id: 2,
+      username: 'Test User 2 UserName',
+    },
+    {
+      groupId: 1,
+      name: 'Test Group 1 Name',
+    },
+    {
+      groupId: 2,
+      name: 'Test Group 2 Name',
+    },
+  ],
+    [groupsAssignedDirectly, mockWorkspaceMembers, usersAssignedDirectly],
   );
 
   const handleNameSearchApply = useCallback(
@@ -169,8 +199,9 @@ const WorkspaceMembers: React.FC<Props> = ({
 
             // Needs to be updated to get the correct old role for the user
             // or group.
-            const oldRoleId = assignments?.[0].role?.roleId || 0;
+            const oldRoleId = mockWorkspaceMembers ? 1 : assignments?.[0].role?.roleId || 0;
 
+            try {
             // Remove the old role then add the new role
             if (isUser(record)) {
               await removeRoleFromUser({
@@ -191,6 +222,9 @@ const WorkspaceMembers: React.FC<Props> = ({
                 roleIds: [roleIdValue],
               });
             }
+          } catch(e) {
+            // TBD
+          }
           }}>
           {knownRoles.map((role) => (
             <Select.Option key={role.id} value={role.id}>
@@ -238,7 +272,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: '',
       },
     ] as ColumnDef<UserOrGroup>[];
-  }, [assignments, knownRoles, nameFilterSearch, tableSearchIcon, userCanAssignRoles, workspace]);
+  }, [assignments, knownRoles, mockWorkspaceMembers, nameFilterSearch, tableSearchIcon, userCanAssignRoles, workspace]);
 
   return (
     <div className={css.membersContainer}>

@@ -3,6 +3,7 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -23,11 +24,22 @@ interface FormInputs {
 }
 
 const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): ModalHooks => {
-  const { knownRoles } = useStore();
-
+  let { knownRoles } = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
+  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
+
+  knownRoles = useMemo(() => mockWorkspaceMembers ? [{
+    id: 1,
+    name: 'Editor',
+    permissions: [],
+  },
+  {
+    id: 2,
+    name: 'Viewer',
+    permissions: [],
+  }] : knownRoles, [knownRoles, mockWorkspaceMembers ])
 
   const handleFilter = useCallback(
     (search: string, option): boolean => {
@@ -115,6 +127,7 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
       <div className={css.base}>
         <Form autoComplete="off" form={form} layout="vertical">
           <Form.Item
+          label="User or Group"
             name="userOrGroupId"
             rules={[{ message: 'User or group is required ', required: true }]}>
             <Select
@@ -128,7 +141,10 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
               onSelect={handleSelect}
             />
           </Form.Item>
-          <Form.Item name="roleId" rules={[{ message: 'Role is required ', required: true }]}>
+          <Form.Item
+          label="Role"
+          name="roleId"
+          rules={[{ message: 'Role is required ', required: true }]}>
             <Select placeholder="Role">
               {knownRoles.map((role) => (
                 <Select.Option key={role.id} value={role.id}>
