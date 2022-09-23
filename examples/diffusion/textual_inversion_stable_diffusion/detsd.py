@@ -339,15 +339,16 @@ class DetSDTextualInversionTrainer:
             token_embeddings[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
-            print(
-                80 * "$",
-                f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}",
-                new_token_embeddings_norms.detach().mean().item(),
-                f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
-                new_token_embeddings_norms.detach().max().item(),
-                80 * "$",
-                sep="\n",
-            )
+            if self.accelerator.is_main_process:
+                print(
+                    80 * "$",
+                    f"MEAN NEW EMBEDDING NORM STEP {self.steps_completed}",
+                    new_token_embeddings_norms.detach().mean().item(),
+                    f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
+                    new_token_embeddings_norms.detach().max().item(),
+                    80 * "$",
+                    sep="\n",
+                )
         self.optimizer.zero_grad()
 
         return loss
