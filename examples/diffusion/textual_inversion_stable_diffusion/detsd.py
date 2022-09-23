@@ -321,7 +321,6 @@ class DetSDTextualInversionTrainer:
             self.norm_penalty
             * ((new_token_embeddings_norms - self.original_embedding_mean_norm) ** 2).sum()
         )
-        print("NORM LOSS: ", norm_loss)
         loss = loss + norm_loss
 
         self.accelerator.backward(loss)
@@ -346,6 +345,7 @@ class DetSDTextualInversionTrainer:
                     new_token_embeddings_norms.detach().mean().item(),
                     f"MAX NEW EMBEDDING NORM STEP {self.steps_completed}",
                     new_token_embeddings_norms.detach().max().item(),
+                    print("NORM LOSS: ", norm_loss),
                     80 * "$",
                     sep="\n",
                 )
