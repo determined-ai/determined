@@ -510,6 +510,7 @@ class TestPyTorchTrial:
 
         hparams = self.hparams.copy()
         hparams["lr_scheduler_step_mode"] = lr_scheduler_step_mode
+        hparams["global_batch_size"] = 64
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_onevar_model.OneVarTrialAccessContext,
