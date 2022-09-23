@@ -1,5 +1,4 @@
 import { Button, Dropdown, Menu, Select } from 'antd';
-import { BaseOptionType } from 'antd/lib/select';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
@@ -161,17 +160,18 @@ const WorkspaceMembers: React.FC<Props> = ({
           className={css.selectContainer}
           disabled={!userCanAssignRoles}
           value={assignments[0]}
-          onSelect={async (value: RawValueType | LabelInValueType, option: BaseOptionType) => {
+          onSelect={async (value: RawValueType | LabelInValueType) => {
+            const roleIdValue = value as number;
             const assignmentToRemove = createAssignmentRequest(
+              roleIdValue,
               record,
               getIdFromUserOrGroup(record),
-              0,
               workspace.id,
             );
             const AssignmentToAdd = createAssignmentRequest(
+              roleIdValue,
               record,
               getIdFromUserOrGroup(record),
-              1,
               workspace.id,
             );
             // Remove the old role
