@@ -23,7 +23,8 @@ import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 import { isEqual } from 'shared/utils/data';
 import handleError from 'utils/error';
 
-interface RP {
+// This will be removed once the generated types for the API call exists
+interface GroupsAndUsersAssignedToWorkspaceResponse {
   usersAssignedDirectly: User[];
   assignments: V1RoleWithAssignments[];
   groups: V1Group[];
@@ -86,7 +87,7 @@ const WorkspaceDetails: React.FC = () => {
 
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
     // Mock of https://github.com/determined-ai/determined/pull/5085
-    const response: RP = await Promise.resolve({
+    const response: GroupsAndUsersAssignedToWorkspaceResponse = await Promise.resolve({
       groups: [],
       usersAssignedDirectly: [],
       assignments: [],
