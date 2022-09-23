@@ -191,7 +191,7 @@ class SearchRunner:
         session: client.Session,
         experiment_id: int,
     ) -> Optional[Sequence[bindings.v1SearcherEvent]]:
-        events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
+        events = bindings.get_GetSearcherEventsLongPolling(session, experimentId=experiment_id)
         return events.searcherEvents
 
     def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:

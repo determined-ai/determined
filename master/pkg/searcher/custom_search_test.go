@@ -4,12 +4,13 @@ package searcher
 import (
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 )
 
 // Testing a few methods (not all because they are similar)
@@ -160,5 +161,4 @@ func TestCustomSearchWatcher(t *testing.T) {
 
 	// unwatching should work.
 	queue.Unwatch(id)
-
 }

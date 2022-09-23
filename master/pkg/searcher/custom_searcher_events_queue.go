@@ -26,19 +26,21 @@ type (
 		EventCount int32             `json:"custom_searcher_event_count"`
 	}
 
-	eventsWatcher struct {
+	EventsWatcher struct {
 		C <-chan []*experimentv1.SearcherEvent
 	}
 )
 
 func newSearcherEventQueue() *SearcherEventQueue {
 	events := make([]*experimentv1.SearcherEvent, 0)
-	return &SearcherEventQueue{events: events, eventCount: 0,
-		watchers: map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{}}
+	return &SearcherEventQueue{
+		events: events, eventCount: 0,
+		watchers: map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{},
+	}
 }
 
 // Create a eventsWatcher. If events are available add events and close it.
-func (q *SearcherEventQueue) Watch(id uuid.UUID) (eventsWatcher, error) {
+func (q *SearcherEventQueue) Watch(id uuid.UUID) (EventsWatcher, error) {
 	// buffer size is 1 because we don't want to block
 	//  until another goroutine recieves from this channel.
 	// and only one event list can be sent to a channel.
@@ -50,7 +52,7 @@ func (q *SearcherEventQueue) Watch(id uuid.UUID) (eventsWatcher, error) {
 		close(w)
 		delete(q.watchers, id)
 	}
-	return eventsWatcher{C: w}, nil
+	return EventsWatcher{C: w}, nil
 }
 
 // Unwatch unregisters a eventsWatcher.

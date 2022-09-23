@@ -455,11 +455,26 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err != nil {
 			ctx.Respond(status.Error(codes.Internal, err.Error()))
 		} else {
-			resp := &apiv1.GetSearcherEventsResponse{
-				SearcherEvents: queue.GetEvents(),
+			id := uuid.New()
+			if w, err := queue.Watch(id); err != nil {
+				ctx.Respond(err)
+			} else {
+				ctx.Respond(w)
 			}
-			ctx.Respond(resp)
 		}
+
+	/*
+		case *apiv1.GetSearcherEventsRequest:
+			queue, err := e.searcher.GetCustomSearcherEventQueue()
+			if err != nil {
+				ctx.Respond(status.Error(codes.Internal, err.Error()))
+			} else {
+				resp := &apiv1.GetSearcherEventsResponse{
+					SearcherEvents: queue.GetEvents(),
+				}
+				ctx.Respond(resp)
+			}
+	*/
 
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{

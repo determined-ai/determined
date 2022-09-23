@@ -41,7 +41,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/searcher"
+	searcher "github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -233,7 +233,54 @@ func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearche
 func (a *apiServer) GetSearcherEventsLongPolling(ctx context.Context, req *apiv1.GetSearcherEventsRequest) (
 	resp *apiv1.GetSearcherEventsResponse, err error,
 ) {
-	return nil, nil
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+	if !isActiveExperimentState(exp.State) {
+		event := experimentv1.SearcherEvent_ExperimentInactive{
+			ExperimentInactive: &experimentv1.ExperimentInactive{
+				ExperimentState: exp.State,
+			},
+		}
+		searcherEvent := experimentv1.SearcherEvent{
+			Id:    int32(-1),
+			Event: &event,
+		}
+		events := []*experimentv1.SearcherEvent{&searcherEvent}
+		resp = &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}
+		return resp, nil
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+
+	var w searcher.EventsWatcher
+	switch err = a.ask(addr, w, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to get events %v", err) // failed to get eventsWatcher to be more specific. But to the user this is not relevant.
+	default:
+		ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
+		defer cancel()
+		select {
+		case <-w.C:
+			resp = &apiv1.GetSearcherEventsResponse{
+				SearcherEvents: <-w.C,
+			}
+			return resp, nil
+		case <-ctx.Done():
+			resp = &apiv1.GetSearcherEventsResponse{
+				SearcherEvents: nil,
+			}
+			return resp, nil
+		}
+
+	}
 }
 
 func (a *apiServer) PostSearcherOperations(ctx context.Context,
