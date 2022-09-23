@@ -49,7 +49,12 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }: ItemProps) => {
+export const NavigationItem: React.FC<ItemProps> = ({
+  path,
+  status,
+  action,
+  ...props
+}: ItemProps) => {
   const location = useLocation();
   const [isActive, setIsActive] = useState(false);
   const classes = [css.navItem];

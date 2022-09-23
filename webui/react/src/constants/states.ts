@@ -23,22 +23,31 @@ export const activeRunStates: Array<
   'STATE_ACTIVE' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
 > = ['STATE_ACTIVE', 'STATE_STOPPING_CANCELED', 'STATE_STOPPING_COMPLETED', 'STATE_STOPPING_ERROR'];
 
+/* activeStates are sub-states which replace the previous Active RunState,
+  and Active for backward compatibility  */
+const activeStates: Array<RunState> = [
+  RunState.Active,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.Running,
+  RunState.Starting,
+];
 const jobStates: Array<JobState> = [
   JobState.QUEUED,
   JobState.SCHEDULED,
   JobState.SCHEDULEDBACKFILLED,
 ];
 export const killableRunStates: CompoundRunState[] = [
-  RunState.Active,
+  ...activeStates,
   RunState.Paused,
   RunState.StoppingCanceled,
   ...jobStates,
 ];
 
-export const pausableRunStates: Set<CompoundRunState> = new Set([RunState.Active, ...jobStates]);
+export const pausableRunStates: Set<CompoundRunState> = new Set([...activeStates, ...jobStates]);
 
 export const cancellableRunStates: Set<CompoundRunState> = new Set([
-  RunState.Active,
+  ...activeStates,
   RunState.Paused,
   ...jobStates,
 ]);
@@ -105,6 +114,7 @@ export const V1SchedulerTypeToLabel: { [key in V1SchedulerType]: string } = {
 };
 
 export const commandStateToLabel: { [key in CommandState]: string } = {
+  [CommandState.Waiting]: 'Waiting',
   [CommandState.Pulling]: 'Pulling',
   [CommandState.Queued]: 'Queued',
   [CommandState.Starting]: 'Starting',

@@ -19,7 +19,7 @@ import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import Json from './Json';
-import css from './ResourcePoolCardLight.module.scss';
+import css from './ResourcePoolCard.module.scss';
 
 interface Props {
   poolStats?: V1RPQueueStat | undefined;
@@ -80,7 +80,7 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
   return <img className={css['rp-type-logo']} src={iconSrc} />;
 };
 
-const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) => {
+const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const descriptionClasses = [css.description];
 
   if (!pool.description) descriptionClasses.push(css.empty);
@@ -179,4 +179,4 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
   );
 };
 
-export default ResourcePoolCardLight;
+export default ResourcePoolCard;

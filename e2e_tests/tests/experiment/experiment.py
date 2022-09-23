@@ -272,11 +272,14 @@ def experiment_first_trial(exp_id: int) -> int:
     return trial_id
 
 
-def determined_test_session() -> api.Session:
+def determined_test_session(admin: bool = False) -> api.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
-    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    username = "admin" if admin else "determined"
+    authentication.cli_auth = authentication.Authentication(
+        murl, requested_user=username, password="", try_reauth=True
+    )
+    return api.Session(murl, username, authentication.cli_auth, certs.cli_cert)
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
@@ -768,7 +771,13 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
 
         logs = trial_logs(trial.id)
         if error_str is not None:
-            assert any(error_str in line for line in logs)
+            try:
+                assert any(error_str in line for line in logs)
+            except AssertionError:
+                # Display error log for triage of this failure
+                print(f"Trial {trial.id} log did not contain expected message:  {error_str}")
+                print_trial_logs(trial.id)
+                raise
 
     return experiment_id
 

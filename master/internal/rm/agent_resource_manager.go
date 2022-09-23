@@ -71,6 +71,30 @@ func (a AgentResourceManager) ValidateResourcePool(ctx actor.Messenger, name str
 	return err
 }
 
+// IsReattachEnabled is true if any RP is configured to support it.
+func (a AgentResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
+	config := config.GetMasterConfig()
+
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.AgentReattachEnabled {
+			return true
+		}
+	}
+	return false
+}
+
+// IsReattachEnabledForRP returns true, if the specified RP has AgentReattachEnabled.
+func (a AgentResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName string) bool {
+	config := config.GetMasterConfig()
+
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.PoolName == rpName && rpConfig.AgentReattachEnabled {
+			return true
+		}
+	}
+	return false
+}
+
 // ResolveResourcePool fully resolves the resource pool name.
 func (a AgentResourceManager) ResolveResourcePool(
 	ctx actor.Messenger, name string, slots int, command bool,

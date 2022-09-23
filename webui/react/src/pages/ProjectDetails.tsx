@@ -794,14 +794,13 @@ const ProjectDetails: React.FC = () => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
+      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
-    });
-  }, [openCustomizeColumns, settings.columns, transferColumns]);
+    openCustomizeColumns({});
+  }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -963,7 +962,6 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
-    if (!canViewWorkspaces) return <NoPermissions />;
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -1099,6 +1097,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
+  if (!canViewWorkspaces) return <NoPermissions />;
   if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }

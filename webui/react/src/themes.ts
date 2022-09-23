@@ -45,6 +45,7 @@ const stateColorMapping = {
   [RunState.Pulling]: 'pending',
   [RunState.Starting]: 'pending',
   [RunState.Running]: 'active',
+  [CommandState.Waiting]: 'inactive',
   [CommandState.Pulling]: 'active',
   [CommandState.Starting]: 'active',
   [CommandState.Running]: 'active',
