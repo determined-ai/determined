@@ -1,5 +1,0 @@
-:orphan:
-
-** Bug Fixes ** 
-
-- Checkpoints: Fixed a bug where operations that listed checkpoints could sometimes return the same checkpoint multiple times.

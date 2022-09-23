@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Kubernetes: Allow the UID and GID of Fluent Bit logging sidecars to be configured on a
-   cluster-wide basis.
