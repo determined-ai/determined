@@ -102,19 +102,21 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
   }, [form, updatePermissions, user]);
 
   const permissionTableColumn = useMemo(() => {
-    const columns = [
+    const columns: ColumnDef<UserRole>[] = [
       {
         dataIndex: 'name',
+        defaultWidth: 40,
         key: 'name',
         title: 'Name',
       },
       {
         dataIndex: 'permissions',
+        defaultWidth: 24,
         key: 'permissions',
         render: (p) => p.length,
         title: 'Permissions',
       },
-    ] as ColumnDef<UserRole>[];
+    ];
     if (canModifyPermissions && !viewOnly && rbacEnabled) {
       columns.push({
         dataIndex: 'id',

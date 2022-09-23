@@ -111,7 +111,9 @@ const relevantPermissions = (
     return new Set<string>();
   }
   const relevantAssigned = userAssignments
-    .filter((a) => a.cluster || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)))
+    .filter(
+      (a) => a.isGlobal || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)),
+    )
     .map((a) => a.name);
   let permissions = Array<Permission>();
   userRoles
@@ -121,9 +123,9 @@ const relevantPermissions = (
       // but not all of its permissions?
       permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
     });
-  const permitter = new Set<string>(permissions.map((p) => p.name));
+  const permitter = new Set<string>(permissions.map((p) => p.id));
   // a cluster_admin has all permissions
-  if (permitter.has('cluster_admin')) {
+  if (relevantAssigned.includes('ClusterAdmin')) {
     return { has: () => true };
   }
   return permitter;

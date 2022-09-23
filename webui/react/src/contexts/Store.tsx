@@ -1,7 +1,7 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { V1UserWebSetting } from 'services/api-ts-sdk';
+import { V1Role, V1RoleAssignmentSummary, V1UserWebSetting} from 'services/api-ts-sdk';
 import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
@@ -21,6 +21,7 @@ import {
   Workspace,
 } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
+import * as decoder from 'services/decoder';
 
 const logger = rootLogger.extend('store');
 
@@ -157,6 +158,23 @@ const initInfo: DeterminedInfo = {
   version: process.env.VERSION || '',
 };
 
+export const OSSUserRole: V1Role = {
+  roleId: -1,
+  name: 'OSS User',
+  permissions: [
+    {
+      id: -1,
+      isGlobal: true,
+      name: 'oss_user',
+    },
+  ],
+};
+
+export const OSSUserAssignment: V1RoleAssignmentSummary = {
+  isGlobal: true,
+  roleId: -1,
+};
+
 const initState: State = {
   activeExperiments: 0,
   activeTasks: {
@@ -174,25 +192,8 @@ const initState: State = {
   pool: {},
   resourcePools: [],
   ui: { ...initUI, omnibar: { isShowing: false } },
-  userAssignments: [
-    {
-      cluster: true,
-      name: 'OSS User',
-    },
-  ],
-  userRoles: [
-    {
-      id: -1,
-      name: 'OSS User',
-      permissions: [
-        {
-          id: -1,
-          isGlobal: true,
-          name: 'oss_user',
-        },
-      ],
-    },
-  ],
+  userAssignments: [OSSUserAssignment].map((a) => decoder.mapV1Assignment(a, [OSSUserRole])),
+  userRoles: [OSSUserRole].map(decoder.mapV1Role),
   users: [],
   userSettings: [],
 };

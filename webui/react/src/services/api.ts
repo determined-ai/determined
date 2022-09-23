@@ -70,6 +70,12 @@ export const getUserSetting = generateDetApi<
   Api.V1GetUserSettingResponse
 >(Config.getUserSetting);
 
+export const getPermissionsSummary = generateDetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Api.V1GetPermissionsSummaryResponse
+>(Config.getPermissionsSummary);
+
 export const updateUserSetting = generateDetApi<
   Service.UpdateUserSettingParams,
   Api.V1PostUserSettingResponse,
@@ -133,7 +139,7 @@ export const listRoles = generateDetApi<
 >(Config.listRoles);
 
 export const listWorkspaceRoles = generateDetApi<
-  Service.ListWorlspaceRolesParams,
+  Service.ListWorkspaceRolesParams,
   Api.V1SearchRolesAssignableToScopeResponse,
   Type.UserRole[]
 >(Config.listWorkspaceRoles);

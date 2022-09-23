@@ -6,6 +6,7 @@ import {
   useFetchKnownRoles,
   useFetchPinnedWorkspaces,
   useFetchResourcePools,
+  useFetchUserRoles,
   useFetchUserSettings,
 } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -27,18 +28,24 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const fetchUserSettings = useFetchUserSettings(canceler);
+  const fetchUserRoles = useFetchUserRoles(canceler);
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
   usePolling(fetchUserSettings, { interval: 60000 });
-  usePolling(fetchKnownRoles);
+  usePolling(fetchUserRoles, { interval: 60000 });
 
   useEffect(() => {
     fetchResourcePools();
 
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
+
+  useEffect(() => {
+    fetchKnownRoles();
+    return () => canceler.abort();
+  }, [canceler, fetchKnownRoles]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

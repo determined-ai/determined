@@ -166,6 +166,16 @@ export const getUserSetting: DetApi<
   request: () => detApi.Users.getUserSetting(),
 };
 
+export const getPermissionsSummary: DetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Api.V1GetPermissionsSummaryResponse
+> = {
+  name: 'getPermissionsSummary',
+  postProcess: (response) => response,
+  request: () => detApi.RBAC.getPermissionsSummary(),
+};
+
 export const updateUserSetting: DetApi<
   Service.UpdateUserSettingParams,
   Api.V1PostUserSettingResponse,
@@ -286,7 +296,7 @@ export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse,
   };
 
 export const listWorkspaceRoles: DetApi<
-  Service.ListWorlspaceRolesParams,
+  Service.ListWorkspaceRolesParams,
   Api.V1SearchRolesAssignableToScopeResponse,
   Type.UserRole[]
 > = {

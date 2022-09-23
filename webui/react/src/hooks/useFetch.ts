@@ -1,7 +1,14 @@
 import { useCallback } from 'react';
 
 import { activeRunStates } from 'constants/states';
-import { agentsToOverview, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import {
+  agentsToOverview,
+  StoreAction,
+  useStore,
+  useStoreDispatch,
+  OSSUserAssignment,
+  OSSUserRole,
+} from 'contexts/Store';
 import {
   getActiveTasks,
   getAgents,
@@ -12,11 +19,14 @@ import {
   getUserSetting,
   getWorkspaces,
   listRoles,
+  getPermissionsSummary,
 } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, ResourceType } from 'types';
+import { BrandingType, Permission, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
+import useFeature from 'hooks/useFeature';
+import * as decoder from 'services/decoder';
 
 export const useFetchActiveExperiments = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
@@ -142,10 +152,30 @@ export const useFetchPinnedWorkspaces = (canceler: AbortController): (() => Prom
 
 export const useFetchKnownRoles = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
+  const rbacEnabled = useFeature().isOn('rbac');
   return useCallback(async (): Promise<void> => {
     try {
-      const roles = await listRoles({ limit: 0 }, { signal: canceler.signal });
+      const roles = rbacEnabled ? await listRoles({ limit: 0 }, { signal: canceler.signal }) : [];
       storeDispatch({ type: StoreAction.SetKnownRoles, value: roles });
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, storeDispatch]);
+};
+
+export const useFetchUserRoles = (canceler: AbortController): (() => Promise<void>) => {
+  const storeDispatch = useStoreDispatch();
+  const rbacEnabled = useFeature().isOn('rbac');
+  return useCallback(async (): Promise<void> => {
+    try {
+      const { roles, assignments } = rbacEnabled
+        ? await getPermissionsSummary({}, { signal: canceler.signal })
+        : { roles: [OSSUserRole], assignments: [OSSUserAssignment] };
+      storeDispatch({ type: StoreAction.SetUserRoles, value: roles.map(decoder.mapV1Role) });
+      storeDispatch({
+        type: StoreAction.SetUserAssignments,
+        value: assignments.map((a) => decoder.mapV1Assignment(a, roles)),
+      });
     } catch (e) {
       handleError(e);
     }

@@ -807,13 +807,14 @@ export interface ProjectPagination extends WithPagination {
 }
 
 export interface UserAssignment {
-  cluster: boolean;
+  isGlobal: boolean;
   name: string;
+  roleId: number;
   workspaces?: number[];
 }
 
 export interface Permission {
-  id: number;
+  id: string;
   isGlobal: boolean;
   name: string;
 }

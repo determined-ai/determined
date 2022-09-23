@@ -39,9 +39,22 @@ export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
 
 export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
   return {
-    id: permission.id,
+    id: Sdk.V1PermissionType[permission.id],
     isGlobal: permission.isGlobal || false,
     name: permission.name || '',
+  };
+};
+
+export const mapV1Assignment = (
+  assignment: Sdk.V1RoleAssignmentSummary,
+  roles: Sdk.V1Role[],
+): types.UserAssignment => {
+  const role = roles.find((r) => r.roleId === assignment.roleId);
+  return {
+    isGlobal: assignment.isGlobal || false,
+    name: role?.name || '',
+    workspaces: assignment.scopeWorkspaceIds,
+    roleId: assignment.roleId || 0,
   };
 };
 

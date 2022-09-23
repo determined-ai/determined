@@ -377,7 +377,7 @@ export interface ListRolesParams extends PaginationParams {
   isGlobal?: boolean;
 }
 
-export interface ListWorlspaceRolesParams extends PaginationParams {
+export interface ListWorkspaceRolesParams extends PaginationParams {
   workspaceId: number;
 }
 
