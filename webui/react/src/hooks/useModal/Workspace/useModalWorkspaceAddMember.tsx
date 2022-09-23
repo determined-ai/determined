@@ -7,7 +7,7 @@ import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
-import { User, UserOrGroup, Workspace } from 'types';
+import { User, UserOrGroup } from 'types';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -16,18 +16,13 @@ import css from './useModalWorkspaceAddMember.module.scss';
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
   onClose?: () => void;
-  workspace: Workspace;
 }
 interface FormInputs {
-  userOrGroupId: number;
   roleId: number;
+  userOrGroupId: number;
 }
 
-const useModalWorkspaceAddMember = ({
-  addableUsersAndGroups,
-  onClose,
-  workspace,
-}: Props): ModalHooks => {
+const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): ModalHooks => {
   const { knownRoles } = useStore();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
@@ -81,19 +76,18 @@ const useModalWorkspaceAddMember = ({
     try {
       const values = await form.validateFields();
       if (values && selectedOption) {
-        isUser(selectedOption) ? 
-          await assignRolesToUser({
-            roleIds: [values.roleId],
-            userId: values.userOrGroupId
-          })
-        :
-          await assignRolesToGroup({
-            roleIds: [values.roleId],
-            groupId: values.userOrGroupId
-          })
+        isUser(selectedOption)
+          ? await assignRolesToUser({
+              roleIds: [values.roleId],
+              userId: values.userOrGroupId,
+            })
+          : await assignRolesToGroup({
+              groupId: values.userOrGroupId,
+              roleIds: [values.roleId],
+            });
         form.resetFields();
         setSelectedOption(undefined);
-        message.success(`${getName(selectedOption)} added to workspace,`)
+        message.success(`${getName(selectedOption)} added to workspace,`);
       }
     } catch (e) {
       if (e instanceof DetError) {
@@ -114,13 +108,15 @@ const useModalWorkspaceAddMember = ({
         });
       }
     }
-  }, [workspace.id, form, selectedOption]);
+  }, [form, selectedOption]);
 
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
         <Form autoComplete="off" form={form} layout="vertical">
-          <Form.Item name="userOrGroupId" rules={[{ message: 'User or group is required ', required: true }]}>
+          <Form.Item
+            name="userOrGroupId"
+            rules={[{ message: 'User or group is required ', required: true }]}>
             <Select
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({

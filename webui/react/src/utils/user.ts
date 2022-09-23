@@ -1,9 +1,4 @@
-import {
-  V1AssignRolesRequest,
-  V1Group,
-  V1RemoveAssignmentsRequest,
-  V1RoleAssignment,
-} from 'services/api-ts-sdk';
+import { V1Group } from 'services/api-ts-sdk';
 import { DetailedUser, User, UserOrGroup } from 'types';
 
 interface UserNameFields {
@@ -15,24 +10,24 @@ export function getDisplayName(user: DetailedUser | User | UserNameFields | unde
   return user?.displayName || user?.username || 'Unavailable';
 }
 
-export function isUser(obj: UserOrGroup): string | undefined {
-  const user = obj as User;
+export function isUser(userOrGroup: UserOrGroup): string | undefined {
+  const user = userOrGroup as User;
   return user?.username || user?.displayName;
 }
 
-export function getName(obj: UserOrGroup): string {
-  const user = obj as User;
-  const group = obj as V1Group;
-  return isUser(obj) ? getDisplayName(user) : group.name ? group.name : '';
+export function getName(userOrGroup: UserOrGroup): string {
+  const user = userOrGroup as User;
+  const group = userOrGroup as V1Group;
+  return isUser(userOrGroup) ? getDisplayName(user) : group.name ? group.name : '';
 }
 
-export const getIdFromUserOrGroup = (obj: UserOrGroup): number => {
-  if (isUser(obj)) {
-    const user = obj as User;
+export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {
+  if (isUser(userOrGroup)) {
+    const user = userOrGroup as User;
     return user.id;
   }
-  const group = obj as V1Group;
+  const group = userOrGroup as V1Group;
 
-  // THe groupId should always exist
+  // The groupId should always exist
   return group.groupId || 0;
 };

@@ -324,13 +324,12 @@ export const removeRoleFromGroup: DetApi<
     detApi.RBAC.removeAssignments({
       groupRoleAssignments: [
         {
-          roleAssignment: { role: { roleId: params.roleId } },
           groupId: params.groupId,
+          roleAssignment: { role: { roleId: params.roleId } },
         },
       ],
     }),
 };
-
 
 export const assignRolesToUser: DetApi<
   Service.AssignRolesToUserParams,

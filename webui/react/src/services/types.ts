@@ -366,8 +366,8 @@ export interface GetGroupParams {
   groupId: number;
 }
 export interface RemoveRoleFromGroupParams {
-  roleId: number;
   groupId: number;
+  roleId: number;
 }
 
 export interface AssignRolesToUserParams {

@@ -12,13 +12,19 @@ import { useStore } from 'contexts/Store';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { assignRolesToUser, assignRolesToGroup, removeRoleFromUser, removeRoleFromGroup} from 'services/api';
+import {
+  assignRolesToGroup,
+  assignRolesToUser,
+  removeRoleFromGroup,
+  removeRoleFromUser,
+} from 'services/api';
 import { V1Group, V1GroupDetails, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, Workspace } from 'types';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -41,7 +47,6 @@ interface GroupOrMemberActionDropdownProps {
 
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
   userOrGroup,
-  workspace,
   name,
 }) => {
   const {
@@ -51,7 +56,6 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
     name,
     userOrGroup: userOrGroup,
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
-    workspaceId: workspace.id,
   });
 
   const menuItems = (
@@ -162,27 +166,27 @@ const WorkspaceMembers: React.FC<Props> = ({
           onSelect={async (value: RawValueType | LabelInValueType) => {
             const roleIdValue = value as number;
             const userOrGroupId = getIdFromUserOrGroup(record);
-            
+
             // Remove the old role
             // Add the new role
-            if(isUser(record)){
+            if (isUser(record)) {
               await removeRoleFromUser({
-                roleId:roleIdValue,
-                userId: userOrGroupId
-              })
+                roleId: roleIdValue,
+                userId: userOrGroupId,
+              });
               await assignRolesToUser({
-                roleIds:[roleIdValue],
-                userId: userOrGroupId
-              })
+                roleIds: [roleIdValue],
+                userId: userOrGroupId,
+              });
             } else {
               await removeRoleFromGroup({
+                groupId: userOrGroupId,
                 roleId: roleIdValue,
-                groupId: userOrGroupId
-              })
+              });
               await assignRolesToGroup({
+                groupId: userOrGroupId,
                 roleIds: [roleIdValue],
-                groupId: userOrGroupId
-              })
+              });
             }
           }}>
           {knownRoles.map((role) => (
