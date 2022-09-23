@@ -12,7 +12,7 @@ import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown
 import { patchWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { Workspace } from 'types';
+import { UserOrGroup, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
@@ -20,11 +20,11 @@ import { V1Group } from 'services/api-ts-sdk';
 
 interface Props {
   fetchWorkspace: () => void;
-  groups: V1Group[];
+  addableUsersAndGroups: UserOrGroup[];
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ groups, workspace, fetchWorkspace }: Props) => {
+const WorkspaceDetailsHeader: React.FC<Props> = ({addableUsersAndGroups, workspace, fetchWorkspace }: Props) => {
 
   const { canAssignRoles } = usePermissions();
 
@@ -35,7 +35,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ groups, workspace, fetchWorks
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
       workspace,
-      groups
+      addableUsersAndGroups
     });
 
   const rbacEnabled = useFeature().isOn('rbac');

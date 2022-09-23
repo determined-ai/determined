@@ -14,8 +14,8 @@ import { getWorkspace, getGroups } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isNotFound } from 'shared/utils/service';
-import { Workspace } from 'types';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { User, Workspace } from 'types';
+import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
@@ -23,6 +23,11 @@ import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 import { isEqual } from 'shared/utils/data';
 import handleError from 'utils/error';
 
+interface RP {
+  usersAssignedDirectly: User[];
+  assignments: V1RoleWithAssignments[];
+  groups: V1Group[];
+}
 interface Params {
   tab: string;
   workspaceId: string;
@@ -35,9 +40,16 @@ export enum WorkspaceDetailsTab {
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
+
+  const {users } = useStore();
   const { workspaceId } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
+  const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
+  const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
+  const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>();
+  const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>();
+  const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
   const [pageError, setPageError] = useState<Error>();
   const [canceler] = useState(new AbortController());
   const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
@@ -72,8 +84,30 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [canceler.signal]);
 
+  const fetchGroupsAndUsersAssignedToWorkspace  = useCallback(async (): Promise<void> => {
+    // Mock of https://github.com/determined-ai/determined/pull/5085
+    const response: RP = await Promise.resolve({
+      groups: [],
+      usersAssignedDirectly: [],
+      assignments: []
+    })
+
+    const newGroupIds = new Set<number>();
+    setUsersAssignedDirectly(response.usersAssignedDirectly);
+    setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map(user => user.id)));
+    setGroupsAssignedDirectly(response.groups);
+    response.groups.forEach(group => {
+      if(group.groupId){
+        newGroupIds.add(group.groupId)
+      }
+    });
+    setGroupsAssignedDirectlyIds(newGroupIds);
+    setWorkspaceAssignments(response.assignments);
+
+  }, [canceler.signal]);
+
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchWorkspace(), fetchUsers(), fetchGroups()]);
+    await Promise.allSettled([fetchWorkspace(), fetchUsers(), fetchGroups(), fetchGroupsAndUsersAssignedToWorkspace()]);
   }, [fetchWorkspace, fetchUsers, fetchGroups]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
@@ -98,6 +132,14 @@ const WorkspaceDetails: React.FC = () => {
       history.replace(`${basePath}/${tabKey}`);
   }, [basePath, history, location.pathname, tabKey]);
 
+  // Users and Groups that are not already a part of the workspace
+  const addableGroups: V1Group[] = groups ? 
+  groups?.filter(groupDetails => {
+    groupDetails.group?.groupId && !groupsAssignedDirectlyIds?.has(groupDetails.group.groupId)}
+    ).map(groupDetails => groupDetails.group) : [];
+  const addableUsers = users.filter(user=> !usersAssignedDirectlyIds?.has(user.id));
+  const addableUsersAndGroups = [...addableGroups, ...addableUsers];
+
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
@@ -116,12 +158,11 @@ const WorkspaceDetails: React.FC = () => {
     return <PageNotFound />;
   }
 
-  const groupsList = groups?.map(group => group.group) || [] 
   return (
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader groups={groupsList} fetchWorkspace={fetchAll} workspace={workspace} />}
+      headerComponent={<WorkspaceDetailsHeader addableUsersAndGroups={addableUsersAndGroups} fetchWorkspace={fetchAll} workspace={workspace} />}
       id="workspaceDetails">
       {rbacEnabled ? (
         <Tabs activeKey={tabKey} destroyInactiveTabPane onChange={handleTabChange}>
@@ -129,7 +170,13 @@ const WorkspaceDetails: React.FC = () => {
             <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
           </Tabs.TabPane>
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
-            <WorkspaceMembers pageRef={pageRef} workspace={workspace} groups={groupsList}/>
+            <WorkspaceMembers
+            usersAssignedDirectly = {usersAssignedDirectly}
+            groupsAssignedDirectly = {groupsAssignedDirectly}
+            assignments = {workspaceAssignments}
+            pageRef={pageRef} 
+            workspace={workspace} 
+            />
           </Tabs.TabPane>
         </Tabs>
       ) : (

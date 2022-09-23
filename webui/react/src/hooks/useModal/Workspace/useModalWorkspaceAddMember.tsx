@@ -15,24 +15,24 @@ import css from './useModalWorkspaceAddMember.module.scss';
 interface Props {
   onClose?: () => void;
   workspace: Workspace;
-  groups: V1Group[];
+  addableUsersAndGroups: UserOrGroup[];
 }
 interface FormInputs {
   role: string;
   id: number;
 }
 
-const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): ModalHooks => {
-  const {users} = useStore();
+const useModalWorkspaceAddMember = ({ onClose, workspace, addableUsersAndGroups  }: Props): ModalHooks => {
+  const { knownRoles, users} = useStore();
+
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
-
-  const usersAndGroups = useMemo(() => [...users, ...groups], [users, groups]);
+  
   const handleFilter = useCallback(
     (search: string, option): boolean => {
       const label = option.label as string;
-      const userOrGroup = usersAndGroups.find((u) => {
+      const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u)) {
           const user = u as User;
           return user?.displayName === label || user?.username === label;
@@ -52,11 +52,11 @@ const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): Mod
         return groupOption?.name?.includes(search) || false;
       }
     },
-    [usersAndGroups],
+    [addableUsersAndGroups],
   );
   
   const handleSelect = useCallback((value, option) => {
-    const userOrGroup = usersAndGroups.find(u => {
+    const userOrGroup = addableUsersAndGroups.find(u => {
       if(isUser(u)){
         const user = u as User;
         return (user?.displayName == option.label || user?.username == option.label)  && user.id == value
@@ -67,7 +67,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): Mod
     }
     )
     setSelectedOption(userOrGroup);
-  }, [usersAndGroups])
+  }, [addableUsersAndGroups])
 
   const handleOk = useCallback(
     async () => {
@@ -110,8 +110,6 @@ const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): Mod
 
   const modalContent = useMemo(() => {
 
-  // Mock Data for potential roles
-  const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
     return (
       <div className={css.base}>
         <Form autoComplete="off" form={form} layout="vertical">
@@ -120,7 +118,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): Mod
           rules={[{ message: 'User or group is required ', required: true }]}>
         <Select
           filterOption={handleFilter}
-          options={usersAndGroups.map((option) => ({ label: getName(option), value: getIdFromUserOrGroup(option) }))}
+          options={addableUsersAndGroups.map((option) => ({ label: getName(option), value: getIdFromUserOrGroup(option) }))}
           onSelect={handleSelect}
           placeholder="Find user or group by display name or username"
           showSearch
@@ -130,9 +128,9 @@ const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): Mod
         name="role"
         rules={[{ message: 'Role is required ', required: true }]}>
         <Select placeholder="Role">
-          {roles.map((r) => (
-            <Select.Option key={r} value={r}>
-              {r}
+          {knownRoles.map((role) => (
+            <Select.Option key={role.id} value={role.id}>
+              {role.name}
             </Select.Option>
           ))}
         </Select>
@@ -140,7 +138,7 @@ const useModalWorkspaceAddMember = ({ onClose, workspace, groups  }: Props): Mod
         </Form>
       </div>
     );
-  }, [handleFilter, usersAndGroups]);
+  }, [handleFilter, addableUsersAndGroups]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {

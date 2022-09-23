@@ -827,14 +827,4 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
-export interface UserWithRole extends User{
-  role: V1Role; 
-}
-
 export type UserOrGroup = User | V1Group; 
-
-export interface GroupDetailsWithRole extends Api.V1GroupDetails{
-  role: V1Role; 
-}
-
-export type UserOrGroupDetails = UserWithRole | GroupDetailsWithRole;

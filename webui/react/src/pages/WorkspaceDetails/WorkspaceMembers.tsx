@@ -12,7 +12,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { GroupDetailsWithRole, User, UserWithRole, UserOrGroupDetails, Workspace } from 'types';
+import { UserOrGroup, User, Workspace } from 'types';
 import {V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments} from 'services/api-ts-sdk';
 import { getName, getIdFromUserOrGroup, isUser, createAssignmentRequest } from 'utils/user';
 import css from './WorkspaceMembers.module.scss';
@@ -24,29 +24,32 @@ import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { BaseOptionType } from 'antd/lib/select';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import { assignRoles, removeAssignments } from 'services/api';
+import { useStore } from 'contexts/Store';
 
-const roles = ['Basic', 'Cluster Admin', 'Editor', 'Viewer', 'Restricted', 'Workspace Admin'];
+
 interface Props {
-  groups: V1Group[];
+  assignments: V1RoleWithAssignments[];
   pageRef: React.RefObject<HTMLElement>;
+  usersAssignedDirectly: User[];
+  groupsAssignedDirectly: V1Group[];
   workspace: Workspace;
 }
 
 interface GroupOrMemberActionDropdownProps {
-  userOrGroupDetails: UserOrGroupDetails;
+  userOrGroup: UserOrGroup;
   name: string;
   workspace: Workspace;
 }
 
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
-  userOrGroupDetails,
+  userOrGroup,
   workspace,
   name,
 }) => {
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
-  } = useModalWorkspaceRemoveMember({ userOrGroup: userOrGroupDetails, name, workspaceId: workspace.id, userOrGroupId: getIdFromUserOrGroup(userOrGroupDetails) });
+  } = useModalWorkspaceRemoveMember({ userOrGroup: userOrGroup, name, workspaceId: workspace.id, userOrGroupId: getIdFromUserOrGroup(userOrGroup) });
 
   const menuItems = (
     <Menu>
@@ -68,34 +71,22 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   );
 };
 
-const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props) => {
+const WorkspaceMembers: React.FC<Props> = ({ assignments,
+  usersAssignedDirectly,
+  groupsAssignedDirectly,
+  pageRef,
+  workspace }: Props) => {
   
-  const users: User[] = [];
-  const rolesWithAssignments: V1RoleWithAssignments[] = []
-
-  const usersWithRoles: UserWithRole[] = users.map(user => {
-    const userWithRole = user as UserWithRole;
-    rolesWithAssignments.forEach(roleWithAssignment => {
-      roleWithAssignment?.userRoleAssignments?.forEach(userRole => {
-        if( userRole.userId === user.id && roleWithAssignment.role) userWithRole.role = roleWithAssignment.role;
-    })});
-    return userWithRole;
-  });
-
-  const groupsWithRoles: GroupDetailsWithRole[] = groups.map(group => {
-    const groupDetailsWithRole = group as GroupDetailsWithRole;
-    rolesWithAssignments.forEach(roleWithAssignment => {
-      roleWithAssignment?.groupRoleAssignments?.forEach(groupRole => {
-        if( groupRole.groupId === group.groupId && roleWithAssignment.role) groupDetailsWithRole.role = roleWithAssignment.role;
-    })});
-    return groupDetailsWithRole;
-  });
-
-  const usersAndGroupDetails: UserOrGroupDetails[] = [...usersWithRoles, ...groupsWithRoles];
+  const { knownRoles }= useStore();
 
   const { canUpdateRoles } = usePermissions();
+
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
+  
+  const usersAndGroups: UserOrGroup[] = useMemo(() => [...usersAssignedDirectly, ...groupsAssignedDirectly], [
+    groupsAssignedDirectly, usersAssignedDirectly
+  ])
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -123,7 +114,7 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
   
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: UserOrGroupDetails) => {
+    const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
         return (
@@ -157,12 +148,12 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
       );
     };
 
-    const roleRenderer = (value: string, record: UserOrGroupDetails) => {
+    const roleRenderer = (value: string, record: UserOrGroup) => {
       return (
         <Select
           className={css.selectContainer}
           disabled={!userCanAssignRoles}
-          value={record.role}
+          value={assignments[0]}
           onSelect={async (value: RawValueType | LabelInValueType, option: BaseOptionType) => {
             const assignmentToRemove = createAssignmentRequest(
               record,
@@ -183,19 +174,19 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
             await assignRoles(AssignmentToAdd)
           }}
           >
-          {roles.map((role) => (
-            <Select.Option key={role} value={role}>
-              {role}
+          {knownRoles.map((role) => (
+            <Select.Option key={role.id} value={role.id}>
+              {role.name}
             </Select.Option>
           ))}
         </Select>
       );
     };
 
-    const actionRenderer = (value: string, record: UserOrGroupDetails) => {
+    const actionRenderer = (value: string, record: UserOrGroup) => {
       return userCanAssignRoles ? (
         <GroupOrMemberActionDropdown
-          userOrGroupDetails={record}
+          userOrGroup={record}
           name={getName(record)}
           workspace={workspace}
         />
@@ -209,7 +200,7 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         render: nameRenderer,
-        sorter: (a: UserOrGroupDetails, b: UserOrGroupDetails) => alphaNumericSorter(getName(a), getName(b)),
+        sorter: (a: UserOrGroup, b: UserOrGroup) => alphaNumericSorter(getName(a), getName(b)),
         title: 'Name',
       },
       {
@@ -226,7 +217,7 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
         render: actionRenderer,
         title: '',
       },
-    ] as ColumnDef<UserOrGroupDetails>[];
+    ] as ColumnDef<UserOrGroup>[];
   }, [nameFilterSearch, tableSearchIcon, workspace, userCanAssignRoles]);
 
 
@@ -235,13 +226,13 @@ const WorkspaceMembers: React.FC<Props> = ({ pageRef, workspace, groups }: Props
       <InteractiveTable
         columns={columns}
         containerRef={pageRef}
-        dataSource={usersAndGroupDetails}
+        dataSource={usersAndGroups}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          usersAndGroupDetails.length,
+          usersAndGroups.length,
         )}
         rowKey="id"
         settings={settings}
