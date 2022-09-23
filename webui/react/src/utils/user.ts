@@ -45,7 +45,7 @@ export function createAssignmentRequest(
 ): V1AssignRolesRequest | V1RemoveAssignmentsRequest {
   const roleAssignment: V1RoleAssignment = {
     role: {
-      roleId: 0,
+      roleId: roleId,
     },
     scopeWorkspaceId: workspaceId,
   };

@@ -19,8 +19,8 @@ interface Props {
   workspace: Workspace;
 }
 interface FormInputs {
-  id: number;
-  role: string;
+  userOrGroupId: number;
+  roleId: number;
 }
 
 const useModalWorkspaceAddMember = ({
@@ -81,7 +81,7 @@ const useModalWorkspaceAddMember = ({
     try {
       const values = await form.validateFields();
       if (values && selectedOption) {
-        await assignRoles(createAssignmentRequest(values.id, selectedOption, 0, workspace.id));
+        await assignRoles(createAssignmentRequest(values.roleId, selectedOption, values.userOrGroupId, workspace.id));
         form.resetFields();
         setSelectedOption(undefined);
         message.success(`${getName(selectedOption)} added to workspace,`)
@@ -111,7 +111,7 @@ const useModalWorkspaceAddMember = ({
     return (
       <div className={css.base}>
         <Form autoComplete="off" form={form} layout="vertical">
-          <Form.Item name="id" rules={[{ message: 'User or group is required ', required: true }]}>
+          <Form.Item name="userOrGroupId" rules={[{ message: 'User or group is required ', required: true }]}>
             <Select
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
@@ -123,7 +123,7 @@ const useModalWorkspaceAddMember = ({
               onSelect={handleSelect}
             />
           </Form.Item>
-          <Form.Item name="role" rules={[{ message: 'Role is required ', required: true }]}>
+          <Form.Item name="roleId" rules={[{ message: 'Role is required ', required: true }]}>
             <Select placeholder="Role">
               {knownRoles.map((role) => (
                 <Select.Option key={role.id} value={role.id}>
