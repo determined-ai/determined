@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: web-lint-check
+        name: Web Lint Check
+        entry: make -C webui/react lint-staged
+        language: system
+        files: 'webui/react/src/'
+        pass_filenames: false

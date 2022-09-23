@@ -161,8 +161,17 @@
     "resetMocks": false
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": "make check-prettier-js",
-    "*.{css,less,scss}": "make check-prettier-css",
-    "*.{md,json}": "make check-package-lock"
+    "*.{js,jsx,ts,tsx}": [
+      "make check-prettier-js",
+      "make check-eslint"
+    ],
+    "*.{css,less,scss}": [
+      "make check-prettier-css",
+      "make check-stylelint"
+    ],
+    "*.{md,json}": [
+      "make check-prettier-misc",
+      "make check-package-lock"
+    ]
   }
 }
