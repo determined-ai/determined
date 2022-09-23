@@ -824,24 +824,16 @@ const ProjectDetails: React.FC = () => {
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
-          const archivedIndex = settings.columns.indexOf('archived');
-          if (archivedIndex !== -1) {
-            newColumns = [...settings.columns];
-            newColumnWidths = [...settings.columnWidths];
-            newColumns.splice(archivedIndex, 1);
-            newColumnWidths.splice(archivedIndex, 1);
-          } else {
-            newColumns = settings.columns;
-            newColumnWidths = settings.columnWidths;
-          }
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
         }
-        updateSettings({
-          archived: showArchived,
-          columns: newColumns,
-          columnWidths: newColumnWidths,
-          row: undefined,
-        });
       }
+      updateSettings({
+        archived: showArchived,
+        columns: newColumns,
+        columnWidths: newColumnWidths,
+        row: undefined,
+      });
     },
     [settings, updateSettings],
   );
