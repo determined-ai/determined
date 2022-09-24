@@ -146,7 +146,6 @@ main_cmd = Cmd(
                     help="Only print the path to the checkpoint.",
                 ),
                 Arg(
-                    "-m",
                     "--via-master",
                     action="store_true",
                     help="Download the checkpoint through the master.",

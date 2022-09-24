@@ -5,7 +5,10 @@ import os
 import pathlib
 import shutil
 import subprocess
+import tarfile
+import tempfile
 import warnings
+import zipfile
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import api, constants, storage
@@ -198,29 +201,37 @@ class Checkpoint:
     def _download_via_master(self, local_ckpt_dir: pathlib.Path) -> None:
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
         if os.name == "nt":
-            fext = "zip"
-            mime_type = "application/zip"
+            ftype = "zip"
         else:
-            fext = "tgz"
-            mime_type = "application/gzip"
-        resp = self._session.get(f"/checkpoints/{self.uuid}", headers={"Accept": mime_type})
+            ftype = "gzip"
+        mime_type = f"application/{ftype}"
+
+        resp = self._session.get(
+            f"/checkpoints/{self.uuid}", headers={"Accept": mime_type}, stream=True
+        )
         if not resp.ok:
             raise RuntimeError(
                 "unable to download checkpoint from master:", resp.status_code, resp.reason
             )
 
-        tmpfile = pathlib.Path(f"{local_ckpt_dir}/{self.uuid}.{fext}")
-        with open(tmpfile, "wb") as f:
-            f.write(resp.content)
-
-        try:
-            if fext == "zip":
-                subprocess.run(["unzip", "-d", local_ckpt_dir, tmpfile], check=True)
-            else:
-                # gzip
-                subprocess.run(["tar", "-C", local_ckpt_dir, "-xzf", tmpfile], check=True)
-        finally:
-            tmpfile.unlink(missing_ok=True)
+        if ftype == "zip":
+            # The zip format does not allow streamed decompression since the central directory
+            # is at the end of the file. Hence, we fully the zip file before decompression.
+            tmpfd, tmpfpath = tempfile.mkstemp(suffix=".zip", dir=local_ckpt_dir)
+            try:
+                # Download the zip file.
+                with open(tmpfd, "wb") as tmpf:
+                    shutil.copyfileobj(resp.raw, tmpf)
+                # Decompress the zip file.
+                with zipfile.ZipFile(tmpfpath) as zf:
+                    zf.extractall(local_ckpt_dir)
+            finally:
+                # Remove the zip file after decompression.
+                pathlib.Path(tmpfpath).unlink(missing_ok=True)
+        else:
+            # gunzip and untar. tarfile.open can detect the compression algorithm
+            with tarfile.open(fileobj=resp.raw) as tf:
+                tf.extractall(local_ckpt_dir)
 
     def write_metadata_file(self, path: str) -> None:
         """
