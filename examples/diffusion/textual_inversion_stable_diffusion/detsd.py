@@ -305,6 +305,7 @@ class DetSDTextualInversionTrainer:
         # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         mse_loss = F.mse_loss(noise_pred, noise)
+        print(f"mse_loss: {mse_loss}")
         self.accelerator.backward(mse_loss)
 
         # Include a norm_loss which penalizes the new embeddings for being much larger or smaller
@@ -321,6 +322,8 @@ class DetSDTextualInversionTrainer:
 
             self.MEAN_NEW_EMBEDDING = new_token_embeddings_norms.detach().mean().item()
             self.MAX_NEW_EMBEDDING = new_token_embeddings_norms.detach().max().item()
+            print(f"MEAN_NEW_EMBEDDING: {self.MEAN_NEW_EMBEDDING}")
+            print(f"MAX_NEW_EMBEDDING: {self.MAX_NEW_EMBEDDING}")
 
             # Compute the loss with .sum() rather than .mean(), as this should help decouple the
             # optimal value for norm_penalty from the number of newly added tokens.
@@ -331,6 +334,7 @@ class DetSDTextualInversionTrainer:
                     / self.original_embedding_norm_var
                 ).sum()
             )
+            print(f"norm_loss: {self.norm_loss}")
             # Scale up norm_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
             accumulation_scaled_norm_loss = self.norm_loss * self.gradient_accumulation_steps
