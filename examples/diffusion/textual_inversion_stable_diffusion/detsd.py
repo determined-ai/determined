@@ -896,7 +896,7 @@ class DetSDTextualInversionPipeline:
         parallelize_factor: int = 1,
         other_hf_pipeline_call_kwargs: Optional[dict] = None,
         max_nsfw_retries: int = 10,
-    ) -> Image.Image:
+    ) -> Optional[Image.Image]:
         """Generates an image from the provided prompt and optionally writes the results to disk."""
         other_hf_pipeline_call_kwargs = other_hf_pipeline_call_kwargs or {}
         num_samples = rows * cols
@@ -928,7 +928,7 @@ class DetSDTextualInversionPipeline:
             print(
                 "max_retries limit reached without generating any non-nsfw images, returning None"
             )
-            return
+            return None
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
