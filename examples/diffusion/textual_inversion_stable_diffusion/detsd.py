@@ -924,6 +924,11 @@ class DetSDTextualInversionPipeline:
                     continue
                 images.append(image)
                 generated_samples += 1
+        if generated_samples == 0:
+            print(
+                "max_retries limit reached without generating any non-nsfw images, returning None"
+            )
+            return
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
