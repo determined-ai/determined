@@ -40,10 +40,6 @@ live: check-requirements start
 start:
 	npm start
 
-.PHONY: lint-staged
-lint-staged:
-	npm run lint-staged
-
 .PHONY: check-eslint
 check-eslint:
 	npm run eslint

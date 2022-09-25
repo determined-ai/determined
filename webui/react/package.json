@@ -22,7 +22,6 @@
     "format-check:js": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\"",
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
-    "lint-staged": "lint-staged",
     "test": "craco test --config jest.config.js",
     "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
     "eject": "react-scripts eject",
@@ -131,7 +130,6 @@
     "jest-junit": "^13.0.0",
     "less": "^4.1.1",
     "less-loader": "^7.0.2",
-    "lint-staged": "^13.0.3",
     "monaco-editor-webpack-plugin": "^3.0.1",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
@@ -159,19 +157,5 @@
       ".stories.tsx"
     ],
     "resetMocks": false
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "make check-prettier-js",
-      "make check-eslint"
-    ],
-    "*.{css,less,scss}": [
-      "make check-prettier-css",
-      "make check-stylelint"
-    ],
-    "*.{md,json}": [
-      "make check-prettier-misc",
-      "make check-package-lock"
-    ]
   }
 }
