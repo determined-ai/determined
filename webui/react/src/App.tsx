@@ -13,7 +13,6 @@ import { useFetchInfo } from 'hooks/useFetch';
 import { useFetchUsers } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
-import usePolling from 'shared/hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTelemetry from 'hooks/useTelemetry';
@@ -22,6 +21,7 @@ import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';

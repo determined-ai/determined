@@ -1,10 +1,10 @@
 import { Breadcrumb, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import usePolling from 'shared/hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';

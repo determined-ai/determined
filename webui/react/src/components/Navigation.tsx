@@ -8,8 +8,8 @@ import {
   useFetchResourcePools,
   useFetchUserSettings,
 } from 'hooks/useFetch';
-import usePolling from 'shared/hooks/usePolling';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
