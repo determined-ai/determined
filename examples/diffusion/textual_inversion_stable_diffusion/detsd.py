@@ -306,11 +306,11 @@ class DetSDTextualInversionTrainer:
         print("batch_text", batch_text)
         print("dummy_text", dummy_text)
 
-        noise_pred = self._get_noise_pred(
+        dummy_text_noise_pred = self._get_noise_pred(
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
-        mse_loss = F.mse_loss(noise_pred, noise)
+        mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
         print(f"mse_loss: {mse_loss}")
         self.accelerator.backward(mse_loss)
 
