@@ -63,8 +63,8 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
   const menuItems = (
     <Menu>
-      <Menu.Item danger key="delete" onClick={() => openWorkspaceRemoveMemberModal()}>
-        Delete
+      <Menu.Item danger key="remove" onClick={() => openWorkspaceRemoveMemberModal()}>
+        Remove
       </Menu.Item>
       {openWorkspaceRemoveMemberContextHolder}
     </Menu>
@@ -213,29 +213,31 @@ const WorkspaceMembers: React.FC<Props> = ({
             const oldRoleId = mockWorkspaceMembers ? 1 : assignments?.[0].role?.roleId || 0;
 
             try {
-            // Remove the old role then add the new role
-            if (isUser(record)) {
+            // TWy to remove the old role and then add the new role
+             isUser(record) ?
               await removeRoleFromUser({
                 roleId: oldRoleId,
                 userId: userOrGroupId,
-              });
-              await assignRolesToUser({
-                roleIds: [roleIdValue],
-                userId: userOrGroupId,
-              });
-            } else {
-              await removeRoleFromGroup({
+              }) : await removeRoleFromGroup({
                 groupId: userOrGroupId,
                 roleId: oldRoleId,
               });
-              await assignRolesToGroup({
-                groupId: userOrGroupId,
-                roleIds: [roleIdValue],
-              });
+              try { 
+                isUser(record) ? await assignRolesToUser({
+                  roleIds: [roleIdValue],
+                  userId: userOrGroupId,
+                }) : 
+                await assignRolesToGroup({
+                  groupId: userOrGroupId,
+                  roleIds: [roleIdValue],
+                });
+              } catch (addRoleError) {
+                handleError(addRoleError, { publicSubject: 'Unable to update role for user or group unable to add new role.' });
+              }
+
+            } catch (removeRoleError) {
+              handleError(removeRoleError, { publicSubject: 'Unable to update role for user or group could unable to remove current role.' });
             }
-          } catch (e) {
-            handleError(e, { publicSubject: 'Unable to role.' });
-          }
           }}>
           {knownRoles.map((role) => (
             <Select.Option key={role.id} value={role.id}>
