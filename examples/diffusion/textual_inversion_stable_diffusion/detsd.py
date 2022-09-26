@@ -30,6 +30,7 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
+import layers
 
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,
@@ -189,15 +190,13 @@ class DetSDTextualInversionTrainer:
         self.train_dataloader = None
         self.optimizer = None
         self.train_scheduler = None
-        self.original_embedding_idxs = None
-        self.original_embedding_tensors = None
-        self.original_embedding_norm_mean = None
-        self.original_embedding_norm_var = None
         self.new_embedding_idxs = None
 
         self.concept_to_initializer_tokens_map = {}
+        self.concept_to_non_special_initializer_ids_map = {}
         self.concept_to_dummy_tokens_map = {}
         self.concept_to_dummy_ids_map = {}
+        self.dummy_id_to_initializer_id_map = {}
 
         self._build_models()
         self._add_new_tokens()
@@ -370,19 +369,6 @@ class DetSDTextualInversionTrainer:
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        # For textual inversion, we only update the embeddings of the newly added concept tokens.
-        # This is most safely implemented by copying the original embeddings, rather than zeroing
-        # out their gradients, as L2 regularization will still modify weights whose gradient is zero
-        # and thus degrade the parts of the model we want frozen. See link below for a discussion:
-        # https://discuss.pytorch.org/t/how-to-freeze-a-subset-of-weights-of-a-layer/97498
-        # Only perform the overwriting after the step has actually been taken:
-        if self.accelerator.sync_gradients:
-            token_embeddings = self._get_token_embedding_weight_data()
-            token_embeddings[
-                self.original_embedding_idxs
-            ] = self.original_embedding_tensors.detach().clone()
-            self.embedding_reg_loss = None
-
         return loss
 
     def _get_noise_pred(
@@ -445,51 +431,55 @@ class DetSDTextualInversionTrainer:
         text encoder.
         """
         for concept_token, initializer_tokens in zip(self.concept_tokens, self.initializer_tokens):
-            dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
+            (
+                non_special_initializer_ids,
+                dummy_placeholder_ids,
+                dummy_placeholder_tokens,
+            ) = add_new_tokens_to_tokenizer(
                 concept_token=concept_token,
                 initializer_tokens=initializer_tokens,
                 tokenizer=self.tokenizer,
-                text_encoder=self.text_encoder,
             )
             self.concept_to_initializer_tokens_map[concept_token] = initializer_tokens
+            self.concept_to_non_special_initializer_ids_map[
+                concept_token
+            ] = non_special_initializer_ids
             self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
             self.concept_to_dummy_ids_map[concept_token] = dummy_placeholder_ids
+            print("dummy_placeholder_ids", dummy_placeholder_ids)
             self.logger.info(
                 f"Added {len(dummy_placeholder_tokens)} new tokens for {concept_token}."
             )
             print("self.concept_to_initializer_tokens_map", self.concept_to_initializer_tokens_map)
             print("self.concept_to_dummy_tokens_map", self.concept_to_dummy_tokens_map)
 
-        # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
-        # we only train the newly added concept vectors.
-        all_dummy_placeholder_token_ids = []
-        for ids in self.concept_to_dummy_ids_map.values():
-            all_dummy_placeholder_token_ids.extend(ids)
-        self.original_embedding_idxs = torch.isin(
-            torch.arange(len(self.tokenizer)),
-            torch.tensor(all_dummy_placeholder_token_ids),
-            invert=True,
+        # Create the dummy-to-initializer idx mapping and use the sorted values to generate the
+        # updated embedding layer.
+        self.dummy_id_to_initializer_id_map = {}
+        for concept_token in self.concept_tokens:
+            for dummy_id, initializer_id in zip(
+                self.concept_to_dummy_tokens_map[concept_token],
+                self.concept_to_non_special_initializer_ids_map[concept_token],
+            ):
+                self.dummy_id_to_initializer_id_map[dummy_id] = initializer_id
+        sorted_dummy_initializer_id_list = sorted(
+            [(k, v) for k, v in self.dummy_id_to_initializer_id_map.items()]
         )
-        token_embeddings = self._get_token_embedding_weight_data()
-        self.original_embedding_tensors = (
-            token_embeddings[self.original_embedding_idxs]
-            .detach()
-            .clone()
-            .to(self.accelerator.device)
+        idxs_to_copy = torch.tensor(
+            [v for k, v in sorted_dummy_initializer_id_list], device=self.accelerator.device
         )
-        with torch.no_grad():
-            self.original_embedding_norm_mean = (
-                torch.linalg.vector_norm(self.original_embedding_tensors, dim=1).mean().item()
-            )
-            self.original_embedding_norm_var = (
-                torch.linalg.vector_norm(self.original_embedding_tensors, dim=1)
-                .var(unbiased=False)
-                .item()
-            )
-        self.new_embedding_idxs = torch.isin(
-            torch.arange(len(self.tokenizer)),
-            torch.tensor(all_dummy_placeholder_token_ids),
+        copied_embedding_weights = (
+            self._get_token_embedding_weight_data()[idxs_to_copy].clone().detach().contiguous()
         )
+
+        # Update the embedding layer.
+        old_embedding = self.text_encoder.text_model.embeddings.token_embedding
+        self.text_encoder.text_model.embeddings.token_embedding = layers.ExtendedEmbedding(
+            old_embedding=old_embedding,
+            new_embedding_weights=copied_embedding_weights,
+            device=self.accelerator.device,
+        )
+        print(self.text_encoder)
 
     def _freeze_layers(self) -> None:
         """Freeze all not-to-be-trained layers."""
@@ -502,20 +492,10 @@ class DetSDTextualInversionTrainer:
             for param in model.parameters():
                 param.requires_grad = False
 
-        for param in self.text_encoder.text_model.embeddings.token_embedding.parameters():
+        for (
+            param
+        ) in self.text_encoder.text_model.embeddings.token_embedding.new_embedding.parameters():
             param.requires_grad = True
-
-    def _tokenizer_fn(self, text: str) -> torch.Tensor:
-        """Helper function for turning text directly into a tensor."""
-        dummy_text = self._replace_concepts_with_dummies(text)
-        tokenized_dummy_text = self.tokenizer(
-            dummy_text,
-            padding="max_length",
-            truncation=True,
-            max_length=self.tokenizer.model_max_length,
-            return_tensors="pt",
-        ).input_ids[0]
-        return tokenized_dummy_text
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         """Helper function for replacing concepts with dummy placeholders."""
@@ -568,10 +548,6 @@ class DetSDTextualInversionTrainer:
     def _wrap_and_prepare(self) -> None:
         """Wrap necessary modules for distributed training and set unwrapped, non-trained modules
         to the appropriate eval state."""
-
-        # Freeze the vae and unet completely, and everything in the text encoder except the
-        # embedding layer
-
         self.text_encoder, self.optimizer, self.train_dataloader = self.accelerator.prepare(
             self.text_encoder, self.optimizer, self.train_dataloader
         )
@@ -847,11 +823,14 @@ class DetSDTextualInversionPipeline:
                     )
                 initializer_tokens = embedding_dict["initializer_tokens"]
                 learned_embeddings = embedding_dict["learned_embeddings"]
-                dummy_placeholder_tokens, dummy_placeholder_ids = add_new_tokens(
+                (
+                    initializer_ids,
+                    dummy_placeholder_ids,
+                    dummy_placeholder_tokens,
+                ) = add_new_tokens_to_tokenizer(
                     concept_token=concept_token,
                     initializer_tokens=initializer_tokens,
                     tokenizer=self.tokenizer,
-                    text_encoder=self.text_encoder,
                 )
 
                 token_embeddings = self.text_encoder.get_input_embeddings().weight.data
@@ -1036,47 +1015,11 @@ class DetSDTextualInversionPipeline:
         return f"{self.__class__.__name__}({attr_dict_str})"
 
 
-class ExtendedEmbedding(nn.Module):
-    """A class for extending an embedding layer with additional tokens while also leaving the old
-    and new embeddings as separate nn.Module instances. This allows only the new embeddings to be
-    trained, for instance."""
-
-    def __init__(
-        self, old_embedding: nn.Module, new_embedding_weights: torch.Tensor, device: str
-    ) -> None:
-        super().__init__()
-        self.old_embedding = old_embedding
-        self.new_embedding = nn.Embedding.from_pretrained(
-            embeddings=new_embedding_weights, freeze=False
-        )
-        self.device = device
-
-        self.old_embedding_vocab_size, self.embedding_dim = self.old_embedding.weight.shape
-        self.old_embedding.to(device)
-        self.new_embedding.to(device)
-
-    def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
-        output = torch.zeros(*input_ids.shape, self.embedding_dim, device=self.device)
-        idxs_for_old_embedding = input_ids < self.old_embedding_vocab_size
-        idxs_for_new_embedding = torch.logical_not(idxs_for_old_embedding)
-        inputs_ids_for_old_embedding = input_ids[idxs_for_old_embedding]
-        inputs_ids_for_new_embedding = (
-            input_ids[idxs_for_new_embedding] - self.old_embedding_vocab_size
-        )
-
-        output[idxs_for_old_embedding] = self.old_embedding(inputs_ids_for_old_embedding)
-        output[idxs_for_new_embedding] = self.new_embedding(inputs_ids_for_new_embedding)
-
-        return output
-
-
-def add_new_tokens(
+def add_new_tokens_to_tokenizer(
     concept_token: str,
     initializer_tokens: Sequence[str],
     tokenizer: nn.Module,
-    old_embedding: nn.Embedding,
-    device: str,
-) -> Tuple[str, List[int], ExtendedEmbedding]:
+) -> Tuple[List[int], List[int], str]:
     """Helper function for adding new tokens to the tokenizer and extending the corresponding
     embeddings appropriately, given a single concept token and its sequence of corresponding
     initializer tokens.  Returns the dummy representation of the initializer tokens as a str,
@@ -1102,7 +1045,7 @@ def add_new_tokens(
         raise ValueError(
             f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
         )
-    # Add a new randomly generated dummy placeholder token for every token in the initializer.
+    # Add a dummy placeholder token for every token in the initializer.
     dummy_placeholder_token_list = [
         f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
     ]
@@ -1119,9 +1062,4 @@ def add_new_tokens(
         non_special_initializer_ids
     ), 'Length of "dummy_placeholder_ids" and "non_special_initializer_ids" must match.'
 
-    copied_embedding_weights = old_embedding.weight.data.clone().detach()[dummy_placeholder_ids]
-    new_embedding = ExtendedEmbedding(
-        old_embedding=old_embedding, new_embedding_weights=copied_embedding_weights, device=device
-    )
-
-    return dummy_placeholder_tokens, dummy_placeholder_ids, new_embedding
+    return non_special_initializer_ids, dummy_placeholder_ids, dummy_placeholder_tokens
