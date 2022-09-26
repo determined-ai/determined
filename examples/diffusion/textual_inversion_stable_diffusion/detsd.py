@@ -60,8 +60,8 @@ class DetSDTextualInversionTrainer:
         learning_rate: float = 5e-04,
         other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
-        embedding_reg_weight: float = 1.0,
-        latent_reg_weight: float = 1.0,
+        embedding_reg_weight: Optional[float] = None,
+        latent_reg_weight: Optional[float] = None,
         checkpoint_freq: int = 50,
         metric_report_freq: int = 50,
         beta_start: float = 0.00085,
@@ -278,6 +278,8 @@ class DetSDTextualInversionTrainer:
         self.text_encoder.train()
 
         # Convert images to latent space.
+        print("MEMORY ALLOC TEST, Get Latents")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
         latents = latent_dist.sample().detach()
 
@@ -296,7 +298,8 @@ class DetSDTextualInversionTrainer:
             (self.train_batch_size,),
             device=self.accelerator.device,
         ).long()
-
+        print("MEMORY ALLOC TEST, Get timesteps")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         # Add noise to the latents according to the noise magnitude at each timestep. This is the
         # forward diffusion process.
         noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
@@ -304,39 +307,45 @@ class DetSDTextualInversionTrainer:
         # Get the text embedding for the prompt.
         batch_text = batch["input_text"]
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
-        print("batch_text", batch_text)
-        print("dummy_text", dummy_text)
 
         dummy_text_noise_pred = self._get_noise_pred(
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
         mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
-        print(f"mse_loss: {mse_loss}")
+        print("MEMORY ALLOC TEST, before mse_backwards")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
+        self.accelerator.backward(mse_loss)
+        print("MEMORY ALLOC TEST, after mse_backwards")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
+        print(f"mse_loss: {mse_loss.item()}  step: {self.steps_completed}")
 
         # Add a latent-space regularization penalty following the ideas in
         # https://github.com/rinongal/textual_inversion/issues/49
+        # Currently implemented as a separate forward/backward pass to avoid CUDA OOM errors.
         if not self.latent_reg_weight:
             latent_reg_loss = 0.0
         else:
             initializer_text = [
                 self._replace_concepts_with_initializers(text) for text in batch_text
             ]
+            dummy_text_noise_pred = self._get_noise_pred(
+                text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+            )
             initializer_text_noise_pred = self._get_noise_pred(
                 text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
             )
-            print("noisy_latents", noisy_latents)
-            print("rand_timesteps", rand_timesteps)
-            print("dummy_text_noise_pred", dummy_text_noise_pred)
-
-            print("initializer_text", initializer_text)
             latent_reg_loss = self.latent_reg_weight * F.mse_loss(
                 dummy_text_noise_pred, initializer_text_noise_pred
             )
-            print(f"latent_reg_loss: {latent_reg_loss}")
+            print("MEMORY ALLOC TEST, before latent_reg_loss_backwards")
+            print(torch.cuda.memory_allocated(device=self.accelerator.device))
+            self.accelerator.backward(latent_reg_loss)
+            print("MEMORY ALLOC TEST, after latent_reg_loss_backwards")
+            print(torch.cuda.memory_allocated(device=self.accelerator.device))
+            print(f"latent_reg_loss: {latent_reg_loss.item()}")
 
         mse_and_latent_reg_loss = mse_loss + latent_reg_loss
-        self.accelerator.backward(mse_and_latent_reg_loss)
 
         # Include a embedding_reg_loss which penalizes the new embeddings for being much larger or smaller
         # than the original embedding vectors.  Without such a loss, the new vectors are typically
@@ -345,7 +354,9 @@ class DetSDTextualInversionTrainer:
         # It is more memory efficient to perform this computation as a separate forward and backward
         # pass, rather than combining it with the mse_loss computation above.  We also only need to
         # perform this computation once per actual optimizer step, rather than once per batch:
-        if self.embedding_reg_loss is None:
+        if not self.embedding_reg_weight:
+            self.embedding_reg_loss = 0.0
+        elif self.embedding_reg_loss is None:
             new_token_embeddings = self._get_new_token_embeddings()
             initializer_token_embeddings = self._get_initializer_token_embeddings()
 
@@ -354,11 +365,11 @@ class DetSDTextualInversionTrainer:
             distance_vectors = new_token_embeddings - initializer_token_embeddings
             self.embedding_reg_loss = (distance_vectors ** 2).mean(dim=-1).sum(dim=0)
 
-            print(f"embedding_reg_loss: {self.embedding_reg_loss}")
+            print(f"embedding_reg_loss: {self.embedding_reg_loss.item()}")
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
             accumulation_scaled_embedding_reg_loss = (
-                self.embedding_reg_loss * self.gradient_accumulation_steps
+                self.embedding_reg_weight * self.gradient_accumulation_steps
             )
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
 
@@ -381,15 +392,25 @@ class DetSDTextualInversionTrainer:
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids
-        print("tokenized_text.shape", tokenized_text.shape)
-        print("tokenized_text", tokenized_text)
+        for n, p in self.text_encoder.named_parameters():
+            if p.requires_grad:
+                print(n)
+        for n, p in self.unet.named_parameters():
+            if p.requires_grad:
+                print(n)
+        for n, p in self.vae.named_parameters():
+            if p.requires_grad:
+                print(n)
+        print("MEMORY ALLOC TEST, before getting hidden states")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         encoder_hidden_states = self.text_encoder(tokenized_text)[0]
-        print("encoder_hidden_states.shape", encoder_hidden_states.shape)
+        print("MEMORY ALLOC TEST, after getting hidden states")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
 
         # Predict the noise residual.
-        print("noisy_latents.shape", noisy_latents.shape)
-        print("rand_timesteps.shape", timesteps.shape)
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
+        print("MEMORY ALLOC TEST, after unet pred")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         return noise_pred
 
     def _build_models(self) -> None:
@@ -447,19 +468,14 @@ class DetSDTextualInversionTrainer:
             ] = non_special_initializer_ids
             self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
             self.concept_to_dummy_ids_map[concept_token] = dummy_placeholder_ids
-            print("dummy_placeholder_ids", dummy_placeholder_ids)
-            self.logger.info(
-                f"Added {len(dummy_placeholder_tokens)} new tokens for {concept_token}."
-            )
-            print("self.concept_to_initializer_tokens_map", self.concept_to_initializer_tokens_map)
-            print("self.concept_to_dummy_tokens_map", self.concept_to_dummy_tokens_map)
+            self.logger.info(f"Added {len(dummy_placeholder_ids)} new tokens for {concept_token}.")
 
         # Create the dummy-to-initializer idx mapping and use the sorted values to generate the
         # updated embedding layer.
         self.dummy_id_to_initializer_id_map = {}
         for concept_token in self.concept_tokens:
             for dummy_id, initializer_id in zip(
-                self.concept_to_dummy_tokens_map[concept_token],
+                self.concept_to_dummy_ids_map[concept_token],
                 self.concept_to_non_special_initializer_ids_map[concept_token],
             ):
                 self.dummy_id_to_initializer_id_map[dummy_id] = initializer_id
@@ -469,18 +485,20 @@ class DetSDTextualInversionTrainer:
         idxs_to_copy = torch.tensor(
             [v for k, v in sorted_dummy_initializer_id_list], device=self.accelerator.device
         )
+        token_embedding_layer_weight_data = self._get_token_embedding_layer().weight.data
         copied_embedding_weights = (
-            self._get_token_embedding_weight_data()[idxs_to_copy].clone().detach().contiguous()
+            token_embedding_layer_weight_data[idxs_to_copy].clone().detach().contiguous()
         )
 
         # Update the embedding layer.
+        print("MEMORY ALLOC TEST")
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         old_embedding = self.text_encoder.text_model.embeddings.token_embedding
         self.text_encoder.text_model.embeddings.token_embedding = layers.ExtendedEmbedding(
             old_embedding=old_embedding,
             new_embedding_weights=copied_embedding_weights,
-            device=self.accelerator.device,
         )
-        print(self.text_encoder)
+        print(torch.cuda.memory_allocated(device=self.accelerator.device))
 
     def _freeze_layers(self) -> None:
         """Freeze all not-to-be-trained layers."""
@@ -527,12 +545,10 @@ class DetSDTextualInversionTrainer:
 
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
-        # We only optimize the embedding vectors.  Ideally, we would only optimize the newly added
-        # embedding vectors, but this would require badly hacking the Huggingface API.  Might be a
-        # TODO for the future.
-        embedding_params = self.text_encoder.get_input_embeddings().parameters()
+        token_embedding_layer = self._get_token_embedding_layer()
+        new_embedding_params = token_embedding_layer.new_embedding.parameters()
         self.optimizer = self._optim_dict[self.optimizer_name](
-            embedding_params,
+            new_embedding_params,
             lr=self.learning_rate,
             **self.other_optimizer_kwargs,
         )
@@ -565,16 +581,18 @@ class DetSDTextualInversionTrainer:
                     with open(path.joinpath("metadata.json"), "r") as f:
                         checkpoint_metadata_dict = json.load(f)
                         self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+
                     optimizer_state_dict = torch.load(
                         path.joinpath("optimizer_state_dict.pt"),
                         map_location=self.accelerator.device,
                     )
                     self.optimizer.load_state_dict(optimizer_state_dict)
+
                     learned_embeddings_dict = torch.load(
                         path.joinpath("learned_embeddings_dict.pt"),
                         map_location=self.accelerator.device,
                     )
-                    token_embeddings = self._get_token_embedding_weight_data()
+                    token_embedding_layer = self._get_token_embedding_layer()
                     for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[concept_token][
                             "learned_embeddings"
@@ -584,11 +602,14 @@ class DetSDTextualInversionTrainer:
                         assert len(dummy_ids) == len(
                             learned_embeddings
                         ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'
+                        idx_offset = token_embedding_layer.old_embedding.weight.shape[0]
+                        new_embedding_layer = token_embedding_layer.new_embedding
                         for idx, tensor in zip(
                             dummy_ids,
                             learned_embeddings,
                         ):
-                            token_embeddings[idx] = tensor
+
+                            new_embedding_layer.weight.data[idx - idx_offset] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
         """Checkpoints the training state and pipeline."""
@@ -613,8 +634,8 @@ class DetSDTextualInversionTrainer:
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
         for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
-            token_embeddings = self._get_token_embedding_weight_data()
-            learned_embeddings = token_embeddings[dummy_ids].detach().cpu()
+            token_embedding_layer = self._get_token_embedding_layer()
+            learned_embeddings = token_embedding_layer.new_embedding.weight.data.detach().cpu()
             initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
             learned_embeddings_dict[concept_token] = {
                 "initializer_tokens": initializer_tokens,
@@ -705,15 +726,11 @@ class DetSDTextualInversionTrainer:
         token_embedding_layer = self._get_token_embedding_layer()
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
-        print("all_dummy_tokens", all_dummy_tokens)
         all_dummy_tokens_t = torch.tensor(
             self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
             device=self.accelerator.device,
         )
-        print("all_dummy_tokens_t", all_dummy_tokens_t)
         new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
-        print("new_token_embeddings.shape", new_token_embeddings.shape)
-        print("new_token_embeddings.requires_grad", new_token_embeddings.requires_grad)
         return new_token_embeddings
 
     def _get_initializer_token_embeddings(self) -> torch.Tensor:
@@ -721,17 +738,11 @@ class DetSDTextualInversionTrainer:
         token_embedding_layer = self._get_token_embedding_layer()
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_initializer_tokens = self._replace_concepts_with_initializers(all_concept_tokens)
-        print("all_initializer_tokens", all_initializer_tokens)
         all_initializer_tokens_t = torch.tensor(
             self.tokenizer.encode(all_initializer_tokens, add_special_tokens=False),
             device=self.accelerator.device,
         )
-        print("all_initializer_tokens_t", all_initializer_tokens_t)
         initializer_token_embeddings = token_embedding_layer(all_initializer_tokens_t)
-        print("initializer_token_embeddings.shape", initializer_token_embeddings.shape)
-        print(
-            "initializer_token_embeddings.requires_grad", initializer_token_embeddings.requires_grad
-        )
         return initializer_token_embeddings
 
 
