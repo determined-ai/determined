@@ -1036,16 +1036,51 @@ class DetSDTextualInversionPipeline:
         return f"{self.__class__.__name__}({attr_dict_str})"
 
 
+class ExtendedEmbedding(nn.Module):
+    """A class for extending an embedding layer with additional tokens while also leaving the old
+    and new embeddings as separate nn.Module instances. This allows only the new embeddings to be
+    trained, for instance."""
+
+    def __init__(
+        self, old_embedding: nn.Module, new_embedding_weights: torch.Tensor, device: str
+    ) -> None:
+        super().__init__()
+        self.old_embedding = old_embedding
+        self.new_embedding = nn.Embedding.from_pretrained(
+            embeddings=new_embedding_weights, freeze=False
+        )
+        self.device = device
+
+        self.old_embedding_vocab_size, self.embedding_dim = self.old_embedding.weight.shape
+        self.old_embedding.to(device)
+        self.new_embedding.to(device)
+
+    def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
+        output = torch.zeros(*input_ids.shape, self.embedding_dim, device=self.device)
+        idxs_for_old_embedding = input_ids < self.old_embedding_vocab_size
+        idxs_for_new_embedding = torch.logical_not(idxs_for_old_embedding)
+        inputs_ids_for_old_embedding = input_ids[idxs_for_old_embedding]
+        inputs_ids_for_new_embedding = (
+            input_ids[idxs_for_new_embedding] - self.old_embedding_vocab_size
+        )
+
+        output[idxs_for_old_embedding] = self.old_embedding(inputs_ids_for_old_embedding)
+        output[idxs_for_new_embedding] = self.new_embedding(inputs_ids_for_new_embedding)
+
+        return output
+
+
 def add_new_tokens(
     concept_token: str,
     initializer_tokens: Sequence[str],
     tokenizer: nn.Module,
-    text_encoder: nn.Module,
-) -> Tuple[str, List[int]]:
+    old_embedding: nn.Embedding,
+    device: str,
+) -> Tuple[str, List[int], ExtendedEmbedding]:
     """Helper function for adding new tokens to the tokenizer and extending the corresponding
     embeddings appropriately, given a single concept token and its sequence of corresponding
-    initializer tokens.  Returns the dummy representation of the initializer tokens as a str and
-    the corresponding ids."""
+    initializer tokens.  Returns the dummy representation of the initializer tokens as a str,
+    the corresponding ids, and the new, ExtendedEmbedding layer."""
     initializer_ids = tokenizer(
         initializer_tokens,
         padding="max_length",
@@ -1071,6 +1106,7 @@ def add_new_tokens(
     dummy_placeholder_token_list = [
         f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
     ]
+    dummy_placeholder_tokens = " ".join(dummy_placeholder_token_list)
     num_added_tokens = tokenizer.add_tokens(dummy_placeholder_token_list)
     if num_added_tokens != len(dummy_placeholder_token_list):
         raise ValueError(
@@ -1081,20 +1117,11 @@ def add_new_tokens(
     # Sanity check
     assert len(dummy_placeholder_ids) == len(
         non_special_initializer_ids
-    ), "dummy placeholder token ids and non-special initializer token count doesn't match"
-
-    text_encoder.resize_token_embeddings(len(tokenizer))
-    try:
-        token_embeddings = text_encoder.module.get_input_embeddings().weight.data
-    except AttributeError:
-        token_embeddings = text_encoder.get_input_embeddings().weight.data
-    # Initialize the placeholder vectors to coincide with their initializer vectors.
-    # Sanity check on length. TODO: replace with strict=True in zip after upgrade to py >= 3.10
-    assert len(dummy_placeholder_ids) == len(
-        non_special_initializer_ids
     ), 'Length of "dummy_placeholder_ids" and "non_special_initializer_ids" must match.'
-    for p_id, i_id in zip(dummy_placeholder_ids, non_special_initializer_ids):
-        token_embeddings[p_id] = token_embeddings[i_id]
 
-    dummy_placeholder_tokens = " ".join(dummy_placeholder_token_list)
-    return dummy_placeholder_tokens, dummy_placeholder_ids
+    copied_embedding_weights = old_embedding.weight.data.clone().detach()[dummy_placeholder_ids]
+    new_embedding = ExtendedEmbedding(
+        old_embedding=old_embedding, new_embedding_weights=copied_embedding_weights, device=device
+    )
+
+    return dummy_placeholder_tokens, dummy_placeholder_ids, new_embedding
