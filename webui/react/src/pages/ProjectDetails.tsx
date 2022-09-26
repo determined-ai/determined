@@ -45,7 +45,6 @@ import useModalExperimentMove, {
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -70,6 +69,7 @@ import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';

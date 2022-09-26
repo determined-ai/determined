@@ -9,10 +9,10 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
-import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricContainer, MetricName, Scale } from 'types';
 
