@@ -3,9 +3,11 @@ import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
 import React, {
+  createContext,
   CSSProperties,
   MutableRefObject,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -117,7 +119,6 @@ interface CellProps {
   children?: React.ReactNode;
   className: string;
   isCellRightClickable?: boolean;
-  rightClickableCellProps?: RightClickableCellProps;
 }
 
 interface RightClickableCellProps {
@@ -126,28 +127,29 @@ interface RightClickableCellProps {
   onMouseLeave: () => void;
 }
 
+const RightClickableRowContext = createContext({});
+
 const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
   return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
 };
 
-const Cell = React.memo(
-  ({ children, className, isCellRightClickable, rightClickableCellProps, ...props }: CellProps) => {
-    const classes = [className, css.cell];
-    if (!isCellRightClickable)
-      return (
-        <td className={classes.join(' ')} {...props}>
-          {children}
-        </td>
-      );
+const Cell = React.memo(({ children, className, isCellRightClickable, ...props }: CellProps) => {
+  const rightClickableCellProps = useContext(RightClickableRowContext);
+  const classes = [className, css.cell];
+  if (!isCellRightClickable)
     return (
       <td className={classes.join(' ')} {...props}>
-        <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
-          {children}
-        </div>
+        {children}
       </td>
     );
-  },
-);
+  return (
+    <td className={classes.join(' ')} {...props}>
+      <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
+        {children}
+      </div>
+    </td>
+  );
+});
 
 const Row: Row = ({
   className,
@@ -166,6 +168,19 @@ const Row: Row = ({
   const [contextMenuOpened, setContextMenuOpened] = useState(false);
   const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
 
+  const rightClickableCellProps: RightClickableCellProps = useMemo(
+    () => ({
+      onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
+      onMouseEnter: () => {
+        if (!rightClickableCellHovered) setRightClickableCellHovered(true);
+      },
+      onMouseLeave: () => {
+        if (rightClickableCellHovered) setRightClickableCellHovered(false);
+      },
+    }),
+    [rightClickableCellHovered],
+  );
+
   if (areRowsSelected) {
     return (
       <tr className={classes.join(' ')} {...props}>
@@ -173,16 +188,6 @@ const Row: Row = ({
       </tr>
     );
   }
-
-  const rightClickableCellProps: RightClickableCellProps = {
-    onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
-    onMouseEnter: () => {
-      if (!rightClickableCellHovered) setRightClickableCellHovered(true);
-    },
-    onMouseLeave: () => {
-      if (rightClickableCellHovered) setRightClickableCellHovered(false);
-    },
-  };
 
   const rowContextMenuTriggerableOrOpen =
     (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
@@ -196,30 +201,18 @@ const Row: Row = ({
   }
 
   return record && ContextMenu ? (
-    <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
-      <tr
-        className={classes.join(' ')}
-        onMouseEnter={() => {
-          if (!rowHovered) setRowHovered(true);
-        }}
-        onMouseLeave={() => {
-          if (rowHovered) setRowHovered(false);
-        }}
-        {...props}
-        style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
-        {React.Children.map(
-          // Avoiding using context here reduces significantly the number of re-renders
-          children,
-          (child) => {
-            if (!React.isValidElement(child)) return;
-
-            const combinedProps = { ...child.props, rightClickableCellProps };
-
-            return React.cloneElement(<Cell {...combinedProps} />);
-          },
-        )}
-      </tr>
-    </ContextMenu>
+    <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
+      <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
+        <tr
+          className={classes.join(' ')}
+          onMouseEnter={() => setRowHovered(true)}
+          onMouseLeave={() => setRowHovered(false)}
+          {...props}
+          style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
+          {children}
+        </tr>
+      </ContextMenu>
+    </RightClickableRowContext.Provider>
   ) : (
     <tr className={classes.join(' ')} {...props}>
       {children}

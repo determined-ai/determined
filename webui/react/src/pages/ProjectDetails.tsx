@@ -807,7 +807,7 @@ const ProjectDetails: React.FC = () => {
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({});;
+    openCustomizeColumns({});
   }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
@@ -978,7 +978,6 @@ const ProjectDetails: React.FC = () => {
       </div>
     );
   }, [
-    canViewWorkspaces,
     filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
