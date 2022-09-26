@@ -722,6 +722,23 @@ The master supports the following configuration settings:
       -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
          size is 16384.
 
+   -  ``authz``: Authorization settings.
+
+         -  ``type``: Authorization system to use. Defaults to ``basic``. See :ref:`RBAC docs
+            <rbac>` for further info.
+
+         -  ``rbac_ui_enabled``: Whether to enable RBAC in WebUI and CLI. When ``type`` is ``rbac``,
+            defaults ``true``, otherwise ``false``.
+
+         -  ``workspace_creator_assign_role``: Assign a role to the user on workspace creation.
+
+               -  ``enabled``: Whether this feature is enabled. Defaults to ``true``.
+               -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
+                  is the role id of ``WorkspaceAdmin`` role.
+
+         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
+            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
+
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 
    -  ``signing_key``: The key used to sign outgoing webhooks.

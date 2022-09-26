@@ -127,6 +127,8 @@ After gaining basic familiarity with Determined tools and operations, you can re
 with your model data and code, and setting configuration parameters for the kind of experiments you
 want to run.
 
+.. _quickstart-submit-experiment:
+
 *****************************************
  Run a Local Single CPU/GPU Training Job
 *****************************************
