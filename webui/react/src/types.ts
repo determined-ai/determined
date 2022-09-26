@@ -1,4 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
+import { V1Group } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
@@ -827,3 +828,5 @@ export interface UserRole {
 export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
+
+export type UserOrGroup = User | V1Group;

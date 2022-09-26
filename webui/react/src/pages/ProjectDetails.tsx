@@ -980,7 +980,6 @@ const ProjectDetails: React.FC = () => {
       </div>
     );
   }, [
-    canViewWorkspaces,
     filterCount,
     handleCustomizeColumnsClick,
     resetFilters,

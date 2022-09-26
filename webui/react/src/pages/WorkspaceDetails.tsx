@@ -1,80 +1,68 @@
-import { Select, Space } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { Tabs } from 'antd';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useHistory, useLocation, useParams } from 'react-router';
 
-import Grid, { GridMode } from 'components/Grid';
-import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-  onRightClickableCell,
-} from 'components/InteractiveTable';
-import Link from 'components/Link';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import SelectFilter from 'components/SelectFilter';
-import {
-  checkmarkRenderer,
-  GenericRenderer,
-  getFullPaginationConfig,
-  relativeTimeRenderer,
-  stateRenderer,
-  userRenderer,
-} from 'components/Table';
-import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getWorkspace, getWorkspaceProjects, patchProject } from 'services/api';
-import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { getGroups, getWorkspace } from 'services/api';
+import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import { ShirtSize } from 'themes';
-import { Project, Workspace } from 'types';
+import { isNotFound } from 'shared/utils/service';
+import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName,
-  WhoseProjects,
-  WorkspaceDetailsSettings,
-} from './WorkspaceDetails.settings';
-import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
-import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
+import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
+import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 
-const { Option } = Select;
-
+// This will be removed once the generated types for the API call exists
+interface GroupsAndUsersAssignedToWorkspaceResponse {
+  assignments: V1RoleWithAssignments[];
+  groups: V1Group[];
+  usersAssignedDirectly: User[];
+}
 interface Params {
+  tab: string;
   workspaceId: string;
 }
 
+export enum WorkspaceDetailsTab {
+  Members = 'members',
+  Projects = 'projects',
+}
+
 const WorkspaceDetails: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const rbacEnabled = useFeature().isOn('rbac');
+
+  const { users } = useStore();
   const { workspaceId } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [groups, setGroups] = useState<V1GroupSearchResult[]>();
+  const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
+  const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
+  const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>();
+  const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>();
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  const [nameFilter, setNameFilter] = useState<string>();
+  const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
   const [pageError, setPageError] = useState<Error>();
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
+  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
   const pageRef = useRef<HTMLElement>(null);
-  const { canViewWorkspace } = usePermissions();
-
   const id = parseInt(workspaceId);
-
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
+  const history = useHistory();
+  const location = useLocation();
+  const basePath = paths.workspaceDetails(workspaceId);
+  const { canViewWorkspace } = usePermissions();
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -85,304 +73,87 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [canceler.signal, id, pageError]);
 
-  const fetchProjects = useCallback(async () => {
-    try {
-      const response = await getWorkspaceProjects(
-        {
-          archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
-          id,
-          limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
-          name: settings.name,
-          offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
-          users: settings.user,
-        },
-        { signal: canceler.signal },
-      );
-      setTotal(response.pagination.total ?? 0);
-      setProjects((prev) => {
-        if (isEqual(prev, response.projects)) return prev;
-        return response.projects;
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch projects.' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    canceler.signal,
-    id,
-    settings.archived,
-    settings.name,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-    settings.user,
-    settings.view,
-    workspace?.archived,
-  ]);
-
   const fetchUsers = useFetchUsers(canceler);
 
+  const fetchGroups = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getGroups({}, { signal: canceler.signal });
+
+      setGroups((prev) => {
+        if (isEqual(prev, response.groups)) return prev;
+        return response.groups || [];
+      });
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler.signal]);
+
+  const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
+    // The user and group name filter will be applied in this call using the nameFilter
+    // Mock of https://github.com/determined-ai/determined/pull/5085
+    const response: GroupsAndUsersAssignedToWorkspaceResponse = await Promise.resolve({
+      assignments: [],
+      groups: [],
+      usersAssignedDirectly: [],
+    });
+
+    const newGroupIds = new Set<number>();
+    setUsersAssignedDirectly(response.usersAssignedDirectly);
+    setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map((user) => user.id)));
+    setGroupsAssignedDirectly(response.groups);
+    response.groups.forEach((group) => {
+      if (group.groupId) {
+        newGroupIds.add(group.groupId);
+      }
+    });
+    setGroupsAssignedDirectlyIds(newGroupIds);
+    setWorkspaceAssignments(response.assignments);
+  }, []);
+
+  const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
+
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchWorkspace(), fetchProjects(), fetchUsers()]);
-  }, [fetchWorkspace, fetchProjects, fetchUsers]);
+    await Promise.allSettled([
+      fetchWorkspace(),
+      fetchUsers(),
+      fetchGroups(),
+      fetchGroupsAndUsersAssignedToWorkspace(),
+    ]);
+  }, [fetchWorkspace, fetchGroups, fetchUsers, fetchGroupsAndUsersAssignedToWorkspace]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  const handleViewSelect = useCallback(
-    (value) => {
-      updateSettings({ whose: value });
+  const handleTabChange = useCallback(
+    (activeTab) => {
+      const tab = activeTab as WorkspaceDetailsTab;
+      history.replace(`${basePath}/${tab}`);
+      setTabKey(tab);
     },
-    [updateSettings],
-  );
-
-  const handleSortSelect = useCallback(
-    (value) => {
-      updateSettings({
-        sortDesc:
-          value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
-            ? false
-            : true,
-        sortKey: value,
-      });
-    },
-    [updateSettings],
-  );
-
-  const handleViewChange = useCallback(
-    (value: GridListView) => {
-      updateSettings({ view: value });
-    },
-    [updateSettings],
+    [basePath, history],
   );
 
   useEffect(() => {
-    switch (settings.whose) {
-      case WhoseProjects.All:
-        updateSettings({ user: undefined });
-        break;
-      case WhoseProjects.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
-        break;
-      case WhoseProjects.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
-        break;
-    }
-  }, [settings.whose, updateSettings, user, users]);
+    // Set the correct pathname to ensure
+    // that user settings will save.
 
-  const saveProjectDescription = useCallback(async (newDescription, projectId: number) => {
-    try {
-      await patchProject({ description: newDescription, id: projectId });
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to edit project.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
+    if (
+      !location.pathname.includes(WorkspaceDetailsTab.Projects) &&
+      !location.pathname.includes(WorkspaceDetailsTab.Members)
+    )
+      history.replace(`${basePath}/${tabKey}`);
+  }, [basePath, history, location.pathname, tabKey]);
 
-  const columns = useMemo(() => {
-    const projectNameRenderer = (value: string, record: Project) => (
-      <Link path={paths.projectDetails(record.id)}>{value}</Link>
-    );
-
-    const actionRenderer: GenericRenderer<Project> = (_, record) => (
-      <ProjectActionDropdown
-        curUser={user}
-        project={record}
-        workspaceArchived={workspace?.archived}
-        onComplete={fetchProjects}
-      />
-    );
-
-    const descriptionRenderer = (value: string, record: Project) => (
-      <InlineEditor
-        disabled={record.archived}
-        placeholder={record.archived ? 'Archived' : 'Add description...'}
-        value={value}
-        onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
-      />
-    );
-
-    return [
-      {
-        dataIndex: 'name',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
-        key: V1GetWorkspaceProjectsRequestSortBy.NAME,
-        onCell: onRightClickableCell,
-        render: projectNameRenderer,
-        title: 'Name',
-      },
-      {
-        dataIndex: 'description',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
-        key: V1GetWorkspaceProjectsRequestSortBy.DESCRIPTION,
-        onCell: onRightClickableCell,
-        render: descriptionRenderer,
-        title: 'Description',
-      },
-      {
-        dataIndex: 'numExperiments',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['numExperiments'],
-        title: 'Experiments',
-      },
-      {
-        dataIndex: 'lastUpdated',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdated'],
-        render: (_: number, record: Project): React.ReactNode =>
-          record.lastExperimentStartedAt
-            ? relativeTimeRenderer(new Date(record.lastExperimentStartedAt))
-            : null,
-        title: 'Last Experiment Started',
-      },
-      {
-        dataIndex: 'userId',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: userRenderer,
-        title: 'User',
-      },
-      {
-        dataIndex: 'archived',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
-        key: 'archived',
-        render: checkmarkRenderer,
-        title: 'Archived',
-      },
-      {
-        dataIndex: 'state',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
-        key: 'state',
-        render: stateRenderer,
-        title: 'State',
-      },
-      {
-        align: 'right',
-        dataIndex: 'action',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-        fixed: 'right',
-        key: 'action',
-        onCell: onRightClickableCell,
-        render: actionRenderer,
-        title: '',
-      },
-    ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, user, workspace?.archived]);
-
-  const switchShowArchived = useCallback(
-    (showArchived: boolean) => {
-      let newColumns: ProjectColumnName[];
-      let newColumnWidths: number[];
-
-      if (showArchived) {
-        if (settings.columns?.includes('archived')) {
-          // just some defensive coding: don't add archived twice
-          newColumns = settings.columns;
-          newColumnWidths = settings.columnWidths;
-        } else {
-          newColumns = [...settings.columns, 'archived'];
-          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
-        }
-      } else {
-        const archivedIndex = settings.columns.indexOf('archived');
-        if (archivedIndex !== -1) {
-          newColumns = [...settings.columns];
-          newColumnWidths = [...settings.columnWidths];
-          newColumns.splice(archivedIndex, 1);
-          newColumnWidths.splice(archivedIndex, 1);
-        } else {
-          newColumns = settings.columns;
-          newColumnWidths = settings.columnWidths;
-        }
-      }
-      updateSettings({
-        archived: showArchived,
-        columns: newColumns,
-        columnWidths: newColumnWidths,
-      });
-    },
-    [settings, updateSettings],
-  );
-
-  const actionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
-      <ProjectActionDropdown
-        curUser={user}
-        project={record}
-        trigger={['contextMenu']}
-        workspaceArchived={workspace?.archived}
-        onComplete={fetchProjects}
-        onVisibleChange={onVisibleChange}>
-        {children}
-      </ProjectActionDropdown>
-    ),
-    [fetchProjects, user, workspace?.archived],
-  );
-
-  const projectsList = useMemo(() => {
-    switch (settings.view) {
-      case GridListView.Grid:
-        return (
-          <Grid gap={ShirtSize.medium} minItemWidth={250} mode={GridMode.AutoFill}>
-            {projects.map((project) => (
-              <ProjectCard
-                curUser={user}
-                fetchProjects={fetchProjects}
-                key={project.id}
-                project={project}
-                workspaceArchived={workspace?.archived}
-              />
-            ))}
-          </Grid>
-        );
-      case GridListView.List:
-        return (
-          <InteractiveTable
-            columns={columns}
-            containerRef={pageRef}
-            ContextMenu={actionDropdown}
-            dataSource={projects}
-            loading={isLoading}
-            pagination={getFullPaginationConfig(
-              {
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
-              },
-              total,
-            )}
-            rowKey="id"
-            settings={settings}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          />
-        );
-    }
-  }, [
-    actionDropdown,
-    columns,
-    fetchProjects,
-    isLoading,
-    projects,
-    settings,
-    total,
-    updateSettings,
-    user,
-    workspace?.archived,
-  ]);
-
-  useEffect(() => {
-    fetchWorkspace();
-  }, [fetchWorkspace]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  // Users and Groups that are not already a part of the workspace
+  const addableGroups: V1Group[] = groups
+    ? groups
+        ?.filter((groupDetails) => {
+          groupDetails.group?.groupId &&
+            !groupsAssignedDirectlyIds?.has(groupDetails.group.groupId);
+        })
+        .map((groupDetails) => groupDetails.group)
+    : [];
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds?.has(user.id));
+  const addableUsersAndGroups = [...addableGroups, ...addableUsers];
 
   useEffect(() => {
     return () => canceler.abort();
@@ -406,55 +177,33 @@ const WorkspaceDetails: React.FC = () => {
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
+      headerComponent={
+        <WorkspaceDetailsHeader
+          addableUsersAndGroups={addableUsersAndGroups}
+          fetchWorkspace={fetchAll}
+          workspace={workspace}
+        />
+      }
       id="workspaceDetails">
-      <div className={css.controls}>
-        <SelectFilter
-          dropdownMatchSelectWidth={140}
-          showSearch={false}
-          value={settings.whose}
-          onSelect={handleViewSelect}>
-          <Option value={WhoseProjects.All}>All Projects</Option>
-          <Option value={WhoseProjects.Mine}>My Projects</Option>
-          <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-        </SelectFilter>
-        <Space wrap>
-          {!workspace.archived && (
-            <Toggle
-              checked={settings.archived}
-              prefixLabel="Show Archived"
-              onChange={switchShowArchived}
+      {rbacEnabled ? (
+        <Tabs activeKey={tabKey} destroyInactiveTabPane onChange={handleTabChange}>
+          <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Projects} tab="Projects">
+            <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
+          </Tabs.TabPane>
+          <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
+            <WorkspaceMembers
+              assignments={workspaceAssignments}
+              groupsAssignedDirectly={groupsAssignedDirectly}
+              pageRef={pageRef}
+              usersAssignedDirectly={usersAssignedDirectly}
+              workspace={workspace}
+              onFilterUpdate={handleFilterUpdate}
             />
-          )}
-          <SelectFilter
-            dropdownMatchSelectWidth={150}
-            showSearch={false}
-            value={settings.sortKey}
-            onSelect={handleSortSelect}>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-              Last Updated
-            </Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-              Newest to Oldest
-            </Option>
-          </SelectFilter>
-          <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
-        </Space>
-      </div>
-      <Spinner spinning={isLoading}>
-        {projects.length !== 0 ? (
-          projectsList
-        ) : workspace.numProjects === 0 ? (
-          <Message
-            message='Create a project with the "New Project" button or in the CLI.'
-            title="Workspace contains no projects. "
-            type={MessageType.Empty}
-          />
-        ) : (
-          <Message title="No projects matching the current filters" type={MessageType.Empty} />
-        )}
-      </Spinner>
+          </Tabs.TabPane>
+        </Tabs>
+      ) : (
+        <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
+      )}
     </Page>
   );
 };
