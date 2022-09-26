@@ -59,7 +59,8 @@ class DetSDTextualInversionTrainer:
         learning_rate: float = 5e-04,
         other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
-        embedding_reg_weight: float = 0.1,
+        embedding_reg_weight: float = 1.0,
+        latent_reg_weight: float = 0.1,
         checkpoint_freq: int = 50,
         metric_report_freq: int = 50,
         beta_start: float = 0.00085,
@@ -121,6 +122,7 @@ class DetSDTextualInversionTrainer:
         self.other_optimizer_kwargs = other_optimizer_kwargs or {}
         self.scale_lr = scale_lr
         self.embedding_reg_weight = embedding_reg_weight
+        self.latent_reg_weight = latent_reg_weights
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
         self.beta_start = beta_start
@@ -312,6 +314,17 @@ class DetSDTextualInversionTrainer:
 
         mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
         print(f"mse_loss: {mse_loss}")
+        self.accelerator.backward(mse_loss)
+
+        # Add a latent-space regularization penalty following the ideas in
+        # https://github.com/rinongal/textual_inversion/issues/49
+        initializer_text = [self._replace_concepts_with_initializers(text) for text in batch_text]
+        initializer_text_noise_pred = self._get_noise_pred(
+            text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+        )
+
+        latent_reg_loss = F.mse_loss(dummy_text_noise_pred, initializer_text_noise_pred)
+        print(f"latent_reg_loss: {latent_reg_loss}")
         self.accelerator.backward(mse_loss)
 
         # Include a embedding_reg_loss which penalizes the new embeddings for being much larger or smaller
