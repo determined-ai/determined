@@ -39,7 +39,7 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
     id: 2,
     name: 'Viewer',
     permissions: [],
-  }] : knownRoles, [knownRoles, mockWorkspaceMembers ])
+  }] : knownRoles, [knownRoles, mockWorkspaceMembers ]);
 
   const handleFilter = useCallback(
     (search: string, option): boolean => {

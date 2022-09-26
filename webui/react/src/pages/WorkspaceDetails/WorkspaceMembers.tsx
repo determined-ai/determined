@@ -24,6 +24,7 @@ import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, Workspace } from 'types';
+import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './WorkspaceMembers.module.scss';
@@ -94,7 +95,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   const userCanAssignRoles = canUpdateRoles({ workspace });
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-  
+
   knownRoles = mockWorkspaceMembers ? [{
     id: 1,
     name: 'Editor',
@@ -104,7 +105,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     id: 2,
     name: 'Viewer',
     permissions: [],
-  }] : knownRoles
+  }] : knownRoles;
 
   const usersAndGroups: UserOrGroup[] = useMemo(
     () => mockWorkspaceMembers ? [{
@@ -223,8 +224,8 @@ const WorkspaceMembers: React.FC<Props> = ({
                 roleIds: [roleIdValue],
               });
             }
-          } catch(e) {
-            // TBD
+          } catch (e) {
+            handleError(e, { publicSubject: 'Unable to role.' });
           }
           }}>
           {knownRoles.map((role) => (
