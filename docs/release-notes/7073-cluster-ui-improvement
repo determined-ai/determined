@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-
-- Centralize sidebar options `Cluster`, `Job Queues` and `Cluster Logs` into `Cluster` page for a simplified layout.
-- In order to provide a more precise view of resource pools, new fields like `accelerator` and `warm slots` have been added.
-- Clicking on resource pool cards will lead to a detail page, which also includes a `Stats` tab showing average queued time by day. 

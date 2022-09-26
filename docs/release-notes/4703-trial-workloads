@@ -1,7 +1,0 @@
-:orphan:
-
-**Breaking Changes**
-
-- Removes the ``workloads`` attribute returned in a ``GetTrialResponse`` from the
-  ``/api/v1/trials/:id`` endpoint. Instead, retrieve paginated workloads from the
-  ``/api/v1/trials/:id/workloads`` endpoint.
