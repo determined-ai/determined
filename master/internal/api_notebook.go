@@ -33,7 +33,7 @@ const (
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
 	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
-	minNotebookPort     = 2900
+	minNotebookPort     = 10000
 	maxNotebookPort     = minNotebookPort + 299
 	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
