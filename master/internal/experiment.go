@@ -72,6 +72,8 @@ type (
 		reason    model.ExitedReason
 	}
 
+	// UnwatchEvents is initiated from the get searcher events API.
+	// It deletes a watcher with id from the map of watchers.
 	UnwatchEvents struct {
 		id uuid.UUID
 	}
@@ -235,7 +237,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		ops, err := e.searcher.InitialOperations()
-
 		if err != nil {
 			err = errors.Wrap(err, "failed to generate initial operations")
 			e.updateState(ctx, model.StateWithReason{

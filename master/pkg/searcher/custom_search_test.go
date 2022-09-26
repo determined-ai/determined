@@ -151,9 +151,8 @@ func TestCustomSearchWatcher(t *testing.T) {
 	require.Equal(t, expEvents, queue.GetEvents())
 
 	//  Receive events in the watcher channel after it's added.
-	eventsInWatcher := <-w.C
 	select {
-	case <-w.C:
+	case eventsInWatcher := <-w.C:
 		require.Equal(t, queue.GetEvents(), eventsInWatcher)
 		print("length")
 		print(len(queue.events))
@@ -166,12 +165,12 @@ func TestCustomSearchWatcher(t *testing.T) {
 	// unwatching should work.
 	queue.Unwatch(id)
 
-	// Recieve events when you create a new watcher after events exist.
+	// Receive events when you create a new watcher after events exist.
 	id = uuid.New()
 	w2, err := queue.Watch(id)
-	eventsInWatcher2 := <-w2.C
+	require.NoError(t, err)
 	select {
-	case <-w.C:
+	case eventsInWatcher2 := <-w2.C:
 		require.Equal(t, queue.GetEvents(), eventsInWatcher2)
 		print("length")
 		print(len(queue.events))
@@ -183,5 +182,4 @@ func TestCustomSearchWatcher(t *testing.T) {
 
 	// unwatching should work.
 	queue.Unwatch(id)
-
 }

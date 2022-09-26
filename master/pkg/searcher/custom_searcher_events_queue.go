@@ -26,6 +26,7 @@ type (
 		EventCount int32             `json:"custom_searcher_event_count"`
 	}
 
+	// EventsWatcher has a channel which allows communication to the GET searcher events API.
 	EventsWatcher struct {
 		ID uuid.UUID
 		C  <-chan []*experimentv1.SearcherEvent
@@ -40,16 +41,16 @@ func newSearcherEventQueue() *SearcherEventQueue {
 	}
 }
 
-// Create a eventsWatcher. If events are available add events and close it.
+// Watch creates a eventsWatcher. If events are available add events and close it.
 func (q *SearcherEventQueue) Watch(id uuid.UUID) (EventsWatcher, error) {
 	// buffer size is 1 because we don't want to block
-	//  until another goroutine recieves from this channel.
+	//  until another goroutine receives from this channel.
 	// and only one event list can be sent to a channel.
 	w := make(chan []*experimentv1.SearcherEvent, 1)
 	q.watchers[id] = w
 
 	if len(q.events) > 0 {
-		w <- q.events
+		w <- q.events // return a copy of it instead. it can modified because you're sending the pointer.
 		close(w)
 		delete(q.watchers, id)
 	}
@@ -57,11 +58,11 @@ func (q *SearcherEventQueue) Watch(id uuid.UUID) (EventsWatcher, error) {
 }
 
 // Unwatch unregisters a eventsWatcher.
-func (p *SearcherEventQueue) Unwatch(id uuid.UUID) {
-	if p == nil {
+func (q *SearcherEventQueue) Unwatch(id uuid.UUID) {
+	if q == nil {
 		return
 	}
-	delete(p.watchers, id)
+	delete(q.watchers, id)
 }
 
 // Enqueue an event.
@@ -72,7 +73,7 @@ func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 
 	// add events to all watcher channels.
 	for id, w := range q.watchers {
-		w <- q.events
+		w <- q.events // return a copy of it instead. it can modified because you're sending the pointer.
 		close(w)
 		delete(q.watchers, id)
 	}

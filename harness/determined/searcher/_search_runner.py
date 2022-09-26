@@ -115,7 +115,7 @@ class SearchRunner:
 
         try:
             while experiment_is_active:
-                time.sleep(5)
+                time.sleep(2) # we don't want to call long polling API more often than every 2 seconds. 
                 events = self.get_events(session, experiment_id)
                 if events is None:
                     continue
