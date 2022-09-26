@@ -6,6 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import projectDetailConfigSettings, { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import { paths } from 'routes/utils';
@@ -84,6 +85,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const { canMoveExperimentsTo } = usePermissions();
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
@@ -92,7 +94,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const fetchWorkspaces = useCallback(async () => {
     try {
       const response = await getWorkspaces({ limit: 0 });
-      setWorkspaces(response.workspaces);
+      setWorkspaces(
+        response.workspaces.filter(
+          (w) => !w.immutable && canMoveExperimentsTo({ destination: { id: w.id } }),
+        ),
+      );
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -102,7 +108,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, []);
+  }, [canMoveExperimentsTo]);
 
   const fetchProjects = useCallback(async () => {
     if (!destSettings.workspaceId) return;

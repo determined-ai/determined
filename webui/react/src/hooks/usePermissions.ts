@@ -46,11 +46,7 @@ interface WorkspacePermissionsArgs {
   workspace?: PermissionWorkspace;
 }
 
-interface MoveExperimentPermissionsArgs extends ExperimentPermissionsArgs {
-  destination?: PermissionWorkspace;
-}
-
-interface MoveProjectPermissionsArgs extends ProjectPermissionsArgs {
+interface MovePermissionsArgs {
   destination?: PermissionWorkspace;
 }
 
@@ -72,8 +68,10 @@ interface PermissionsHook {
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyUsers: boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
-  canMoveExperiment: (arg0: MoveExperimentPermissionsArgs) => boolean;
-  canMoveProjects: (arg0: MoveProjectPermissionsArgs) => boolean;
+  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
+  canMoveExperimentsTo: (arg0: MovePermissionsArgs) => boolean;
+  canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
+  canMoveProjectsTo: (arg0: MovePermissionsArgs) => boolean;
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
@@ -152,10 +150,14 @@ const usePermissions = (): PermissionsHook => {
     canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
 =======
       canModifyWorkspace(args.workspace, user, userAssignments, userRoles),
-    canMoveExperiment: (args: MoveExperimentPermissionsArgs) =>
-      canMoveExperiment(args.experiment, args.destination, user, userAssignments, userRoles),
-    canMoveProjects: (args: MoveProjectPermissionsArgs) =>
-      canMoveWorkspaceProjects(args.project, args.destination, user, userAssignments, userRoles),
+    canMoveExperiment: (args: ExperimentPermissionsArgs) =>
+      canMoveExperiment(args.experiment, user, userAssignments, userRoles),
+    canMoveExperimentsTo: (args: MovePermissionsArgs) =>
+      canMoveExperimentsTo(args.destination, user, userAssignments, userRoles),
+    canMoveProjects: (args: ProjectPermissionsArgs) =>
+      canMoveWorkspaceProjects(args.project, user, userAssignments, userRoles),
+    canMoveProjectsTo: (args: MovePermissionsArgs) =>
+      canMoveProjectsTo(args.destination, user, userAssignments, userRoles),
     canUpdateRoles: (args: WorkspacePermissionsArgs) =>
       canUpdateRoles(args.workspace, user, userAssignments, userRoles),
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -312,16 +314,34 @@ const canMoveExperiment = (
   { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
   experiment: ProjectExperiment,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  // Destination is not needed when querying if an experiment can be moved from its source.
+  const srcPermit = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
+  return (
+    !!user &&
+    (srcPermit.has(V1PermissionType.OSSUSER)
+      ? user.isAdmin || user.id === experiment.userId
+      : srcPermit.has(V1PermissionType.DELETEEXPERIMENT))
+  );
+};
+
+const canMoveExperimentsTo = (
+>>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
   destination?: PermissionWorkspace,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
 ): boolean => {
-  const srcPermit = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
   return (
+<<<<<<< HEAD
 <<<<<<< HEAD
     rbacAllPermission ||
     (!!experiment &&
@@ -337,6 +357,10 @@ const canMoveExperiment = (
       : srcPermit.has(V1PermissionType.DELETEEXPERIMENT) &&
         (!destination || destPermit.has(V1PermissionType.CREATEEXPERIMENT)))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
+=======
+    !!user &&
+    (destPermit.has(V1PermissionType.OSSUSER) || destPermit.has(V1PermissionType.CREATEEXPERIMENT))
+>>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
   );
 };
 
@@ -489,13 +513,27 @@ const canMoveWorkspaceProjects = (
   project?: Project,
 =======
   project?: Project,
+  user?: DetailedUser,
+  userAssignments?: UserAssignment[],
+  userRoles?: UserRole[],
+): boolean => {
+  // can leave out project when we check for valid destinations
+  const srcPermit = relevantPermissions(userAssignments, userRoles, project?.workspaceId);
+  return (
+    !!user &&
+    (srcPermit.has(V1PermissionType.OSSUSER)
+      ? !project || user.isAdmin || user.id === project.userId
+      : srcPermit.has(V1PermissionType.DELETEPROJECT))
+  );
+};
+
+const canMoveProjectsTo = (
   destination?: PermissionWorkspace,
   user?: DetailedUser,
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
 ): boolean => {
-  const srcPermit = relevantPermissions(userAssignments, userRoles, project?.workspaceId);
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
   return (
 <<<<<<< HEAD
@@ -506,12 +544,16 @@ const canMoveWorkspaceProjects = (
       (rbacEnabled ? permitted.has('move_projects') : user.isAdmin || user.id === project.userId))
 =======
     !!user &&
+<<<<<<< HEAD
     !!project &&
     (srcPermit.has(V1PermissionType.OSSUSER)
       ? user.isAdmin || user.id === project.userId
       : srcPermit.has(V1PermissionType.DELETEPROJECT) &&
         (!destination || destPermit.has(V1PermissionType.CREATEPROJECT)))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
+=======
+    (destPermit.has(V1PermissionType.OSSUSER) || destPermit.has(V1PermissionType.CREATEPROJECT))
+>>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
   );
 };
 
@@ -524,12 +566,16 @@ const canCreateWorkspace = ({
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
 <<<<<<< HEAD
+<<<<<<< HEAD
   return !rbacEnabled || rbacAllPermission || permitted.has('create_workspace');
 =======
   return (
     permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.CREATEWORKSPACE)
   );
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
+=======
+  return permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.CREATEWORKSPACE);
+>>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
 };
 
 const canDeleteWorkspace = (
