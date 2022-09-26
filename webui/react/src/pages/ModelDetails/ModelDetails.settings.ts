@@ -31,6 +31,10 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ModelVersionColumnName, number> = {
   version: 74,
 };
 
+export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelVersionsRequestSortBy => {
+  return Object.values(V1GetModelVersionsRequestSortBy).includes(String(sortKey));
+};
+
 export interface Settings extends InteractiveTableSettings {
   columns: ModelVersionColumnName[];
   sortKey: V1GetModelVersionsRequestSortBy;

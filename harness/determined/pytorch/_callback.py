@@ -28,7 +28,7 @@ class PyTorchCallback:
             first_batch_idx (int):  The first batch index to be trained.  If the trial has already
                 completed some amount of training in a previous allocation on the cluster, this will
                 be nonzero.
-            checkpoint_uuid (str or None):  The checkpoint from which weight, optimizer state, etc
+            checkpoint_uuid (str or None):  The checkpoint from which weight, optimizer state, etc.
                 will be loaded.  When ``first_batch_idx > 0`` this will contain the uuid of the
                 most recent checkpoint saved by this trial.  Otherwise, it will contain the uuid of
                 the checkpoint from which this trial was configured to warm start from (via

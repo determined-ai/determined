@@ -431,6 +431,21 @@ html {
     border-color: var(--theme-surface-border);
   }
 
+  /* Card */
+
+  .ant-card {
+    background-color: var(--theme-surface);
+    border-color: var(--theme-surface-border);
+    color: var(--theme-surface-on);
+  }
+  .ant-card-head {
+    border-color: var(--theme-surface-border);
+    color: var(--theme-surface-on);
+  }
+  .ant-card-hoverable:hover {
+    box-shadow: var(--theme-elevation);
+  }
+
   /* Tooltip */
 
   .ant-tooltip {

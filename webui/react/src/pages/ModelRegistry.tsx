@@ -45,6 +45,7 @@ import { getDisplayName } from 'utils/user';
 import css from './ModelRegistry.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
   ModelColumnName,
   Settings,
 } from './ModelRegistry.settings';
@@ -461,8 +462,7 @@ const ModelRegistry: React.FC = () => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

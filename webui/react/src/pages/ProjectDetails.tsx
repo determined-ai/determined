@@ -192,9 +192,7 @@ const ProjectDetails: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+      const states = (settings.state || []).map((state) => encodeExperimentState(state));
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
@@ -519,20 +517,16 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filters: Object.values(RunState)
-          .filter((value) =>
-            [
-              RunState.Active,
-              RunState.Paused,
-              RunState.Canceled,
-              RunState.Completed,
-              RunState.Errored,
-            ].includes(value),
-          )
-          .map((value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
-            value,
-          })),
+        filters: [
+          RunState.Active,
+          RunState.Paused,
+          RunState.Canceled,
+          RunState.Completed,
+          RunState.Error,
+        ].map((value) => ({
+          text: <Badge state={value} type={BadgeType.State} />,
+          value,
+        })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,
@@ -797,14 +791,13 @@ const ProjectDetails: React.FC = () => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
+      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
-    });
-  }, [openCustomizeColumns, settings.columns, transferColumns]);
+    openCustomizeColumns({});
+  }, [openCustomizeColumns]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -966,7 +959,6 @@ const ProjectDetails: React.FC = () => {
       return { items: menuItems, onClick: onItemClick };
     };
 
-    if (!canViewWorkspaces) return <NoPermissions />;
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -1102,6 +1094,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
+  if (!canViewWorkspaces) return <NoPermissions />;
   if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }
