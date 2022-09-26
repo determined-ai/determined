@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/pkg/errors"
@@ -50,7 +51,9 @@ func (q *SearcherEventQueue) Watch(id uuid.UUID) (EventsWatcher, error) {
 	q.watchers[id] = w
 
 	if len(q.events) > 0 {
-		w <- q.events // return a copy of it instead. it can modified because you're sending the pointer.
+		events := make([]*experimentv1.SearcherEvent, len(q.events))
+		copy(events, q.events)
+		w <- events
 		close(w)
 		delete(q.watchers, id)
 	}
@@ -70,10 +73,14 @@ func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 	q.eventCount++
 	event.Id = q.eventCount
 	q.events = append(q.events, event)
+	log.Info("In Enqueue: %v", event)
+	log.Info(string(len(q.events)))
 
 	// add events to all watcher channels.
 	for id, w := range q.watchers {
-		w <- q.events // return a copy of it instead. it can modified because you're sending the pointer.
+		events := make([]*experimentv1.SearcherEvent, len(q.events))
+		copy(events, q.events)
+		w <- events
 		close(w)
 		delete(q.watchers, id)
 	}
