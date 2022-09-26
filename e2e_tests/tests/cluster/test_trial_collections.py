@@ -43,7 +43,7 @@ def patchTrials(
     )
     patch = {"patch": {"addTag": addTags, "removeTag": removeTags}}
     body = bindings.v1UpdateTrialTagsRequest.from_json({**target, **patch})
-    bindings.patch_UpdateTrialTags(sess, body=body)
+    bindings.post_UpdateTrialTags(sess, body=body)
 
 
 def assert_same_ids(a: List["SupportsLessThanT"], b: List["SupportsLessThanT"]) -> None:
