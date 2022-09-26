@@ -60,7 +60,7 @@ class DetSDTextualInversionTrainer:
         other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
         embedding_reg_weight: float = 1.0,
-        latent_reg_weight: float = 0.1,
+        latent_reg_weight: float = 1.0,
         checkpoint_freq: int = 50,
         metric_report_freq: int = 50,
         beta_start: float = 0.00085,
@@ -122,7 +122,7 @@ class DetSDTextualInversionTrainer:
         self.other_optimizer_kwargs = other_optimizer_kwargs or {}
         self.scale_lr = scale_lr
         self.embedding_reg_weight = embedding_reg_weight
-        self.latent_reg_weight = latent_reg_weights
+        self.latent_reg_weight = latent_reg_weight
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
         self.beta_start = beta_start
