@@ -10,7 +10,7 @@ sphinx-sitemap>=2.2.0
 sphinx==4.2.0
 
 # Theme
-furo==2021.10.9
+furo==2022.9.15
 
 # live.py
 watchdog
