@@ -382,6 +382,7 @@ class DetSDTextualInversionTrainer:
             return_tensors="pt",
         ).input_ids
         print("tokenized_text.shape", tokenized_text.shape)
+        print("tokenized_text", tokenized_text)
         encoder_hidden_states = self.text_encoder(tokenized_text)[0]
         print("encoder_hidden_states.shape", encoder_hidden_states.shape)
 
