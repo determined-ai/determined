@@ -2,6 +2,7 @@ package usergroup
 
 import (
 	"context"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -29,6 +30,15 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = AuthZProvider.Get().CanCreateGroups(curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	group := Group{
 		Name: req.Name,
@@ -75,6 +85,12 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 		}
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	searchResults = AuthZProvider.Get().FilterGroupsList(curUser, searchResults)
+
 	return &apiv1.GetGroupsResponse{
 		Groups: searchResults,
 		Pagination: &apiv1.Pagination{
@@ -94,6 +110,16 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanGetGroup(curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	gid := int(req.GroupId)
 	g, err := GroupByIDTx(ctx, nil, gid)
@@ -124,6 +150,16 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroup(curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	var addUsers []model.UserID
 	var removeUsers []model.UserID
@@ -160,6 +196,16 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanDeleteGroup(curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	err = DeleteGroup(ctx, int(req.GroupId))
 	if err != nil {
