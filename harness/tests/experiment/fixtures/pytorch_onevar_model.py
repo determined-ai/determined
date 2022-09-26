@@ -450,7 +450,7 @@ class OneVarManualAMPWithNoopApexTrial(OneVarManualAMPTrial):
 
 
 class OneVarTrialCustomEval(BaseOneVarTrial):
-    _searcher_metric = "loss"
+    _searcher_metric = "val_loss"
 
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         loss_sum = 0.0
@@ -465,7 +465,7 @@ class OneVarTrialCustomEval(BaseOneVarTrial):
 
 
 class OneVarTrialAccessContext(BaseOneVarTrial):
-    _searcher_metric = "loss"
+    _searcher_metric = "val_loss"
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
@@ -552,7 +552,7 @@ class OneVarTrialGradClipping(OneVarTrial):
 
 
 class OneVarTrialWithNonScalarValidation(BaseOneVarTrial):
-    _searcher_metric = "val_loss"
+    _searcher_metric = "mse"
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
