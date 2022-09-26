@@ -5,7 +5,7 @@ import pickle
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from determined.common.api import bindings
 from determined.common.api.bindings import (
@@ -241,7 +241,7 @@ class LocalSearchRunner(SearchRunner):
 
     def run(
         self,
-        exp_config: Dict[str, Any],
+        exp_config: Union[Dict[str, Any], str],
         context_dir: Optional[str] = None,
     ) -> int:
         """
