@@ -154,6 +154,9 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
+  const generateTableKey = useCallback((record: UserOrGroup) => isUser(record) ? `user-${getIdFromUserOrGroup(record)}` :
+  `group-${getIdFromUserOrGroup(record)}`, []);
+
   const columns = useMemo(() => {
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
@@ -289,7 +292,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           },
           usersAndGroups.length,
         )}
-        rowKey="id"
+        rowKey={generateTableKey}
         settings={settings}
         showSorterTooltip={false}
         size="small"
