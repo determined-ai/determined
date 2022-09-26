@@ -329,7 +329,7 @@ def check_if_experiment_was_paused(experiment_id: int, count: int = 1) -> None:
         )
     )
     # check for pausing operations
-    pausing_count = logs.count("root: Pausing")
+    pausing_count = logs.count("determined.searcher: Pausing")
     assert pausing_count == count
 
 
