@@ -78,7 +78,12 @@
 
 ## HP Search Constraints
 
-
 | Example                                                                  | Dataset | Framework  |
 |:------------------------------------------------------------------------:|:-------:|:----------:|
 | [hp\_constraints\_mnist\_pytorch](features/hp_constraints_mnist_pytorch) | MNIST   | PyTorch    |
+
+## Custom SearchMethod
+
+| Example                                                                  | Dataset | Framework  |
+|:------------------------------------------------------------------------:|:-------:|:----------:|
+| [asha\_search\_method](custom_search_method/asha_search_method)          | MNIST   | PyTorch    |
