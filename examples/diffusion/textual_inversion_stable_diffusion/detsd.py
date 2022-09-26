@@ -280,34 +280,34 @@ class DetSDTextualInversionTrainer:
         # Convert images to latent space.
         print("MEMORY ALLOC TEST, Get Latents")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
-        latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
-        latents = latent_dist.sample().detach()
+        with torch.no_grad():
+            latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
+            latents = latent_dist.sample()
 
-        # In 2112.10752, it was found that the latent space variance plays a large role in image
-        # quality.  The following scale factor helps to maintain unit latent variance.  See
-        # https://github.com/huggingface/diffusers/issues/437 for more details.
-        scale_factor = 0.18215
-        latents = latents * scale_factor
+            # In 2112.10752, it was found that the latent space variance plays a large role in image
+            # quality.  The following scale factor helps to maintain unit latent variance.  See
+            # https://github.com/huggingface/diffusers/issues/437 for more details.
+            scale_factor = 0.18215
+            latents = latents * scale_factor
 
-        # Sample noise that we'll add to the latents.
-        noise = torch.randn(latents.shape).to(self.accelerator.device)
-        # Sample a random timestep for each image in the batch.
-        rand_timesteps = torch.randint(
-            0,
-            self.num_train_timesteps,
-            (self.train_batch_size,),
-            device=self.accelerator.device,
-        ).long()
-        print("MEMORY ALLOC TEST, Get timesteps")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
-        # Add noise to the latents according to the noise magnitude at each timestep. This is the
-        # forward diffusion process.
-        noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
+            # Sample noise that we'll add to the latents.
+            noise = torch.randn(latents.shape).to(self.accelerator.device)
+            # Sample a random timestep for each image in the batch.
+            rand_timesteps = torch.randint(
+                0,
+                self.num_train_timesteps,
+                (self.train_batch_size,),
+                device=self.accelerator.device,
+            ).long()
+            print("MEMORY ALLOC TEST, Get timesteps")
+            print(torch.cuda.memory_allocated(device=self.accelerator.device))
+            # Add noise to the latents according to the noise magnitude at each timestep. This is the
+            # forward diffusion process.
+            noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
 
         # Get the text embedding for the prompt.
         batch_text = batch["input_text"]
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
-
         dummy_text_noise_pred = self._get_noise_pred(
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
@@ -315,7 +315,7 @@ class DetSDTextualInversionTrainer:
         mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
         print("MEMORY ALLOC TEST, before mse_backwards")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
-        self.accelerator.backward(mse_loss)
+        # self.accelerator.backward(mse_loss)
         print("MEMORY ALLOC TEST, after mse_backwards")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
         print(f"mse_loss: {mse_loss.item()}  step: {self.steps_completed}")
@@ -326,26 +326,29 @@ class DetSDTextualInversionTrainer:
         if not self.latent_reg_weight:
             latent_reg_loss = 0.0
         else:
-            initializer_text = [
-                self._replace_concepts_with_initializers(text) for text in batch_text
-            ]
-            dummy_text_noise_pred = self._get_noise_pred(
-                text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
-            )
-            initializer_text_noise_pred = self._get_noise_pred(
-                text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
-            )
+            with torch.no_grad():
+                initializer_text = [
+                    self._replace_concepts_with_initializers(text) for text in batch_text
+                ]
+                initializer_text_noise_pred = self._get_noise_pred(
+                    text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+                )
+
+            # dummy_text_noise_pred = self._get_noise_pred(
+            #     text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+            # )
             latent_reg_loss = self.latent_reg_weight * F.mse_loss(
                 dummy_text_noise_pred, initializer_text_noise_pred
             )
             print("MEMORY ALLOC TEST, before latent_reg_loss_backwards")
             print(torch.cuda.memory_allocated(device=self.accelerator.device))
-            self.accelerator.backward(latent_reg_loss)
+            # self.accelerator.backward(latent_reg_loss)
             print("MEMORY ALLOC TEST, after latent_reg_loss_backwards")
             print(torch.cuda.memory_allocated(device=self.accelerator.device))
             print(f"latent_reg_loss: {latent_reg_loss.item()}")
 
         mse_and_latent_reg_loss = mse_loss + latent_reg_loss
+        self.accelerator.backward(mse_and_latent_reg_loss)
 
         # Include a embedding_reg_loss which penalizes the new embeddings for being much larger or smaller
         # than the original embedding vectors.  Without such a loss, the new vectors are typically
@@ -363,13 +366,15 @@ class DetSDTextualInversionTrainer:
             # Compute the squared-distance between the two, taking the mean over the embeddeing
             # dimension, but summing over tokens.
             distance_vectors = new_token_embeddings - initializer_token_embeddings
-            self.embedding_reg_loss = (distance_vectors ** 2).mean(dim=-1).sum(dim=0)
+            self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).mean(
+                dim=-1
+            ).sum(dim=0)
 
             print(f"embedding_reg_loss: {self.embedding_reg_loss.item()}")
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
             accumulation_scaled_embedding_reg_loss = (
-                self.embedding_reg_weight * self.gradient_accumulation_steps
+                self.embedding_reg_loss * self.gradient_accumulation_steps
             )
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
 
