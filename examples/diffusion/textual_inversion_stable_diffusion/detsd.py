@@ -305,21 +305,11 @@ class DetSDTextualInversionTrainer:
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
         print("batch_text", batch_text)
         print("dummy_text", dummy_text)
-        tokenized_dummy_text = self.tokenizer(
-            dummy_text,
-            padding="max_length",
-            truncation=True,
-            max_length=self.tokenizer.model_max_length,
-            return_tensors="pt",
-        ).input_ids
-        print("tokenized_dummy_text.shape", tokenized_dummy_text.shape)
-        encoder_hidden_states = self.text_encoder(tokenized_dummy_text)[0]
-        print("encoder_hidden_states.shape", encoder_hidden_states.shape)
 
-        # Predict the noise residual.
-        print("noisy_latents.shape", noisy_latents.shape)
-        print("rand_timesteps.shape", rand_timesteps.shape)
-        noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
+        noise_pred = self._get_noise_pred(
+            text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+        )
+
         mse_loss = F.mse_loss(noise_pred, noise)
         print(f"mse_loss: {mse_loss}")
         self.accelerator.backward(mse_loss)
@@ -369,6 +359,26 @@ class DetSDTextualInversionTrainer:
         self.optimizer.zero_grad()
 
         return loss
+
+    def _get_noise_pred(
+        self, text: List[str], noisy_latents: torch.Tensor, timesteps: torch.Tensor
+    ) -> torch.Tensor:
+        tokenized_text = self.tokenizer(
+            text,
+            padding="max_length",
+            truncation=True,
+            max_length=self.tokenizer.model_max_length,
+            return_tensors="pt",
+        ).input_ids
+        print("tokenized_text.shape", tokenized_text.shape)
+        encoder_hidden_states = self.text_encoder(tokenized_text)[0]
+        print("encoder_hidden_states.shape", encoder_hidden_states.shape)
+
+        # Predict the noise residual.
+        print("noisy_latents.shape", noisy_latents.shape)
+        print("rand_timesteps.shape", timesteps.shape)
+        noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
+        return noise_pred
 
     def _build_models(self) -> None:
         """Download the relevant models using deferred execution:
