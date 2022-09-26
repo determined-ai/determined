@@ -3,7 +3,7 @@ import { Button, Space } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useMemo } from 'react';
 
-import loremIpsum from 'storybook/shared/loremIpsum';
+import loremIpsum from 'shared/utils/loremIpsum';
 
 import useModal from './useModal';
 import css from './useModal.stories.module.scss';
