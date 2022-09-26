@@ -814,9 +814,8 @@ export interface UserAssignment {
 }
 
 export interface Permission {
-  id: number;
+  id: Api.V1PermissionType;
   isGlobal: boolean;
-  name: string;
 }
 
 export interface UserRole {

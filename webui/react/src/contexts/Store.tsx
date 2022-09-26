@@ -1,7 +1,7 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { V1UserWebSetting } from 'services/api-ts-sdk';
+import { V1PermissionType, V1UserWebSetting } from 'services/api-ts-sdk';
 import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
