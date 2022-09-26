@@ -1,7 +1,7 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Union
 from unittest.mock import Mock
 
 from determined.common.api import bindings
@@ -155,7 +155,7 @@ class MockMasterSearchRunner(LocalSearchRunner):
         logging.info("MockMasterSearchRunner.get_events")
         return self.mock_master_obj.handle_get_events()
 
-    def run(self, exp_config: Dict[str, Any], context_dir: Optional[str] = None) -> int:
+    def run(self, exp_config: Union[Dict[str, Any], str], context_dir: Optional[str] = None) -> int:
         logging.info("MockMasterSearchRunner.run")
         experiment_id_file = self.searcher_dir.joinpath("experiment_id")
         exp_id = 4  # dummy exp
