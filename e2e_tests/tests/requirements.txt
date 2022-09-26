@@ -4,7 +4,7 @@ pytest>=6.0.1
 pytest-timeout
 pexpect
 torch==1.9.0
-torchvision==0.10.0
+torchvision==0.13.1
 tensorflow==2.4.3; sys_platform != 'darwin' or platform_machine != 'arm64'
 tensorflow-macos==2.7.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 pandas
