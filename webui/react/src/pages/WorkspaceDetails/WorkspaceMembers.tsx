@@ -98,36 +98,44 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  knownRoles = mockWorkspaceMembers ? [{
-    id: 1,
-    name: 'Editor',
-    permissions: [],
-  },
-  {
-    id: 2,
-    name: 'Viewer',
-    permissions: [],
-  }] : knownRoles;
+  knownRoles = mockWorkspaceMembers
+    ? [
+        {
+          id: 1,
+          name: 'Editor',
+          permissions: [],
+        },
+        {
+          id: 2,
+          name: 'Viewer',
+          permissions: [],
+        },
+      ]
+    : knownRoles;
 
   const usersAndGroups: UserOrGroup[] = useMemo(
-    () => mockWorkspaceMembers ? [{
-      displayName: 'Test User One Display Name',
-      id: 1,
-      username: 'TestUserOneUserName',
-    },
-    {
-      id: 2,
-      username: 'TestUserTwoUserName',
-    },
-    {
-      groupId: 1,
-      name: 'Test Group 1 Name',
-    },
-    {
-      groupId: 2,
-      name: 'Test Group 2 Name',
-    },
-  ] : [...usersAssignedDirectly, ...groupsAssignedDirectly],
+    () =>
+      mockWorkspaceMembers
+        ? [
+            {
+              displayName: 'Test User One Display Name',
+              id: 1,
+              username: 'TestUserOneUserName',
+            },
+            {
+              id: 2,
+              username: 'TestUserTwoUserName',
+            },
+            {
+              groupId: 1,
+              name: 'Test Group 1 Name',
+            },
+            {
+              groupId: 2,
+              name: 'Test Group 2 Name',
+            },
+          ]
+        : [...usersAssignedDirectly, ...groupsAssignedDirectly],
     [groupsAssignedDirectly, mockWorkspaceMembers, usersAssignedDirectly],
   );
 
@@ -160,8 +168,13 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
-  const generateTableKey = useCallback((record: UserOrGroup) => isUser(record) ? `user-${getIdFromUserOrGroup(record)}` :
-  `group-${getIdFromUserOrGroup(record)}`, []);
+  const generateTableKey = useCallback(
+    (record: UserOrGroup) =>
+      isUser(record)
+        ? `user-${getIdFromUserOrGroup(record)}`
+        : `group-${getIdFromUserOrGroup(record)}`,
+    [],
+  );
 
   const columns = useMemo(() => {
     const nameRenderer = (value: string, record: UserOrGroup) => {
@@ -213,30 +226,36 @@ const WorkspaceMembers: React.FC<Props> = ({
             const oldRoleId = mockWorkspaceMembers ? 1 : assignments?.[0].role?.roleId || 0;
 
             try {
-            // Try to remove the old role and then add the new role
-             isUser(record) ?
-              await removeRoleFromUser({
-                roleId: oldRoleId,
-                userId: userOrGroupId,
-              }) : await removeRoleFromGroup({
-                groupId: userOrGroupId,
-                roleId: oldRoleId,
-              });
+              // Try to remove the old role and then add the new role
+              isUser(record)
+                ? await removeRoleFromUser({
+                    roleId: oldRoleId,
+                    userId: userOrGroupId,
+                  })
+                : await removeRoleFromGroup({
+                    groupId: userOrGroupId,
+                    roleId: oldRoleId,
+                  });
               try {
-                isUser(record) ? await assignRolesToUser({
-                  roleIds: [roleIdValue],
-                  userId: userOrGroupId,
-                }) :
-                await assignRolesToGroup({
-                  groupId: userOrGroupId,
-                  roleIds: [roleIdValue],
-                });
+                isUser(record)
+                  ? await assignRolesToUser({
+                      roleIds: [roleIdValue],
+                      userId: userOrGroupId,
+                    })
+                  : await assignRolesToGroup({
+                      groupId: userOrGroupId,
+                      roleIds: [roleIdValue],
+                    });
               } catch (addRoleError) {
-                handleError(addRoleError, { publicSubject: 'Unable to update role for user or group unable to add new role.' });
+                handleError(addRoleError, {
+                  publicSubject: 'Unable to update role for user or group unable to add new role.',
+                });
               }
-
             } catch (removeRoleError) {
-              handleError(removeRoleError, { publicSubject: 'Unable to update role for user or group could unable to remove current role.' });
+              handleError(removeRoleError, {
+                publicSubject:
+                  'Unable to update role for user or group could unable to remove current role.',
+              });
             }
           }}>
           {knownRoles.map((role) => (
@@ -285,7 +304,15 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: '',
       },
     ] as ColumnDef<UserOrGroup>[];
-  }, [assignments, knownRoles, mockWorkspaceMembers, nameFilterSearch, tableSearchIcon, userCanAssignRoles, workspace]);
+  }, [
+    assignments,
+    knownRoles,
+    mockWorkspaceMembers,
+    nameFilterSearch,
+    tableSearchIcon,
+    userCanAssignRoles,
+    workspace,
+  ]);
 
   return (
     <div className={css.membersContainer}>

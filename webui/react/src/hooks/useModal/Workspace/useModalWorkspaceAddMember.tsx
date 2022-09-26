@@ -30,16 +30,24 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
   const [form] = Form.useForm<FormInputs>();
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  knownRoles = useMemo(() => mockWorkspaceMembers ? [{
-    id: 1,
-    name: 'Editor',
-    permissions: [],
-  },
-  {
-    id: 2,
-    name: 'Viewer',
-    permissions: [],
-  }] : knownRoles, [knownRoles, mockWorkspaceMembers ]);
+  knownRoles = useMemo(
+    () =>
+      mockWorkspaceMembers
+        ? [
+            {
+              id: 1,
+              name: 'Editor',
+              permissions: [],
+            },
+            {
+              id: 2,
+              name: 'Viewer',
+              permissions: [],
+            },
+          ]
+        : knownRoles,
+    [knownRoles, mockWorkspaceMembers],
+  );
 
   const handleFilter = useCallback(
     (search: string, option): boolean => {
@@ -127,7 +135,7 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
       <div className={css.base}>
         <Form autoComplete="off" form={form} layout="vertical">
           <Form.Item
-          label="User or Group"
+            label="User or Group"
             name="userOrGroupId"
             rules={[{ message: 'User or group is required ', required: true }]}>
             <Select
@@ -142,9 +150,9 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
             />
           </Form.Item>
           <Form.Item
-          label="Role"
-          name="roleId"
-          rules={[{ message: 'Role is required ', required: true }]}>
+            label="Role"
+            name="roleId"
+            rules={[{ message: 'Role is required ', required: true }]}>
             <Select placeholder="Role">
               {knownRoles.map((role) => (
                 <Select.Option key={role.id} value={role.id}>

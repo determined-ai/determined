@@ -89,7 +89,6 @@ const WorkspaceDetails: React.FC = () => {
   }, [canceler.signal]);
 
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
-
     // The user and group name filter will be applied in this call using the nameFilter
     // Mock of https://github.com/determined-ai/determined/pull/5085
     const response: GroupsAndUsersAssignedToWorkspaceResponse = await Promise.resolve({
