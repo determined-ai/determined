@@ -19772,6 +19772,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -20504,10 +20508,11 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * 
          * @summary Get groups and users assigned to a given workspace with what roles are assigned.
          * @param {number} workspaceId ID of workspace getting groups and users.
+         * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, options: any = {}): FetchArgs {
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options: any = {}): FetchArgs {
             // verify required parameter 'workspaceId' is not null or undefined
             if (workspaceId === null || workspaceId === undefined) {
                 throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling getGroupsAndUsersAssignedToWorkspace.');
@@ -20834,11 +20839,12 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get groups and users assigned to a given workspace with what roles are assigned.
          * @param {number} workspaceId ID of workspace getting groups and users.
+         * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, options);
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21004,11 +21010,12 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * 
          * @summary Get groups and users assigned to a given workspace with what roles are assigned.
          * @param {number} workspaceId ID of workspace getting groups and users.
+         * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, options?: any) {
-            return RBACApiFp(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, options)(fetch, basePath);
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
+            return RBACApiFp(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(fetch, basePath);
         },
         /**
          * 
@@ -21105,12 +21112,13 @@ export class RBACApi extends BaseAPI {
      * 
      * @summary Get groups and users assigned to a given workspace with what roles are assigned.
      * @param {number} workspaceId ID of workspace getting groups and users.
+     * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getGroupsAndUsersAssignedToWorkspace(workspaceId: number, options?: any) {
-        return RBACApiFp(this.configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, options)(this.fetch, this.basePath);
+    public getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
+        return RBACApiFp(this.configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(this.fetch, this.basePath);
     }
 
     /**

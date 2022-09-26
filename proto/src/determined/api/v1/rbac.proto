@@ -29,6 +29,10 @@ message GetPermissionsSummaryResponse {
 message GetGroupsAndUsersAssignedToWorkspaceRequest {
   // ID of workspace getting groups and users.
   int32 workspace_id = 1;
+  // Name of groups and users to search by. Name filters by group name for
+  // groups. Name filters by display name then username if display name is null
+  // for users.
+  string name = 2;
 }
 
 // Response object for GetGroupsAndUsersAssignedToWorkspace.

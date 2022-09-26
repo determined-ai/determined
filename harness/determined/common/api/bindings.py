@@ -9089,8 +9089,11 @@ def get_GetGroupsAndUsersAssignedToWorkspace(
     session: "api.Session",
     *,
     workspaceId: int,
+    name: "typing.Optional[str]" = None,
 ) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
-    _params = None
+    _params = {
+        "name": name,
+    }
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/roles/workspace/{workspaceId}",
