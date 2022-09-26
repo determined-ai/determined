@@ -4,18 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 from unittest.mock import Mock
 
+from determined import searcher
 from determined.common.api import bindings
 from determined.experimental import client
-from determined.searcher.search_method import (
-    Close,
-    Create,
-    Operation,
-    Progress,
-    SearchMethod,
-    Shutdown,
-    ValidateAfter,
-)
-from determined.searcher.search_runner import LocalSearchRunner
 from tests.search_methods import ASHASearchMethod, RandomSearchMethod
 
 
@@ -63,7 +54,7 @@ class SimulateMaster:
         self.overall_progress = 0.0
 
     def handle_post_operations(
-        self, event: bindings.v1SearcherEvent, operations: List[Operation]
+        self, event: bindings.v1SearcherEvent, operations: List[searcher.Operation]
     ) -> None:
         self._remove_upto(event)
         self._process_operations(operations)
@@ -76,15 +67,15 @@ class SimulateMaster:
 
         raise RuntimeError(f"event not found in events queue: {event}")
 
-    def _process_operations(self, operations: List[Operation]) -> None:
+    def _process_operations(self, operations: List[searcher.Operation]) -> None:
         for op in operations:
             self._append_events_for_op(op)  # validate_after returns two events.
 
     def handle_get_events(self) -> Optional[Sequence[bindings.v1SearcherEvent]]:
         return self.events_queue
 
-    def _append_events_for_op(self, op: Operation) -> None:
-        if type(op) == ValidateAfter:
+    def _append_events_for_op(self, op: searcher.Operation) -> None:
+        if type(op) == searcher.ValidateAfter:
             validation_completed = bindings.v1ValidationCompleted(
                 requestId=str(op.request_id), metric=self.metric, validateAfterLength=str(op.length)
             )
@@ -101,22 +92,22 @@ class SimulateMaster:
             event = bindings.v1SearcherEvent(id=self.events_count, trialProgress=trial_progress)
             self.events_queue.append(event)
 
-        if type(op) == Create:
+        if type(op) == searcher.Create:
             trial_created = bindings.v1TrialCreated(requestId=str(op.request_id))
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, trialCreated=trial_created)
             self.events_queue.append(event)
 
-        if type(op) == Progress:  # no events
+        if type(op) == searcher.Progress:  # no events
             self.overall_progress
 
-        if type(op) == Close:
+        if type(op) == searcher.Close:
             trial_closed = bindings.v1TrialClosed(requestId=str(op.request_id))
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, trialClosed=trial_closed)
             self.events_queue.append(event)
 
-        if type(op) == Shutdown:
+        if type(op) == searcher.Shutdown:
             exp_state = bindings.determinedexperimentv1State.STATE_COMPLETED
             exp_inactive = bindings.v1ExperimentInactive(experimentState=exp_state)
             self.events_count += 1
@@ -124,10 +115,10 @@ class SimulateMaster:
             self.events_queue.append(event)
 
 
-class MockMasterSearchRunner(LocalSearchRunner):
+class MockMasterSearchRunner(searcher.LocalSearchRunner):
     def __init__(
         self,
-        search_method: SearchMethod,
+        search_method: searcher.SearchMethod,
         mock_master_object: SimulateMaster,
         searcher_dir: Optional[Path] = None,
     ):
@@ -142,7 +133,7 @@ class MockMasterSearchRunner(LocalSearchRunner):
         session: client.Session,
         experiment_id: int,
         event: bindings.v1SearcherEvent,
-        operations: List[Operation],
+        operations: List[searcher.Operation],
     ) -> None:
         logging.info("MockMasterSearchRunner.post_operations")
         self.mock_master_obj.handle_post_operations(event, operations)
@@ -168,7 +159,7 @@ class MockMasterSearchRunner(LocalSearchRunner):
         self.search_method.searcher_state.last_event_id = 0
         super(MockMasterSearchRunner, self).save_state(exp_id, [])
         experiment_id = exp_id
-        operations: Optional[List[Operation]] = None
+        operations: Optional[List[searcher.Operation]] = None
         session: client.Session = Mock()
         super(MockMasterSearchRunner, self).run_experiment(experiment_id, session, operations)
         return exp_id

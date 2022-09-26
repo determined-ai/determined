@@ -21,7 +21,8 @@ import determined as det
 from asha import ASHASearchMethod
 from utils import sample_params
 from attrdict import AttrDict
-from determined.searcher.core_search_runner import CoreSearchRunner
+from determined import searcher
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         )
 
         # Instantiate CoreSearchRunner
-        search_runner = CoreSearchRunner(search_method, context=core_context)
+        search_runner = searcher.CoreSearchRunner(search_method, context=core_context)
 
         ########################################################################
         # Run CoreSearchRunner

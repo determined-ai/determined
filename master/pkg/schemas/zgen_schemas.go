@@ -2969,8 +2969,20 @@ var (
             ],
             "default": true
         },
-        "source_trial_id": true,
-        "source_checkpoint_uuid": true,
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "budget": true,
         "train_stragglers": true,
         "unit": true

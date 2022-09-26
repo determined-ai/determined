@@ -6,9 +6,8 @@ from searchers import ASHASearchMethod, RandomSearchMethod
 from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
 import determined as det
+from determined import searcher
 from determined.common import util
-from determined.searcher.core_search_runner import CoreSearchRunner
-from determined.searcher.search_method import Operation, SearchMethod
 
 
 def load_config(config_path: str):
@@ -51,12 +50,14 @@ def create_search_method(args, exception_points: Optional[List[str]] = None):
         raise ValueError("Unknown searcher type")
 
 
-class FallibleSearchRunner(CoreSearchRunner):
-    def __init__(self, search_method: SearchMethod, core_context: det.core.Context) -> None:
+class FallibleSearchRunner(searcher.CoreSearchRunner):
+    def __init__(
+        self, search_method: searcher.SearchMethod, core_context: det.core.Context
+    ) -> None:
         super(FallibleSearchRunner, self).__init__(search_method, core_context)
         self.fail_on_save = False
 
-    def load_state(self, storage_id: str) -> Tuple[int, List[Operation]]:
+    def load_state(self, storage_id: str) -> Tuple[int, List[searcher.Operation]]:
         result = super(FallibleSearchRunner, self).load_state(storage_id)
 
         # on every load remove first exception from the list
@@ -72,7 +73,7 @@ class FallibleSearchRunner(CoreSearchRunner):
 
         return result
 
-    def save_state(self, experiment_id: int, operations: List[Operation]) -> None:
+    def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
         super(FallibleSearchRunner, self).save_state(experiment_id, operations)
         if self.fail_on_save:
             logging.info(
