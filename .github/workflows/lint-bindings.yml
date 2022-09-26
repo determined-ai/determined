@@ -31,7 +31,7 @@ jobs:
         uses: arduino/setup-protoc@v1
         with:
           version: 3.17.1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.DETERMINED_TOKEN }}
       - name: Install dependencies
         run: |
           make -C proto get-deps
