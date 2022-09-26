@@ -24,7 +24,9 @@ class SingleSearchMethod(searcher.SearchMethod):
     def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         return []
 
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[searcher.Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         return []
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
@@ -51,7 +53,9 @@ class SingleSearchMethod(searcher.SearchMethod):
             hparams=self.hyperparameters,
             checkpoint=None,
         )
-        validate_after = searcher.ValidateAfter(request_id=create.request_id, length=self.max_length)
+        validate_after = searcher.ValidateAfter(
+            request_id=create.request_id, length=self.max_length
+        )
         close = searcher.Close(request_id=create.request_id)
         logging.debug(f"Create({create.request_id}, {create.hparams})")
         return [create, validate_after, close]
@@ -86,7 +90,9 @@ class RandomSearchMethod(searcher.SearchMethod):
         self._log_stats()
         return []
 
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[searcher.Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         self.raise_exception("on_validation_completed")
         return []
 
@@ -96,7 +102,11 @@ class RandomSearchMethod(searcher.SearchMethod):
         ops: List[searcher.Operation] = []
         if self.created_trials < self.max_trials:
             request_id = uuid.uuid4()
-            ops.append(searcher.Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
+            ops.append(
+                searcher.Create(
+                    request_id=request_id, hparams=self.sample_params(), checkpoint=None
+                )
+            )
             ops.append(searcher.ValidateAfter(request_id=request_id, length=self.max_length))
             ops.append(searcher.Close(request_id=request_id))
             self.created_trials += 1
@@ -142,7 +152,11 @@ class RandomSearchMethod(searcher.SearchMethod):
         ops: List[searcher.Operation] = []
         if exit_reason == searcher.ExitedReason.INVALID_HP:
             request_id = uuid.uuid4()
-            ops.append(searcher.Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
+            ops.append(
+                searcher.Create(
+                    request_id=request_id, hparams=self.sample_params(), checkpoint=None
+                )
+            )
             ops.append(searcher.ValidateAfter(request_id=request_id, length=self.max_length))
             ops.append(searcher.Close(request_id=request_id))
             self.pending_trials += 1
@@ -358,7 +372,9 @@ class ASHASearchMethod(searcher.SearchMethod):
         self.raise_exception("on_trial_created")
         return []
 
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[searcher.Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1

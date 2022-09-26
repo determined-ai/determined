@@ -431,7 +431,9 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     num_rungs = 3
     divisor = 4
 
-    search_method = searchers.ASHASearchMethod(max_length, max_trials, num_rungs, divisor, test_type="noop")
+    search_method = searchers.ASHASearchMethod(
+        max_length, max_trials, num_rungs, divisor, test_type="noop"
+    )
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
