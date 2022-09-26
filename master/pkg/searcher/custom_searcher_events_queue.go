@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/pkg/errors"
@@ -73,8 +72,6 @@ func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 	q.eventCount++
 	event.Id = q.eventCount
 	q.events = append(q.events, event)
-	log.Info("In Enqueue: %v", event)
-	log.Info(string(len(q.events)))
 
 	// add events to all watcher channels.
 	for id, w := range q.watchers {
