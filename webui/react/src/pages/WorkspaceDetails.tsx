@@ -51,6 +51,7 @@ const WorkspaceDetails: React.FC = () => {
   const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
   const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>();
   const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>();
+  const [nameFilter, setNameFilter] = useState<string>();
   const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
   const [pageError, setPageError] = useState<Error>();
   const [canceler] = useState(new AbortController());
@@ -87,13 +88,15 @@ const WorkspaceDetails: React.FC = () => {
   }, [canceler.signal]);
 
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
+    
+    // The user and group name filter will be applied in this call using the nameFilter
     // Mock of https://github.com/determined-ai/determined/pull/5085
     const response: GroupsAndUsersAssignedToWorkspaceResponse = await Promise.resolve({
       assignments: [],
       groups: [],
       usersAssignedDirectly: [],
     });
-
+    
     const newGroupIds = new Set<number>();
     setUsersAssignedDirectly(response.usersAssignedDirectly);
     setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map((user) => user.id)));
@@ -106,6 +109,9 @@ const WorkspaceDetails: React.FC = () => {
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
   }, []);
+
+  const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
+
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
@@ -192,6 +198,7 @@ const WorkspaceDetails: React.FC = () => {
               pageRef={pageRef}
               usersAssignedDirectly={usersAssignedDirectly}
               workspace={workspace}
+              onFilterUpdate={handleFilterUpdate}
             />
           </Tabs.TabPane>
         </Tabs>

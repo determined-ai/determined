@@ -2,7 +2,7 @@ import { Button, Dropdown, Menu, Select } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import { getFullPaginationConfig } from 'components/Table';
@@ -36,6 +36,7 @@ import settingsConfig, {
 interface Props {
   assignments: V1RoleWithAssignments[];
   groupsAssignedDirectly: V1Group[];
+  onFilterUpdate: (name: string | undefined) => void;
   pageRef: React.RefObject<HTMLElement>;
   usersAssignedDirectly: User[];
   workspace: Workspace;
@@ -82,6 +83,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
 const WorkspaceMembers: React.FC<Props> = ({
   assignments,
+  onFilterUpdate,
   usersAssignedDirectly,
   groupsAssignedDirectly,
   pageRef,
@@ -128,6 +130,10 @@ const WorkspaceMembers: React.FC<Props> = ({
   ] : [...usersAssignedDirectly, ...groupsAssignedDirectly],
     [groupsAssignedDirectly, mockWorkspaceMembers, usersAssignedDirectly],
   );
+
+  useEffect(() => {
+    onFilterUpdate(settings.name);
+  }, [onFilterUpdate, settings.name]);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
