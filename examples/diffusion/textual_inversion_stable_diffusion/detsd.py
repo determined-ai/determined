@@ -318,7 +318,7 @@ class DetSDTextualInversionTrainer:
         # self.accelerator.backward(mse_loss)
         print("MEMORY ALLOC TEST, after mse_backwards")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
-        print(f"mse_loss: {mse_loss.item()}  step: {self.steps_completed}")
+        print(f"mse_loss: {mse_loss.item()}")
 
         # Add a latent-space regularization penalty following the ideas in
         # https://github.com/rinongal/textual_inversion/issues/49
@@ -397,21 +397,12 @@ class DetSDTextualInversionTrainer:
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids
-        print("text_encder param check")
-        for n, p in self.text_encoder.named_parameters():
-            if p.requires_grad:
-                print(n)
-        print("unet param check")
-        for n, p in self.unet.named_parameters():
-            if p.requires_grad:
-                print(n)
-        print("vae param check")
-        for n, p in self.vae.named_parameters():
-            if p.requires_grad:
-                print(n)
+        print("tokenized_text grad check", tokenized_text.requires_grad)
         print("MEMORY ALLOC TEST, before getting hidden states")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
         encoder_hidden_states = self.text_encoder(tokenized_text)[0]
+        print("encoder_hidden_states grad check", encoder_hidden_states.requires_grad)
+        print("encoder_hidden_states shape check", encoder_hidden_states.shape)
         print("MEMORY ALLOC TEST, after getting hidden states")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
 
