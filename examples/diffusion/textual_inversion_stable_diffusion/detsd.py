@@ -275,6 +275,7 @@ class DetSDTextualInversionTrainer:
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
         self.text_encoder.train()
+
         # Convert images to latent space.
         latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
         latents = latent_dist.sample().detach()
@@ -300,9 +301,22 @@ class DetSDTextualInversionTrainer:
         noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
 
         # Get the text embedding for the prompt.
-        encoder_hidden_states = self.text_encoder(batch["input_ids"])[0]
+        batch_text = batch["input_text"]
+        dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
+        tokenized_dummy_text = self.tokenizer(
+            dummy_text,
+            padding="max_length",
+            truncation=True,
+            max_length=self.tokenizer.model_max_length,
+            return_tensors="pt",
+        ).input_ids
+        print("tokenized_dummy_text.shape", tokenized_dummy_text.shape)
+        encoder_hidden_states = self.text_encoder(tokenized_dummy_text)[0]
+        print("encoder_hidden_states.shape", encoder_hidden_states.shape)
 
         # Predict the noise residual.
+        print("noisy_latents.shape", noisy_latents.shape)
+        print("rand_timesteps.shape", rand_timesteps.shape)
         noise_pred = self.unet(noisy_latents, rand_timesteps, encoder_hidden_states).sample
         mse_loss = F.mse_loss(noise_pred, noise)
         print(f"mse_loss: {mse_loss}")
@@ -468,21 +482,20 @@ class DetSDTextualInversionTrainer:
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         """Helper function for replacing concepts with dummy placeholders."""
-        for concept_token, d_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(concept_token, " ".join(d_tokens))
+        for concept_token, dummy_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(concept_token, dummy_tokens)
         return text
 
     def _replace_concepts_with_initializers(self, text: str) -> str:
         """Helper function for replacing concepts with their initializer tokens."""
         for concept_token, init_tokens in self.concept_to_initializer_tokens_map.items():
-            text = text.replace(concept_token, " ".join(init_tokens))
+            text = text.replace(concept_token, init_tokens)
         return text
 
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
         self.train_dataset = data.TextualInversionDataset(
             train_img_dirs=self.train_img_dirs,
-            tokenizer_fn=self._tokenizer_fn,
             concept_tokens=self.concept_tokens,
             learnable_properties=self.learnable_properties,
             img_size=self.img_size,
@@ -496,9 +509,12 @@ class DetSDTextualInversionTrainer:
 
     def _build_optimizer(self) -> None:
         """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
+        # We only optimize the embedding vectors.  Ideally, we would only optimize the newly added
+        # embedding vectors, but this would require badly hacking the Huggingface API.  Might be a
+        # TODO for the future.
         embedding_params = self.text_encoder.get_input_embeddings().parameters()
         self.optimizer = self._optim_dict[self.optimizer_name](
-            embedding_params,  # only optimize the embeddings
+            embedding_params,
             lr=self.learning_rate,
             **self.other_optimizer_kwargs,
         )
@@ -890,8 +906,8 @@ class DetSDTextualInversionPipeline:
         print("Done!")
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
-        for concept_token, d_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(concept_token, " ".join(d_tokens))
+        for concept_token, dummy_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(concept_token, dummy_tokens)
         return text
 
     def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:
@@ -984,11 +1000,11 @@ def add_new_tokens(
     initializer_tokens: Sequence[str],
     tokenizer: nn.Module,
     text_encoder: nn.Module,
-) -> Tuple[List[str], List[int]]:
+) -> Tuple[str, List[int]]:
     """Helper function for adding new tokens to the tokenizer and extending the corresponding
     embeddings appropriately, given a single concept token and its sequence of corresponding
-    initializer tokens.  Returns the dummy representation of the initializer tokens and their
-    ids."""
+    initializer tokens.  Returns the dummy representation of the initializer tokens as a str and
+    the corresponding ids."""
     initializer_ids = tokenizer(
         initializer_tokens,
         padding="max_length",
@@ -1011,14 +1027,16 @@ def add_new_tokens(
             f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
         )
     # Add a new randomly generated dummy placeholder token for every token in the initializer.
-    dummy_placeholder_tokens = [
+    dummy_placeholder_token_list = [
         f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
     ]
-    num_added_tokens = tokenizer.add_tokens(dummy_placeholder_tokens)
-    if num_added_tokens != len(dummy_placeholder_tokens):
-        raise ValueError(f"Subset of {dummy_placeholder_tokens} tokens already exist in tokenizer.")
+    num_added_tokens = tokenizer.add_tokens(dummy_placeholder_token_list)
+    if num_added_tokens != len(dummy_placeholder_token_list):
+        raise ValueError(
+            f"Subset of {dummy_placeholder_token_list} tokens already exist in tokenizer."
+        )
     # Get the ids of the new placeholders.
-    dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(dummy_placeholder_tokens)
+    dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(dummy_placeholder_token_list)
     # Sanity check
     assert len(dummy_placeholder_ids) == len(
         non_special_initializer_ids
@@ -1036,4 +1054,6 @@ def add_new_tokens(
     ), 'Length of "dummy_placeholder_ids" and "non_special_initializer_ids" must match.'
     for p_id, i_id in zip(dummy_placeholder_ids, non_special_initializer_ids):
         token_embeddings[p_id] = token_embeddings[i_id]
+
+    dummy_placeholder_tokens = " ".join(dummy_placeholder_token_list)
     return dummy_placeholder_tokens, dummy_placeholder_ids

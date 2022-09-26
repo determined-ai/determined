@@ -25,7 +25,6 @@ class TextualInversionDataset(Dataset):
     def __init__(
         self,
         train_img_dirs: Sequence[str],
-        tokenizer_fn: Callable,
         concept_tokens: Sequence[str],
         learnable_properties: Sequence[str],
         img_size: int = 512,
@@ -47,7 +46,6 @@ class TextualInversionDataset(Dataset):
             ), f"learnable_properties must be one of {list(TEMPLATE_DICT.keys())}, not {prop}."
 
         self.train_img_dirs = train_img_dirs
-        self.tokenizer_fn = tokenizer_fn
         self.learnable_properties = learnable_properties
         self.img_size = img_size
         self.concept_tokens = concept_tokens
@@ -63,7 +61,7 @@ class TextualInversionDataset(Dataset):
         )
 
         self.records = []
-        for dir_path, token, prop in zip(
+        for dir_path, concept_token, prop in zip(
             self.train_img_dirs, concept_tokens, self.learnable_properties
         ):
             templates = TEMPLATE_DICT[prop]
@@ -71,10 +69,8 @@ class TextualInversionDataset(Dataset):
             img_ts = self._convert_imgs_to_tensors(imgs)
             for img_t in img_ts:
                 for text in templates:
-                    text_with_token = text.format(token)
-                    self.records.append(
-                        {"input_ids": self._tokenize_text(text_with_token), "pixel_values": img_t}
-                    )
+                    text_with_token = text.format(concept_token)
+                    self.records.append({"input_text": text_with_token, "pixel_values": img_t})
 
     def _get_imgs_from_dir_path(self, dir_path: str) -> List[Image.Image]:
         """Gets all images from a directory and converts them to tensors."""
@@ -101,11 +97,6 @@ class TextualInversionDataset(Dataset):
             img_t = (img_t - 0.5) * 2.0
             img_ts.append(img_t)
         return img_ts
-
-    def _tokenize_text(self, text: str) -> torch.Tensor:
-        """Tokenizes text and removes the batch dimension."""
-        tokenized_text = self.tokenizer_fn(text)
-        return tokenized_text
 
     def __len__(self):
         return len(self.records)
