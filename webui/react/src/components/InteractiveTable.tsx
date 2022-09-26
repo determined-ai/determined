@@ -14,7 +14,7 @@ import React, {
   useState,
 } from 'react';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
-import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
+import { DraggableCore, DraggableData, DraggableEvent, DraggableEventHandler } from 'react-draggable';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
@@ -108,7 +108,7 @@ interface HeaderCellProps {
   index: number;
   isResizing: boolean;
   moveColumn: (source: number, destination: number) => void;
-  onResize: DraggableEventHandler;
+  onResize: (e: DraggableEvent, data: DraggableData) => number;
   onResizeStart: DraggableEventHandler;
   onResizeStop: DraggableEventHandler;
   title: unknown;
@@ -300,8 +300,9 @@ const HeaderCell = ({
       <DraggableCore
         nodeRef={resizingRef}
         onDrag={(e, data) => {
-          setXValue(data.x);
-          onResize(e, data);
+          const minWidth = onResize(e, data);
+
+          setXValue(data.x < minWidth ? minWidth : data.x);
         }}
         onStart={(e, data) => {
           setShadowVisibility('block');
@@ -440,46 +441,49 @@ const InteractiveTable: InteractiveTable = ({
     (resizeIndex) => {
       return (e: Event, { x }: DraggableData) => {
         if (timeout.current) clearTimeout(timeout.current);
+        const column = settings.columns[resizeIndex];
+        const minWidth = columnDefs[column].defaultWidth;
+        const currentWidths = widthData.widths;
+
+        if (x === currentWidths[resizeIndex]) return;
+
+        let targetWidths = currentWidths;
+
+        targetWidths[resizeIndex] = x < minWidth ? minWidth : x;
+
+        const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
+        /**
+         * If the table width is less than the page width, the browser upscales,
+         * and then the resize no longer tracks with the cursor.
+         * we manually do the scaling here to keep the tableWidth >= pageWidth
+         * in particular, we distribute the deficit among the other columns
+         */
+        const shortage = pageWidth - targetWidthSum;
+        if (shortage > 0) {
+          const compensatingPortion = shortage / (currentWidths.length - 1);
+          targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
+            targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion,
+          );
+        }
+
+        const widths = getUpscaledWidths(targetWidths);
+        const dropRightStyles = widths.map((width, idx) => ({
+          left: `${width / 2}px`,
+          width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        }));
+        const dropLeftStyles = widths.map((width, idx) => ({
+          left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+          width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        }));
 
         timeout.current = setTimeout(() => {
-          setWidthData(({ widths: prevWidths, ...rest }) => {
-            const column = settings.columns[resizeIndex];
-            const minWidth = columnDefs[column].defaultWidth;
-            let targetWidths = prevWidths;
-
-            targetWidths[resizeIndex] = x < minWidth ? minWidth : x;
-
-            const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
-            /**
-             * If the table width is less than the page width, the browser upscales,
-             * and then the resize no longer tracks with the cursor.
-             * we manually do the scaling here to keep the tableWidth >= pageWidth
-             * in particular, we distribute the deficit among the other columns
-             */
-            const shortage = pageWidth - targetWidthSum;
-            if (shortage > 0) {
-              const compensatingPortion = shortage / (prevWidths.length - 1);
-              targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
-                targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion,
-              );
-            }
-
-            const widths = getUpscaledWidths(targetWidths);
-            const dropRightStyles = widths.map((width, idx) => ({
-              left: `${width / 2}px`,
-              width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-            }));
-            const dropLeftStyles = widths.map((width, idx) => ({
-              left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-              width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-            }));
-
-            return { ...rest, dropLeftStyles, dropRightStyles, widths };
-          });
+          setWidthData({ dropLeftStyles, dropRightStyles, widths });
         }, DEFAULT_RESIZE_THROTTLE_TIME);
+
+        return minWidth;
       };
     },
-    [settings.columns, pageWidth, columnDefs, getUpscaledWidths],
+    [settings.columns, widthData.widths, pageWidth, columnDefs, getUpscaledWidths],
   );
 
   const handleResizeStart = useCallback(
