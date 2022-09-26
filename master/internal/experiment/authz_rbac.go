@@ -36,7 +36,7 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 		return false, err
 	}
 
-	if err = rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	if err = db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA); err != nil {
 		if errors.Is(err, grpcutil.ErrPermissionDenied) {
 			return false, nil
@@ -56,7 +56,7 @@ func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 		return err
 	}
 
-	return rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS)
 }
 
@@ -69,7 +69,7 @@ func (a *ExperimentAuthZRBAC) CanDeleteExperiment(curUser model.User, e *model.E
 		return err
 	}
 
-	return rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT)
 }
 
@@ -173,7 +173,7 @@ func (a *ExperimentAuthZRBAC) CanEditExperiment(curUser model.User, e *model.Exp
 		return err
 	}
 
-	return rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT)
 }
 
@@ -188,7 +188,7 @@ func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 		return err
 	}
 
-	return rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA)
 }
 
@@ -203,7 +203,7 @@ func (a *ExperimentAuthZRBAC) CanCreateExperiment(
 		return err
 	}
 
-	return rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_EXPERIMENT)
 }
 
@@ -218,7 +218,7 @@ func (a *ExperimentAuthZRBAC) CanForkFromExperiment(
 		return err
 	}
 
-	return rbac.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 }
 

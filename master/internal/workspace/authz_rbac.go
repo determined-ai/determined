@@ -3,6 +3,8 @@ package workspace
 import (
 	"context"
 
+	"github.com/determined-ai/determined/master/internal/db"
+
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 
@@ -94,46 +96,53 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(curUser model.User) error {
 
 // CanSetWorkspacesName determines whether a user can set a workspace's name.
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	return denyAccessWithoutPermission(curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
 // CanDeleteWorkspace determines whether a user can delete a workspace.
 func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	return denyAccessWithoutPermission(curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_WORKSPACE)
 }
 
 // CanArchiveWorkspace determines whether a user can archive a workspace.
 func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	return denyAccessWithoutPermission(curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
 // CanUnarchiveWorkspace determines whether a user can unarchive a workspace.
 func (r *WorkspaceAuthZRBAC) CanUnarchiveWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	return denyAccessWithoutPermission(curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
 // CanPinWorkspace determines whether a user can pin a workspace.
 func (r *WorkspaceAuthZRBAC) CanPinWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	return nil
 }
 
 // CanUnpinWorkspace determines whether a user can unpin a workspace.
 func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	return nil
 }
 
 func denyAccessWithoutPermission(uid model.UserID, workspace *workspacev1.Workspace,
-	permID rbacv1.PermissionType) error {
+	permID rbacv1.PermissionType,
+) error {
 	allowed, err := hasPermissionOnWorkspace(context.TODO(), uid, workspace, permID)
 	if err != nil {
 		return errors.Wrap(err, ErrorLookup.Error())
@@ -147,13 +156,14 @@ func denyAccessWithoutPermission(uid model.UserID, workspace *workspacev1.Worksp
 }
 
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
-	workspace *workspacev1.Workspace, permID rbacv1.PermissionType) (bool, error) {
+	workspace *workspacev1.Workspace, permID rbacv1.PermissionType,
+) (bool, error) {
 	var workspaceID *int32
 	if workspace != nil {
 		workspaceID = &workspace.Id
 	}
 
-	err := rbac.DoesPermissionMatch(ctx, uid, workspaceID, permID)
+	err := db.DoesPermissionMatch(ctx, uid, workspaceID, permID)
 	if err != nil {
 		return false, errors.Wrap(err, ErrorLookup.Error())
 	}
@@ -162,7 +172,8 @@ func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 }
 
 func workspacesUserHasPermissionOn(ctx context.Context, uid model.UserID,
-	workspaceIDs []int32, permID rbacv1.PermissionType) (map[int32]bool, error) {
+	workspaceIDs []int32, permID rbacv1.PermissionType,
+) (map[int32]bool, error) {
 	// We'll want set intersection later, so let's set up for constant-time lookup
 	inWorkspaceIDSet := make(map[int32]bool, len(workspaceIDs))
 	for _, w := range workspaceIDs {
