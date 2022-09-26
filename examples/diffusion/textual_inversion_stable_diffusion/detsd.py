@@ -59,7 +59,7 @@ class DetSDTextualInversionTrainer:
         learning_rate: float = 5e-04,
         other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
-        norm_penalty: float = 1.0,
+        embedding_reg_weight: float = 0.1,
         checkpoint_freq: int = 50,
         metric_report_freq: int = 50,
         beta_start: float = 0.00085,
@@ -120,7 +120,7 @@ class DetSDTextualInversionTrainer:
         self.learning_rate = learning_rate
         self.other_optimizer_kwargs = other_optimizer_kwargs or {}
         self.scale_lr = scale_lr
-        self.norm_penalty = norm_penalty
+        self.embedding_reg_weight = embedding_reg_weight
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
         self.beta_start = beta_start
@@ -164,7 +164,7 @@ class DetSDTextualInversionTrainer:
         self.steps_completed = 0
         self.loss_history = []
         self.last_mean_loss = None
-        self.norm_loss = None
+        self.embedding_reg_loss = None
 
         self.effective_global_batch_size = (
             self.gradient_accumulation_steps
@@ -308,40 +308,32 @@ class DetSDTextualInversionTrainer:
         print(f"mse_loss: {mse_loss}")
         self.accelerator.backward(mse_loss)
 
-        # Include a norm_loss which penalizes the new embeddings for being much larger or smaller
+        # Include a embedding_reg_loss which penalizes the new embeddings for being much larger or smaller
         # than the original embedding vectors.  Without such a loss, the new vectors are typically
         # driven to be very large and consequently dominate the art they are used to produce.
 
         # It is more memory efficient to perform this computation as a separate forward and backward
         # pass, rather than combining it with the mse_loss computation above.  We also only need to
         # perform this computation once per actual optimizer step, rather than once per batch:
-        if self.norm_loss is None:
-            new_token_embeddings_norms = torch.linalg.vector_norm(
-                self._get_new_token_embeddings(), dim=1
-            )
+        if self.embedding_reg_loss is None:
+            new_token_embeddings = self._get_new_token_embeddings()
+            initializer_token_embeddings = self._get_initializer_token_embeddings()
 
-            self.MEAN_NEW_EMBEDDING = new_token_embeddings_norms.detach().mean().item()
-            self.MAX_NEW_EMBEDDING = new_token_embeddings_norms.detach().max().item()
-            print(f"MEAN_NEW_EMBEDDING: {self.MEAN_NEW_EMBEDDING}")
-            print(f"MAX_NEW_EMBEDDING: {self.MAX_NEW_EMBEDDING}")
+            # Compute the squared-distance between the two, taking the mean over the embeddeing
+            # dimension, but summing over tokens.
+            distance_vectors = new_token_embeddings - initializer_token_embeddings
+            self.embedding_reg_loss = (distance_vectors ** 2).mean(dim=-1).sum(dim=0)
 
-            # Compute the loss with .sum() rather than .mean(), as this should help decouple the
-            # optimal value for norm_penalty from the number of newly added tokens.
-            self.norm_loss = (
-                self.norm_penalty
-                * (
-                    (new_token_embeddings_norms - self.original_embedding_norm_mean) ** 2
-                    / self.original_embedding_norm_var
-                ).sum()
-            )
-            print(f"norm_loss: {self.norm_loss}")
-            # Scale up norm_loss by gradient_accumulation_steps since we are only doing the
+            print(f"embedding_reg_loss: {self.embedding_reg_loss}")
+            # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
-            accumulation_scaled_norm_loss = self.norm_loss * self.gradient_accumulation_steps
-            self.accelerator.backward(accumulation_scaled_norm_loss)
+            accumulation_scaled_embedding_reg_loss = (
+                self.embedding_reg_loss * self.gradient_accumulation_steps
+            )
+            self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
 
         # Add the total loss to the loss history for metric tracking.
-        loss = (mse_loss + self.norm_loss).detach()
+        loss = (mse_loss + self.embedding_reg_loss).detach()
         self.loss_history.append(loss)
 
         self.optimizer.step()
@@ -357,7 +349,7 @@ class DetSDTextualInversionTrainer:
             token_embeddings[
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
-            self.norm_loss = None
+            self.embedding_reg_loss = None
         self.optimizer.zero_grad()
 
         return loss
@@ -414,6 +406,8 @@ class DetSDTextualInversionTrainer:
             self.logger.info(
                 f"Added {len(dummy_placeholder_tokens)} new tokens for {concept_token}."
             )
+            print("self.concept_to_initializer_tokens_map", self.concept_to_initializer_tokens_map)
+            print("self.concept_to_dummy_tokens_map", self.concept_to_dummy_tokens_map)
 
         # Take a snapshot of the original embedding weights.  Used in the update step to ensure that
         # we only train the newly added concept vectors.
@@ -476,6 +470,12 @@ class DetSDTextualInversionTrainer:
         """Helper function for replacing concepts with dummy placeholders."""
         for concept_token, d_tokens in self.concept_to_dummy_tokens_map.items():
             text = text.replace(concept_token, " ".join(d_tokens))
+        return text
+
+    def _replace_concepts_with_initializers(self, text: str) -> str:
+        """Helper function for replacing concepts with their initializer tokens."""
+        for concept_token, init_tokens in self.concept_to_initializer_tokens_map.items():
+            text = text.replace(concept_token, " ".join(init_tokens))
         return text
 
     def _build_dataset_and_dataloader(self) -> None:
@@ -656,30 +656,49 @@ class DetSDTextualInversionTrainer:
                 metrics={"loss": self.last_mean_loss},
             )
 
-    def _get_token_embedding_weight_data(self) -> torch.Tensor:
-        """Returns the data tensor from the `weight` parameter of the embedding matrix, accounting
-        for the possible insertion of a .module attr insertion due to the .prepare() call.
-        """
-        try:
-            token_embeddings = self.text_encoder.module.get_input_embeddings().weight.data
-        except AttributeError:
-            token_embeddings = self.text_encoder.get_input_embeddings().weight.data
-        return token_embeddings
-
-    def _get_new_token_embeddings(self) -> torch.Tensor:
-        """Returns the tensor of newly-added token embeddings."""
+    def _get_token_embedding_layer(self) -> nn.Module:
         try:
             token_embedding_layer = self.text_encoder.module.text_model.embeddings.token_embedding
         except AttributeError:
             token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
+        return token_embedding_layer
+
+    def _get_token_embedding_weight_data(self) -> torch.Tensor:
+        """Returns the data tensor from the `weight` parameter of the embedding matrix, accounting
+        for the possible insertion of a .module attr insertion due to the .prepare() call.
+        """
+        token_embedding_layer = self._get_token_embedding_layer()
+        return token_embedding_layer.weight.data
+
+    def _get_new_token_embeddings(self) -> torch.Tensor:
+        """Returns the tensor of newly-added token embeddings."""
+        token_embedding_layer = self._get_token_embedding_layer()
         all_concept_tokens = " ".join(list(self.concept_tokens))
         all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
+        print("all_dummy_tokens", all_dummy_tokens)
         all_dummy_tokens_t = torch.tensor(
             self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
             device=self.accelerator.device,
         )
+        print("all_dummy_tokens_t", all_dummy_tokens_t)
         new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
+        print("new_token_embeddings.shape", new_token_embeddings.shape)
         return new_token_embeddings
+
+    def _get_initializer_token_embeddings(self) -> torch.Tensor:
+        """Returns the tensor of initializer token embeddings."""
+        token_embedding_layer = self._get_token_embedding_layer()
+        all_concept_tokens = " ".join(list(self.concept_tokens))
+        all_initializer_tokens = self._replace_concepts_with_initializers(all_concept_tokens)
+        print("all_initializer_tokens", all_initializer_tokens)
+        all_initializer_tokens_t = torch.tensor(
+            self.tokenizer.encode(all_initializer_tokens, add_special_tokens=False),
+            device=self.accelerator.device,
+        )
+        print("all_initializer_tokens_t", all_initializer_tokens_t)
+        initializer_token_embeddings = token_embedding_layer(all_initializer_tokens_t)
+        print("initializer_token_embeddings.shape", initializer_token_embeddings.shape)
+        return initializer_token_embeddings
 
 
 class DetSDTextualInversionPipeline:
