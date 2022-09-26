@@ -160,7 +160,7 @@ class Checkpoint:
                         "Checkpoint download via master is only supported on S3"
                         f", got {checkpoint_storage['type']}"
                     )
-                self._download_via_master(local_ckpt_dir)
+                self._download_via_master(self._session, self.uuid, local_ckpt_dir)
             elif checkpoint_storage["type"] == "shared_fs":
                 src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
@@ -198,17 +198,24 @@ class Checkpoint:
 
         return str(local_ckpt_dir)
 
-    def _download_via_master(self, local_ckpt_dir: pathlib.Path) -> None:
+    @staticmethod
+    def _download_via_master(
+        sess: api.Session, uuid: str, local_ckpt_dir: pathlib.Path, os_name: str = os.name
+    ) -> None:
+        """Downloads a checkpoint through the master.
+        Arguments:
+            via_master (Path-like): the directory in which the checkpoint is downloaded
+            os_name (string, optional): the name of the current OS -- this is for testing only
+        """
+
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-        if os.name == "nt":
+        if os_name == "nt":
             ftype = "zip"
         else:
             ftype = "gzip"
         mime_type = f"application/{ftype}"
 
-        resp = self._session.get(
-            f"/checkpoints/{self.uuid}", headers={"Accept": mime_type}, stream=True
-        )
+        resp = sess.get(f"/checkpoints/{uuid}", headers={"Accept": mime_type}, stream=True)
         if not resp.ok:
             raise RuntimeError(
                 "unable to download checkpoint from master:", resp.status_code, resp.reason
