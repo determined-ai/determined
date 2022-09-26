@@ -14,7 +14,12 @@ import React, {
   useState,
 } from 'react';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
-import { DraggableCore, DraggableData, DraggableEvent, DraggableEventHandler } from 'react-draggable';
+import {
+  DraggableCore,
+  DraggableData,
+  DraggableEvent,
+  DraggableEventHandler,
+} from 'react-draggable';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
@@ -301,8 +306,9 @@ const HeaderCell = ({
         nodeRef={resizingRef}
         onDrag={(e, data) => {
           const minWidth = onResize(e, data);
+          const newWidth = data.x < minWidth ? minWidth : data.x;
 
-          setXValue(data.x < minWidth ? minWidth : data.x);
+          if (newWidth !== xValue) setXValue(newWidth);
         }}
         onStart={(e, data) => {
           setShadowVisibility('block');
