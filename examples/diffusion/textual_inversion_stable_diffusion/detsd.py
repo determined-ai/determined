@@ -397,12 +397,15 @@ class DetSDTextualInversionTrainer:
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids
+        print("text_encder param check")
         for n, p in self.text_encoder.named_parameters():
             if p.requires_grad:
                 print(n)
+        print("unet param check")
         for n, p in self.unet.named_parameters():
             if p.requires_grad:
                 print(n)
+        print("vae param check")
         for n, p in self.vae.named_parameters():
             if p.requires_grad:
                 print(n)
