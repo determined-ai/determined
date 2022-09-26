@@ -213,7 +213,7 @@ const WorkspaceMembers: React.FC<Props> = ({
             const oldRoleId = mockWorkspaceMembers ? 1 : assignments?.[0].role?.roleId || 0;
 
             try {
-            // TWy to remove the old role and then add the new role
+            // Try to remove the old role and then add the new role
              isUser(record) ?
               await removeRoleFromUser({
                 roleId: oldRoleId,
@@ -222,11 +222,11 @@ const WorkspaceMembers: React.FC<Props> = ({
                 groupId: userOrGroupId,
                 roleId: oldRoleId,
               });
-              try { 
+              try {
                 isUser(record) ? await assignRolesToUser({
                   roleIds: [roleIdValue],
                   userId: userOrGroupId,
-                }) : 
+                }) :
                 await assignRolesToGroup({
                   groupId: userOrGroupId,
                   roleIds: [roleIdValue],
