@@ -130,7 +130,7 @@
     "jest-junit": "^13.0.0",
     "less": "^4.1.1",
     "less-loader": "^7.0.2",
-    "monaco-editor-webpack-plugin": "^3.0.1",
+    "monaco-editor-webpack-plugin": "^7.0.1",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
     "prettier": "^2.7.1",
