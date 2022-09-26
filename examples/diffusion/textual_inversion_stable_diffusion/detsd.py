@@ -491,8 +491,6 @@ class DetSDTextualInversionTrainer:
         )
 
         # Update the embedding layer.
-        print("MEMORY ALLOC TEST")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         old_embedding = self.text_encoder.text_model.embeddings.token_embedding
         self.text_encoder.text_model.embeddings.token_embedding = layers.ExtendedEmbedding(
             old_embedding=old_embedding,
