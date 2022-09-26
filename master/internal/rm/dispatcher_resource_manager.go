@@ -734,7 +734,8 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 // Wait up to 2mins for the dispatch to be in a terminal state.
 func (m *dispatcherResourceManager) waitForDispatchTerminalState(ctx *actor.Context,
-	impersonatedUser string, dispatchID string) {
+	impersonatedUser string, dispatchID string,
+) {
 	for i := 0; i < 20; i++ {
 		if m.jobWatcher.isDispatchInProgress(ctx, impersonatedUser, dispatchID) {
 			ctx.Log().Debugf("Dispatch %s still active, waiting for termination.", dispatchID)
