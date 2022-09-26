@@ -36,7 +36,7 @@ def auto_init(old_init: Callable) -> Callable:
       - The annotations are easily recognized by type-aware systems for linting or tab-completion.
 
       - Listing out the types in the signature of __init__() is not actually necessary (it could
-        be inferred from the annotations) but for type-awarness and tab-completion systems it is
+        be inferred from the annotations) but for type-awareness and tab-completion systems it is
         necessary.  (side note: you don't need explicit __init__ definitions for @dataclass
         classes when working with mypy, but that's because mypy special-cases them.)
 

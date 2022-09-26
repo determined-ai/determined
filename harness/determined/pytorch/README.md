@@ -209,7 +209,7 @@ limitations (needing to know the optimizer when calling `scale_loss`).
 
 * PyTorch-native AMP:
   * (repeated from above) always call scaler.step(optimizer) *after*
-    optimzer.synchronize()
+    optimizer.synchronize()
   * (repeated from above) only call scaler.update() after each grouping of N
     batches.
 
