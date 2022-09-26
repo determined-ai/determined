@@ -2,7 +2,7 @@ import os
 import PIL
 import torch
 from PIL import Image
-from typing import Callable, List, Sequence
+from typing import List, Sequence
 
 from torch.utils.data import Dataset
 from torchvision import transforms

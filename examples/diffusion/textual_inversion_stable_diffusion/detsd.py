@@ -303,6 +303,8 @@ class DetSDTextualInversionTrainer:
         # Get the text embedding for the prompt.
         batch_text = batch["input_text"]
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
+        print("batch_text", batch_text)
+        print("dummy_text", dummy_text)
         tokenized_dummy_text = self.tokenizer(
             dummy_text,
             padding="max_length",
