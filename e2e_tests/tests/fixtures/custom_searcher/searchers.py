@@ -10,18 +10,10 @@ from typing import Dict, List, Optional, Set
 
 from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
-from determined.searcher.search_method import (
-    Close,
-    Create,
-    ExitedReason,
-    Operation,
-    SearchMethod,
-    Shutdown,
-    ValidateAfter,
-)
+from determined import searcher
 
 
-class SingleSearchMethod(SearchMethod):
+class SingleSearchMethod(searcher.SearchMethod):
     def __init__(self, experiment_config: dict, max_length: int) -> None:
         super().__init__()
         # since this is a single trial the hyperparameter space comprises a single point
@@ -29,15 +21,17 @@ class SingleSearchMethod(SearchMethod):
         self.max_length = max_length
         self.trial_closed = False
 
-    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         return []
 
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         return []
 
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.trial_closed = True
-        return [Shutdown()]
+        return [searcher.Shutdown()]
 
     def progress(self) -> float:
         if self.trial_closed:
@@ -46,26 +40,28 @@ class SingleSearchMethod(SearchMethod):
         return self.searcher_state.trial_progress[the_trial] / self.max_length
 
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exit_reason: ExitedReason
-    ) -> List[Operation]:
+        self, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+    ) -> List[searcher.Operation]:
         logging.warning(f"Trial {request_id} exited early: {exit_reason}")
-        return [Shutdown()]
+        return [searcher.Shutdown()]
 
-    def initial_operations(self) -> List[Operation]:
+    def initial_operations(self) -> List[searcher.Operation]:
         logging.info("initial_operations")
 
-        create = Create(
+        create = searcher.Create(
             request_id=uuid.uuid4(),
             hparams=self.hyperparameters,
             checkpoint=None,
         )
-        validate_after = ValidateAfter(request_id=create.request_id, length=self.max_length)
-        close = Close(request_id=create.request_id)
+        validate_after = searcher.ValidateAfter(
+            request_id=create.request_id, length=self.max_length
+        )
+        close = searcher.Close(request_id=create.request_id)
         logging.debug(f"Create({create.request_id}, {create.hparams})")
         return [create, validate_after, close]
 
 
-class RandomSearchMethod(SearchMethod):
+class RandomSearchMethod(searcher.SearchMethod):
     def __init__(
         self,
         max_trials: int,
@@ -87,31 +83,37 @@ class RandomSearchMethod(SearchMethod):
         self.pending_trials = 0
         self.closed_trials = 0
 
-    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.raise_exception("on_trial_created")
         if self.created_trials == 5:
             self.raise_exception("on_trial_created_5")
         self._log_stats()
         return []
 
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         self.raise_exception("on_validation_completed")
         return []
 
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.pending_trials -= 1
         self.closed_trials += 1
-        ops: List[Operation] = []
+        ops: List[searcher.Operation] = []
         if self.created_trials < self.max_trials:
             request_id = uuid.uuid4()
-            ops.append(Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
-            ops.append(ValidateAfter(request_id=request_id, length=self.max_length))
-            ops.append(Close(request_id=request_id))
+            ops.append(
+                searcher.Create(
+                    request_id=request_id, hparams=self.sample_params(), checkpoint=None
+                )
+            )
+            ops.append(searcher.ValidateAfter(request_id=request_id, length=self.max_length))
+            ops.append(searcher.Close(request_id=request_id))
             self.created_trials += 1
             self.pending_trials += 1
         elif self.pending_trials == 0:
             self.raise_exception("on_trial_closed_shutdown")
-            ops.append(Shutdown())
+            ops.append(searcher.Shutdown())
 
         self._log_stats()
         self.raise_exception("on_trial_closed_end")
@@ -143,16 +145,20 @@ class RandomSearchMethod(SearchMethod):
         return progress
 
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exit_reason: ExitedReason
-    ) -> List[Operation]:
+        self, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+    ) -> List[searcher.Operation]:
         self.pending_trials -= 1
 
-        ops: List[Operation] = []
-        if exit_reason == ExitedReason.INVALID_HP:
+        ops: List[searcher.Operation] = []
+        if exit_reason == searcher.ExitedReason.INVALID_HP:
             request_id = uuid.uuid4()
-            ops.append(Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
-            ops.append(ValidateAfter(request_id=request_id, length=self.max_length))
-            ops.append(Close(request_id=request_id))
+            ops.append(
+                searcher.Create(
+                    request_id=request_id, hparams=self.sample_params(), checkpoint=None
+                )
+            )
+            ops.append(searcher.ValidateAfter(request_id=request_id, length=self.max_length))
+            ops.append(searcher.Close(request_id=request_id))
             self.pending_trials += 1
             return ops
 
@@ -160,24 +166,24 @@ class RandomSearchMethod(SearchMethod):
         self._log_stats()
         return ops
 
-    def initial_operations(self) -> List[Operation]:
+    def initial_operations(self) -> List[searcher.Operation]:
         self.raise_exception("initial_operations_start")
         initial_trials = self.max_trials
         max_concurrent_trials = self.max_concurrent_trials
         if max_concurrent_trials > 0:
             initial_trials = min(initial_trials, max_concurrent_trials)
 
-        ops: List[Operation] = []
+        ops: List[searcher.Operation] = []
 
         for _ in range(initial_trials):
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
                 checkpoint=None,
             )
             ops.append(create)
-            ops.append(ValidateAfter(request_id=create.request_id, length=self.max_length))
-            ops.append(Close(request_id=create.request_id))
+            ops.append(searcher.ValidateAfter(request_id=create.request_id, length=self.max_length))
+            ops.append(searcher.Close(request_id=create.request_id))
 
             self.created_trials += 1
             self.pending_trials += 1
@@ -329,7 +335,7 @@ class ASHASearchMethodState:
             self.rungs.append(Rung(units_needed, idx))
 
 
-class ASHASearchMethod(SearchMethod):
+class ASHASearchMethod(searcher.SearchMethod):
     def __init__(
         self,
         max_length: int,
@@ -347,7 +353,7 @@ class ASHASearchMethod(SearchMethod):
         self.test_type = test_type
         self.exception_points = exception_points
 
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.asha_search_state.completed_trials += 1
         self.asha_search_state.closed_trials.add(request_id)
 
@@ -356,17 +362,19 @@ class ASHASearchMethod(SearchMethod):
             and self.asha_search_state.completed_trials == self.asha_search_state.max_trials
         ):
             self.raise_exception("shutdown")
-            return [Shutdown()]
+            return [searcher.Shutdown()]
 
         return []
 
-    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.asha_search_state.rungs[0].outstanding_trials += 1
         self.asha_search_state.trial_rungs[request_id] = 0
         self.raise_exception("on_trial_created")
         return []
 
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1
@@ -375,14 +383,14 @@ class ASHASearchMethod(SearchMethod):
         return ops
 
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exited_reason: ExitedReason
-    ) -> List[Operation]:
+        self, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
+    ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
-        if exited_reason == ExitedReason.INVALID_HP:
-            ops: List[Operation] = []
+        if exited_reason == searcher.ExitedReason.INVALID_HP:
+            ops: List[searcher.Operation] = []
 
             self.asha_search_state.early_exit_trials.add(request_id)
-            ops.append(Close(request_id))
+            ops.append(searcher.Close(request_id))
             self.asha_search_state.closed_trials.add(request_id)
             self.asha_search_state.invalid_trials += 1
 
@@ -394,14 +402,14 @@ class ASHASearchMethod(SearchMethod):
                 rung = self.asha_search_state.rungs[rung_idx]
                 rung.metrics = list(filter(lambda x: x.request_id != request_id, rung.metrics))
 
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
                 checkpoint=None,
             )
             ops.append(create)
             ops.append(
-                ValidateAfter(
+                searcher.ValidateAfter(
                     request_id=create.request_id,
                     length=self.asha_search_state.rungs[0].units_needed,
                 )
@@ -416,9 +424,9 @@ class ASHASearchMethod(SearchMethod):
         self.asha_search_state.closed_trials.add(request_id)
         return self.promote_async(request_id, sys.float_info.max)
 
-    def initial_operations(self) -> List[Operation]:
+    def initial_operations(self) -> List[searcher.Operation]:
         self.raise_exception("initial_operations_start")
-        ops: List[Operation] = []
+        ops: List[searcher.Operation] = []
 
         if self.asha_search_state.max_concurrent_trials > 0:
             max_concurrent_trials = min(
@@ -434,14 +442,14 @@ class ASHASearchMethod(SearchMethod):
             )
 
         for _ in range(0, max_concurrent_trials):
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
                 checkpoint=None,
             )
             ops.append(create)
             ops.append(
-                ValidateAfter(
+                searcher.ValidateAfter(
                     request_id=create.request_id,
                     length=self.asha_search_state.rungs[0].units_needed,
                 )
@@ -452,20 +460,20 @@ class ASHASearchMethod(SearchMethod):
 
         return ops
 
-    def promote_async(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def promote_async(self, request_id: uuid.UUID, metric: float) -> List[searcher.Operation]:
         rung_idx = self.asha_search_state.trial_rungs[request_id]
         rung = self.asha_search_state.rungs[rung_idx]
         rung.outstanding_trials -= 1
         added_train_workload = False
 
-        ops: List[Operation] = []
+        ops: List[searcher.Operation] = []
 
         if rung_idx == self.asha_search_state.num_rungs - 1:
             rung.metrics.append(TrialMetric(request_id=request_id, metric=metric))
 
             if request_id not in self.asha_search_state.early_exit_trials:
                 self.raise_exception("promote_async_close_trials")
-                ops.append(Close(request_id=request_id))
+                ops.append(searcher.Close(request_id=request_id))
                 logging.info(f"Closing trial {request_id}")
                 self.asha_search_state.closed_trials.add(request_id)
         else:
@@ -480,7 +488,7 @@ class ASHASearchMethod(SearchMethod):
                 if promoted_request_id not in self.asha_search_state.early_exit_trials:
                     logging.info(f"Promoted {promoted_request_id}")
                     units_needed = max(next_rung.units_needed - rung.units_needed, 1)
-                    ops.append(ValidateAfter(promoted_request_id, units_needed))
+                    ops.append(searcher.ValidateAfter(promoted_request_id, units_needed))
                     added_train_workload = True
                     self.asha_search_state.pending_trials += 1
                 else:
@@ -491,14 +499,14 @@ class ASHASearchMethod(SearchMethod):
             logging.info("Creating new trial instead of promoting")
             self.asha_search_state.pending_trials += 1
 
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
                 checkpoint=None,
             )
             ops.append(create)
             ops.append(
-                ValidateAfter(
+                searcher.ValidateAfter(
                     request_id=create.request_id,
                     length=self.asha_search_state.rungs[0].units_needed,
                 )
@@ -510,9 +518,9 @@ class ASHASearchMethod(SearchMethod):
 
         return ops
 
-    def _get_close_rungs_ops(self) -> List[Operation]:
+    def _get_close_rungs_ops(self) -> List[searcher.Operation]:
         self.raise_exception("_get_close_rungs_ops")
-        ops: List[Operation] = []
+        ops: List[searcher.Operation] = []
 
         for rung in self.asha_search_state.rungs:
             if rung.outstanding_trials > 0:
@@ -524,7 +532,7 @@ class ASHASearchMethod(SearchMethod):
                 ):
                     if trial_metric.request_id not in self.asha_search_state.early_exit_trials:
                         logging.info(f"Closing trial {trial_metric.request_id}")
-                        ops.append(Close(trial_metric.request_id))
+                        ops.append(searcher.Close(trial_metric.request_id))
                         self.asha_search_state.closed_trials.add(trial_metric.request_id)
         return ops
 
