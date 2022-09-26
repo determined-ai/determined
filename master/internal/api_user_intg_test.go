@@ -66,6 +66,7 @@ func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 			taskSpec: &tasks.TaskSpec{},
 		},
 	}
+	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
 	userModel, err := user.UserByUsername("admin")
 	require.NoError(t, err, "Couldn't get admin user")
