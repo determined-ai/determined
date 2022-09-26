@@ -400,7 +400,7 @@ class DetSDTextualInversionTrainer:
         print("tokenized_text grad check", tokenized_text.requires_grad)
         print("MEMORY ALLOC TEST, before getting hidden states")
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
-        encoder_hidden_states = self.text_encoder(tokenized_text)[0]
+        encoder_hidden_states = self.text_encoder(tokenized_text).last_hidden_state
         print("encoder_hidden_states grad check", encoder_hidden_states.requires_grad)
         print("encoder_hidden_states shape check", encoder_hidden_states.shape)
         print("MEMORY ALLOC TEST, after getting hidden states")
