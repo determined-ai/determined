@@ -9,6 +9,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
+// ErrNotEnoughPermissions is returned when a user
+// does not have permissions required.
+var ErrNotEnoughPermissions = errors.New("access denied")
+
 // DoesPermissionMatch checks for the existence of a permission in a workspace.
 func DoesPermissionMatch(ctx context.Context, curUserID model.UserID, workspaceID *int32,
 	permissionID rbacv1.PermissionType,
@@ -19,7 +23,7 @@ func DoesPermissionMatch(ctx context.Context, curUserID model.UserID, workspaceI
 		Join("JOIN user_group_membership ugm ON ra.group_id = ugm.group_id").
 		Join("JOIN role_assignment_scopes ras ON ra.scope_id = ras.id").
 		Where("ugm.user_id = ?", curUserID).
-		Where("permission_assignments.id = ?", permissionID)
+		Where("permission_assignments.permission_id = ?", permissionID)
 
 	if workspaceID == nil {
 		query = query.Where("ras.scope_workspace_id IS NULL")
@@ -34,5 +38,5 @@ func DoesPermissionMatch(ctx context.Context, curUserID model.UserID, workspaceI
 	if exists {
 		return nil
 	}
-	return errors.New("access denied")
+	return ErrNotEnoughPermissions
 }

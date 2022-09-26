@@ -7,7 +7,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -38,7 +37,7 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 
 	if err = db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA); err != nil {
-		if errors.Is(err, grpcutil.ErrPermissionDenied) {
+		if errors.Is(err, db.ErrNotEnoughPermissions) {
 			return false, nil
 		}
 		return false, err

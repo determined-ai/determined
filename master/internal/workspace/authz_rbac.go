@@ -164,7 +164,9 @@ func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	}
 
 	err := db.DoesPermissionMatch(ctx, uid, workspaceID, permID)
-	if err != nil {
+	if errors.Is(err, db.ErrNotEnoughPermissions) {
+		return false, nil
+	} else if err != nil {
 		return false, errors.Wrap(err, ErrorLookup.Error())
 	}
 
