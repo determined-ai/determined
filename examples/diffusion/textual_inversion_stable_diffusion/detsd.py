@@ -314,18 +314,30 @@ class DetSDTextualInversionTrainer:
 
         mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
         print(f"mse_loss: {mse_loss}")
-        self.accelerator.backward(mse_loss)
 
         # Add a latent-space regularization penalty following the ideas in
         # https://github.com/rinongal/textual_inversion/issues/49
-        initializer_text = [self._replace_concepts_with_initializers(text) for text in batch_text]
-        initializer_text_noise_pred = self._get_noise_pred(
-            text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
-        )
+        if not self.latent_reg_weight:
+            latent_reg_loss = 0.0
+        else:
+            initializer_text = [
+                self._replace_concepts_with_initializers(text) for text in batch_text
+            ]
+            initializer_text_noise_pred = self._get_noise_pred(
+                text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+            )
+            print("noisy_latents", noisy_latents)
+            print("rand_timesteps", rand_timesteps)
+            print("dummy_text_noise_pred", dummy_text_noise_pred)
 
-        latent_reg_loss = F.mse_loss(dummy_text_noise_pred, initializer_text_noise_pred)
-        print(f"latent_reg_loss: {latent_reg_loss}")
-        self.accelerator.backward(mse_loss)
+            print("initializer_text", initializer_text)
+            latent_reg_loss = self.latent_reg_weight * F.mse_loss(
+                dummy_text_noise_pred, initializer_text_noise_pred
+            )
+            print(f"latent_reg_loss: {latent_reg_loss}")
+
+        mse_and_latent_reg_loss = mse_loss + latent_reg_loss
+        self.accelerator.backward(mse_and_latent_reg_loss)
 
         # Include a embedding_reg_loss which penalizes the new embeddings for being much larger or smaller
         # than the original embedding vectors.  Without such a loss, the new vectors are typically
@@ -352,10 +364,11 @@ class DetSDTextualInversionTrainer:
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
 
         # Add the total loss to the loss history for metric tracking.
-        loss = (mse_loss + self.embedding_reg_loss).detach()
+        loss = (mse_and_latent_reg_loss + self.embedding_reg_loss).detach()
         self.loss_history.append(loss)
 
         self.optimizer.step()
+        self.optimizer.zero_grad()
 
         # For textual inversion, we only update the embeddings of the newly added concept tokens.
         # This is most safely implemented by copying the original embeddings, rather than zeroing
@@ -369,7 +382,6 @@ class DetSDTextualInversionTrainer:
                 self.original_embedding_idxs
             ] = self.original_embedding_tensors.detach().clone()
             self.embedding_reg_loss = None
-        self.optimizer.zero_grad()
 
         return loss
 
@@ -724,6 +736,7 @@ class DetSDTextualInversionTrainer:
         print("all_dummy_tokens_t", all_dummy_tokens_t)
         new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
         print("new_token_embeddings.shape", new_token_embeddings.shape)
+        print("new_token_embeddings.requires_grad", new_token_embeddings.requires_grad)
         return new_token_embeddings
 
     def _get_initializer_token_embeddings(self) -> torch.Tensor:
@@ -739,6 +752,9 @@ class DetSDTextualInversionTrainer:
         print("all_initializer_tokens_t", all_initializer_tokens_t)
         initializer_token_embeddings = token_embedding_layer(all_initializer_tokens_t)
         print("initializer_token_embeddings.shape", initializer_token_embeddings.shape)
+        print(
+            "initializer_token_embeddings.requires_grad", initializer_token_embeddings.requires_grad
+        )
         return initializer_token_embeddings
 
 
