@@ -3109,7 +3109,7 @@ schemas = {
         },
         "source_checkpoint_uuid": {
             "type": [
-                "integer",
+                "string",
                 "null"
             ],
             "default": null
