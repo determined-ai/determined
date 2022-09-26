@@ -9,7 +9,6 @@ from determined.common import check
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
 
 WorkloadGenerator = Generator[WorkloadStreamElem, None, None]
-logger = logging.getLogger("determined.core")
 
 
 def yield_and_await_response(
@@ -375,7 +374,6 @@ class WorkloadSequencer(workload.Source):
                 yield from self.validate(None)
 
             for op in self.core_context.searcher.operations(core.SearcherMode.ChiefOnly):
-                logger.warning(f"SearcherOperation length={op.length}")
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
