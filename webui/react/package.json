@@ -42,7 +42,7 @@
     "io-ts": "^2.2.16",
     "js-sha512": "^0.8.0",
     "js-yaml": "^4.1.0",
-    "markdown-to-jsx": "^7.1.3",
+    "markdown-to-jsx": "^7.1.7",
     "omnibar": "github:hamidzr/omnibar",
     "path-to-regexp": "^6.2.1",
     "portable-fetch": "^3.0.0",
