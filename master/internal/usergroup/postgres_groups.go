@@ -104,7 +104,8 @@ func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 func SearchGroups(
 	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
 ) (groups []Group, memberCounts []int32, tableRows int, err error) {
-	return searchGroups(ctx, name, userBelongsTo, offset, limit, true)
+	query := SearchGroupsQuery(name, userBelongsTo, true)
+	return SearchGroupsPaginated(ctx, query, offset, limit)
 }
 
 // SearchGroupsWithoutPersonalGroups searches the database for groups.
@@ -114,14 +115,17 @@ func SearchGroups(
 func SearchGroupsWithoutPersonalGroups(
 	ctx context.Context, name string, userBelongsTo model.UserID, offset, limit int,
 ) (groups []Group, memberCounts []int32, tableRows int, err error) {
-	return searchGroups(ctx, name, userBelongsTo, offset, limit, false)
+	query := SearchGroupsQuery(name, userBelongsTo, false)
+	return SearchGroupsPaginated(ctx, query, offset, limit)
 }
 
-func searchGroups(ctx context.Context,
-	name string, userBelongsTo model.UserID, offset, limit int, includePersonal bool,
-) (groups []Group, memberCounts []int32, tableRows int, err error) {
+// SearchGroupsQuery builds a query and returns it to the caller. userBelongsTo
+// is "optional in that if a value < 1 is passed in, the parameter is ignored.
+func SearchGroupsQuery(name string, userBelongsTo model.UserID,
+	includePersonal bool,
+) *bun.SelectQuery {
+	var groups []Group
 	query := db.Bun().NewSelect().Model(&groups)
-
 	if !includePersonal {
 		query = query.Where("groups.user_id IS NULL")
 	}
@@ -137,7 +141,15 @@ func searchGroups(ctx context.Context,
 			WHERE m.group_id=groups.id AND m.user_id = ?)`,
 			userBelongsTo)
 	}
+	return query
+}
 
+// SearchGroupsPaginated adds pagination arguments to a group search query and
+// executes it. SearchGroupsPaginated does not return an error if no groups
+// are found (that is a successful search)
+func SearchGroupsPaginated(ctx context.Context,
+	query *bun.SelectQuery, offset, limit int,
+) (groups []Group, memberCounts []int32, tableRows int, err error) {
 	paginatedQuery := db.PaginateBun(query, "id", db.SortDirectionAsc, offset, limit)
 
 	err = paginatedQuery.Scan(ctx, &groups)

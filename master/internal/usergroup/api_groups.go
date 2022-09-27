@@ -72,8 +72,20 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 		return nil, apiutils.ErrInvalidLimit
 	}
 
-	groups, memberCounts, tableCount, err := SearchGroupsWithoutPersonalGroups(ctx,
-		req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
+	query := SearchGroupsQuery(req.Name, model.UserID(req.UserId), true)
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query, err = AuthZProvider.Get().FilterGroupsList(*curUser, query)
+	if err != nil {
+		return nil, err
+	}
+
+	groups, memberCounts, tableCount, err := SearchGroupsPaginated(ctx,
+		query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -84,16 +96,6 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 			Group:      g.Proto(),
 			NumMembers: memberCounts[i],
 		}
-	}
-
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	searchResults, err = AuthZProvider.Get().FilterGroupsList(*curUser, searchResults)
-	if err != nil {
-		return nil, err
 	}
 
 	return &apiv1.GetGroupsResponse{

@@ -1,8 +1,11 @@
 package usergroup
 
 import (
+	"fmt"
+
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
 // UserGroupAuthZBasic is basic OSS controls.
@@ -15,14 +18,17 @@ func (a *UserGroupAuthZBasic) CanGetGroup(curUser model.User, gid int) error {
 
 // FilterGroupsList returns the list it was given and a nil error.
 func (a *UserGroupAuthZBasic) FilterGroupsList(curUser model.User,
-	groups []*groupv1.GroupSearchResult,
-) ([]*groupv1.GroupSearchResult, error) {
-	return groups, nil
+	query *bun.SelectQuery,
+) (*bun.SelectQuery, error) {
+	return query, nil
 }
 
 // CanUpdateGroups always returns nil.
 func (a *UserGroupAuthZBasic) CanUpdateGroups(curUser model.User) error {
-	return nil
+	if curUser.Admin {
+		return nil
+	}
+	return fmt.Errorf("non admin users may not update groups")
 }
 
 func init() {

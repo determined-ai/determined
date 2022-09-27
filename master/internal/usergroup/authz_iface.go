@@ -1,9 +1,10 @@
 package usergroup
 
 import (
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
 // UserGroupAuthZ describes authz methods for `user` package.
@@ -14,8 +15,7 @@ type UserGroupAuthZ interface {
 
 	// FilterGroupsList checks what groups a user can get.
 	// POST /api/v1/groups/search
-	FilterGroupsList(curUser model.User, groups []*groupv1.GroupSearchResult) (
-		[]*groupv1.GroupSearchResult, error)
+	FilterGroupsList(curUser model.User, query *bun.SelectQuery) (*bun.SelectQuery, error)
 
 	// CanUpdateGroups checks if a user can create, delete, or update a group.
 	// POST /api/v1/groups
