@@ -350,12 +350,11 @@ class DetSDTextualInversionTrainer:
             new_token_embeddings = self._get_new_token_embeddings()
             initializer_token_embeddings = self._get_initializer_token_embeddings()
 
-            # Compute the squared-distance between the two, taking the mean over the embeddeing
-            # dimension, but summing over tokens.
+            # Compute the squared-distance between the two, averaged over tokens.
             distance_vectors = new_token_embeddings - initializer_token_embeddings
-            self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).mean(
+            self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).sum(
                 dim=-1
-            ).sum(dim=0)
+            ).mean(dim=0)
             self.metrics_history["embedding_reg_loss"].append(self.embedding_reg_loss.item())
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
