@@ -9,4 +9,4 @@ from determined.searcher._search_method import (
     ValidateAfter,
 )
 from determined.searcher._search_runner import SearchRunner, LocalSearchRunner
-from determined.searcher._core_search_runner import CoreSearchRunner
+from determined.searcher._remote_search_runner import RemoteSearchRunner

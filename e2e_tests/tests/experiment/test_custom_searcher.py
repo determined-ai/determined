@@ -34,7 +34,7 @@ def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
     config["description"] = "custom searcher"
     search_method = searchers.SingleSearchMethod(config, 500)
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -63,7 +63,7 @@ def test_run_random_searcher_exp() -> None:
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -296,7 +296,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_method.searcher_state.last_event_id == 41
     assert search_method.searcher_state.experiment_completed is True
@@ -334,7 +334,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
         max_length, max_trials, num_rungs, divisor, test_type="noop"
     )
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -524,7 +524,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
             max_length, max_trials, num_rungs, divisor, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_method.searcher_state.experiment_completed is True
     assert client._determined is not None

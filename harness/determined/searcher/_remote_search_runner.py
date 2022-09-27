@@ -10,12 +10,12 @@ from determined.experimental import client
 logger = logging.getLogger("determined.searcher")
 
 
-class CoreSearchRunner(searcher.SearchRunner):
+class RemoteSearchRunner(searcher.SearchRunner):
     """
-    ``CoreSearchRunner`` performs a search for optimal hyperparameter values on-cluster,
+    ``RemoteSearchRunner`` performs a search for optimal hyperparameter values on-cluster,
     applying the provided ``SearchMethod`` (you will subclass ``SearchMethod`` and provide
     an instance of the derived class).
-    ``CoreSearchRunner`` is intended to execute on-cluster: it runs a meta-experiment
+    ``RemoteSearchRunner`` is intended to execute on-cluster: it runs a meta-experiment
     using ``Core API``.
     """
 
@@ -23,7 +23,7 @@ class CoreSearchRunner(searcher.SearchRunner):
         super().__init__(search_method)
         self.context = context
         info = det.get_cluster_info()
-        assert info is not None, "CoreSearchRunner only runs on-cluster"
+        assert info is not None, "RemoteSearchRunner only runs on-cluster"
         self.info = info
 
         self.latest_checkpoint = self.info.latest_checkpoint
@@ -31,21 +31,28 @@ class CoreSearchRunner(searcher.SearchRunner):
     def run(
         self,
         exp_config: Union[Dict[str, Any], str],
-        context_dir: Optional[str] = None,
+        model_dir: Optional[str] = None,
     ) -> int:
-        logger.info("CoreSearchRunner.run")
+        """
+        Run custom search as a Core API experiment (on-cluster).
+
+        Args:
+            exp_config (dictionary, string): experiment config filename (.yaml) or a dict.
+            model_dir (string): directory containing model definition.
+        """
+        logger.info("RemoteSearchRunner.run")
 
         operations: Optional[List[searcher.Operation]] = None
 
-        if context_dir is None:
-            context_dir = os.getcwd()
+        if model_dir is None:
+            model_dir = os.getcwd()
 
         if self.latest_checkpoint is not None:
             experiment_id, operations = self.load_state(self.latest_checkpoint)
             logger.info(f"Resuming HP searcher for experiment {experiment_id}")
         else:
             logger.info("No latest checkpoint. Starting new experiment.")
-            exp = client.create_experiment(exp_config, context_dir)
+            exp = client.create_experiment(exp_config, model_dir)
             self.search_method.searcher_state.experiment_id = exp.id
             self.search_method.searcher_state.last_event_id = 0
             self.save_state(exp.id, [])

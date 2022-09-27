@@ -12,9 +12,9 @@
    :members:
    :member-order: bysource
 
-*******************************************
+******************************************
  ``determined.searcher.CoreSearchRunner``
-*******************************************
+******************************************
 
 .. autoclass:: determined.searcher.CoreSearchRunner
    :members:
