@@ -21,4 +21,11 @@
   .dropdown {
     font-size: 12px;
   }
+  .headerButton {
+    display: inline-flex;
+
+    button {
+      margin-right: 10px;
+    }
+  }
 }

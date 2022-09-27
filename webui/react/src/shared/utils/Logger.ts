@@ -25,10 +25,15 @@ const generateNamespace = (parts: string[], separator = NAMEPACE_SEPARATOR) => {
   return parts.join(separator);
 };
 
+const loggers: Record<string, debug.Debugger> = {};
+
 /** returns the underlying Debug logger. */
 export const getLogger = (namespace: string, level: Level): ((...msg: unknown[]) => void) => {
-  const logger = debug(`${namespace}:${level}`);
-  return logger;
+  const key = `${namespace}:${level}`;
+  if (!loggers[key]) {
+    loggers[key] = debug(key);
+  }
+  return loggers[key];
 };
 
 export interface LoggerInterface {

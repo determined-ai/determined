@@ -313,6 +313,58 @@ export const assignRolesToGroup: DetApi<
     }),
 };
 
+export const removeRoleFromGroup: DetApi<
+  Service.RemoveRoleFromGroupParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeRoleFromGroup',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.removeAssignments({
+      groupRoleAssignments: [
+        {
+          groupId: params.groupId,
+          roleAssignment: { role: { roleId: params.roleId } },
+        },
+      ],
+    }),
+};
+
+export const assignRolesToUser: DetApi<
+  Service.AssignRolesToUserParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+> = {
+  name: 'assignRolesToUser',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.assignRoles({
+      userRoleAssignments: params.roleIds.map((roleId) => ({
+        roleAssignment: { role: { roleId } },
+        userId: params.userId,
+      })),
+    }),
+};
+
+export const removeRoleFromUser: DetApi<
+  Service.RemoveRoleFromUserParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeRoleFromUser',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.removeAssignments({
+      userRoleAssignments: [
+        {
+          roleAssignment: { role: { roleId: params.roleId } },
+          userId: params.userId,
+        },
+      ],
+    }),
+};
+
 /* Info */
 
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo> = {

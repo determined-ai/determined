@@ -22,7 +22,7 @@ jobs:
       contents: write
     env:
       NEW_CHART_DIR: /tmp/newchart
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
     steps:
       # figure out release ID based on how we were run
       - if: github.event_name == 'release'

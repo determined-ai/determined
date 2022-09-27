@@ -25,6 +25,7 @@ from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
 from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.project import args_description as project_args_description
+from determined.cli.rbac import args_description as rbac_args_description
 from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
@@ -152,6 +153,7 @@ all_args_description = (
     + remote_args_description
     + user_args_description
     + user_groups_args_description
+    + rbac_args_description
     + version_args_description
     + workspace_args_description
     + auth_args_description

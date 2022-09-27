@@ -136,6 +136,24 @@ export const assignRolesToGroup = generateDetApi<
   Api.V1AssignRolesResponse
 >(Config.assignRolesToGroup);
 
+export const removeRoleFromGroup = generateDetApi<
+  Service.RemoveRoleFromGroupParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeRoleFromGroup);
+
+export const assignRolesToUser = generateDetApi<
+  Service.AssignRolesToUserParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+>(Config.assignRolesToUser);
+
+export const removeRoleFromUser = generateDetApi<
+  Service.RemoveRoleFromUserParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeRoleFromUser);
+
 /* Info */
 
 export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo>(

@@ -19,6 +19,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	k8sV1 "k8s.io/api/core/v1"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -273,6 +275,25 @@ func (a *apiServer) LaunchTensorboard(
 			CPU:  expConf.Environment().Image().CPU(),
 			CUDA: expConf.Environment().Image().CUDA(),
 			ROCM: expConf.Environment().Image().ROCM(),
+		}
+
+		// Inherit ImagePullSecrets too, if we inherit the image.
+		presentPod := spec.Config.Environment.PodSpec
+		experimentPod := expConf.Environment().PodSpec()
+		if experimentPod != nil && len(experimentPod.Spec.ImagePullSecrets) > 0 {
+			if presentPod != nil {
+				// Update the k8sV1.Pod with the experiment's pod's ImagePullSecrets.
+				presentPod.Spec.ImagePullSecrets = append(
+					presentPod.Spec.ImagePullSecrets, experimentPod.Spec.ImagePullSecrets...,
+				)
+			} else {
+				// Construct a new k8sV1.Pod with just ImagePullSecrets set.
+				spec.Config.Environment.PodSpec = &k8sV1.Pod{
+					Spec: k8sV1.PodSpec{
+						ImagePullSecrets: experimentPod.Spec.ImagePullSecrets,
+					},
+				}
+			}
 		}
 	}
 	// Prefer RegistryAuth already present over the one from inferred from the experiment.
