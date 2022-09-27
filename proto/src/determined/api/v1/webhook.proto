@@ -10,12 +10,32 @@ import "determined/api/v1/pagination.proto";
 import "determined/template/v1/template.proto";
 import "determined/webhook/v1/webhook.proto";
 
+// Request for creating a webhook
+message PostWebhookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "url" ] }
+  };
+
+  // The url of the webhook.
+  string url = 1;
+}
+
+// Response to PostWebhookRequest.
+message PostWebhookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "webhook" ] }
+  };
+
+  // The webhook created.
+  determined.webhook.v1.Webhook webhook = 1;
+}
 
 // Get a single webhook.
 message GetWebhookRequest {
   // The id of the webhook.
   int32 webhook_id = 1;
 }
+
 // Response to GetWebhookRequest.
 message GetWebhookResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
