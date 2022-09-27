@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import logging
 import json
 import os
 import pathlib
@@ -13,6 +14,15 @@ from typing import Any, Dict, List, Optional, cast
 from determined.common import api, constants, storage
 from determined.common.api import bindings
 from determined.common.storage import shared
+
+
+class DownloadMode(enum.Enum):
+    DIRECT = "direct"
+    MASTER = "master"
+    AUTO = "auto"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class ModelFramework(enum.Enum):
@@ -116,7 +126,7 @@ class Checkpoint:
             "checkpoint storage configuration.".format(self.uuid, potential_paths)
         )
 
-    def download(self, path: Optional[str] = None, via_master: bool = False) -> str:
+    def download(self, path: Optional[str] = None, mode: DownloadMode = DownloadMode.AUTO) -> str:
         """
         Download checkpoint to local storage.
 
@@ -127,12 +137,11 @@ class Checkpoint:
           - :func:`determined.estimator.load_estimator_from_checkpoint_path`
 
         Arguments:
-            via_master (bool): If true, checkpoints are downloaded through the master,
-                otherwise they are downloaded directly from checkpoint storage.
             path (string, optional): Top level directory to place the
                 checkpoint under. If this parameter is not set, the checkpoint will
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
+            mode (DownloadMode): Select how a checkpoint is downloaded.
         """
         if path is not None:
             local_ckpt_dir = pathlib.Path(path)
@@ -153,21 +162,21 @@ class Checkpoint:
                 raise NotImplementedError("Non-training checkpoints cannot be downloaded")
 
             checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
-            try:
-                if via_master:
-                    self._download_via_master(self._session, self.uuid, local_ckpt_dir)
-                else:
-                    self._download_direct(checkpoint_storage, local_ckpt_dir)
+            if mode == DownloadMode.DIRECT:
+                self._download_direct(checkpoint_storage, local_ckpt_dir)
 
-            except storage.NoCloudAccess:
-                # Failing back to downloading via the master if due to NoCloudAccess.
-                # Only supporting S3 currently.
-                if checkpoint_storage["type"] != "s3":
-                    raise
+            elif mode == DownloadMode.MASTER:
+                self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+
+            elif mode == DownloadMode.AUTO:
                 try:
+                    self._download_direct(checkpoint_storage, local_ckpt_dir)
+                except storage.NoCloudAccess:
+                    logging.info("Unable to download directly, proxying download through master")
                     self._download_via_master(self._session, self.uuid, local_ckpt_dir)
-                except Exception as e:
-                    raise Exception("Fallback checkpoint download also failed") from e
+
+            else:
+                raise ValueError(f"Unknown download mode {mode}")
 
         # As of v0.18.0, we write metadata.json once at upload time.  Checkpoints uploaded prior to
         # 0.18.0 will not have a metadata.json present.  Unfortunately, checkpoints earlier than
