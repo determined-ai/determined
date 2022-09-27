@@ -165,9 +165,13 @@ class DetSDTextualInversionTrainer:
         self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
 
         self.steps_completed = 0
-        self.loss_history = []
-        self.last_mean_loss = None
         self.embedding_reg_loss = None
+        self.metrics_history = {"noise_pred_mse_loss": []}
+        if self.embedding_reg_weight:
+            self.metrics_history["embedding_reg_loss"] = []
+        if self.latent_reg_weight:
+            self.metrics_history["latent_reg_loss"] = []
+        self.last_mean_loss = None
 
         self.effective_global_batch_size = (
             self.gradient_accumulation_steps
@@ -254,7 +258,8 @@ class DetSDTextualInversionTrainer:
                         if took_sgd_step:
                             self.steps_completed += 1
                             self.logger.info(f"Step {self.steps_completed} completed")
-                            self.embedding_reg_loss = None
+                            if self.embedding_reg_loss is not None:
+                                self.embedding_reg_loss = None
 
                             is_end_of_training = self.steps_completed == op.length
                             time_to_report = self.steps_completed % self.metric_report_freq == 0
@@ -309,8 +314,9 @@ class DetSDTextualInversionTrainer:
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
-        mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
-        print(f"mse_loss: {mse_loss.item()}")
+        noise_pred_mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
+        print(f"noise_pred_mse_loss: {noise_pred_mse_loss.item()}")
+        self.metrics_history["noise_pred_mse_loss"].append(noise_pred_mse_loss.item())
 
         # Add a latent-space regularization penalty following the ideas in
         # https://github.com/rinongal/textual_inversion/issues/49
@@ -328,17 +334,15 @@ class DetSDTextualInversionTrainer:
             latent_reg_loss = self.latent_reg_weight * F.mse_loss(
                 dummy_text_noise_pred, initializer_text_noise_pred
             )
+            print("latent_reg_loss", latent_reg_loss.item())
+            self.metrics_history["latent_reg_loss"].append(latent_reg_loss.item())
 
-        mse_and_latent_reg_loss = mse_loss + latent_reg_loss
+        mse_and_latent_reg_loss = noise_pred_mse_loss + latent_reg_loss
         self.accelerator.backward(mse_and_latent_reg_loss)
 
-        # Include a embedding_reg_loss which penalizes the new embeddings for being much larger or smaller
-        # than the original embedding vectors.  Without such a loss, the new vectors are typically
-        # driven to be very large and consequently dominate the art they are used to produce.
-
-        # It is more memory efficient to perform this computation as a separate forward and backward
-        # pass, rather than combining it with the mse_loss computation above.  We also only need to
-        # perform this computation once per actual optimizer step, rather than once per batch:
+        # We add a regularization loss which penalizes the new embeddings for straying far from
+        # their initialization point. We only need to perform this computation once per actual
+        # optimizer step, rather than once per batch.
         if not self.embedding_reg_weight:
             self.embedding_reg_loss = 0.0
         elif self.embedding_reg_loss is None:
@@ -351,7 +355,7 @@ class DetSDTextualInversionTrainer:
             self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).mean(
                 dim=-1
             ).sum(dim=0)
-
+            self.metrics_history["embedding_reg_loss"].append(self.embedding_reg_loss.item())
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
             accumulation_scaled_embedding_reg_loss = (
@@ -362,7 +366,6 @@ class DetSDTextualInversionTrainer:
 
         # Add the total loss to the loss history for metric tracking.
         loss = (mse_and_latent_reg_loss + self.embedding_reg_loss).detach()
-        self.loss_history.append(loss)
 
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -463,9 +466,9 @@ class DetSDTextualInversionTrainer:
         )
 
         # Update the embedding layer.
-        old_embedding = self.text_encoder.text_model.embeddings.token_embedding
+        original_embedding = self.text_encoder.text_model.embeddings.token_embedding
         self.text_encoder.text_model.embeddings.token_embedding = layers.ExtendedEmbedding(
-            old_embedding=old_embedding,
+            original_embedding=original_embedding,
             new_embedding_weights=copied_embedding_weights,
         )
         print(torch.cuda.memory_allocated(device=self.accelerator.device))
@@ -572,7 +575,7 @@ class DetSDTextualInversionTrainer:
                         assert len(dummy_ids) == len(
                             learned_embeddings
                         ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'
-                        idx_offset = token_embedding_layer.old_embedding.weight.shape[0]
+                        idx_offset = token_embedding_layer.original_embedding.weight.shape[0]
                         new_embedding_layer = token_embedding_layer.new_embedding
                         for idx, tensor in zip(
                             dummy_ids,
@@ -662,19 +665,27 @@ class DetSDTextualInversionTrainer:
         core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
-        """Report training metrics to the Determined master."""
+        """Report training metrics to the Determined master after reducing across workers."""
         self.accelerator.wait_for_everyone()
-        local_mean_loss = torch.tensor(self.loss_history, device=self.accelerator.device).mean()
-        # reduction = 'mean' seems to return the sum rather than the mean:
-        self.last_mean_loss = (
-            self.accelerator.reduce(local_mean_loss, reduction="sum").item()
+        mean_metrics = {
+            metric_name: torch.tensor(metric_values, device=self.accelerator.device).mean()
+            for metric_name, metric_values in self.metrics_history.items()
+        }
+        # reduction='mean' seems to return the sum rather than the mean:
+        reduced_mean_metrics = {
+            metric_name: self.accelerator.reduce(mean_metric_value, reduction="sum").item()
             / self.accelerator.num_processes
-        )
-        self.loss_history = []
+            for metric_name, mean_metric_value in mean_metrics.items()
+        }
+        loss = sum(value for value in reduced_mean_metrics.values())
+        reduced_mean_metrics["loss"] = loss
+        self.last_mean_loss = loss
+        # Reset the local metrics history
+        self.metrics_history = {metric_name: [] for metric_name in self.metrics_history}
         if self.accelerator.is_main_process:
             core_context.train.report_training_metrics(
                 steps_completed=self.steps_completed,
-                metrics={"loss": self.last_mean_loss},
+                metrics=reduced_mean_metrics,
             )
 
     def _get_token_embedding_layer(self) -> nn.Module:
