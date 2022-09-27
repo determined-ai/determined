@@ -345,3 +345,86 @@ func (a *apiServer) UnarchiveProject(
 	}
 	return &apiv1.UnarchiveProjectResponse{}, nil
 }
+
+func (a *apiServer) GetProjectGroups(
+	ctx context.Context, req *apiv1.GetProjectGroupsRequest) (*apiv1.GetProjectGroupsResponse,
+	error,
+) {
+	resp := &apiv1.GetProjectGroupsResponse{}
+	var groups []projectv1.ProjectExperimentGroup
+	err := a.m.db.Query("get_project_groups", &groups, req.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *apiServer) GetProjectGroupByID(id int32) (*projectv1.ProjectExperimentGroup, error) {
+	notFoundErr := status.Errorf(codes.NotFound, "project group (%d) not found", id)
+	g := &projectv1.ProjectExperimentGroup{}
+	if err := a.m.db.QueryProto("get_project_group", g, id); errors.Is(err, db.ErrNotFound) {
+		return nil, notFoundErr
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "error fetching project group (%d) from database", id)
+	}
+
+	return g, nil
+}
+
+func (a *apiServer) PostProjectGroup(
+	ctx context.Context, req *apiv1.PostProjectGroupRequest) (*apiv1.PostProjectGroupResponse,
+	error,
+) {
+	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+	if currProject.Archived {
+		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+			currProject.Id)
+	}
+
+	var g *projectv1.ProjectExperimentGroup
+	err = a.m.db.QueryProto("insert_project_group", g, req.ProjectId, req.Name)
+
+	return &apiv1.PostProjectGroupResponse{Group: g},
+		errors.Wrapf(err, "error creating project group %s in database", req.Name)
+}
+
+func (a *apiServer) PatchProjectGroup(
+	ctx context.Context, req *apiv1.PatchProjectGroupRequest,
+) (*apiv1.PatchProjectGroupResponse, error) {
+	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+	if currProject.Archived {
+		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+			currProject.Id)
+	}
+
+	currProjectGroup, err := a.GetProjectGroupByID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	madeChanges := false
+	if req.Group.Name != nil && req.Group.Name.Value != currProjectGroup.Name {
+		log.Infof("project group (%d) name changing from \"%s\" to \"%s\"",
+			currProjectGroup.Id, currProjectGroup.Name, req.Group.Name.Value)
+		madeChanges = true
+		currProjectGroup.Name = req.Group.Name.Value
+	}
+
+	if !madeChanges {
+		return &apiv1.PatchProjectGroupResponse{Group: currProjectGroup}, nil
+	}
+
+	finalProjectGroup := &projectv1.ProjectExperimentGroup{}
+	err = a.m.db.QueryProto("update_project_group",
+		finalProjectGroup, currProjectGroup.Id, currProjectGroup.Name)
+
+	return &apiv1.PatchProjectGroupResponse{Group: finalProjectGroup},
+		errors.Wrapf(err, "error updating project group (%d) in database", currProjectGroup.Id)
+}

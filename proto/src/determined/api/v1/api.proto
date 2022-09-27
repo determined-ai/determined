@@ -1742,6 +1742,35 @@ service Determined {
       tags: "Projects"
     };
   }
+  // Get experiment groups within a project.
+  rpc GetProjectGroups(GetProjectGroupsRequest) returns (GetProjectGroupsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{project_id}/groups"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Create an experiment group within a project.
+  rpc PostProjectGroup(PostProjectGroupRequest) returns (PostProjectGroupResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/groups"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Update an experiment group within a project.
+  rpc PatchProjectGroup(PatchProjectGroupRequest) returns (PatchProjectGroupResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/projects/{project_id}/groups/{id}"
+      body: "group"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
   // Move a project into a workspace.
   rpc MoveProject(MoveProjectRequest) returns (MoveProjectResponse) {
     option (google.api.http) = {

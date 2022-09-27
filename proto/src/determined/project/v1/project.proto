@@ -106,3 +106,9 @@ message ProjectExperimentGroup {
   // The id of the associated project.
   int32 project_id = 3;
 }
+
+// PatchProjectExperimentGroup is a partial update to a project group with all optional fields.
+message PatchProjectExperimentGroup {
+  // The new name for the project.
+  google.protobuf.StringValue name = 1;
+}

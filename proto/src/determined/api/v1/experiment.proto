@@ -107,6 +107,8 @@ message GetExperimentsRequest {
   int32 project_id = 12;
   // filtering by experiment ids
   determined.common.v1.Int32FieldFilter experiment_id_filter = 13;
+  // Limit experiments to those that match the provided groups.
+  repeated string groups = 14;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {

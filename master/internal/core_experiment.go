@@ -550,7 +550,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 				g := projectv1.ProjectExperimentGroup{}
 				err = m.db.Query("insert_project_group", &g, projectID, config.Group())
 				*groupID = int(g.Id)
-			} else if err != nil {
+			} 
+			if err != nil {
 				return nil, false, nil, errors.Wrapf(err, errors.Errorf("unable to find or create group").Error())
 			}
 		}

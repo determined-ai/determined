@@ -174,3 +174,68 @@ message UnarchiveProjectRequest {
 
 // Response to UnarchiveProjectRequest.
 message UnarchiveProjectResponse {}
+
+// Get experiment groups within a project.
+message GetProjectGroupsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the project.
+  int32 project_id = 1;
+}
+
+// Response to ProjectGroupsRequest.
+message GetProjectGroupsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "groups" ] }
+  };
+  // The list of returned groups.
+  repeated determined.project.v1.ProjectExperimentGroup groups = 1;
+}
+
+// Request for creating a project group.
+message PostProjectGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "name" ] }
+  };
+
+  // The id of the project.
+  int32 project_id = 1;
+  // The name of the group.
+  string name = 2;
+}
+
+// Response to PostProjectGroupRequest.
+message PostProjectGroupResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group" ] }
+  };
+
+  // The project group created.
+  determined.project.v1.ProjectExperimentGroup group = 1;
+}
+
+// Request for updating a project group.
+message PatchProjectGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "id" ] }
+  };
+
+  // The id of the project.
+  int32 project_id = 1;
+  // The id of the group.
+  int32 id = 2;
+  // The desired group fields and values to update.
+  determined.project.v1.PatchProjectExperimentGroup group = 3;
+}
+
+// Response to PatchProjectGroupRequest.
+message PatchProjectGroupResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group" ] }
+  };
+
+  // The project group created.
+  determined.project.v1.ProjectExperimentGroup group = 1;
+}
