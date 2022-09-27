@@ -369,7 +369,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       const isDefault = isEqual(config.defaultValue, jsonValue);
 
       // Store or clear setting if `storageKey` is available.
-      if (config.storageKey && isValid) {
+      if (config.storageKey && isValid && options?.store !== false) {
         const currentSetting = storage.get(config.storageKey);
 
         // avoiding re-setting it with the same value from last updates at setting state
@@ -382,7 +382,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         }
       }
     });
-  }, [configMap, storage, userSettings]);
+  }, [configMap, storage, userSettings, options?.store]);
 
   useEffect(() => {
     decodeUserSettings();
