@@ -418,8 +418,12 @@ const canGetPermissions = ({
     !!user &&
     (permitted.has(V1PermissionType.OSSUSER)
       ? user.isAdmin
+<<<<<<< HEAD
       : permitted.has(V1PermissionType.ADMINISTRATEUSER))
 >>>>>>> e69ab586d (fmt experiment roles)
+=======
+      : permitted.has(V1PermissionType.ASSIGNROLES))
+>>>>>>> 59f28358a (rbac said viewing permissions is based on ASSIGNROLES)
   );
 };
 
