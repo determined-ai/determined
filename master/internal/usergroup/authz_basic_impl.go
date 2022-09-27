@@ -34,3 +34,7 @@ func (a *UserGroupAuthZBasic) CanUpdateGroup(curUser model.User) error {
 func (a *UserGroupAuthZBasic) CanDeleteGroup(curUser model.User) error {
 	return nil
 }
+
+func init() {
+	AuthZProvider.Register("basic", &UserGroupAuthZBasic{})
+}
