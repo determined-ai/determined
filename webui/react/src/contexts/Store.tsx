@@ -174,25 +174,8 @@ const initState: State = {
   pool: {},
   resourcePools: [],
   ui: { ...initUI, omnibar: { isShowing: false } },
-  userAssignments: [
-    {
-      cluster: true,
-      name: 'OSS User',
-    },
-  ],
-  userRoles: [
-    {
-      id: -1,
-      name: 'OSS User',
-      permissions: [
-        {
-          id: -1,
-          isGlobal: true,
-          name: 'oss_user',
-        },
-      ],
-    },
-  ],
+  userAssignments: [],
+  userRoles: [],
   users: [],
   userSettings: [],
 };
