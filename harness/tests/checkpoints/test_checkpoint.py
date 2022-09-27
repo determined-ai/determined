@@ -1,7 +1,6 @@
 import io
 import tarfile
 import tempfile
-import zipfile
 from pathlib import Path
 
 import responses
@@ -63,24 +62,9 @@ def get_response_raw_tgz(checkpoint_path: Path) -> bytes:
     return buf.getbuffer()
 
 
-def get_response_raw_zip(checkpoint_path: Path) -> bytes:
-    d = tempfile.mkdtemp()
-    tmpzip = Path(f"{d}/tmp.zip")
-
-    with zipfile.ZipFile(tmpzip, "w") as zf:
-        for k in mock_content:
-            zf.write(checkpoint_path / k, arcname=k)
-
-    with open(tmpzip, "rb") as f:
-        buf = f.read()
-
-    return buf
-
-
 @responses.activate
 def test_checkpoint_download_via_master(tmp_path: Path) -> None:
     uuid_tgz = "dummy-uuid-123-tgz"
-    uuid_zip = "dummy-uuid-123-zip"
     checkpoint_path = tmp_path / "mock-checkpoint"
 
     setup_mock_checkpoint(checkpoint_path)
@@ -93,30 +77,11 @@ def test_checkpoint_download_via_master(tmp_path: Path) -> None:
         status=200,
         match=[matchers.header_matcher({"Accept": "application/gzip"})],
     )
-    responses.get(
-        f"https://dummy-master.none:443/checkpoints/{uuid_zip}",
-        body=get_response_raw_zip(checkpoint_path),
-        stream=True,
-        status=200,
-        match=[matchers.header_matcher({"Accept": "application/zip"})],
-    )
 
-    # Posix
     checkpoint_path = tmp_path / uuid_tgz
     Checkpoint._download_via_master(
         api.Session(master="https://dummy-master.none", user=None, auth=None, cert=None),
         uuid_tgz,
         checkpoint_path,
-        os_name="posix",
-    )
-    verify_test_checkpoint(checkpoint_path)
-
-    # Windows
-    checkpoint_path = tmp_path / uuid_zip
-    Checkpoint._download_via_master(
-        api.Session(master="https://dummy-master.none", user=None, auth=None, cert=None),
-        uuid_zip,
-        checkpoint_path,
-        os_name="nt",
     )
     verify_test_checkpoint(checkpoint_path)

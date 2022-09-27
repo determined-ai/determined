@@ -216,47 +216,24 @@ class Checkpoint:
             manager.download(self.uuid, str(local_ckpt_dir))
 
     @staticmethod
-    def _download_via_master(
-        sess: api.Session, uuid: str, local_ckpt_dir: pathlib.Path, os_name: str = os.name
-    ) -> None:
+    def _download_via_master(sess: api.Session, uuid: str, local_ckpt_dir: pathlib.Path) -> None:
         """Downloads a checkpoint through the master.
         Arguments:
             sess (api.Session): a session for the download
             uuid (string): the uuid of the checkpoint to be downloaded
             local_ckpt_dir (Path-like): the local directory where the download is downloaded
-            os_name (string, optional): the name of the current OS -- this is for testing only
         """
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-        if os_name == "nt":
-            ftype = "zip"
-        else:
-            ftype = "gzip"
-        mime_type = f"application/{ftype}"
+        mime_type = f"application/gzip"
 
         resp = sess.get(f"/checkpoints/{uuid}", headers={"Accept": mime_type}, stream=True)
         if not resp.ok:
             raise RuntimeError(
                 "unable to download checkpoint from master:", resp.status_code, resp.reason
             )
-
-        if ftype == "zip":
-            # The zip format does not allow streamed decompression since the central directory
-            # is at the end of the file. Hence, we download the zip file before decompression.
-            tmpfd, tmpfpath = tempfile.mkstemp(suffix=".zip", dir=local_ckpt_dir)
-            try:
-                # Download the zip file.
-                with open(tmpfd, "wb") as tmpf:
-                    shutil.copyfileobj(resp.raw, tmpf)
-                # Decompress the zip file.
-                with zipfile.ZipFile(tmpfpath) as zf:
-                    zf.extractall(local_ckpt_dir)
-            finally:
-                # Remove the zip file after decompression.
-                pathlib.Path(tmpfpath).unlink()
-        else:
-            # gunzip and untar. tarfile.open can detect the compression algorithm
-            with tarfile.open(fileobj=resp.raw) as tf:
-                tf.extractall(local_ckpt_dir)
+        # gunzip and untar. tarfile.open can detect the compression algorithm
+        with tarfile.open(fileobj=resp.raw) as tf:
+            tf.extractall(local_ckpt_dir)
 
     def write_metadata_file(self, path: str) -> None:
         """
