@@ -28,6 +28,7 @@ interface ProjectPermissionsArgs {
   workspace?: PermissionWorkspace;
 }
 
+<<<<<<< HEAD
 interface RbacOptsProps {
   rbacAllPermission: boolean;
   rbacEnabled: boolean;
@@ -46,6 +47,8 @@ interface WorkspacePermissionsArgs {
   workspace?: PermissionWorkspace;
 }
 
+=======
+>>>>>>> e69ab586d (fmt experiment roles)
 interface MovePermissionsArgs {
   destination?: PermissionWorkspace;
 }
@@ -263,7 +266,14 @@ const canCreateExperiment = (
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+<<<<<<< HEAD
   return !!workspace && (!rbacEnabled || rbacAllPermission || permitted.has('create_experiment'));
+=======
+  return (
+    !!workspace &&
+    (permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.CREATEEXPERIMENT))
+  );
+>>>>>>> e69ab586d (fmt experiment roles)
 };
 
 const canDeleteExperiment = (
@@ -295,7 +305,12 @@ const canModifyExperiment = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
+<<<<<<< HEAD
     rbacAllPermission || (!!workspace && (!rbacEnabled || permitted.has('update_experiments')))
+=======
+    !!workspace &&
+    (permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.UPDATEEXPERIMENT))
+>>>>>>> e69ab586d (fmt experiment roles)
   );
 };
 
@@ -306,7 +321,12 @@ const canModifyExperimentMetadata = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
+<<<<<<< HEAD
     (!rbacEnabled || rbacAllPermission || permitted.has('update_experiment_metadata'))
+=======
+    (permitted.has(V1PermissionType.OSSUSER) ||
+      permitted.has(V1PermissionType.UPDATEEXPERIMENTMETADATA))
+>>>>>>> e69ab586d (fmt experiment roles)
   );
 };
 
@@ -372,7 +392,12 @@ const canViewExperimentArtifacts = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
+<<<<<<< HEAD
     (!rbacEnabled || rbacReadPermission || permitted.has('view_experiment_artifacts'))
+=======
+    (permitted.has(V1PermissionType.OSSUSER) ||
+      permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS))
+>>>>>>> e69ab586d (fmt experiment roles)
   );
 };
 
@@ -386,8 +411,15 @@ const canGetPermissions = ({
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
+<<<<<<< HEAD
     rbacAllPermission ||
     (!!user && (rbacEnabled ? permitted.has('view_permissions') : user.isAdmin))
+=======
+    !!user &&
+    (permitted.has(V1PermissionType.OSSUSER)
+      ? user.isAdmin
+      : permitted.has(V1PermissionType.ADMINISTRATEUSER))
+>>>>>>> e69ab586d (fmt experiment roles)
   );
 };
 
@@ -645,10 +677,18 @@ const canUpdateRoles = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
+<<<<<<< HEAD
     rbacAllPermission ||
     (!!workspace &&
       !!user &&
       (rbacEnabled ? permitted.has('update_roles') : user.isAdmin || user.id === workspace.userId))
+=======
+    !!workspace &&
+    !!user &&
+    (permitted.has(V1PermissionType.OSSUSER)
+      ? user.isAdmin || user.id === workspace.userId
+      : permitted.has(V1PermissionType.UPDATEROLES))
+>>>>>>> e69ab586d (fmt experiment roles)
   );
 };
 
@@ -658,10 +698,18 @@ const canAssignRoles = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
+<<<<<<< HEAD
     rbacAllPermission ||
     (!!workspace &&
       !!user &&
       (rbacEnabled ? permitted.has('assign_roles') : user.isAdmin || user.id === workspace.userId))
+=======
+    !!workspace &&
+    !!user &&
+    (permitted.has(V1PermissionType.OSSUSER)
+      ? user.isAdmin || user.id === workspace.userId
+      : permitted.has(V1PermissionType.ASSIGNROLES))
+>>>>>>> e69ab586d (fmt experiment roles)
   );
 };
 
