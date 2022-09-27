@@ -31,7 +31,7 @@ mock_content = {
 }
 
 
-def setup_mock_checkpoint(directory: Path) -> str:
+def setup_mock_checkpoint(directory: Path) -> None:
     for k, v in mock_content.items():
         fpath = directory / k
         if len(v) == 0:
@@ -43,7 +43,7 @@ def setup_mock_checkpoint(directory: Path) -> str:
                 f.write(v)
 
 
-def verify_test_checkpoint(directory: Path):
+def verify_test_checkpoint(directory: Path) -> None:
     for k, v in mock_content.items():
         fpath = directory / k
         if len(v) == 0:
@@ -54,7 +54,7 @@ def verify_test_checkpoint(directory: Path):
                 assert f.read() == v
 
 
-def get_response_raw_tgz(checkpoint_path: Path):
+def get_response_raw_tgz(checkpoint_path: Path) -> bytes:
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w|gz") as tf:
         for k in mock_content:
@@ -63,7 +63,7 @@ def get_response_raw_tgz(checkpoint_path: Path):
     return buf.getbuffer()
 
 
-def get_response_raw_zip(checkpoint_path: Path):
+def get_response_raw_zip(checkpoint_path: Path) -> bytes:
     d = tempfile.mkdtemp()
     tmpzip = Path(f"{d}/tmp.zip")
 

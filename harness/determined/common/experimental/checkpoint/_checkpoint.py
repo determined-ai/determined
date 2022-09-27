@@ -6,7 +6,6 @@ import pathlib
 import shutil
 import tarfile
 import tempfile
-import traceback
 import warnings
 import zipfile
 from typing import Any, Dict, List, Optional, cast
@@ -117,7 +116,7 @@ class Checkpoint:
             "checkpoint storage configuration.".format(self.uuid, potential_paths)
         )
 
-    def download(self, via_master: bool, path: Optional[str] = None) -> str:
+    def download(self, path: Optional[str] = None, via_master: bool = False) -> str:
         """
         Download checkpoint to local storage.
 
@@ -180,23 +179,22 @@ class Checkpoint:
                         ),
                     ):
                         raise AssertionError(
-                            "Downloading from Azure, S3 or GCS requires the experiment to be "
-                            "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
-                                checkpoint_storage["type"]
-                            )
+                            "Downloading from Azure, S3 or GCS requires the experiment "
+                            "to be configured with Azure, S3 or GCS checkpointing"
+                            ", {} found instead".format(checkpoint_storage["type"])
                         )
 
                     manager.download(self.uuid, str(local_ckpt_dir))
 
-            except storage.NoCloudAccess as e:
+            except storage.NoCloudAccess:
                 # Failing back to downloading via the master if due to NoCloudAccess.
                 # Only supporting S3 currently.
                 if checkpoint_storage["type"] != "s3":
                     raise
                 try:
                     self._download_via_master(self._session, self.uuid, local_ckpt_dir)
-                except Exception as exc_inner:
-                    raise Exception("Fallback checkpoint download also failed") from exc_inner
+                except Exception as e:
+                    raise Exception("Fallback checkpoint download also failed") from e
 
         # As of v0.18.0, we write metadata.json once at upload time.  Checkpoints uploaded prior to
         # 0.18.0 will not have a metadata.json present.  Unfortunately, checkpoints earlier than

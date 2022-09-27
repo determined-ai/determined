@@ -123,11 +123,11 @@ class S3StorageManager(storage.CloudStorageManager):
 
         except botocore.exceptions.ClientError as e:
             if e.response["Error"]["Code"] == "AccessDenied":
-                raise storage.NoCloudAccess from e
+                raise storage.NoCloudAccess("Unable to access cloud checkpoint storage") from e
             raise
 
         except botocore.exceptions.NoCredentialsError as e:
-            raise storage.NoCloudAccess from e
+            raise storage.NoCloudAccess("Unable to access cloud checkpoint storage") from e
 
         if not found:
             raise errors.CheckpointNotFound(f"Did not find {prefix} in S3")

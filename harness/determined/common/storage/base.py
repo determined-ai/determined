@@ -7,7 +7,8 @@ from typing import Any, Dict, Iterator, Optional, Union
 
 class NoCloudAccess(Exception):
     """Throw this exception when the operation fails due to denied access or missing credntials.
-    It allows higher level code to catch this exception and fall back to other methods."""
+    It allows higher level code to catch this exception and fall back to other methods.
+    """
 
     pass
 
