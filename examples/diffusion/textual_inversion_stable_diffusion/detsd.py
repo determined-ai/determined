@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 
 import accelerate
-import attrdict
 import determined as det
 import torch
 import torch.nn as nn
@@ -187,7 +186,7 @@ class DetSDTextualInversionTrainer:
             self.learning_rate *= self.effective_global_batch_size
             self.logger.info(f"Using scaled learning rate {self.learning_rate}")
 
-        # The below are instantiated as needed through private methods.
+        # The trivial attrs below are instantiated as needed through private methods.
         self.tokenizer = None
         self.text_encoder = None
         self.vae = None
@@ -198,16 +197,16 @@ class DetSDTextualInversionTrainer:
         self.train_dataloader = None
         self.optimizer = None
         self.train_scheduler = None
-        self.new_embedding_idxs = None
+        self.inference_scheduler_kwargs = None
+        self.pipeline = None
 
         self.concept_to_initializer_tokens_map = {}
         self.concept_to_non_special_initializer_ids_map = {}
         self.concept_to_dummy_tokens_map = {}
         self.concept_to_dummy_ids_map = {}
-        self.dummy_id_to_initializer_id_map = {}
 
         self._build_models()
-        self._add_new_tokens()
+        self._add_new_tokens_and_update_embeddings()
         self._freeze_layers()
         self._build_dataset_and_dataloader()
         self._build_optimizer()
@@ -216,23 +215,22 @@ class DetSDTextualInversionTrainer:
 
         # Pipeline construction is deferred until the _save call, as the pipeline is not required
         # if generate_training_images is False.
-        self.inference_scheduler_kwargs = None
-        self.pipeline = None
 
     @classmethod
     def init_on_cluster(cls) -> "DetSDTextualInversionTrainer":
         """Creates a DetStableDiffusion instance on the cluster, drawing hyperparameters and other
-        needed information from the Determined master."""
+        needed information from the Determined master.  Expects the `hyperparameters` section of the
+        config to be broken into `model`, `data`, `training`, and `inference` subsections."""
         info = det.get_cluster_info()
-        hparams = attrdict.AttrDict(info.trial.hparams)
+        hparams = info.trial.hparams
         latest_checkpoint = info.latest_checkpoint
 
         return cls(
             latest_checkpoint=latest_checkpoint,
-            **hparams.model,
-            **hparams.data,
-            **hparams.trainer,
-            **hparams.inference,
+            **hparams["model"],
+            **hparams["data"],
+            **hparams["training"],
+            **hparams["inference"],
         )
 
     def train_on_cluster(self) -> None:
@@ -253,7 +251,7 @@ class DetSDTextualInversionTrainer:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while self.steps_completed < op.length:
-                    for batch in self.train_dataloader:
+                    for batch_idx, batch in enumerate(self.train_dataloader):
                         # Use the accumulate method for efficient gradient accumulation.
                         with self.accelerator.accumulate(self.text_encoder):
                             self._train_one_batch(batch)
@@ -261,7 +259,9 @@ class DetSDTextualInversionTrainer:
                         took_sgd_step = self.accelerator.sync_gradients
                         if took_sgd_step:
                             self.steps_completed += 1
-                            self.logger.info(f"Step {self.steps_completed} completed")
+                            self.logger.info(
+                                f"Step {self.steps_completed} completed on batch {batch_idx}"
+                            )
                             if self.embedding_reg_loss is not None:
                                 self.embedding_reg_loss = None
 
@@ -272,11 +272,12 @@ class DetSDTextualInversionTrainer:
                             # Report metrics, checkpoint, and preempt as appropriate.
                             if is_end_of_training or time_to_report or time_to_ckpt:
                                 self._report_train_metrics(core_context)
+                                # report_progress for Web UI progress-bar rendering.
+                                op.report_progress(self.steps_completed)
                             if is_end_of_training or time_to_ckpt:
                                 self._save(core_context)
                                 if core_context.preempt.should_preempt():
                                     return
-
                             if is_end_of_training:
                                 break
                 if self.accelerator.is_main_process:
@@ -286,8 +287,7 @@ class DetSDTextualInversionTrainer:
     def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
         """Train on a single batch, returning the loss and updating internal metrics."""
         self.text_encoder.train()
-
-        # Convert images to latent space.
+        # Convert sample images to latent space.
         with torch.no_grad():
             latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
             latents = latent_dist.sample()
@@ -307,11 +307,11 @@ class DetSDTextualInversionTrainer:
                 (self.train_batch_size,),
                 device=self.accelerator.device,
             ).long()
-            # Add noise to the latents according to the noise magnitude at each timestep. This is the
-            # forward diffusion process.
+            # Add noise to the latents according to the noise magnitude at each timestep. This is
+            # the forward diffusion process.
             noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
 
-        # Get the text embedding for the prompt.
+        # Process the text for each batch.
         batch_text = batch["input_text"]
         print("BATCH TEXT", batch_text)
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
@@ -346,17 +346,20 @@ class DetSDTextualInversionTrainer:
         self.accelerator.backward(mse_and_latent_reg_loss)
 
         # We add a regularization loss which penalizes the new embeddings for straying far from
-        # their initialization point. We only need to perform this computation once per actual
-        # optimizer step, rather than once per batch.
+        # their initialization point.  This idea was present in the original textual inversion repo:
+        # https://github.com/rinongal/textual_inversion/blob/3214ca02ded6019c3948e17dd68bf02364b0c2dd/ldm/modules/embedding_manager.py#L159
+        # We only need to perform this computation once per actual optimizer step, rather than once
+        # per batch.
         if not self.embedding_reg_weight:
             self.embedding_reg_loss = 0.0
         elif self.embedding_reg_loss is None:
-            new_token_embeddings = self._get_new_token_embeddings()
-            initializer_token_embeddings = self._get_initializer_token_embeddings()
+            dummy_token_embeddings = self._get_all_concept_embeddings(dummy_or_initializer="dummy")
+            initializer_token_embeddings = self._get_all_concept_embeddings(
+                dummy_or_initializer="initializer"
+            )
 
-            # Compute the squared-distance between the two, averaged over tokens, following
-            # https://github.com/rinongal/textual_inversion/blob/3214ca02ded6019c3948e17dd68bf02364b0c2dd/ldm/modules/embedding_manager.py#L159
-            distance_vectors = new_token_embeddings - initializer_token_embeddings
+            # Compute the squared-distance between the two, averaged over tokens.
+            distance_vectors = dummy_token_embeddings - initializer_token_embeddings
             self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).sum(
                 dim=-1
             ).mean(dim=0)
@@ -369,7 +372,6 @@ class DetSDTextualInversionTrainer:
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
         print(f"embedding_reg_loss: {self.embedding_reg_loss.item()}")
 
-        # Add the total loss to the loss history for metric tracking.
         loss = (mse_and_latent_reg_loss + self.embedding_reg_loss).detach()
 
         self.optimizer.step()
@@ -388,8 +390,6 @@ class DetSDTextualInversionTrainer:
             return_tensors="pt",
         ).input_ids
         encoder_hidden_states = self.text_encoder(tokenized_text).last_hidden_state
-
-        # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
         return noise_pred
 
@@ -418,7 +418,7 @@ class DetSDTextualInversionTrainer:
                 subfolder="unet",
                 use_auth_token=self.use_auth_token,
             )
-        # Modules for StableDiffusionPipeline only required by chief worker.
+        # Modules for StableDiffusionPipeline are only required by the chief.
         if self.accelerator.is_main_process:
             self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
                 pretrained_model_name_or_path="CompVis/stable-diffusion-safety-checker"
@@ -427,9 +427,9 @@ class DetSDTextualInversionTrainer:
                 pretrained_model_name_or_path="openai/clip-vit-base-patch32"
             )
 
-    def _add_new_tokens(self) -> None:
+    def _add_new_tokens_and_update_embeddings(self) -> None:
         """
-        Add new concept tokens to the tokenizer and the corresponding embedding tensors to the
+        Add new concept tokens to the tokenizer and update the corresponding embedding layers in the
         text encoder.
         """
         for concept_token, initializer_tokens in zip(self.concept_tokens, self.initializer_tokens):
@@ -449,22 +449,22 @@ class DetSDTextualInversionTrainer:
             self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
             self.concept_to_dummy_ids_map[concept_token] = dummy_placeholder_ids
             self.logger.info(f"Added {len(dummy_placeholder_ids)} new tokens for {concept_token}.")
-        print("self.concept_to_initializer_tokens_map", self.concept_to_initializer_tokens_map)
-        print("self.concept_to_dummy_tokens_map", self.concept_to_dummy_tokens_map)
+
         # Create the dummy-to-initializer idx mapping and use the sorted values to generate the
         # updated embedding layer.
-        self.dummy_id_to_initializer_id_map = {}
+        dummy_id_to_initializer_id_map = {}
         for concept_token in self.concept_tokens:
             for dummy_id, initializer_id in zip(
                 self.concept_to_dummy_ids_map[concept_token],
                 self.concept_to_non_special_initializer_ids_map[concept_token],
             ):
-                self.dummy_id_to_initializer_id_map[dummy_id] = initializer_id
+                dummy_id_to_initializer_id_map[dummy_id] = initializer_id
         sorted_dummy_initializer_id_list = sorted(
-            [(k, v) for k, v in self.dummy_id_to_initializer_id_map.items()]
+            [(dummy_id, init_id) for dummy_id, init_id in dummy_id_to_initializer_id_map.items()]
         )
         idxs_to_copy = torch.tensor(
-            [v for k, v in sorted_dummy_initializer_id_list], device=self.accelerator.device
+            [init_id for _, init_id in sorted_dummy_initializer_id_list],
+            device=self.accelerator.device,
         )
         token_embedding_layer_weight_data = self._get_token_embedding_layer().weight.data
         copied_embedding_weights = (
@@ -578,18 +578,18 @@ class DetSDTextualInversionTrainer:
                             "learned_embeddings"
                         ]
                         # Sanity check on length.
-                        # TODO: replace with strict=True in zip after upgrade to py >= 3.10
+                        # TODO: replace with strict=True in zip after upgrade to py >= 3.10.
                         assert len(dummy_ids) == len(
                             learned_embeddings
                         ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'
-                        idx_offset = token_embedding_layer.original_embedding.weight.shape[0]
+                        id_offset = token_embedding_layer.original_embedding.weight.shape[0]
                         new_embedding_layer = token_embedding_layer.new_embedding
-                        for idx, tensor in zip(
+                        for dummy_id, tensor in zip(
                             dummy_ids,
                             learned_embeddings,
                         ):
 
-                            new_embedding_layer.weight.data[idx - idx_offset] = tensor
+                            new_embedding_layer.weight.data[dummy_id - id_offset] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
         """Checkpoints the training state and pipeline."""
@@ -702,36 +702,30 @@ class DetSDTextualInversionTrainer:
             token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
         return token_embedding_layer
 
-    def _get_token_embedding_weight_data(self) -> torch.Tensor:
-        """Returns the data tensor from the `weight` parameter of the embedding matrix, accounting
-        for the possible insertion of a .module attr insertion due to the .prepare() call.
+    def _get_all_concept_embeddings(
+        self, dummy_or_initializer: Literal["dummy", "initializer"]
+    ) -> torch.Tensor:
+        """Returns the embedding vectors for all added concepts, either using their initializer
+        representation or their trained dummy representation.
         """
-        token_embedding_layer = self._get_token_embedding_layer()
-        return token_embedding_layer.weight.data
+        concept_replace_fn_dict = {
+            "dummy": self._replace_concepts_with_dummies,
+            "initializer": self._replace_concepts_with_initializers,
+        }
+        assert (
+            dummy_or_initializer in concept_replace_fn_dict
+        ), 'dummy_or_initializer must be "dummy" or "initializer"'
+        concept_replace_fn = concept_replace_fn_dict[dummy_or_initializer]
 
-    def _get_new_token_embeddings(self) -> torch.Tensor:
-        """Returns the tensor of newly-added token embeddings."""
         token_embedding_layer = self._get_token_embedding_layer()
         all_concept_tokens = " ".join(list(self.concept_tokens))
-        all_dummy_tokens = self._replace_concepts_with_dummies(all_concept_tokens)
-        all_dummy_tokens_t = torch.tensor(
-            self.tokenizer.encode(all_dummy_tokens, add_special_tokens=False),
+        all_replaced_concept_tokens = concept_replace_fn(all_concept_tokens)
+        all_replaced_concept_tokens_t = torch.tensor(
+            self.tokenizer.encode(all_replaced_concept_tokens, add_special_tokens=False),
             device=self.accelerator.device,
         )
-        new_token_embeddings = token_embedding_layer(all_dummy_tokens_t)
-        return new_token_embeddings
-
-    def _get_initializer_token_embeddings(self) -> torch.Tensor:
-        """Returns the tensor of initializer token embeddings."""
-        token_embedding_layer = self._get_token_embedding_layer()
-        all_concept_tokens = " ".join(list(self.concept_tokens))
-        all_initializer_tokens = self._replace_concepts_with_initializers(all_concept_tokens)
-        all_initializer_tokens_t = torch.tensor(
-            self.tokenizer.encode(all_initializer_tokens, add_special_tokens=False),
-            device=self.accelerator.device,
-        )
-        initializer_token_embeddings = token_embedding_layer(all_initializer_tokens_t)
-        return initializer_token_embeddings
+        all_concept_embeddings = token_embedding_layer(all_replaced_concept_tokens_t)
+        return all_concept_embeddings
 
 
 class DetSDTextualInversionPipeline:
@@ -833,6 +827,7 @@ class DetSDTextualInversionPipeline:
                     tokenizer=self.tokenizer,
                 )
 
+                self.text_encoder.resize_token_embeddings(len(self.tokenizer))
                 token_embeddings = self.text_encoder.get_input_embeddings().weight.data
                 # Sanity check on length.
                 # TODO: replace with strict=True in zip after upgrade to py >= 3.10
