@@ -3,7 +3,6 @@ CREATE TABLE webhooks (
   url TEXT NOT NULL
 )
 
-
 CREATE TYPE public.trigger_type as ENUM (
   'EXPERIMENT_STATE_CHANGE',
   'METRIC_THRESHOLD_EXCEEDED'
@@ -16,10 +15,9 @@ CREATE TABLE webhook_triggers (
   webhook_id integer NOT NULL REFERENCES webhooks(id)
 )
 
-
 CREATE TABLE webhook_events (
   id SERIAL PRIMARY KEY,
   trigger_id integer NOT NULL REFERENCES webhook_triggers(id),
   attempts integer DEFAULT 0,
-  payload jsonb
+  payload jsonb NOT NULL
 )
