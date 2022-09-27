@@ -260,7 +260,7 @@ const ProjectDetails: React.FC = () => {
     await Promise.allSettled([fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels()]);
   }, [fetchProject, fetchExperiments, fetchUsers, fetchLabels]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   const experimentTags = useExperimentTags(fetchAll);
 
@@ -892,9 +892,19 @@ const ProjectDetails: React.FC = () => {
     settings.user,
   ]);
 
+  // cleanup
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    return () => {
+      canceler.abort();
+      stopPolling();
+
+      setProject(undefined);
+      setExperiments([]);
+      setLabels([]);
+      setIsLoading(true);
+      setTotal(0);
+    };
+  }, [canceler, stopPolling]);
 
   const ContextMenu = useCallback(
     ({ record, onVisibleChange, children }) => {

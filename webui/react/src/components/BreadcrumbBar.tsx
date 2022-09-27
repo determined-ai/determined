@@ -97,7 +97,7 @@ const BreadcrumbBar: React.FC<Props> = ({
     await Promise.allSettled([fetchProject(), fetchWorkspace(), fetchExperiment(), fetchTrial()]);
   }, [fetchProject, fetchWorkspace, fetchExperiment, fetchTrial]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     fetchWorkspace();
@@ -130,6 +130,18 @@ const BreadcrumbBar: React.FC<Props> = ({
   useEffect(() => {
     setWorkspace(workspaceIn);
   }, [workspaceIn]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setWorkspace(undefined);
+      setProject(undefined);
+      setExperiment(undefined);
+      setTrial(undefined);
+    };
+  }, [stopPolling]);
 
   return (
     <div className={css.base}>
