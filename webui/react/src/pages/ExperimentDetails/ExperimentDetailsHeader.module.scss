@@ -13,6 +13,14 @@
       background-color: transparent;
       color: #fff;
       opacity: 0.75;
+
+      &[disabled],
+      &[disabled]:active,
+      &[disabled]:focus,
+      &[disabled]:hover {
+        background-color: transparent !important;
+        border-color: transparent !important;
+      }
     }
     .buttonPause,
     .buttonPlay {

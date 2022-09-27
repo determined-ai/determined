@@ -3,6 +3,9 @@ package rbac
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -26,4 +29,7 @@ type RBACAPIServer interface {
 		*apiv1.AssignRolesResponse, error)
 	RemoveAssignments(context.Context, *apiv1.RemoveAssignmentsRequest) (
 		*apiv1.RemoveAssignmentsResponse, error)
+	AssignWorkspaceAdminToUserTx(
+		ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
+	) error
 }

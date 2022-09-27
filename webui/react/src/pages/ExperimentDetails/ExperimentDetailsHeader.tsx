@@ -90,10 +90,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [fetchExperimentDetails]);
 
-  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
-
+  const expPermissions = usePermissions();
   const isMovable =
-    canActionExperiment(Action.Move, experiment) && canMoveExperiment({ experiment });
+    canActionExperiment(Action.Move, experiment) &&
+    expPermissions.canMoveExperiment({ experiment });
+  const canPausePlay = expPermissions.canModifyExperiment({
+    workspace: { id: experiment.workspaceId },
+  });
 
   const { contextHolder: modalExperimentStopContextHolder, modalOpen: openModalStop } =
     useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
@@ -119,7 +122,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }),
     [experiment.state],
   );
-  const disabled = experiment?.parentArchived || experiment?.archived;
+  const disabled =
+    experiment?.parentArchived ||
+    experiment?.archived ||
+    !expPermissions.canModifyExperimentMetadata({ workspace: { id: experiment?.workspaceId } });
 
   const handlePauseClick = useCallback(async () => {
     setIsChangingState(true);
@@ -256,7 +262,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: handleContinueTrialClick,
       },
       [Action.Delete]: {
-        icon: <Icon name="fork" size="small" />,
         isLoading: isRunningDelete,
         key: 'delete',
         label: 'Delete',
@@ -318,17 +323,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
 
-    const availableActions = getActionsForExperiment(experiment, headerActions).filter((action) =>
-      [Action.Delete, Action.Move].includes(action)
-        ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-          (action === Action.Move && canMoveExperiment({ experiment }))
-        : true,
-    );
+    const availableActions = getActionsForExperiment(experiment, headerActions, expPermissions);
 
     return availableActions.map((action) => options[action]) as Option[];
   }, [
-    canDeleteExperiment,
-    canMoveExperiment,
+    expPermissions,
     isRunningArchive,
     handleContinueTrialClick,
     isRunningDelete,
@@ -409,6 +408,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isPausable && (
                   <Button
                     className={css.buttonPause}
+                    disabled={!canPausePlay}
                     icon={<Icon name="pause" size="large" />}
                     shape="circle"
                     onClick={handlePauseClick}
@@ -417,6 +417,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isPaused && (
                   <Button
                     className={css.buttonPlay}
+                    disabled={!canPausePlay}
                     icon={<Icon name="play" size="large" />}
                     shape="circle"
                     onClick={handlePlayClick}
@@ -425,6 +426,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {!isTerminated && (
                   <Button
                     className={css.buttonStop}
+                    disabled={!canPausePlay}
                     icon={<Icon name="stop" size="large" />}
                     shape="circle"
                     onClick={handleStopClick}

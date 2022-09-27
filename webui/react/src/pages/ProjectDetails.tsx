@@ -45,7 +45,6 @@ import useModalExperimentMove, {
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -70,6 +69,7 @@ import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
@@ -96,7 +96,6 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
-import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -139,8 +138,7 @@ const ProjectDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
-    usePermissions();
+  const expPermissions = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -166,13 +164,8 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(
-      experiments,
-      batchActions,
-      canDeleteExperiment,
-      canMoveExperiment,
-    );
-  }, [canDeleteExperiment, canMoveExperiment, experimentMap, settings.row]);
+    return getActionsForExperimentsUnion(experiments, batchActions, expPermissions);
+  }, [experimentMap, expPermissions, settings.row]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -189,9 +182,7 @@ const ProjectDetails: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+      const states = (settings.state || []).map((state) => encodeExperimentState(state));
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
@@ -399,26 +390,16 @@ const ProjectDetails: React.FC = () => {
     }
   }, []);
 
-  const ContextMenu = useCallback(
-    ({ record, onVisibleChange, children }) => {
-      return (
-        <ExperimentActionDropdown
-          experiment={getProjectExperimentForExperimentItem(record, project)}
-          settings={settings}
-          updateSettings={updateSettings}
-          onComplete={handleActionComplete}
-          onVisibleChange={onVisibleChange}>
-          {children}
-        </ExperimentActionDropdown>
-      );
-    },
-    [project, settings, updateSettings, handleActionComplete],
-  );
+  const canEditExperiment =
+    !!project &&
+    expPermissions.canModifyExperimentMetadata({
+      workspace: { id: project.workspaceId },
+    });
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
-        disabled={record.archived || project?.archived}
+        disabled={record.archived || project?.archived || !canEditExperiment}
         tags={record.labels}
         onChange={experimentTags.handleTagListChange(record.id)}
       />
@@ -430,8 +411,8 @@ const ProjectDetails: React.FC = () => {
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
       <TextEditorModal
-        disabled={record.archived}
-        placeholder={record.archived ? 'Archived' : 'Add description...'}
+        disabled={record.archived || !canEditExperiment}
+        placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
@@ -525,20 +506,16 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filters: Object.values(RunState)
-          .filter((value) =>
-            [
-              RunState.Active,
-              RunState.Paused,
-              RunState.Canceled,
-              RunState.Completed,
-              RunState.Errored,
-            ].includes(value),
-          )
-          .map((value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
-            value,
-          })),
+        filters: [
+          RunState.Active,
+          RunState.Paused,
+          RunState.Canceled,
+          RunState.Completed,
+          RunState.Error,
+        ].map((value) => ({
+          text: <Badge state={value} type={BadgeType.State} />,
+          value,
+        })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,
@@ -611,6 +588,7 @@ const ProjectDetails: React.FC = () => {
     users,
     project,
     experimentTags,
+    canEditExperiment,
     settings,
     saveExperimentDescription,
     ContextMenu,
@@ -659,7 +637,7 @@ const ProjectDetails: React.FC = () => {
           experimentIds: settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
-              canMoveExperiment({ experiment: experimentMap[id] }),
+              expPermissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
           sourceProjectId: project?.id,
           sourceWorkspaceId: project?.workspaceId,
@@ -695,14 +673,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [
-      canMoveExperiment,
-      settings.row,
-      openMoveModal,
-      project?.workspaceId,
-      project?.id,
-      experimentMap,
-    ],
+    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(
@@ -1088,8 +1059,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
-  if (!canViewWorkspaces) return <NoPermissions />;
-  if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
+  if (project && !expPermissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }
 

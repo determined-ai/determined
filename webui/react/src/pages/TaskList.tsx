@@ -27,11 +27,11 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
@@ -42,7 +42,12 @@ import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } 
 import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';
+import settingsConfig, {
+  ALL_SORTKEY,
+  DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
+  Settings,
+} from './TaskList.settings';
 
 enum TensorBoardSourceType {
   Experiment = 'Experiment',
@@ -470,11 +475,9 @@ const TaskList: React.FC = () => {
 
       const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
-
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

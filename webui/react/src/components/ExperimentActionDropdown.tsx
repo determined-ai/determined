@@ -195,33 +195,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     ],
   );
 
-  const { canMoveExperiment, canDeleteExperiment } = usePermissions();
-
-  const menuItems = useMemo(
-    () =>
-      getActionsForExperiment(experiment, dropdownActions)
-        .filter((action) =>
-          [Action.Delete, Action.Move].includes(action)
-            ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-              (action === Action.Move && canMoveExperiment({ experiment }))
-            : true,
-        )
-        .map((action) => {
-          if (action === Action.SwitchPin) {
-            const label = (settings?.pinned[experiment.projectId] ?? []).includes(id)
-              ? 'Unpin'
-              : 'Pin';
-            return { key: action, label };
-          } else {
-            return { danger: action === Action.Delete, key: action, label: action };
-          }
-        }),
-    [experiment, settings.pinned, canDeleteExperiment, canMoveExperiment, id],
-  );
-
-  const menu = useMemo(
-    () => <Menu items={menuItems} onClick={handleMenuClick} />,
-    [menuItems, handleMenuClick],
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
+    (action) => {
+      if (action === Action.SwitchPin) {
+        const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';
+        return { key: action, label };
+      } else {
+        return { danger: action === Action.Delete, key: action, label: action };
+      }
+    },
   );
 
   if (menuItems.length === 0) {

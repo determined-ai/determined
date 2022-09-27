@@ -15,7 +15,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
-import usePolling from 'hooks/usePolling';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
@@ -25,6 +25,7 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import usePolling from 'shared/hooks/usePolling';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
@@ -33,6 +34,7 @@ import {
   CheckpointWorkloadExtended,
   CommandTask,
   ExperimentBase,
+  MetricsWorkload,
   RunState,
   TrialItem,
 } from 'types';
@@ -41,7 +43,7 @@ import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import settingsConfig, { Settings } from './ExperimentTrials.settings';
+import settingsConfig, { isOfSortKey, Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
@@ -63,6 +65,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [canceler] = useState(new AbortController());
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+
+  const workspace = { id: experiment.workspaceId };
+  const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
+  const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -120,13 +126,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const dropDownOnTrigger = useCallback(
     (trial: TrialItem) => {
-      return {
+      const opts: Partial<Record<TrialAction, () => Promise<void> | void>> = {
         [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
+      if (!canHparam) {
+        delete opts[TrialAction.HyperparameterSearch];
+      }
+      return opts;
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
   );
 
   const columns = useMemo(() => {
@@ -149,10 +159,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       );
     };
 
-    const validationRenderer = (key: string) => {
+    const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        const value = getMetricValue((record as any)[key], metric);
+        const hasMetric = (obj: TrialItem[keyof TrialItem]): obj is MetricsWorkload => {
+          return typeof obj === 'object' && 'metrics' in obj;
+        };
+
+        const item: TrialItem[keyof TrialItem] = record[key];
+        const value = getMetricValue(hasMetric(item) ? item : undefined, metric);
         return <HumanReadableNumber num={value} />;
       };
     };
@@ -229,8 +243,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: isOfSortKey(columnKey)
+          ? columnKey
+          : V1GetExperimentTrialsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

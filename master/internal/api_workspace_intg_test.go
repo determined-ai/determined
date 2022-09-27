@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -23,6 +24,45 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
+
+func TestPostWorkspace(t *testing.T) {
+	api, curUser, ctx := SetupAPITest(t)
+
+	// Name min error.
+	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: ""})
+	require.Error(t, err)
+
+	// Name max error.
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: string(make([]byte, 81))})
+	require.Error(t, err)
+
+	workspaceName := uuid.New().String()
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	require.NoError(t, err)
+
+	// Workspace returned correctly?
+	expected := &workspacev1.Workspace{
+		Id:             resp.Workspace.Id,
+		Name:           workspaceName,
+		Archived:       false,
+		Username:       curUser.Username,
+		Immutable:      false,
+		NumProjects:    0,
+		Pinned:         true,
+		UserId:         int32(curUser.ID),
+		NumExperiments: 0,
+		State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
+		ErrorMessage:   "",
+	}
+	proto.Equal(expected, resp.Workspace)
+	require.Equal(t, expected, resp.Workspace)
+
+	// Workspace persisted correctly?
+	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
+	require.NoError(t, err)
+	proto.Equal(expected, getWorkResp.Workspace)
+	require.Equal(t, expected, getWorkResp.Workspace)
+}
 
 var workspaceAuthZ *mocks.WorkspaceAuthZ
 
@@ -119,6 +159,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
 }
 
