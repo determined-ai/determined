@@ -254,6 +254,7 @@ class DetSDTextualInversionTrainer:
                         if took_sgd_step:
                             self.steps_completed += 1
                             self.logger.info(f"Step {self.steps_completed} completed")
+                            self.embedding_reg_loss = None
 
                             is_end_of_training = self.steps_completed == op.length
                             time_to_report = self.steps_completed % self.metric_report_freq == 0
@@ -351,13 +352,13 @@ class DetSDTextualInversionTrainer:
                 dim=-1
             ).sum(dim=0)
 
-            print(f"embedding_reg_loss: {self.embedding_reg_loss.item()}")
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
             accumulation_scaled_embedding_reg_loss = (
                 self.embedding_reg_loss * self.gradient_accumulation_steps
             )
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
+        print(f"embedding_reg_loss: {self.embedding_reg_loss.item()}")
 
         # Add the total loss to the loss history for metric tracking.
         loss = (mse_and_latent_reg_loss + self.embedding_reg_loss).detach()
