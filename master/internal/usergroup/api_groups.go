@@ -2,8 +2,9 @@ package usergroup
 
 import (
 	"context"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"strings"
+
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,7 +36,7 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 	if err != nil {
 		return nil, err
 	}
-	err = AuthZProvider.Get().CanCreateGroups(curUser)
+	err = AuthZProvider.Get().CanCreateGroups(*curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,11 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 	if err != nil {
 		return nil, err
 	}
-	searchResults = AuthZProvider.Get().FilterGroupsList(curUser, searchResults)
+
+	searchResults, err = AuthZProvider.Get().FilterGroupsList(*curUser, searchResults)
+	if err != nil {
+		return nil, err
+	}
 
 	return &apiv1.GetGroupsResponse{
 		Groups: searchResults,
@@ -116,7 +121,7 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanGetGroup(curUser)
+	err = AuthZProvider.Get().CanGetGroup(*curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +161,7 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanUpdateGroup(curUser)
+	err = AuthZProvider.Get().CanUpdateGroup(*curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +207,7 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanDeleteGroup(curUser)
+	err = AuthZProvider.Get().CanDeleteGroup(*curUser)
 	if err != nil {
 		return nil, err
 	}
