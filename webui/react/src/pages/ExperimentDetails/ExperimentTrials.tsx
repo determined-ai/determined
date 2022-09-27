@@ -153,7 +153,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
         const hasMetric = (obj: TrialItem[keyof TrialItem]): obj is MetricsWorkload => {
-          return typeof obj === 'object' && 'metrics' in obj;
+          return !!obj && typeof obj === 'object' && 'metrics' in obj;
         };
 
         const item: TrialItem[keyof TrialItem] = record[key];
