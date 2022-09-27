@@ -44,6 +44,8 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res.Environment = env
 
 	res.ResourcesConfig = s.ExperimentConfig.Resources()
+	res.SlurmClusterConfig = s.ExperimentConfig.SlurmClusterConfig()
+	res.PbsClusterConfig = s.ExperimentConfig.PbsClusterConfig()
 
 	res.WorkDir = DefaultWorkDir
 

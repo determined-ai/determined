@@ -43,6 +43,8 @@ type ExperimentConfigV0 struct {
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
 	RawWorkspace                *string                     `json:"workspace"`
+	RawSlurmClusterConfig       *SlurmClusterConfigV0       `json:"slurm"`
+	RawPbsClusterConfig         *PbsClusterConfigV0         `json:"pbs"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -179,6 +181,20 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 		(*l)[label] = true
 	}
 	return err
+}
+
+//go:generate ../gen.sh
+// SlurmClusterConfigV0 configures experiment resource usage.
+type SlurmClusterConfigV0 struct {
+	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
+	RawSbatchArgs   []string `json:"sbatch_args"`
+}
+
+//go:generate ../gen.sh
+// PbsClusterConfigV0 configures experiment resource usage.
+type PbsClusterConfigV0 struct {
+	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
+	RawSbatchArgs   []string `json:"pbsbatch_args"`
 }
 
 //go:generate ../gen.sh

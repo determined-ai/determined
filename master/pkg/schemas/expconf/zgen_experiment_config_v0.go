@@ -281,6 +281,28 @@ func (e *ExperimentConfigV0) SetWorkspace(val string) {
 	e.RawWorkspace = &val
 }
 
+func (e ExperimentConfigV0) SlurmClusterConfig() SlurmClusterConfigV0 {
+	if e.RawSlurmClusterConfig == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .SlurmClusterConfig")
+	}
+	return *e.RawSlurmClusterConfig
+}
+
+func (e *ExperimentConfigV0) SetSlurmClusterConfig(val SlurmClusterConfigV0) {
+	e.RawSlurmClusterConfig = &val
+}
+
+func (e ExperimentConfigV0) PbsClusterConfig() PbsClusterConfigV0 {
+	if e.RawPbsClusterConfig == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .PbsClusterConfig")
+	}
+	return *e.RawPbsClusterConfig
+}
+
+func (e *ExperimentConfigV0) SetPbsClusterConfig(val PbsClusterConfigV0) {
+	e.RawPbsClusterConfig = &val
+}
+
 func (e ExperimentConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedExperimentConfigV0()
 }
