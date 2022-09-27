@@ -218,8 +218,6 @@ class Checkpoint:
             via_master (Path-like): the directory in which the checkpoint is downloaded
             os_name (string, optional): the name of the current OS -- this is for testing only
         """
-        raise Exception("forced exception from download master")
-
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
         if os_name == "nt":
             ftype = "zip"
@@ -246,7 +244,7 @@ class Checkpoint:
                     zf.extractall(local_ckpt_dir)
             finally:
                 # Remove the zip file after decompression.
-                pathlib.Path(tmpfpath).unlink(missing_ok=True)
+                pathlib.Path(tmpfpath).unlink()
         else:
             # gunzip and untar. tarfile.open can detect the compression algorithm
             with tarfile.open(fileobj=resp.raw) as tf:

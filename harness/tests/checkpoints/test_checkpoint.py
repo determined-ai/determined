@@ -32,11 +32,11 @@ mock_content = {
 }
 
 
-def setup_mock_checkpoint(dir: Path) -> str:
+def setup_mock_checkpoint(directory: Path) -> str:
     for k, v in mock_content.items():
-        fpath = dir / k
+        fpath = directory / k
         if len(v) == 0:
-            # This is a dir
+            # This is a directory
             fpath.mkdir(parents=True, exist_ok=True)
         else:
             fpath.parent.mkdir(parents=True, exist_ok=True)
@@ -44,11 +44,11 @@ def setup_mock_checkpoint(dir: Path) -> str:
                 f.write(v)
 
 
-def verify_test_checkpoint(dir: Path):
+def verify_test_checkpoint(directory: Path):
     for k, v in mock_content.items():
-        fpath = dir / k
+        fpath = directory / k
         if len(v) == 0:
-            # This is a dir
+            # This is a directory
             assert fpath.exists()
         else:
             with open(fpath) as f:
@@ -58,7 +58,7 @@ def verify_test_checkpoint(dir: Path):
 def get_response_raw_tgz(checkpoint_path: Path):
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w|gz") as tf:
-        for k, v in mock_content.items():
+        for k in mock_content:
             tf.add(checkpoint_path / k, arcname=k)
 
     return buf.getbuffer()
@@ -69,7 +69,7 @@ def get_response_raw_zip(checkpoint_path: Path):
     tmpzip = Path(f"{d}/tmp.zip")
 
     with zipfile.ZipFile(tmpzip, "w") as zf:
-        for k, v in mock_content.items():
+        for k in mock_content:
             zf.write(checkpoint_path / k, arcname=k)
 
     with open(tmpzip, "rb") as f:
@@ -80,8 +80,6 @@ def get_response_raw_zip(checkpoint_path: Path):
 
 @responses.activate
 def test_checkpoint_download_via_master(tmp_path: Path) -> None:
-    assert False # force fail
-
     uuid_tgz = "dummy-uuid-123-tgz"
     uuid_zip = "dummy-uuid-123-zip"
     checkpoint_path = tmp_path / "mock-checkpoint"
