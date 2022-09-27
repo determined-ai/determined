@@ -449,7 +449,8 @@ class DetSDTextualInversionTrainer:
             self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
             self.concept_to_dummy_ids_map[concept_token] = dummy_placeholder_ids
             self.logger.info(f"Added {len(dummy_placeholder_ids)} new tokens for {concept_token}.")
-
+        print("self.concept_to_initializer_tokens_map", self.concept_to_initializer_tokens_map)
+        print("self.concept_to_dummy_tokens_map", self.concept_to_dummy_tokens_map)
         # Create the dummy-to-initializer idx mapping and use the sorted values to generate the
         # updated embedding layer.
         self.dummy_id_to_initializer_id_map = {}
@@ -476,7 +477,6 @@ class DetSDTextualInversionTrainer:
             original_embedding=original_embedding,
             new_embedding_weights=copied_embedding_weights,
         )
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
 
     def _freeze_layers(self) -> None:
         """Freeze all not-to-be-trained layers."""
