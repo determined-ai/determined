@@ -829,4 +829,13 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
+export interface PermissionWorkspace {
+  id: number;
+  userId?: number;
+}
+
+export interface WorkspacePermissionsArgs {
+  workspace?: PermissionWorkspace;
+}
+
 export type UserOrGroup = User | V1Group;

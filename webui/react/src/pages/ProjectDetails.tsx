@@ -96,7 +96,6 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
-import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -139,8 +138,7 @@ const ProjectDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
-    usePermissions();
+  const expPermissions = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -166,13 +164,8 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(
-      experiments,
-      batchActions,
-      canDeleteExperiment,
-      canMoveExperiment,
-    );
-  }, [canDeleteExperiment, canMoveExperiment, experimentMap, settings.row]);
+    return getActionsForExperimentsUnion(experiments, batchActions, expPermissions);
+  }, [experimentMap, expPermissions, settings.row]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -397,10 +390,16 @@ const ProjectDetails: React.FC = () => {
     }
   }, []);
 
+  const canEditExperiment =
+    !!project &&
+    expPermissions.canModifyExperimentMetadata({
+      workspace: { id: project.workspaceId },
+    });
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
-        disabled={record.archived || project?.archived}
+        disabled={record.archived || project?.archived || !canEditExperiment}
         tags={record.labels}
         onChange={experimentTags.handleTagListChange(record.id)}
       />
@@ -419,8 +418,8 @@ const ProjectDetails: React.FC = () => {
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
       <TextEditorModal
-        disabled={record.archived}
-        placeholder={record.archived ? 'Archived' : 'Add description...'}
+        disabled={record.archived || !canEditExperiment}
+        placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
@@ -596,6 +595,7 @@ const ProjectDetails: React.FC = () => {
     users,
     project,
     experimentTags,
+    canEditExperiment,
     settings,
     updateSettings,
     handleActionComplete,
@@ -645,7 +645,7 @@ const ProjectDetails: React.FC = () => {
           experimentIds: settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
-              canMoveExperiment({ experiment: experimentMap[id] }),
+              expPermissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
           sourceProjectId: project?.id,
           sourceWorkspaceId: project?.workspaceId,
@@ -681,14 +681,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [
-      canMoveExperiment,
-      settings.row,
-      openMoveModal,
-      project?.workspaceId,
-      project?.id,
-      experimentMap,
-    ],
+    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(
@@ -1090,8 +1083,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
-  if (!canViewWorkspaces) return <NoPermissions />;
-  if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
+  if (project && !expPermissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }
 

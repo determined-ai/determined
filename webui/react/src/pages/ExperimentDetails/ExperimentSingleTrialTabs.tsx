@@ -6,6 +6,7 @@ import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -186,6 +187,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     openHyperparameterSearchModal({});
   }, [openHyperparameterSearchModal]);
 
+  const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
+    usePermissions();
+  const workspace = { id: experiment.workspaceId };
+  const editableNotes = canModifyExperimentMetadata({ workspace });
+  const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
+  const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -194,7 +202,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       <Tabs
         activeKey={tabKey}
         tabBarExtraContent={
-          tabKey === 'hyperparameters' ? (
+          tabKey === 'hyperparameters' && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
               <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
             </div>
@@ -208,20 +216,25 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <TabPane key="hyperparameters" tab="Hyperparameters">
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="checkpoints" tab="Checkpoints">
-          <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-        </TabPane>
-        <TabPane key="code" tab="Code">
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
-              submittedConfig={experiment.originalConfig}
-            />
-          </React.Suspense>
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <>
+            <TabPane key="checkpoints" tab="Checkpoints">
+              <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+            </TabPane>
+            <TabPane key="code" tab="Code">
+              <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+                <CodeViewer
+                  experimentId={experiment.id}
+                  runtimeConfig={experiment.configRaw}
+                  submittedConfig={experiment.originalConfig}
+                />
+              </React.Suspense>
+            </TabPane>
+          </>
+        ) : null}
         <TabPane key="notes" tab="Notes">
           <NotesCard
+            disabled={!editableNotes}
             notes={experiment.notes ?? ''}
             style={{ border: 0, height: '100%' }}
             onSave={handleNotesUpdate}
@@ -230,9 +243,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <TabPane key="profiler" tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="logs" tab="Logs">
-          <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <TabPane key="logs" tab="Logs">
+            <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+          </TabPane>
+        ) : null}
       </Tabs>
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
