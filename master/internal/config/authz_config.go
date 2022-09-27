@@ -24,7 +24,8 @@ type AuthZConfig struct {
 	FallbackType  *string `json:"fallback"`
 	RBACUIEnabled *bool   `json:"rbac_ui_enabled"`
 	// Removed: this option is removed and will not have any effect.
-	StrictNTSCEnabled bool `json:"_strict_ntsc_enabled"`
+	StrictNTSCEnabled      bool                         `json:"_strict_ntsc_enabled"`
+	AssignWorkspaceCreator AssignWorkspaceCreatorConfig `json:"workspace_creator_assign_role"`
 }
 
 // DefaultAuthZConfig returns default authz config.
@@ -33,6 +34,10 @@ func DefaultAuthZConfig() *AuthZConfig {
 		Type: BasicAuthZType,
 		// TODO(ilia): Maybe default to nil?
 		FallbackType: ptrs.Ptr(BasicAuthZType),
+		AssignWorkspaceCreator: AssignWorkspaceCreatorConfig{
+			Enabled: true,
+			RoleID:  2, // WorkspaceAdmin.
+		},
 	}
 }
 
@@ -53,6 +58,22 @@ func (c *AuthZConfig) Validate() []error {
 	}
 
 	return errs
+}
+
+// AssignWorkspaceCreatorConfig configures behavior of assigning a role on workspace creation.
+type AssignWorkspaceCreatorConfig struct {
+	Enabled bool `json:"enabled"`
+	RoleID  int  `json:"role_id"`
+}
+
+// Validate the RoleID of the config.
+func (a AssignWorkspaceCreatorConfig) Validate() []error {
+	if a.RoleID <= 0 {
+		return []error{
+			fmt.Errorf("workspace_creator_assign_role.role_id must be >= 0 got %d", a.RoleID),
+		}
+	}
+	return nil
 }
 
 // IsRBACUIEnabled returns if the feature flag RBAC should be enabled.
