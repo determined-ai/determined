@@ -129,6 +129,8 @@ message Experiment {
   int32 project_owner_id = 28;
   // The id of the group associated with this experiment.
   google.protobuf.Int32Value group_id = 29;
+  // The name of the group associated with this experiment.
+  google.protobuf.StringValue group_name = 30;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

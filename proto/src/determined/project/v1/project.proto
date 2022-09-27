@@ -107,7 +107,8 @@ message ProjectExperimentGroup {
   int32 project_id = 3;
 }
 
-// PatchProjectExperimentGroup is a partial update to a project group with all optional fields.
+// PatchProjectExperimentGroup is a partial update to a project group with all
+// optional fields.
 message PatchProjectExperimentGroup {
   // The new name for the project.
   google.protobuf.StringValue name = 1;

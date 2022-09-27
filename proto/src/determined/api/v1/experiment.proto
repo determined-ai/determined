@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/pagination.proto";
@@ -73,6 +74,8 @@ message GetExperimentsRequest {
     SORT_BY_RESOURCE_POOL = 13;
     // Returns experiments sorted by project.
     SORT_BY_PROJECT_ID = 14;
+    // Returns experiments sorted by group name.
+    SORT_BY_GROUP = 15;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;
@@ -107,7 +110,7 @@ message GetExperimentsRequest {
   int32 project_id = 12;
   // filtering by experiment ids
   determined.common.v1.Int32FieldFilter experiment_id_filter = 13;
-  // Limit experiments to those that match the provided groups.
+  // Limit experiments to those that match the provided group names.
   repeated string groups = 14;
 }
 // Response to GetExperimentsRequest.
@@ -213,11 +216,12 @@ message UnarchiveExperimentRequest {
 message UnarchiveExperimentResponse {}
 
 // Patch an experiment by providing the updated attributes. Only description,
-// label, name, notes, and group_id fields will be updated through this endpoint, and
-// others will be ignored.
+// label, name, notes, and group_id fields will be updated through this
+// endpoint, and others will be ignored.
 message PatchExperimentRequest {
   // Patched experiment attributes.
   determined.experiment.v1.PatchExperiment experiment = 2;
+  google.protobuf.FieldMask update_mask               = 3;
 }
 
 // Response to PatchExperimentRequest.

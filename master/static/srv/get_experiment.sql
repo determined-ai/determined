@@ -36,4 +36,5 @@ FROM
 JOIN users u ON e.owner_id = u.id
 LEFT JOIN projects p ON e.project_id = p.id
 LEFT JOIN workspaces w ON p.workspace_id = w.id
+LEFT JOIN project_experiment_groups g ON e.group_id = g.id
 WHERE e.id = $1

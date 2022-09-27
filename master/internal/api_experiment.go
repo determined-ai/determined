@@ -464,9 +464,11 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("p.user_id AS project_owner_id").
 		Column("e.config").
 		Column("e.group_id").
+		ColumnExpr("g.name AS group_name").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id")
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Join("JOIN project_experiment_groups g ON e.group_id = g.id")
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
@@ -483,6 +485,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "e.parent_id",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:    "project_id",
+		apiv1.GetExperimentsRequest_SORT_BY_GROUP: 			   "group_name",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -518,6 +521,9 @@ func (a *apiServer) GetExperiments(
 				THEN NULL
 				ELSE e.config->'labels' END
 			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
+	}
+	if len(req.Groups) > 0 {
+		query = query.Where("g.name IN (?)", bun.In(req.Groups))
 	}
 	if req.Archived != nil {
 		query = query.Where("e.archived = ?", req.Archived.Value)
