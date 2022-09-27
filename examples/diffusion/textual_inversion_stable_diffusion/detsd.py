@@ -314,14 +314,12 @@ class DetSDTextualInversionTrainer:
 
         # Process the text for each batch.
         batch_text = batch["input_text"]
-        print("BATCH TEXT", batch_text)
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
         dummy_text_noise_pred = self._get_noise_pred(
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
         noise_pred_mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
-        print(f"noise_pred_mse_loss: {noise_pred_mse_loss.item()}")
         self.metrics_history["noise_pred_mse_loss"].append(noise_pred_mse_loss.item())
 
         # Add a latent-space regularization penalty following the ideas in
@@ -340,7 +338,6 @@ class DetSDTextualInversionTrainer:
             latent_reg_loss = self.latent_reg_weight * F.mse_loss(
                 dummy_text_noise_pred, initializer_text_noise_pred
             )
-            print("latent_reg_loss", latent_reg_loss.item())
             self.metrics_history["latent_reg_loss"].append(latent_reg_loss.item())
 
         mse_and_latent_reg_loss = noise_pred_mse_loss + latent_reg_loss
@@ -371,7 +368,6 @@ class DetSDTextualInversionTrainer:
                 self.embedding_reg_loss * self.gradient_accumulation_steps
             )
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
-        print(f"embedding_reg_loss: {self.embedding_reg_loss.item()}")
 
         loss = (mse_and_latent_reg_loss + self.embedding_reg_loss).detach()
 
