@@ -155,36 +155,9 @@ class Checkpoint:
             checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
             try:
                 if via_master:
-                    if checkpoint_storage["type"] != "s3":
-                        raise NotImplementedError(
-                            "Checkpoint download via master is only supported on S3"
-                            f", got {checkpoint_storage['type']}"
-                        )
                     self._download_via_master(self._session, self.uuid, local_ckpt_dir)
-                elif checkpoint_storage["type"] == "shared_fs":
-                    src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-                    shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
                 else:
-                    local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-                    manager = storage.build(
-                        checkpoint_storage,
-                        container_path=None,
-                    )
-                    if not isinstance(
-                        manager,
-                        (
-                            storage.S3StorageManager,
-                            storage.GCSStorageManager,
-                            storage.AzureStorageManager,
-                        ),
-                    ):
-                        raise AssertionError(
-                            "Downloading from Azure, S3 or GCS requires the experiment "
-                            "to be configured with Azure, S3 or GCS checkpointing"
-                            ", {} found instead".format(checkpoint_storage["type"])
-                        )
-
-                    manager.download(self.uuid, str(local_ckpt_dir))
+                    self._download_direct(checkpoint_storage, local_ckpt_dir)
 
             except storage.NoCloudAccess:
                 # Failing back to downloading via the master if due to NoCloudAccess.
@@ -206,6 +179,32 @@ class Checkpoint:
             self.write_metadata_file(str(metadata_path))
 
         return str(local_ckpt_dir)
+
+    def _download_direct(self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path):
+        if checkpoint_storage["type"] == "shared_fs":
+            src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
+            shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+        else:
+            local_ckpt_dir.mkdir(parents=True, exist_ok=True)
+            manager = storage.build(
+                checkpoint_storage,
+                container_path=None,
+            )
+            if not isinstance(
+                manager,
+                (
+                    storage.S3StorageManager,
+                    storage.GCSStorageManager,
+                    storage.AzureStorageManager,
+                ),
+            ):
+                raise AssertionError(
+                    "Downloading from Azure, S3 or GCS requires the experiment "
+                    "to be configured with Azure, S3 or GCS checkpointing"
+                    ", {} found instead".format(checkpoint_storage["type"])
+                )
+
+            manager.download(self.uuid, str(local_ckpt_dir))
 
     @staticmethod
     def _download_via_master(
