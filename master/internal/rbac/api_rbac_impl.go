@@ -5,9 +5,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/usergroup"
@@ -246,6 +249,34 @@ func (a *RBACAPIServerImpl) RemoveAssignments(ctx context.Context,
 	}
 
 	return &apiv1.RemoveAssignmentsResponse{}, nil
+}
+
+// AssignWorkspaceAdminToUserTx assigns workspace admin to a given user.
+func (a *RBACAPIServerImpl) AssignWorkspaceAdminToUserTx(
+	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
+) error {
+	workspaceCreatorConfig := config.GetMasterConfig().Security.AuthZ.AssignWorkspaceCreator
+	if !workspaceCreatorConfig.Enabled {
+		return nil
+	}
+
+	groupAssign, err := GetGroupsFromUsersTx(ctx, idb, []*rbacv1.UserRoleAssignment{
+		{
+			UserId: int32(userID),
+			RoleAssignment: &rbacv1.RoleAssignment{
+				Role:             &rbacv1.Role{RoleId: int32(workspaceCreatorConfig.RoleID)},
+				ScopeWorkspaceId: wrapperspb.Int32(int32(workspaceID)),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = AddGroupAssignmentsTx(ctx, idb, groupAssign); err != nil {
+		return err
+	}
+	return nil
 }
 
 func dbRolesToAPISummary(roles []Role) []*rbacv1.Role {
