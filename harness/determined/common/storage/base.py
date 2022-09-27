@@ -6,9 +6,7 @@ from typing import Any, Dict, Iterator, Optional, Union
 
 
 class NoCloudAccess(Exception):
-    """Throw this exception when the operation fails due to denied access or missing credntials.
-    It allows higher level code to catch the exception and fall back to other methods.
-    """
+    """Checkpoint download failed due to denied access or missing credentials."""
 
     pass
 

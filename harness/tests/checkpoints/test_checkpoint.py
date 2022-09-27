@@ -1,6 +1,5 @@
 import io
 import tarfile
-import tempfile
 from pathlib import Path
 
 import responses

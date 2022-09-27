@@ -1,14 +1,11 @@
 import dataclasses
 import enum
-import logging
 import json
-import os
+import logging
 import pathlib
 import shutil
 import tarfile
-import tempfile
 import warnings
-import zipfile
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import api, constants, storage
@@ -17,12 +14,11 @@ from determined.common.storage import shared
 
 
 class DownloadMode(enum.Enum):
-    DIRECT = "direct"
-    MASTER = "master"
-    AUTO = "auto"
+    """A list of supported checkpoint download modes."""
 
-    def __str__(self) -> str:
-        return self.value
+    DIRECT = "direct"  # Download directly from checkpoint storage
+    MASTER = "master"  # Proxy download through the master
+    AUTO = "auto"  # Auto select between DIRECT and MASTER
 
 
 class ModelFramework(enum.Enum):
@@ -141,7 +137,8 @@ class Checkpoint:
                 checkpoint under. If this parameter is not set, the checkpoint will
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
-            mode (DownloadMode): Select how a checkpoint is downloaded.
+            mode (DownloadMode): Mode governs how a checkpoint is downloaded. Refer to
+                the definition of for more details.
         """
         if path is not None:
             local_ckpt_dir = pathlib.Path(path)
@@ -189,7 +186,9 @@ class Checkpoint:
 
         return str(local_ckpt_dir)
 
-    def _download_direct(self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path):
+    def _download_direct(
+        self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path
+    ) -> None:
         if checkpoint_storage["type"] == "shared_fs":
             src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
             shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
@@ -224,9 +223,8 @@ class Checkpoint:
             local_ckpt_dir (Path-like): the local directory where the download is downloaded
         """
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-        mime_type = f"application/gzip"
 
-        resp = sess.get(f"/checkpoints/{uuid}", headers={"Accept": mime_type}, stream=True)
+        resp = sess.get(f"/checkpoints/{uuid}", headers={"Accept": "application/gzip"}, stream=True)
         if not resp.ok:
             raise RuntimeError(
                 "unable to download checkpoint from master:", resp.status_code, resp.reason
