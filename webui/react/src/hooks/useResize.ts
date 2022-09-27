@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useState } from 'react';
 
 interface ResizeInfo {
   height: number;
@@ -18,13 +18,6 @@ export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
 
 const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
   const [resizeInfo, setResizeInfo] = useState<ResizeInfo>(defaultResizeInfo);
-  const timeout = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    return () => {
-      if (timeout.current) clearTimeout(timeout.current);
-    };
-  }, []);
 
   useEffect(() => {
     let element = document.body;
@@ -39,23 +32,14 @@ const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
       if (!element || elements.indexOf(element) === -1) return;
 
       const rect = element.getBoundingClientRect();
-
-      if (timeout.current) clearTimeout(timeout.current);
-
-      timeout.current = setTimeout(() => {
-        setResizeInfo(rect);
-      }, DEFAULT_RESIZE_THROTTLE_TIME);
+      setResizeInfo(rect);
     };
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(element);
 
     // Set initial resize info
     const rect = element.getBoundingClientRect();
-    if (timeout.current) clearTimeout(timeout.current);
-
-    timeout.current = setTimeout(() => {
-      setResizeInfo(rect);
-    }, DEFAULT_RESIZE_THROTTLE_TIME);
+    setResizeInfo(rect);
 
     return (): void => resizeObserver.unobserve(element);
   }, [ref]);
