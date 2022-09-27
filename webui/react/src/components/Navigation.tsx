@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import {
   useFetchAgents,
   useFetchKnownRoles,
@@ -39,10 +40,11 @@ const Navigation: React.FC<Props> = ({ children }) => {
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
 
+  const makeListRoleCalls = useFeature().isOn('rbac');
   useEffect(() => {
-    fetchKnownRoles();
+    makeListRoleCalls && fetchKnownRoles();
     return () => canceler.abort();
-  }, [canceler, fetchKnownRoles]);
+  }, [canceler, fetchKnownRoles, makeListRoleCalls]);
 
   return (
     <Spinner spinning={ui.showSpinner}>
