@@ -25,7 +25,6 @@ def get_long_str(approx_len: int) -> str:
 mock_content = {
     "emptyDir": "",
     "data.txt": "This is mock data.",
-    # This long string must be longer than delayWriter.delayBytes
     "lib/big-data.txt": get_long_str(1024 * 64),
     "lib/math.py": "def triple(x):\n  return x * 3",
     "print.py": "print('hello')",
