@@ -273,7 +273,8 @@ class DetSDTextualInversionTrainer:
                             if is_end_of_training or time_to_report or time_to_ckpt:
                                 self._report_train_metrics(core_context)
                                 # report_progress for Web UI progress-bar rendering.
-                                op.report_progress(self.steps_completed)
+                                if self.accelerator.is_main_process:
+                                    op.report_progress(self.steps_completed)
                             if is_end_of_training or time_to_ckpt:
                                 self._save(core_context)
                                 if core_context.preempt.should_preempt():
