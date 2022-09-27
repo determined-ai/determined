@@ -4,9 +4,9 @@ import json
 import os
 import pathlib
 import shutil
-import subprocess
 import tarfile
 import tempfile
+import traceback
 import warnings
 import zipfile
 from typing import Any, Dict, List, Optional, cast
@@ -154,38 +154,49 @@ class Checkpoint:
                 raise NotImplementedError("Non-training checkpoints cannot be downloaded")
 
             checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
-            if via_master:
-                if checkpoint_storage["type"] != "s3":
-                    raise NotImplementedError(
-                        "Checkpoint download via master is only supported on S3"
-                        f", got {checkpoint_storage['type']}"
-                    )
-                self._download_via_master(self._session, self.uuid, local_ckpt_dir)
-            elif checkpoint_storage["type"] == "shared_fs":
-                src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-                shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
-            else:
-                local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-                manager = storage.build(
-                    checkpoint_storage,
-                    container_path=None,
-                )
-                if not isinstance(
-                    manager,
-                    (
-                        storage.S3StorageManager,
-                        storage.GCSStorageManager,
-                        storage.AzureStorageManager,
-                    ),
-                ):
-                    raise AssertionError(
-                        "Downloading from Azure, S3 or GCS requires the experiment to be "
-                        "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
-                            checkpoint_storage["type"]
+            try:
+                if via_master:
+                    if checkpoint_storage["type"] != "s3":
+                        raise NotImplementedError(
+                            "Checkpoint download via master is only supported on S3"
+                            f", got {checkpoint_storage['type']}"
                         )
+                    self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+                elif checkpoint_storage["type"] == "shared_fs":
+                    src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
+                    shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+                else:
+                    local_ckpt_dir.mkdir(parents=True, exist_ok=True)
+                    manager = storage.build(
+                        checkpoint_storage,
+                        container_path=None,
                     )
+                    if not isinstance(
+                        manager,
+                        (
+                            storage.S3StorageManager,
+                            storage.GCSStorageManager,
+                            storage.AzureStorageManager,
+                        ),
+                    ):
+                        raise AssertionError(
+                            "Downloading from Azure, S3 or GCS requires the experiment to be "
+                            "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
+                                checkpoint_storage["type"]
+                            )
+                        )
 
-                manager.download(self.uuid, str(local_ckpt_dir))
+                    manager.download(self.uuid, str(local_ckpt_dir))
+
+            except storage.NoCloudAccess as e:
+                # Failing back to downloading via the master if due to NoCloudAccess.
+                # Only supporting S3 currently.
+                if checkpoint_storage["type"] != "s3":
+                    raise
+                try:
+                    self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+                except Exception as exc_inner:
+                    raise Exception("Fallback checkpoint download also failed") from exc_inner
 
         # As of v0.18.0, we write metadata.json once at upload time.  Checkpoints uploaded prior to
         # 0.18.0 will not have a metadata.json present.  Unfortunately, checkpoints earlier than
@@ -207,6 +218,7 @@ class Checkpoint:
             via_master (Path-like): the directory in which the checkpoint is downloaded
             os_name (string, optional): the name of the current OS -- this is for testing only
         """
+        raise Exception("forced exception from download master")
 
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
         if os_name == "nt":

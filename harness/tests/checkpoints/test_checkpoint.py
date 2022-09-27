@@ -80,6 +80,7 @@ def get_response_raw_zip(checkpoint_path: Path):
 
 @responses.activate
 def test_checkpoint_download_via_master(tmp_path: Path) -> None:
+    assert False # force fail
 
     uuid_tgz = "dummy-uuid-123-tgz"
     uuid_zip = "dummy-uuid-123-zip"
