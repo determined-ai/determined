@@ -38,7 +38,7 @@ interface PermissionsHook {
   canGetPermissions: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
-  canModifyGroups: () => boolean;
+  canModifyGroups: boolean;
   canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyUsers: boolean;
@@ -87,7 +87,7 @@ const usePermissions = (): PermissionsHook => {
       canModifyExperiment(args.workspace, userAssignments, userRoles),
     canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
       canModifyExperimentMetadata(args.workspace, userAssignments, userRoles),
-    canModifyGroups: () => canModifyGroups(user, userAssignments, userRoles),
+    canModifyGroups: canModifyGroups(user, userAssignments, userRoles),
     canModifyPermissions: canAdministrateUsers(user, userAssignments, userRoles),
     canModifyProjects: (args: ProjectPermissionsArgs) =>
       canModifyWorkspaceProjects(args.workspace, args.project, user, userAssignments, userRoles),

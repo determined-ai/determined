@@ -96,7 +96,6 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
-import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
