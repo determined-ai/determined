@@ -213,7 +213,9 @@ class Checkpoint:
     ) -> None:
         """Downloads a checkpoint through the master.
         Arguments:
-            via_master (Path-like): the directory in which the checkpoint is downloaded
+            sess (api.Session): a session for the download
+            uuid (string): the uuid of the checkpoint to be downloaded
+            local_ckpt_dir (Path-like): the local directory where the download is downloaded
             os_name (string, optional): the name of the current OS -- this is for testing only
         """
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -231,7 +233,7 @@ class Checkpoint:
 
         if ftype == "zip":
             # The zip format does not allow streamed decompression since the central directory
-            # is at the end of the file. Hence, we fully the zip file before decompression.
+            # is at the end of the file. Hence, we download the zip file before decompression.
             tmpfd, tmpfpath = tempfile.mkstemp(suffix=".zip", dir=local_ckpt_dir)
             try:
                 # Download the zip file.
