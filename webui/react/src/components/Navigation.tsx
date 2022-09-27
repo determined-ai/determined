@@ -40,11 +40,13 @@ const Navigation: React.FC<Props> = ({ children }) => {
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
 
-  const makeListRoleCalls = useFeature().isOn('rbac');
+  const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
-    makeListRoleCalls && fetchKnownRoles();
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
     return () => canceler.abort();
-  }, [canceler, fetchKnownRoles, makeListRoleCalls]);
+  }, [canceler, fetchKnownRoles, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>
