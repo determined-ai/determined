@@ -30,6 +30,30 @@ message CheckpointWorkload {
   google.protobuf.Struct metadata = 9;
 }
 
+// The current state of the trial. see \dT+ trial_state in db
+enum State {
+  // The trial is in an unspecified state.
+  STATE_UNSPECIFIED = 0;
+  // The trial is in an active state.
+  STATE_ACTIVE = 1;
+  // The trial is in a paused state
+  STATE_PAUSED = 2;
+  // The trial is canceled and is shutting down.
+  STATE_STOPPING_CANCELED = 3;
+  // The trial is killed and is shutting down.
+  STATE_STOPPING_KILLED = 4;
+  // The trial is completed and is shutting down.
+  STATE_STOPPING_COMPLETED = 5;
+  // The trial is errored and is shutting down.
+  STATE_STOPPING_ERROR = 6;
+  // The trial is canceled and is shut down.
+  STATE_CANCELED = 7;
+  // The trial is completed and is shut down.
+  STATE_COMPLETED = 8;
+  // The trial is errored and is shut down.
+  STATE_ERROR = 9;
+}
+
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
