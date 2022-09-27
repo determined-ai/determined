@@ -278,8 +278,6 @@ class DetSDTextualInversionTrainer:
         self.text_encoder.train()
 
         # Convert images to latent space.
-        print("MEMORY ALLOC TEST, Get Latents")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         with torch.no_grad():
             latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
             latents = latent_dist.sample()
@@ -299,8 +297,6 @@ class DetSDTextualInversionTrainer:
                 (self.train_batch_size,),
                 device=self.accelerator.device,
             ).long()
-            print("MEMORY ALLOC TEST, Get timesteps")
-            print(torch.cuda.memory_allocated(device=self.accelerator.device))
             # Add noise to the latents according to the noise magnitude at each timestep. This is the
             # forward diffusion process.
             noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
@@ -313,16 +309,10 @@ class DetSDTextualInversionTrainer:
         )
 
         mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
-        print("MEMORY ALLOC TEST, before mse_backwards")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
-        # self.accelerator.backward(mse_loss)
-        print("MEMORY ALLOC TEST, after mse_backwards")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         print(f"mse_loss: {mse_loss.item()}")
 
         # Add a latent-space regularization penalty following the ideas in
         # https://github.com/rinongal/textual_inversion/issues/49
-        # Currently implemented as a separate forward/backward pass to avoid CUDA OOM errors.
         if not self.latent_reg_weight:
             latent_reg_loss = 0.0
         else:
@@ -334,18 +324,9 @@ class DetSDTextualInversionTrainer:
                     text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
                 )
 
-            # dummy_text_noise_pred = self._get_noise_pred(
-            #     text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
-            # )
             latent_reg_loss = self.latent_reg_weight * F.mse_loss(
                 dummy_text_noise_pred, initializer_text_noise_pred
             )
-            print("MEMORY ALLOC TEST, before latent_reg_loss_backwards")
-            print(torch.cuda.memory_allocated(device=self.accelerator.device))
-            # self.accelerator.backward(latent_reg_loss)
-            print("MEMORY ALLOC TEST, after latent_reg_loss_backwards")
-            print(torch.cuda.memory_allocated(device=self.accelerator.device))
-            print(f"latent_reg_loss: {latent_reg_loss.item()}")
 
         mse_and_latent_reg_loss = mse_loss + latent_reg_loss
         self.accelerator.backward(mse_and_latent_reg_loss)
@@ -397,19 +378,10 @@ class DetSDTextualInversionTrainer:
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids
-        print("tokenized_text grad check", tokenized_text.requires_grad)
-        print("MEMORY ALLOC TEST, before getting hidden states")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         encoder_hidden_states = self.text_encoder(tokenized_text).last_hidden_state
-        print("encoder_hidden_states grad check", encoder_hidden_states.requires_grad)
-        print("encoder_hidden_states shape check", encoder_hidden_states.shape)
-        print("MEMORY ALLOC TEST, after getting hidden states")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
 
         # Predict the noise residual.
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
-        print("MEMORY ALLOC TEST, after unet pred")
-        print(torch.cuda.memory_allocated(device=self.accelerator.device))
         return noise_pred
 
     def _build_models(self) -> None:
