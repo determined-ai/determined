@@ -206,6 +206,11 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
   );
 
+  const menu = useMemo(
+    () => <Menu items={menuItems} onClick={handleMenuClick} />,
+    [menuItems, handleMenuClick],
+  );
+
   if (menuItems.length === 0) {
     return (
       (children as JSX.Element) ?? (

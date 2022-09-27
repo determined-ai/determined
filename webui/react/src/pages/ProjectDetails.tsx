@@ -396,6 +396,22 @@ const ProjectDetails: React.FC = () => {
       workspace: { id: project.workspaceId },
     });
 
+  const ContextMenu = useCallback(
+    ({ record, onVisibleChange, children }) => {
+      return (
+        <ExperimentActionDropdown
+          experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
+          onComplete={handleActionComplete}
+          onVisibleChange={onVisibleChange}>
+          {children}
+        </ExperimentActionDropdown>
+      );
+    },
+    [project, settings, updateSettings, handleActionComplete],
+  );
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
