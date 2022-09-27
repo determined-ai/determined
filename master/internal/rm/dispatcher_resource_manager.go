@@ -1616,7 +1616,7 @@ func schedulingStateFromDispatchState(state launcher.DispatchState) sproto.Sched
 func resourcesStateFromDispatchState(state launcher.DispatchState) sproto.ResourcesState {
 	switch state {
 	case launcher.PENDING:
-		return sproto.Starting
+		return sproto.Assigned
 	case launcher.RUNNING:
 		return sproto.Running
 	case launcher.TERMINATING:
