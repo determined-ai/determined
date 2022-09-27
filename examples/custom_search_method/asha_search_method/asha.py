@@ -34,25 +34,15 @@ ASHASearchMethodState. We elected to use pickle as the storage format for conven
 
 import dataclasses
 import logging
-import random
 import pickle
 import sys
 import uuid
 from pathlib import Path
 from typing import Dict, List, Set, Callable
-
-from determined.searcher.search_method import (
-    Close,
-    Create,
-    ExitedReason,
-    Operation,
-    SearchMethod,
-    Shutdown,
-    ValidateAfter,
-)
+from determined import searcher
 
 
-class ASHASearchMethod(SearchMethod):
+class ASHASearchMethod(searcher.SearchMethod):
     def __init__(
         self,
         search_space: Callable[[], Dict[str, object]],
@@ -88,19 +78,19 @@ class ASHASearchMethod(SearchMethod):
     #         units selection is made in the custom_config.yaml.
     #
     # Note: the order in which trials are created is not guaranteed.
-    def initial_operations(self) -> List[Operation]:
-        ops: List[Operation] = []
+    def initial_operations(self) -> List[searcher.Operation]:
+        ops: List[searcher.Operation] = []
         N = self._get_max_concurrent_trials()
 
         for _ in range(0, N):
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.search_space(),
                 checkpoint=None,
             )
             ops.append(create)
             ops.append(
-                ValidateAfter(
+                searcher.ValidateAfter(
                     request_id=create.request_id,
                     length=self.asha_search_state.rungs[0].units_needed,
                 )
@@ -115,7 +105,7 @@ class ASHASearchMethod(SearchMethod):
     # Invoked when a trial with specific request_id is created.
     # In this example, ASHASearchMethodState is updated with
     # information about a trial's progress and no new operations are created.
-    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.asha_search_state.rungs[0].outstanding_trials += 1
         self.asha_search_state.trial_rungs[request_id] = 0
         return []
@@ -133,7 +123,7 @@ class ASHASearchMethod(SearchMethod):
     #        trials is reached.
     def on_validation_completed(
         self, request_id: uuid.UUID, metric: float
-    ) -> List[Operation]:
+    ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1
@@ -147,7 +137,7 @@ class ASHASearchMethod(SearchMethod):
     # maximum trials has been reached, Shutdown operation is sent to close
     # the experiment. Note, that Shutdown operation does not take request_id
     # as input, since it refers to the experiment, not a single trial.
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
         self.asha_search_state.completed_trials += 1
         self.asha_search_state.closed_trials.add(request_id)
 
@@ -156,7 +146,7 @@ class ASHASearchMethod(SearchMethod):
             and self.asha_search_state.completed_trials
             == self.asha_search_state.max_trials
         ):
-            return [Shutdown()]
+            return [searcher.Shutdown()]
 
         return []
 
@@ -171,8 +161,8 @@ class ASHASearchMethod(SearchMethod):
     # Next, ASHA invoked _promote_async function to decided whether to promote
     # existing trial, start a new trial or close the experiment.
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exited_reason: ExitedReason
-    ) -> List[Operation]:
+        self, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
+    ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
 
         # The "if" statement below can be completely removed.
@@ -180,11 +170,11 @@ class ASHASearchMethod(SearchMethod):
         # you do not wish to train and test your model for.
         # Instead, make sure that your search method is not
         # producing the unwanted hyperparameters.
-        if exited_reason == ExitedReason.INVALID_HP:
-            ops: List[Operation] = []
+        if exited_reason == searcher.ExitedReason.INVALID_HP:
+            ops: List[searcher.Operation] = []
 
             self.asha_search_state.early_exit_trials.add(request_id)
-            ops.append(Close(request_id))
+            ops.append(searcher.Close(request_id))
             self.asha_search_state.closed_trials.add(request_id)
             self.asha_search_state.invalid_trials += 1
 
@@ -198,14 +188,14 @@ class ASHASearchMethod(SearchMethod):
                     filter(lambda x: x.request_id != request_id, rung.metrics)
                 )
 
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.search_space(),
                 checkpoint=None,
             )
             ops.append(create)
             ops.append(
-                ValidateAfter(
+                searcher.ValidateAfter(
                     request_id=create.request_id,
                     length=self.asha_search_state.rungs[0].units_needed,
                 )
@@ -303,19 +293,21 @@ class ASHASearchMethod(SearchMethod):
             )
         return max_concurrent_trials
 
-    def _promote_async(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def _promote_async(
+        self, request_id: uuid.UUID, metric: float
+    ) -> List[searcher.Operation]:
         rung_idx = self.asha_search_state.trial_rungs[request_id]
         rung = self.asha_search_state.rungs[rung_idx]
         rung.outstanding_trials -= 1
         added_train_workload = False
 
-        ops: List[Operation] = []
+        ops: List[searcher.Operation] = []
 
         if rung_idx == self.asha_search_state.num_rungs - 1:
             rung.metrics.append(TrialMetric(request_id=request_id, metric=metric))
 
             if request_id not in self.asha_search_state.early_exit_trials:
-                ops.append(Close(request_id=request_id))
+                ops.append(searcher.Close(request_id=request_id))
                 logging.info(f"Closing trial {request_id}")
                 self.asha_search_state.closed_trials.add(request_id)
         else:
@@ -329,7 +321,9 @@ class ASHASearchMethod(SearchMethod):
                 if promoted_request_id not in self.asha_search_state.early_exit_trials:
                     logging.info(f"Promoted {promoted_request_id}")
                     units_needed = max(next_rung.units_needed - rung.units_needed, 1)
-                    ops.append(ValidateAfter(promoted_request_id, units_needed))
+                    ops.append(
+                        searcher.ValidateAfter(promoted_request_id, units_needed)
+                    )
                     added_train_workload = True
                     self.asha_search_state.pending_trials += 1
                 else:
@@ -343,14 +337,14 @@ class ASHASearchMethod(SearchMethod):
             logging.info("Creating new trial instead of promoting")
             self.asha_search_state.pending_trials += 1
 
-            create = Create(
+            create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.search_space(),
                 checkpoint=None,
             )
             ops.append(create)
             ops.append(
-                ValidateAfter(
+                searcher.ValidateAfter(
                     request_id=create.request_id,
                     length=self.asha_search_state.rungs[0].units_needed,
                 )
@@ -365,8 +359,8 @@ class ASHASearchMethod(SearchMethod):
 
         return ops
 
-    def _get_close_rungs_ops(self) -> List[Operation]:
-        ops: List[Operation] = []
+    def _get_close_rungs_ops(self) -> List[searcher.Operation]:
+        ops: List[searcher.Operation] = []
 
         for rung in self.asha_search_state.rungs:
             if rung.outstanding_trials > 0:
@@ -382,7 +376,7 @@ class ASHASearchMethod(SearchMethod):
                         not in self.asha_search_state.early_exit_trials
                     ):
                         logging.info(f"Closing trial {trial_metric.request_id}")
-                        ops.append(Close(trial_metric.request_id))
+                        ops.append(searcher.Close(trial_metric.request_id))
                         self.asha_search_state.closed_trials.add(
                             trial_metric.request_id
                         )
