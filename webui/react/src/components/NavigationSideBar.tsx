@@ -149,6 +149,10 @@ const NavigationSideBar: React.FC = () => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
 
+  const handleOpenJupyterLabModal = useCallback(() => {
+    openJupyterLabModal();
+  }, [openJupyterLabModal]);
+
   const handleCreateWorkspace = useCallback(() => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
@@ -198,11 +202,11 @@ const NavigationSideBar: React.FC = () => {
         <main>
           <section className={css.launch}>
             <div className={css.launchBlock}>
-              <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
+              <Button className={css.launchButton} onClick={handleOpenJupyterLabModal}>
                 Launch JupyterLab
               </Button>
               {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
+                <Button className={css.launchIcon} onClick={handleOpenJupyterLabModal}>
                   <Icon name="jupyter-lab" />
                 </Button>
               ) : null}

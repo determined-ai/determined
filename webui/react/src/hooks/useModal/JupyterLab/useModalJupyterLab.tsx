@@ -5,7 +5,6 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -20,41 +19,11 @@ import css from './useModalJupyterLab.module.scss';
 const { Option } = Select;
 const { Item } = Form;
 
-const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
-
-const settingsConfig: SettingsConfig = {
-  settings: [
-    {
-      defaultValue: '',
-      key: 'name',
-      skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
-    },
-    {
-      defaultValue: '',
-      key: 'pool',
-      skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
-    },
-    {
-      defaultValue: DEFAULT_SLOT_COUNT,
-      key: 'slots',
-      skipUrlEncoding: true,
-      type: { baseType: BaseType.Integer },
-    },
-    {
-      key: 'template',
-      skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
-    },
-  ],
-  storagePath: STORAGE_PATH,
-};
 
 interface FormProps {
   fields: JupyterLabOptions;
-  updateFields?: UpdateSettings<JupyterLabOptions>;
+  updateFields: (val: { [key in keyof JupyterLabOptions]: JupyterLabOptions[key] }) => void;
 }
 
 interface FullConfigProps {
@@ -67,6 +36,12 @@ interface FullConfigProps {
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const useModalJupyterLab = (): ModalHooks => {
+  const [fields, setFields] = useState<JupyterLabOptions>({
+    name: '',
+    pool: '',
+    slots: DEFAULT_SLOT_COUNT,
+    template: undefined,
+  });
   const [visible, setVisible] = useState(false);
   const [showFullConfig, setShowFullConfig] = useState(false);
   const [config, setConfig] = useState<string>();
@@ -77,14 +52,18 @@ const useModalJupyterLab = (): ModalHooks => {
 
   const handleModalClose = useCallback(() => setVisible(false), []);
 
+  const handleSetFields = useCallback(
+    (val: { [key in keyof JupyterLabOptions]: JupyterLabOptions[key] }) =>
+      setFields({ ...fields, ...val }),
+    [fields],
+  );
+
   const {
     modalClose,
     modalOpen: openOrUpdate,
     ...modalHook
   } = useModal({ onClose: handleModalClose });
 
-  const { settings: fields, updateSettings: updateFields } =
-    useSettings<JupyterLabOptions>(settingsConfig);
   const previousFields = usePrevious(fields, undefined);
 
   const fetchConfig = useCallback(async () => {
@@ -137,9 +116,9 @@ const useModalJupyterLab = (): ModalHooks => {
           onChange={handleConfigChange}
         />
       ) : (
-        <JupyterLabForm fields={fields} updateFields={updateFields} />
+        <JupyterLabForm fields={fields} updateFields={handleSetFields} />
       ),
-    [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
+    [config, configError, fields, handleConfigChange, handleSetFields, showFullConfig],
   );
 
   const content = useMemo(
@@ -301,15 +280,15 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
     const maxSlots = selectedPool.slotsPerAgent ?? 0;
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
-    if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
-    if (hasComputeCapacity && fields.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
+    if (hasAuxCapacity && !hasComputeCapacity) updateFields({ slots: 0 });
+    if (hasComputeCapacity && fields.slots == null) updateFields({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [fields.pool, updateFields, resourcePools, fields.slots]);
+  }, [resourcePools, updateFields, fields]);
 
   const fetchResourcePools = useCallback(async () => {
     try {
@@ -338,9 +317,9 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   useEffect(() => {
     if (!fields.pool && resourcePools[0]?.name) {
       const pool = resourcePools[0]?.name;
-      updateFields?.({ pool });
+      updateFields({ pool });
     }
-  }, [resourcePools, fields.pool, updateFields]);
+  }, [resourcePools, fields.pool, fields, updateFields]);
 
   return (
     <div className={css.form}>
@@ -351,7 +330,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               allowClear
               placeholder="No template (optional)"
               value={fields.template}
-              onChange={(value) => updateFields?.({ template: value?.toString() })}>
+              onChange={(value) => updateFields({ template: value?.toString() })}>
               {templates.map((temp) => (
                 <Option key={temp.name} value={temp.name}>
                   {temp.name}
@@ -366,7 +345,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
             <Input
               placeholder="Name (optional)"
               value={fields.name}
-              onChange={(e) => updateFields?.({ name: e.target.value })}
+              onChange={(e) => updateFields({ name: e.target.value })}
             />
           ),
           label: 'Name',
@@ -377,7 +356,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               allowClear
               placeholder="Pick the best option"
               value={fields.pool}
-              onChange={(value) => updateFields?.({ pool: value })}>
+              onChange={(value) => updateFields({ pool: value })}>
               {resourcePools.map((pool) => (
                 <Option key={pool.name} value={pool.name}>
                   {pool.name}
@@ -395,7 +374,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
-              onChange={(value) => updateFields?.({ slots: value })}
+              onChange={(value) => updateFields({ slots: value })}
             />
           ),
           label: 'Slots',
