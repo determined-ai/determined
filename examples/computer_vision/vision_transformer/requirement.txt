@@ -1,4 +1,0 @@
-sklearn
-transformers
-datasets
-deepspeed==0.6.7

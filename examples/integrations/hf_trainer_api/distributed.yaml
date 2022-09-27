@@ -1,6 +1,4 @@
-name: adaptive
-#workspace: Deepspeed
-#project: VisionTransformer
+name: vision transformer distributed
 debug: false
 environment:
   environment_variables:
@@ -8,27 +6,11 @@ environment:
     # You may need to modify this to match your network configuration.
     - NCCL_SOCKET_IFNAME=ens,eth,ib
 resources:
-  slots_per_trial: 2
-records_per_epoch: 1000
+  slots_per_trial: 4
 searcher:
-  name: adaptive_asha
-  max_length:
-    epochs: 5
-  max_trials: 8
-  max_rungs: 2
-  divisor: 4
+  name: single
+  max_length: 3
   metric: eval_loss
-hyperparameters:
-  learning_rate:
-    type: log
-    base: 10
-    minval: -2
-    maxval: -1
-  adam_epsilon:
-    type: log
-    base: 10
-    minval: -2
-    maxval: -1
 entrypoint: >-
   python -m determined.launch.torch_distributed
   python image_classification.py 
@@ -38,7 +20,7 @@ entrypoint: >-
   --do_train  
   --do_eval 
   --learning_rate 2e-5 
-  --num_train_epochs 5 
+  --num_train_epochs 3 
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8 
   --logging_strategy steps 
