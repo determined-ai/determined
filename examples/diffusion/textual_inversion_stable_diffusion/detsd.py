@@ -350,7 +350,8 @@ class DetSDTextualInversionTrainer:
             new_token_embeddings = self._get_new_token_embeddings()
             initializer_token_embeddings = self._get_initializer_token_embeddings()
 
-            # Compute the squared-distance between the two, averaged over tokens.
+            # Compute the squared-distance between the two, averaged over tokens, following
+            # https://github.com/rinongal/textual_inversion/blob/3214ca02ded6019c3948e17dd68bf02364b0c2dd/ldm/modules/embedding_manager.py#L159
             distance_vectors = new_token_embeddings - initializer_token_embeddings
             self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).sum(
                 dim=-1
