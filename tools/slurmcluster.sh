@@ -33,53 +33,71 @@ INTUNNEL=1
 TUNNEL=1
 DEVLAUNCHER=
 USERNAME=$USER
+DEBUGLEVEL=debug
 
-if [[ $1 == '-n' ]]; then
-    INTUNNEL=
-    shift
-fi
-if [[ $1 == '-x' ]]; then
-    TUNNEL=
-    shift
-fi
-if [[ $1 == '-t' ]]; then
-    TRACE=1
-    shift
-fi
-if [[ $1 == '-p' ]]; then
-    PODMAN=1
-    shift
-fi
-if [[ $1 == '-d' ]]; then
-    DEVLAUNCHER=1
-    shift
-fi
-if [[ $1 == '-u' ]]; then
-    USERNAME=$2
-    shift 2
-fi
-if [[ $1 == '-a' ]]; then
-    PULL_AUTH=1
-    shift
-fi
 
-if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
-    echo "Usage: $0 [-h] [-n] [-x] [-t] [-p] [-d] [-u] {username} [-a] {cluster}"
-    echo "  -h     This help message.   Options are order sensitive."
-    echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
-    echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
-    echo "  -t     Force debug level to trace regardless of cluster configuration value."
-    echo "  -p     Use podman as a container host (otherwise singlarity)."
-    echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
-    echo "  -u     Use provided {username} to lookup the per-user port number."
-    echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
-    echo
-    echo "Documentation:"
-    head -n $HELPEND $0 | tail -n $(($HELPEND  - 1))
-    exit 1
-fi
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -n)
+        INTUNNEL=
+        shift
+        ;;
+    -x)
+        TUNNEL=
+        shift
+        ;;
+    -t)
+        DEBUGLEVEL=trace
+        shift
+        ;;
+    -i)
+        DEBUGLEVEL=info
+        shift
+        ;;
+    -p)
+        PODMAN=1
+        shift
+        ;;
+    -d)
+        DEVLAUNCHER=1
+        shift
+        ;;
+    -u)
+        USERNAME=$2
+        shift 2
+        ;;
+    -a)
+        PULL_AUTH=1
+        shift
+        ;;
+    -h|--help)
+        echo "Usage: $0 [-anxtpd] [-u {username}]  {cluster}"
+        echo "  -h     This help message."
+        echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
+        echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
+        echo "  -t     Force debug level to trace regardless of cluster configuration value."
+        echo "  -p     Use podman as a container host (otherwise singlarity)."
+        echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
+        echo "  -u     Use provided {username} to lookup the per-user port number."
+        echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
+        echo
+        echo "Documentation:"
+        head -n $HELPEND $0 | tail -n $(($HELPEND  - 1))
+        exit 1
+        ;;
+    -*|--*)
+        echo >&2 "$0: Illegal option $1"
+        echo >&2 "Usage: $0 [-anxtpd] [-u {username}]  {cluster}"
+        exit 1
+        ;;
+    *) # Non Option args
+        CLUSTER=$1
+        shift
+        ;;
+  esac
+done
 
-CLUSTER=$1
+
 CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023')
 
 function lookup() {
@@ -167,7 +185,6 @@ OPT_LAUNCHERHOST_casablanca=localhost
 OPT_LAUNCHERPORT_casablanca=8181
 OPT_LAUNCHERPROTOCOL_casablanca=http
 OPT_CHECKPOINTPATH_casablanca=/mnt/lustre/foundation_engineering/determined-cp
-OPT_DEBUGLEVEL_casablanca=debug
 OPT_MASTERHOST_casablanca=casablanca-mgmt1.us.cray.com
 OPT_MASTERPORT_casablanca=$USERPORT
 OPT_TRESSUPPORTED_casablanca=true
@@ -179,7 +196,6 @@ OPT_LAUNCHERHOST_horizon=localhost
 OPT_LAUNCHERPORT_horizon=8181
 OPT_LAUNCHERPROTOCOL_horizon=http
 OPT_CHECKPOINTPATH_horizon=/lus/scratch/foundation_engineering/determined-cp
-OPT_DEBUGLEVEL_horizon=debug
 OPT_MASTERHOST_horizon=horizon
 OPT_MASTERPORT_horizon=$USERPORT
 OPT_TRESSUPPORTED_horizon=false
@@ -191,7 +207,6 @@ OPT_LAUNCHERHOST_casablanca_login=localhost
 OPT_LAUNCHERPORT_casablanca_login=8443
 OPT_LAUNCHERPROTOCOL_casablanca_login=https
 OPT_CHECKPOINTPATH_casablanca_login=/mnt/lustre/foundation_engineering/determined-cp
-OPT_DEBUGLEVEL_casablanca_login=debug
 OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login=true
@@ -202,7 +217,6 @@ OPT_LAUNCHERHOST_casablanca_login2=localhost
 OPT_LAUNCHERPORT_casablanca_login2=8443
 OPT_LAUNCHERPROTOCOL_casablanca_login2=http
 OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determined-cp
-OPT_DEBUGLEVEL_casablanca_login2=debug
 OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login2=true
@@ -213,7 +227,6 @@ OPT_LAUNCHERHOST_shuco=localhost
 OPT_LAUNCHERPORT_shuco=8181
 OPT_LAUNCHERPROTOCOL_shuco=http
 OPT_CHECKPOINTPATH_shuco=/home/launcher/determined-cp
-OPT_DEBUGLEVEL_shuco=debug
 OPT_MASTERHOST_shuco=admin.head.cm.us.cray.com
 OPT_MASTERPORT_shuco=$USERPORT
 OPT_TRESSUPPORTED_shuco=false
@@ -226,7 +239,6 @@ OPT_LAUNCHERHOST_mosaic=localhost
 OPT_LAUNCHERPORT_mosaic=8181
 OPT_LAUNCHERPROTOCOL_mosaic=http
 OPT_CHECKPOINTPATH_mosaic=/home/launcher/determinedai/checkpoints
-OPT_DEBUGLEVEL_mosaic=debug
 OPT_MASTERHOST_mosaic=10.30.91.220
 OPT_MASTERPORT_mosaic=$USERPORT
 OPT_TRESSUPPORTED_mosaic=false
@@ -252,7 +264,6 @@ OPT_LAUNCHERHOST_swan=localhost
 OPT_LAUNCHERPORT_swan=8181
 OPT_LAUNCHERPROTOCOL_swan=http
 OPT_CHECKPOINTPATH_swan=/lus/scratch/foundation_engineering/determined-cp
-OPT_DEBUGLEVEL_swan=debug
 OPT_MASTERHOST_swan=swan
 OPT_MASTERPORT_swan=$USERPORT
 OPT_TRESSUPPORTED_swan=false
@@ -264,7 +275,6 @@ OPT_LAUNCHERHOST_raptor=localhost
 OPT_LAUNCHERPORT_raptor=8181
 OPT_LAUNCHERPROTOCOL_raptor=http
 OPT_CHECKPOINTPATH_raptor=/lus/scratch/foundation_engineering/determined-cp
-OPT_DEBUGLEVEL_raptor=debug
 OPT_MASTERHOST_raptor=raptor
 OPT_MASTERPORT_raptor=$USERPORT
 OPT_TRESSUPPORTED_raptor=false
@@ -284,7 +294,6 @@ OPT_LAUNCHERHOST_o184i023=localhost
 OPT_LAUNCHERPORT_o184i023=8181
 OPT_LAUNCHERPROTOCOL_o184i023=http
 OPT_CHECKPOINTPATH_o184i023=/cstor/harrow/determined-cp
-OPT_DEBUGLEVEL_o184i023=debug
 OPT_MASTERHOST_o184i023=o184i023
 OPT_MASTERPORT_o184i023=$USERPORT
 OPT_TRESSUPPORTED_o184i023=false
@@ -296,7 +305,6 @@ export OPT_LAUNCHERHOST=$(lookup "OPT_LAUNCHERHOST_$CLUSTER")
 export OPT_LAUNCHERPORT=$(lookup "OPT_LAUNCHERPORT_$CLUSTER")
 export OPT_LAUNCHERPROTOCOL=$(lookup "OPT_LAUNCHERPROTOCOL_$CLUSTER")
 export OPT_CHECKPOINTPATH=$(lookup "OPT_CHECKPOINTPATH_$CLUSTER")
-export OPT_DEBUGLEVEL=$(lookup "OPT_DEBUGLEVEL_$CLUSTER")
 export OPT_MASTERHOST=$(lookup "OPT_MASTERHOST_$CLUSTER")
 export OPT_MASTERPORT=$(lookup "OPT_MASTERPORT_$CLUSTER")
 export OPT_TRESSUPPORTED=$(lookup "OPT_TRESSUPPORTED_$CLUSTER")
@@ -334,10 +342,7 @@ if [[ -n $PULL_AUTH ]]; then
     pull_auth_token ${OPT_REMOTEUSER}$SLURMCLUSTER $CLUSTER
 fi
 
-
-if [[ -n $TRACE ]]; then
-    export OPT_DEBUGLEVEL=trace
-fi
+export OPT_DEBUGLEVEL=$DEBUGLEVEL
 
 if [[ -n $PODMAN ]]; then
     export OPT_CONTAINER_RUN_TYPE='podman'
