@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package determined.webhook.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/webhookv1";
+import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/struct.proto";
+
+message Webhook {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "url"
+      ]
+    }
+  };
+  // The id of the webhook.
+  int32 id = 1;
+  // The url of the webhook.
+  string url = 2;
+}
+
