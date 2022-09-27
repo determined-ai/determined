@@ -73,6 +73,8 @@ class DetSDTextualInversionTrainer:
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.0,
         center_crop: bool = True,
+        append_file_name_to_text: bool = False,
+        file_name_split_char: str = "_",
         generate_training_images: bool = True,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
         inference_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "pndm",
@@ -108,6 +110,8 @@ class DetSDTextualInversionTrainer:
         self.interpolation = interpolation
         self.flip_p = flip_p
         self.center_crop = center_crop
+        self.append_file_name_to_text = append_file_name_to_text
+        self.file_name_split_char = file_name_split_char
 
         self.train_batch_size = train_batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
@@ -512,6 +516,8 @@ class DetSDTextualInversionTrainer:
             interpolation=self.interpolation,
             flip_p=self.flip_p,
             center_crop=self.center_crop,
+            append_file_name_to_text=self.append_file_name_to_text,
+            file_name_split_char=self.file_name_split_char,
         )
         self.train_dataloader = DataLoader(
             self.train_dataset, batch_size=self.train_batch_size, shuffle=True
