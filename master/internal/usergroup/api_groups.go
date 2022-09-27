@@ -36,7 +36,7 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 	if err != nil {
 		return nil, err
 	}
-	err = AuthZProvider.Get().CanCreateGroups(*curUser)
+	err = AuthZProvider.Get().CanUpdateGroups(*curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -121,12 +121,13 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanGetGroup(*curUser)
+	gid := int(req.GroupId)
+
+	err = AuthZProvider.Get().CanGetGroup(*curUser, gid)
 	if err != nil {
 		return nil, err
 	}
 
-	gid := int(req.GroupId)
 	g, err := GroupByIDTx(ctx, nil, gid)
 	if err != nil {
 		return nil, err
@@ -161,7 +162,7 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanUpdateGroup(*curUser)
+	err = AuthZProvider.Get().CanUpdateGroups(*curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +208,7 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanDeleteGroup(*curUser)
+	err = AuthZProvider.Get().CanUpdateGroups(*curUser)
 	if err != nil {
 		return nil, err
 	}

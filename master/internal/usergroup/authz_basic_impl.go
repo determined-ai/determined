@@ -9,7 +9,7 @@ import (
 type UserGroupAuthZBasic struct{}
 
 // CanGetGroup always returns nil.
-func (a *UserGroupAuthZBasic) CanGetGroup(curUser model.User) error {
+func (a *UserGroupAuthZBasic) CanGetGroup(curUser model.User, gid int) error {
 	return nil
 }
 
@@ -20,18 +20,8 @@ func (a *UserGroupAuthZBasic) FilterGroupsList(curUser model.User,
 	return groups, nil
 }
 
-// CanCreateGroups always returns nil.
-func (a *UserGroupAuthZBasic) CanCreateGroups(curUser model.User) error {
-	return nil
-}
-
-// CanUpdateGroup always returns nil.
-func (a *UserGroupAuthZBasic) CanUpdateGroup(curUser model.User) error {
-	return nil
-}
-
-// CanDeleteGroup always returns nil.
-func (a *UserGroupAuthZBasic) CanDeleteGroup(curUser model.User) error {
+// CanUpdateGroups always returns nil.
+func (a *UserGroupAuthZBasic) CanUpdateGroups(curUser model.User) error {
 	return nil
 }
 

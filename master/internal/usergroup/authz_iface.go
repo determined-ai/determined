@@ -10,24 +10,18 @@ import (
 type UserGroupAuthZ interface {
 	// CanGetGroup checks whether a user can get a group.
 	// GET /api/v1/groups/{group_id}
-	CanGetGroup(curUser model.User) error
+	CanGetGroup(curUser model.User, gid int) error
 
 	// FilterGroupsList checks what groups a user can get.
 	// POST /api/v1/groups/search
 	FilterGroupsList(curUser model.User, groups []*groupv1.GroupSearchResult) (
 		[]*groupv1.GroupSearchResult, error)
 
-	// CanCreateGroups checks if a user can create a group.
+	// CanUpdateGroups checks if a user can create, delete, or update a group.
 	// POST /api/v1/groups
-	CanCreateGroups(curUser model.User) error
-
-	// CanUpdateGroup checks if a user can update groups.
 	// PUT /api/v1/groups/{group_id}
-	CanUpdateGroup(curUser model.User) error
-
-	// CanDeleteGroup checks if a user can delete a group.
 	// DELETE /api/v1/groups/{group_id}
-	CanDeleteGroup(curUser model.User) error
+	CanUpdateGroups(curUser model.User) error
 }
 
 // AuthZProvider is the authz registry for `user` package.
