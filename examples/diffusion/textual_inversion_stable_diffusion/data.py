@@ -2,7 +2,7 @@ import os
 import PIL
 import torch
 from PIL import Image
-from typing import List, Sequence
+from typing import List, Tuple, Sequence
 
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -17,9 +17,9 @@ INTERPOLATION_DICT = {
 
 
 class TextualInversionDataset(Dataset):
-    """Dataset for textual inversion, pairing tokenized captions with images.  Contains
-    dictionaries of tokenized-caption, image pairs, corresponding to the 'input_ids',
-    'pixel_values' keys, respectively.
+    """Dataset for textual inversion, pairing captions with normalized image tensors.  The
+    'input_text' and 'pixel_values' keys of each record correspond to the text and image tensor,
+    respectively, with the latter normalized to lie in the range [-1, 1].
     """
 
     def __init__(
@@ -31,6 +31,8 @@ class TextualInversionDataset(Dataset):
         interpolation: str = "bicubic",
         flip_p: float = 0.0,
         center_crop: bool = False,
+        append_file_name_to_text: bool = False,
+        file_name_split_char: str = "_",
     ):
         assert (
             len(train_img_dirs) == len(concept_tokens) == len(learnable_properties)
@@ -51,6 +53,8 @@ class TextualInversionDataset(Dataset):
         self.concept_tokens = concept_tokens
         self.center_crop = center_crop
         self.flip_p = flip_p
+        self.append_file_name_to_text = append_file_name_to_text
+        self.file_name_split_char = file_name_split_char
 
         self._base_img_trans = transforms.Compose(
             [
@@ -65,38 +69,44 @@ class TextualInversionDataset(Dataset):
             self.train_img_dirs, concept_tokens, self.learnable_properties
         ):
             templates = TEMPLATE_DICT[prop]
-            imgs = self._get_imgs_from_dir_path(dir_path)
-            img_ts = self._convert_imgs_to_tensors(imgs)
-            for img_t in img_ts:
+            imgs_and_file_paths = self._get_imgs_and_file_paths_from_dir_path(dir_path)
+            for img, file_path in imgs_and_file_paths:
+                img_t = self._convert_img_to_tensor(img)
                 for text in templates:
                     text_with_token = text.format(concept_token)
+                    if append_file_name_to_text:
+                        file_path_without_extension = ".".join(file_path.split(".")[:-1])
+                        split_file_name = file_path_without_extension.split(
+                            self.file_name_split_char
+                        )
+                        joined_file_name = " ".join(split_file_name)
+                        text_with_token = f"{text_with_token} {joined_file_name}"
                     self.records.append({"input_text": text_with_token, "pixel_values": img_t})
 
-    def _get_imgs_from_dir_path(self, dir_path: str) -> List[Image.Image]:
+    def _get_imgs_and_file_paths_from_dir_path(
+        self, dir_path: str
+    ) -> List[Tuple[Image.Image, str]]:
         """Returns a list of PIL Images loaded from all valid files contained in dir_path."""
-        imgs = []
+        imgs_and_file_paths = []
         for file_path in os.listdir(dir_path):
             path = os.path.join(dir_path, file_path)
             try:
                 img = Image.open(path)
                 if not img.mode == "RGB":
                     img = img.convert("RGB")
-                imgs.append(img)
+                imgs_and_file_paths.append((img, file_path))
             except PIL.UnidentifiedImageError:
                 print(f"File at {path} raised UnidentifiedImageError and will be skipped.")
-        return imgs
+        return imgs_and_file_paths
 
-    def _convert_imgs_to_tensors(self, imgs: List[Image.Image]) -> List[torch.Tensor]:
-        """Converts a list of PIL images into appropriately transformed tensors."""
-        img_ts = []
-        for img in imgs:
-            if self.center_crop:
-                img = transforms.CenterCrop(size=min(img.size))(img)
-            img_t = self._base_img_trans(img)
-            # Normalize the tensor to be in the range [-1, 1]
-            img_t = (img_t - 0.5) * 2.0
-            img_ts.append(img_t)
-        return img_ts
+    def _convert_img_to_tensor(self, img: Image.Image) -> torch.Tensor:
+        """Converts a PIL image into an appropriately transformed tensor."""
+        if self.center_crop:
+            img = transforms.CenterCrop(size=min(img.size))(img)
+        img_t = self._base_img_trans(img)
+        # Normalize the tensor to be in the range [-1, 1]
+        img_t = (img_t - 0.5) * 2.0
+        return img_t
 
     def __len__(self):
         return len(self.records)
