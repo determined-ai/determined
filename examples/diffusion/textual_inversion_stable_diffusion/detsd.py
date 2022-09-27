@@ -309,6 +309,7 @@ class DetSDTextualInversionTrainer:
 
         # Get the text embedding for the prompt.
         batch_text = batch["input_text"]
+        print("BATCH TEXT", batch_text)
         dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
         dummy_text_noise_pred = self._get_noise_pred(
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
