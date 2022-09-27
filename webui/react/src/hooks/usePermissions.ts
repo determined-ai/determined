@@ -2,6 +2,8 @@ import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import {
+  ClientMockPermissionType,
+  ClientPermissionType,
   DetailedUser,
   ExperimentPermissionsArgs,
   ModelItem,
@@ -184,10 +186,10 @@ const relevantPermissions = (
   userAssignments?: UserAssignment[],
   userRoles?: UserRole[],
   workspaceId?: number,
-): Set<V1PermissionType> => {
+): Set<ClientPermissionType> => {
   if (!userAssignments || !userRoles) {
     // console.error('missing UserAssignment or UserRole');
-    return new Set<V1PermissionType>();
+    return new Set<ClientPermissionType>();
   }
   const relevantAssigned = userAssignments
     .filter((a) => a.cluster || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)))
@@ -200,7 +202,7 @@ const relevantPermissions = (
       // but not all of its permissions?
       permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
     });
-  return new Set<V1PermissionType>(permissions.map((p) => p.id));
+  return new Set<ClientPermissionType>(permissions.map((p) => p.id));
 };
 
 // User actions
@@ -223,7 +225,7 @@ const canViewGroups = ({ rbacReadPermission, rbacEnabled, user }: RbacOptsProps)
   return rbacReadPermission || (!!user && (rbacEnabled || user.isAdmin));
 =======
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin
       : permitted.has(V1PermissionType.ADMINISTRATEUSER))
   );
@@ -235,8 +237,12 @@ const canViewGroups = (
   userRoles?: UserRole[],
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
+<<<<<<< HEAD
   return !!user && (permitted.has(V1PermissionType.OSSUSER) ? user.isAdmin : true);
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
+=======
+  return !!user && (permitted.has(ClientMockPermissionType.OSSUSER) ? user.isAdmin : true);
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
 };
 
 const canModifyGroups = ({
@@ -253,7 +259,7 @@ const canModifyGroups = ({
     (!!user && (rbacEnabled ? permitted.has('PERMISSION_CAN_UPDATE_GROUP') : user.isAdmin))
 =======
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin
       : permitted.has(V1PermissionType.UPDATEGROUP))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -271,7 +277,8 @@ const canCreateExperiment = (
 =======
   return (
     !!workspace &&
-    (permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.CREATEEXPERIMENT))
+    (permitted.has(ClientMockPermissionType.OSSUSER) ||
+      permitted.has(V1PermissionType.CREATEEXPERIMENT))
   );
 >>>>>>> e69ab586d (fmt experiment roles)
 };
@@ -292,7 +299,7 @@ const canDeleteExperiment = (
 =======
     !!experiment &&
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === experiment.userId
       : permitted.has(V1PermissionType.DELETEEXPERIMENT))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -309,8 +316,13 @@ const canModifyExperiment = (
     rbacAllPermission || (!!workspace && (!rbacEnabled || permitted.has('update_experiments')))
 =======
     !!workspace &&
+<<<<<<< HEAD
     (permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.UPDATEEXPERIMENT))
 >>>>>>> e69ab586d (fmt experiment roles)
+=======
+    (permitted.has(ClientMockPermissionType.OSSUSER) ||
+      permitted.has(V1PermissionType.UPDATEEXPERIMENT))
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
   );
 };
 
@@ -322,9 +334,13 @@ const canModifyExperimentMetadata = (
   return (
     !!workspace &&
 <<<<<<< HEAD
+<<<<<<< HEAD
     (!rbacEnabled || rbacAllPermission || permitted.has('update_experiment_metadata'))
 =======
     (permitted.has(V1PermissionType.OSSUSER) ||
+=======
+    (permitted.has(ClientMockPermissionType.OSSUSER) ||
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
       permitted.has(V1PermissionType.UPDATEEXPERIMENTMETADATA))
 >>>>>>> e69ab586d (fmt experiment roles)
   );
@@ -345,7 +361,7 @@ const canMoveExperiment = (
   const srcPermit = relevantPermissions(userAssignments, userRoles, experiment.workspaceId);
   return (
     !!user &&
-    (srcPermit.has(V1PermissionType.OSSUSER)
+    (srcPermit.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === experiment.userId
       : srcPermit.has(V1PermissionType.DELETEEXPERIMENT))
   );
@@ -379,8 +395,13 @@ const canMoveExperimentsTo = (
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
 =======
     !!user &&
+<<<<<<< HEAD
     (destPermit.has(V1PermissionType.OSSUSER) || destPermit.has(V1PermissionType.CREATEEXPERIMENT))
 >>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
+=======
+    (destPermit.has(ClientMockPermissionType.OSSUSER) ||
+      destPermit.has(V1PermissionType.CREATEEXPERIMENT))
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
   );
 };
 
@@ -393,9 +414,13 @@ const canViewExperimentArtifacts = (
   return (
     !!workspace &&
 <<<<<<< HEAD
+<<<<<<< HEAD
     (!rbacEnabled || rbacReadPermission || permitted.has('view_experiment_artifacts'))
 =======
     (permitted.has(V1PermissionType.OSSUSER) ||
+=======
+    (permitted.has(ClientMockPermissionType.OSSUSER) ||
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
       permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS))
 >>>>>>> e69ab586d (fmt experiment roles)
   );
@@ -416,7 +441,7 @@ const canGetPermissions = ({
     (!!user && (rbacEnabled ? permitted.has('view_permissions') : user.isAdmin))
 =======
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin
 <<<<<<< HEAD
       : permitted.has(V1PermissionType.ADMINISTRATEUSER))
@@ -448,7 +473,7 @@ const canDeleteModel = (
 =======
     !!model &&
     !!user &&
-    // (permitted.has(V1PermissionType.OSSUSER) ?
+    // (permitted.has(ClientMockPermissionType.OSSUSER) ?
     (user.isAdmin || user.id === model.userId)
     // : permitted.has('delete_model'))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -477,7 +502,7 @@ const canDeleteModelVersion = (
 =======
     !!modelVersion &&
     !!user &&
-    // (permitted.has(V1PermissionType.OSSUSER) ?
+    // (permitted.has(ClientMockPermissionType.OSSUSER) ?
     (user.isAdmin || user.id === modelVersion.userId)
     // : permitted.has('delete_model_version'))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -511,7 +536,7 @@ const canDeleteWorkspaceProjects = (
     !!workspace &&
     !!user &&
     !!project &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === project.userId
       : permitted.has(V1PermissionType.DELETEPROJECT))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -535,7 +560,7 @@ const canModifyWorkspaceProjects = (
     !!workspace &&
     !!user &&
     !!project &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === project.userId
       : permitted.has(V1PermissionType.UPDATEPROJECT))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -557,7 +582,7 @@ const canMoveWorkspaceProjects = (
   const srcPermit = relevantPermissions(userAssignments, userRoles, project?.workspaceId);
   return (
     !!user &&
-    (srcPermit.has(V1PermissionType.OSSUSER)
+    (srcPermit.has(ClientMockPermissionType.OSSUSER)
       ? !project || user.isAdmin || user.id === project.userId
       : srcPermit.has(V1PermissionType.DELETEPROJECT))
   );
@@ -581,6 +606,7 @@ const canMoveProjectsTo = (
 =======
     !!user &&
 <<<<<<< HEAD
+<<<<<<< HEAD
     !!project &&
     (srcPermit.has(V1PermissionType.OSSUSER)
       ? user.isAdmin || user.id === project.userId
@@ -590,6 +616,10 @@ const canMoveProjectsTo = (
 =======
     (destPermit.has(V1PermissionType.OSSUSER) || destPermit.has(V1PermissionType.CREATEPROJECT))
 >>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
+=======
+    (destPermit.has(ClientMockPermissionType.OSSUSER) ||
+      destPermit.has(V1PermissionType.CREATEPROJECT))
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
   );
 };
 
@@ -603,6 +633,7 @@ const canCreateWorkspace = ({
   const permitted = relevantPermissions(userAssignments, userRoles);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   return !rbacEnabled || rbacAllPermission || permitted.has('create_workspace');
 =======
   return (
@@ -612,6 +643,12 @@ const canCreateWorkspace = ({
 =======
   return permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.CREATEWORKSPACE);
 >>>>>>> 37f4f48f2 (change rules for moving projects/experiments)
+=======
+  return (
+    permitted.has(ClientMockPermissionType.OSSUSER) ||
+    permitted.has(V1PermissionType.CREATEWORKSPACE)
+  );
+>>>>>>> da7238c50 (remove OSSUSER from server permission codes, add ClientPermissionType)
 };
 
 const canDeleteWorkspace = (
@@ -630,7 +667,7 @@ const canDeleteWorkspace = (
 =======
     !!workspace &&
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === workspace.userId
       : permitted.has(V1PermissionType.DELETEWORKSPACE))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -653,7 +690,7 @@ const canModifyWorkspace = (
 =======
     !!workspace &&
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === workspace.userId
       : permitted.has(V1PermissionType.UPDATEWORKSPACE))
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
@@ -670,7 +707,8 @@ const canViewWorkspace = (
 =======
   return (
     !!workspace &&
-    (permitted.has(V1PermissionType.OSSUSER) || permitted.has(V1PermissionType.VIEWWORKSPACE))
+    (permitted.has(ClientMockPermissionType.OSSUSER) ||
+      permitted.has(V1PermissionType.VIEWWORKSPACE))
   );
 >>>>>>> f492f26de (chore: convert permission.name string to permission.id enum)
 };
@@ -689,7 +727,7 @@ const canUpdateRoles = (
 =======
     !!workspace &&
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === workspace.userId
       : permitted.has(V1PermissionType.UPDATEROLES))
 >>>>>>> e69ab586d (fmt experiment roles)
@@ -710,7 +748,7 @@ const canAssignRoles = (
 =======
     !!workspace &&
     !!user &&
-    (permitted.has(V1PermissionType.OSSUSER)
+    (permitted.has(ClientMockPermissionType.OSSUSER)
       ? user.isAdmin || user.id === workspace.userId
       : permitted.has(V1PermissionType.ASSIGNROLES))
 >>>>>>> e69ab586d (fmt experiment roles)

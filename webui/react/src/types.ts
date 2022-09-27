@@ -813,8 +813,14 @@ export interface UserAssignment {
   workspaces?: number[];
 }
 
+export enum ClientMockPermissionType {
+  OSSUSER = 'PERMISSION_TYPE_OSS_USER',
+}
+
+export type ClientPermissionType = Api.V1PermissionType | ClientMockPermissionType;
+
 export interface Permission {
-  id: Api.V1PermissionType;
+  id: ClientPermissionType;
   isGlobal: boolean;
 }
 

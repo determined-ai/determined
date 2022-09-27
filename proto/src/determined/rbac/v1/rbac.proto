@@ -85,9 +85,6 @@ enum PermissionType {
   // If assigned at a workspace scope, can only assign roles to that workspace
   // scope.
   PERMISSION_TYPE_ASSIGN_ROLES = 6002;
-
-  // Permission used on client to expect open source product behavior.
-  PERMISSION_TYPE_OSS_USER = -1;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.
