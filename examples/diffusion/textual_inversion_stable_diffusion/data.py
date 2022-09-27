@@ -73,7 +73,7 @@ class TextualInversionDataset(Dataset):
                     self.records.append({"input_text": text_with_token, "pixel_values": img_t})
 
     def _get_imgs_from_dir_path(self, dir_path: str) -> List[Image.Image]:
-        """Gets all images from a directory and converts them to tensors."""
+        """Returns a list of PIL Images loaded from all valid files contained in dir_path."""
         imgs = []
         for file_path in os.listdir(dir_path):
             path = os.path.join(dir_path, file_path)
