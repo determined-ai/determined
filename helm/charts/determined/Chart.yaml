@@ -11,4 +11,4 @@ annotations:
 # a non-release version (e.g., X.Y.Z.dev0) you will have to specify an
 # existing official release version (e.g., X.Y.Z) or specify a commit has
 # that has been publicly published (all commits from master).
-appVersion: "0.19.2"
+appVersion: "0.19.3"
