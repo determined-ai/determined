@@ -16,9 +16,9 @@ from determined.common.storage import shared
 class DownloadMode(enum.Enum):
     """A list of supported checkpoint download modes."""
 
-    DIRECT = "direct"  # Download directly from checkpoint storage
-    MASTER = "master"  # Proxy download through the master
-    AUTO = "auto"  # Auto select between DIRECT and MASTER
+    DIRECT = "direct"  # Download directly from checkpoint storage.
+    MASTER = "master"  # Proxy download through the master.
+    AUTO = "auto"  # Attemp DIRECT and fall back to MASTER.
 
 
 class ModelFramework(enum.Enum):
@@ -138,7 +138,7 @@ class Checkpoint:
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
             mode (DownloadMode): Mode governs how a checkpoint is downloaded. Refer to
-                the definition of for more details.
+                the definition of DownloadMode for details.
         """
         if path is not None:
             local_ckpt_dir = pathlib.Path(path)
@@ -220,7 +220,7 @@ class Checkpoint:
         Arguments:
             sess (api.Session): a session for the download
             uuid (string): the uuid of the checkpoint to be downloaded
-            local_ckpt_dir (Path-like): the local directory where the download is downloaded
+            local_ckpt_dir (Path-like): the local directory where the checkpoint is downloaded
         """
         local_ckpt_dir.mkdir(parents=True, exist_ok=True)
 
