@@ -21,7 +21,7 @@ type UserGroupAuthZ interface {
 	// POST /api/v1/groups
 	// PUT /api/v1/groups/{group_id}
 	// DELETE /api/v1/groups/{group_id}
-	CanUpdateGroups(curUser model.User) error
+	CanUpdateGroups(curUser model.User) (bool, error)
 }
 
 // AuthZProvider is the authz registry for `user` package.

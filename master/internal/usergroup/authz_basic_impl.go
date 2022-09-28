@@ -24,11 +24,11 @@ func (a *UserGroupAuthZBasic) FilterGroupsList(curUser model.User,
 }
 
 // CanUpdateGroups always returns nil.
-func (a *UserGroupAuthZBasic) CanUpdateGroups(curUser model.User) error {
+func (a *UserGroupAuthZBasic) CanUpdateGroups(curUser model.User) (bool, error) {
 	if curUser.Admin {
-		return nil
+		return true, nil
 	}
-	return fmt.Errorf("non admin users may not update groups")
+	return false, fmt.Errorf("access denied")
 }
 
 func init() {

@@ -164,9 +164,11 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 		return nil, err
 	}
 
-	err = AuthZProvider.Get().CanUpdateGroups(*curUser)
+	canUpdate, err := AuthZProvider.Get().CanUpdateGroups(*curUser)
 	if err != nil {
 		return nil, err
+	} else if !canUpdate {
+		return nil, status.Errorf(codes.NotFound, "group not found: %d", req.GroupId)
 	}
 
 	var addUsers []model.UserID
