@@ -44,7 +44,7 @@ DEFAULT_SCHEDULER_KWARGS_DICT = {
 
 
 class DetSDTextualInversionTrainer:
-    """Class for training a textual inversion model on a Determined cluster."""
+    """Perform Textual Inversion fine-tuning on a Determined cluster."""
 
     def __init__(
         self,
@@ -220,7 +220,8 @@ class DetSDTextualInversionTrainer:
     def init_on_cluster(cls) -> "DetSDTextualInversionTrainer":
         """Creates a DetStableDiffusion instance on the cluster, drawing hyperparameters and other
         needed information from the Determined master.  Expects the `hyperparameters` section of the
-        config to be broken into `model`, `data`, `training`, and `inference` subsections."""
+        config to be broken into `model`, `data`, `training`, and `inference` subsections.
+        """
         info = det.get_cluster_info()
         hparams = info.trial.hparams
         latest_checkpoint = info.latest_checkpoint
@@ -235,7 +236,8 @@ class DetSDTextualInversionTrainer:
 
     def train_on_cluster(self) -> None:
         """Run the full textual inversion training loop. Training must be performed on a
-        Determined cluster."""
+        Determined cluster.
+        """
         self.logger.info("--------------- Starting Training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
         self.logger.info(f"Learning rate: {self.learning_rate}")
@@ -419,9 +421,8 @@ class DetSDTextualInversionTrainer:
             )
 
     def _add_new_tokens_and_update_embeddings(self) -> None:
-        """
-        Add new concept tokens to the tokenizer and update the corresponding embedding layers in the
-        text encoder.
+        """Add new concept tokens to the tokenizer and update the corresponding embedding layers in
+        the text encoder.
         """
         for concept_token, initializer_tokens in zip(self.concept_tokens, self.initializer_tokens):
             (
@@ -515,8 +516,8 @@ class DetSDTextualInversionTrainer:
         )
 
     def _build_optimizer(self) -> None:
-        """Construct the optimizer, recalling that only the embedding vectors are to be trained."""
         token_embedding_layer = self._get_token_embedding_layer()
+        # Only optimize the newly-added embedding vectors.
         new_embedding_params = token_embedding_layer.new_embedding.parameters()
         self.optimizer = self._optim_dict[self.optimizer_name](
             new_embedding_params,
@@ -563,6 +564,7 @@ class DetSDTextualInversionTrainer:
                         path.joinpath("learned_embeddings_dict.pt"),
                         map_location=self.accelerator.device,
                     )
+
                     token_embedding_layer = self._get_token_embedding_layer()
                     for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
                         learned_embeddings = learned_embeddings_dict[concept_token][
@@ -583,7 +585,7 @@ class DetSDTextualInversionTrainer:
                             new_embedding_layer.weight.data[dummy_id - id_offset] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
-        """Checkpoints the training state and pipeline."""
+        """Save the training state, metadata, and any generated images."""
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
         if self.accelerator.is_main_process:
@@ -615,7 +617,7 @@ class DetSDTextualInversionTrainer:
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))
 
     def _build_pipeline(self) -> None:
-        """Build the pipeline for the chief worker only."""
+        # Only the chief worker requires the pipeline.
         if self.accelerator.is_main_process:
             inference_scheduler = NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
             self.inference_scheduler_kwargs = {
@@ -635,7 +637,6 @@ class DetSDTextualInversionTrainer:
             ).to(self.accelerator.device)
 
     def _generate_and_write_tb_imgs(self, core_context: det.core.Context) -> None:
-        """Generates images using the current pipeline and logs them to Tensorboard."""
         self.logger.info("Generating sample images")
         tb_dir = core_context.train.get_tensorboard_path()
         tb_writer = SummaryWriter(log_dir=tb_dir)
@@ -663,7 +664,6 @@ class DetSDTextualInversionTrainer:
         core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
-        """Report training metrics to the Determined master after reducing across workers."""
         self.accelerator.wait_for_everyone()
         mean_metrics = {
             metric_name: torch.tensor(metric_values, device=self.accelerator.device).mean()
@@ -721,8 +721,8 @@ class DetSDTextualInversionTrainer:
 
 
 class DetSDTextualInversionPipeline:
-    """Class for generating images from a Stable Diffusion checkpoint pre-trained using Determined
-    AI.  Initialize with no arguments in order to run plan Stable Diffusion without any trained
+    """Class for generating images from a Stable Diffusion checkpoint trained using Determined
+    AI. Initialize with no arguments in order to run plan Stable Diffusion without any trained
     textual inversion embeddings.
     """
 
@@ -739,7 +739,7 @@ class DetSDTextualInversionPipeline:
         use_autocast: bool = True,
         use_fp16: bool = True,
     ) -> None:
-        # We assume that the Huggingface User Access token has been stored as a HF_AUTH_TOKEN
+        # We assume that the Huggingface User Access token has been stored as the HF_AUTH_TOKEN
         # environment variable. See https://huggingface.co/docs/hub/security-tokens
         try:
             self.use_auth_token = os.environ["HF_AUTH_TOKEN"]
@@ -784,7 +784,7 @@ class DetSDTextualInversionPipeline:
     ) -> None:
         """Load concepts from one or more checkpoint paths, each of which is expected contain a
         file with the name specified by the `learned_embeddings_filename` init arg. The file is
-        expected to contain a dictionary whose keys are concept_token names and whose values are
+        expected to contain a dictionary whose keys are the `concept_token`s and whose values are
         dictionaries containing an `initializer_token` key and a `learned_embeddings` whose
         corresponding values are the initializer string and learned embedding tensors, respectively.
         """
@@ -1009,8 +1009,9 @@ def add_new_tokens_to_tokenizer(
 ) -> Tuple[List[int], List[int], str]:
     """Helper function for adding new tokens to the tokenizer and extending the corresponding
     embeddings appropriately, given a single concept token and its sequence of corresponding
-    initializer tokens.  Returns the dummy representation of the initializer tokens as a str,
-    the corresponding ids, and the new, ExtendedEmbedding layer."""
+    initializer tokens.  Returns the lists of ids for the initializer tokens and their dummy
+    replacements, as well as the string representation of the dummies.
+    """
     initializer_ids = tokenizer(
         initializer_tokens,
         padding="max_length",
