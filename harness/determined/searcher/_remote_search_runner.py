@@ -12,10 +12,10 @@ logger = logging.getLogger("determined.searcher")
 
 class RemoteSearchRunner(searcher.SearchRunner):
     """
-    ``RemoteSearchRunner`` performs a search for optimal hyperparameter values on-cluster,
+    ``RemoteSearchRunner`` performs a search for optimal hyperparameter values,
     applying the provided ``SearchMethod`` (you will subclass ``SearchMethod`` and provide
     an instance of the derived class).
-    ``RemoteSearchRunner`` is intended to execute on-cluster: it runs a meta-experiment
+    ``RemoteSearchRunner`` executes on-cluster: it runs a meta-experiment
     using ``Core API``.
     """
 

@@ -1,5 +1,6 @@
 from determined.searcher._search_method import (
     SearchMethod,
+    SearcherState,
     Close,
     Create,
     ExitedReason,
