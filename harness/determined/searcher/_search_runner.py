@@ -86,11 +86,6 @@ class SearchRunner:
                 f"experiment {self.search_method.searcher_state.experiment_id} is "
                 f"inactive; state={event.experimentInactive.experimentState}"
             )
-            if (
-                event.experimentInactive.experimentState
-                == bindings.determinedexperimentv1State.STATE_COMPLETED
-            ):
-                self.search_method.searcher_state.experiment_completed = True
 
             raise _ExperimentInactiveException(event.experimentInactive.experimentState)
 
@@ -150,13 +145,15 @@ class SearchRunner:
                             ):
                                 self.search_method.searcher_state.experiment_completed = True
 
-                            experiment_is_active = False
                             if (
                                 event.experimentInactive.experimentState
                                 == bindings.determinedexperimentv1State.STATE_PAUSED
                             ):
-                                experiment_is_active = not self.pause_searcher(session)
+                                self._show_experiment_paused_msg()
+                            else:
+                                experiment_is_active = False
                             break
+
                         else:
                             operations = self._get_operations(event)
 
@@ -166,10 +163,6 @@ class SearchRunner:
 
                     first_event = False
                     self.post_operations(session, experiment_id, event, operations)
-
-                    if self.maybe_preempt(session, experiment_id):
-                        experiment_is_active = False
-                        break
 
         except KeyboardInterrupt:
             print("Runner interrupted")
@@ -203,12 +196,8 @@ class SearchRunner:
     def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
         pass
 
-    def pause_searcher(self, session: client.Session) -> bool:
+    def _show_experiment_paused_msg(self) -> None:
         pass
-
-    def maybe_preempt(self, session: client.Session, experiment_id: int) -> bool:
-        # CoreSearchRunner has to implement this method to support preemption
-        return False
 
     @staticmethod
     def _searcher_event_as_dict(event: bindings.v1SearcherEvent) -> dict:
@@ -335,13 +324,11 @@ class LocalSearchRunner(SearchRunner):
     def _get_state_path(self, experiment_id: int) -> Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
 
-    def pause_searcher(self, session: client.Session) -> bool:
+    def _show_experiment_paused_msg(self) -> None:
         logging.warning(
             f"Experiment {self.search_method.searcher_state.experiment_id} "
-            f"has been paused in the WebUI. "
-            f"If you leave searcher process running, your search method will "
-            f"automatically resume when the experiment becomes active again. "
+            f"has been paused. If you leave searcher process running, your search method"
+            f" will automatically resume when the experiment becomes active again. "
             f"Otherwise, you can terminate this process and restart it "
             f"manually to continue the search."
         )
-        return False

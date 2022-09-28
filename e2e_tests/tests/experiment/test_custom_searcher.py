@@ -174,83 +174,9 @@ def test_run_random_searcher_exp_core_api(
 
 
 @pytest.mark.e2e_cpu_2a
-def test_pause_random_searcher_core_api() -> None:
-    config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
-    exp_name = f"random-pause1-{TIMESTAMP}"
-    config["entrypoint"] += " --exp-name " + exp_name
-    config["entrypoint"] += " --config-name noop.yaml"
-
-    model_def_path = conf.fixtures_path("custom_searcher")
-
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-
-        searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
-        exp.wait_for_experiment_state(
-            searcher_exp_id,
-            determinedexperimentv1State.STATE_RUNNING,
-        )
-    # make sure both experiments have started by checking
-    # that multi-trial experiment has at least 1 running trials
-    multi_trial_exp_id = exp.wait_for_experiment_by_name_is_active(exp_name, 1)
-
-    # pause searcher
-    exp.pause_experiment(searcher_exp_id)
-    exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_PAUSED
-    )
-    time.sleep(10)
-
-    # multi-trial should be paused after pausing searcher
-    exp.wait_for_experiment_state(
-        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_PAUSED
-    )
-    time.sleep(10)
-
-    # activate multi-trial experiment
-    exp.activate_experiment(multi_trial_exp_id)
-    exp.wait_for_experiment_state(
-        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
-    )
-
-    # activate searcher
-    exp.activate_experiment(searcher_exp_id)
-    exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
-    )
-
-    # wait for experiment to complete
-    exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_COMPLETED
-    )
-
-    # searcher experiment
-    searcher_exp = bindings.get_GetExperiment(
-        exp.determined_test_session(), experimentId=searcher_exp_id
-    ).experiment
-    assert searcher_exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-
-    # actual experiment
-    experiment = bindings.get_GetExperiment(
-        exp.determined_test_session(), experimentId=multi_trial_exp_id
-    ).experiment
-    assert experiment.numTrials == 5
-
-    trials = bindings.get_GetExperimentTrials(
-        exp.determined_test_session(), experimentId=experiment.id
-    ).trials
-    for trial in trials:
-        assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-        assert trial.totalBatchesProcessed == 500
-
-    check_if_experiment_was_paused(searcher_exp_id)
-
-
-@pytest.mark.e2e_cpu_2a
 def test_pause_multi_trial_random_searcher_core_api() -> None:
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
-    exp_name = f"random-pause2-{TIMESTAMP}"
+    exp_name = f"random-pause-{TIMESTAMP}"
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name noop.yaml"
 
@@ -274,13 +200,6 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     exp.wait_for_experiment_state(
         multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_PAUSED
     )
-    time.sleep(10)
-
-    # searcher should be paused after pausing multi-trial experiment
-    exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_PAUSED
-    )
-    time.sleep(10)
 
     # activate multi-trial experiment
     exp.activate_experiment(multi_trial_exp_id)
@@ -288,13 +207,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
     )
 
-    # activate searcher
-    exp.activate_experiment(searcher_exp_id)
-    exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
-    )
-
-    # wait for experiment to complete
+    # wait for searcher to complete
     exp.wait_for_experiment_state(
         searcher_exp_id, bindings.determinedexperimentv1State.STATE_COMPLETED
     )
@@ -317,20 +230,6 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     for trial in trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
         assert trial.totalBatchesProcessed == 500
-
-    check_if_experiment_was_paused(searcher_exp_id)
-
-
-def check_if_experiment_was_paused(experiment_id: int, count: int = 1) -> None:
-    # check logs to ensure failures actually happened
-    logs = str(
-        subprocess.check_output(
-            ["det", "-m", conf.make_master_url(), "experiment", "logs", str(experiment_id)]
-        )
-    )
-    # check for pausing operations
-    pausing_count = logs.count("determined.searcher: Pausing")
-    assert pausing_count == count
 
 
 @pytest.mark.e2e_cpu_2a
