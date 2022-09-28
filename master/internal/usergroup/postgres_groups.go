@@ -146,7 +146,7 @@ func SearchGroupsQuery(name string, userBelongsTo model.UserID,
 
 // SearchGroupsPaginated adds pagination arguments to a group search query and
 // executes it. SearchGroupsPaginated does not return an error if no groups
-// are found (that is a successful search)
+// are found (that is a successful search).
 func SearchGroupsPaginated(ctx context.Context,
 	query *bun.SelectQuery, offset, limit int,
 ) (groups []Group, memberCounts []int32, tableRows int, err error) {
