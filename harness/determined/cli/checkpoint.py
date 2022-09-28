@@ -152,10 +152,10 @@ main_cmd = Cmd(
                     default=DownloadMode.AUTO,
                     type=DownloadMode,
                     help=(
-                        "Select different download modes. "
-                        f"'{DownloadMode.DIRECT}' directly download from checkpoint storage. "
-                        f"'{DownloadMode.MASTER}' download via the master. "
-                        f"'{DownloadMode.AUTO}' first attempt a direct download but fall "
+                        "Select different download modes: "
+                        f"'{DownloadMode.DIRECT}' to directly download from checkpoint storage; "
+                        f"'{DownloadMode.MASTER}' to download via the master; "
+                        f"'{DownloadMode.AUTO}' to first attempt a direct download and fall "
                         f"back to '{DownloadMode.MASTER}'."
                     ),
                 ),

@@ -20,6 +20,9 @@ class DownloadMode(enum.Enum):
     MASTER = "master"  # Proxy download through the master.
     AUTO = "auto"  # Attemp DIRECT and fall back to MASTER.
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class ModelFramework(enum.Enum):
     PYTORCH = 1
