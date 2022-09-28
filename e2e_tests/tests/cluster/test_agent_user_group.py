@@ -11,6 +11,7 @@ from tests import experiment as exp
 
 GID, GROUPNAME = 1234, "group1234"
 
+
 # TODO(ilia): Add this utility to Python SDK.
 def _delete_workspace_and_check(
     sess: Session, w: bindings.v1Workspace, max_ticks: int = 60
