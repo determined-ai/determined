@@ -81,7 +81,7 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 }
 
 func (m *Master) getCheckpointImpl(
-	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) (retErr error) {
+	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) error {
 	// Assume a checkpoint always has experiment configs
 	storageConfig, err := m.getCheckpointStorageConfig(id)
 	switch {
@@ -102,20 +102,20 @@ func (m *Master) getCheckpointImpl(
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	defer func() {
-		for _, v := range []io.Closer{downloader, dw} {
-			if innerErr := v.Close(); innerErr != nil && retErr == nil {
-				// Only surface this error if there has been none.
-				retErr = echo.NewHTTPError(http.StatusInternalServerError,
-					fmt.Sprintf("failed to complete checkpoint download: %s", innerErr.Error()))
-			}
-		}
-	}()
 
 	err = downloader.Download(ctx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			fmt.Sprintf("unable to download checkpoint %s: %s", id.String(), err.Error()))
+	}
+
+	// Closing the writers will cause Echo to send a 200 response to the client. Hence we
+	// cannot use defer, and we close the writers only when there has been no error.
+	for _, v := range []io.Closer{downloader, dw} {
+		if err := v.Close(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError,
+				fmt.Sprintf("failed to complete checkpoint download: %s", err.Error()))
+		}
 	}
 
 	return nil
