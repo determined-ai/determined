@@ -5,6 +5,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -62,7 +63,9 @@ const setup = () =>
       <DndProvider backend={HTML5Backend}>
         <HelmetProvider>
           <Router history={history}>
-            <Container />
+            <CompatRouter>
+              <Container />
+            </CompatRouter>
           </Router>
         </HelmetProvider>
       </DndProvider>

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Router } from 'react-router-dom';
-import { useParams } from 'react-router-dom-v5-compat';
+import { CompatRouter, useParams } from 'react-router-dom-v5-compat';
 
 import StoreProvider from 'contexts/Store';
 import {
@@ -26,8 +26,8 @@ import RESPONSES from './ExperimentDetails.test.mock';
  * then override the implementation or return value
  */
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: jest.fn().mockReturnValue({ experimentId: undefined }),
 }));
 
@@ -56,7 +56,9 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <Router history={history}>
-          <ExperimentDetails />
+          <CompatRouter>
+            <ExperimentDetails />
+          </CompatRouter>
         </Router>
       </HelmetProvider>
     </StoreProvider>,
