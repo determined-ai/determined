@@ -2182,7 +2182,8 @@ workflows:
   test-intg:
     jobs:
       - test-intg-downstream
-      - test-intg-master
+      - test-intg-master:
+          context: storage-unit-tests
       - test-intg-agent
       - go-coverage:
           requires:
