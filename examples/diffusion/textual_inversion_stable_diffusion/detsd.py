@@ -1020,11 +1020,12 @@ def add_new_tokens_to_tokenizer(
         return_tensors="pt",
         add_special_tokens=False,
     ).input_ids
-    # Get all non-special tokens
+
     try:
         special_token_ids = tokenizer.all_special_ids
     except AttributeError:
         special_token_ids = []
+
     non_special_initializer_locations = torch.isin(
         initializer_ids, torch.tensor(special_token_ids), invert=True
     )
@@ -1033,6 +1034,7 @@ def add_new_tokens_to_tokenizer(
         raise ValueError(
             f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
         )
+
     # Add a dummy placeholder token for every token in the initializer.
     dummy_placeholder_token_list = [
         f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
@@ -1043,7 +1045,7 @@ def add_new_tokens_to_tokenizer(
         raise ValueError(
             f"Subset of {dummy_placeholder_token_list} tokens already exist in tokenizer."
         )
-    # Get the ids of the new placeholders.
+
     dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(dummy_placeholder_token_list)
     # Sanity check
     assert len(dummy_placeholder_ids) == len(
