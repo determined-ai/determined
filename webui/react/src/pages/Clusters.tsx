@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
@@ -20,9 +19,9 @@ enum TabType {
   Logs = 'logs',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
-}
+};
 
 const DEFAULT_TAB_KEY = TabType.Overview;
 

@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -36,11 +35,11 @@ enum TabType {
   Workloads = 'workloads',
 }
 
-interface Params {
+type Params = {
   experimentId?: string;
   tab?: TabType;
   trialId: string;
-}
+};
 
 const DEFAULT_TAB_KEY = TabType.Overview;
 
@@ -49,16 +48,16 @@ const TrialDetailsComp: React.FC = () => {
   const [experiment, setExperiment] = useState<ExperimentBase>();
   const [isFetching, setIsFetching] = useState(false);
   const navigate = useNavigate();
-  const routeParams = useParams<Params>();
-  const [tabKey, setTabKey] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
-  const [trialId, setTrialId] = useState<number>(parseInt(routeParams.trialId));
+  const { experimentId, tab, trialId: trialID } = useParams<Params>();
+  const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_TAB_KEY);
+  const [trialId, setTrialId] = useState<number>(parseInt(trialID ?? ''));
   const [trialDetails, setTrialDetails] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
   });
   const pageRef = useRef<HTMLElement>(null);
 
-  const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
+  const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
@@ -76,7 +75,7 @@ const TrialDetailsComp: React.FC = () => {
       setExperiment(response);
 
       // Experiment id does not exist in route, reroute to the one with it
-      if (!routeParams.experimentId) {
+      if (!experimentId) {
         navigate(paths.trialDetails(trial.id, trial.experimentId), { replace: true });
       }
     } catch (e) {
@@ -89,7 +88,7 @@ const TrialDetailsComp: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [canceler, navigate, routeParams.experimentId, trial]);
+  }, [canceler, navigate, experimentId, trial]);
 
   const fetchTrialDetails = useCallback(async () => {
     try {
@@ -120,8 +119,8 @@ const TrialDetailsComp: React.FC = () => {
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
   useEffect(() => {
-    setTrialId(parseInt(routeParams.trialId));
-  }, [routeParams.trialId]);
+    setTrialId(trialId);
+  }, [trialId]);
 
   useEffect(() => {
     fetchTrialDetails();
@@ -142,7 +141,7 @@ const TrialDetailsComp: React.FC = () => {
   }, [canceler]);
 
   if (isNaN(trialId)) {
-    return <Message title={`Invalid Trial ID ${routeParams.trialId}`} />;
+    return <Message title={`Invalid Trial ID ${trialId}`} />;
   }
 
   if (trialDetails.error !== undefined) {

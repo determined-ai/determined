@@ -1,6 +1,6 @@
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
@@ -46,13 +46,13 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 
-interface Params {
+type Params = {
   modelId: string;
-}
+};
 
 const ModelDetails: React.FC = () => {
   const [model, setModel] = useState<ModelVersions>();
-  const modelId = decodeURIComponent(useParams<Params>().modelId);
+  const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);

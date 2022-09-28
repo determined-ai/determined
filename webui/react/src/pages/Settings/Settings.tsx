@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useState } from 'react';
-import { useParams } from 'react-router';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
@@ -19,9 +18,9 @@ export enum TabType {
   GroupManagement = 'Group Management',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
-}
+};
 
 const TAB_KEYS = {
   [TabType.Account]: 'account',

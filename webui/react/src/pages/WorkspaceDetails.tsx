@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -31,10 +30,10 @@ interface GroupsAndUsersAssignedToWorkspaceResponse {
   groups: V1Group[];
   usersAssignedDirectly: User[];
 }
-interface Params {
+type Params = {
   tab: string;
   workspaceId: string;
-}
+};
 
 export enum WorkspaceDetailsTab {
   Members = 'members',
@@ -45,7 +44,7 @@ const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
   const { users } = useStore();
-  const { workspaceId } = useParams<Params>();
+  const { workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
@@ -59,6 +58,7 @@ const WorkspaceDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
   const pageRef = useRef<HTMLElement>(null);
+  const workspaceId = workspaceID ?? '';
   const id = parseInt(workspaceId);
   const navigate = useNavigate();
   const location = useLocation();

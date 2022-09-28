@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { Router, useParams } from 'react-router-dom';
+import { Router } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import StoreProvider from 'contexts/Store';
 import {
