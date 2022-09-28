@@ -169,7 +169,7 @@ class DetSDTextualInversionTrainer:
 
         self.steps_completed = 0
         self.embedding_reg_loss = None
-        self.metrics_history = {"noise_pred_mse_loss": []}
+        self.metrics_history = {"noise_pred_loss": []}
         if self.embedding_reg_weight:
             self.metrics_history["embedding_reg_loss"] = []
         if self.latent_reg_weight:
@@ -285,8 +285,8 @@ class DetSDTextualInversionTrainer:
                     # Report the final mean loss.
                     op.report_completed(self.last_mean_loss)
 
-    def _train_one_batch(self, batch: TorchData) -> torch.Tensor:
-        """Train on a single batch, returning the loss and updating internal metrics."""
+    def _train_one_batch(self, batch: TorchData) -> None:
+        """Train on a single batch and update internal metrics."""
         self.text_encoder.train()
         # Convert sample images to latent space.
         with torch.no_grad():
@@ -319,8 +319,8 @@ class DetSDTextualInversionTrainer:
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
-        noise_pred_mse_loss = F.mse_loss(dummy_text_noise_pred, noise)
-        self.metrics_history["noise_pred_mse_loss"].append(noise_pred_mse_loss.item())
+        noise_pred_loss = F.mse_loss(dummy_text_noise_pred, noise)
+        self.metrics_history["noise_pred_loss"].append(noise_pred_loss.item())
 
         # Add a latent-space regularization penalty following the ideas in
         # https://github.com/rinongal/textual_inversion/issues/49
@@ -340,14 +340,15 @@ class DetSDTextualInversionTrainer:
             )
             self.metrics_history["latent_reg_loss"].append(latent_reg_loss.item())
 
-        mse_and_latent_reg_loss = noise_pred_mse_loss + latent_reg_loss
-        self.accelerator.backward(mse_and_latent_reg_loss)
+        noise_and_latent_loss = noise_pred_loss + latent_reg_loss
+        self.accelerator.backward(noise_and_latent_loss)
 
         # We add a regularization loss which penalizes the new embeddings for straying far from
         # their initialization point.  This idea was present in the original textual inversion repo:
         # https://github.com/rinongal/textual_inversion/blob/3214ca02ded6019c3948e17dd68bf02364b0c2dd/ldm/modules/embedding_manager.py#L159
         # We only need to perform this computation once per actual optimizer step, rather than once
-        # per batch.
+        # per batch. We compute this as an MSE loss, which differs from the above implementation by
+        # changing a sum to a mean.
         if not self.embedding_reg_weight:
             self.embedding_reg_loss = 0.0
         elif self.embedding_reg_loss is None:
@@ -355,12 +356,9 @@ class DetSDTextualInversionTrainer:
             initializer_token_embeddings = self._get_all_concept_embeddings(
                 dummy_or_initializer="initializer"
             )
-
-            # Compute the squared-distance between the two, averaged over tokens.
-            distance_vectors = dummy_token_embeddings - initializer_token_embeddings
-            self.embedding_reg_loss = self.embedding_reg_weight * (distance_vectors ** 2).sum(
-                dim=-1
-            ).mean(dim=0)
+            self.embedding_reg_loss = self.embedding_reg_weight * F.mse_loss(
+                dummy_token_embeddings, initializer_token_embeddings
+            )
             self.metrics_history["embedding_reg_loss"].append(self.embedding_reg_loss.item())
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
@@ -369,12 +367,8 @@ class DetSDTextualInversionTrainer:
             )
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
 
-        loss = (mse_and_latent_reg_loss + self.embedding_reg_loss).detach()
-
         self.optimizer.step()
         self.optimizer.zero_grad()
-
-        return loss
 
     def _get_noise_pred(
         self, text: List[str], noisy_latents: torch.Tensor, timesteps: torch.Tensor
@@ -675,12 +669,14 @@ class DetSDTextualInversionTrainer:
             metric_name: torch.tensor(metric_values, device=self.accelerator.device).mean()
             for metric_name, metric_values in self.metrics_history.items()
         }
+        print("mean_metrics", mean_metrics)
         # reduction='mean' seems to return the sum rather than the mean:
         reduced_mean_metrics = {
-            metric_name: self.accelerator.reduce(mean_metric_value, reduction="sum").item()
+            metric_name: self.accelerator.reduce(mean_metric_value, reduction="mean").item()
             / self.accelerator.num_processes
             for metric_name, mean_metric_value in mean_metrics.items()
         }
+        print("reduced_mean_metrics", reduced_mean_metrics)
         loss = sum(value for value in reduced_mean_metrics.values())
         reduced_mean_metrics["loss"] = loss
         self.last_mean_loss = loss
