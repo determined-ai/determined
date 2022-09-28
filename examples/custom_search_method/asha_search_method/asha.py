@@ -168,8 +168,9 @@ class ASHASearchMethod(searcher.SearchMethod):
         # The "if" statement below can be completely removed.
         # There is no need to raise INVALID_HP for hyperparameters
         # you do not wish to train and test your model for.
-        # Instead, make sure that your search method is not
-        # producing the unwanted hyperparameters.
+        # Instead, make sure to start trials only with hyperparameters
+        # that satisfy your criteria. For instance, in this example,
+        # sample_params() should return only valid hyperparameters.
         if exited_reason == searcher.ExitedReason.INVALID_HP:
             ops: List[searcher.Operation] = []
 

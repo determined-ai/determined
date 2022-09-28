@@ -3,7 +3,7 @@ import random
 
 
 ############################################################################
-# User-defined function that generates hyperparameters for each trial.
+# User-defined function that generates a combination of hyperparameters for each trial.
 # The hyperparameters are passed to a trial in the Create operation.
 # In this example, the model (defined in experiment_files/model_def.py) is expecting
 # the following hyperparameters:
@@ -18,7 +18,7 @@ def sample_params() -> Dict[str, object]:
         "global_batch_size": 64,
         "n_filters1": random.randint(8, 64),
         "n_filters2": random.randint(8, 72),
-        "learning_rate": random.uniform(0.0001, 1.0),
+        "learning_rate": 10 ** random.uniform(-4.0, 0.0),
         "dropout1": random.uniform(0.2, 0.8),
         "dropout2": random.uniform(0.2, 0.8),
     }
