@@ -347,7 +347,7 @@ class DetSDTextualInversionTrainer:
         # their initialization point.  This idea was present in the original textual inversion repo:
         # https://github.com/rinongal/textual_inversion/blob/3214ca02ded6019c3948e17dd68bf02364b0c2dd/ldm/modules/embedding_manager.py#L159
         # We only need to perform this computation once per actual optimizer step, rather than once
-        # per batch. We compute this as an MSE loss, which differs from the above implementation by
+        # per batch, and it is computed via MSE, which differs from the above implementation by
         # changing a sum to a mean.
         if not self.embedding_reg_weight:
             self.embedding_reg_loss = 0.0
