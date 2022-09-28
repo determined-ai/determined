@@ -41,7 +41,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
 
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const canModify = usePermissions().canModifyWorkspace;
+  const { canCreateProject, canModifyWorkspace } = usePermissions();
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
@@ -76,7 +76,9 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
         <h1 className={css.name}>
           <InlineEditor
             disabled={
-              workspace.immutable || workspace.archived || !canModify({ workspace: workspace })
+              workspace.immutable ||
+              workspace.archived ||
+              !canModifyWorkspace({ workspace: workspace })
             }
             maxLength={80}
             value={workspace.name}
@@ -109,9 +111,11 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
           canAssignRoles({ workspace }) &&
           !workspace.immutable &&
           !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
-        {!workspace.immutable && !workspace.archived && (
-          <Button onClick={handleProjectCreateClick}>New Project</Button>
-        )}
+        {!workspace.immutable &&
+          !workspace.archived &&
+          canCreateProject({ workspace: workspace }) && (
+            <Button onClick={handleProjectCreateClick}>New Project</Button>
+          )}
       </div>
       {workspaceAddMemberContextHolder}
       {contextHolder}

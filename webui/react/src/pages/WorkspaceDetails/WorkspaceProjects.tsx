@@ -21,6 +21,7 @@ import {
 } from 'components/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
@@ -62,6 +63,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
+  const { canCreateProject } = usePermissions();
 
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
 
@@ -402,7 +404,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           projectsList
         ) : workspace.numProjects === 0 ? (
           <Message
-            message='Create a project with the "New Project" button or in the CLI.'
+            message={
+              canCreateProject({ workspace: { id } })
+                ? 'Create a project with the "New Project" button or in the CLI.'
+                : 'User cannot create a project in this workspace.'
+            }
             title="Workspace contains no projects. "
             type={MessageType.Empty}
           />
