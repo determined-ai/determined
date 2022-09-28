@@ -5,6 +5,13 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/webhookv1";
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/struct.proto";
 
+enum TriggerType {
+  TRIGGER_TYPE_UNSPECIFIED  = 0;
+  TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE  = 1;
+  // For metrics emitted during training.
+  TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED  = 2;
+}
+
 message Webhook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
@@ -18,5 +25,24 @@ message Webhook {
   int32 id = 1;
   // The url of the webhook.
   string url = 2;
+}
+
+message Trigger {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "trigger_type",
+        "condition"
+      ]
+    }
+  };
+  // The id of the trigger.
+  int32 id = 1;
+  // The type of the trigger.
+  TriggerType trigger_type = 2;
+  // The trigger condition.
+  google.protobuf.Struct condition = 3;
+  // The parent webhook of the trigger.
+  int32 webhook_id = 4;
 }
 

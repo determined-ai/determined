@@ -1639,6 +1639,27 @@ service Determined {
     };
   }
 
+  // Create a webhook.
+  rpc PostWebhook(PostWebhookRequest) returns (PostWebhookResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/webhooks",
+       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
+
+  // Delete a webhook.
+  rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/webhooks/{id}",
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
 
   // Get a group by id.
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
