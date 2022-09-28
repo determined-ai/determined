@@ -1,6 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -59,7 +60,7 @@ const WorkspaceDetails: React.FC = () => {
   const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
   const pageRef = useRef<HTMLElement>(null);
   const id = parseInt(workspaceId);
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const basePath = paths.workspaceDetails(workspaceId);
   const { canViewWorkspace } = usePermissions();
@@ -126,10 +127,10 @@ const WorkspaceDetails: React.FC = () => {
   const handleTabChange = useCallback(
     (activeTab) => {
       const tab = activeTab as WorkspaceDetailsTab;
-      history.replace(`${basePath}/${tab}`);
+      navigate(`${basePath}/${tab}`, { replace: true });
       setTabKey(tab);
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   useEffect(() => {
@@ -140,8 +141,8 @@ const WorkspaceDetails: React.FC = () => {
       !location.pathname.includes(WorkspaceDetailsTab.Projects) &&
       !location.pathname.includes(WorkspaceDetailsTab.Members)
     )
-      history.replace(`${basePath}/${tabKey}`);
-  }, [basePath, history, location.pathname, tabKey]);
+      navigate(`${basePath}/${tabKey}`, { replace: true });
+  }, [basePath, navigate, location.pathname, tabKey]);
 
   // Users and Groups that are not already a part of the workspace
   const addableGroups: V1Group[] = groups
