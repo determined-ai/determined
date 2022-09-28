@@ -17,10 +17,7 @@ INTERPOLATION_DICT = {
 
 
 class TextualInversionDataset(Dataset):
-    """Dataset for textual inversion, pairing captions with normalized image tensors.  The
-    'input_text' and 'pixel_values' keys of each record correspond to the text and image tensor,
-    respectively, with the latter normalized to lie in the range [-1, 1].
-    """
+    """Dataset for textual inversion, pairing prompts with normalized image tensors."""
 
     def __init__(
         self,
@@ -73,15 +70,15 @@ class TextualInversionDataset(Dataset):
             for img, file_path in imgs_and_file_paths:
                 img_t = self._convert_img_to_tensor(img)
                 for text in templates:
-                    text_with_token = text.format(concept_token)
+                    prompt = text.format(concept_token)
                     if append_file_name_to_text:
                         file_path_without_extension = ".".join(file_path.split(".")[:-1])
                         split_file_name = file_path_without_extension.split(
                             self.file_name_split_char
                         )
                         joined_file_name = " ".join(split_file_name)
-                        text_with_token = f"{text_with_token} {joined_file_name}"
-                    self.records.append({"input_text": text_with_token, "pixel_values": img_t})
+                        prompt = f"{prompt} {joined_file_name}"
+                    self.records.append((prompt, img_t))
 
     def _get_imgs_and_file_paths_from_dir_path(
         self, dir_path: str
@@ -111,5 +108,5 @@ class TextualInversionDataset(Dataset):
     def __len__(self):
         return len(self.records)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[str, torch.Tensor]:
         return self.records[idx]

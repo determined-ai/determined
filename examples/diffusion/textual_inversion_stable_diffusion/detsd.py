@@ -168,7 +168,7 @@ class DetSDTextualInversionTrainer:
         self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
 
         self.steps_completed = 0
-        self.embedding_reg_loss = None
+        self._cached_embedding_reg_loss = None
         self.metrics_history = {"noise_pred_loss": []}
         if self.embedding_reg_weight:
             self.metrics_history["embedding_reg_loss"] = []
@@ -264,8 +264,8 @@ class DetSDTextualInversionTrainer:
                             self.logger.info(
                                 f"Step {self.steps_completed} completed on batch {batch_idx}"
                             )
-                            if self.embedding_reg_loss is not None:
-                                self.embedding_reg_loss = None
+                            if self._cached_embedding_reg_loss is not None:
+                                self._cached_embedding_reg_loss = None
 
                             is_end_of_training = self.steps_completed == op.length
                             time_to_report = self.steps_completed % self.metric_report_freq == 0
@@ -291,8 +291,9 @@ class DetSDTextualInversionTrainer:
         """Train on a single batch and update internal metrics."""
         self.text_encoder.train()
         # Convert sample images to latent space.
+        prompt, img_t = batch
         with torch.no_grad():
-            latent_dist = self.vae.encode(batch["pixel_values"]).latent_dist
+            latent_dist = self.vae.encode(img_t).latent_dist
             latents = latent_dist.sample()
 
             # In 2112.10752, it was found that the latent space variance plays a large role in image
@@ -315,8 +316,7 @@ class DetSDTextualInversionTrainer:
             noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
 
         # Process the text for each batch.
-        batch_text = batch["input_text"]
-        dummy_text = [self._replace_concepts_with_dummies(text) for text in batch_text]
+        dummy_text = [self._replace_concepts_with_dummies(text) for text in prompt]
         dummy_text_noise_pred = self._get_noise_pred(
             text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
@@ -331,7 +331,7 @@ class DetSDTextualInversionTrainer:
         else:
             with torch.no_grad():
                 initializer_text = [
-                    self._replace_concepts_with_initializers(text) for text in batch_text
+                    self._replace_concepts_with_initializers(text) for text in prompt
                 ]
                 initializer_text_noise_pred = self._get_noise_pred(
                     text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
@@ -352,20 +352,22 @@ class DetSDTextualInversionTrainer:
         # per batch, and it is computed via MSE, which differs from the above implementation by
         # changing a sum to a mean.
         if not self.embedding_reg_weight:
-            self.embedding_reg_loss = 0.0
-        elif self.embedding_reg_loss is None:
+            self._cached_embedding_reg_loss = 0.0
+        elif self._cached_embedding_reg_loss is None:
             dummy_token_embeddings = self._get_all_concept_embeddings(dummy_or_initializer="dummy")
             initializer_token_embeddings = self._get_all_concept_embeddings(
                 dummy_or_initializer="initializer"
             )
-            self.embedding_reg_loss = self.embedding_reg_weight * F.mse_loss(
+            self._cached_embedding_reg_loss = self.embedding_reg_weight * F.mse_loss(
                 dummy_token_embeddings, initializer_token_embeddings
             )
-            self.metrics_history["embedding_reg_loss"].append(self.embedding_reg_loss.item())
+            self.metrics_history["embedding_reg_loss"].append(
+                self._cached_embedding_reg_loss.item()
+            )
             # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
             # backward pass once every gradient_accumulation_steps steps.
             accumulation_scaled_embedding_reg_loss = (
-                self.embedding_reg_loss * self.gradient_accumulation_steps
+                self._cached_embedding_reg_loss * self.gradient_accumulation_steps
             )
             self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
 
