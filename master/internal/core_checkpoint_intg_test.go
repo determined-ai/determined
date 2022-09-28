@@ -207,7 +207,6 @@ func TestGetCheckpointEcho(t *testing.T) {
 
 // TestGetCheckpointEchoExpErr expects specific errors are returned for each check
 func TestGetCheckpointEchoExpErr(t *testing.T) {
-
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id string) error
