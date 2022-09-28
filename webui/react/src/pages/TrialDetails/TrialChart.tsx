@@ -57,11 +57,23 @@ const TrialChart: React.FC<Props> = ({
   }, [metricNames, scale, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
+
   useEffect(() => {
     if (trialTerminated) {
       stopPolling();
     }
   }, [trialTerminated, stopPolling]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setScale(Scale.Linear);
+      setTrialSummary([]);
+    };
+  }, [stopPolling]);
+
   if (trialTerminated) {
     stopPolling();
   }

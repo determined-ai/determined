@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -162,7 +162,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     settings.filter,
   ]);
 
-  usePolling(fetchWorkloads, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchWorkloads, { rerunOnNewFn: true });
 
   const workloadSteps = useMemo(() => {
     const data = workloads ?? [];
@@ -223,6 +223,16 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       </SelectFilter>
     </ResponsiveFilters>
   );
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setWorkloads([]);
+      setWorkloadCount(0);
+    };
+  }, [stopPolling]);
 
   return (
     <>
