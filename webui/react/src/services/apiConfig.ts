@@ -1431,6 +1431,42 @@ export const unarchiveProject: DetApi<
   request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
+export const getProjectGroups: DetApi<
+  Service.GetProjectGroupsParams,
+  Api.V1GetProjectGroupsResponse,
+  Type.ProjectGroup[]
+> = {
+  name: 'getProjectGroups',
+  postProcess: (response) => response.groups,
+  request: (params, options) => detApi.Projects.getProjectGroups(params.id, options),
+};
+
+export const createProjectGroup: DetApi<
+  Service.CreateProjectGroupParams,
+  Api.V1PostProjectGroupResponse,
+  Type.ProjectGroup
+> = {
+  name: 'createProjectGroup',
+  postProcess: (response) => response.group,
+  request: (params, options) =>
+    detApi.Projects.postProjectGroup(
+      params.id,
+      { name: params.name, projectId: params.id },
+      options,
+    ),
+};
+
+export const patchProjectGroup: DetApi<
+  Service.PatchProjectGroupParams,
+  Api.V1PatchProjectGroupResponse,
+  Type.ProjectGroup
+> = {
+  name: 'patchProjectGroup',
+  postProcess: (response) => response.group,
+  request: (params, options) =>
+    detApi.Projects.patchProjectGroup(params.projectId, params.id, { name: params.name }, options),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;

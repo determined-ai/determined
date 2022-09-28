@@ -21,6 +21,7 @@ export type ExperimentColumnName =
   | 'description'
   | 'duration'
   | 'forkedFrom'
+  | 'groupName'
   | 'id'
   | 'name'
   | 'progress'
@@ -50,6 +51,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   description: 148,
   duration: 96,
   forkedFrom: 128,
+  groupName: 100,
   id: 60,
   name: 150,
   numTrials: 74,

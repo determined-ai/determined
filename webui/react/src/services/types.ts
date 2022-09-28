@@ -458,6 +458,19 @@ export interface ArchiveProjectParams {
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
+export type GetProjectGroupsParams = GetProjectParams;
+
+export interface CreateProjectGroupParams {
+  id: number;
+  name: string;
+}
+
+export interface PatchProjectGroupParams {
+  id: number;
+  name?: string;
+  projectId: number;
+}
+
 export interface ArchiveWorkspaceParams {
   id: number;
 }

@@ -468,7 +468,7 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Join("JOIN project_experiment_groups g ON e.group_id = g.id")
+		Join("LEFT JOIN project_experiment_groups g ON e.group_id IS NOT NULL AND e.group_id = g.id AND e.project_id = g.project_id")
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
@@ -561,7 +561,7 @@ func (a *apiServer) GetExperiments(
 			return nil, err
 		}
 
-		query = query.Where("project_id = ?", req.ProjectId)
+		query = query.Where("e.project_id = ?", req.ProjectId)
 	}
 	if query, err = expauth.AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, proj, query); err != nil {

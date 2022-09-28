@@ -480,6 +480,8 @@ export const mapV1Experiment = (
     description: data.description,
     endTime: data.endTime as unknown as string,
     forkedFrom: data.forkedFrom,
+    groupId: data.groupId,
+    groupName: data.groupName,
     hyperparameters,
     id: data.id,
     jobId: data.jobId,

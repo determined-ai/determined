@@ -539,6 +539,8 @@ export interface ExperimentItem {
   description?: string;
   endTime?: string;
   forkedFrom?: number;
+  groupId?: number;
+  groupName?: string;
   hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar
   id: number;
   jobId: string;
@@ -846,6 +848,12 @@ export interface Project {
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];
+}
+
+export interface ProjectGroup {
+  id: number;
+  name: string;
+  projectId: number;
 }
 
 export interface Permission {
