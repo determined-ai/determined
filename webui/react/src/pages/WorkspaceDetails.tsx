@@ -58,7 +58,6 @@ const WorkspaceDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
   const pageRef = useRef<HTMLElement>(null);
-
   const id = parseInt(workspaceId);
   const history = useHistory();
   const location = useLocation();
