@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useParams } from 'react-router';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
