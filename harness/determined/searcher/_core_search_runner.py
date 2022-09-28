@@ -1,12 +1,10 @@
 import logging
 import os
 import pickle
-import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import determined as det
 from determined import searcher
-from determined.common.api import bindings
 from determined.experimental import client
 
 logger = logging.getLogger("determined.searcher")
@@ -76,50 +74,10 @@ class CoreSearchRunner(searcher.SearchRunner):
             with path.joinpath("ops").open("wb") as ops_file:
                 pickle.dump(operations, ops_file)
 
-    def maybe_preempt(self, session: client.Session, multitrial_experiment_id: int) -> bool:
-        if self.context.preempt.should_preempt():
-            # if searcher is preempted, then pause multitrial experiment
-            self._pause_and_wait(session, multitrial_experiment_id)
-            return True
-        return False
-
-    def _pause_and_wait(self, session: client.Session, experiment_id: int) -> None:
-        logger.info(f"Pausing multi-trial experiment {experiment_id}")
-        exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
-        if exp.state == bindings.determinedexperimentv1State.STATE_PAUSED:
-            return
-        elif _is_experiment_active(exp.state):
-            bindings.post_PauseExperiment(session, id=experiment_id)
-
-            while True:
-                time.sleep(5)
-                state = bindings.get_GetExperiment(
-                    session, experimentId=experiment_id
-                ).experiment.state
-                if state == bindings.determinedexperimentv1State.STATE_PAUSED:
-                    return
-                elif not _is_experiment_active(state):
-                    break
-
-        logger.warning(f"Cannot pause Experiment {experiment_id} with current state {exp.state}.")
-
-    def pause_searcher(self, session: client.Session) -> bool:
-        logger.info("Pausing searcher experiment")
-
-        exp_id = self.info.trial.experiment_id
-        bindings.post_PauseExperiment(session, id=exp_id)
-        while self.context.preempt.should_preempt() is False:
-            time.sleep(5)
-            continue
-
-        return True
-
-
-def _is_experiment_active(state: bindings.determinedexperimentv1State) -> bool:
-    return state in (
-        bindings.determinedexperimentv1State.STATE_ACTIVE,
-        bindings.determinedexperimentv1State.STATE_QUEUED,
-        bindings.determinedexperimentv1State.STATE_RUNNING,
-        bindings.determinedexperimentv1State.STATE_STARTING,
-        bindings.determinedexperimentv1State.STATE_PULLING,
-    )
+    def _show_experiment_paused_msg(self) -> None:
+        logging.warning(
+            f"Experiment {self.search_method.searcher_state.experiment_id} "
+            f"has been paused. If you leave searcher experiment running, "
+            f"your search method will automatically resume when the experiment "
+            f"becomes active again."
+        )

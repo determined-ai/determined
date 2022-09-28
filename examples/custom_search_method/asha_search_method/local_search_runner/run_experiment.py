@@ -23,7 +23,7 @@ import logging
 from asha import ASHASearchMethod
 from utils import sample_params
 from pathlib import Path
-from determined.searcher.search_runner import LocalSearchRunner
+from determined import searcher
 
 if __name__ == "__main__":
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     )
 
     # Instantiate LocalSearchRunner
-    search_runner = LocalSearchRunner(search_method, searcher_dir=searcher_dir)
+    search_runner = searcher.LocalSearchRunner(search_method, searcher_dir=searcher_dir)
 
     ########################################################################
     # Run LocalSearchRunner
