@@ -32,7 +32,6 @@ const PermissionRenderer: React.FC<Props> = () => {
     canDeleteWorkspace,
     canModifyWorkspace,
     canViewWorkspace,
-    canViewWorkspaces,
   } = usePermissions();
 
   return (
@@ -41,8 +40,7 @@ const PermissionRenderer: React.FC<Props> = () => {
       <li>{canCreateWorkspace && 'canCreateWorkspace'}</li>
       <li>{canDeleteWorkspace({ workspace }) && 'canDeleteWorkspace'}</li>
       <li>{canModifyWorkspace({ workspace }) && 'canModifyWorkspace'}</li>
-      <li>{canViewWorkspace({ workspace }) && 'canViewWorkspace_'}</li>
-      <li>{canViewWorkspaces && 'canViewWorkspaces_'}</li>
+      <li>{canViewWorkspace({ workspace }) && 'canViewWorkspace'}</li>
     </ul>
   );
 };
@@ -65,8 +63,7 @@ describe('usePermissions', () => {
     // any user permission in OSS
     expect(screen.queryByText('canCreateWorkspace')).toBeInTheDocument();
     expect(screen.queryByText('canCreateProject')).toBeInTheDocument();
-    expect(screen.queryByText('canViewWorkspaces_')).toBeInTheDocument();
-    expect(screen.queryByText('canViewWorkspace_')).toBeInTheDocument();
+    expect(screen.queryByText('canViewWorkspace')).toBeInTheDocument();
 
     expect(screen.queryByText('canModifyWorkspace')).not.toBeInTheDocument();
     expect(screen.queryByText('canDeleteWorkspace')).not.toBeInTheDocument();
@@ -79,8 +76,7 @@ describe('usePermissions', () => {
     await setup();
 
     // read permissions available
-    expect(screen.queryByText('canViewWorkspaces_')).toBeInTheDocument();
-    expect(screen.queryByText('canViewWorkspace_')).toBeInTheDocument();
+    expect(screen.queryByText('canViewWorkspace')).toBeInTheDocument();
 
     // create / update / delete permissions permissions not available
     expect(screen.queryByText('canCreateWorkspace')).not.toBeInTheDocument();
@@ -100,7 +96,6 @@ describe('usePermissions', () => {
     expect(screen.queryByText('canCreateProject')).toBeInTheDocument();
     expect(screen.queryByText('canModifyWorkspace')).toBeInTheDocument();
     expect(screen.queryByText('canDeleteWorkspace')).toBeInTheDocument();
-    expect(screen.queryByText('canViewWorkspaces_')).toBeInTheDocument();
-    expect(screen.queryByText('canViewWorkspace_')).toBeInTheDocument();
+    expect(screen.queryByText('canViewWorkspace')).toBeInTheDocument();
   });
 });
