@@ -139,7 +139,7 @@ export const Default = (): React.ReactNode => (
 
 export const Disabled = (): React.ReactNode => (
   <div style={{ height: '80vh', width: '600px' }}>
-    <Markdown disabled={true} markdown={''} />
+    <Markdown disabled={true} markdown="" />
   </div>
 );
 

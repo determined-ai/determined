@@ -50,7 +50,7 @@ const Markdown: React.FC<Props> = ({
 }: Props) => {
   return (
     <div aria-label="markdown-editor" className={css.base}>
-      {editing ? (
+      {editing && !disabled ? (
         <Tabs className="no-padding">
           <TabPane className={css.noOverflow} key={TabType.Edit} tab="Edit">
             <React.Suspense
