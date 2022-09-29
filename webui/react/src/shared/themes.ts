@@ -231,9 +231,9 @@ const themeDark = {
   overlay: 'rgba(0, 0, 0, 0.75)',
   overlayStrong: 'rgba(0, 0, 0, 1.0)',
   overlayWeak: 'rgba(0, 0, 0, 0.5)',
-  elevation: '0px 6px 12px rgba(255, 255, 255, 0.12)',
-  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.12)',
-  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.24)',
+  elevation: '0px 6px 12px rgba(255, 255, 255, 0.06)',
+  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.06)',
+  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.12)',
 };
 
 export const themeLightDetermined: Theme = generateStrongWeak(
