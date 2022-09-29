@@ -9947,26 +9947,6 @@ def get_GetSearcherEvents(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/experiments/{experimentId}/searcher_events",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetSearcherEventsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetSearcherEvents", _resp)
-
-def get_GetSearcherEventsLongPolling(
-    session: "api.Session",
-    *,
-    experimentId: int,
-) -> "v1GetSearcherEventsResponse":
-    _params = None
-    _resp = session._do_request(
-        method="GET",
         path=f"/api/v1/experiments/{experimentId}/searcher_events_long_polling",
         params=_params,
         json=None,
@@ -9977,7 +9957,7 @@ def get_GetSearcherEventsLongPolling(
     )
     if _resp.status_code == 200:
         return v1GetSearcherEventsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetSearcherEventsLongPolling", _resp)
+    raise APIHttpError("get_GetSearcherEvents", _resp)
 
 def get_GetShell(
     session: "api.Session",

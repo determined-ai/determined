@@ -193,44 +193,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return e, *curUser, nil
 }
 
-func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearcherEventsRequest) (
-	resp *apiv1.GetSearcherEventsResponse, err error,
-) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
-	if err != nil {
-		return nil, err
-	}
-	if !isActiveExperimentState(exp.State) {
-		event := experimentv1.SearcherEvent_ExperimentInactive{
-			ExperimentInactive: &experimentv1.ExperimentInactive{
-				ExperimentState: exp.State,
-			},
-		}
-		searcherEvent := experimentv1.SearcherEvent{
-			Id:    int32(-1),
-			Event: &event,
-		}
-		events := []*experimentv1.SearcherEvent{&searcherEvent}
-		resp = &apiv1.GetSearcherEventsResponse{
-			SearcherEvents: events,
-		}
-		return resp, nil
-	}
-
-	addr := experimentsAddr.Child(req.ExperimentId)
-	switch err = a.ask(addr, req, &resp); {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to get events from actor %v", err)
-	default:
-		return resp, nil
-	}
-}
-
-func (a *apiServer) GetSearcherEventsLongPolling(
+func (a *apiServer) GetSearcherEvents(
 	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
 ) (*apiv1.GetSearcherEventsResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
