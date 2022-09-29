@@ -285,7 +285,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                 search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, Path(searcher_dir)
                 )
-                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
             except MaxRetryError:
                 failures += 1
@@ -513,7 +513,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                 search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, Path(searcher_dir)
                 )
-                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
             except MaxRetryError:
                 failures += 1

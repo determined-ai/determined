@@ -13,18 +13,35 @@
 Determined supports defining your own hyperparameter search algorithms and provides search runner
 utilities for executing them.
 
-Remember that a Determined experiment is a set of trials, each corresponding to a point in the
-hyperparameter space.
+.. tip::
+
+   Remember that a Determined experiment is a set of trials, each corresponding to a point in the
+   hyperparameter space.
 
 To implement a custom hyperparameter tuning algorithm, subclass
-:class:`~determined.searcher.SearchMethod`, overriding its event handler methods. For testing you
-can use :class:`~determined.searcher.LocalSearchRunner` that can be executed on your laptop. To
-achieve fault tolerance, use :class:`~determined.searcher.RemoteSearchRunner` that runs on a
-Determined cluster. and override :meth:`~determined.searcher.SearchMethod.save_method_state` and
+:class:`~determined.searcher.SearchMethod`, overriding its event handler methods. Note that
+overriding :meth:`~determined.searcher.SearchMethod.save_method_state` and
 :meth:`~determined.searcher.SearchMethod.load_method_state` of
-:class:`~determined.searcher.SearchMethod`.
+:class:`~determined.searcher.SearchMethod` is not mandatory. However, it is *recommended* as it
+enables fault tolerance.
 
-You also have to specify "custom" searcher type in the experiment configuration:
+To run the custom hyperparameter tuning algorithm, you can use:
+
+-  :class:`~determined.searcher.LocalSearchRunner` that executes on your machine,
+-  :class:`~determined.searcher.RemoteSearchRunner` that runs on a Determined cluster.
+
+Both Search Runners execute the custom hyperparameter tuning algorithm and start a multi-trial
+experiment on a Determined cluster.
+
+The following sections explain the steps to take in order to implement and use a
+custom hyperparameter search algorithm. A detailed example can be found here:
+:download:`asha_search_method.tgz </examples/asha_search_method.tgz>`
+
+**********************************************
+ Experiment Configuration for Custom Searcher
+**********************************************
+
+You have to specify "custom" searcher type in the experiment configuration:
 
 .. code:: yaml
 
@@ -53,8 +70,14 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
            # initialize any state you would need
 
        def initial_operations(self) -> List[searcher.Operation]:
-           # create and return the initial list of operations
+           # Create and return the initial list of operations
            # immediately after an experiment has been created
+           # Currently, we support the following operations:
+           # - Create - starts a new trial with a unique trial id and a set of hyperparameters,
+           # - ValidateAfter - sets the number of steps (i.e., batches or epochs) after which
+           #                   a validation is run, for a trial with a given id,
+           # - Close - closes a trial with a given id,
+           # - Shutdown - closes the experiment.
            return []
 
        def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
@@ -88,7 +111,7 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
        def on_trial_exited_early(self) -> List[searcher.Operation]:
            # update internal state, reflecting early trial exit
            # return operations (e.g., create a trial with a different
-           # combination of hyperparameters
+           # combination of hyperparameters)
            return []
 
        def save_method_state(self, path: Path) -> None:
@@ -140,7 +163,7 @@ look like the following:
 
        search_runner = searcher.LocalSearchRunner(search_method, searcher_dir=searcher_dir)
 
-       experiment_id = search_runner.run(model_config, context_dir=model_context_dir)
+       experiment_id = search_runner.run(model_config, model_dir=model_context_dir)
        logging.info(f"Experiment {experiment_id} has been completed.")
 
 ****************************************
@@ -174,4 +197,4 @@ A script to run your custom search method on a Determined cluster may look like 
 
            # Instantiate and execute RemoteSearchRunner
            search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
-           search_runner.run(model_config, context_dir=model_context_dir)
+           search_runner.run(model_config, model_dir=model_context_dir)

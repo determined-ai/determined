@@ -30,6 +30,7 @@ class SearcherState:
         trials_closed: set of completed trials
         trials_created: set of created trials
     """
+
     failures: Set[uuid.UUID]
     trial_progress: Dict[uuid.UUID, float]
     trials_closed: Set[uuid.UUID]
@@ -95,6 +96,7 @@ class Operation:
     """
     Abstract base class for all Operations
     """
+
     @abstractmethod
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         pass
@@ -102,9 +104,11 @@ class Operation:
 
 class ValidateAfter(Operation):
     """
-    Operation signaling the trial to train until its total batches trained
-    equals the specified length
+    Operation signaling the trial to train until its total units trained
+    equals the specified length, where the units (batches, epochs, etc.)
+    are specified in the searcher section of the experiment configuration
     """
+
     def __init__(self, request_id: uuid.UUID, length: int) -> None:
         super().__init__()
         self.request_id = request_id
@@ -123,6 +127,7 @@ class Close(Operation):
     """
     Operation closing the specified trial
     """
+
     def __init__(self, request_id: uuid.UUID):
         super().__init__()
         self.request_id = request_id
@@ -148,6 +153,7 @@ class Shutdown(Operation):
     """
     Operation shutting the experiment down
     """
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -159,6 +165,7 @@ class Create(Operation):
     """
     Operation creating a trial with a specified combination of hyperparameter values
     """
+
     def __init__(
         self,
         request_id: uuid.UUID,
@@ -180,7 +187,7 @@ class Create(Operation):
 
 class SearchMethod:
     """
-    The implementation of a custom hyperparameter tuning algorithm
+    The implementation of a custom hyperparameter tuning algorithm.
 
     To implement your specific hyperparameter tuning approach, subclass ``SearchMethod``
     overriding the event handler methods. Each event handler, except ``progress`` returns a list of
@@ -201,6 +208,15 @@ class SearchMethod:
     def initial_operations(self) -> List[Operation]:
         """
         Returns a set of initial operations that the searcher will perform.
+
+        Currently, we support the following operations:
+
+        - Create - starts a new trial with a unique trial id and a set of hyperparameter
+          values,
+        - ValidateAfter - sets number of steps (i.e., batches or epochs) after which a validation
+          is run for a trial with a given id,
+        - Close - closes a trial with a given id,
+        - Shutdown - closes the experiment.
         """
         pass
 
@@ -224,7 +240,7 @@ class SearchMethod:
     @abstractmethod
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
         """
-        Informs the searcher that the trial has been closed as a result of a Close
+        Informs the searcher that a trial has been closed as a result of a Close
         operation.
         """
         pass
@@ -243,7 +259,7 @@ class SearchMethod:
         exited_reason: ExitedReason,
     ) -> List[Operation]:
         """
-        Informs the searcher that the trial has exited earlier than expected.
+        Informs the searcher that a trial has exited earlier than expected.
         """
         pass
 
@@ -270,9 +286,6 @@ class SearchMethod:
     def load(self, path: pathlib.Path) -> int:
         """
         Loads searcher state and method-specific state.
-
-        Args:
-            path: directory containing files where state is stored
         """
         searcher_state_file = path.joinpath(STATE_FILE)
         with searcher_state_file.open("r") as f:
