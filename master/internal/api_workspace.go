@@ -333,7 +333,7 @@ func (a *apiServer) PatchWorkspace(
 	_, err = db.Bun().NewUpdate().Model(&updatedWorkspace).
 		Column(insertColumns...).
 		Where("id = ?", currWorkspace.Id).
-		Exec(context.TODO())
+		Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
