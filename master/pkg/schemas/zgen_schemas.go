@@ -1401,7 +1401,8 @@ var (
             }
         }
     }
-}`)
+}
+`)
 	textSlurmClusterConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json",
@@ -1429,7 +1430,8 @@ var (
             }
         }
     }
-}`)
+}
+`)
 	textCategoricalHyperparameterV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json",
