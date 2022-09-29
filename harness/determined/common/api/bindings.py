@@ -9947,7 +9947,7 @@ def get_GetSearcherEvents(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/experiments/{experimentId}/searcher_events_long_polling",
+        path=f"/api/v1/experiments/{experimentId}/searcher_events",
         params=_params,
         json=None,
         data=None,

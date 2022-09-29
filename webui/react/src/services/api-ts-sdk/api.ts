@@ -12160,7 +12160,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
             }
-            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events_long_polling`
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
