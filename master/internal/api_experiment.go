@@ -230,7 +230,11 @@ func (a *apiServer) GetSearcherEvents(
 			return nil, status.Errorf(codes.Internal,
 				"failed to get events from actor: long polling %v", err)
 		default:
-			defer a.ask(addr, UnwatchEvents{w.ID}, &w)
+			defer func() {
+				if err = a.ask(addr, UnwatchEvents{w.ID}, &w); err != nil {
+					logrus.WithError(err).Errorf("unwatching watcher %d", w.ID)
+				}
+			}()
 			select {
 			case events := <-w.C:
 				return &apiv1.GetSearcherEventsResponse{
