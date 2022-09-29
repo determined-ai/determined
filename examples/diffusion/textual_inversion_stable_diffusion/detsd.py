@@ -738,8 +738,8 @@ class DetSDTextualInversionPipeline:
         other_scheduler_kwargs: Optional[Dict[str, Any]] = None,
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
-        use_autocast: bool = True,
-        use_fp16: bool = True,
+        use_autocast: bool = False,
+        use_fp16: bool = False,
     ) -> None:
         # We assume that the Huggingface User Access token has been stored as the HF_AUTH_TOKEN
         # environment variable. See https://huggingface.co/docs/hub/security-tokens
