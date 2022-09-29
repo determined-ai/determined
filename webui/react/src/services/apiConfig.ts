@@ -1431,40 +1431,45 @@ export const unarchiveProject: DetApi<
   request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
-export const getProjectGroups: DetApi<
-  Service.GetProjectGroupsParams,
-  Api.V1GetProjectGroupsResponse,
-  Type.ProjectGroup[]
+export const getExperimentGroups: DetApi<
+  Service.GetExperimentGroupsParams,
+  Api.V1GetExperimentGroupsResponse,
+  Type.ExperimentGroup[]
 > = {
-  name: 'getProjectGroups',
+  name: 'getExperimentGroups',
   postProcess: (response) => response.groups,
-  request: (params, options) => detApi.Projects.getProjectGroups(params.id, options),
+  request: (params, options) => detApi.Projects.getExperimentGroups(params.id, options),
 };
 
-export const createProjectGroup: DetApi<
-  Service.CreateProjectGroupParams,
-  Api.V1PostProjectGroupResponse,
-  Type.ProjectGroup
+export const createExperimentGroup: DetApi<
+  Service.CreateExperimentGroupParams,
+  Api.V1PostExperimentGroupResponse,
+  Type.ExperimentGroup
 > = {
-  name: 'createProjectGroup',
+  name: 'createExperimentGroup',
   postProcess: (response) => response.group,
   request: (params, options) =>
-    detApi.Projects.postProjectGroup(
+    detApi.Projects.postExperimentGroup(
       params.id,
       { name: params.name, projectId: params.id },
       options,
     ),
 };
 
-export const patchProjectGroup: DetApi<
-  Service.PatchProjectGroupParams,
-  Api.V1PatchProjectGroupResponse,
-  Type.ProjectGroup
+export const patchExperimentGroup: DetApi<
+  Service.PatchExperimentGroupParams,
+  Api.V1PatchExperimentGroupResponse,
+  Type.ExperimentGroup
 > = {
-  name: 'patchProjectGroup',
+  name: 'patchExperimentGroup',
   postProcess: (response) => response.group,
   request: (params, options) =>
-    detApi.Projects.patchProjectGroup(params.projectId, params.id, { name: params.name }, options),
+    detApi.Projects.patchExperimentGroup(
+      params.projectId,
+      params.id,
+      { name: params.name },
+      options,
+    ),
 };
 
 /* Tasks */

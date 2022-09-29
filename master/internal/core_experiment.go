@@ -545,9 +545,9 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	var groupID *int
 	if params.GroupID == nil {
 		if config.Group() != "" {
-			*groupID, err = m.db.ProjectGroupByName(int32(projectID), config.Group())
+			*groupID, err = m.db.ExperimentGroupByName(int32(projectID), config.Group())
 			if errors.Is(err, db.ErrNotFound) {
-				g := projectv1.ProjectExperimentGroup{}
+				g := projectv1.ExperimentGroup{}
 				err = m.db.Query("insert_project_group", &g, projectID, config.Group())
 				*groupID = int(g.Id)
 			} 

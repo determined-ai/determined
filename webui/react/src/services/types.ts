@@ -238,6 +238,7 @@ export interface CreateExperimentParams {
 export interface PatchExperimentParams extends ExperimentIdParams {
   body: Partial<{
     description: string;
+    groupId: number;
     labels: string[];
     name: string;
     notes: string;
@@ -458,14 +459,14 @@ export interface ArchiveProjectParams {
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
-export type GetProjectGroupsParams = GetProjectParams;
+export type GetExperimentGroupsParams = GetProjectParams;
 
-export interface CreateProjectGroupParams {
+export interface CreateExperimentGroupParams {
   id: number;
   name: string;
 }
 
-export interface PatchProjectGroupParams {
+export interface PatchExperimentGroupParams {
   id: number;
   name?: string;
   projectId: number;

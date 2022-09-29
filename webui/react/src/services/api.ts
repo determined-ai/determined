@@ -606,6 +606,24 @@ export const unarchiveProject = generateDetApi<
   void
 >(Config.unarchiveProject);
 
+export const getExperimentGroups = generateDetApi<
+  Service.GetExperimentGroupsParams,
+  Api.V1GetExperimentGroupsResponse,
+  Type.ExperimentGroup[]
+>(Config.getExperimentGroups);
+
+export const createExperimentGroup = generateDetApi<
+  Service.CreateExperimentGroupParams,
+  Api.V1PostExperimentGroupResponse,
+  Type.ExperimentGroup
+>(Config.createExperimentGroup);
+
+export const patchExperimentGroup = generateDetApi<
+  Service.PatchExperimentGroupParams,
+  Api.V1PatchExperimentGroupResponse,
+  Type.ExperimentGroup
+>(Config.patchExperimentGroup);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

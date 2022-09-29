@@ -468,7 +468,7 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Join("LEFT JOIN project_experiment_groups g ON e.group_id IS NOT NULL AND e.group_id = g.id AND e.project_id = g.project_id")
+		Join("LEFT JOIN experiment_groups g ON e.group_id IS NOT NULL AND e.group_id = g.id AND e.project_id = g.project_id")
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{

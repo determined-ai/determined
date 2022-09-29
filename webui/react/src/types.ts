@@ -850,7 +850,7 @@ export interface ProjectPagination extends WithPagination {
   projects: Project[];
 }
 
-export interface ProjectGroup {
+export interface ExperimentGroup {
   id: number;
   name: string;
   projectId: number;

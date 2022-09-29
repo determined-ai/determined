@@ -176,7 +176,7 @@ message UnarchiveProjectRequest {
 message UnarchiveProjectResponse {}
 
 // Get experiment groups within a project.
-message GetProjectGroupsRequest {
+message GetExperimentGroupsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
@@ -185,17 +185,17 @@ message GetProjectGroupsRequest {
   int32 project_id = 1;
 }
 
-// Response to ProjectGroupsRequest.
-message GetProjectGroupsResponse {
+// Response to ExperimentGroupsRequest.
+message GetExperimentGroupsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "groups" ] }
   };
   // The list of returned groups.
-  repeated determined.project.v1.ProjectExperimentGroup groups = 1;
+  repeated determined.project.v1.ExperimentGroup groups = 1;
 }
 
-// Request for creating a project group.
-message PostProjectGroupRequest {
+// Request for creating a experiment group.
+message PostExperimentGroupRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id", "name" ] }
   };
@@ -206,18 +206,18 @@ message PostProjectGroupRequest {
   string name = 2;
 }
 
-// Response to PostProjectGroupRequest.
-message PostProjectGroupResponse {
+// Response to PostExperimentGroupRequest.
+message PostExperimentGroupResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "group" ] }
   };
 
-  // The project group created.
-  determined.project.v1.ProjectExperimentGroup group = 1;
+  // The experiment group created.
+  determined.project.v1.ExperimentGroup group = 1;
 }
 
-// Request for updating a project group.
-message PatchProjectGroupRequest {
+// Request for updating a experiment group.
+message PatchExperimentGroupRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "project_id", "id" ] }
   };
@@ -227,15 +227,15 @@ message PatchProjectGroupRequest {
   // The id of the group.
   int32 id = 2;
   // The desired group fields and values to update.
-  determined.project.v1.PatchProjectExperimentGroup group = 3;
+  determined.project.v1.PatchExperimentGroup group = 3;
 }
 
-// Response to PatchProjectGroupRequest.
-message PatchProjectGroupResponse {
+// Response to PatchExperimentGroupRequest.
+message PatchExperimentGroupResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "group" ] }
   };
 
-  // The project group created.
-  determined.project.v1.ProjectExperimentGroup group = 1;
+  // The experiment group created.
+  determined.project.v1.ExperimentGroup group = 1;
 }

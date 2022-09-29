@@ -76,9 +76,9 @@ WHERE e.project_id = $1`, id)
 	return experiments, nil
 }
 
-// ProjectGroupByName returns a group's ID if it exists in the given project.
-func (db *PgDB) ProjectGroupByName(projectID int32, groupName string) (int, error) {
-	g := projectv1.ProjectExperimentGroup{}
+// ExperimentGroupByName returns a group's ID if it exists in the given project.
+func (db *PgDB) ExperimentGroupByName(projectID int32, groupName string) (int, error) {
+	g := projectv1.ExperimentGroup{}
 	err := db.Query("get_project_group_from_name", &g, projectID, groupName)
 	if err != nil {
 		return 1, err

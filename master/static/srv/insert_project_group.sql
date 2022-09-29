@@ -1,5 +1,5 @@
 WITH g AS (
-  INSERT INTO project_experiment_groups (project_id, name)
+  INSERT INTO experiment_groups (project_id, name)
   VALUES ($1, $2)
   RETURNING id, name, project_id
 )

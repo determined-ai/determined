@@ -94,8 +94,8 @@ message PatchProject {
   google.protobuf.StringValue description = 2;
 }
 
-// ProjectExperimentGroup is a group of experiments within a project.
-message ProjectExperimentGroup {
+// ExperimentGroup is a group of experiments within a project.
+message ExperimentGroup {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id", "name", "project_id" ] }
   };
@@ -107,9 +107,9 @@ message ProjectExperimentGroup {
   int32 project_id = 3;
 }
 
-// PatchProjectExperimentGroup is a partial update to a project group with all
+// PatchExperimentGroup is a partial update to a experiment group with all
 // optional fields.
-message PatchProjectExperimentGroup {
+message PatchExperimentGroup {
   // The new name for the project.
   google.protobuf.StringValue name = 1;
 }

@@ -346,12 +346,12 @@ func (a *apiServer) UnarchiveProject(
 	return &apiv1.UnarchiveProjectResponse{}, nil
 }
 
-func (a *apiServer) GetProjectGroups(
-	ctx context.Context, req *apiv1.GetProjectGroupsRequest) (*apiv1.GetProjectGroupsResponse,
+func (a *apiServer) GetExperimentGroups(
+	ctx context.Context, req *apiv1.GetExperimentGroupsRequest) (*apiv1.GetExperimentGroupsResponse,
 	error,
 ) {
-	resp := &apiv1.GetProjectGroupsResponse{}
-	var groups []projectv1.ProjectExperimentGroup
+	resp := &apiv1.GetExperimentGroupsResponse{}
+	var groups []projectv1.ExperimentGroup
 	err := a.m.db.Query("get_project_groups", &groups, req.ProjectId)
 	if err != nil {
 		return nil, err
@@ -360,20 +360,20 @@ func (a *apiServer) GetProjectGroups(
 	return resp, nil
 }
 
-func (a *apiServer) GetProjectGroupByID(id int32) (*projectv1.ProjectExperimentGroup, error) {
-	notFoundErr := status.Errorf(codes.NotFound, "project group (%d) not found", id)
-	g := &projectv1.ProjectExperimentGroup{}
+func (a *apiServer) GetExperimentGroupByID(id int32) (*projectv1.ExperimentGroup, error) {
+	notFoundErr := status.Errorf(codes.NotFound, "experiment group (%d) not found", id)
+	g := &projectv1.ExperimentGroup{}
 	if err := a.m.db.QueryProto("get_project_group", g, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error fetching project group (%d) from database", id)
+		return nil, errors.Wrapf(err, "error fetching experiment group (%d) from database", id)
 	}
 
 	return g, nil
 }
 
-func (a *apiServer) PostProjectGroup(
-	ctx context.Context, req *apiv1.PostProjectGroupRequest) (*apiv1.PostProjectGroupResponse,
+func (a *apiServer) PostExperimentGroup(
+	ctx context.Context, req *apiv1.PostExperimentGroupRequest) (*apiv1.PostExperimentGroupResponse,
 	error,
 ) {
 	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)
@@ -385,16 +385,16 @@ func (a *apiServer) PostProjectGroup(
 			currProject.Id)
 	}
 
-	var g *projectv1.ProjectExperimentGroup
+	var g *projectv1.ExperimentGroup
 	err = a.m.db.QueryProto("insert_project_group", g, req.ProjectId, req.Name)
 
-	return &apiv1.PostProjectGroupResponse{Group: g},
-		errors.Wrapf(err, "error creating project group %s in database", req.Name)
+	return &apiv1.PostExperimentGroupResponse{Group: g},
+		errors.Wrapf(err, "error creating experiment group %s in database", req.Name)
 }
 
-func (a *apiServer) PatchProjectGroup(
-	ctx context.Context, req *apiv1.PatchProjectGroupRequest,
-) (*apiv1.PatchProjectGroupResponse, error) {
+func (a *apiServer) PatchExperimentGroup(
+	ctx context.Context, req *apiv1.PatchExperimentGroupRequest,
+) (*apiv1.PatchExperimentGroupResponse, error) {
 	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)
 	if err != nil {
 		return nil, err
@@ -404,27 +404,27 @@ func (a *apiServer) PatchProjectGroup(
 			currProject.Id)
 	}
 
-	currProjectGroup, err := a.GetProjectGroupByID(req.Id)
+	currExperimentGroup, err := a.GetExperimentGroupByID(req.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	madeChanges := false
-	if req.Group.Name != nil && req.Group.Name.Value != currProjectGroup.Name {
-		log.Infof("project group (%d) name changing from \"%s\" to \"%s\"",
-			currProjectGroup.Id, currProjectGroup.Name, req.Group.Name.Value)
+	if req.Group.Name != nil && req.Group.Name.Value != currExperimentGroup.Name {
+		log.Infof("experiment group (%d) name changing from \"%s\" to \"%s\"",
+			currExperimentGroup.Id, currExperimentGroup.Name, req.Group.Name.Value)
 		madeChanges = true
-		currProjectGroup.Name = req.Group.Name.Value
+		currExperimentGroup.Name = req.Group.Name.Value
 	}
 
 	if !madeChanges {
-		return &apiv1.PatchProjectGroupResponse{Group: currProjectGroup}, nil
+		return &apiv1.PatchExperimentGroupResponse{Group: currExperimentGroup}, nil
 	}
 
-	finalProjectGroup := &projectv1.ProjectExperimentGroup{}
+	finalExperimentGroup := &projectv1.ExperimentGroup{}
 	err = a.m.db.QueryProto("update_project_group",
-		finalProjectGroup, currProjectGroup.Id, currProjectGroup.Name)
+		finalExperimentGroup, currExperimentGroup.Id, currExperimentGroup.Name)
 
-	return &apiv1.PatchProjectGroupResponse{Group: finalProjectGroup},
-		errors.Wrapf(err, "error updating project group (%d) in database", currProjectGroup.Id)
+	return &apiv1.PatchExperimentGroupResponse{Group: finalExperimentGroup},
+		errors.Wrapf(err, "error updating experiment group (%d) in database", currExperimentGroup.Id)
 }
