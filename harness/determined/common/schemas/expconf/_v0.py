@@ -72,6 +72,7 @@ class SlurmClusterConfigV0(schemas.SchemaBase):
     ) -> None:
         pass
 
+
 class OptimizationsConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/optimizations.json"
     aggregation_frequency: Optional[int] = None
