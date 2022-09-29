@@ -33,8 +33,8 @@ To run the custom hyperparameter tuning algorithm, you can use:
 Both Search Runners execute the custom hyperparameter tuning algorithm and start a multi-trial
 experiment on a Determined cluster.
 
-The following sections explain the steps to take in order to implement and use a
-custom hyperparameter search algorithm. A detailed example can be found here:
+The following sections explain the steps to take in order to implement and use a custom
+hyperparameter search algorithm. A detailed example can be found here:
 :download:`asha_search_method.tgz </examples/asha_search_method.tgz>`
 
 **********************************************
