@@ -35,6 +35,8 @@ hyperparameters:
         optimizer_name: adam
         learning_rate: 1e-5
         scale_lr: True
+        embedding_reg_weight: 1e-2
+        latent_reg_weight: 1e-1
         norm_penalty: 1.
         checkpoint_freq: 50
         metric_report_freq: 50
