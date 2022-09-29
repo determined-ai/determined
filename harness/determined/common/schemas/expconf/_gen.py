@@ -1487,6 +1487,7 @@ schemas = {
         }
     }
 }
+
 """
     ),
     "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json": json.loads(
@@ -1519,6 +1520,7 @@ schemas = {
         }
     }
 }
+
 """
     ),
     "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json": json.loads(
