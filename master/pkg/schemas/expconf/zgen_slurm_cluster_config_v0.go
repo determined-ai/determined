@@ -8,15 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SlurmClusterConfigV0) SlotsPerNode() int {
-	if s.RawSlotsPerNode == nil {
-		panic("You must call WithDefaults on SlurmClusterConfigV0 before .SlotsPerNode")
-	}
-	return *s.RawSlotsPerNode
+func (s SlurmClusterConfigV0) SlotsPerNode() *int {
+	return s.RawSlotsPerNode
 }
 
-func (s *SlurmClusterConfigV0) SetSlotsPerNode(val int) {
-	s.RawSlotsPerNode = &val
+func (s *SlurmClusterConfigV0) SetSlotsPerNode(val *int) {
+	s.RawSlotsPerNode = val
 }
 
 func (s SlurmClusterConfigV0) SbatchArgs() []string {

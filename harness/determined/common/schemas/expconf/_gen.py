@@ -1473,7 +1473,7 @@ schemas = {
                 "null"
             ],
             "minimum": 1,
-            "default": 1
+            "default": null
         },
         "pbsbatch_args": {
             "type": [
@@ -1505,7 +1505,7 @@ schemas = {
                 "null"
             ],
             "minimum": 1,
-            "default": 1
+            "default": null
         },
         "sbatch_args": {
             "type": [

@@ -1388,7 +1388,7 @@ var (
                 "null"
             ],
             "minimum": 1,
-            "default": 1
+            "default": null
         },
         "pbsbatch_args": {
             "type": [
@@ -1416,7 +1416,7 @@ var (
                 "null"
             ],
             "minimum": 1,
-            "default": 1
+            "default": null
         },
         "sbatch_args": {
             "type": [

@@ -8,15 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (p PbsClusterConfigV0) SlotsPerNode() int {
-	if p.RawSlotsPerNode == nil {
-		panic("You must call WithDefaults on PbsClusterConfigV0 before .SlotsPerNode")
-	}
-	return *p.RawSlotsPerNode
+func (p PbsClusterConfigV0) SlotsPerNode() *int {
+	return p.RawSlotsPerNode
 }
 
-func (p *PbsClusterConfigV0) SetSlotsPerNode(val int) {
-	p.RawSlotsPerNode = &val
+func (p *PbsClusterConfigV0) SetSlotsPerNode(val *int) {
+	p.RawSlotsPerNode = val
 }
 
 func (p PbsClusterConfigV0) SbatchArgs() []string {
