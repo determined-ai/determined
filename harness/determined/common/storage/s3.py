@@ -8,6 +8,7 @@ import requests
 
 from determined import errors
 from determined.common import storage, util
+from determined.errors import NoDirectStorageAccess
 
 
 def normalize_prefix(prefix: Optional[str]) -> str:
@@ -123,11 +124,11 @@ class S3StorageManager(storage.CloudStorageManager):
 
         except botocore.exceptions.ClientError as e:
             if e.response["Error"]["Code"] == "AccessDenied":
-                raise storage.NoCloudAccess("Unable to access cloud checkpoint storage") from e
+                raise NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
             raise
 
         except botocore.exceptions.NoCredentialsError as e:
-            raise storage.NoCloudAccess("Unable to access cloud checkpoint storage") from e
+            raise NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
 
         if not found:
             raise errors.CheckpointNotFound(f"Did not find {prefix} in S3")

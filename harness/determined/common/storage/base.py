@@ -5,12 +5,6 @@ import pathlib
 from typing import Any, Dict, Iterator, Optional, Union
 
 
-class NoCloudAccess(Exception):
-    """Checkpoint download failed due to denied access or missing credentials."""
-
-    pass
-
-
 class StorageManager(metaclass=abc.ABCMeta):
     """
     Abstract base class for storage managers. Storage managers need to

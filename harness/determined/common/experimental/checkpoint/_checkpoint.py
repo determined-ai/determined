@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, cast
 from determined.common import api, constants, storage
 from determined.common.api import bindings
 from determined.common.storage import shared
+from determined.errors import NoDirectStorageAccess, ProxiedDownloadFailed
 
 
 class DownloadMode(enum.Enum):
@@ -171,7 +172,7 @@ class Checkpoint:
             elif mode == DownloadMode.AUTO:
                 try:
                     self._download_direct(checkpoint_storage, local_ckpt_dir)
-                except storage.NoCloudAccess:
+                except NoDirectStorageAccess:
                     logging.info("Unable to download directly, proxying download through master")
                     self._download_via_master(self._session, self.uuid, local_ckpt_dir)
 
@@ -229,7 +230,7 @@ class Checkpoint:
 
         resp = sess.get(f"/checkpoints/{uuid}", headers={"Accept": "application/gzip"}, stream=True)
         if not resp.ok:
-            raise RuntimeError(
+            raise ProxiedDownloadFailed(
                 "unable to download checkpoint from master:", resp.status_code, resp.reason
             )
         # gunzip and untar. tarfile.open can detect the compression algorithm

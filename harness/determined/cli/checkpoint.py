@@ -7,7 +7,7 @@ from determined.common import experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Determined
-from determined.common.experimental.checkpoint import DownloadMode
+from determined.experimental.client import DownloadMode
 
 from . import render
 
