@@ -77,6 +77,8 @@ options="$(
             continue
         fi
 
+        # Convert any explicit newline to \n
+        val="${val//$'\n'/'\n'}"
         # Backslash-escape quotes so that sshd works.
         val="${val//\"/\\\"}"
         # Backslash-escape backslashes so that sed doesn't interpret them.
