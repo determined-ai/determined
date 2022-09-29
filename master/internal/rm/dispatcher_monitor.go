@@ -24,6 +24,7 @@ import (
 const (
 	pollLoopIntervalSecs       = 10
 	minItemPollingIntervalSecs = pollLoopIntervalSecs
+	ignoredReporter            = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
 )
 
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
@@ -32,13 +33,15 @@ var messagePatternsOfInterest = []*regexp.Regexp{
 	// Remove the carrier prefix and "()" will contain just the Slurm error message.
 	// The (?s) is a non-capturing option that allows . to match newlines.
 	// This provides the additional SBATCH error context in the message
+	// (?:x) is not capturing prefix for alternating word patterns.
 	regexp.MustCompile("com.cray.analytics.capsules.carriers.hpc.\\S+" +
-		" - [Slurm|Pbs] job is in a (?s)(.+)"),
+		" - (?:Slurm|Pbs|PBS) job is in a (?s)(.+)"),
+	regexp.MustCompile("(?s)(Slurm job is in a .+)"),
 
 	// Whatever matches what's inside the "()" will contain the root cause of the SLURM error.
 	// The (?s) is a non-capturing option that allows . to match newlines.
 	// This provides the additional SBATCH error context in the message
-	regexp.MustCompile("[Slurm|Pbs] job process terminated with exit code \\d+:\n*(?s)(.+)"),
+	regexp.MustCompile("(?:Slurm|Pbs|PBS) job process terminated with exit code \\d+:\n*(?s)(.+)"),
 }
 
 // launcherJob describes a new launcher job, the progress of which we need to track.
@@ -400,6 +403,11 @@ func calculateJobExitStatus(
 func getJobExitMessages(resp launcher.DispatchInfo) []string {
 	var result []string
 	for _, event := range resp.GetEvents() {
+		if "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher" == *event.Reporter {
+			// Ignore general dispatcher messages, only want carrier messages
+			continue
+		}
+
 		// Only need messages that help diagnose the failure
 		if *event.Level == "WARNING" || *event.Level == "ERROR" {
 			result = append(result, *event.Message)
@@ -434,11 +442,12 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	// So in the rare case that we fail to start and need to display
 	// the log file content, read the payload name from the launcher.
 	if len(job.payloadName) == 0 {
-		manifest, _, err := m.apiClient.MonitoringApi.GetEnvironmentDetails(
+		manifest, resp, err := m.apiClient.MonitoringApi.GetEnvironmentDetails(
 			m.authContext(ctx), job.user, dispatchID).Execute()
 		if err != nil {
 			ctx.Log().WithError(err).Warnf(
-				"Unable to access environment details for dispatch %s", dispatchID)
+				"Unable to access environment details for dispatch %s, response {%v}",
+				dispatchID, resp)
 			return []string{}, err
 		}
 		for _, p := range *manifest.Payloads {
@@ -453,7 +462,8 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 		m.authContext(ctx), job.user, dispatchID, logFileName,
 	).Range_(logRange).Execute()
 	if err != nil {
-		ctx.Log().WithError(err).Warnf("unable to access %s for dispatch", logFileName)
+		ctx.Log().WithError(err).Warnf("unable to access %s for dispatch %s, response {%v}",
+			logFileName, dispatchID, httpResponse)
 		return []string{}, err
 	}
 

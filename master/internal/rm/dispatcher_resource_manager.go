@@ -1086,7 +1086,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 		LoadEnvironmentLog(m.authContext(ctx), owner, dispatchID, logFileName).
 		Execute()
 	if err != nil {
-		ctx.Log().WithError(err).Errorf("failed to retrieve HPC Resource details")
+		ctx.Log().WithError(err).Errorf("failed to retrieve HPC Resource details. response: {%v}", resp)
 		return
 	}
 
@@ -1205,8 +1205,8 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 	if _, response, err = m.apiClient.RunningApi.TerminateRunning(m.authContext(ctx),
 		owner, dispatchID).Force(true).Execute(); err != nil {
 		if response == nil || response.StatusCode != 404 {
-			ctx.Log().WithError(err).Errorf("Failed to terminate job with Dispatch ID %s",
-				dispatchID)
+			ctx.Log().WithError(err).Errorf("Failed to terminate job with Dispatch ID %s, response: {%v}",
+				dispatchID, response)
 			// We failed to delete, and not 404/notfound so leave in DB.
 			return false
 		}
@@ -1230,8 +1230,8 @@ func (m *dispatcherResourceManager) removeDispatchEnvironment(
 	if response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
 		owner, dispatchID).Execute(); err != nil {
 		if response == nil || response.StatusCode != 404 {
-			ctx.Log().WithError(err).Errorf("Failed to remove environment for Dispatch ID %s",
-				dispatchID)
+			ctx.Log().WithError(err).Errorf("Failed to remove environment for Dispatch ID %s, response:{%v}",
+				dispatchID, response)
 			// We failed to delete, and not 404/notfound so leave in DB for later retry
 			return
 		}
@@ -1276,9 +1276,9 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 			// So we can show the HTTP status code, if available.
 			httpStatus = fmt.Sprintf("(HTTP status %d)", response.StatusCode)
 		}
-		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s. "+
+		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
 			"Verify that the launcher service is up and reachable. Try a restart the "+
-			"launcher service followed by a restart of the determined-master service.", httpStatus)
+			"launcher service followed by a restart of the determined-master service.", httpStatus, response)
 	}
 	return dispatchInfo.GetDispatchId(), nil
 }
