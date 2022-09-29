@@ -291,9 +291,9 @@ class DetSDTextualInversionTrainer:
         """Train on a single batch and update internal metrics."""
         self.text_encoder.train()
         # Convert sample images to latent space.
-        prompt, img_t = batch
+        prompts, img_tensors = batch
         with torch.no_grad():
-            latent_dist = self.vae.encode(img_t).latent_dist
+            latent_dist = self.vae.encode(img_tensors).latent_dist
             latents = latent_dist.sample()
 
             # In 2112.10752, it was found that the latent space variance plays a large role in image
@@ -316,12 +316,12 @@ class DetSDTextualInversionTrainer:
             noisy_latents = self.train_scheduler.add_noise(latents, noise, rand_timesteps)
 
         # Process the text for each batch.
-        dummy_text = [self._replace_concepts_with_dummies(text) for text in prompt]
-        dummy_text_noise_pred = self._get_noise_pred(
-            text=dummy_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+        dummy_prompts = [self._replace_concepts_with_dummies(text) for text in prompts]
+        dummy_prompts_noise_pred = self._get_noise_pred(
+            text=dummy_prompts, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
-        noise_pred_loss = F.mse_loss(dummy_text_noise_pred, noise)
+        noise_pred_loss = F.mse_loss(dummy_prompts_noise_pred, noise)
         self.metrics_history["noise_pred_loss"].append(noise_pred_loss.item())
 
         # Add a latent-space regularization penalty following the ideas in
@@ -330,15 +330,15 @@ class DetSDTextualInversionTrainer:
             latent_reg_loss = 0.0
         else:
             with torch.no_grad():
-                initializer_text = [
-                    self._replace_concepts_with_initializers(text) for text in prompt
+                intializer_prompts = [
+                    self._replace_concepts_with_initializers(text) for text in prompts
                 ]
-                initializer_text_noise_pred = self._get_noise_pred(
-                    text=initializer_text, noisy_latents=noisy_latents, timesteps=rand_timesteps
+                intializer_prompts_noise_pred = self._get_noise_pred(
+                    text=intializer_prompts, noisy_latents=noisy_latents, timesteps=rand_timesteps
                 )
 
             latent_reg_loss = self.latent_reg_weight * F.mse_loss(
-                dummy_text_noise_pred, initializer_text_noise_pred
+                dummy_prompts_noise_pred, intializer_prompts_noise_pred
             )
             self.metrics_history["latent_reg_loss"].append(latent_reg_loss.item())
 

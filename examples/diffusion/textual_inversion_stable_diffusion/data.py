@@ -68,7 +68,7 @@ class TextualInversionDataset(Dataset):
             templates = TEMPLATE_DICT[prop]
             imgs_and_file_paths = self._get_imgs_and_file_paths_from_dir_path(dir_path)
             for img, file_path in imgs_and_file_paths:
-                img_t = self._convert_img_to_tensor(img)
+                img_tensor = self._convert_img_to_tensor(img)
                 for text in templates:
                     prompt = text.format(concept_token)
                     if append_file_name_to_text:
@@ -78,7 +78,7 @@ class TextualInversionDataset(Dataset):
                         )
                         joined_file_name = " ".join(split_file_name)
                         prompt = f"{prompt} {joined_file_name}"
-                    self.records.append((prompt, img_t))
+                    self.records.append((prompt, img_tensor))
 
     def _get_imgs_and_file_paths_from_dir_path(
         self, dir_path: str
@@ -100,10 +100,10 @@ class TextualInversionDataset(Dataset):
         """Converts a PIL image into an appropriately transformed tensor."""
         if self.center_crop:
             img = transforms.CenterCrop(size=min(img.size))(img)
-        img_t = self._base_img_trans(img)
+        img_tensor = self._base_img_trans(img)
         # Normalize the tensor to be in the range [-1, 1]
-        img_t = (img_t - 0.5) * 2.0
-        return img_t
+        img_tensor = (img_tensor - 0.5) * 2.0
+        return img_tensor
 
     def __len__(self):
         return len(self.records)
