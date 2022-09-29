@@ -9,7 +9,6 @@ import { percent } from 'shared/utils/number';
 import {
   Agent,
   Auth,
-  ClientMockPermissionType,
   ClusterOverview,
   ClusterOverviewResource,
   DetailedUser,
