@@ -462,12 +462,12 @@ export type UnarchiveProjectParams = ArchiveProjectParams;
 export type GetExperimentGroupsParams = GetProjectParams;
 
 export interface CreateExperimentGroupParams {
-  id: number;
   name: string;
+  projectId: number;
 }
 
 export interface PatchExperimentGroupParams {
-  id: number;
+  groupId: number;
   name?: string;
   projectId: number;
 }

@@ -3014,6 +3014,25 @@ class v1GetExperimentCheckpointsResponse:
         }
         return out
 
+class v1GetExperimentGroupsResponse:
+    def __init__(
+        self,
+        *,
+        groups: "typing.Sequence[v1ExperimentGroup]",
+    ):
+        self.groups = groups
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetExperimentGroupsResponse":
+        return cls(
+            groups=[v1ExperimentGroup.from_json(x) for x in obj["groups"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groups": [x.to_json() for x in self.groups],
+        }
+
 class v1GetExperimentLabelsResponse:
     labels: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -3866,25 +3885,6 @@ class v1GetPermissionsSummaryResponse:
             "roles": [x.to_json(omit_unset) for x in self.roles],
         }
         return out
-
-class v1GetProjectGroupsResponse:
-    def __init__(
-        self,
-        *,
-        groups: "typing.Sequence[v1ProjectExperimentGroup]",
-    ):
-        self.groups = groups
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetProjectGroupsResponse":
-        return cls(
-            groups=[v1ProjectExperimentGroup.from_json(x) for x in obj["groups"]],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "groups": [x.to_json() for x in self.groups],
-        }
 
 class v1GetProjectResponse:
 
@@ -6493,6 +6493,44 @@ class v1PatchExperiment:
             out["notes"] = self.notes
         return out
 
+class v1PatchExperimentGroup:
+    def __init__(
+        self,
+        *,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchExperimentGroup":
+        return cls(
+            name=obj.get("name", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+        }
+
+class v1PatchExperimentGroupResponse:
+    def __init__(
+        self,
+        *,
+        group: "v1ExperimentGroup",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchExperimentGroupResponse":
+        return cls(
+            group=v1ExperimentGroup.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
 class v1PatchExperimentResponse:
     experiment: "typing.Optional[v1Experiment]" = None
 
@@ -6720,44 +6758,6 @@ class v1PatchProject:
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
-
-class v1PatchProjectExperimentGroup:
-    def __init__(
-        self,
-        *,
-        name: "typing.Optional[str]" = None,
-    ):
-        self.name = name
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchProjectExperimentGroup":
-        return cls(
-            name=obj.get("name", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "name": self.name if self.name is not None else None,
-        }
-
-class v1PatchProjectGroupResponse:
-    def __init__(
-        self,
-        *,
-        group: "v1ProjectExperimentGroup",
-    ):
-        self.group = group
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchProjectGroupResponse":
-        return cls(
-            group=v1ProjectExperimentGroup.from_json(obj["group"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "group": self.group.to_json(),
-        }
 
 class v1PatchProjectResponse:
 
@@ -7161,6 +7161,48 @@ class v1PostCheckpointMetadataResponse:
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
 
+class v1PostExperimentGroupRequest:
+    def __init__(
+        self,
+        *,
+        name: str,
+        projectId: "typing.Optional[int]" = None,
+    ):
+        self.projectId = projectId
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostExperimentGroupRequest":
+        return cls(
+            projectId=obj.get("projectId", None),
+            name=obj["name"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "projectId": self.projectId if self.projectId is not None else None,
+            "name": self.name,
+        }
+
+class v1PostExperimentGroupResponse:
+    def __init__(
+        self,
+        *,
+        group: "v1ExperimentGroup",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostExperimentGroupResponse":
+        return cls(
+            group=v1ExperimentGroup.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
 class v1PostModelRequest:
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
@@ -7324,48 +7366,6 @@ class v1PostModelVersionResponse:
             "modelVersion": self.modelVersion.to_json(omit_unset),
         }
         return out
-
-class v1PostProjectGroupRequest:
-    def __init__(
-        self,
-        *,
-        name: str,
-        projectId: "typing.Optional[int]" = None,
-    ):
-        self.projectId = projectId
-        self.name = name
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostProjectGroupRequest":
-        return cls(
-            projectId=obj.get("projectId", None),
-            name=obj["name"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "projectId": self.projectId if self.projectId is not None else None,
-            "name": self.name,
-        }
-
-class v1PostProjectGroupResponse:
-    def __init__(
-        self,
-        *,
-        group: "v1ProjectExperimentGroup",
-    ):
-        self.group = group
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostProjectGroupResponse":
-        return cls(
-            group=v1ProjectExperimentGroup.from_json(obj["group"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "group": self.group.to_json(),
-        }
 
 class v1PostProjectRequest:
     description: "typing.Optional[str]" = None
@@ -7816,33 +7816,6 @@ class v1Project:
         if not omit_unset or "workspaceName" in vars(self):
             out["workspaceName"] = self.workspaceName
         return out
-
-class v1ProjectExperimentGroup:
-    def __init__(
-        self,
-        *,
-        id: int,
-        name: str,
-        projectId: int,
-    ):
-        self.id = id
-        self.name = name
-        self.projectId = projectId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ProjectExperimentGroup":
-        return cls(
-            id=obj["id"],
-            name=obj["name"],
-            projectId=obj["projectId"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "projectId": self.projectId,
-        }
 
 class v1PutProjectNotesRequest:
 
@@ -12655,6 +12628,26 @@ def get_GetExperimentCheckpoints(
         return v1GetExperimentCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentCheckpoints", _resp)
 
+def get_GetExperimentGroups(
+    session: "api.Session",
+    *,
+    projectId: int,
+) -> "v1GetExperimentGroupsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{projectId}/groups",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetExperimentGroupsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperimentGroups", _resp)
+
 def get_GetExperimentLabels(
     session: "api.Session",
     *,
@@ -13266,26 +13259,6 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
-
-def get_GetProjectGroups(
-    session: "api.Session",
-    *,
-    projectId: int,
-) -> "v1GetProjectGroupsResponse":
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/projects/{projectId}/groups",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetProjectGroupsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetProjectGroups", _resp)
 
 def get_GetResourcePools(
     session: "api.Session",
@@ -14482,6 +14455,28 @@ def patch_PatchExperiment(
         return v1PatchExperimentResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchExperiment", _resp)
 
+def patch_PatchExperimentGroup(
+    session: "api.Session",
+    *,
+    body: "v1PatchExperimentGroup",
+    id: int,
+    projectId: int,
+) -> "v1PatchExperimentGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/projects/{projectId}/groups/{id}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchExperimentGroupResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchExperimentGroup", _resp)
+
 def patch_PatchModel(
     session: "api.Session",
     *,
@@ -14689,6 +14684,27 @@ def post_PostCheckpointMetadata(
     if _resp.status_code == 200:
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
+
+def post_PostExperimentGroup(
+    session: "api.Session",
+    *,
+    body: "v1PostExperimentGroupRequest",
+    projectId: int,
+) -> "v1PostExperimentGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{projectId}/groups",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostExperimentGroupResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostExperimentGroup", _resp)
 
 def post_PostModel(
     session: "api.Session",

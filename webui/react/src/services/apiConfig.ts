@@ -1450,8 +1450,8 @@ export const createExperimentGroup: DetApi<
   postProcess: (response) => response.group,
   request: (params, options) =>
     detApi.Projects.postExperimentGroup(
-      params.id,
-      { name: params.name, projectId: params.id },
+      params.projectId,
+      { name: params.name, projectId: params.projectId },
       options,
     ),
 };
@@ -1466,7 +1466,7 @@ export const patchExperimentGroup: DetApi<
   request: (params, options) =>
     detApi.Projects.patchExperimentGroup(
       params.projectId,
-      params.id,
+      params.groupId,
       { name: params.name },
       options,
     ),

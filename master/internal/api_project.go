@@ -404,7 +404,7 @@ func (a *apiServer) PatchExperimentGroup(
 			currProject.Id)
 	}
 
-	currExperimentGroup, err := a.GetExperimentGroupByID(req.Id)
+	currExperimentGroup, err := a.GetExperimentGroupByID(req.GroupId)
 	if err != nil {
 		return nil, err
 	}

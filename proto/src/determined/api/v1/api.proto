@@ -1767,7 +1767,7 @@ service Determined {
   rpc PatchExperimentGroup(PatchExperimentGroupRequest)
       returns (PatchExperimentGroupResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/projects/{project_id}/groups/{id}"
+      patch: "/api/v1/projects/{project_id}/groups/{group_id}"
       body: "group"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
