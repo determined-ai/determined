@@ -236,7 +236,9 @@ describe('useSettings', () => {
     });
   });
 
-  it('should keep track of active settings', () => {
+  it('should keep track of active settings', async () => {
+    await waitFor(() => result.current.updateSettings(newSettings));
+
     expect(result.current.activeSettings()).toStrictEqual(Object.keys(newSettings));
   });
 
@@ -281,7 +283,7 @@ describe('useSettings', () => {
     expect(history.location.search).toContain('extra=fancy');
   });
 
-  it('should pick up query param changes and read new settings', () => {
+  it('should pick up query param changes and read new settings', async () => {
     const newQueryParams = {
       boolean: true,
       extra: 'donut',
@@ -289,10 +291,9 @@ describe('useSettings', () => {
     };
     const newQuery = queryString.stringify(newQueryParams);
 
-    act(() => {
-      result.current.resetSettings();
-      history.replace(`${history.location.pathname}?${newQuery}`);
-    });
+    await waitFor(() => result.current.resetSettings());
+
+    act(() => history.replace(`${history.location.pathname}?${newQuery}`));
 
     expect(result.current.settings.boolean).toBe(newQueryParams.boolean);
     expect(result.current.settings.number).toBe(newQueryParams.number);
