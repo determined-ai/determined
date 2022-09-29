@@ -24,8 +24,9 @@ In order to use this repository's implementation of Stable Diffusion, you must:
 
 ## Walkthrough: Basic Usage
 
-Below we walk through the Textual Inversion workflow, training on a few images of a specific toy cat
-and then incorporating the object into our Stable-Diffusion-generated art.
+Below we walk through the Textual Inversion workflow, first fine-tuning Stable Diffusion on a set of
+user-provided training images featuring a new concept, and then incorporating representations of the
+concept into generated art.
 
 
 ### Training
@@ -54,7 +55,7 @@ through
 training images found in `/det_logos`, such as the example found below (placed on a background for
 improved training results):
 
-![det-logo](./det_logos/det_1.png)
+![det-logo](./det_logos/on_a_dark_blue_oil_painting_of_ocean_waves.jpg)
 
 A corresponding concept token, chosen to be `<det-logo>` as specified in the `concept_tokens` field
 in the config, will then be available for use in our prompts to signify the concept of this logo.
