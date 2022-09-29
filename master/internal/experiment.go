@@ -476,19 +476,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			queue.Unwatch(msg.id)
 		}
 
-	/*
-		case *apiv1.GetSearcherEventsRequest:
-			queue, err := e.searcher.GetCustomSearcherEventQueue()
-			if err != nil {
-				ctx.Respond(status.Error(codes.Internal, err.Error()))
-			} else {
-				resp := &apiv1.GetSearcherEventsResponse{
-					SearcherEvents: queue.GetEvents(),
-				}
-				ctx.Respond(resp)
-			}
-	*/
-
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{
 			State:               model.ActiveState,
