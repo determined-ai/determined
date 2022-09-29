@@ -4,7 +4,6 @@ package searcher
 import (
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -123,8 +122,7 @@ func TestCustomSearchWatcher(t *testing.T) {
 
 	var queue *SearcherEventQueue
 	queue = customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
-	id := uuid.New()
-	w, err := queue.Watch(id)
+	w, err := queue.Watch()
 	require.NoError(t, err)
 
 	// should immediately receive initial status.
@@ -163,11 +161,10 @@ func TestCustomSearchWatcher(t *testing.T) {
 	}
 
 	// unwatching should work.
-	queue.Unwatch(id)
+	queue.Unwatch(w.ID)
 
 	// Receive events when you create a new watcher after events exist.
-	id = uuid.New()
-	w2, err := queue.Watch(id)
+	w2, err := queue.Watch()
 	require.NoError(t, err)
 	select {
 	case eventsInWatcher2 := <-w2.C:
@@ -181,5 +178,5 @@ func TestCustomSearchWatcher(t *testing.T) {
 	}
 
 	// unwatching should work.
-	queue.Unwatch(id)
+	queue.Unwatch(w2.ID)
 }

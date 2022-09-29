@@ -41,20 +41,25 @@ func newSearcherEventQueue() *SearcherEventQueue {
 	}
 }
 
+func (q *SearcherEventQueue) addEventsToWatcher(id uuid.UUID, w chan<- []*experimentv1.SearcherEvent) {
+	events := make([]*experimentv1.SearcherEvent, len(q.events))
+	copy(events, q.events)
+	w <- events
+	close(w)
+	delete(q.watchers, id)
+}
+
 // Watch creates a eventsWatcher. If events are available add events and close it.
-func (q *SearcherEventQueue) Watch(id uuid.UUID) (EventsWatcher, error) {
+func (q *SearcherEventQueue) Watch() (EventsWatcher, error) {
 	// buffer size is 1 because we don't want to block
 	//  until another goroutine receives from this channel.
 	// and only one event list can be sent to a channel.
+	id := uuid.New()
 	w := make(chan []*experimentv1.SearcherEvent, 1)
 	q.watchers[id] = w
 
 	if len(q.events) > 0 {
-		events := make([]*experimentv1.SearcherEvent, len(q.events))
-		copy(events, q.events)
-		w <- events
-		close(w)
-		delete(q.watchers, id)
+		q.addEventsToWatcher(id, w)
 	}
 	return EventsWatcher{ID: id, C: w}, nil
 }
@@ -75,11 +80,7 @@ func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 
 	// add events to all watcher channels.
 	for id, w := range q.watchers {
-		events := make([]*experimentv1.SearcherEvent, len(q.events))
-		copy(events, q.events)
-		w <- events
-		close(w)
-		delete(q.watchers, id)
+		q.addEventsToWatcher(id, w)
 	}
 }
 

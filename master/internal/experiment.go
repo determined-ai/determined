@@ -461,8 +461,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err != nil {
 			ctx.Respond(status.Error(codes.Internal, err.Error()))
 		} else {
-			id := uuid.New()
-			if w, err := queue.Watch(id); err != nil {
+			if w, err := queue.Watch(); err != nil {
 				ctx.Respond(err)
 			} else {
 				ctx.Respond(w)

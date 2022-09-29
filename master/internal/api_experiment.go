@@ -230,10 +230,9 @@ func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearche
 	}
 }
 
-func (a *apiServer) GetSearcherEventsLongPolling(ctx context.Context,
-	req *apiv1.GetSearcherEventsRequest) (
-	resp *apiv1.GetSearcherEventsResponse, err error,
-) {
+func (a *apiServer) GetSearcherEventsLongPolling(
+	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
+) (*apiv1.GetSearcherEventsResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -243,20 +242,16 @@ func (a *apiServer) GetSearcherEventsLongPolling(ctx context.Context,
 		return nil, err
 	}
 	if !isActiveExperimentState(exp.State) {
-		event := experimentv1.SearcherEvent_ExperimentInactive{
-			ExperimentInactive: &experimentv1.ExperimentInactive{
-				ExperimentState: exp.State,
-			},
-		}
-		searcherEvent := experimentv1.SearcherEvent{
-			Id:    int32(-1),
-			Event: &event,
-		}
-		events := []*experimentv1.SearcherEvent{&searcherEvent}
-		resp = &apiv1.GetSearcherEventsResponse{
-			SearcherEvents: events,
-		}
-		return resp, nil
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: []*experimentv1.SearcherEvent{{
+				Id: -1,
+				Event: &experimentv1.SearcherEvent_ExperimentInactive{
+					ExperimentInactive: &experimentv1.ExperimentInactive{
+						ExperimentState: exp.State,
+					},
+				},
+			}},
+		}, nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
@@ -266,25 +261,26 @@ func (a *apiServer) GetSearcherEventsLongPolling(ctx context.Context,
 
 	var w searcher.EventsWatcher
 
-	switch err = a.ask(addr, req, &w); {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal,
-			"failed to get events from actor: long polling %v", err)
-	default:
-		msg := UnwatchEvents{w.ID}
-		defer a.ask(addr, msg, &w)
-		select {
-		case events := <-w.C:
-			resp = &apiv1.GetSearcherEventsResponse{
-				SearcherEvents: events,
+	if err = a.ask(addr, req, &w); err != nil {
+		switch {
+		case err != nil:
+			return nil, status.Errorf(codes.Internal,
+				"failed to get events from actor: long polling %v", err)
+		default:
+			defer a.ask(addr, UnwatchEvents{w.ID}, &w)
+			select {
+			case events := <-w.C:
+				return &apiv1.GetSearcherEventsResponse{
+					SearcherEvents: events,
+				}, nil
+			case <-ctx.Done():
+				return &apiv1.GetSearcherEventsResponse{
+					SearcherEvents: nil,
+				}, nil
 			}
-			return resp, nil
-		case <-ctx.Done():
-			resp = &apiv1.GetSearcherEventsResponse{
-				SearcherEvents: nil,
-			}
-			return resp, nil
 		}
+	} else {
+		return nil, err
 	}
 }
 
