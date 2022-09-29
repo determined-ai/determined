@@ -1764,6 +1764,19 @@ service Determined {
     };
   }
 
+  // Get groups and users assigned to a given workspace with what roles are
+  // assigned.
+  rpc GetGroupsAndUsersAssignedToWorkspace(
+      GetGroupsAndUsersAssignedToWorkspaceRequest)
+      returns (GetGroupsAndUsersAssignedToWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/workspace/{workspace_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
   // Get a set of roles with the corresponding IDs.
   rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
     option (google.api.http) = {
