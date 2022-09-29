@@ -1661,6 +1661,16 @@ service Determined {
     };
   }
 
+  // Test a webhook.
+  rpc TestWebhook(TestWebhookRequest) returns (TestWebhookResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/webhooks/{id}/test",
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
   // Get a group by id.
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {

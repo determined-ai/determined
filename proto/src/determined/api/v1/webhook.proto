@@ -104,3 +104,24 @@ message DeleteWebhookResponse {
   bool completed = 1;
 }
 
+// Request for testing a webhook.
+message TestWebhookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the webhook.
+  int32 id = 1;
+}
+
+// Response to TestWebhookRequest.
+message TestWebhookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "completed" ] }
+  };
+
+  // Status of test.
+  bool completed = 1;
+}
+
+

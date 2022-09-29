@@ -56,3 +56,11 @@ func (a *apiServer) DeleteWebhook(
 	_, err := db.Bun().NewDelete().Model(&webhookv1.Webhook{Id: req.Id}).Where("id = ?", req.Id).Exec(context.TODO())
 	return &apiv1.DeleteWebhookResponse{Completed: true}, err
 }
+
+
+func (a *apiServer) TestWebhook(
+	ctx context.Context, req *apiv1.TestWebhookRequest,
+) (*apiv1.TestWebhookResponse, error) {
+	_, err := db.Bun().NewSelect().Model(&webhookv1.Webhook{Id: req.Id}).Where("id = ?", req.Id).Exec(context.TODO())
+	return &apiv1.TestWebhookResponse{Completed: true}, err
+}
