@@ -41,7 +41,8 @@ func newSearcherEventQueue() *SearcherEventQueue {
 	}
 }
 
-func (q *SearcherEventQueue) addEventsToWatcher(id uuid.UUID, w chan<- []*experimentv1.SearcherEvent) {
+func (q *SearcherEventQueue) addEventsToWatcher(id uuid.UUID,
+	w chan<- []*experimentv1.SearcherEvent) {
 	events := make([]*experimentv1.SearcherEvent, len(q.events))
 	copy(events, q.events)
 	w <- events
