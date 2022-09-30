@@ -42,13 +42,13 @@ start:
 
 .PHONY: prettier-check
 prettier:
-	npm run prettier $(ARGS)
+	npm run prettier $(PRE_ARGS)
 .PHONY: stylelint
 stylelint:
-	npm run stylelint $(ARGS)
+	npm run stylelint $(ST_ARGS)
 .PHONY: eslint
 eslint:
-	npm run eslint $(ARGS)
+	npm run eslint $(ES_ARGS)
 
 .PHONY: check-eslint
 check-eslint:
