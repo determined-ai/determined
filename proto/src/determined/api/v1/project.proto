@@ -178,7 +178,7 @@ message UnarchiveProjectResponse {}
 // Get experiment groups within a project.
 message GetExperimentGroupsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
+    json_schema: { required: [ "project_id" ] }
   };
 
   // The id of the project.

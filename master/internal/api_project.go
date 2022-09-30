@@ -352,7 +352,7 @@ func (a *apiServer) GetExperimentGroups(
 ) {
 	resp := &apiv1.GetExperimentGroupsResponse{}
 	var groups []projectv1.ExperimentGroup
-	err := a.m.db.Query("get_project_groups", &groups, req.ProjectId)
+	err := a.m.db.Query("get_experiment_groups", &groups, req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (a *apiServer) GetExperimentGroups(
 func (a *apiServer) GetExperimentGroupByID(id int32) (*projectv1.ExperimentGroup, error) {
 	notFoundErr := status.Errorf(codes.NotFound, "experiment group (%d) not found", id)
 	g := &projectv1.ExperimentGroup{}
-	if err := a.m.db.QueryProto("get_project_group", g, id); errors.Is(err, db.ErrNotFound) {
+	if err := a.m.db.QueryProto("get_experiment_group", g, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error fetching experiment group (%d) from database", id)
@@ -386,7 +386,7 @@ func (a *apiServer) PostExperimentGroup(
 	}
 
 	var g *projectv1.ExperimentGroup
-	err = a.m.db.QueryProto("insert_project_group", g, req.ProjectId, req.Name)
+	err = a.m.db.QueryProto("insert_experiment_group", g, req.ProjectId, req.Name)
 
 	return &apiv1.PostExperimentGroupResponse{Group: g},
 		errors.Wrapf(err, "error creating experiment group %s in database", req.Name)
@@ -422,7 +422,7 @@ func (a *apiServer) PatchExperimentGroup(
 	}
 
 	finalExperimentGroup := &projectv1.ExperimentGroup{}
-	err = a.m.db.QueryProto("update_project_group",
+	err = a.m.db.QueryProto("update_experiment_group",
 		finalExperimentGroup, currExperimentGroup.Id, currExperimentGroup.Name)
 
 	return &apiv1.PatchExperimentGroupResponse{Group: finalExperimentGroup},
