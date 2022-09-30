@@ -3,22 +3,49 @@ repos:
     hooks:
       - id: web-js-lint-check
         name: Web JS Lint Check
-        entry: bash -c 'make -j$(nproc) -C webui/react check-eslint check-prettier-js'
+        entry: >
+          bash -c
+          '
+          cd webui/react &&
+          FILES=$(
+            git diff --name-only --staged --relative src/**/*.js src/**/*.jsx src/**/*.ts src/**/*.tsx |
+            tr "\n" " "
+          ) &&
+          make prettier ARGS="-- -c $FILES" &&
+          make eslint ARGS="$FILES"
+          '
         language: system
         files: 'webui/react/src/'
         types_or: [javascript, jsx, ts, tsx]
-        pass_filenames: false
       - id: web-css-lint-check
         name: Web CSS Lint Check
-        entry: bash -c 'make -j$(nproc) -C webui/react check-prettier-css check-stylelint'
+        entry: >
+          bash -c
+          '
+          cd webui/react &&
+          FILES=$(
+            git diff --name-only --staged --relative src/**/*.css src/**/*.less src/**/*.scss |
+            tr "\n" " "
+          ) &&
+          make prettier ARGS="-- -c $FILES" &&
+          make stylelint ARGS="$FILES"
+          '
         language: system
         files: 'webui/react/src/'
         types_or: [css, less, scss]
-        pass_filenames: false
       - id: web-misc-lint-check
         name: Web Misc Lint Check
-        entry: bash -c 'make -j$(nproc) -C webui/react check-prettier-misc check-package-lock'
+        entry: >
+          bash -c
+          '
+          cd webui/react &&
+          FILES=$(
+            git diff --name-only --staged --relative *.json *.md |
+            tr "\n" " "
+          ) &&
+          make prettier ARGS="-- -c $FILES" &&
+          make check-package-lock
+          '
         language: system
-        files: 'webui/react/src/'
+        files: 'webui/react/'
         types_or: [markdown, json]
-        pass_filenames: false

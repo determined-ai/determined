@@ -40,12 +40,22 @@ live: check-requirements start
 start:
 	npm start
 
+.PHONY: prettier-check
+prettier:
+	npm run prettier $(ARGS)
+.PHONY: stylelint
+stylelint:
+	npm run stylelint $(ARGS)
+.PHONY: eslint
+eslint:
+	npm run eslint $(ARGS)
+
 .PHONY: check-eslint
 check-eslint:
-	npm run eslint
+	npm run lint:eslint
 .PHONY: check-stylelint
 check-stylelint:
-	npm run stylelint
+	npm run lint:style
 check-prettier-js:
 	npm run format-check:js > /dev/null
 check-prettier-css:
