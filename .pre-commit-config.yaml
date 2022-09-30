@@ -5,11 +5,8 @@ repos:
         name: Web JS Lint Check
         entry: >
           bash -c '
-            sh ./pre-commit/strip.sh "$0 $*" webui\/react\/ |
-            (
-              FILE_PATHS=$(cat);
-              make -j$(nproc) -C webui/react prettier PRE_ARGS="-- -c $FILE_PATHS" eslint ES_ARGS="$FILE_PATHS"
-            )
+            FILE_PATHS=$(realpath --relative-to webui/react $0 $@) &&
+            make -j$(nproc) -C webui/react prettier PRE_ARGS="-- -c $FILE_PATHS" eslint ES_ARGS="$FILE_PATHS"
           '
         language: system
         files: '^webui/react/src/'
@@ -18,25 +15,19 @@ repos:
         name: Web CSS Lint Check
         entry: >
           bash -c '
-            sh ./pre-commit/strip.sh "$0 $*" webui\/react\/ |
-            (
-              FILE_PATHS=$(cat);
-              make -j$(nproc) -C webui/react prettier PRE_ARGS="-- -c $FILE_PATHS" stylelint ST_ARGS="$FILE_PATHS"
-            )
+            FILE_PATHS=$(realpath --relative-to webui/react $0 $@) &&
+            make -j$(nproc) -C webui/react prettier PRE_ARGS="-- -c $FILE_PATHS" stylelint ST_ARGS="$FILE_PATHS"
           '
         language: system
-        files: 'webui/react/src/'
+        files: '^webui/react/src/'
         types_or: [css, less, scss]
       - id: web-misc-lint-check
         name: Web Misc Lint Check
         entry: >
           bash -c '
-            sh ./pre-commit/strip.sh "$0 $*" webui\/react\/ |
-            (
-              FILE_PATHS=$(cat);
-              make -j$(nproc) -C webui/react prettier PRE_ARGS="-- -c $FILE_PATHS" check-package-lock
-            )
+            FILE_PATHS=$(realpath --relative-to webui/react $0 $@) &&
+            make -j$(nproc) -C webui/react prettier PRE_ARGS="-- -c $FILE_PATHS" check-package-lock
           '
         language: system
-        files: 'webui/react/'
+        files: '^webui/react/'
         types_or: [markdown, json]
