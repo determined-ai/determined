@@ -46,6 +46,7 @@
    Model Hub Reference <reference/reference-model-hub/index>
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
+   Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
 
 .. toctree::
    :caption: Tools

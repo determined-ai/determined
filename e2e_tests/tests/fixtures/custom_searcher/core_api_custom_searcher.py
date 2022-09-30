@@ -50,7 +50,7 @@ def create_search_method(args, exception_points: Optional[List[str]] = None):
         raise ValueError("Unknown searcher type")
 
 
-class FallibleSearchRunner(searcher.CoreSearchRunner):
+class FallibleSearchRunner(searcher.RemoteSearchRunner):
     def __init__(
         self, search_method: searcher.SearchMethod, core_context: det.core.Context
     ) -> None:

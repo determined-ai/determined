@@ -14,6 +14,23 @@ STATE_FILE = "state"
 
 @dataclasses.dataclass
 class SearcherState:
+    """
+    Mutable Searcher state.
+
+    Search runners maintain this state that can be used by a ``SearchMethod``
+    to inform event handling. In other words, this state can be taken into account
+    when deciding which operations to return from your event handler. Do not
+    modify ``SearcherState`` in your ``SearchMethod``. If your hyperparameter
+    tuning algorithm needs additional state variables, add those variable to your
+    ``SearchMethod`` implementation.
+
+    Attributes:
+        failures: number of failed trials
+        trial_progress: progress of each trial as a number between 0.0 and 1.0
+        trials_closed: set of completed trials
+        trials_created: set of created trials
+    """
+
     failures: Set[uuid.UUID]
     trial_progress: Dict[uuid.UUID, float]
     trials_closed: Set[uuid.UUID]
@@ -76,12 +93,22 @@ class ExitedReason(Enum):
 
 
 class Operation:
+    """
+    Abstract base class for all Operations
+    """
+
     @abstractmethod
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         pass
 
 
 class ValidateAfter(Operation):
+    """
+    Operation signaling the trial to train until its total units trained
+    equals the specified length, where the units (batches, epochs, etc.)
+    are specified in the searcher section of the experiment configuration
+    """
+
     def __init__(self, request_id: uuid.UUID, length: int) -> None:
         super().__init__()
         self.request_id = request_id
@@ -97,6 +124,10 @@ class ValidateAfter(Operation):
 
 
 class Close(Operation):
+    """
+    Operation closing the specified trial
+    """
+
     def __init__(self, request_id: uuid.UUID):
         super().__init__()
         self.request_id = request_id
@@ -119,6 +150,10 @@ class Progress(Operation):
 
 
 class Shutdown(Operation):
+    """
+    Operation shutting the experiment down
+    """
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -127,6 +162,10 @@ class Shutdown(Operation):
 
 
 class Create(Operation):
+    """
+    Operation creating a trial with a specified combination of hyperparameter values
+    """
+
     def __init__(
         self,
         request_id: uuid.UUID,
@@ -148,7 +187,11 @@ class Create(Operation):
 
 class SearchMethod:
     """
-    Override this class to implement a custom hyperparameter search method.
+    The implementation of a custom hyperparameter tuning algorithm.
+
+    To implement your specific hyperparameter tuning approach, subclass ``SearchMethod``
+    overriding the event handler methods. Each event handler, except ``progress`` returns a list of
+    operations (``List[Operation]``) that will be submitted to master for processing.
     """
 
     def __init__(self) -> None:
@@ -156,20 +199,31 @@ class SearchMethod:
 
     @property
     def searcher_state(self) -> SearcherState:
+        """
+        Internal ``SearcherState``
+        """
         return self._searcher_state
 
     @abstractmethod
     def initial_operations(self) -> List[Operation]:
         """
-        initial_operations returns a set of initial operations that the searcher
-        would like to take.
+        Returns a set of initial operations that the searcher will perform.
+
+        Currently, we support the following operations:
+
+        - Create - starts a new trial with a unique trial id and a set of hyperparameter
+          values,
+        - ValidateAfter - sets number of steps (i.e., batches or epochs) after which a validation
+          is run for a trial with a given id,
+        - Close - closes a trial with a given id,
+        - Shutdown - closes the experiment.
         """
         pass
 
     @abstractmethod
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
         """
-        on_trial_created informs the searcher that a trial has been created
+        Informs the searcher that a trial has been created
         as a result of Create operation.
         """
         pass
@@ -177,7 +231,7 @@ class SearchMethod:
     @abstractmethod
     def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
         """
-        on_validation_completed informs the searcher that the validation workload
+        Informs the searcher that the validation workload
         initiated by the same searcher has completed. It returns any new operations
         as a result of this workload completing.
         """
@@ -186,7 +240,7 @@ class SearchMethod:
     @abstractmethod
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
         """
-        trialClosed informs the searcher that the trial has been closed as a result of a Close
+        Informs the searcher that a trial has been closed as a result of a Close
         operation.
         """
         pass
@@ -194,7 +248,7 @@ class SearchMethod:
     @abstractmethod
     def progress(self) -> float:
         """
-        progress returns experiment progress as a float between 0 and 1.
+        Returns experiment progress as a float between 0 and 1.
         """
         pass
 
@@ -205,13 +259,13 @@ class SearchMethod:
         exited_reason: ExitedReason,
     ) -> List[Operation]:
         """
-        on_trial_exited_early informs the searcher that the trial has exited earlier than expected.
+        Informs the searcher that a trial has exited earlier than expected.
         """
         pass
 
     def save(self, path: pathlib.Path, *, experiment_id: int) -> None:
         """
-        This is optionally overridden to save a checkpoint indexed by event id.
+        Saves the searcher state and the search method state.
         It will be called by the ``SearchRunner`` after receiving operations
         from the ``SearchMethod``
         """
@@ -225,15 +279,13 @@ class SearchMethod:
 
     def save_method_state(self, path: pathlib.Path) -> None:
         """
-        Override to save method-specific state
+        Saves method-specific state
         """
         pass
 
     def load(self, path: pathlib.Path) -> int:
         """
-        Load a checkpoint indexed by event id.
-        It will be called by the ``SearchRunner`` before processing new searcher events
-        from the master. It updates SearcherState
+        Loads searcher state and method-specific state.
         """
         searcher_state_file = path.joinpath(STATE_FILE)
         with searcher_state_file.open("r") as f:
@@ -249,6 +301,6 @@ class SearchMethod:
         path: pathlib.Path,
     ) -> None:
         """
-        This is optionally implemented to load method-specific search state.
+        Loads method-specific search state.
         """
         pass
