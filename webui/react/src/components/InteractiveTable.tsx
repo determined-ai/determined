@@ -601,21 +601,6 @@ const InteractiveTable: InteractiveTable = ({
     };
   }, []);
 
-  // useEffect(() => {
-  //   const newSettingsWidths = settings.columnWidths;
-  //   if (!newSettingsWidths) return;
-  //   const widths = getUpscaledWidths(newSettingsWidths);
-  //   const dropRightStyles = widths.map((width, idx) => ({
-  //     left: `${width / 2}px`,
-  //     width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-  //   }));
-  //   const dropLeftStyles = widths.map((width, idx) => ({
-  //     left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-  //     width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-  //   }));
-  //   setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  // }, [settings.columnWidths, getUpscaledWidths, updateSettings, pageWidth]);
-
   return (
     <div className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={spinning}>
