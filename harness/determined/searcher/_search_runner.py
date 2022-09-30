@@ -42,6 +42,10 @@ class SearchRunner:
             request_id = uuid.UUID(event.trialClosed.requestId)
             self.search_method.searcher_state.trials_closed.add(request_id)
             operations = self.search_method.on_trial_closed(request_id)
+
+            # add progress operation
+            progress = self.search_method.progress()
+            operations.append(searcher.Progress(progress))
         elif event.trialExitedEarly:
             # duplicate exit accounting already performed by master
             logger.info(
@@ -67,6 +71,9 @@ class SearchRunner:
                     event.trialExitedEarly.exitedReason
                 ),
             )
+            # add progress operation
+            progress = self.search_method.progress()
+            operations.append(searcher.Progress(progress))
         elif event.validationCompleted:
             # duplicate completion accounting already performed by master
             logger.info(
@@ -81,7 +88,9 @@ class SearchRunner:
                 request_id,
                 event.validationCompleted.metric,
             )
-
+            # add progress operation
+            progress = self.search_method.progress()
+            operations.append(searcher.Progress(progress))
         elif event.experimentInactive:
             logger.info(
                 f"experiment {self.search_method.searcher_state.experiment_id} is "
@@ -89,7 +98,6 @@ class SearchRunner:
             )
 
             raise _ExperimentInactiveException(event.experimentInactive.experimentState)
-
         elif event.trialProgress:
             logger.debug(
                 f"trialProgress({event.trialProgress.requestId}, "
