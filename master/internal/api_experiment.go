@@ -217,37 +217,26 @@ func (a *apiServer) GetSearcherEvents(
 		}, nil
 	}
 
+	addr := experimentsAddr.Child(req.ExperimentId)
+	var w searcher.EventsWatcher
+	err = a.ask(addr, req, &w)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to get events from actor: long polling %v", err)
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
 	defer cancel()
 
-	addr := experimentsAddr.Child(req.ExperimentId)
-
-	var w searcher.EventsWatcher
-
-	if err = a.ask(addr, req, &w); err != nil {
-		switch {
-		case err != nil:
-			return nil, status.Errorf(codes.Internal,
-				"failed to get events from actor: long polling %v", err)
-		default:
-			defer func() {
-				if err = a.ask(addr, UnwatchEvents{w.ID}, &w); err != nil {
-					logrus.WithError(err).Errorf("unwatching watcher %d", w.ID)
-				}
-			}()
-			select {
-			case events := <-w.C:
-				return &apiv1.GetSearcherEventsResponse{
-					SearcherEvents: events,
-				}, nil
-			case <-ctx.Done():
-				return &apiv1.GetSearcherEventsResponse{
-					SearcherEvents: nil,
-				}, nil
-			}
-		}
-	} else {
-		return nil, err
+	select {
+	case events := <-w.C:
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}, nil
+	case <-ctx.Done():
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: nil,
+		}, nil
 	}
 }
 

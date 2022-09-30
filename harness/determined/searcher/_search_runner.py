@@ -119,7 +119,7 @@ class SearchRunner:
                     2
                 )  # we don't want to call long polling API more often than every 2 seconds.
                 events = self.get_events(session, experiment_id)
-                if events is None:
+                if events is None or len(events) == 0:
                     continue
                 logger.info(json.dumps([SearchRunner._searcher_event_as_dict(e) for e in events]))
                 # the first event is an event we have already processed and told master about it
