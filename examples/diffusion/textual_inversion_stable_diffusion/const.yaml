@@ -25,7 +25,7 @@ hyperparameters:
             - orange brain logo, connected circles, concept art, high resolution, sharp lines
         train_img_dirs:
             - det_logos
-    trainer:
+    training:
         train_batch_size: 1
         optimizer_name: adam
         learning_rate: 1e-5
