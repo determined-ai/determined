@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -351,11 +352,11 @@ func (a *apiServer) GetExperimentGroups(
 	error,
 ) {
 	resp := &apiv1.GetExperimentGroupsResponse{}
-	err := a.m.db.Query("get_experiment_groups", &resp.Groups, req.ProjectId)
+	err := a.m.db.QueryProto("get_experiment_groups", &resp.Groups, req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return resp, nil
 }
 
@@ -382,6 +383,10 @@ func (a *apiServer) PostExperimentGroup(
 	if currProject.Archived {
 		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
 			currProject.Id)
+	}
+	if len(strings.TrimSpace(req.Name)) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"`name` must not be an empty or whitespace string.")
 	}
 
 	var g *projectv1.ExperimentGroup
@@ -410,6 +415,10 @@ func (a *apiServer) PatchExperimentGroup(
 
 	madeChanges := false
 	if req.Group.Name != nil && req.Group.Name.Value != currExperimentGroup.Name {
+		if len(strings.TrimSpace(req.Group.Name.Value)) == 0 {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"`name` must not be an empty or whitespace string.")
+		}
 		log.Infof("experiment group (%d) name changing from \"%s\" to \"%s\"",
 			currExperimentGroup.Id, currExperimentGroup.Name, req.Group.Name.Value)
 		madeChanges = true
