@@ -42,7 +42,7 @@ func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
 	// For this method and all the other methods in custom_search
 	// the Id will be set in the Enqueue method of SearcherEvent queue.
 	s.SearcherEventQueue.Enqueue(&searcherEvent)
-	
+
 	return nil, nil
 }
 
