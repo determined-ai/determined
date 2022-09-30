@@ -268,7 +268,11 @@ const HeaderCell = ({
       const dragItem = monitor.getItem() || {};
       const dragIndex = dragItem?.index;
       const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-      const internalDragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
+      const internalDragState = deltaX
+        ? deltaX > 0
+          ? 'draggingRight'
+          : 'draggingLeft'
+        : 'notDragging';
       if (
         dragIndex == null ||
         dragIndex === index ||
@@ -395,14 +399,16 @@ const InteractiveTable: InteractiveTable = ({
   const [widthData, setWidthData] = useState(() => {
     const widths = getUpscaledWidths(settings?.columnWidths) || [];
     return {
-      dropLeftStyles: widths.map((width, idx) => ({
-        left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-        width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-      })) ?? [],
-      dropRightStyles: widths.map((width, idx) => ({
-        left: `${width / 2}px`,
-        width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-      })) ?? [],
+      dropLeftStyles:
+        widths.map((width, idx) => ({
+          left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+          width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        })) ?? [],
+      dropRightStyles:
+        widths.map((width, idx) => ({
+          left: `${width / 2}px`,
+          width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        })) ?? [],
       widths: widths ?? [],
     };
   });
