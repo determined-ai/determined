@@ -49,48 +49,6 @@ log() {
     echo -e "$*" >&2
 }
 
-# The PBS Pro equivalent of the SLURM_PROCID environment variable is PBS_TASKNUM.
-# However, the PBS_TASKNUM may not always be represented as an integer and may
-# show up as a hex value, where the lower 6 hex digits are the actual task number
-# and the upper 2 hex digits are the vnode ID. For example, "04000001", where
-# "04" is the hex vnode ID and "0000001" is the task number.
-isPbsHexTaskNum()
-{
-    local val=$1
-
-    # Check if value is 8 characater hexadecimal.
-    if [ ! -z "${val}" ] && [ "${#val}" -eq 8 ] && (( 16#${val} )) 2> /dev/null
-    then
-        return 0
-    else
-	return 1
-    fi
-}
-
-# When PBS_TASKNUM is represented as a hex value, the upper 2 hex digits are
-# the vnode ID and the lower 6 hex digits are the task number. Return the
-# lower 6 hex digits as a decimal if PBS_TASKNUM is a hex value, otherwise
-# return the original value, which should already be a decimal.
-getPbsTaskNum()
-{
-    local val=$1
-
-    if isPbsHexTaskNum ${val}
-    then
-        # Strip out the high 2 hex digits, as those represent the vnode ID,
-        # leaving us with the task number in the lower 6 hex digits. There
-        # is no "bc" command in the container, so we use "printf".
-        decimalVal=$(printf "%d" $((16#${val:2})))
-
-        # Slurm process IDs start a 0, while PBS starts the task numbers at 1,
-        # so we need to subtract 1 to match Slurm.
-        echo $((${decimalVal} - 1))
-    else
-        # The PBS_TASKNUM is already an integer value. Simply return it, as-is.
-	echo ${val}
-    fi
-}
-
 # CUDA_VISIBLE_DEVICES is set by both SLURM and PBS. However, there can be differences in the 
 # format used by each of them. SLURM is guaranteed to set the value using simple number like 
 # "0,1,2" whereas PBS can sometimes set the value using GPU UUID like 
@@ -141,18 +99,6 @@ convert_to_gpu_numbers(){
         fi
     fi
 }
-
-# When PBS Pro is being used as the Workload Manager, the "PBS_*" environment
-# variables will be set. Map the "PBS_*" environment variables to their Slurm
-# equivalent.  Make sure that SLURM_PROCID is not set in case the user is
-# actually using Slurm, not PBS Pro, but he inadvertently has the PBS_TASKNUM
-# environment variable set.
-if [ ! -z "${PBS_TASKNUM}" ] && [ -z "${SLURM_PROCID}" ]
-then
-    export SLURM_PROCID="$(getPbsTaskNum ${PBS_TASKNUM})"
-
-    log_debug "DEBUG: Converted PBS_TASKNUM=${PBS_TASKNUM} to SLURM_PROCID=${SLURM_PROCID}"
-fi
 
 # Container-local directory to host determined directory
 # With --writable-tmpfs option / is writable by the user
