@@ -33,12 +33,12 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
-	tr := requireMockTrial(t, db, exp)
-	a := requireMockAllocation(t, db, tr.TaskID)
+	tr := RequireMockTrial(t, db, exp)
+	a := RequireMockAllocation(t, db, tr.TaskID)
 	var expectedCheckpoints []uuid.UUID
 	for i := 1; i <= 3; i++ {
 		ckptUuid := uuid.New()
-		ckpt := mockModelCheckpoint(ckptUuid, tr, a)
+		ckpt := MockModelCheckpoint(ckptUuid, tr, a)
 		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
 		require.NoError(t, err)
 		if i == 2 { // add this checkpoint to the model registry
@@ -102,27 +102,6 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 	return nil
 }
 
-func mockModelCheckpoint(ckptUuid uuid.UUID, tr *model.Trial, a *model.Allocation) model.CheckpointV2 {
-	stepsCompleted := int32(10)
-	ckpt := model.CheckpointV2{
-		UUID:         ckptUuid,
-		TaskID:       tr.TaskID,
-		AllocationID: a.AllocationID,
-		ReportTime:   time.Now().UTC(),
-		State:        model.CompletedState,
-		Resources: map[string]int64{
-			"ok": 1.0,
-		},
-		Metadata: map[string]interface{}{
-			"framework":          "some framework",
-			"determined_version": "1.0.0",
-			"steps_completed":    float64(stepsCompleted),
-		},
-	}
-
-	return ckpt
-}
-
 func mockExpconf() expconf.ExperimentConfig {
 	return schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
@@ -175,8 +154,8 @@ func TestCheckpointMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			user := RequireMockUser(t, db)
 			exp := RequireMockExperiment(t, db, user)
-			tr := requireMockTrial(t, db, exp)
-			a := requireMockAllocation(t, db, tr.TaskID)
+			tr := RequireMockTrial(t, db, exp)
+			a := RequireMockAllocation(t, db, tr.TaskID)
 
 			ckptUuid := uuid.New()
 			stepsCompleted := int32(10)

@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -396,6 +396,22 @@ const ProjectDetails: React.FC = () => {
       workspace: { id: project.workspaceId },
     });
 
+  const ContextMenu = useCallback(
+    ({ record, onVisibleChange, children }) => {
+      return (
+        <ExperimentActionDropdown
+          experiment={getProjectExperimentForExperimentItem(record, project)}
+          settings={settings}
+          updateSettings={updateSettings}
+          onComplete={handleActionComplete}
+          onVisibleChange={onVisibleChange}>
+          {children}
+        </ExperimentActionDropdown>
+      );
+    },
+    [project, settings, updateSettings, handleActionComplete],
+  );
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
@@ -406,14 +422,7 @@ const ProjectDetails: React.FC = () => {
     );
 
     const actionRenderer: ExperimentRenderer = (_, record) => {
-      return (
-        <ExperimentActionDropdown
-          experiment={getProjectExperimentForExperimentItem(record, project)}
-          settings={settings}
-          updateSettings={updateSettings}
-          onComplete={handleActionComplete}
-        />
-      );
+      return <ContextMenu record={record} />;
     };
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
@@ -597,12 +606,11 @@ const ProjectDetails: React.FC = () => {
     experimentTags,
     canEditExperiment,
     settings,
-    updateSettings,
-    handleActionComplete,
     saveExperimentDescription,
+    ContextMenu,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
     if (!settings.columns?.length || !settings.columnWidths?.length) {
       updateSettings({
@@ -621,7 +629,7 @@ const ProjectDetails: React.FC = () => {
       }
       if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
     }
-  }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
+  }, [settings.columns, settings.columnWidths, columns, updateSettings]);
 
   const transferColumns = useMemo(() => {
     return columns
@@ -905,22 +913,6 @@ const ProjectDetails: React.FC = () => {
       setTotal(0);
     };
   }, [canceler, stopPolling]);
-
-  const ContextMenu = useCallback(
-    ({ record, onVisibleChange, children }) => {
-      return (
-        <ExperimentActionDropdown
-          experiment={getProjectExperimentForExperimentItem(record, project)}
-          settings={settings}
-          updateSettings={updateSettings}
-          onComplete={handleActionComplete}
-          onVisibleChange={onVisibleChange}>
-          {children}
-        </ExperimentActionDropdown>
-      );
-    },
-    [project, settings, updateSettings, handleActionComplete],
-  );
 
   const ExperimentTabOptions = useMemo(() => {
     const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {

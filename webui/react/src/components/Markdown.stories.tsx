@@ -137,6 +137,12 @@ export const Default = (): React.ReactNode => (
   </div>
 );
 
+export const Disabled = (): React.ReactNode => (
+  <div style={{ height: '80vh', width: '600px' }}>
+    <Markdown disabled={true} markdown="" />
+  </div>
+);
+
 export const Editing = (): React.ReactNode => {
   const [editedMarkdown, setEditedMarkdown] = useState(markdown);
 

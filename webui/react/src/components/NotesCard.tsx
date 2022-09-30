@@ -140,6 +140,7 @@ const NotesCard: React.FC<Props> = ({
       }>
       <Spinner spinning={isLoading}>
         <Markdown
+          disabled={disabled}
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}

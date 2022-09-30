@@ -5,6 +5,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
+import "determined/group/v1/group.proto";
+import "determined/user/v1/user.proto";
 import "determined/rbac/v1/rbac.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -21,6 +23,34 @@ message GetPermissionsSummaryResponse {
   repeated determined.rbac.v1.Role roles = 1;
   // Lists of assignments for the cluster and other scopes.
   repeated determined.rbac.v1.RoleAssignmentSummary assignments = 2;
+}
+
+// Request object for GetGroupsAndUsersAssignedToWorkspace.
+message GetGroupsAndUsersAssignedToWorkspaceRequest {
+  // ID of workspace getting groups and users.
+  int32 workspace_id = 1;
+  // Name of groups and users to search by. Name filters by group name for
+  // groups. Name filters by display name then username if display name is null
+  // for users.
+  string name = 2;
+}
+
+// Response object for GetGroupsAndUsersAssignedToWorkspace.
+message GetGroupsAndUsersAssignedToWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "groups", "users_assigned_directly", "assignments" ]
+    }
+  };
+
+  // Groups with a role assigned to the given workspace scope.
+  // Contains user membership of each group.
+  repeated determined.group.v1.GroupDetails groups = 1;
+  // Only contains users assigned directly to roles on the workspace scope.
+  repeated determined.user.v1.User users_assigned_directly = 2;
+  // Roles assigned to workspace with associations between
+  // groups and users_assigned_directly with roles.
+  repeated determined.rbac.v1.RoleWithAssignments assignments = 3;
 }
 
 // Request object for GetRolesByID

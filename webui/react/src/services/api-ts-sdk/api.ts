@@ -2885,6 +2885,32 @@ export interface V1GetGroupResponse {
 }
 
 /**
+ * Response object for GetGroupsAndUsersAssignedToWorkspace.
+ * @export
+ * @interface V1GetGroupsAndUsersAssignedToWorkspaceResponse
+ */
+export interface V1GetGroupsAndUsersAssignedToWorkspaceResponse {
+    /**
+     * Groups with a role assigned to the given workspace scope. Contains user membership of each group.
+     * @type {Array<V1GroupDetails>}
+     * @memberof V1GetGroupsAndUsersAssignedToWorkspaceResponse
+     */
+    groups: Array<V1GroupDetails>;
+    /**
+     * Only contains users assigned directly to roles on the workspace scope.
+     * @type {Array<V1User>}
+     * @memberof V1GetGroupsAndUsersAssignedToWorkspaceResponse
+     */
+    usersAssignedDirectly: Array<V1User>;
+    /**
+     * Roles assigned to workspace with associations between groups and users_assigned_directly with roles.
+     * @type {Array<V1RoleWithAssignments>}
+     * @memberof V1GetGroupsAndUsersAssignedToWorkspaceResponse
+     */
+    assignments: Array<V1RoleWithAssignments>;
+}
+
+/**
  * GetGroupsRequest is the body of the request for the call to search for groups.
  * @export
  * @interface V1GetGroupsRequest
@@ -8965,6 +8991,43 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get a checkpoint's contents in a tgz or zip file.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCheckpoint_1(checkpointUuid: string, options: any = {}): FetchArgs {
+            // verify required parameter 'checkpointUuid' is not null or undefined
+            if (checkpointUuid === null || checkpointUuid === undefined) {
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpoint_1.');
+            }
+            const localVarPath = `/checkpoints/{checkpoint_uuid}`
+                .replace(`{${"checkpoint_uuid"}}`, encodeURIComponent(String(checkpointUuid)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update checkpoint metadata.
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1PostCheckpointMetadataRequest} body 
@@ -9058,6 +9121,25 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a checkpoint's contents in a tgz or zip file.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCheckpoint_1(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint_1(checkpointUuid, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Update checkpoint metadata.
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1PostCheckpointMetadataRequest} body 
@@ -9107,6 +9189,16 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get a checkpoint's contents in a tgz or zip file.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCheckpoint_1(checkpointUuid: string, options?: any) {
+            return CheckpointsApiFp(configuration).getCheckpoint_1(checkpointUuid, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Update checkpoint metadata.
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1PostCheckpointMetadataRequest} body 
@@ -9148,6 +9240,18 @@ export class CheckpointsApi extends BaseAPI {
      */
     public getCheckpoint(checkpointUuid: string, options?: any) {
         return CheckpointsApiFp(this.configuration).getCheckpoint(checkpointUuid, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a checkpoint's contents in a tgz or zip file.
+     * @param {string} checkpointUuid Checkpoint UUID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CheckpointsApi
+     */
+    public getCheckpoint_1(checkpointUuid: string, options?: any) {
+        return CheckpointsApiFp(this.configuration).getCheckpoint_1(checkpointUuid, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20398,6 +20502,48 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @summary Get groups and users assigned to a given workspace with what roles are assigned.
+         * @param {number} workspaceId ID of workspace getting groups and users.
+         * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling getGroupsAndUsersAssignedToWorkspace.');
+            }
+            const localVarPath = `/api/v1/roles/workspace/{workspaceId}`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all permissions for the logged in user in all scopes.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20691,6 +20837,26 @@ export const RBACApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get groups and users assigned to a given workspace with what roles are assigned.
+         * @param {number} workspaceId ID of workspace getting groups and users.
+         * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all permissions for the logged in user in all scopes.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20842,6 +21008,17 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
         },
         /**
          * 
+         * @summary Get groups and users assigned to a given workspace with what roles are assigned.
+         * @param {number} workspaceId ID of workspace getting groups and users.
+         * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
+            return RBACApiFp(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all permissions for the logged in user in all scopes.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20929,6 +21106,19 @@ export class RBACApi extends BaseAPI {
      */
     public assignRoles(body: V1AssignRolesRequest, options?: any) {
         return RBACApiFp(this.configuration).assignRoles(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get groups and users assigned to a given workspace with what roles are assigned.
+     * @param {number} workspaceId ID of workspace getting groups and users.
+     * @param {string} [name] Name of groups and users to search by. Name filters by group name for groups. Name filters by display name then username if display name is null for users.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
+        return RBACApiFp(this.configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(this.fetch, this.basePath);
     }
 
     /**

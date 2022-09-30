@@ -46,8 +46,8 @@ func TestModels(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			user := RequireMockUser(t, db)
 			exp := RequireMockExperiment(t, db, user)
-			tr := requireMockTrial(t, db, exp)
-			a := requireMockAllocation(t, db, tr.TaskID)
+			tr := RequireMockTrial(t, db, exp)
+			a := RequireMockAllocation(t, db, tr.TaskID)
 
 			// Insert a model.
 			now := time.Now()

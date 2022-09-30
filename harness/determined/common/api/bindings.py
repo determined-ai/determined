@@ -2308,6 +2308,33 @@ class v1GetGroupResponse:
             "group": self.group.to_json(),
         }
 
+class v1GetGroupsAndUsersAssignedToWorkspaceResponse:
+    def __init__(
+        self,
+        *,
+        assignments: "typing.Sequence[v1RoleWithAssignments]",
+        groups: "typing.Sequence[v1GroupDetails]",
+        usersAssignedDirectly: "typing.Sequence[v1User]",
+    ):
+        self.groups = groups
+        self.usersAssignedDirectly = usersAssignedDirectly
+        self.assignments = assignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
+        return cls(
+            groups=[v1GroupDetails.from_json(x) for x in obj["groups"]],
+            usersAssignedDirectly=[v1User.from_json(x) for x in obj["usersAssignedDirectly"]],
+            assignments=[v1RoleWithAssignments.from_json(x) for x in obj["assignments"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groups": [x.to_json() for x in self.groups],
+            "usersAssignedDirectly": [x.to_json() for x in self.usersAssignedDirectly],
+            "assignments": [x.to_json() for x in self.assignments],
+        }
+
 class v1GetGroupsRequest:
     def __init__(
         self,
@@ -9057,6 +9084,29 @@ def post_GetGroups(
     if _resp.status_code == 200:
         return v1GetGroupsResponse.from_json(_resp.json())
     raise APIHttpError("post_GetGroups", _resp)
+
+def get_GetGroupsAndUsersAssignedToWorkspace(
+    session: "api.Session",
+    *,
+    workspaceId: int,
+    name: "typing.Optional[str]" = None,
+) -> "v1GetGroupsAndUsersAssignedToWorkspaceResponse":
+    _params = {
+        "name": name,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/roles/workspace/{workspaceId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGroupsAndUsersAssignedToWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGroupsAndUsersAssignedToWorkspace", _resp)
 
 def get_GetHPImportance(
     session: "api.Session",

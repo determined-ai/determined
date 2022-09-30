@@ -25,6 +25,12 @@ func (s *rbacAPIServerStub) GetPermissionsSummary(
 	return nil, UnimplementedError
 }
 
+func (s *rbacAPIServerStub) GetGroupsAndUsersAssignedToWorkspace(
+	context.Context, *apiv1.GetGroupsAndUsersAssignedToWorkspaceRequest,
+) (*apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse, error) {
+	return nil, UnimplementedError
+}
+
 func (s *rbacAPIServerStub) GetRolesByID(ctx context.Context, req *apiv1.GetRolesByIDRequest) (
 	resp *apiv1.GetRolesByIDResponse, err error,
 ) {

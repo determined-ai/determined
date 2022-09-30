@@ -190,20 +190,20 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
-export const getUserPermissions: DetApi<Service.GetUserParams, number, Type.Permission[]> = {
+export const getUserPermissions: DetApi<
+  Service.GetUserParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.Permission[]
+> = {
   name: 'getUserPermissions',
   postProcess: (response) => {
-    const fillerPermission: Type.Permission = {
-      id: response,
-      isGlobal: true,
-      name: 'oss_user',
-    };
-    return [fillerPermission];
+    let permissions = new Array<Type.Permission>();
+    response.roles
+      .map(decoder.mapV1Role)
+      .forEach((r) => (permissions = permissions.concat(r.permissions)));
+    return permissions;
   },
-  request: (params) =>
-    new Promise((resolve) => {
-      resolve(-1 * params.userId);
-    }),
+  request: () => detApi.RBAC.getPermissionsSummary(),
 };
 
 /* Group */
