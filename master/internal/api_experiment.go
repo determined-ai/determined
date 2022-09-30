@@ -225,6 +225,8 @@ func (a *apiServer) GetSearcherEvents(
 			"failed to get events from actor: long polling %v", err)
 	}
 
+	defer a.ask(addr, UnwatchEvents{w.ID}, &w) //nolint
+
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
 	defer cancel()
 
