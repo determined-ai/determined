@@ -1742,7 +1742,7 @@ service Determined {
       tags: "Projects"
     };
   }
-  // Get experiment groups within a project.
+  // Get experiment groups within a project (alpha).
   rpc GetExperimentGroups(GetExperimentGroupsRequest)
       returns (GetExperimentGroupsResponse) {
     option (google.api.http) = {
@@ -1752,7 +1752,7 @@ service Determined {
       tags: "Projects"
     };
   }
-  // Create an experiment group within a project.
+  // Create an experiment group within a project (alpha).
   rpc PostExperimentGroup(PostExperimentGroupRequest)
       returns (PostExperimentGroupResponse) {
     option (google.api.http) = {
@@ -1763,7 +1763,7 @@ service Determined {
       tags: "Projects"
     };
   }
-  // Update an experiment group within a project.
+  // Update an experiment group within a project (alpha).
   rpc PatchExperimentGroup(PatchExperimentGroupRequest)
       returns (PatchExperimentGroupResponse) {
     option (google.api.http) = {
