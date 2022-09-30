@@ -1,7 +1,7 @@
 import { Button, notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
@@ -37,7 +37,7 @@ const logoConfig: Record<RecordKey, string> = {
 };
 
 const SignIn: React.FC = () => {
-  const location = useLocation<{ loginRedirect: Location }>();
+  const location = useLocation();
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
   const [canceler] = useState(new AbortController());

@@ -1,6 +1,6 @@
 import queryString from 'query-string';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import { useStore } from 'contexts/Store';
 import { updateUserSetting } from 'services/api';
@@ -222,7 +222,7 @@ const defaultPathChange = {
 };
 
 const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): SettingsHook<T> => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(options?.storagePath || config.storagePath);
   const {
@@ -411,7 +411,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     if (currentQuery && !hasObjectKeys(searchSettings)) {
       const newQueries = [currentQuery];
       if (locationSearch) newQueries.unshift(locationSearch);
-      history.replace(`${location.pathname}?${newQueries.join('&')}`);
+      navigate(`${location.pathname}?${newQueries.join('&')}`, { replace: true });
     } else {
       const defaultSettings = getDefaultSettings<T>(config, storage);
       const hasUnsetQuery = Object.keys(searchSettings)
@@ -428,7 +428,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         return { ...prevSettings, ...defaultSettings, ...searchSettings };
       });
     }
-  }, [config, history, location.pathname, location.search, prevSearch, settings, storage]);
+  }, [config, location.pathname, location.search, navigate, prevSearch, settings, storage]);
 
   useEffect(() => {
     if (pathChange.type === PathChangeType.None) return;
@@ -443,11 +443,11 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     // Update path with new and validated settings.
     const query = settingsToQuery(config, { ...clone(settings), ...pathChange.querySettings });
     const path = getNewQueryPath(config, location.pathname, location.search, query);
-    pathChange.type === PathChangeType.Push ? history.push(path) : history.replace(path);
+    pathChange.type === PathChangeType.Push ? navigate(path) : navigate(path, { replace: true });
 
     // Reset path change.
     setPathChange(defaultPathChange);
-  }, [config, history, location.pathname, location.search, pathChange, settings]);
+  }, [config, location.pathname, location.search, navigate, pathChange, settings]);
 
   return { activeSettings, resetSettings, settings, updateSettings };
 };

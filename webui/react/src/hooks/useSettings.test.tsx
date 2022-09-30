@@ -3,6 +3,7 @@ import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import queryString from 'query-string';
 import React from 'react';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -194,7 +195,9 @@ describe('useSettings', () => {
   beforeEach(() => {
     const RouterWrapper: React.FC = ({ children }) => (
       <StoreProvider>
-        <Router history={history}>{children}</Router>
+        <Router history={history}>
+          <CompatRouter>{children}</CompatRouter>
+        </Router>
       </StoreProvider>
     );
     const hookResult = renderHook(() => useSettings<Settings>(config), { wrapper: RouterWrapper });

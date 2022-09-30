@@ -1,6 +1,6 @@
 import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -38,9 +38,9 @@ enum TabType {
   Notes = 'notes',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
-}
+};
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
@@ -58,7 +58,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   onTrialUpdate,
   pageRef,
 }: Props) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [trialId, setFirstTrialId] = useState<number>();
   const [wontHaveTrials, setWontHaveTrials] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
@@ -122,22 +122,22 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const handleTabChange = useCallback(
     (key) => {
       setTabKey(key);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
-    history.replace(`${basePath}/${TabType.Logs}?tail`);
-  }, [basePath, history]);
+    navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
+  }, [basePath, navigate]);
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
+      navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [basePath, navigate, tab, tabKey]);
 
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
