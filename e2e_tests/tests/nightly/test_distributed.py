@@ -246,9 +246,9 @@ def test_deepspeed_cpu_offloading() -> None:
 
 
 @pytest.mark.distributed
-def test_core_search_runner() -> None:
+def test_remote_search_runner() -> None:
     config = conf.custom_search_method_examples_path(
-        "asha_search_method/core_search_runner/searcher.yaml"
+        "asha_search_method/remote_search_runner/searcher.yaml"
     )
 
     exp.run_basic_test(config, conf.custom_search_method_examples_path("asha_search_method"), 1)
