@@ -449,7 +449,7 @@ def test_run_asha_searcher_exp_core_api(
     assert failures == len(exception_points)
 
     # check for resubmitting operations
-    resubmissions = logs.count("root: Resubmitting operations for event.id=")
+    resubmissions = logs.count("determined.searcher: Resubmitting operations for event.id=")
     assert resubmissions == sum([x == "after_save" for x in exception_points])
 
 
