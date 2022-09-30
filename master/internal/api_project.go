@@ -351,12 +351,11 @@ func (a *apiServer) GetExperimentGroups(
 	error,
 ) {
 	resp := &apiv1.GetExperimentGroupsResponse{}
-	var groups []projectv1.ExperimentGroup
-	err := a.m.db.Query("get_experiment_groups", &groups, req.ProjectId)
+	err := a.m.db.Query("get_experiment_groups", &resp.Groups, req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return resp, nil
 }
 

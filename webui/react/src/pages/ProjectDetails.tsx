@@ -349,8 +349,8 @@ const ProjectDetails: React.FC = () => {
     const groupRenderer = (value: string, record: ExperimentItem) => {
       const handleGroupSelect = async (option?: { label: string; value: number } | string) => {
         try {
-          if (option === undefined) {
-            if (record.groupId === undefined) return;
+          if (option === undefined || option === '') {
+            if (record.groupId === undefined || record.groupId === null) return;
             await patchExperiment({
               body: { groupId: undefined },
               experimentId: record.id,

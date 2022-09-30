@@ -4,8 +4,13 @@
   :global(.ant-select-auto-complete) {
     display: flex;
 
-    & > div {
+    :global(.ant-select-selector) {
+      border-color: transparent !important;
       flex-grow: 1;
+
+      &:hover {
+        border-color: inherit !important;
+      }
     }
   }
   .empty {
