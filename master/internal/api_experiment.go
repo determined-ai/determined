@@ -462,8 +462,8 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
 		ColumnExpr("p.user_id AS project_owner_id").
 		Column("e.config").
-		Column("e.group_id").
-		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE 'g.name' END AS group_name").
+		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE json_build_object('value', e.group_id) END AS group_id").
+		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE json_build_object('value', g.name) END AS group_name").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").

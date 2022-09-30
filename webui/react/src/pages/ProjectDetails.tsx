@@ -378,9 +378,10 @@ const ProjectDetails: React.FC = () => {
       };
       return (
         <AutoComplete
+          allowClear={true}
           options={experimentGroups.map((group) => ({ label: group.name, value: group.id }))}
           placeholder="Add experiment group..."
-          searchValue={record.groupName}
+          value={record.groupName}
           onSave={handleGroupSelect}
         />
       );

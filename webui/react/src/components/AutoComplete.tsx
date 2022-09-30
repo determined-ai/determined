@@ -13,7 +13,10 @@ const AutoComplete = <OptionType extends DefaultOptionType>({
   onSave,
   ...props
 }: Props<OptionType>): React.ReactElement => {
-  const [searchValue, setSearchValue] = useState(props.searchValue ?? '');
+  const [value, setValue] = useState(props.value ?? '');
+
+  const classes = [css.base];
+  if (value.length === 0) classes.push(css.empty);
 
   const handleSelect = useCallback(
     (value: string, option: OptionType) => {
@@ -23,23 +26,23 @@ const AutoComplete = <OptionType extends DefaultOptionType>({
   );
 
   const handleBlur = useCallback(() => {
-    const selectedOption =
-      props.options?.find((option) => option.label === searchValue) ?? searchValue;
+    const selectedOption = props.options?.find((option) => option.label === value) ?? value;
     onSave?.(selectedOption);
-  }, [onSave, props.options, searchValue]);
+  }, [onSave, props.options, value]);
 
   const handleClear = useCallback(() => {
+    setValue('');
     onSave?.();
   }, [onSave]);
 
   return (
-    <div className={css.base}>
+    <div className={classes.join(' ')}>
       <AutoCompleteAntD<string, OptionType>
         {...props}
-        className={searchValue ? undefined : css.empty}
-        searchValue={searchValue}
+        //className={value.length === 0 ? undefined : css.empty}
+        value={value}
         onBlur={handleBlur}
-        onChange={setSearchValue}
+        onChange={setValue}
         onClear={handleClear}
         onSelect={handleSelect}
       />
