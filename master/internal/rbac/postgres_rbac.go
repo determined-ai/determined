@@ -385,6 +385,84 @@ func RemoveGroupAssignmentsTx(ctx context.Context, idb bun.IDB,
 	return nil
 }
 
+// GetRolesWithAssignmentsOnWorkspace gets all roles assigned to the workspace
+// and what assignments they have on the workspace.
+func GetRolesWithAssignmentsOnWorkspace(ctx context.Context, workspaceID int) ([]Role, error) {
+	roleIDsQuery := db.Bun().NewSelect().Table("role_assignments").
+		Column("role_id").
+		Distinct().
+		Join("LEFT JOIN role_assignment_scopes AS ras ON "+
+			"ras.id = role_assignments.scope_id").
+		Where("ras.scope_workspace_id = ?", workspaceID)
+
+	// Get all roles and permission from roles that have at least one assignment to the scope.
+	var roles []*Role
+	if err := db.Bun().NewSelect().Model(&roles).
+		Where("id IN (?)", roleIDsQuery).
+		Relation("Permissions").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	roleIDsToRole := make(map[int]*Role)
+	for _, r := range roles {
+		roleIDsToRole[r.ID] = r
+	}
+
+	// Get all role assignments that are assigned to the scope.
+	var roleAssigns []*RoleAssignment
+	if err := db.Bun().NewSelect().Model(&roleAssigns).
+		Join("LEFT JOIN role_assignment_scopes AS ras ON "+
+			"ras.id = role_assignments.scope_id").
+		Where("ras.scope_workspace_id = ?", workspaceID).
+		Relation("Scope").
+		Relation("Group").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	for _, assign := range roleAssigns {
+		r := roleIDsToRole[assign.RoleID]
+		r.RoleAssignments = append(r.RoleAssignments, assign)
+		assign.Role = &Role{ID: r.ID, Name: r.Name}
+	}
+
+	rolesValue := make([]Role, len(roles))
+	for i, r := range roles {
+		rolesValue[i] = *r
+	}
+	return rolesValue, nil
+}
+
+// GetUsersAndGroupMembershipOnWorkspace gets all users assigned to the workspace
+// and what groups they are in that are assigned to the workspace.
+func GetUsersAndGroupMembershipOnWorkspace(
+	ctx context.Context, workspaceID int,
+) ([]model.User, []usergroup.GroupMembership, error) {
+	var users []model.User
+	if err := db.Bun().NewSelect().Model(&users).
+		Distinct().
+		Join(`INNER JOIN user_group_membership AS ugm ON "user"."id"=ugm.user_id`).
+		Join(`INNER JOIN role_assignments AS ra ON ra.group_id=ugm.group_id`).
+		Join("LEFT JOIN role_assignment_scopes AS ras ON "+
+			"ras.id = ra.scope_id").
+		Where("ras.scope_workspace_id = ?", workspaceID).
+		Scan(ctx); err != nil {
+		return nil, nil, err
+	}
+
+	var membership []usergroup.GroupMembership
+	if err := db.Bun().NewSelect().Model(&membership).
+		Join(`INNER JOIN groups ON "group_membership".group_id = groups.id`).
+		Where("groups.user_id IS NULL").
+		Join(`INNER JOIN role_assignments AS ra ON ra.group_id="group_membership".group_id`).
+		Join("LEFT JOIN role_assignment_scopes AS ras ON "+
+			"ras.id = ra.scope_id").
+		Where("ras.scope_workspace_id = ?", workspaceID).
+		Scan(ctx); err != nil {
+		return nil, nil, err
+	}
+	return users, membership, nil
+}
+
 func getOrCreateRoleAssignmentScopeTx(ctx context.Context, idb bun.IDB,
 	assignment *rbacv1.RoleAssignment,
 ) (RoleAssignmentScope, error) {

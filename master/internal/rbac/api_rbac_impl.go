@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -16,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/groupv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
@@ -69,6 +71,75 @@ func (a *RBACAPIServerImpl) GetPermissionsSummary(
 	return &apiv1.GetPermissionsSummaryResponse{
 		Roles:       dbRolesToAPISummary(roles),
 		Assignments: assignments,
+	}, nil
+}
+
+// GetGroupsAndUsersAssignedToWorkspace gets groups and users
+// assigned to a given workspace along with roles assigned.
+func (a *RBACAPIServerImpl) GetGroupsAndUsersAssignedToWorkspace(
+	ctx context.Context, req *apiv1.GetGroupsAndUsersAssignedToWorkspaceRequest,
+) (resp *apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
+	users, membership, err := GetUsersAndGroupMembershipOnWorkspace(ctx, int(req.WorkspaceId))
+	if err != nil {
+		return nil, err
+	}
+	idsToUser := make(map[model.UserID]model.User, len(users))
+	for _, u := range users {
+		idsToUser[u.ID] = u
+	}
+	groupToMembers := make(map[int][]model.User)
+	for _, m := range membership {
+		groupToMembers[m.GroupID] = append(groupToMembers[m.GroupID], idsToUser[m.UserID])
+	}
+
+	roles, err := GetRolesWithAssignmentsOnWorkspace(ctx, int(req.WorkspaceId))
+	if err != nil {
+		return nil, err
+	}
+
+	var rolesFiltered []Role
+	var groups []*groupv1.GroupDetails
+	var usersAssignedDirectly []model.User
+	for _, r := range roles {
+		roleAssigned := false
+		for _, assign := range r.RoleAssignments {
+			if assign.Group.OwnerID != 0 { // Personal group.
+				u := idsToUser[assign.Group.OwnerID]
+				if req.Name != "" &&
+					((!u.DisplayName.IsZero() && !strings.Contains(
+						u.DisplayName.ValueOrZero(), req.Name)) ||
+						(u.DisplayName.IsZero() && !strings.Contains(u.Username, req.Name))) {
+					continue
+				}
+				usersAssignedDirectly = append(usersAssignedDirectly, u)
+			} else {
+				// Actual group.
+				if req.Name != "" && !strings.Contains(assign.Group.Name, req.Name) {
+					continue
+				}
+				groups = append(groups, &groupv1.GroupDetails{
+					GroupId: int32(assign.GroupID),
+					Name:    assign.Group.Name,
+					Users:   model.Users(groupToMembers[assign.GroupID]).Proto(),
+				})
+			}
+
+			roleAssigned = true
+		}
+		if roleAssigned {
+			rolesFiltered = append(rolesFiltered, r)
+		}
+	}
+
+	return &apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse{
+		Groups:                groups,
+		Assignments:           Roles(rolesFiltered).Proto(),
+		UsersAssignedDirectly: model.Users(usersAssignedDirectly).Proto(),
 	}, nil
 }
 
