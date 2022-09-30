@@ -1,16 +1,16 @@
 """
-This script runs a custom SearchMethod with CoreSearchRunner on a Determined cluster.
+This script runs a custom SearchMethod with RemoteSearchRunner on a Determined cluster.
 
-CoreSearchRunner is responsible for:
+RemoteSearchRunner is responsible for:
  -> executing the custom SearchMethod as a single trial experiment on the Determined cluster,
  -> creating a multi-trial experiment on the Determined cluster,
  -> handling communication between the multi-trial experiment and the custom SearchMethod,
  -> enabling fault tolerance for SearchMethods that implement save_method_state() and
     load_method_state().
 
-CoreSearchRunner receives SearcherEvents from the multi-trial experiment, and passes
+RemoteSearchRunner receives SearcherEvents from the multi-trial experiment, and passes
 the events to your custom SearchMethod, which, in turn, produces a list of Operations.
-Next, CoreSearchRunner sends the operations to the multi-trial experiment for execution.
+Next, RemoteSearchRunner sends the operations to the multi-trial experiment for execution.
 """
 import sys
 
@@ -39,16 +39,16 @@ if __name__ == "__main__":
     model_config = "experiment_files/config.yaml"
 
     ########################################################################
-    # Fault Tolerance for CoreSearchRunner
+    # Fault Tolerance for RemoteSearchRunner
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     #
-    # To support fault tolerance, CoreSearchRunner saves information required to
-    # resume CoreSearchRunner and SearchMethod in the case of unexpected process termination.
-    # The required information is stored in CoreSearchRunner experiment checkpoint (reported through Core API
-    # checkpointing) and includes experiment id, CoreSearchRunner state, and SearchMethod state.
+    # To support fault tolerance, RemoteSearchRunner saves information required to
+    # resume RemoteSearchRunner and SearchMethod in the case of unexpected process termination.
+    # The required information is stored in RemoteSearchRunner experiment checkpoint (reported through Core API
+    # checkpointing) and includes experiment id, RemoteSearchRunner state, and SearchMethod state.
     # To learn more about checkpointing, see https://docs.determined.ai/latest/reference/python-api.html#checkpoint
     #
-    # While CoreSearchRunner saves its own state and ensures invoking save() and
+    # While RemoteSearchRunner saves its own state and ensures invoking save() and
     # load() methods when necessary, a user is responsible for implementing
     # SearchMethod.save_method_state() and SearchMethod.load_method_state() to ensure correct
     # resumption of the SearchMethod.
@@ -71,16 +71,16 @@ if __name__ == "__main__":
             divisor=args.divisor,
         )
 
-        # Instantiate CoreSearchRunner
-        search_runner = searcher.CoreSearchRunner(search_method, context=core_context)
+        # Instantiate RemoteSearchRunner
+        search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
 
         ########################################################################
-        # Run CoreSearchRunner
+        # Run RemoteSearchRunner
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         # 1) Creates new experiment or loads state:
-        #      -> if checkpoint for an experiment exists, then CoreSearchRunner loads its own state
+        #      -> if checkpoint for an experiment exists, then RemoteSearchRunner loads its own state
         #         and invokes SearchMethod.load_method_state() to restore SearchMethod state;
         #      -> otherwise, new experiment is created.
         # 2) Handles communication between the multi-trial experiment and the custom SearchMethod
         # 3) Exits when the experiment is completed.
-        search_runner.run(model_config, context_dir=model_context_dir)
+        search_runner.run(model_config, model_dir=model_context_dir)

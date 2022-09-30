@@ -1,5 +1,5 @@
 name: core-search-runner
-entrypoint: python3 core_search_runner/run_experiment.py
+entrypoint: python3 remote_search_runner/run_experiment.py
 hyperparameters:
   max_length: 1000
   max_trials: 16
