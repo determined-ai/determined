@@ -57,7 +57,7 @@ export interface InteractiveTableSettings {
 }
 
 export const WIDGET_COLUMN_WIDTH = 46;
-const DEFAULT_RESIZE_THROTTLE_TIME = 100;
+const DEFAULT_RESIZE_THROTTLE_TIME = 30;
 const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
@@ -138,7 +138,7 @@ const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
   return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
 };
 
-const Cell = React.memo(({ children, className, isCellRightClickable, ...props }: CellProps) => {
+const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps) => {
   const rightClickableCellProps = useContext(RightClickableRowContext);
   const classes = [className, css.cell];
   if (!isCellRightClickable)
@@ -154,7 +154,7 @@ const Cell = React.memo(({ children, className, isCellRightClickable, ...props }
       </div>
     </td>
   );
-});
+};
 
 const Row: Row = ({
   className,
@@ -173,18 +173,15 @@ const Row: Row = ({
   const [contextMenuOpened, setContextMenuOpened] = useState(false);
   const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
 
-  const rightClickableCellProps: RightClickableCellProps = useMemo(
-    () => ({
-      onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
-      onMouseEnter: () => {
-        if (!rightClickableCellHovered) setRightClickableCellHovered(true);
-      },
-      onMouseLeave: () => {
-        if (rightClickableCellHovered) setRightClickableCellHovered(false);
-      },
-    }),
-    [rightClickableCellHovered],
-  );
+  const rightClickableCellProps: RightClickableCellProps = {
+    onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
+    onMouseEnter: () => {
+      if (!rightClickableCellHovered) setRightClickableCellHovered(true);
+    },
+    onMouseLeave: () => {
+      if (rightClickableCellHovered) setRightClickableCellHovered(false);
+    },
+  };
 
   if (areRowsSelected) {
     return (
@@ -210,8 +207,12 @@ const Row: Row = ({
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr
           className={classes.join(' ')}
-          onMouseEnter={() => setRowHovered(true)}
-          onMouseLeave={() => setRowHovered(false)}
+          onMouseEnter={() => {
+            if (!rowHovered) setRowHovered(true);
+          }}
+          onMouseLeave={() => {
+            if (rowHovered) setRowHovered(false);
+          }}
           {...props}
           style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
           {children}
@@ -267,12 +268,12 @@ const HeaderCell = ({
       const dragItem = monitor.getItem() || {};
       const dragIndex = dragItem?.index;
       const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-      const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
+      const internalDragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
       if (
         dragIndex == null ||
         dragIndex === index ||
-        (dragState === 'draggingRight' && dragIndex > index) ||
-        (dragState === 'draggingLeft' && dragIndex < index)
+        (internalDragState === 'draggingRight' && dragIndex > index) ||
+        (internalDragState === 'draggingLeft' && dragIndex < index)
       ) {
         return false;
       }
@@ -311,12 +312,12 @@ const HeaderCell = ({
           if (newWidth !== xValue) setXValue(newWidth);
         }}
         onStart={(e, data) => {
-          setShadowVisibility('block');
           onResizeStart(e, data);
+          setShadowVisibility('block');
         }}
         onStop={(e, data) => {
-          setShadowVisibility('none');
           onResizeStop(e, data);
+          setShadowVisibility('none');
         }}>
         <span
           className={css.columnResizeHandle}
@@ -374,21 +375,6 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
-  const [widthData, setWidthData] = useState({
-    dropLeftStyles: settings?.columnWidths?.map(() => ({})) ?? [],
-    dropRightStyles: settings?.columnWidths?.map(() => ({})) ?? [],
-    widths: settings?.columnWidths ?? [],
-  });
-
-  const [isResizing, setIsResizing] = useState(false);
-
-  const { dragState } = useDragLayer((monitor) => {
-    const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-    const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
-    return { dragState };
-  });
-
-  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
@@ -405,6 +391,31 @@ const InteractiveTable: InteractiveTable = ({
     },
     [pageWidth],
   );
+
+  const [widthData, setWidthData] = useState(() => {
+    const widths = getUpscaledWidths(settings?.columnWidths) || [];
+    return {
+      dropLeftStyles: widths.map((width, idx) => ({
+        left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+        width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+      })) ?? [],
+      dropRightStyles: widths.map((width, idx) => ({
+        left: `${width / 2}px`,
+        width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+      })) ?? [],
+      widths: widths ?? [],
+    };
+  });
+
+  const [isResizing, setIsResizing] = useState(false);
+
+  const { dragState } = useDragLayer((monitor) => {
+    const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
+    const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
+    return { dragState };
+  });
+
+  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
@@ -589,6 +600,21 @@ const InteractiveTable: InteractiveTable = ({
       if (timeout.current) clearTimeout(timeout.current);
     };
   }, []);
+
+  // useEffect(() => {
+  //   const newSettingsWidths = settings.columnWidths;
+  //   if (!newSettingsWidths) return;
+  //   const widths = getUpscaledWidths(newSettingsWidths);
+  //   const dropRightStyles = widths.map((width, idx) => ({
+  //     left: `${width / 2}px`,
+  //     width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+  //   }));
+  //   const dropLeftStyles = widths.map((width, idx) => ({
+  //     left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+  //     width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+  //   }));
+  //   setWidthData({ dropLeftStyles, dropRightStyles, widths });
+  // }, [settings.columnWidths, getUpscaledWidths, updateSettings, pageWidth]);
 
   return (
     <div className={css.tableContainer} ref={tableRef}>
