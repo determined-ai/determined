@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/pkg/errors"
 
@@ -464,7 +463,7 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("p.user_id AS project_owner_id").
 		Column("e.config").
 		Column("e.group_id").
-		ColumnExpr("g.name AS group_name").
+		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE 'g.name' END AS group_name").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
@@ -983,9 +982,9 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	if req.Experiment.GroupId != nil && exp.GroupId.Value != req.Experiment.GroupId.Value  {
+	if exp.GroupId.GetValue() != req.Experiment.GroupId.GetValue()  {
 		madeChanges = true
-		exp.GroupId = wrapperspb.Int32(req.Experiment.GroupId.Value)
+		exp.GroupId = req.Experiment.GroupId
 	}
 
 	if madeChanges {
@@ -993,13 +992,11 @@ func (a *apiServer) PatchExperiment(
 			Labels      []string `json:"labels"`
 			Description string   `json:"description"`
 			Name        string   `json:"name"`
-			GroupId			int32		 `json:"group_id"`
 		}
 		patches := experimentPatch{
 			Labels:      exp.Labels,
 			Description: exp.Description,
 			Name:        exp.Name,
-			GroupId: 		 exp.GroupId.Value,
 		}
 		marshalledPatches, patchErr := json.Marshal(patches)
 		if patchErr != nil {
@@ -1007,7 +1004,7 @@ func (a *apiServer) PatchExperiment(
 		}
 
 		_, err = a.m.db.RawQuery(
-			"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
+			"patch_experiment", exp.Id, marshalledPatches, exp.Notes, exp.GroupId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 		}
