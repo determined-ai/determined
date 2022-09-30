@@ -1,6 +1,7 @@
 import os
 import PIL
 import torch
+from pathlib import Path
 from PIL import Image
 from typing import List, Tuple, Sequence
 
@@ -66,35 +67,34 @@ class TextualInversionDataset(Dataset):
             self.train_img_dirs, concept_tokens, self.learnable_properties
         ):
             templates = TEMPLATE_DICT[prop]
-            imgs_and_file_paths = self._get_imgs_and_file_paths_from_dir_path(dir_path)
-            for img, file_path in imgs_and_file_paths:
+            imgs_and_paths = self._get_imgs_and_paths_from_dir_path(dir_path)
+            for img, path in imgs_and_paths:
                 img_tensor = self._convert_img_to_tensor(img)
                 for text in templates:
                     prompt = text.format(concept_token)
                     if append_file_name_to_text:
-                        file_path_without_extension = ".".join(file_path.split(".")[:-1])
-                        split_file_name = file_path_without_extension.split(
+                        file_name_without_extension = path.stem
+                        split_file_name = file_name_without_extension.split(
                             self.file_name_split_char
                         )
                         joined_file_name = " ".join(split_file_name)
                         prompt = f"{prompt} {joined_file_name}"
                     self.records.append((prompt, img_tensor))
 
-    def _get_imgs_and_file_paths_from_dir_path(
-        self, dir_path: str
-    ) -> List[Tuple[Image.Image, str]]:
+    def _get_imgs_and_paths_from_dir_path(self, dir_path: str) -> List[Tuple[Image.Image, Path]]:
         """Returns a list of PIL Images loaded from all valid files contained in dir_path."""
-        imgs_and_file_paths = []
-        for file_path in os.listdir(dir_path):
-            path = os.path.join(dir_path, file_path)
-            try:
-                img = Image.open(path)
-                if not img.mode == "RGB":
-                    img = img.convert("RGB")
-                imgs_and_file_paths.append((img, file_path))
-            except PIL.UnidentifiedImageError:
-                print(f"File at {path} raised UnidentifiedImageError and will be skipped.")
-        return imgs_and_file_paths
+        imgs_and_paths = []
+        for file_or_dir in os.listdir(dir_path):
+            path = Path(dir_path).joinpath(file_or_dir)
+            if path.is_file():
+                try:
+                    img = Image.open(path)
+                    if not img.mode == "RGB":
+                        img = img.convert("RGB")
+                    imgs_and_paths.append((img, path))
+                except PIL.UnidentifiedImageError:
+                    print(f"File at {path} raised UnidentifiedImageError and will be skipped.")
+        return imgs_and_paths
 
     def _convert_img_to_tensor(self, img: Image.Image) -> torch.Tensor:
         """Converts a PIL image into an appropriately transformed tensor."""
