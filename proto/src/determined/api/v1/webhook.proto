@@ -51,8 +51,9 @@ message GetWebhooksResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "webhooks"] }
   };
+
   // The list of returned webhooks.
-  repeated determined.webhook.v1.Webhook webhooks = 1;
+  repeated determined.webhook.v1.WebhookWithTriggers webhooks = 1;
 
   int32 offset = 3;
 

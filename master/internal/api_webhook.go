@@ -6,6 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 var webhooksAddr = actor.Addr("webhooks")
@@ -13,13 +14,25 @@ var webhooksAddr = actor.Addr("webhooks")
 func (a *apiServer) GetWebhooks(
 	ctx context.Context, req *apiv1.GetWebhooksRequest,
 ) (*apiv1.GetWebhooksResponse, error) {
-	resp := &apiv1.GetWebhooksResponse{Webhooks: []*webhookv1.Webhook{}}
-	err := db.Bun().NewSelect().
-		Model(&resp.Webhooks).Scan(ctx)
+	webhooksWithTriggers := []*webhookv1.WebhookWithTriggers{}
+	webhooks := []model.Webhook{}
+	err := db.Bun().NewSelect().Model(&webhooks).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+	resp := &apiv1.GetWebhooksResponse{}
+	for _, webhook := range webhooks {
 
+		triggers := []model.Trigger{}
+		db.Bun().NewSelect().Model(&triggers).Where("webhook_id = ?", webhook.ID).Scan(ctx)
+		webhookWithTriggers := model.WebhookWithTriggers{
+				ID: webhook.ID,
+				Url: webhook.Url,
+				Triggers: triggers,
+		}
+		webhooksWithTriggers = append(webhooksWithTriggers, webhookWithTriggers.Proto())
+	}
+	resp.Webhooks = webhooksWithTriggers
 	return resp, nil
 }
 
