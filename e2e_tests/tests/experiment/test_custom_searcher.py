@@ -34,7 +34,7 @@ def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
     config["description"] = "custom searcher"
     search_method = searchers.SingleSearchMethod(config, 500)
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -63,7 +63,7 @@ def test_run_random_searcher_exp() -> None:
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -169,7 +169,7 @@ def test_run_random_searcher_exp_core_api(
     assert failures == len(exception_points)
 
     # check for resubmitting operations
-    resubmissions = logs.count("root: Resubmitting operations for event.id=")
+    resubmissions = logs.count("determined.searcher: Resubmitting operations for event.id=")
     assert resubmissions == sum([x == "after_save" for x in exception_points])
 
 
@@ -285,7 +285,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                 search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, Path(searcher_dir)
                 )
-                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
             except MaxRetryError:
                 failures += 1
@@ -296,7 +296,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_method.searcher_state.last_event_id == 41
     assert search_method.searcher_state.experiment_completed is True
@@ -334,7 +334,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
         max_length, max_trials, num_rungs, divisor, test_type="noop"
     )
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
     session = client._determined._session
@@ -449,7 +449,7 @@ def test_run_asha_searcher_exp_core_api(
     assert failures == len(exception_points)
 
     # check for resubmitting operations
-    resubmissions = logs.count("root: Resubmitting operations for event.id=")
+    resubmissions = logs.count("determined.searcher: Resubmitting operations for event.id=")
     assert resubmissions == sum([x == "after_save" for x in exception_points])
 
 
@@ -513,7 +513,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                 search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, Path(searcher_dir)
                 )
-                search_runner_mock.run(config, context_dir=conf.fixtures_path("no_op"))
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
             except MaxRetryError:
                 failures += 1
@@ -524,7 +524,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
             max_length, max_trials, num_rungs, divisor, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_method.searcher_state.experiment_completed is True
     assert client._determined is not None

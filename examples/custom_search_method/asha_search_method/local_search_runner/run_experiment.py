@@ -75,5 +75,5 @@ if __name__ == "__main__":
     #      -> otherwise, new experiment is created.
     # 2) Handle communication between the remote experiment and the custom SearchMethod
     # 3) Exits when the experiment is completed.
-    experiment_id = search_runner.run(model_config, context_dir=model_context_dir)
+    experiment_id = search_runner.run(model_config, model_dir=model_context_dir)
     logging.info(f"Experiment {experiment_id} has been completed.")
