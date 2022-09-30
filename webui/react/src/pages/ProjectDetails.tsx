@@ -5,6 +5,23 @@ import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu, Modal, Space } from 'antd';
+import type { MenuProps } from 'antd';
+import { FilterDropdownProps } from 'antd/lib/table/interface';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
+
+import AutoComplete from 'components/AutoComplete';
+import Badge, { BadgeType } from 'components/Badge';
+import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import FilterCounter from 'components/FilterCounter';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+  onRightClickableCell,
+} from 'components/InteractiveTable';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useStore } from 'contexts/Store';
@@ -16,6 +33,10 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
+import { RecordKey } from 'shared/types';
+import { isEqual, isString } from 'shared/utils/data';
+import { ErrorLevel } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -140,9 +161,19 @@ const ProjectDetails: React.FC = () => {
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
+      const labels = await getExperimentLabels({ projectId: id }, { signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler.signal, id]);
+
+  const fetchExperimentGroups = useCallback(async () => {
+    try {
+      const groups = await getExperimentGroups({ projectId: id }, { signal: canceler.signal });
+      groups.sort((a, b) => alphaNumericSorter(a.name, b.name));
+      setExperimentGroups(groups);
     } catch (e) {
       handleError(e);
     }
@@ -314,6 +345,46 @@ const ProjectDetails: React.FC = () => {
         onChange={experimentTags.handleTagListChange(record.id)}
       />
     );
+
+    const groupRenderer = (value: string, record: ExperimentItem) => {
+      const handleGroupSelect = async (option?: { label: string; value: number } | string) => {
+        try {
+          if (option === undefined) {
+            if (record.groupId === undefined) return;
+            await patchExperiment({
+              body: { groupId: undefined },
+              experimentId: record.id,
+              updateMask: { paths: ['groupId'] },
+            });
+          } else if (isString(option)) {
+            const response = await createExperimentGroup({
+              name: option,
+              projectId: record.projectId,
+            });
+            await patchExperiment({ body: { groupId: response.id }, experimentId: record.id });
+            await fetchExperimentGroups();
+          } else {
+            if (record.groupId === option.value) return;
+            await patchExperiment({ body: { groupId: option.value }, experimentId: record.id });
+          }
+        } catch (e) {
+          handleError(e, {
+            isUserTriggered: true,
+            publicMessage: 'Unable to save experiment group.',
+            silent: false,
+          });
+          return e as Error;
+        }
+      };
+      return (
+        <AutoComplete
+          options={experimentGroups.map((group) => ({ label: group.name, value: group.id }))}
+          placeholder="Add experiment group..."
+          searchValue={record.groupName}
+          onSave={handleGroupSelect}
+        />
+      );
+    };
 
     const actionRenderer: ExperimentRenderer = (_, record) => {
       return <ContextMenu record={record} />;
@@ -506,6 +577,7 @@ const ProjectDetails: React.FC = () => {
     project,
     experimentTags,
     canEditExperiment,
+    fetchExperimentGroups,
     settings,
     saveExperimentDescription,
     ContextMenu,

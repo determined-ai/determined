@@ -116,7 +116,7 @@ export interface getExperimentCheckpointsParams extends PaginationParams {
 }
 
 export interface ExperimentLabelsParams {
-  project_id?: number;
+  projectId?: number;
 }
 
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
@@ -236,13 +236,8 @@ export interface CreateExperimentParams {
 }
 
 export interface PatchExperimentParams extends ExperimentIdParams {
-  body: Partial<{
-    description: string;
-    groupId: number;
-    labels: string[];
-    name: string;
-    notes: string;
-  }>;
+  body: Omit<Api.V1PatchExperiment, 'id'>;
+  updateMask?: Api.ProtobufFieldMask;
 }
 
 export interface LaunchTensorBoardParams {
@@ -459,7 +454,9 @@ export interface ArchiveProjectParams {
 
 export type UnarchiveProjectParams = ArchiveProjectParams;
 
-export type GetExperimentGroupsParams = GetProjectParams;
+export interface GetExperimentGroupsParams {
+  projectId: number;
+}
 
 export interface CreateExperimentGroupParams {
   name: string;

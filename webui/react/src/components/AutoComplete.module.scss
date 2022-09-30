@@ -1,0 +1,14 @@
+.base {
+  width: 100%;
+
+  :global(.ant-select-auto-complete) {
+    display: flex;
+
+    & > div {
+      flex-grow: 1;
+    }
+  }
+  .empty {
+    background-color: inherit;
+  }
+}

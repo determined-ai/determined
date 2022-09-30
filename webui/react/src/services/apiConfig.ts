@@ -730,7 +730,10 @@ export const patchExperiment: DetApi<
   request: (params: Service.PatchExperimentParams, options) => {
     return detApi.Experiments.patchExperiment(
       params.experimentId,
-      params.body as Api.V1Experiment,
+      {
+        experiment: { ...params.body, id: params.experimentId },
+        updateMask: params.updateMask,
+      },
       options,
     );
   },
@@ -816,7 +819,7 @@ export const getExperimentLabels: DetApi<
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (params, options) => detApi.Experiments.getExperimentLabels(params.project_id, options),
+  request: (params, options) => detApi.Experiments.getExperimentLabels(params.projectId, options),
 };
 
 export const getTrialDetails: DetApi<
@@ -1438,7 +1441,7 @@ export const getExperimentGroups: DetApi<
 > = {
   name: 'getExperimentGroups',
   postProcess: (response) => response.groups,
-  request: (params, options) => detApi.Projects.getExperimentGroups(params.id, options),
+  request: (params, options) => detApi.Projects.getExperimentGroups(params.projectId, options),
 };
 
 export const createExperimentGroup: DetApi<

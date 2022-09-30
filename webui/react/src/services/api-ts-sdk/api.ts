@@ -5481,6 +5481,26 @@ export interface V1PatchExperimentGroupResponse {
 }
 
 /**
+ * Patch an experiment by providing the updated attributes. Only description, label, name, notes, and group_id fields will be updated through this endpoint, and others will be ignored.
+ * @export
+ * @interface V1PatchExperimentRequest
+ */
+export interface V1PatchExperimentRequest {
+    /**
+     * Patched experiment attributes.
+     * @type {V1PatchExperiment}
+     * @memberof V1PatchExperimentRequest
+     */
+    experiment?: V1PatchExperiment;
+    /**
+     * 
+     * @type {ProtobufFieldMask}
+     * @memberof V1PatchExperimentRequest
+     */
+    updateMask?: ProtobufFieldMask;
+}
+
+/**
  * Response to PatchExperimentRequest.
  * @export
  * @interface V1PatchExperimentResponse
@@ -26691,11 +26711,11 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
-         * @param {V1PatchExperiment} body Patched experiment attributes.
+         * @param {V1PatchExperimentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(experimentId: number, body: V1PatchExperiment, options: any = {}): FetchArgs {
+        patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling patchExperiment.');
@@ -26725,7 +26745,7 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchExperiment" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchExperimentRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -27488,11 +27508,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
-         * @param {V1PatchExperiment} body Patched experiment attributes.
+         * @param {V1PatchExperimentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
+        patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).patchExperiment(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -27892,11 +27912,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
-         * @param {V1PatchExperiment} body Patched experiment attributes.
+         * @param {V1PatchExperimentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
+        patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options?: any) {
             return ExperimentsApiFp(configuration).patchExperiment(experimentId, body, options)(fetch, basePath);
         },
         /**
@@ -29306,7 +29326,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
      *
      * @summary Patch an experiment's fields.
      * @param {number} experimentId The id of the experiment.
-     * @param {V1PatchExperiment} body Patched experiment attributes.
+     * @param {V1PatchExperimentRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
