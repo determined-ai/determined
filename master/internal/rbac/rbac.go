@@ -92,11 +92,6 @@ type Role struct {
 
 // Proto converts a Role into a RoleWithAssignments.
 func (r *Role) Proto() *rbacv1.RoleWithAssignments {
-	for _, ra := range r.RoleAssignments {
-		if len(ra.Role.Permissions) == 0 {
-			ra.Role.Permissions = r.Permissions
-		}
-	}
 	userAssignments, groupAssignments := RoleAssignments(r.RoleAssignments).Proto()
 
 	return &rbacv1.RoleWithAssignments{

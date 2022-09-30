@@ -11,6 +11,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -480,6 +481,10 @@ func TestRbac(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("testOnWorkspace", func(t *testing.T) {
+		testOnWorkspace(ctx, t, pgDB)
+	})
 }
 
 func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
@@ -593,4 +598,195 @@ func filterToTestRoles(rolesGotten []Role) []Role {
 		}
 	}
 	return roles
+}
+
+func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
+	// Don't error if we pass a non-existant workspaceID.
+	roles, err := GetRolesWithAssignmentsOnWorkspace(ctx, -999)
+	require.NoError(t, err)
+	require.Len(t, roles, 0)
+	users, membership, err := GetUsersAndGroupMembershipOnWorkspace(ctx, -999)
+	require.NoError(t, err)
+	require.Len(t, users, 0)
+	require.Len(t, membership, 0)
+
+	// Create empty workspace.
+	ws := struct {
+		bun.BaseModel `bun:"table:workspaces"`
+		ID            int `bun:"id,pk,autoincrement"`
+		Name          string
+	}{Name: uuid.New().String()}
+	_, err = db.Bun().NewInsert().Model(&ws).Exec(ctx)
+	require.NoError(t, err)
+
+	// Don't error with workspace with no assignmnets.
+	roles, err = GetRolesWithAssignmentsOnWorkspace(ctx, ws.ID)
+	require.NoError(t, err)
+	require.Len(t, roles, 0)
+	users, membership, err = GetUsersAndGroupMembershipOnWorkspace(ctx, ws.ID)
+	require.NoError(t, err)
+	require.Len(t, users, 0)
+	require.Len(t, membership, 0)
+
+	// Add users and assignments.
+	user0 := model.User{Username: uuid.New().String()}
+	_, err = pgDB.AddUser(&user0, nil)
+	user1 := model.User{Username: uuid.New().String()}
+	_, err = pgDB.AddUser(&user1, nil)
+	user2 := model.User{Username: uuid.New().String()}
+	_, err = pgDB.AddUser(&user2, nil)
+	require.NoError(t, err)
+	require.NoError(t, AddRoleAssignments(ctx, nil,
+		[]*rbacv1.UserRoleAssignment{
+			{
+				UserId: int32(user0.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: &rbacv1.Role{
+						RoleId: 2,
+					},
+					ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+				},
+			},
+			{
+				UserId: int32(user0.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: &rbacv1.Role{
+						RoleId: 5,
+					},
+					ScopeWorkspaceId: nil, // Global shouldn't show up.
+				},
+			},
+			{
+				UserId: int32(user0.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: &rbacv1.Role{
+						RoleId: 5,
+					},
+					ScopeWorkspaceId: wrapperspb.Int32(1), // Different workspace shouldn't show up.
+				},
+			},
+			{
+				UserId: int32(user1.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: &rbacv1.Role{
+						RoleId: 5,
+					},
+					ScopeWorkspaceId: wrapperspb.Int32(1), // Different workspace shouldn't show up.
+				},
+			},
+		},
+	))
+
+	// Verify personal assignments work correctly.
+	roles, err = GetRolesWithAssignmentsOnWorkspace(ctx, ws.ID)
+	require.NoError(t, err)
+	require.Len(t, roles, 1)
+	require.Equal(t, 2, roles[0].ID)
+	require.Len(t, roles[0].RoleAssignments, 1)
+	require.Equal(t, user0.ID, roles[0].RoleAssignments[0].Group.OwnerID)
+	require.Equal(t, int32(ws.ID), roles[0].RoleAssignments[0].Scope.WorkspaceID.Int32)
+
+	users, membership, err = GetUsersAndGroupMembershipOnWorkspace(ctx, ws.ID)
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	require.Equal(t, user0.ID, users[0].ID)
+	require.Len(t, membership, 0) // Personal groups don't show.
+
+	// Add groups and group assignments.
+	group0, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()},
+		user0.ID)
+	require.NoError(t, err)
+	group1, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()},
+		user0.ID, user1.ID)
+	require.NoError(t, err)
+	group2, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()})
+	require.NoError(t, err)
+	group3, _, err := usergroup.AddGroupWithMembers(ctx, usergroup.Group{Name: uuid.New().String()},
+		user2.ID)
+	require.NoError(t, err)
+	require.NoError(t, AddRoleAssignments(ctx, []*rbacv1.GroupRoleAssignment{
+		{
+			GroupId: int32(group0.ID),
+			RoleAssignment: &rbacv1.RoleAssignment{
+				Role: &rbacv1.Role{
+					RoleId: 2,
+				},
+				ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+			},
+		},
+		{
+			GroupId: int32(group1.ID),
+			RoleAssignment: &rbacv1.RoleAssignment{
+				Role: &rbacv1.Role{
+					RoleId: 5,
+				},
+				ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+			},
+		},
+		{
+			GroupId: int32(group2.ID),
+			RoleAssignment: &rbacv1.RoleAssignment{
+				Role: &rbacv1.Role{
+					RoleId: 4,
+				},
+				ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+			},
+		},
+		{
+			GroupId: int32(group3.ID),
+			RoleAssignment: &rbacv1.RoleAssignment{
+				Role: &rbacv1.Role{
+					RoleId: 2,
+				},
+				ScopeWorkspaceId: wrapperspb.Int32(1), // Shouldn't show up since different workspace.
+			},
+		},
+		{
+			GroupId: int32(group3.ID),
+			RoleAssignment: &rbacv1.RoleAssignment{
+				Role: &rbacv1.Role{
+					RoleId: 2,
+				},
+				ScopeWorkspaceId: nil, // Global shouldn't be returned.
+			},
+		},
+	}, nil))
+
+	// Verify personal and group assignments work correctly.
+	roles, err = GetRolesWithAssignmentsOnWorkspace(ctx, ws.ID)
+	require.NoError(t, err)
+	require.Len(t, roles, 3)
+	sort.Slice(roles, func(i, j int) bool { return roles[i].ID < roles[j].ID })
+
+	// Role 2 assignment should have an assignment to group0 and user0.
+	require.Equal(t, 2, roles[0].ID)
+	require.Len(t, roles[0].RoleAssignments, 2)
+	sort.Slice(roles[0].RoleAssignments, func(i, j int) bool {
+		return roles[0].RoleAssignments[i].GroupID < roles[0].RoleAssignments[j].GroupID
+	})
+	require.Equal(t, roles[0].RoleAssignments[0].Group.OwnerID, user0.ID)
+	require.Equal(t, group0.ID, roles[0].RoleAssignments[1].Group.ID)
+	require.Equal(t, roles[0].ID, roles[0].RoleAssignments[0].Role.ID)
+
+	// Role 4 assignment should have an assignment to group2.
+	require.Equal(t, 4, roles[1].ID)
+	require.Len(t, roles[1].RoleAssignments, 1)
+	require.Equal(t, group2.ID, roles[1].RoleAssignments[0].Group.ID)
+
+	// Role 5 assignment should have an assignment to group1.
+	require.Equal(t, 5, roles[2].ID)
+	require.Len(t, roles[2].RoleAssignments, 1)
+	require.Equal(t, group1.ID, roles[2].RoleAssignments[0].Group.ID)
+
+	users, membership, err = GetUsersAndGroupMembershipOnWorkspace(ctx, ws.ID)
+	require.NoError(t, err)
+	require.Len(t, users, 2)
+	sort.Slice(users, func(i, j int) bool { return users[i].ID < users[j].ID })
+	require.Equal(t, user0.ID, users[0].ID)
+	require.Equal(t, user1.ID, users[1].ID)
+	require.ElementsMatch(t, membership, []usergroup.GroupMembership{
+		{UserID: user0.ID, GroupID: group0.ID},
+		{UserID: user0.ID, GroupID: group1.ID},
+		{UserID: user1.ID, GroupID: group1.ID},
+	})
 }
