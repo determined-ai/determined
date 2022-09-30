@@ -1,5 +1,5 @@
 name: textual_inversion_stable_diffusion
-entrypoint: python -m determined.launch.torch_distributed accelerate launch main.py
+entrypoint: python3 -m determined.launch.torch_distributed python3 main.py
 searcher:
   name: single
   metric: loss
@@ -12,7 +12,7 @@ environment:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 checkpoint_storage:
     save_trial_best: 1
-    save_trial_latest: 1 
+    save_trial_latest: 5
 hyperparameters:
     model:
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
@@ -29,15 +29,16 @@ hyperparameters:
         interpolation: bicubic # One of "nearest", "bilinear", or "bicubic".
         flip_p: 0.0
         center_crop: True
-    trainer:
+        append_file_name_to_text: True # For additional control over training prompts.
+        file_name_split_char: '_'
+    training:
         train_batch_size: 1
         gradient_accumulation_steps: 4
         optimizer_name: adam
-        learning_rate: 1e-5
+        learning_rate: 5e-4
         scale_lr: True
-        embedding_reg_weight: 1e-2
-        latent_reg_weight: 1e-1
-        norm_penalty: 1.
+        embedding_reg_weight: null
+        latent_reg_weight: null
         checkpoint_freq: 50
         metric_report_freq: 50
         beta_start: 0.00085
@@ -50,6 +51,7 @@ hyperparameters:
         inference_scheduler_name: pndm # One of "ddim", "lms-discrete", or "pndm".
         inference_prompts:
             - a photo of a <det-logo>
+            - a watercolor painting of a <det-logo>
         num_inference_steps: 50
         guidance_scale: 7.5
         generator_seed: 2147483647
