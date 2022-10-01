@@ -241,7 +241,9 @@ class DetSDTextualInversionTrainer:
         """
         self.logger.info("--------------- Starting Training ---------------")
         self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
-        self.logger.info(f"Learning rate: {self.learning_rate}")
+        self.logger.info(
+            f"{'(Scaled) ' if self.scale_lr else ''}Learning rate: {self.learning_rate}"
+        )
         self.logger.info(f"Train dataset size: {len(self.train_dataset)}")
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
@@ -430,7 +432,7 @@ class DetSDTextualInversionTrainer:
                 non_special_initializer_ids,
                 dummy_placeholder_ids,
                 dummy_placeholder_tokens,
-            ) = utils.add_new_tokens_to_tokenizer(
+            ) = add_new_tokens_to_tokenizer(
                 concept_token=concept_token,
                 initializer_tokens=initializer_tokens,
                 tokenizer=self.tokenizer,
@@ -618,24 +620,22 @@ class DetSDTextualInversionTrainer:
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))
 
     def _build_pipeline(self) -> None:
-        # Only the chief worker requires the pipeline.
-        if self.accelerator.is_main_process:
-            inference_scheduler = NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
-            self.inference_scheduler_kwargs = {
-                "beta_start": self.beta_start,
-                "beta_end": self.beta_end,
-                "beta_schedule": self.beta_schedule,
-                **self.other_inference_scheduler_kwargs,
-            }
-            self.pipeline = StableDiffusionPipeline(
-                text_encoder=self.accelerator.unwrap_model(self.text_encoder),
-                vae=self.vae,
-                unet=self.unet,
-                tokenizer=self.tokenizer,
-                scheduler=inference_scheduler(**self.inference_scheduler_kwargs),
-                safety_checker=self.safety_checker,
-                feature_extractor=self.feature_extractor,
-            ).to(self.accelerator.device)
+        inference_scheduler = NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
+        self.inference_scheduler_kwargs = {
+            "beta_start": self.beta_start,
+            "beta_end": self.beta_end,
+            "beta_schedule": self.beta_schedule,
+            **self.other_inference_scheduler_kwargs,
+        }
+        self.pipeline = StableDiffusionPipeline(
+            text_encoder=self.accelerator.unwrap_model(self.text_encoder),
+            vae=self.vae,
+            unet=self.unet,
+            tokenizer=self.tokenizer,
+            scheduler=inference_scheduler(**self.inference_scheduler_kwargs),
+            safety_checker=self.safety_checker,
+            feature_extractor=self.feature_extractor,
+        ).to(self.accelerator.device)
 
     def _generate_and_write_tb_imgs(self, core_context: det.core.Context) -> None:
         self.logger.info("Generating sample images")
@@ -647,30 +647,28 @@ class DetSDTextualInversionTrainer:
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
                 self.generator_seed + self.accelerator.process_index
             )
-            # Set output_type to anything other than `pil` to get numpy arrays out. Needed
-            # for tensorboard logging.
-            generated_img = self.pipeline(
+            # Set output_type to anything other than `pil` to get numpy arrays out.
+            generated_img_array = self.pipeline(
                 prompt=dummy_prompt,
                 num_inference_steps=self.num_inference_steps,
                 guidance_scale=self.guidance_scale,
                 generator=generator,
                 output_type="np",
             ).images[0]
-
-            # Gather all images to the chief and combine, if needed.
-            all_generated_imgs = core_context.distributed.gather(generated_img)
+            generated_img_t = torch.from_numpy(generated_img_array)
+            # Gather all images and upload via the chief.
+            all_generated_img_ts = self.accelerator.gather(
+                generated_img_t.to(self.accelerator.device)
+            )
             if self.accelerator.is_main_process:
-                img_grid = utils.create_image_grid(
-                    all_generated_imgs, rows=1, cols=len(all_generated_imgs)
-                )
                 tb_writer.add_image(
                     prompt,
-                    img_tensor=img_grid,
+                    img_tensor=all_generated_img_ts,
                     global_step=self.steps_completed,
                     dataformats="HWC",
                 )
-        # Only the chief worker writes to tensorboard.
         if self.accelerator.is_main_process:
+            tb_writer.flush()  # Ensure all images are written to disk.
             core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
@@ -823,7 +821,7 @@ class DetSDTextualInversionPipeline:
                     initializer_ids,
                     dummy_placeholder_ids,
                     dummy_placeholder_tokens,
-                ) = utils.add_new_tokens_to_tokenizer(
+                ) = add_new_tokens_to_tokenizer(
                     concept_token=concept_token,
                     initializer_tokens=initializer_tokens,
                     tokenizer=self.tokenizer,
@@ -978,7 +976,7 @@ class DetSDTextualInversionPipeline:
                 "max_retries limit reached without generating any non-nsfw images, returning None"
             )
             return None
-        image_grid = utils.create_image_grid(images[:num_samples], rows, cols)
+        image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
             timestamp = "_".join(f"_{datetime.now().strftime('%c')}".split())
@@ -986,6 +984,13 @@ class DetSDTextualInversionPipeline:
             joined_split_prompt = "_".join(prompt.split())
             filename = joined_split_prompt[: 255 - len(file_suffix)] + file_suffix
             self._save_image(image_grid, filename, saved_img_dir)
+        return image_grid
+
+    def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:
+        w, h = images[0].size
+        image_grid = Image.new("RGB", size=(cols * w, rows * h))
+        for idx, img in enumerate(images):
+            image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
         return image_grid
 
     def __repr__(self) -> str:
@@ -1003,3 +1008,56 @@ class DetSDTextualInversionPipeline:
         }
         attr_dict_str = ", ".join([f"{key}={value}" for key, value in attr_dict.items()])
         return f"{self.__class__.__name__}({attr_dict_str})"
+
+
+def add_new_tokens_to_tokenizer(
+    concept_token: str,
+    initializer_tokens: Sequence[str],
+    tokenizer: nn.Module,
+) -> Tuple[List[int], List[int], str]:
+    """Helper function for adding new tokens to the tokenizer and extending the corresponding
+    embeddings appropriately, given a single concept token and its sequence of corresponding
+    initializer tokens.  Returns the lists of ids for the initializer tokens and their dummy
+    replacements, as well as the string representation of the dummies.
+    """
+    initializer_ids = tokenizer(
+        initializer_tokens,
+        padding="max_length",
+        truncation=True,
+        max_length=tokenizer.model_max_length,
+        return_tensors="pt",
+        add_special_tokens=False,
+    ).input_ids
+
+    try:
+        special_token_ids = tokenizer.all_special_ids
+    except AttributeError:
+        special_token_ids = []
+
+    non_special_initializer_locations = torch.isin(
+        initializer_ids, torch.tensor(special_token_ids), invert=True
+    )
+    non_special_initializer_ids = initializer_ids[non_special_initializer_locations]
+    if len(non_special_initializer_ids) == 0:
+        raise ValueError(
+            f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
+        )
+
+    # Add a dummy placeholder token for every token in the initializer.
+    dummy_placeholder_token_list = [
+        f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
+    ]
+    dummy_placeholder_tokens = " ".join(dummy_placeholder_token_list)
+    num_added_tokens = tokenizer.add_tokens(dummy_placeholder_token_list)
+    if num_added_tokens != len(dummy_placeholder_token_list):
+        raise ValueError(
+            f"Subset of {dummy_placeholder_token_list} tokens already exist in tokenizer."
+        )
+
+    dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(dummy_placeholder_token_list)
+    # Sanity check
+    assert len(dummy_placeholder_ids) == len(
+        non_special_initializer_ids
+    ), 'Length of "dummy_placeholder_ids" and "non_special_initializer_ids" must match.'
+
+    return non_special_initializer_ids, dummy_placeholder_ids, dummy_placeholder_tokens
