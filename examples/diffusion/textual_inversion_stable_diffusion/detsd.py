@@ -590,14 +590,14 @@ class DetSDTextualInversionTrainer:
         """Save the training state, metadata, and any generated images."""
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
+        if self.generate_training_images:
+            self._build_pipeline()
+            self._generate_and_write_tb_imgs(core_context)
         if self.accelerator.is_main_process:
             checkpoint_metadata_dict = {
                 "steps_completed": self.steps_completed,
                 "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
             }
-            if self.generate_training_images:
-                self._build_pipeline()
-                self._generate_and_write_tb_imgs(core_context)
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 self._write_optimizer_state_dict_to_path(path)
                 self._write_learned_embeddings_to_path(path)
@@ -644,9 +644,9 @@ class DetSDTextualInversionTrainer:
         tb_writer = SummaryWriter(log_dir=tb_dir)
         for prompt in self.inference_prompts:
             dummy_prompt = self._replace_concepts_with_dummies(prompt)
-            # Fix generator for reproducibility.
+            # Fix the seed for reproducibility, unique to each worker.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
-                self.generator_seed
+                self.generator_seed + self.accelerator.process_index
             )
             # Set output_type to anything other than `pil` to get numpy arrays out. Needed
             # for tensorboard logging.
@@ -657,13 +657,22 @@ class DetSDTextualInversionTrainer:
                 generator=generator,
                 output_type="np",
             ).images[0]
-            tb_writer.add_image(
-                prompt,
-                img_tensor=generated_img,
-                global_step=self.steps_completed,
-                dataformats="HWC",
-            )
-        core_context.train.upload_tensorboard_files()
+
+            # Gather all images to the chief and combine, if needed.
+            all_generated_imgs = core_context.distributed.gather(generated_img)
+            if self.accelerator.is_main_process:
+                img_grid = create_image_grid(
+                    all_generated_imgs, rows=1, cols=len(all_generated_imgs)
+                )
+                tb_writer.add_image(
+                    prompt,
+                    img_tensor=img_grid,
+                    global_step=self.steps_completed,
+                    dataformats="HWC",
+                )
+        # Only the chief worker writes to tensorboard.
+        if self.accelerator.is_main_process:
+            core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         self.accelerator.wait_for_everyone()
@@ -919,13 +928,6 @@ class DetSDTextualInversionPipeline:
             text = text.replace(concept_token, dummy_tokens)
         return text
 
-    def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:
-        w, h = images[0].size
-        image_grid = Image.new("RGB", size=(cols * w, rows * h))
-        for idx, img in enumerate(images):
-            image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
-        return image_grid
-
     def _save_image(self, image: Image.Image, filename: str, saved_img_dir: str) -> None:
         """Saves the image as a time-stamped png file."""
         saved_img_dir = pathlib.Path(saved_img_dir)
@@ -977,7 +979,7 @@ class DetSDTextualInversionPipeline:
                 "max_retries limit reached without generating any non-nsfw images, returning None"
             )
             return None
-        image_grid = self._create_image_grid(images[:num_samples], rows, cols)
+        image_grid = create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
             timestamp = "_".join(f"_{datetime.now().strftime('%c')}".split())
@@ -1055,3 +1057,11 @@ def add_new_tokens_to_tokenizer(
     ), 'Length of "dummy_placeholder_ids" and "non_special_initializer_ids" must match.'
 
     return non_special_initializer_ids, dummy_placeholder_ids, dummy_placeholder_tokens
+
+
+def create_image_grid(images: List[Image.Image], rows: int, cols: int) -> Image.Image:
+    w, h = images[0].size
+    image_grid = Image.new("RGB", size=(cols * w, rows * h))
+    for idx, img in enumerate(images):
+        image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
+    return image_grid
