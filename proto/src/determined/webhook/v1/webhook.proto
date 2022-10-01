@@ -16,7 +16,7 @@ message Webhook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [
-        "id",
+        "id"
         "url"
       ]
     }
@@ -25,7 +25,6 @@ message Webhook {
   int32 id = 1;
   // The url of the webhook.
   string url = 2;
-
   // The triggers of the webhook.
   repeated Trigger triggers = 3;
 }
@@ -34,7 +33,7 @@ message Trigger {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [
-        "trigger_type",
+        "trigger_type"
         "condition"
       ]
     }
@@ -47,25 +46,4 @@ message Trigger {
   google.protobuf.Struct condition = 3;
   // The parent webhook of the trigger.
   int32 webhookId = 4;
-}
-
-
-message WebhookWithTriggers {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "id",
-        "url",
-        "triggers"
-      ]
-    }
-  };
-
-  // The id of the webhook.
-  int32 id = 1;
-  // The url of the webhook.
-  string url = 2;
-
-    // The webhook.
-  repeated Trigger triggers = 3;
 }

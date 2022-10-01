@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/usergroup"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -26,6 +27,7 @@ type apiServer struct {
 
 	usergroup.UserGroupAPIServer
 	rbac.RBACAPIServerWrapper
+	webhooks.WebhooksAPIServer
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.

@@ -38,11 +38,11 @@ message GetWebhooksRequest {
   }
   // Sort webhooks by the given field.
   SortBy sort_by = 1;
-
   // Order webhooks in either ascending or descending order.
   OrderBy order_by = 2;
-
+  // Offset for the request.
   int32 offset = 3;
+  // Limit for the request.
   int32 limit = 4;
 }
 
@@ -53,25 +53,17 @@ message GetWebhooksResponse {
   };
 
   // The list of returned webhooks.
-  repeated determined.webhook.v1.WebhookWithTriggers webhooks = 1;
-
-  int32 offset = 3;
-
-  // Limit the number of webhooks.
-  int32 limit = 4;
+  repeated determined.webhook.v1.Webhook webhooks = 1;
 }
 
 // Request for creating a webhook
 message PostWebhookRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "url", "triggers" ] }
+    json_schema: { required: [ "webhook" ] }
   };
 
-  // The url of the webhook.
-  string url = 1;
-
-  // The triggers for the webhook.
-  repeated determined.webhook.v1.Trigger triggers = 2;
+  // The webhook to store.
+  determined.webhook.v1.Webhook webhook = 1;
 }
 
 
@@ -100,9 +92,6 @@ message DeleteWebhookResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "completed" ] }
   };
-
-  // Status of deletion.
-  bool completed = 1;
 }
 
 // Request for testing a webhook.
