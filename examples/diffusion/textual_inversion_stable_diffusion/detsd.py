@@ -414,8 +414,6 @@ class DetSDTextualInversionTrainer:
                 subfolder="unet",
                 use_auth_token=self.use_auth_token,
             )
-        # Modules for StableDiffusionPipeline are only required by the chief.
-        if self.accelerator.is_main_process:
             self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
                 pretrained_model_name_or_path="CompVis/stable-diffusion-safety-checker"
             )
