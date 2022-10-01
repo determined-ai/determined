@@ -30,7 +30,6 @@ from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
 import layers
-import utils
 
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,
