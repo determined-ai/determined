@@ -457,8 +457,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case *apiv1.GetSearcherEventsRequest:
-		queue, err := e.searcher.GetCustomSearcherEventQueue()
-		if err != nil {
+		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
 			ctx.Respond(status.Error(codes.Internal, err.Error()))
 		} else {
 			if w, err := queue.Watch(); err != nil {
@@ -469,8 +468,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case UnwatchEvents:
-		queue, err := e.searcher.GetCustomSearcherEventQueue()
-		if err != nil {
+		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
 			ctx.Respond(status.Error(codes.Internal, err.Error()))
 		} else {
 			queue.Unwatch(msg.id)

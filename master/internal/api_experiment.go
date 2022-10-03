@@ -41,7 +41,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	searcher "github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -219,13 +219,12 @@ func (a *apiServer) GetSearcherEvents(
 
 	addr := experimentsAddr.Child(req.ExperimentId)
 	var w searcher.EventsWatcher
-	err = a.ask(addr, req, &w)
-	if err != nil {
+	if err = a.ask(addr, req, &w); err != nil {
 		return nil, status.Errorf(codes.Internal,
 			"failed to get events from actor: long polling %v", err)
 	}
 
-	defer a.ask(addr, UnwatchEvents{w.ID}, &w) //nolint
+	defer a.m.system.TellAt(addr, UnwatchEvents{w.ID})
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
 	defer cancel()
