@@ -123,9 +123,11 @@ class SearchRunner:
 
         try:
             while experiment_is_active:
-                time.sleep(5)
+                time.sleep(
+                    2
+                )  # we don't want to call long polling API more often than every 2 seconds.
                 events = self.get_events(session, experiment_id)
-                if events is None:
+                if not events:
                     continue
                 logger.info(json.dumps([SearchRunner._searcher_event_as_dict(e) for e in events]))
                 # the first event is an event we have already processed and told master about it
@@ -199,6 +201,7 @@ class SearchRunner:
         session: client.Session,
         experiment_id: int,
     ) -> Optional[Sequence[bindings.v1SearcherEvent]]:
+        # API is implemented with long polling.
         events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
         return events.searcherEvents
 
