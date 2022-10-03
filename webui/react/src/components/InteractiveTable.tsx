@@ -456,8 +456,9 @@ const InteractiveTable: InteractiveTable = ({
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
+      setWidthData({ ...widthData, widths: reorderedWidths });
     },
-    [settings.columns, settings.columnWidths, updateSettings],
+    [settings.columns, settings.columnWidths, widthData, updateSettings],
   );
 
   const handleResize = useCallback(
