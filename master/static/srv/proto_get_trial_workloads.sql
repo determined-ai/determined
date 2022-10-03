@@ -60,7 +60,14 @@ workloads AS (
     coalesce(
       t.metrics,
       v.metrics
-    ) AS metrics
+    ) AS metrics,
+    CASE
+      WHEN $6 = 'METRIC_TYPE_VALIDATION' THEN
+        v.metrics
+      WHEN $6 = 'METRIC_TYPE_TRAINING' THEN
+        t.metrics
+      ELSE metrics
+    END AS sort_metrics
   FROM trainings_vt t
     FULL JOIN checkpoints_vt c ON false
     FULL JOIN validations_vt v ON false
