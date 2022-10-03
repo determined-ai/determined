@@ -571,7 +571,8 @@ const InteractiveTable: InteractiveTable = ({
         if (!columnDefs[columnName]) return acc;
 
         const column = columnDefs[columnName];
-        const columnWidth = widthData.widths[index];
+        const currentWidth = widthData.widths[index];
+        const columnWidth = currentWidth < column.defaultWidth ? column.defaultWidth : currentWidth; // avoid rendering a column with less width than the default
         const sortOrder =
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
