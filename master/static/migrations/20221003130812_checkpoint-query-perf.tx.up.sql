@@ -16,4 +16,3 @@ SELECT c.uuid::text                          AS uuid,
         c.trial_id,
         c.state AS state_enum
 FROM checkpoints_view c;
-
