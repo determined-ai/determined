@@ -754,7 +754,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit = ptrs.Ptr[int32](-1)
 	}
 
-	sortType := apiv1.MetricType.METRIC_TYPE_UNSPECIFIED
+	sortType := apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
 	sortCode := "total_batches"
 	if req.SortKey != "" && req.SortKey != "batches" {
 		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'", strings.ReplaceAll(req.SortKey, "'", ""))
@@ -777,7 +777,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit,
 		req.Filter.String(),
 		req.IncludeBatchMetrics,
-		req.MetricType,
+		req.MetricType.String(),
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)

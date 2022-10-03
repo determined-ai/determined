@@ -20,6 +20,7 @@ import {
   CommandTask,
   ExperimentBase,
   MetricName,
+  MetricType,
   Step,
   TrialDetails,
   TrialWorkloadFilter,
@@ -100,7 +101,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
               ? 'ascend'
               : 'descend'
             : undefined,
-        key: metricName.name,
+        key: (metricName.type === MetricType.Training ? 't_' : 'v_') + metricName.name,
         render: metricRenderer(metricName),
         sorter: (a, b) => {
           const aVal = extractMetricSortValue(a, metricName),
@@ -135,9 +136,11 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
+          metricType:
+            settings.sortKey.substring(0, 2) === 't_' ? MetricType.Training : MetricType.Validation,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: settings.sortKey,
+          sortKey: settings.sortKey.substring(2),
         });
         setWorkloads(wl.workloads);
         setWorkloadCount(wl.pagination.total || 0);
