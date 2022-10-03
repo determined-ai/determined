@@ -12306,7 +12306,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get list of SearcherEvents.
+         * @summary Get list of SearcherEvents with long polling.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13303,7 +13303,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get list of SearcherEvents.
+         * @summary Get list of SearcherEvents with long polling.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13790,7 +13790,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get list of SearcherEvents.
+         * @summary Get list of SearcherEvents with long polling.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14182,7 +14182,7 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get list of SearcherEvents.
+     * @summary Get list of SearcherEvents with long polling.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

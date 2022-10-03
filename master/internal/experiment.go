@@ -72,6 +72,12 @@ type (
 		requestID model.RequestID
 		reason    model.ExitedReason
 	}
+
+	// UnwatchEvents is initiated from the get searcher events API.
+	// It deletes a watcher with id from the map of watchers.
+	UnwatchEvents struct {
+		id uuid.UUID
+	}
 )
 
 type (
@@ -449,14 +455,21 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case *apiv1.GetSearcherEventsRequest:
-		queue, err := e.searcher.GetCustomSearcherEventQueue()
-		if err != nil {
+		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
 			ctx.Respond(status.Error(codes.Internal, err.Error()))
 		} else {
-			resp := &apiv1.GetSearcherEventsResponse{
-				SearcherEvents: queue.GetEvents(),
+			if w, err := queue.Watch(); err != nil {
+				ctx.Respond(err)
+			} else {
+				ctx.Respond(w)
 			}
-			ctx.Respond(resp)
+		}
+
+	case UnwatchEvents:
+		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
+		} else {
+			queue.Unwatch(msg.id)
 		}
 
 	case *apiv1.ActivateExperimentRequest:
