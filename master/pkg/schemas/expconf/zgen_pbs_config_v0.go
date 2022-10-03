@@ -8,30 +8,30 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (p PbsClusterConfigV0) SlotsPerNode() *int {
+func (p PbsConfigV0) SlotsPerNode() *int {
 	return p.RawSlotsPerNode
 }
 
-func (p *PbsClusterConfigV0) SetSlotsPerNode(val *int) {
+func (p *PbsConfigV0) SetSlotsPerNode(val *int) {
 	p.RawSlotsPerNode = val
 }
 
-func (p PbsClusterConfigV0) SbatchArgs() []string {
+func (p PbsConfigV0) SbatchArgs() []string {
 	return p.RawSbatchArgs
 }
 
-func (p *PbsClusterConfigV0) SetSbatchArgs(val []string) {
+func (p *PbsConfigV0) SetSbatchArgs(val []string) {
 	p.RawSbatchArgs = val
 }
 
-func (p PbsClusterConfigV0) ParsedSchema() interface{} {
-	return schemas.ParsedPbsClusterConfigV0()
+func (p PbsConfigV0) ParsedSchema() interface{} {
+	return schemas.ParsedPbsConfigV0()
 }
 
-func (p PbsClusterConfigV0) SanityValidator() *jsonschema.Schema {
+func (p PbsConfigV0) SanityValidator() *jsonschema.Schema {
 	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json")
 }
 
-func (p PbsClusterConfigV0) CompletenessValidator() *jsonschema.Schema {
+func (p PbsConfigV0) CompletenessValidator() *jsonschema.Schema {
 	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json")
 }

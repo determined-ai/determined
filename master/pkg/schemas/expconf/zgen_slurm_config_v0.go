@@ -8,30 +8,30 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SlurmClusterConfigV0) SlotsPerNode() *int {
+func (s SlurmConfigV0) SlotsPerNode() *int {
 	return s.RawSlotsPerNode
 }
 
-func (s *SlurmClusterConfigV0) SetSlotsPerNode(val *int) {
+func (s *SlurmConfigV0) SetSlotsPerNode(val *int) {
 	s.RawSlotsPerNode = val
 }
 
-func (s SlurmClusterConfigV0) SbatchArgs() []string {
+func (s SlurmConfigV0) SbatchArgs() []string {
 	return s.RawSbatchArgs
 }
 
-func (s *SlurmClusterConfigV0) SetSbatchArgs(val []string) {
+func (s *SlurmConfigV0) SetSbatchArgs(val []string) {
 	s.RawSbatchArgs = val
 }
 
-func (s SlurmClusterConfigV0) ParsedSchema() interface{} {
-	return schemas.ParsedSlurmClusterConfigV0()
+func (s SlurmConfigV0) ParsedSchema() interface{} {
+	return schemas.ParsedSlurmConfigV0()
 }
 
-func (s SlurmClusterConfigV0) SanityValidator() *jsonschema.Schema {
+func (s SlurmConfigV0) SanityValidator() *jsonschema.Schema {
 	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json")
 }
 
-func (s SlurmClusterConfigV0) CompletenessValidator() *jsonschema.Schema {
+func (s SlurmConfigV0) CompletenessValidator() *jsonschema.Schema {
 	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json")
 }

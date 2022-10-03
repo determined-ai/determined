@@ -1462,7 +1462,7 @@ schemas = {
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json",
-    "title": "PbsClusterConfig",
+    "title": "PbsConfig",
     "type": "object",
     "additionalProperties": false,
     "required": [],
@@ -1495,7 +1495,7 @@ schemas = {
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json",
-    "title": "SlurmClusterConfig",
+    "title": "SlurmConfig",
     "type": "object",
     "additionalProperties": false,
     "required": [],

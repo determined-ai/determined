@@ -1374,10 +1374,10 @@ var (
     }
 }
 `)
-	textPbsClusterConfigV0 = []byte(`{
+	textPbsConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json",
-    "title": "PbsClusterConfig",
+    "title": "PbsConfig",
     "type": "object",
     "additionalProperties": false,
     "required": [],
@@ -1403,10 +1403,10 @@ var (
     }
 }
 `)
-	textSlurmClusterConfigV0 = []byte(`{
+	textSlurmConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json",
-    "title": "SlurmClusterConfig",
+    "title": "SlurmConfig",
     "type": "object",
     "additionalProperties": false,
     "required": [],
@@ -3282,9 +3282,9 @@ var (
 
 	schemaHDFSConfigV0 interface{}
 
-	schemaPbsClusterConfigV0 interface{}
+	schemaPbsConfigV0 interface{}
 
-	schemaSlurmClusterConfigV0 interface{}
+	schemaSlurmConfigV0 interface{}
 
 	schemaCategoricalHyperparameterV0 interface{}
 
@@ -3799,44 +3799,44 @@ func ParsedHDFSConfigV0() interface{} {
 	return schemaHDFSConfigV0
 }
 
-func ParsedPbsClusterConfigV0() interface{} {
+func ParsedPbsConfigV0() interface{} {
 	cacheLock.RLock()
-	if schemaPbsClusterConfigV0 != nil {
+	if schemaPbsConfigV0 != nil {
 		cacheLock.RUnlock()
-		return schemaPbsClusterConfigV0
+		return schemaPbsConfigV0
 	}
 	cacheLock.RUnlock()
 
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
-	if schemaPbsClusterConfigV0 != nil {
-		return schemaPbsClusterConfigV0
+	if schemaPbsConfigV0 != nil {
+		return schemaPbsConfigV0
 	}
-	err := json.Unmarshal(textPbsClusterConfigV0, &schemaPbsClusterConfigV0)
+	err := json.Unmarshal(textPbsConfigV0, &schemaPbsConfigV0)
 	if err != nil {
-		panic("invalid embedded json for PbsClusterConfigV0")
+		panic("invalid embedded json for PbsConfigV0")
 	}
-	return schemaPbsClusterConfigV0
+	return schemaPbsConfigV0
 }
 
-func ParsedSlurmClusterConfigV0() interface{} {
+func ParsedSlurmConfigV0() interface{} {
 	cacheLock.RLock()
-	if schemaSlurmClusterConfigV0 != nil {
+	if schemaSlurmConfigV0 != nil {
 		cacheLock.RUnlock()
-		return schemaSlurmClusterConfigV0
+		return schemaSlurmConfigV0
 	}
 	cacheLock.RUnlock()
 
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
-	if schemaSlurmClusterConfigV0 != nil {
-		return schemaSlurmClusterConfigV0
+	if schemaSlurmConfigV0 != nil {
+		return schemaSlurmConfigV0
 	}
-	err := json.Unmarshal(textSlurmClusterConfigV0, &schemaSlurmClusterConfigV0)
+	err := json.Unmarshal(textSlurmConfigV0, &schemaSlurmConfigV0)
 	if err != nil {
-		panic("invalid embedded json for SlurmClusterConfigV0")
+		panic("invalid embedded json for SlurmConfigV0")
 	}
-	return schemaSlurmClusterConfigV0
+	return schemaSlurmConfigV0
 }
 
 func ParsedCategoricalHyperparameterV0() interface{} {
@@ -4559,9 +4559,9 @@ func schemaBytesMap() map[string][]byte {
 	url = "http://determined.ai/schemas/expconf/v0/hdfs.json"
 	cachedSchemaBytesMap[url] = textHDFSConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
-	cachedSchemaBytesMap[url] = textPbsClusterConfigV0
+	cachedSchemaBytesMap[url] = textPbsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
-	cachedSchemaBytesMap[url] = textSlurmClusterConfigV0
+	cachedSchemaBytesMap[url] = textSlurmConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json"
 	cachedSchemaBytesMap[url] = textCategoricalHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameter-const.json"

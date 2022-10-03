@@ -79,8 +79,8 @@ type TaskSpec struct {
 
 	UserSessionToken   string
 	TaskType           model.TaskType
-	SlurmClusterConfig expconf.SlurmClusterConfig
-	PbsClusterConfig   expconf.PbsClusterConfig
+	SlurmConfig        expconf.SlurmConfig
+	PbsConfig          expconf.PbsConfig
 }
 
 // ResolveWorkDir resolves the work dir.
