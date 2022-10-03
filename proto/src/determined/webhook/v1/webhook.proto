@@ -6,19 +6,17 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/struct.proto";
 
 enum TriggerType {
-  TRIGGER_TYPE_UNSPECIFIED  = 0;
-  TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE  = 1;
+  TRIGGER_TYPE_UNSPECIFIED             = 0;
+  TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = 1;
   // For metrics emitted during training.
-  TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED  = 2;
+  TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = 2;
 }
 
 message Webhook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [
-        "id"
-        "url"
-      ]
+      required: [ "id"
+                  "url" ]
     }
   };
   // The id of the webhook.
@@ -32,10 +30,8 @@ message Webhook {
 message Trigger {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [
-        "trigger_type"
-        "condition"
-      ]
+      required: [ "trigger_type"
+                  "condition" ]
     }
   };
   // The id of the trigger.

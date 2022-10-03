@@ -3,8 +3,9 @@ package webhooks
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/internal/db"
 )
 
 func AddWebhook(ctx context.Context, w Webhook) error {

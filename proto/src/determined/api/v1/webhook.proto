@@ -34,7 +34,7 @@ message GetWebhooksRequest {
     // Returns webhooks sorted by id.
     SORT_BY_ID = 1;
     // Returns webhooks sorted by name.
-    SORT_BY_URL= 12;
+    SORT_BY_URL = 12;
   }
   // Sort webhooks by the given field.
   SortBy sort_by = 1;
@@ -49,7 +49,7 @@ message GetWebhooksRequest {
 // Response to GetWebhooksRequest.
 message GetWebhooksResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "webhooks"] }
+    json_schema: { required: [ "webhooks" ] }
   };
 
   // The list of returned webhooks.
@@ -65,7 +65,6 @@ message PostWebhookRequest {
   // The webhook to store.
   determined.webhook.v1.Webhook webhook = 1;
 }
-
 
 // Response to PostWebhookRequest.
 message PostWebhookResponse {
@@ -113,5 +112,3 @@ message TestWebhookResponse {
   // Status of test.
   bool completed = 1;
 }
-
-

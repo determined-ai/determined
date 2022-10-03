@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/webhookv1"
-	"github.com/uptrace/bun"
 )
 
 // Webhooks is a slice of Webhook objects.

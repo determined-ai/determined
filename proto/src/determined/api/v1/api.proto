@@ -1651,7 +1651,6 @@ service Determined {
     };
   }
 
-
   // Delete a webhook.
   rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {
     option (google.api.http) = {
