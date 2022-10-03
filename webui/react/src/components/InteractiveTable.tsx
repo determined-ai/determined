@@ -420,12 +420,12 @@ const InteractiveTable: InteractiveTable = ({
   const { dragState } = useDragLayer((monitor) => {
     const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
     const dragState = (() => {
-        if (!deltaX) return 'notDragging';
+      if (!deltaX) return 'notDragging';
 
-        if (deltaX > 0) return 'draggingRight';
+      if (deltaX > 0) return 'draggingRight';
 
-        return 'draggingLeft';
-      })();
+      return 'draggingLeft';
+    })();
     return { dragState };
   });
 
@@ -631,7 +631,7 @@ const InteractiveTable: InteractiveTable = ({
     }));
 
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  }, [ settings.columnWidths, widthData, getUpscaledWidths ]);
+  }, [settings.columnWidths, widthData, getUpscaledWidths]);
 
   return (
     <div className={css.tableContainer} ref={tableRef}>
