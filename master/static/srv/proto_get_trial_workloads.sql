@@ -57,10 +57,6 @@ workloads AS (
       v.end_time,
       c.end_time
     ) AS end_time,
-    coalesce(
-      t.metrics,
-      v.metrics
-    ) AS metrics,
     CASE
       WHEN $6 = 'METRIC_TYPE_VALIDATION' THEN
         v.metrics
