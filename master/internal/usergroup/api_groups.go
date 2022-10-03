@@ -2,6 +2,7 @@ package usergroup
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -74,7 +75,7 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 		return nil, apiutils.ErrInvalidLimit
 	}
 
-	query := SearchGroupsQuery(req.Name, model.UserID(req.UserId), true)
+	query := SearchGroupsQuery(req.Name, model.UserID(req.UserId), false)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -127,9 +128,11 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 
 	gid := int(req.GroupId)
 
-	err = AuthZProvider.Get().CanGetGroup(*curUser, gid)
+	canGet, err := AuthZProvider.Get().CanGetGroup(*curUser, gid)
 	if err != nil {
 		return nil, err
+	} else if !canGet {
+		return nil, errors.Wrapf(db.ErrNotFound, "Error getting group %d", gid)
 	}
 
 	g, err := GroupByIDTx(ctx, nil, gid)
