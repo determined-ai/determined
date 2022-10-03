@@ -985,7 +985,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 		}
 	}
 
-	resp := &apiv1.GetExperimentCheckpointsResponse{Checkpoints: []*checkpointv1.Checkpoint{}}
+	resp := &apiv1.GetExperimentCheckpointsResponse{
+		Checkpoints: []*checkpointv1.Checkpoint{},
+		Pagination:  &apiv1.Pagination{},
+	}
 
 	checkpoints := []*Checkpoint{}
 	q := db.Bun().NewSelect().
