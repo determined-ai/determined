@@ -122,7 +122,7 @@ class ASHASearchMethod(searcher.SearchMethod):
     #    (3) close experiment if all trials are completed and maximum number of
     #        trials is reached.
     def on_validation_completed(
-        self, request_id: uuid.UUID, metric: float
+        self, request_id: uuid.UUID, metric: float, train_length: int
     ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:

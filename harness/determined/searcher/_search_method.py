@@ -229,11 +229,13 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
+    def on_validation_completed(
+        self, request_id: uuid.UUID, metric: float, train_length: int
+    ) -> List[Operation]:
         """
         Informs the searcher that the validation workload
-        initiated by the same searcher has completed. It returns any new operations
-        as a result of this workload completing.
+        initiated by the same searcher has completed after training for ``train_length`` units.
+        It returns any new operations as a result of this workload completing.
         """
         pass
 
