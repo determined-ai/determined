@@ -87,6 +87,7 @@ class SearchRunner:
             operations = self.search_method.on_validation_completed(
                 request_id,
                 event.validationCompleted.metric,
+                int(event.validationCompleted.validateAfterLength),
             )
             # add progress operation
             progress = self.search_method.progress()
