@@ -3,22 +3,19 @@ repos:
     hooks:
       - id: web-js-lint-check
         name: Web JS Lint Check
-        entry: bash -c 'make -j$(nproc) -C webui/react check-eslint check-prettier-js'
+        entry: sh ./pre-commit/web_lint_check.sh js
         language: system
-        files: 'webui/react/src/'
+        files: '^webui/react/src/'
         types_or: [javascript, jsx, ts, tsx]
-        pass_filenames: false
       - id: web-css-lint-check
         name: Web CSS Lint Check
-        entry: bash -c 'make -j$(nproc) -C webui/react check-prettier-css check-stylelint'
+        entry: sh ./pre-commit/web_lint_check.sh css
         language: system
-        files: 'webui/react/src/'
+        files: '^webui/react/src/'
         types_or: [css, less, scss]
-        pass_filenames: false
       - id: web-misc-lint-check
         name: Web Misc Lint Check
-        entry: bash -c 'make -j$(nproc) -C webui/react check-prettier-misc check-package-lock'
+        entry: sh ./pre-commit/web_lint_check.sh misc
         language: system
-        files: 'webui/react/src/'
+        files: '^webui/react/'
         types_or: [markdown, json]
-        pass_filenames: false
