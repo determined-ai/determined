@@ -110,3 +110,73 @@ func TestCustomSearchMethod(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expEvents[2:], queue.events)
 }
+
+func TestCustomSearchWatcher(t *testing.T) {
+	config := expconf.SearcherConfig{
+		RawCustomConfig: &expconf.CustomConfig{},
+	}
+
+	customSearchMethod := NewSearchMethod(config)
+	rand := nprand.New(0)
+	ctx := context{rand: rand}
+
+	var queue *SearcherEventQueue
+	queue = customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
+	w, err := queue.Watch()
+	require.NoError(t, err)
+
+	// should immediately receive initial status.
+	select {
+	case <-w.C:
+		t.Fatal("received a non-empty channel but should not have")
+	default:
+	}
+
+	expEvents := make([]*experimentv1.SearcherEvent, 0)
+	// Add initialOperations
+	_, err = customSearchMethod.initialOperations(ctx)
+	require.NoError(t, err)
+	var expEventCount int32
+	initOpsEvent := experimentv1.SearcherEvent_InitialOperations{
+		InitialOperations: &experimentv1.InitialOperations{},
+	}
+	expEventCount++
+	searcherEvent := experimentv1.SearcherEvent{
+		Event: &initOpsEvent,
+		Id:    expEventCount,
+	}
+	expEvents = append(expEvents, &searcherEvent)
+	require.Equal(t, expEvents, queue.GetEvents())
+
+	//  Receive events in the watcher channel after it's added.
+	select {
+	case eventsInWatcher := <-w.C:
+		require.Equal(t, queue.GetEvents(), eventsInWatcher)
+		print("length")
+		print(len(queue.events))
+		print("\n")
+		print(len(eventsInWatcher))
+	default:
+		t.Fatal("did not receive events")
+	}
+
+	// unwatching should work.
+	queue.Unwatch(w.ID)
+
+	// Receive events when you create a new watcher after events exist.
+	w2, err := queue.Watch()
+	require.NoError(t, err)
+	select {
+	case eventsInWatcher2 := <-w2.C:
+		require.Equal(t, queue.GetEvents(), eventsInWatcher2)
+		print("length")
+		print(len(queue.events))
+		print("\n")
+		print(len(eventsInWatcher2))
+	default:
+		t.Fatal("did not receive events")
+	}
+
+	// unwatching should work.
+	queue.Unwatch(w2.ID)
+}
