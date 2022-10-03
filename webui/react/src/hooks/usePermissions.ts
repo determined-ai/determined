@@ -68,6 +68,7 @@ interface PermissionsHook {
   canViewGroups: boolean;
   canViewUsers: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
+  canViewWorkspaces: boolean;
 }
 
 const usePermissions = (): PermissionsHook => {
@@ -130,6 +131,7 @@ const usePermissions = (): PermissionsHook => {
     canViewUsers: canAdministrateUsers(rbacOpts),
     canViewWorkspace: (args: WorkspacePermissionsArgs) =>
       canViewWorkspace(rbacOpts, args.workspace),
+    canViewWorkspaces: canViewWorkspaces(rbacOpts),
   };
 };
 
@@ -426,6 +428,19 @@ const canViewWorkspace = (
   return (
     !!workspace &&
     (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWWORKSPACE))
+  );
+};
+
+const canViewWorkspaces = ({
+  rbacEnabled,
+  rbacReadPermission,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  return (
+    !rbacEnabled ||
+    rbacReadPermission ||
+    (!!userRoles &&
+      !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)))
   );
 };
 

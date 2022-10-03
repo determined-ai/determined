@@ -46,6 +46,7 @@ import useModalExperimentMove, {
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import NoPermissions from 'pages/NoPermissions';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -1075,6 +1076,8 @@ const ProjectDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
+  } else if (!expPermissions.canViewWorkspaces) {
+    return <NoPermissions />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
     const message = `Unable to fetch Project ${projectId}`;
