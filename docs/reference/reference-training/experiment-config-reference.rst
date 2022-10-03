@@ -1100,7 +1100,6 @@ workloads for this experiment. For more information on customizing the trial env
 
 .. _exp-environment-slurm:
 
-
 ***************
  Optimizations
 ***************
@@ -1280,9 +1279,8 @@ To verify your search is working as intended before committing to a full run, yo
  Slurm Cluster Details
 ***********************
 
-The ``slurm`` section specifies configuration options applicable 
-when the cluster is configured with :ref:`resource_manager.type: slurm
-<cluster-configuration-slurm>`.
+The ``slurm`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
 
 **Optional Fields**
 
