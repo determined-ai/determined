@@ -754,13 +754,11 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit = ptrs.Ptr[int32](-1)
 	}
 
-	sortType := apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+	sortType = req.MetricType
 	sortCode := "total_batches"
 	if req.SortKey != "" && req.SortKey != "batches" {
-		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'", strings.ReplaceAll(req.SortKey, "'", ""))
-		if req.MetricType != sortType {
-			sortType = req.MetricType
-		}
+		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'",
+			strings.ReplaceAll(req.SortKey, "'", ""))
 	}
 
 	switch err := a.m.db.QueryProtof(
