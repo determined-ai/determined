@@ -107,7 +107,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
     ) {
       items.push({ key: MenuKey.EDIT, label: 'Edit...' });
     }
-    if (canMoveProjects({ project, workspace: { id: project.workspaceId } }) && !project.archived) {
+    if (canMoveProjects({ project }) && !project.archived) {
       items.push({ key: MenuKey.MOVE, label: 'Move...' });
     }
     if (
