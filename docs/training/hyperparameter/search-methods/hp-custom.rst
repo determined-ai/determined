@@ -90,11 +90,13 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
        def on_validation_completed(
            self,
            request_id: uuid.UUID,
-           metric: float
+           metric: float,
+           train_length: int,
        ) -> List[searcher.Operation:
-           # return operations to be performed based on the state
-           # and the value of the metric returned by the validation
-           # for a given trial
+           # return operations to be performed based on the state,
+           # the value of the metric returned by the validation
+           # for a given trial, and the length of the training
+           # (in units specified in the searcher configuration)
            return []
 
        def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
