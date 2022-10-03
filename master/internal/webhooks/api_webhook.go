@@ -23,7 +23,7 @@ func (a *WebhooksAPIServer) PostWebhook(
 	ctx context.Context, req *apiv1.PostWebhookRequest,
 ) (*apiv1.PostWebhookResponse, error) {
 	w := WebhookFromProto(req.Webhook)
-	if err := AddWebhook(ctx, w); err != nil {
+	if err := AddWebhook(ctx, &w); err != nil {
 		return nil, err
 	}
 	return &apiv1.PostWebhookResponse{Webhook: w.Proto()}, nil

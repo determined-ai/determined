@@ -8,9 +8,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 )
 
-func AddWebhook(ctx context.Context, w Webhook) error {
+func AddWebhook(ctx context.Context, w *Webhook) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().Model(&w).Exec(ctx)
+		_, err := tx.NewInsert().Model(w).Exec(ctx)
 		if err != nil {
 			return err
 		}
