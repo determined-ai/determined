@@ -268,11 +268,13 @@ const HeaderCell = ({
       const dragItem = monitor.getItem() || {};
       const dragIndex = dragItem?.index;
       const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-      const internalDragState = deltaX
-        ? deltaX > 0
-          ? 'draggingRight'
-          : 'draggingLeft'
-        : 'notDragging';
+      const internalDragState = (() => {
+        if (!deltaX) return 'notDragging';
+
+        if (deltaX > 0) return 'draggingRight';
+
+        return 'draggingLeft';
+      })();
       if (
         dragIndex == null ||
         dragIndex === index ||
@@ -417,7 +419,13 @@ const InteractiveTable: InteractiveTable = ({
 
   const { dragState } = useDragLayer((monitor) => {
     const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-    const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
+    const dragState = (() => {
+        if (!deltaX) return 'notDragging';
+
+        if (deltaX > 0) return 'draggingRight';
+
+        return 'draggingLeft';
+      })();
     return { dragState };
   });
 
