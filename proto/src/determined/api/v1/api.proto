@@ -1377,7 +1377,7 @@ service Determined {
     };
   }
 
-  // Get list of SearcherEvents.
+  // Get list of SearcherEvents with long polling.
   rpc GetSearcherEvents(GetSearcherEventsRequest)
       returns (GetSearcherEventsResponse) {
     option (google.api.http) = {
