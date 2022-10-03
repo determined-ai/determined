@@ -180,7 +180,6 @@ func (a *TrialsAPIServer) GetTrialsCollections(
 	}
 
 	err := q.Scan(context.TODO())
-	
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trials collections %w", err)
 	}

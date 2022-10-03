@@ -77,10 +77,10 @@ type TaskSpec struct {
 	ContainerID            string
 	Devices                []device.Device
 
-	UserSessionToken   string
-	TaskType           model.TaskType
-	SlurmConfig        expconf.SlurmConfig
-	PbsConfig          expconf.PbsConfig
+	UserSessionToken string
+	TaskType         model.TaskType
+	SlurmConfig      expconf.SlurmConfig
+	PbsConfig        expconf.PbsConfig
 }
 
 // ResolveWorkDir resolves the work dir.
