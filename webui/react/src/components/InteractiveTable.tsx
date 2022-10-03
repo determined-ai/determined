@@ -399,7 +399,7 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const [widthData, setWidthData] = useState(() => {
-    const widths = getUpscaledWidths(settings?.columnWidths) || [];
+    const widths = settings?.columnWidths || [];
     return {
       dropLeftStyles:
         widths.map((width, idx) => ({
@@ -498,24 +498,23 @@ const InteractiveTable: InteractiveTable = ({
           );
         }
 
-        const widths = getUpscaledWidths(targetWidths);
-        const dropRightStyles = widths.map((width, idx) => ({
+        const dropRightStyles = targetWidths.map((width, idx) => ({
           left: `${width / 2}px`,
-          width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+          width: `${(width + (targetWidths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
         }));
-        const dropLeftStyles = widths.map((width, idx) => ({
-          left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-          width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        const dropLeftStyles = targetWidths.map((width, idx) => ({
+          left: `${-((targetWidths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+          width: `${(width + (targetWidths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
         }));
 
         timeout.current = setTimeout(() => {
-          setWidthData({ dropLeftStyles, dropRightStyles, widths });
+          setWidthData({ dropLeftStyles, dropRightStyles, widths: targetWidths });
         }, DEFAULT_RESIZE_THROTTLE_TIME);
 
         return minWidth;
       };
     },
-    [settings.columns, widthData.widths, pageWidth, columnDefs, getUpscaledWidths],
+    [settings.columns, widthData.widths, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
@@ -616,6 +615,23 @@ const InteractiveTable: InteractiveTable = ({
       if (timeout.current) clearTimeout(timeout.current);
     };
   }, []);
+
+  useEffect(() => {
+    // this should run only when getting new number of cols
+    if (settings.columnWidths.length === widthData.widths.length) return;
+
+    const widths = getUpscaledWidths(settings.columnWidths);
+    const dropRightStyles = widths.map((width, idx) => ({
+      left: `${width / 2}px`,
+      width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+    }));
+    const dropLeftStyles = widths.map((width, idx) => ({
+      left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+      width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+    }));
+
+    setWidthData({ dropLeftStyles, dropRightStyles, widths });
+  }, [ settings.columnWidths, widthData, getUpscaledWidths ]);
 
   return (
     <div className={css.tableContainer} ref={tableRef}>

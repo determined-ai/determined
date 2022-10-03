@@ -1020,7 +1020,6 @@ const ProjectDetails: React.FC = () => {
                 selectedRowKeys: settings.row ?? [],
               }}
               scroll={{
-                x: 'min-content',
                 y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)`,
               }}
               settings={settings as InteractiveTableSettings}
