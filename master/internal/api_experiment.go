@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/pkg/errors"
 
@@ -37,7 +39,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -936,6 +937,33 @@ func (a *apiServer) PatchExperiment(
 	return &apiv1.PatchExperimentResponse{Experiment: exp}, nil
 }
 
+type Checkpoint struct {
+	bun.BaseModel `bun:"table:bun_checkpoints_view"`
+	Uuid          string
+	TaskId        string
+	AllocationId  string
+	ReportTime    time.Time
+	State         string
+	Resources     map[string]int64
+	Metadata      *structpb.Struct
+	Training      *checkpointv1.CheckpointTrainingMetadata
+	ExperimentId  int32
+	TrialId       int32
+}
+
+func (c Checkpoint) Proto() *checkpointv1.Checkpoint {
+	return &checkpointv1.Checkpoint{
+		TaskId:       c.TaskId,
+		AllocationId: c.AllocationId,
+		Uuid:         c.Uuid,
+		ReportTime:   timestamppb.New(c.ReportTime),
+		Resources:    c.Resources,
+		Metadata:     c.Metadata,
+		State:        checkpointv1.State(checkpointv1.State_value[c.State]),
+		Training:     c.Training,
+	}
+}
+
 func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
@@ -957,10 +985,60 @@ func (a *apiServer) GetExperimentCheckpoints(
 		}
 	}
 
-	resp := &apiv1.GetExperimentCheckpointsResponse{}
-	resp.Checkpoints = []*checkpointv1.Checkpoint{}
-	switch err = a.m.db.QueryProto("get_checkpoints_for_experiment", &resp.Checkpoints, req.Id); {
-	case err == db.ErrNotFound:
+	resp := &apiv1.GetExperimentCheckpointsResponse{Checkpoints: []*checkpointv1.Checkpoint{}}
+
+	checkpoints := []*Checkpoint{}
+	q := db.Bun().NewSelect().
+		Model(&checkpoints).
+		Where("experiment_id = ?", req.Id)
+
+	if len(req.States) > 0 {
+		states := []string{}
+		for _, s := range req.States {
+			state_text := checkpointv1.State_name[int32(s.Number())]
+			states = append(states, state_text)
+		}
+		q.Where("state in (?)", bun.In(states))
+
+	}
+
+	orderColumn := "trial_id, report_time"
+	switch req.SortBy {
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
+		orderColumn = "(metadata->>'steps_completed')::int"
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
+		orderColumn = "uuid"
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
+		orderColumn = "report_time"
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
+		orderColumn = "state_enum"
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
+		orderColumn = "(training->>'searcher_metric')::float8"
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
+	case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
+	default:
+	}
+
+	sortDirection := db.SortDirectionAsc
+	if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
+		sortDirection = db.SortDirectionDescNullsLast
+	}
+
+	if req.Limit == 0 {
+		req.Limit = 100
+	}
+
+	db.PaginateBunUnsafe(
+		q,
+		orderColumn,
+		sortDirection,
+		int(req.Offset),
+		int(req.Limit))
+
+	err = q.Scan(context.TODO(), &checkpoints)
+
+	switch {
+	case errors.Cause(err) == sql.ErrNoRows || err == db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "no checkpoints found for experiment %d", req.Id)
 	case err != nil:
@@ -968,56 +1046,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
 	}
 
-	a.filter(&resp.Checkpoints, func(i int) bool {
-		v := resp.Checkpoints[i]
-
-		found := false
-		for _, state := range req.States {
-			if state == v.State {
-				found = true
-				break
-			}
-		}
-
-		if len(req.States) != 0 && !found {
-			return false
-		}
-
-		return true
-	})
-
-	sort.Slice(resp.Checkpoints, func(i, j int) bool {
-		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
-		if useSearcherSortBy {
-			if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
-				return order
-			}
-		}
-
-		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
-			aj, ai = ai, aj
-		}
-
-		switch req.SortBy {
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			return protoless.CheckpointStepsCompletedLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
-			return ai.Uuid < aj.Uuid
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
-			return protoless.CheckpointTrialIDLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
-			return protoless.CheckpointReportTimeLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
-			return ai.State.Number() < aj.State.Number()
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
-			return protoless.CheckpointSearcherMetricLess(ai, aj)
-		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
-			fallthrough
-		default:
-			return protoless.CheckpointTrialIDLess(ai, aj)
-		}
-	})
-	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+	for _, checkpoint := range checkpoints {
+		resp.Checkpoints = append(resp.Checkpoints, checkpoint.Proto())
+	}
+	return resp, nil
 }
 
 func (a *apiServer) CreateExperiment(
