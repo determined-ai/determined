@@ -140,6 +140,21 @@ func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(curUser model.User,
 	return nil
 }
 
+// CanCreateWorkspaceWithAgentUserGroup determines whether a user can set agent
+// uid/gid on a new workspace.
+func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(curUser model.User) error {
+	return denyAccessWithoutPermission(curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
+}
+
+// CanSetWorkspacesAgentUserGroup determines whether a user can set agent uid/gid.
+func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
+	curUser model.User, workspace *workspacev1.Workspace,
+) error {
+	return denyAccessWithoutPermission(curUser.ID, workspace,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
+}
+
 func denyAccessWithoutPermission(uid model.UserID, workspace *workspacev1.Workspace,
 	permID rbacv1.PermissionType,
 ) error {
