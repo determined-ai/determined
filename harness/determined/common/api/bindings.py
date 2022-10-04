@@ -12098,6 +12098,27 @@ def delete_DeleteExperiment(
         return
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
+def delete_DeleteExperimentGroup(
+    session: "api.Session",
+    *,
+    groupId: int,
+    projectId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/projects/{projectId}/groups/{groupId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteExperimentGroup", _resp)
+
 def delete_DeleteGroup(
     session: "api.Session",
     *,

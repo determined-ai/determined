@@ -2007,6 +2007,14 @@ export interface V1DeleteCheckpointsResponse {
 }
 
 /**
+ * Response to DeleteExperimentGroupRequest.
+ * @export
+ * @interface V1DeleteExperimentGroupResponse
+ */
+export interface V1DeleteExperimentGroupResponse {
+}
+
+/**
  * Response to DeleteExperimentRequest.
  * @export
  * @interface V1DeleteExperimentResponse

@@ -469,6 +469,11 @@ export interface PatchExperimentGroupParams {
   projectId: number;
 }
 
+export interface DeleteExperimentGroupParams {
+  groupId: number;
+  projectId: number;
+}
+
 export interface ArchiveWorkspaceParams {
   id: number;
 }

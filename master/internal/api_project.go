@@ -436,3 +436,23 @@ func (a *apiServer) PatchExperimentGroup(
 	return &apiv1.PatchExperimentGroupResponse{Group: finalExperimentGroup},
 		errors.Wrapf(err, "error updating experiment group (%d) in database", currExperimentGroup.Id)
 }
+
+
+func (a *apiServer) DeleteExperimentGroup(
+	ctx context.Context, req *apiv1.DeleteExperimentGroupRequest) (*apiv1.DeleteExperimentGroupResponse,
+	error,
+) {
+	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+	if currProject.Archived {
+		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+			currProject.Id)
+	}
+
+	holder := &projectv1.ExperimentGroup{}
+	err = a.m.db.QueryProto("delete_experiment_group", holder, req.GroupId)
+	return &apiv1.DeleteExperimentGroupResponse{},
+		errors.Wrapf(err, "error deleting experiment group (%d)", req.GroupId)
+}

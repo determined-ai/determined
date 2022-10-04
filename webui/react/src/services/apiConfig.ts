@@ -1475,6 +1475,17 @@ export const patchExperimentGroup: DetApi<
     ),
 };
 
+export const deleteExperimentGroup: DetApi<
+  Service.DeleteExperimentGroupParams,
+  Api.V1DeleteExperimentGroupResponse,
+  void
+> = {
+  name: 'deleteExperimentGroup',
+  postProcess: noOp,
+  request: (params, options) =>
+    detApi.Projects.deleteExperimentGroup(params.projectId, params.groupId, options),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;

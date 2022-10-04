@@ -624,6 +624,12 @@ export const patchExperimentGroup = generateDetApi<
   Type.ExperimentGroup
 >(Config.patchExperimentGroup);
 
+export const deleteExperimentGroup = generateDetApi<
+  Service.DeleteExperimentGroupParams,
+  Api.V1DeleteExperimentGroupResponse,
+  void
+>(Config.deleteExperimentGroup);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

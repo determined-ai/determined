@@ -219,7 +219,7 @@ message PostExperimentGroupResponse {
 // Request for updating a experiment group.
 message PatchExperimentGroupRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "group_id" ] }
+    json_schema: { required: [ "project_id", "group_id", "group" ] }
   };
 
   // The id of the project.
@@ -239,3 +239,18 @@ message PatchExperimentGroupResponse {
   // The experiment group created.
   determined.project.v1.ExperimentGroup group = 1;
 }
+
+// Request for deleting a experiment group.
+message DeleteExperimentGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "group_id" ] }
+  };
+
+  // The id of the project.
+  int32 project_id = 1;
+  // The id of the group.
+  int32 group_id = 2;
+}
+
+// Response to DeleteExperimentGroupRequest.
+message DeleteExperimentGroupResponse {}
