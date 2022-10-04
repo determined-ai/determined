@@ -25,6 +25,14 @@ import Link from 'components/Link';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useStore } from 'contexts/Store';
+import useExperimentTags from 'hooks/useExperimentTags';
+import { useFetchUsers } from 'hooks/useFetch';
+import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
+import useModalExperimentMove, {
+  Settings as MoveExperimentSettings,
+  settingsConfig as moveExperimentSettingsConfig,
+} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace } from 'services/api';
@@ -774,6 +782,13 @@ const ProjectDetails: React.FC = () => {
     openCustomizeColumns({});
   }, [openCustomizeColumns]);
 
+  const { contextHolder: modalExperimentGroupsContextHolder, modalOpen: openManageGroups } =
+    useModalExperimentGroups({ projectId: id });
+
+  const handleManageGroupsClick = useCallback(() => {
+    openManageGroups({});
+  }, [openManageGroups]);
+
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
       let newColumns: ExperimentColumnName[];
@@ -897,6 +912,7 @@ const ProjectDetails: React.FC = () => {
         SWITCH_ARCHIVED = 'switchArchive',
         COLUMNS = 'columns',
         RESULT_FILTER = 'resetFilters',
+        GROUPS = 'groups',
       }
 
       const funcs = {
@@ -908,6 +924,9 @@ const ProjectDetails: React.FC = () => {
         },
         [MenuKey.RESULT_FILTER]: () => {
           resetFilters();
+        },
+        [MenuKey.GROUPS]: () => {
+          handleManageGroupsClick();
         },
       };
 
@@ -921,6 +940,7 @@ const ProjectDetails: React.FC = () => {
           label: settings.archived ? 'Hide Archived' : 'Show Archived',
         },
         { key: MenuKey.COLUMNS, label: 'Columns' },
+        { key: MenuKey.GROUPS, label: 'Groups' },
       ];
       if (filterCount > 0) {
         menuItems.push({ key: MenuKey.RESULT_FILTER, label: `Clear Filters (${filterCount})` });
@@ -937,6 +957,7 @@ const ProjectDetails: React.FC = () => {
             onChange={switchShowArchived}
           />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
+          <Button onClick={handleManageGroupsClick}>Groups</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
@@ -954,6 +975,7 @@ const ProjectDetails: React.FC = () => {
   }, [
     filterCount,
     handleCustomizeColumnsClick,
+    handleManageGroupsClick,
     resetFilters,
     settings.archived,
     switchShowArchived,
@@ -1118,6 +1140,7 @@ const ProjectDetails: React.FC = () => {
             </TabPane>
           </>
         )}
+      {modalExperimentGroupsContextHolder}
       </DynamicTabs>
     </Page>
   );

@@ -1,0 +1,23 @@
+.base:global(.ant-modal)
+> :global(.ant-modal-content)
+> :global(.ant-modal-body){
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .groupRow      {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      gap: 4px;
+
+      span {
+        height: fit-content
+      }
+    }
+  }
+  :global(.ant-modal-confirm-btns) {
+    display: none;
+  }
+}
