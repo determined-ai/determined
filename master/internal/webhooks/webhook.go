@@ -40,7 +40,7 @@ func WebhookFromProto(w *webhookv1.Webhook) Webhook {
 	}
 }
 
-// Proto converts a user to its protobuf representation.
+// Proto converts a webhook to its protobuf representation.
 func (w *Webhook) Proto() *webhookv1.Webhook {
 	return &webhookv1.Webhook{
 		Id:       int32(w.ID),
@@ -91,7 +91,7 @@ func TriggerFromProto(t *webhookv1.Trigger) *Trigger {
 	}
 }
 
-// Proto converts a user to its protobuf representation.
+// Proto converts a Trigger to its protobuf representation.
 func (t *Trigger) Proto() *webhookv1.Trigger {
 	return &webhookv1.Trigger{
 		Id:          int32(t.ID),
@@ -101,7 +101,7 @@ func (t *Trigger) Proto() *webhookv1.Trigger {
 	}
 }
 
-// TriggerID is the type for user Trigger IDs.
+// TriggerID is the type for Trigger IDs.
 type TriggerID int
 
 type TriggerType string
