@@ -450,6 +450,10 @@ const canViewWorkspaces = ({
   rbacReadPermission,
   userRoles,
 }: RbacOptsProps): boolean => {
+  console.log(userRoles);
+  console.log(userRoles[0].permissions);
+  console.log(!!userRoles &&
+        !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)));
   return (
     !rbacEnabled ||
     rbacReadPermission ||
