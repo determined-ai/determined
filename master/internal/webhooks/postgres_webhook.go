@@ -15,7 +15,7 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 			return err
 		}
 		for _, t := range w.Triggers {
-			t.WebhookId = w.ID
+			t.Webhookid = w.ID
 		}
 
 		if len(w.Triggers) != 0 {
@@ -46,6 +46,7 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 		if err != nil {
 			return err
 		}
+		return nil
 	})
 	return nil
 }

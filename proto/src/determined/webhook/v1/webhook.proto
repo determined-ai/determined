@@ -8,7 +8,7 @@ import "google/protobuf/struct.proto";
 // Enum values for expected trigger types.
 enum TriggerType {
   // Default value
-  TRIGGER_TYPE_UNSPECIFIED             = 0;
+  TRIGGER_TYPE_UNSPECIFIED = 0;
   // For an experiment changing state
   TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = 1;
   // For metrics emitted during training.

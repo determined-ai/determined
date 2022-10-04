@@ -3040,6 +3040,25 @@ class v1GetUsersResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetWebhooksResponse:
+    def __init__(
+        self,
+        *,
+        webhooks: "typing.Sequence[v1Webhook]",
+    ):
+        self.webhooks = webhooks
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWebhooksResponse":
+        return cls(
+            webhooks=[v1Webhook.from_json(x) for x in obj["webhooks"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "webhooks": [x.to_json() for x in self.webhooks],
+        }
+
 class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
     SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
@@ -4933,6 +4952,25 @@ class v1PostUserSettingRequest:
             "setting": self.setting.to_json(),
         }
 
+class v1PostWebhookResponse:
+    def __init__(
+        self,
+        *,
+        webhook: "v1Webhook",
+    ):
+        self.webhook = webhook
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostWebhookResponse":
+        return cls(
+            webhook=v1Webhook.from_json(obj["webhook"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "webhook": self.webhook.to_json(),
+        }
+
 class v1PostWorkspaceRequest:
     def __init__(
         self,
@@ -6579,6 +6617,25 @@ class v1Tensorboard:
             "jobId": self.jobId,
         }
 
+class v1TestWebhookResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TestWebhookResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
 class v1TrialEarlyExit:
     def __init__(
         self,
@@ -6907,6 +6964,42 @@ class v1TrialsSnapshotResponseTrial:
             "batchesProcessed": self.batchesProcessed,
         }
 
+class v1Trigger:
+    def __init__(
+        self,
+        *,
+        condition: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        id: "typing.Optional[int]" = None,
+        triggerType: "typing.Optional[v1TriggerType]" = None,
+        webhookid: "typing.Optional[int]" = None,
+    ):
+        self.id = id
+        self.triggerType = triggerType
+        self.condition = condition
+        self.webhookid = webhookid
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Trigger":
+        return cls(
+            id=obj.get("id", None),
+            triggerType=v1TriggerType(obj["triggerType"]) if obj.get("triggerType", None) is not None else None,
+            condition=obj.get("condition", None),
+            webhookid=obj.get("webhookid", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "triggerType": self.triggerType.value if self.triggerType is not None else None,
+            "condition": self.condition if self.condition is not None else None,
+            "webhookid": self.webhookid if self.webhookid is not None else None,
+        }
+
+class v1TriggerType(enum.Enum):
+    TRIGGER_TYPE_UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
+    TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
+    TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
+
 class v1UpdateGroupRequest:
     def __init__(
         self,
@@ -7113,6 +7206,33 @@ class v1ValidationHistoryEntry:
             "trialId": self.trialId,
             "endTime": self.endTime,
             "searcherMetric": dump_float(self.searcherMetric),
+        }
+
+class v1Webhook:
+    def __init__(
+        self,
+        *,
+        id: "typing.Optional[int]" = None,
+        triggers: "typing.Optional[typing.Sequence[v1Trigger]]" = None,
+        url: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.url = url
+        self.triggers = triggers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Webhook":
+        return cls(
+            id=obj.get("id", None),
+            url=obj.get("url", None),
+            triggers=[v1Trigger.from_json(x) for x in obj["triggers"]] if obj.get("triggers", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "url": self.url if self.url is not None else None,
+            "triggers": [x.to_json() for x in self.triggers] if self.triggers is not None else None,
         }
 
 class v1WorkloadContainer:
@@ -7790,6 +7910,26 @@ def delete_DeleteTemplate(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
+
+def delete_DeleteWebhook(
+    session: "api.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/webhooks/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteWebhook", _resp)
 
 def delete_DeleteWorkspace(
     session: "api.Session",
@@ -9307,6 +9447,24 @@ def get_GetUsers(
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
 
+def get_GetWebhooks(
+    session: "api.Session",
+) -> "v1GetWebhooksResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/webhooks",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetWebhooksResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWebhooks", _resp)
+
 def get_GetWorkspace(
     session: "api.Session",
     *,
@@ -10193,6 +10351,26 @@ def post_PostUserSetting(
         return
     raise APIHttpError("post_PostUserSetting", _resp)
 
+def post_PostWebhook(
+    session: "api.Session",
+    *,
+    body: "v1Webhook",
+) -> "v1PostWebhookResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/webhooks",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostWebhookResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostWebhook", _resp)
+
 def post_PostWorkspace(
     session: "api.Session",
     *,
@@ -10710,6 +10888,26 @@ def get_TaskLogsFields(
             yield v1TaskLogsFieldsResponse.from_json(_j["result"])
         return
     raise APIHttpError("get_TaskLogsFields", _resp)
+
+def post_TestWebhook(
+    session: "api.Session",
+    *,
+    id: int,
+) -> "v1TestWebhookResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/webhooks/{id}/test",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1TestWebhookResponse.from_json(_resp.json())
+    raise APIHttpError("post_TestWebhook", _resp)
 
 def get_TrialLogs(
     session: "api.Session",
