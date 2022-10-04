@@ -18,9 +18,11 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 			t.WebhookId = w.ID
 		}
 
-		_, err = tx.NewInsert().Model(&w.Triggers).Exec(ctx)
-		if err != nil {
-			return err
+		if len(w.Triggers) != 0 {
+			_, err = tx.NewInsert().Model(&w.Triggers).Exec(ctx)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
