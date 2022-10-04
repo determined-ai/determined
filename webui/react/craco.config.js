@@ -12,6 +12,11 @@ const webpackEnvPlugin = new DefinePlugin({
   'process.env.VERSION': '"0.19.5-dev0"',
 });
 
+
+// want to fallback in case of empty string, hence no ??
+const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080'
+
+
 /**
  * Add theme override support for antd. For more options:
  * https://github.com/mzohaibqc/antd-theme-webpack-plugin
@@ -36,8 +41,8 @@ module.exports = {
      * requests to the server itself though
      */
     {
-      '/api': { target: 'http://localhost:8080' },
-      '/proxy': { target: 'http://localhost:8080' },
+      '/api': { target: webpackProxyUrl },
+      '/proxy': { target: webpackProxyUrl },
     },
   },
   webpack: {

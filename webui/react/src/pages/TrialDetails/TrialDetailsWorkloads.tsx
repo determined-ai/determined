@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -26,7 +26,12 @@ import {
   WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetricSortValue, extractMetricValue } from 'utils/metric';
+import {
+  extractMetricSortValue,
+  extractMetricValue,
+  metricNameToValue,
+  valueToMetricName,
+} from 'utils/metric';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';
@@ -100,7 +105,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
               ? 'ascend'
               : 'descend'
             : undefined,
-        key: metricName.name,
+        key: metricNameToValue(metricName),
         render: metricRenderer(metricName),
         sorter: (a, b) => {
           const aVal = extractMetricSortValue(a, metricName),
@@ -135,9 +140,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
+          metricType: valueToMetricName(settings.sortKey)?.type || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: settings.sortKey,
+          sortKey: valueToMetricName(settings.sortKey)?.name || undefined,
         });
         setWorkloads(wl.workloads);
         setWorkloadCount(wl.pagination.total || 0);
@@ -162,7 +168,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     settings.filter,
   ]);
 
-  usePolling(fetchWorkloads, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchWorkloads, { rerunOnNewFn: true });
 
   const workloadSteps = useMemo(() => {
     const data = workloads ?? [];
@@ -223,6 +229,16 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       </SelectFilter>
     </ResponsiveFilters>
   );
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setWorkloads([]);
+      setWorkloadCount(0);
+    };
+  }, [stopPolling]);
 
   return (
     <>

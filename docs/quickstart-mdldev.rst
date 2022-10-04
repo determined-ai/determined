@@ -191,7 +191,7 @@ schedules to run.
       :align: center
       :alt: Dashboard
 
-   The figure shows two experiments. Experiment **3** has **COMPLETED** and experiment **4** is
+   The figure shows two experiments. Experiment **11** has **COMPLETED** and experiment **12** is
    still **ACTIVE**. Your experiment number and status can differ depending on how many times you
    run the examples.
 

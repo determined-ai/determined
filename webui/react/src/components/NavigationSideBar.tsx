@@ -1,6 +1,6 @@
 import { Button, Menu, Tooltip, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';

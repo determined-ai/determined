@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev12
+    default: v1dev13
   gke-version:
     type: string
     default: "1.21.14"
@@ -228,14 +228,15 @@ commands:
       - install-protoc
       - restore_cache:
           keys:
-            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
           paths:
-            - "/home/circleci/go/pkg/mod/"
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -2181,7 +2182,8 @@ workflows:
   test-intg:
     jobs:
       - test-intg-downstream
-      - test-intg-master
+      - test-intg-master:
+          context: storage-unit-tests
       - test-intg-agent
       - go-coverage:
           requires:

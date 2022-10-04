@@ -15,6 +15,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
@@ -64,6 +65,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [canceler] = useState(new AbortController());
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+
+  const workspace = { id: experiment.workspaceId };
+  const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
+  const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -121,13 +126,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const dropDownOnTrigger = useCallback(
     (trial: TrialItem) => {
-      return {
+      const opts: Partial<Record<TrialAction, () => Promise<void> | void>> = {
         [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
+      if (!canHparam) {
+        delete opts[TrialAction.HyperparameterSearch];
+      }
+      return opts;
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
   );
 
   const columns = useMemo(() => {
@@ -153,7 +162,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
         const hasMetric = (obj: TrialItem[keyof TrialItem]): obj is MetricsWorkload => {
-          return typeof obj === 'object' && 'metrics' in obj;
+          return !!obj && typeof obj === 'object' && 'metrics' in obj;
         };
 
         const item: TrialItem[keyof TrialItem] = record[key];

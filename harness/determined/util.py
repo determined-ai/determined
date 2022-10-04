@@ -256,6 +256,7 @@ def calculate_batch_sizes(
     slots_per_trial: int,
     trialname: str,
 ) -> Tuple[int, int]:
+    slots_per_trial = max(slots_per_trial, 1)
     if "global_batch_size" not in hparams:
         raise det.errors.InvalidExperimentException(
             "Please specify an integer `global_batch_size` hyperparameter in your experiment "

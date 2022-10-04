@@ -240,7 +240,7 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
     )
 
     # --autohorovod is an internal-only flag.  What it does is it causes the code skip the
-    # horovodrun wrapper when slots_per_trial == 1.  This has two effects:
+    # horovodrun wrapper when slots_per_trial <= 1.  This has two effects:
     # 1. the execution stack for non-distributed training is simpler, because horovodrun would only
     #    add complexity, and
     # 2. the training code becomes more complex because it has to be aware of multi-vs-single-slot

@@ -1,6 +1,6 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
@@ -26,11 +26,11 @@ import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 
 const { TabPane } = Tabs;
 
-interface Params {
+type Params = {
   modelId: string;
   tab?: TabType;
   versionId: string;
-}
+};
 
 enum TabType {
   CheckpointDetails = 'checkpoint-details',
@@ -42,10 +42,13 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 
 const ModelVersionDetails: React.FC = () => {
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
-  const { modelId, versionId, tab } = useParams<Params>();
+  const { modelId: modelID, versionId: versionID, tab } = useParams<Params>();
   const [pageError, setPageError] = useState<Error>();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+
+  const modelId = modelID ?? '';
+  const versionId = versionID ?? '';
 
   const basePath = paths.modelVersionDetails(modelId, versionId);
 
@@ -71,17 +74,17 @@ const ModelVersionDetails: React.FC = () => {
   const handleTabChange = useCallback(
     (key) => {
       setTabKey(key);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
+      navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [basePath, navigate, tab, tabKey]);
 
   const saveMetadata = useCallback(
     async (editedMetadata) => {

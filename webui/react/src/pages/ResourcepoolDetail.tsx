@@ -1,6 +1,6 @@
 import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
@@ -29,10 +29,10 @@ import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 
-interface Params {
+type Params = {
   poolname?: string;
   tab?: TabType;
-}
+};
 const { TabPane } = Tabs;
 
 enum TabType {
@@ -62,7 +62,7 @@ const ResourcepoolDetail: React.FC = () => {
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
   }, [pool, agents]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const [canceler] = useState(new AbortController());
 
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
@@ -91,8 +91,8 @@ const ResourcepoolDetail: React.FC = () => {
   useEffect(() => {
     if (tab || !pool) return;
     const basePath = paths.resourcePool(pool.name);
-    history.replace(`${basePath}/${DEFAULT_POOL_TAB_KEY}`);
-  }, [history, pool, tab]);
+    navigate(`${basePath}/${DEFAULT_POOL_TAB_KEY}`, { replace: true });
+  }, [navigate, pool, tab]);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_POOL_TAB_KEY);
@@ -103,9 +103,9 @@ const ResourcepoolDetail: React.FC = () => {
       if (!pool) return;
       setTabKey(key);
       const basePath = paths.resourcePool(pool.name);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [history, pool],
+    [navigate, pool],
   );
 
   const renderPoolConfig = useCallback(() => {
@@ -138,7 +138,7 @@ const ResourcepoolDetail: React.FC = () => {
   return (
     <Page className={css.poolDetailPage}>
       <Section>
-        <div className={css.nav} onClick={() => history.replace(paths.cluster())}>
+        <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
           <Icon name="arrow-left" size="tiny" />
           <div className={css.icon}>
             <PoolLogo type={pool.type} />

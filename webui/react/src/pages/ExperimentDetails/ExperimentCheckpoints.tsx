@@ -280,7 +280,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
   );
 
-  usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
 
   // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {
@@ -295,9 +295,16 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     settings.tableOffset,
   ]);
 
+  // cleanup
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    return () => {
+      canceler.abort();
+      stopPolling();
+
+      setCheckpoints([]);
+      setTotal(0);
+    };
+  }, [canceler, stopPolling]);
 
   const handleTableRowSelect = useCallback(
     (rowKeys) => {

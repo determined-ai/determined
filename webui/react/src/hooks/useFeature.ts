@@ -3,7 +3,12 @@ import queryString from 'query-string';
 import { useStore } from 'contexts/Store';
 import { DeterminedInfo } from 'types';
 
-type ValidFeature = 'rbac' | 'mock_workspace_members'; // Add new feature switches here using `|`
+// Add new feature switches below using `|`
+type ValidFeature =
+  | 'rbac'
+  | 'mock_workspace_members'
+  | 'mock_permissions_read'
+  | 'mock_permissions_all';
 const queryParams = queryString.parse(window.location.search);
 
 interface FeatureHook {
@@ -19,8 +24,6 @@ const IsOn = (feature: string, info: DeterminedInfo): boolean => {
   const { rbacEnabled } = info;
   switch (feature) {
     case 'rbac':
-      return rbacEnabled || queryParams[`f_${feature}`] === 'on';
-    case 'mock_workspace_members':
       return rbacEnabled || queryParams[`f_${feature}`] === 'on';
     default:
       return queryParams[`f_${feature}`] === 'on';

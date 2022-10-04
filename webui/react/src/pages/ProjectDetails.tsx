@@ -2,8 +2,8 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -46,6 +46,7 @@ import useModalExperimentMove, {
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import NoPermissions from 'pages/NoPermissions';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -96,7 +97,6 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
-import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -108,9 +108,9 @@ import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = ['label', 'search', 'state', 'user'];
 
-interface Params {
+type Params = {
   projectId: string;
-}
+};
 
 const batchActions = [
   Action.CompareExperiments,
@@ -139,8 +139,7 @@ const ProjectDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canDeleteExperiment, canMoveExperiment, canViewWorkspace, canViewWorkspaces } =
-    usePermissions();
+  const expPermissions = usePermissions();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -150,7 +149,7 @@ const ProjectDetails: React.FC = () => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
   }, [updateDestinationSettings, project?.workspaceId]);
 
-  const id = parseInt(projectId);
+  const id = parseInt(projectId ?? '1');
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ProjectDetailsSettings>(settingsConfig);
@@ -166,13 +165,8 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(
-      experiments,
-      batchActions,
-      canDeleteExperiment,
-      canMoveExperiment,
-    );
-  }, [canDeleteExperiment, canMoveExperiment, experimentMap, settings.row]);
+    return getActionsForExperimentsUnion(experiments, batchActions, expPermissions);
+  }, [experimentMap, expPermissions, settings.row]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -267,7 +261,7 @@ const ProjectDetails: React.FC = () => {
     await Promise.allSettled([fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels()]);
   }, [fetchProject, fetchExperiments, fetchUsers, fetchLabels]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   const experimentTags = useExperimentTags(fetchAll);
 
@@ -397,30 +391,45 @@ const ProjectDetails: React.FC = () => {
     }
   }, []);
 
-  const columns = useMemo(() => {
-    const tagsRenderer = (value: string, record: ExperimentItem) => (
-      <TagList
-        disabled={record.archived || project?.archived}
-        tags={record.labels}
-        onChange={experimentTags.handleTagListChange(record.id)}
-      />
-    );
+  const canEditExperiment =
+    !!project &&
+    expPermissions.canModifyExperimentMetadata({
+      workspace: { id: project.workspaceId },
+    });
 
-    const actionRenderer: ExperimentRenderer = (_, record) => {
+  const ContextMenu = useCallback(
+    ({ record, onVisibleChange, children }) => {
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
           settings={settings}
           updateSettings={updateSettings}
           onComplete={handleActionComplete}
-        />
+          onVisibleChange={onVisibleChange}>
+          {children}
+        </ExperimentActionDropdown>
       );
+    },
+    [project, settings, updateSettings, handleActionComplete],
+  );
+
+  const columns = useMemo(() => {
+    const tagsRenderer = (value: string, record: ExperimentItem) => (
+      <TagList
+        disabled={record.archived || project?.archived || !canEditExperiment}
+        tags={record.labels}
+        onChange={experimentTags.handleTagListChange(record.id)}
+      />
+    );
+
+    const actionRenderer: ExperimentRenderer = (_, record) => {
+      return <ContextMenu record={record} />;
     };
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
       <TextEditorModal
-        disabled={record.archived}
-        placeholder={record.archived ? 'Archived' : 'Add description...'}
+        disabled={record.archived || !canEditExperiment}
+        placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
@@ -596,13 +605,13 @@ const ProjectDetails: React.FC = () => {
     users,
     project,
     experimentTags,
+    canEditExperiment,
     settings,
-    updateSettings,
-    handleActionComplete,
     saveExperimentDescription,
+    ContextMenu,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
     if (!settings.columns?.length || !settings.columnWidths?.length) {
       updateSettings({
@@ -621,7 +630,7 @@ const ProjectDetails: React.FC = () => {
       }
       if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
     }
-  }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
+  }, [settings.columns, settings.columnWidths, columns, updateSettings]);
 
   const transferColumns = useMemo(() => {
     return columns
@@ -645,7 +654,7 @@ const ProjectDetails: React.FC = () => {
           experimentIds: settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
-              canMoveExperiment({ experiment: experimentMap[id] }),
+              expPermissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
           sourceProjectId: project?.id,
           sourceWorkspaceId: project?.workspaceId,
@@ -681,14 +690,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [
-      canMoveExperiment,
-      settings.row,
-      openMoveModal,
-      project?.workspaceId,
-      project?.id,
-      experimentMap,
-    ],
+    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(
@@ -899,25 +901,19 @@ const ProjectDetails: React.FC = () => {
     settings.user,
   ]);
 
+  // cleanup
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    return () => {
+      canceler.abort();
+      stopPolling();
 
-  const ContextMenu = useCallback(
-    ({ record, onVisibleChange, children }) => {
-      return (
-        <ExperimentActionDropdown
-          experiment={getProjectExperimentForExperimentItem(record, project)}
-          settings={settings}
-          updateSettings={updateSettings}
-          onComplete={handleActionComplete}
-          onVisibleChange={onVisibleChange}>
-          {children}
-        </ExperimentActionDropdown>
-      );
-    },
-    [project, settings, updateSettings, handleActionComplete],
-  );
+      setProject(undefined);
+      setExperiments([]);
+      setLabels([]);
+      setIsLoading(true);
+      setTotal(0);
+    };
+  }, [canceler, stopPolling]);
 
   const ExperimentTabOptions = useMemo(() => {
     const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
@@ -1080,6 +1076,8 @@ const ProjectDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
+  } else if (!expPermissions.canViewWorkspaces) {
+    return <NoPermissions />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
     const message = `Unable to fetch Project ${projectId}`;
@@ -1090,8 +1088,7 @@ const ProjectDetails: React.FC = () => {
     );
   }
 
-  if (!canViewWorkspaces) return <NoPermissions />;
-  if (project && !canViewWorkspace({ workspace: { id: project.workspaceId } })) {
+  if (project && !expPermissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) {
     return <PageNotFound />;
   }
 

@@ -29,9 +29,18 @@ import {
   RunState,
   TrialDetails,
   TrialHyperparameters,
+  WorkspacePermissionsArgs,
 } from 'types';
 
 type ExperimentChecker = (experiment: ProjectExperiment, trial?: TrialDetails) => boolean;
+
+type ExperimentPermissionSet = {
+  canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
+  canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
+  canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
+};
 
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
@@ -172,39 +181,57 @@ export const canActionExperiment = (
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
   targets: ExperimentAction[],
+  permissions: ExperimentPermissionSet,
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
-  return targets.filter((action) => canActionExperiment(action, experiment));
+  const workspace = { id: experiment.workspaceId };
+  return targets
+    .filter((action) => canActionExperiment(action, experiment))
+    .filter((action) => {
+      switch (action) {
+        case ExperimentAction.ContinueTrial:
+        case ExperimentAction.Fork:
+        case ExperimentAction.HyperparameterSearch:
+          return (
+            permissions.canViewExperimentArtifacts({ workspace }) &&
+            permissions.canCreateExperiment({ workspace })
+          );
+
+        case ExperimentAction.Delete:
+          return permissions.canDeleteExperiment({ experiment });
+
+        case ExperimentAction.DownloadCode:
+        case ExperimentAction.OpenTensorBoard:
+          return permissions.canViewExperimentArtifacts({ workspace });
+
+        case ExperimentAction.Move:
+          return permissions.canMoveExperiment({ experiment });
+
+        case ExperimentAction.Activate:
+        case ExperimentAction.Archive:
+        case ExperimentAction.Cancel:
+        case ExperimentAction.Kill:
+        case ExperimentAction.Pause:
+        case ExperimentAction.Unarchive:
+          return permissions.canModifyExperiment({ workspace });
+
+        default:
+          return true;
+      }
+    });
 };
 
 export const getActionsForExperimentsUnion = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
-  canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
-  canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean,
+  permissions: ExperimentPermissionSet,
 ): ExperimentAction[] => {
   if (!experiments.length) return []; // redundant, for clarity
   const actionsForExperiments = experiments.map((e) =>
-    getActionsForExperiment(e, targets).filter((action) =>
-      [ExperimentAction.Delete, ExperimentAction.Move].includes(action)
-        ? (action === ExperimentAction.Delete && canDeleteExperiment({ experiment: e })) ||
-          (action === ExperimentAction.Move && canMoveExperiment({ experiment: e }))
-        : true,
-    ),
+    getActionsForExperiment(e, targets, permissions),
   );
   return targets.filter((action) =>
     actionsForExperiments.some((experimentActions) => experimentActions.includes(action)),
-  );
-};
-
-export const getActionsForExperimentsIntersection = (
-  experiments: ProjectExperiment[],
-  targets: ExperimentAction[],
-): ExperimentAction[] => {
-  if (!experiments.length) [];
-  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets));
-  return targets.filter((action) =>
-    actionsForExperiments.every((experimentActions) => experimentActions.includes(action)),
   );
 };
 

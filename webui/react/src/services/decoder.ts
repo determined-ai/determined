@@ -41,7 +41,6 @@ export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission 
   return {
     id: permission.id,
     isGlobal: permission.isGlobal || false,
-    name: permission.name || '',
   };
 };
 

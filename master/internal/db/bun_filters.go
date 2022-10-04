@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -19,30 +20,46 @@ type FilterComparison[T any] struct {
 	Lte *T
 }
 
-func applyFieldFilterComparison[T any](
+func applyFieldFilterComparison[T any, U string | schema.Ident](
 	q *bun.SelectQuery,
-	column schema.Ident,
+	column U,
 	filter FilterComparison[T],
 ) (*bun.SelectQuery, error) {
-	if filter.Gt != nil {
-		q = q.Where("? > ?", column, filter.Gt)
-	}
-	if filter.Gte != nil {
-		q = q.Where("? >= ?", column, filter.Gte)
-	}
-	if filter.Lt != nil {
-		q = q.Where("? < ?", column, filter.Lt)
-	}
-	if filter.Lte != nil {
-		q = q.Where("? <= ?", column, filter.Lte)
+	switch any(column).(type) {
+	case string:
+		if filter.Gt != nil {
+			q = q.Where(fmt.Sprintf("%s > ?", column), filter.Gt)
+		}
+		if filter.Gte != nil {
+			q = q.Where(fmt.Sprintf("%s >= ?", column), filter.Gte)
+		}
+		if filter.Lt != nil {
+			q = q.Where(fmt.Sprintf("%s < ?", column), filter.Lt)
+		}
+		if filter.Lte != nil {
+			q = q.Where(fmt.Sprintf("%s <= ?", column), filter.Lte)
+		}
+	default:
+		if filter.Gt != nil {
+			q = q.Where("? > ?", column, filter.Gt)
+		}
+		if filter.Gte != nil {
+			q = q.Where("? >= ?", column, filter.Gte)
+		}
+		if filter.Lt != nil {
+			q = q.Where("? < ?", column, filter.Lt)
+		}
+		if filter.Lte != nil {
+			q = q.Where("? <= ?", column, filter.Lte)
+		}
 	}
 	return q, nil
 }
 
 // ApplyInt32FieldFilter applies filtering on a bun query for int32 field.
-func ApplyInt32FieldFilter(
+func ApplyInt32FieldFilter[T string | schema.Ident](
 	q *bun.SelectQuery,
-	column schema.Ident,
+	column T,
 	filter *commonv1.Int32FieldFilter,
 ) (*bun.SelectQuery, error) {
 	q, err := applyFieldFilterComparison(q, column, FilterComparison[int32]{
@@ -79,9 +96,9 @@ func ApplyInt32FieldFilter(
 }
 
 // ApplyDoubleFieldFilter applies filtering on a bun query for double field.
-func ApplyDoubleFieldFilter(
+func ApplyDoubleFieldFilter[T string | schema.Ident](
 	q *bun.SelectQuery,
-	column schema.Ident,
+	column T,
 	filter *commonv1.DoubleFieldFilter,
 ) (*bun.SelectQuery, error) {
 	q, err := applyFieldFilterComparison(q, column, FilterComparison[float64]{
@@ -106,9 +123,9 @@ func tryAsTime(tspb *timestamppb.Timestamp) *time.Time {
 }
 
 // ApplyTimestampFieldFilter applies filtering on a bun query for timestamp field.
-func ApplyTimestampFieldFilter(
+func ApplyTimestampFieldFilter[T string | schema.Ident](
 	q *bun.SelectQuery,
-	column schema.Ident,
+	column T,
 	filter *commonv1.TimestampFieldFilter,
 ) (*bun.SelectQuery, error) {
 	q, err := applyFieldFilterComparison(q, column, FilterComparison[time.Time]{

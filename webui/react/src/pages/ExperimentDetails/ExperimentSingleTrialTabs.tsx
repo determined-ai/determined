@@ -1,11 +1,12 @@
 import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -37,9 +38,9 @@ enum TabType {
   Notes = 'notes',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
-}
+};
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
@@ -57,7 +58,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   onTrialUpdate,
   pageRef,
 }: Props) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [trialId, setFirstTrialId] = useState<number>();
   const [wontHaveTrials, setWontHaveTrials] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
@@ -121,22 +122,22 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const handleTabChange = useCallback(
     (key) => {
       setTabKey(key);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
-    history.replace(`${basePath}/${TabType.Logs}?tail`);
-  }, [basePath, history]);
+    navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
+  }, [basePath, navigate]);
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
+      navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [basePath, navigate, tab, tabKey]);
 
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
@@ -164,6 +165,18 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [fetchTrialDetails, prevTrialId, trialId]);
 
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setFirstTrialId(undefined);
+      setWontHaveTrials(false);
+      setTrialDetails(undefined);
+      setTabKey(DEFAULT_TAB_KEY);
+    };
+  }, [stopPolling]);
+
   const handleNotesUpdate = useCallback(
     async (editedNotes: string) => {
       try {
@@ -186,6 +199,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     openHyperparameterSearchModal({});
   }, [openHyperparameterSearchModal]);
 
+  const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
+    usePermissions();
+  const workspace = { id: experiment.workspaceId };
+  const editableNotes = canModifyExperimentMetadata({ workspace });
+  const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
+  const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -194,7 +214,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       <Tabs
         activeKey={tabKey}
         tabBarExtraContent={
-          tabKey === 'hyperparameters' ? (
+          tabKey === 'hyperparameters' && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
               <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
             </div>
@@ -208,20 +228,25 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <TabPane key="hyperparameters" tab="Hyperparameters">
           <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="checkpoints" tab="Checkpoints">
-          <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-        </TabPane>
-        <TabPane key="code" tab="Code">
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
-              submittedConfig={experiment.originalConfig}
-            />
-          </React.Suspense>
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <>
+            <TabPane key="checkpoints" tab="Checkpoints">
+              <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+            </TabPane>
+            <TabPane key="code" tab="Code">
+              <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+                <CodeViewer
+                  experimentId={experiment.id}
+                  runtimeConfig={experiment.configRaw}
+                  submittedConfig={experiment.originalConfig}
+                />
+              </React.Suspense>
+            </TabPane>
+          </>
+        ) : null}
         <TabPane key="notes" tab="Notes">
           <NotesCard
+            disabled={!editableNotes}
             notes={experiment.notes ?? ''}
             style={{ border: 0, height: '100%' }}
             onSave={handleNotesUpdate}
@@ -230,9 +255,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <TabPane key="profiler" tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="logs" tab="Logs">
-          <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <TabPane key="logs" tab="Logs">
+            <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+          </TabPane>
+        ) : null}
       </Tabs>
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>

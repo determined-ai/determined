@@ -1,6 +1,6 @@
 import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
@@ -85,7 +85,7 @@ const getHpImportanceMap = (hpImportanceMetrics: {
 
 const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }: Props) => {
   const { ui } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<MetricName>({
@@ -156,9 +156,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
   const handleTabChange = useCallback(
     (type: string) => {
       setTypeKey(type as ExperimentVisualizationType);
-      history.replace(`${basePath}/${type}`);
+      navigate(`${basePath}/${type}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   // Sets the default sub route.
@@ -166,9 +166,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
     const isVisualizationRoute = location.pathname.includes(basePath);
     const isInvalidType = type && !TYPE_KEYS.includes(type);
     if (isVisualizationRoute && (!type || isInvalidType)) {
-      history.replace(`${basePath}/${typeKey}`);
+      navigate(`${basePath}/${typeKey}`, { replace: true });
     }
-  }, [basePath, history, location, type, typeKey]);
+  }, [basePath, navigate, location, type, typeKey]);
 
   // Stream available metrics.
   useMetricNames({

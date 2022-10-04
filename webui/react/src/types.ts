@@ -814,9 +814,8 @@ export interface UserAssignment {
 }
 
 export interface Permission {
-  id: number;
+  id: Api.V1PermissionType;
   isGlobal: boolean;
-  name: string;
 }
 
 export interface UserRole {
@@ -827,6 +826,15 @@ export interface UserRole {
 
 export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
+}
+
+export interface PermissionWorkspace {
+  id: number;
+  userId?: number;
+}
+
+export interface WorkspacePermissionsArgs {
+  workspace?: PermissionWorkspace;
 }
 
 export type UserOrGroup = User | V1Group;

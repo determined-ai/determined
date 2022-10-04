@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -17,9 +17,9 @@ import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-interface Params {
+type Params = {
   experimentId: string;
-}
+};
 
 export const INVALID_ID_MESSAGE = 'Invalid Experiment ID';
 export const ERROR_MESSAGE = 'Unable to fetch Experiment';
@@ -35,7 +35,7 @@ const ExperimentDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
 
-  const id = parseInt(experimentId);
+  const id = parseInt(experimentId ?? '');
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
@@ -66,6 +66,17 @@ const ExperimentDetails: React.FC = () => {
       stopPolling();
     }
   }, [experiment, stopPolling]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setExperiment(undefined);
+      setTrial(undefined);
+      setValHistory([]);
+    };
+  }, [stopPolling]);
 
   useEffect(() => {
     fetchExperimentDetails();
