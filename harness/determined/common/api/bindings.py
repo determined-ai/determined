@@ -7025,6 +7025,26 @@ class v1Tensorboard:
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
             "jobId": self.jobId,
         }
+
+class v1TestWebhookResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TestWebhookResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
 class v1TimestampFieldFilter:
     def __init__(
         self,
@@ -8584,17 +8604,6 @@ def delete_DeleteTemplate(
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
-<<<<<<< HEAD
-def delete_DeleteWebhook(
-    session: "api.Session",
-    *,
-    id: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="DELETE",
-        path=f"/api/v1/webhooks/{id}",
-=======
 def delete_DeleteTrialsCollection(
     session: "api.Session",
     *,
@@ -8606,7 +8615,6 @@ def delete_DeleteTrialsCollection(
     _resp = session._do_request(
         method="DELETE",
         path="/api/v1/trial-comparison/collections",
->>>>>>> master
         params=_params,
         json=None,
         data=None,
@@ -8616,11 +8624,27 @@ def delete_DeleteTrialsCollection(
     )
     if _resp.status_code == 200:
         return
-<<<<<<< HEAD
-    raise APIHttpError("delete_DeleteWebhook", _resp)
-=======
     raise APIHttpError("delete_DeleteTrialsCollection", _resp)
->>>>>>> master
+
+def delete_DeleteWebhook(
+    session: "api.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/webhooks/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteWebhook", _resp)
 
 def delete_DeleteWorkspace(
     session: "api.Session",

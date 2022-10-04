@@ -183,7 +183,8 @@ func (i *batchDownloadIterator) DownloadObject() s3manager.BatchDownloadObject {
 }
 
 func newBatchDownloadIterator(aw archive.ArchiveWriter,
-	bucket string, prefix string, objs []*s3.Object) *batchDownloadIterator {
+	bucket string, prefix string, objs []*s3.Object,
+) *batchDownloadIterator {
 	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}

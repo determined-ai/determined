@@ -2014,18 +2014,26 @@ export interface V1DeleteTemplateResponse {
 }
 
 /**
+ * Empty response for DeleteTrialsCollection.
+ * @export
+ * @interface V1DeleteTrialsCollectionResponse
+ */
+export interface V1DeleteTrialsCollectionResponse {
+}
+
+/**
  * Response to DeleteWebhookRequest.
  * @export
  * @interface V1DeleteWebhookResponse
  */
 export interface V1DeleteWebhookResponse {
+}
+
 /**
  * Response to DeleteWorkspaceRequest.
  * @export
  * @interface V1DeleteWorkspaceResponse
  */
-
-}
 export interface V1DeleteWorkspaceResponse {
     /**
      * Status of deletion.
@@ -7745,6 +7753,12 @@ export interface V1TestWebhookResponse {
      */
     completed: boolean;
 }
+
+/**
+ * Timestamp filters.
+ * @export
+ * @interface V1TimestampFieldFilter
+ */
 export interface V1TimestampFieldFilter {
     /**
      * Less than.
