@@ -8,12 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// TODO auth this is hard...
+// TODO now
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 	return m.rm.GetAllocationSummaries(m.system, sproto.GetAllocationSummaries{})
 }
 
-// TODO auth ...
+// TODO now
 func (m *Master) getTask(c echo.Context) (interface{}, error) {
 	args := struct {
 		AllocationID string `path:"allocation_id"`

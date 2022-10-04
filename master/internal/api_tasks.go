@@ -38,7 +38,6 @@ var (
 	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
 
-// TODO rename...
 func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
 	allocNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
 	alloc, err := a.m.db.AllocationByID(model.AllocationID(allocationID))
@@ -188,9 +187,6 @@ func (a *apiServer) PostAllocationProxyAddress(
 	return &apiv1.PostAllocationProxyAddressResponse{}, nil
 }
 
-// TODO auth
-// TODO taskid
-// TODO auth task
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {
@@ -386,8 +382,6 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 	return filters, nil
 }
 
-// TODO auth
-// TODO TaskId
 func (a *apiServer) TaskLogsFields(
 	req *apiv1.TaskLogsFieldsRequest, resp apiv1.Determined_TaskLogsFieldsServer,
 ) error {
