@@ -32,6 +32,7 @@ type Webhook struct {
 	Triggers Triggers `bun:"rel:has-many,join:id=webhook_id"`
 }
 
+// WebhookFromProto returns a model Webhook from a proto definition.
 func WebhookFromProto(w *webhookv1.Webhook) Webhook {
 	spew.Dump(w)
 	return Webhook{
@@ -55,6 +56,7 @@ type WebhookID int
 // Triggers is a slice of Trigger objects—primarily useful for its methods.
 type Triggers []*Trigger
 
+// TriggersFromProto returns a slice of model Triggers from a proto definition.
 func TriggersFromProto(ts []*webhookv1.Trigger) Triggers {
 	out := make(Triggers, len(ts))
 	for i, t := range ts {
@@ -84,6 +86,7 @@ type Trigger struct {
 	Webhook *Webhook `bun:"rel:belongs-to,join:webhook_id=id"`
 }
 
+// TriggerFromProto returns a Trigger from a proto definition.
 func TriggerFromProto(t *webhookv1.Trigger) *Trigger {
 	return &Trigger{
 		TriggerType: TriggerTypeFromProto(t.TriggerType),
@@ -104,13 +107,18 @@ func (t *Trigger) Proto() *webhookv1.Trigger {
 // TriggerID is the type for Trigger IDs.
 type TriggerID int
 
+// TriggerType is type for the TriggerType enum.
 type TriggerType string
 
 const (
-	TriggerTypeStateChange             TriggerType = "EXPERIMENT_STATE_CHANGE"
+	// TriggerTypeStateChange represents a change in experiment state.
+	TriggerTypeStateChange TriggerType = "EXPERIMENT_STATE_CHANGE"
+
+	// TriggerTypeMetricThresholdExceeded represents a threshold for a training metric value.
 	TriggerTypeMetricThresholdExceeded TriggerType = "METRIC_THRESHOLD_EXCEEDED"
 )
 
+// TriggerTypeFromProto returns a TriggerType from a proto.
 func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 	switch t {
 	case webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED:
@@ -123,6 +131,7 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 	}
 }
 
+// Proto returns a proto from a TriggerType.
 func (t TriggerType) Proto() webhookv1.TriggerType {
 	switch t {
 	case TriggerTypeStateChange:

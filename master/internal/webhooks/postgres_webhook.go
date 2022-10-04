@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 )
 
+// AddWebhook adds a Webhook and its Triggers to the DB.
 func AddWebhook(ctx context.Context, w *Webhook) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().Model(w).Exec(ctx)
@@ -28,6 +29,7 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 	})
 }
 
+// GetWebhooks returns all Webhooks from the DB.
 func GetWebhooks(ctx context.Context) (Webhooks, error) {
 	webhooks := Webhooks{}
 	err := db.Bun().NewSelect().
@@ -40,6 +42,7 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 	return webhooks, nil
 }
 
+// DeleteWebhook deletes a Webhook and its Triggers from the DB.
 func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
