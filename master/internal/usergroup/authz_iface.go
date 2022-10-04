@@ -17,7 +17,8 @@ type UserGroupAuthZ interface {
 
 	// FilterGroupsList checks what groups a user can get.
 	// POST /api/v1/groups/search
-	FilterGroupsList(ctx context.Context, curUser model.User, query *bun.SelectQuery) (*bun.SelectQuery, error)
+	FilterGroupsList(ctx context.Context, curUser model.User, query *bun.SelectQuery) (
+		*bun.SelectQuery, error)
 
 	// CanUpdateGroups checks if a user can create, delete, or update a group.
 	// POST /api/v1/groups
