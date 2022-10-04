@@ -461,8 +461,9 @@ const ProjectDetails: React.FC = () => {
       {
         dataIndex: 'groupName',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['groupName'],
-        key: 'groupName',
+        key: V1GetExperimentsRequestSortBy.GROUP,
         onCell: onRightClickableCell,
+        sorter: true,
         title: 'Group',
       },
       {
