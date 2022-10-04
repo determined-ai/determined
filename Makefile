@@ -84,6 +84,11 @@ test-%:
 .PHONY: test
 test: test-harness test-model_hub test-master test-agent test-webui
 
+# local frontend dev server against current DET_MASTER
+.PHONY: localfrontend
+local: build-bindings get-deps-webui
+	HOST="localhost" DET_WEBPACK_PROXY_URL=${DET_MASTER} $(MAKE) -C webui live
+
 .PHONY: devcluster
 devcluster:
 	devcluster -c tools/devcluster.yaml
