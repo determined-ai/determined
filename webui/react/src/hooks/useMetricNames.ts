@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -9,21 +9,21 @@ import { MetricName, MetricType } from 'types';
 export interface UseMetricNamesInterface {
   errorHandler: () => void;
   experimentId: number;
-  metricNames: MetricName[];
-  setMetricNames: (metrics: MetricName[]) => void;
 }
 
-const useMetricNames = (args: UseMetricNamesInterface): void => {
+const useMetricNames = (experimentId: number, errorHandler: (e: unknown) => void): MetricName[] => {
+  const [metrics, setMetrics] = useState<MetricName[]>([]);
+
   useEffect(() => {
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
 
     readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(args.experimentId, undefined, {
+      detApi.StreamingInternal.metricNames(experimentId, undefined, {
         signal: canceler.signal,
       }),
-      (event) => {
+      (event: V1MetricNamesResponse) => {
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
@@ -38,13 +38,15 @@ const useMetricNames = (args: UseMetricNamesInterface): void => {
           ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
           ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
-        if (newMetrics.length !== args.metricNames.length) {
-          args.setMetricNames(newMetrics);
-        }
+        setMetrics((prevMetrics) =>
+          prevMetrics.length === newMetrics.length ? prevMetrics : newMetrics,
+        );
       },
-    ).catch(args.errorHandler);
+      errorHandler,
+    );
     return () => canceler.abort();
-  }, [args]);
+  }, [experimentId, errorHandler]);
+  return metrics;
 };
 
 export default useMetricNames;
