@@ -1093,6 +1093,13 @@ schemas = {
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment.json"
         },
+        "group": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
         "hyperparameters": {
             "type": [
                 "object",
