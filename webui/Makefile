@@ -34,3 +34,7 @@ test: test-react
 .PHONY: test-%
 test-%:
 	$(MAKE) -C $* test
+
+.PHONY: live
+live: 
+	$(MAKE) -C react live
