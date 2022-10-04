@@ -167,6 +167,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	var slurmArgs []string
 	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm...)
+	slurmArgs = append(slurmArgs, t.Environment.Slurm()...)
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
 	customParams["slurmArgs"] = slurmArgs
 	errList := model.ValidateSlurm(slurmArgs)
@@ -177,6 +178,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	var pbsArgs []string
 	pbsArgs = append(pbsArgs, t.TaskContainerDefaults.Pbs...)
+	pbsArgs = append(pbsArgs, t.Environment.Pbs()...)
 	logrus.Debugf("Custom pbs arguments: %s", pbsArgs)
 	customParams["pbsArgs"] = pbsArgs
 
