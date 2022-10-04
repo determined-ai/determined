@@ -47,6 +47,8 @@ func MapAndFilterErrors(err error) error {
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, db.ErrDuplicateRecord):
 		return status.Error(codes.AlreadyExists, err.Error())
+	case errors.Is(err, db.ErrNotEnoughPermissions):
+		return err
 	}
 
 	logrus.WithError(err).Debug("suppressing error at API boundary")
