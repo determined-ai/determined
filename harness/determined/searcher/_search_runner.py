@@ -26,25 +26,26 @@ class SearchRunner:
         search_method: searcher.SearchMethod,
     ) -> None:
         self.search_method = search_method
+        self.state = searcher.SearcherState()
 
     def _get_operations(self, event: bindings.v1SearcherEvent) -> List[searcher.Operation]:
         if event.initialOperations:
             logger.info("initial operations")
-            operations = self.search_method.initial_operations()
+            operations = self.search_method.initial_operations(self.state)
         elif event.trialCreated:
             logger.info(f"trialCreated({event.trialCreated.requestId})")
             request_id = uuid.UUID(event.trialCreated.requestId)
-            self.search_method.searcher_state.trials_created.add(request_id)
-            self.search_method.searcher_state.trial_progress[request_id] = 0.0
-            operations = self.search_method.on_trial_created(request_id)
+            self.state.trials_created.add(request_id)
+            self.state.trial_progress[request_id] = 0.0
+            operations = self.search_method.on_trial_created(self.state, request_id)
         elif event.trialClosed:
             logger.info(f"trialClosed({event.trialClosed.requestId})")
             request_id = uuid.UUID(event.trialClosed.requestId)
-            self.search_method.searcher_state.trials_closed.add(request_id)
-            operations = self.search_method.on_trial_closed(request_id)
+            self.state.trials_closed.add(request_id)
+            operations = self.search_method.on_trial_closed(self.state, request_id)
 
             # add progress operation
-            progress = self.search_method.progress()
+            progress = self.search_method.progress(self.state)
             operations.append(searcher.Progress(progress))
         elif event.trialExitedEarly:
             # duplicate exit accounting already performed by master
@@ -59,20 +60,21 @@ class SearchRunner:
                 event.trialExitedEarly.exitedReason
                 == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
             ):
-                self.search_method.searcher_state.trial_progress.pop(request_id, None)
+                self.state.trial_progress.pop(request_id, None)
             elif (
                 event.trialExitedEarly.exitedReason
                 == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
             ):
-                self.search_method.searcher_state.failures.add(request_id)
+                self.state.failures.add(request_id)
             operations = self.search_method.on_trial_exited_early(
+                self.state,
                 request_id,
                 exited_reason=searcher.ExitedReason._from_bindings(
                     event.trialExitedEarly.exitedReason
                 ),
             )
             # add progress operation
-            progress = self.search_method.progress()
+            progress = self.search_method.progress(self.state)
             operations.append(searcher.Progress(progress))
         elif event.validationCompleted:
             # duplicate completion accounting already performed by master
@@ -85,16 +87,17 @@ class SearchRunner:
                 raise RuntimeError("validationCompleted event is invalid without a metric")
 
             operations = self.search_method.on_validation_completed(
+                self.state,
                 request_id,
                 event.validationCompleted.metric,
                 int(event.validationCompleted.validateAfterLength),
             )
             # add progress operation
-            progress = self.search_method.progress()
+            progress = self.search_method.progress(self.state)
             operations.append(searcher.Progress(progress))
         elif event.experimentInactive:
             logger.info(
-                f"experiment {self.search_method.searcher_state.experiment_id} is "
+                f"experiment {self.state.experiment_id} is "
                 f"inactive; state={event.experimentInactive.experimentState}"
             )
 
@@ -105,10 +108,8 @@ class SearchRunner:
                 f"{event.trialProgress.partialUnits})"
             )
             request_id = uuid.UUID(event.trialProgress.requestId)
-            self.search_method.searcher_state.trial_progress[request_id] = float(
-                event.trialProgress.partialUnits
-            )
-            progress = self.search_method.progress()
+            self.state.trial_progress[request_id] = float(event.trialProgress.partialUnits)
+            progress = self.search_method.progress(self.state)
             operations = [searcher.Progress(progress)]
         else:
             raise RuntimeError(f"Unsupported event {event}")
@@ -134,7 +135,7 @@ class SearchRunner:
                 # the first event is an event we have already processed and told master about it
                 # however, we may not have saved the state after that event if we crashed
                 # after POSTing operations but before saving state
-                last_event_id = self.search_method.searcher_state.last_event_id
+                last_event_id = self.state.last_event_id
                 first_event = True
                 for event in events:
                     if (
@@ -148,14 +149,14 @@ class SearchRunner:
                     else:
                         if event.experimentInactive:
                             logger.info(
-                                f"experiment {self.search_method.searcher_state.experiment_id} is "
+                                f"experiment {self.state.experiment_id} is "
                                 f"inactive; state={event.experimentInactive.experimentState}"
                             )
                             if (
                                 event.experimentInactive.experimentState
                                 == bindings.determinedexperimentv1State.STATE_COMPLETED
                             ):
-                                self.search_method.searcher_state.experiment_completed = True
+                                self.state.experiment_completed = True
 
                             if (
                                 event.experimentInactive.experimentState
@@ -170,7 +171,7 @@ class SearchRunner:
                             operations = self._get_operations(event)
 
                         # save state
-                        self.search_method.searcher_state.last_event_id = event.id
+                        self.state.last_event_id = event.id
                         self.save_state(experiment_id, operations)
 
                     first_event = False
@@ -187,7 +188,7 @@ class SearchRunner:
         operations: List[searcher.Operation],
     ) -> None:
         body = bindings.v1PostSearcherOperationsRequest(
-            experimentId=self.search_method.searcher_state.experiment_id,
+            experimentId=self.state.experiment_id,
             searcherOperations=[op._to_searcher_operation() for op in operations],
             triggeredByEvent=event,
         )
@@ -290,8 +291,8 @@ class LocalSearchRunner(SearchRunner):
             state_path = self._get_state_path(exp.id)
             state_path.mkdir(parents=True)
             logger.info(f"Starting HP searcher for experiment {exp.id}")
-            self.search_method.searcher_state.experiment_id = exp.id
-            self.search_method.searcher_state.last_event_id = 0
+            self.state.experiment_id = exp.id
+            self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
@@ -307,7 +308,7 @@ class LocalSearchRunner(SearchRunner):
         with experiment_searcher_dir.joinpath("event_id").open("r") as event_id_file:
             last_event_id = int(event_id_file.read())
         state_path = experiment_searcher_dir.joinpath(f"event_{last_event_id}")
-        loaded_experiment_id = self.search_method.load(state_path)
+        self.state, loaded_experiment_id = self.search_method.load(state_path)
         assert experiment_id == loaded_experiment_id, (
             f"Experiment id mismatch. Expected {experiment_id}." f" Found {loaded_experiment_id}"
         )
@@ -317,14 +318,13 @@ class LocalSearchRunner(SearchRunner):
 
     def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
         experiment_searcher_dir = self._get_state_path(experiment_id)
-        state_path = experiment_searcher_dir.joinpath(
-            f"event_{self.search_method.searcher_state.last_event_id}"
-        )
+        state_path = experiment_searcher_dir.joinpath(f"event_{self.state.last_event_id}")
 
         if not state_path.exists():
             state_path.mkdir(parents=True)
 
         self.search_method.save(
+            self.state,
             state_path,
             experiment_id=experiment_id,
         )
@@ -335,7 +335,7 @@ class LocalSearchRunner(SearchRunner):
         event_id_path = experiment_searcher_dir.joinpath("event_id")
         event_id_new_path = experiment_searcher_dir.joinpath("event_id_new")
         with event_id_new_path.open("w") as f:
-            f.write(str(self.search_method.searcher_state.last_event_id))
+            f.write(str(self.state.last_event_id))
         os.replace(event_id_new_path, event_id_path)
 
     def _get_state_path(self, experiment_id: int) -> Path:
@@ -343,7 +343,7 @@ class LocalSearchRunner(SearchRunner):
 
     def _show_experiment_paused_msg(self) -> None:
         logger.warning(
-            f"Experiment {self.search_method.searcher_state.experiment_id} "
+            f"Experiment {self.state.experiment_id} "
             f"has been paused. If you leave searcher process running, your search method"
             f" will automatically resume when the experiment becomes active again. "
             f"Otherwise, you can terminate this process and restart it "

@@ -70,7 +70,10 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
            super().__init__()
            # initialize any state you would need
 
-       def initial_operations(self) -> List[searcher.Operation]:
+       def initial_operations(
+           self,
+           searcher_state: searcher.SearcherState
+       ) -> List[searcher.Operation]:
            # Create and return the initial list of operations
            # immediately after an experiment has been created
            # Currently, we support the following operations:
@@ -82,7 +85,11 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
            # - searcher.Shutdown - closes the experiment.
            return []
 
-       def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+       def on_trial_created(
+           self,
+           searcher_state: searcher.SearcherState,
+           request_id: uuid.UUID
+       ) -> List[searcher.Operation]:
            # note: the request_id argument in this and other methods
            # uniquely identifies a trial
            # update state as needed
@@ -91,6 +98,7 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
 
        def on_validation_completed(
            self,
+           searcher_state: searcher.SearcherState,
            request_id: uuid.UUID,
            metric: float,
            train_length: int,
@@ -101,18 +109,25 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
            # (in units specified in the searcher configuration)
            return []
 
-       def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+       def on_trial_closed(
+           self,
+           searcher_state: searcher.SearcherState,
+           request_id: uuid.UUID,
+       ) -> List[searcher.Operation]:
            # update internal state, reflecting the completion of the trial
            # identified by request_id
            # return operations
            return []
 
-       def progress(self) -> float:
+       def progress(self, searcher_state: searcher.SearcherState) -> float:
            # report experiment progress as a value between 0.0 and 1.0
            # the Web UI will display a corresponding progress bar
            return 0.0
 
-       def on_trial_exited_early(self) -> List[searcher.Operation]:
+       def on_trial_exited_early(
+           self,
+           searcher_state: searcher.SearcherState,
+        ) -> List[searcher.Operation]:
            # update internal state, reflecting early trial exit
            # return operations (e.g., create a trial with a different
            # combination of hyperparameters)

@@ -24,8 +24,8 @@ def test_run_random_searcher_exp_mock_master() -> None:
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
     assert search_method.closed_trials == 5
-    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
-    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
+    assert len(search_runner.state.trials_created) == search_method.created_trials
+    assert len(search_runner.state.trials_closed) == search_method.closed_trials
 
 
 def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
@@ -41,7 +41,7 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
 
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
-    assert len(search_method.searcher_state.trials_closed) == len(
+    assert len(search_runner.state.trials_closed) == len(
         search_method.asha_search_state.closed_trials
     )
 
@@ -155,8 +155,8 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         state_path = self._get_state_path(exp_id)
         state_path.mkdir(parents=True)
         logging.info(f"Starting HP searcher for mock experiment {exp_id}")
-        self.search_method.searcher_state.experiment_id = exp_id
-        self.search_method.searcher_state.last_event_id = 0
+        self.state.experiment_id = exp_id
+        self.state.last_event_id = 0
         super(MockMasterSearchRunner, self).save_state(exp_id, [])
         experiment_id = exp_id
         operations: Optional[List[searcher.Operation]] = None
