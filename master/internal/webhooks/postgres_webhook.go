@@ -46,12 +46,6 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 		if err != nil {
 			return err
 		}
-
-		_, err = tx.NewDelete().Model((*Trigger)(nil)).Where("webhook_id = ?", id).Exec(ctx)
-		if err != nil {
-			return err
-		}
-		return nil
 	})
 	return nil
 }
