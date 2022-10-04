@@ -25,10 +25,8 @@ var (
 	// ErrDuplicateRecord is the returned standard error for finding duplicates.
 	ErrDuplicateRecord = status.Error(codes.AlreadyExists, "duplicate record")
 	// ErrInternal is the returned standard error for an internal error.
-	ErrInternal = status.Error(codes.Internal, "internal server error")
-	// ErrPermissionDenied is the returned standard error for a permission denied error.
-	ErrPermissionDenied = status.Error(codes.PermissionDenied, "access denied")
-	errPassthroughMap   = map[error]bool{
+	ErrInternal       = status.Error(codes.Internal, "internal server error")
+	errPassthroughMap = map[error]bool{
 		nil:                true,
 		ErrBadRequest:      true,
 		ErrInvalidLimit:    true,
