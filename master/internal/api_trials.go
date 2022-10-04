@@ -754,7 +754,6 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit = ptrs.Ptr[int32](-1)
 	}
 
-	sortType = req.MetricType
 	sortCode := "total_batches"
 	if req.SortKey != "" && req.SortKey != "batches" {
 		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'",

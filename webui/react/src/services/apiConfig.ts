@@ -784,8 +784,8 @@ export const getTrialWorkloads: DetApi<
         'FILTER_OPTION_UNSPECIFIED',
       undefined,
       params.metricType === Type.MetricType.Training
-        ? 'METRIC_TYPE_TRAINING'
-        : 'METRIC_TYPE_VALIDATION',
+        ? 'V1MetricType.TRAINING'
+        : 'V1MetricType.VALIDATION',
     ),
 };
 
