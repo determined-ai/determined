@@ -264,7 +264,7 @@ describe('useModalCustomizeColumns', () => {
 
     ///** The reason for the 2 in the line 270 is that the UI never removes all of the options,
     /* it always returns with the id and name. The line 272 is a reflection of the math done on the line 270.
-    */
+     */
     await waitFor(() => {
       expect(parseInt(lists[0].style.height)).toEqual(
         (NUM_GENERATED_COLUMNS + (DEFAULT_COLUMNS.length - 2)) * lineHeight,
