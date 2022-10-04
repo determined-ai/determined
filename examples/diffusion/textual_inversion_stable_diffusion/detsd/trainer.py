@@ -40,8 +40,6 @@ class DetSDTextualInversionTrainer:
         learning_rate: float = 5e-04,
         other_optimizer_kwargs: Optional[dict] = None,
         scale_lr: bool = True,
-        embedding_reg_weight: Optional[float] = None,
-        latent_reg_weight: Optional[float] = None,
         checkpoint_freq: int = 50,
         metric_report_freq: int = 50,
         beta_start: float = 0.00085,
@@ -105,8 +103,6 @@ class DetSDTextualInversionTrainer:
         self.learning_rate = learning_rate
         self.other_optimizer_kwargs = other_optimizer_kwargs or {}
         self.scale_lr = scale_lr
-        self.embedding_reg_weight = embedding_reg_weight
-        self.latent_reg_weight = latent_reg_weight
         self.checkpoint_freq = checkpoint_freq
         self.metric_report_freq = metric_report_freq
         self.beta_start = beta_start
@@ -154,12 +150,7 @@ class DetSDTextualInversionTrainer:
         self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
 
         self.steps_completed = 0
-        self._cached_embedding_reg_loss = None
-        self.metrics_history = {"noise_pred_loss": []}
-        if self.embedding_reg_weight:
-            self.metrics_history["embedding_reg_loss"] = []
-        if self.latent_reg_weight:
-            self.metrics_history["latent_reg_loss"] = []
+        self.metrics_history = {"loss": []}
         self.last_mean_loss = None
 
         self.effective_global_batch_size = (
@@ -256,8 +247,6 @@ class DetSDTextualInversionTrainer:
                             trainer.logger.info(
                                 f"Step {trainer.steps_completed} completed on batch {batch_idx}"
                             )
-                            if trainer._cached_embedding_reg_loss is not None:
-                                trainer._cached_embedding_reg_loss = None
 
                             is_end_of_training = trainer.steps_completed == op.length
                             time_to_report = (
@@ -315,55 +304,9 @@ class DetSDTextualInversionTrainer:
             text=dummy_prompts, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
-        noise_pred_loss = F.mse_loss(dummy_prompts_noise_pred, noise)
-        self.metrics_history["noise_pred_loss"].append(noise_pred_loss.item())
-
-        # Add a latent-space regularization penalty following the ideas in
-        # https://github.com/rinongal/textual_inversion/issues/49
-        if not self.latent_reg_weight:
-            latent_reg_loss = 0.0
-        else:
-            with torch.no_grad():
-                intializer_prompts = [
-                    self._replace_concepts_with_initializers(text) for text in prompts
-                ]
-                intializer_prompts_noise_pred = self._get_noise_pred(
-                    text=intializer_prompts, noisy_latents=noisy_latents, timesteps=rand_timesteps
-                )
-
-            latent_reg_loss = self.latent_reg_weight * F.mse_loss(
-                dummy_prompts_noise_pred, intializer_prompts_noise_pred
-            )
-            self.metrics_history["latent_reg_loss"].append(latent_reg_loss.item())
-
-        noise_and_latent_loss = noise_pred_loss + latent_reg_loss
-        self.accelerator.backward(noise_and_latent_loss)
-
-        # We add a regularization loss which penalizes the new embeddings for straying far from
-        # their initialization point.  This idea was present in the original textual inversion repo:
-        # https://github.com/rinongal/textual_inversion/blob/3214ca02ded6019c3948e17dd68bf02364b0c2dd/ldm/modules/embedding_manager.py#L159
-        # We only need to perform this computation once per actual optimizer step, rather than once
-        # per batch, and it is computed via MSE, which differs from the above implementation by
-        # changing a sum to a mean.
-        if not self.embedding_reg_weight:
-            self._cached_embedding_reg_loss = 0.0
-        elif self._cached_embedding_reg_loss is None:
-            dummy_token_embeddings = self._get_all_concept_embeddings(dummy_or_initializer="dummy")
-            initializer_token_embeddings = self._get_all_concept_embeddings(
-                dummy_or_initializer="initializer"
-            )
-            self._cached_embedding_reg_loss = self.embedding_reg_weight * F.mse_loss(
-                dummy_token_embeddings, initializer_token_embeddings
-            )
-            self.metrics_history["embedding_reg_loss"].append(
-                self._cached_embedding_reg_loss.item()
-            )
-            # Scale up embedding_reg_loss by gradient_accumulation_steps since we are only doing the
-            # backward pass once every gradient_accumulation_steps steps.
-            accumulation_scaled_embedding_reg_loss = (
-                self._cached_embedding_reg_loss * self.gradient_accumulation_steps
-            )
-            self.accelerator.backward(accumulation_scaled_embedding_reg_loss)
+        loss = F.mse_loss(dummy_prompts_noise_pred, noise)
+        self.metrics_history["loss"].append(loss.item())
+        self.accelerator.backward(loss)
 
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -670,20 +613,20 @@ class DetSDTextualInversionTrainer:
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
         self.accelerator.wait_for_everyone()
+        # Currently only tracking the loss in self.metrics_history, but the below code generalizes
+        # to arbitrarily many tracked metrics.
         mean_metrics = {
             metric_name: torch.tensor(metric_values, device=self.accelerator.device).mean()
             for metric_name, metric_values in self.metrics_history.items()
         }
         # reduction='mean' seems to return the sum rather than the mean.
-        # TODO: Verify this isn't an issue with how we are using accelerate launch.
+        # TODO: Verify this apparent problem.
         reduced_mean_metrics = {
             metric_name: self.accelerator.reduce(mean_metric_value, reduction="sum").item()
             / self.accelerator.num_processes
             for metric_name, mean_metric_value in mean_metrics.items()
         }
-        loss = sum(value for value in reduced_mean_metrics.values())
-        reduced_mean_metrics["loss"] = loss
-        self.last_mean_loss = loss
+        self.last_mean_loss = reduced_mean_metrics["loss"]
         # Reset the local metrics history
         self.metrics_history = {metric_name: [] for metric_name in self.metrics_history}
         if self.accelerator.is_main_process:

@@ -37,8 +37,6 @@ hyperparameters:
         optimizer_name: adam
         learning_rate: 5e-4
         scale_lr: True
-        embedding_reg_weight: null
-        latent_reg_weight: null
         checkpoint_freq: 50
         metric_report_freq: 50
         beta_start: 0.00085
