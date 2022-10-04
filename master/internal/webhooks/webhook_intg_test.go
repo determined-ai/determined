@@ -5,9 +5,11 @@ package webhooks
 
 import (
 	"context"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/internal/db"
 )
 
 func TestWebhooks(t *testing.T) {
@@ -44,7 +46,6 @@ func TestWebhooks(t *testing.T) {
 	})
 
 	t.Run("Deleting a webhook should work", func(t *testing.T) {
-
 		testWebhookThree.Triggers = testTriggersThree
 
 		err := AddWebhook(ctx, &testWebhookThree)
