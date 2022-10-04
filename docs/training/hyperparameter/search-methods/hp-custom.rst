@@ -61,6 +61,7 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
 
    import json
    import uuid
+   from determined import searcher
    from pathlib import Path
    from typing import List
 
@@ -73,11 +74,12 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
            # Create and return the initial list of operations
            # immediately after an experiment has been created
            # Currently, we support the following operations:
-           # - Create - starts a new trial with a unique trial id and a set of hyperparameters,
-           # - ValidateAfter - sets the number of steps (i.e., batches or epochs) after which
-           #                   a validation is run, for a trial with a given id,
-           # - Close - closes a trial with a given id,
-           # - Shutdown - closes the experiment.
+           # - searcher.Create - starts a new trial with a unique trial id
+               and a set of hyperparameters,
+           # - searcher.ValidateAfter - sets the number of steps (i.e., batches or epochs) after which
+           #   a validation is run, for a trial with a given id,
+           # - searcher.Close - closes a trial with a given id,
+           # - searcher.Shutdown - closes the experiment.
            return []
 
        def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
@@ -92,7 +94,7 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
            request_id: uuid.UUID,
            metric: float,
            train_length: int,
-       ) -> List[searcher.Operation:
+       ) -> List[searcher.Operation]:
            # return operations to be performed based on the state,
            # the value of the metric returned by the validation
            # for a given trial, and the length of the training
