@@ -40,7 +40,7 @@ def test_unsupported_option() -> None:
         conf.fixtures_path("failures/unsupported-slurm-option.yaml"),
         conf.fixtures_path("failures/"),
         "ERROR: resources failed with non-zero exit code: unable to create "
-        + "the Slurm launcher manifest: slurm option -G is not configurable",
+        + "the launcher manifest: slurm option -G is not configurable",
     )
 
 
