@@ -1,25 +1,28 @@
 import { AutoComplete as AutoCompleteAntD } from 'antd';
-import { DefaultOptionType } from 'antd/lib/select';
 import React, { useCallback, useState } from 'react';
 
 import css from './AutoComplete.module.scss';
 
-interface Props<OptionType extends DefaultOptionType>
-  extends React.ComponentProps<typeof AutoCompleteAntD<string, OptionType>> {
+export interface OptionType {
+  disabled?: boolean;
+  label: string;
+  value: string | number;
+}
+
+interface Props extends React.ComponentProps<typeof AutoCompleteAntD<string, OptionType>> {
+  initialValue?: string;
   onSave?: (option?: OptionType | string) => void;
 }
 
-const AutoComplete = <OptionType extends DefaultOptionType>({
-  onSave,
-  ...props
-}: Props<OptionType>): React.ReactElement => {
-  const [value, setValue] = useState(props.value ?? '');
+const AutoComplete = ({ initialValue, onSave, ...props }: Props): React.ReactElement => {
+  const [value, setValue] = useState(initialValue);
 
   const classes = [css.base];
-  if (value.length === 0) classes.push(css.empty);
+  if (value === undefined || value.length === 0) classes.push(css.empty);
 
   const handleSelect = useCallback(
     (value: string, option: OptionType) => {
+      setValue(option.label);
       onSave?.(option);
     },
     [onSave],
@@ -31,7 +34,7 @@ const AutoComplete = <OptionType extends DefaultOptionType>({
   }, [onSave, props.options, value]);
 
   const handleClear = useCallback(() => {
-    setValue('');
+    setValue(undefined);
     onSave?.();
   }, [onSave]);
 
@@ -39,7 +42,6 @@ const AutoComplete = <OptionType extends DefaultOptionType>({
     <div className={classes.join(' ')}>
       <AutoCompleteAntD<string, OptionType>
         {...props}
-        //className={value.length === 0 ? undefined : css.empty}
         value={value}
         onBlur={handleBlur}
         onChange={setValue}

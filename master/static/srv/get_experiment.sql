@@ -22,6 +22,7 @@ SELECT
     e.parent_id AS forked_from,
     e.owner_id AS user_id,
     e.group_id AS group_id,
+    CASE WHEN e.group_id IS NULL THEN NULL ELSE g.name END AS group_name,
     u.username AS username,
     (SELECT json_agg(id) FROM trial_ids) AS trial_ids,
 	  (SELECT count(id) FROM trial_ids) AS num_trials,

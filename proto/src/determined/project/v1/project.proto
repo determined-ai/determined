@@ -111,5 +111,5 @@ message ExperimentGroup {
 // optional fields.
 message PatchExperimentGroup {
   // The new name for the project.
-  google.protobuf.StringValue name = 1;
+  optional string name = 1;
 }

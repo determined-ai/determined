@@ -12,7 +12,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import AutoComplete from 'components/AutoComplete';
+import AutoComplete, { OptionType } from 'components/AutoComplete';
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
@@ -34,7 +34,7 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
 import { RecordKey } from 'shared/types';
-import { isEqual, isString } from 'shared/utils/data';
+import { isEqual, isNumber, isString } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
@@ -347,14 +347,14 @@ const ProjectDetails: React.FC = () => {
     );
 
     const groupRenderer = (value: string, record: ExperimentItem) => {
-      const handleGroupSelect = async (option?: { label: string; value: number } | string) => {
+      const handleGroupSelect = async (option?: OptionType | string) => {
         try {
           if (option === undefined || option === '') {
             if (record.groupId === undefined || record.groupId === null) return;
             await patchExperiment({
               body: { groupId: undefined },
               experimentId: record.id,
-              updateMask: { paths: ['groupId'] },
+              updateMask: { paths: ['group_id'] },
             });
           } else if (isString(option)) {
             const response = await createExperimentGroup({
@@ -365,7 +365,10 @@ const ProjectDetails: React.FC = () => {
             await fetchExperimentGroups();
           } else {
             if (record.groupId === option.value) return;
-            await patchExperiment({ body: { groupId: option.value }, experimentId: record.id });
+            await patchExperiment({
+              body: { groupId: isNumber(option.value) ? option.value : parseInt(option.value) },
+              experimentId: record.id,
+            });
           }
         } catch (e) {
           handleError(e, {
@@ -379,9 +382,9 @@ const ProjectDetails: React.FC = () => {
       return (
         <AutoComplete
           allowClear={true}
+          initialValue={record.groupName}
           options={experimentGroups.map((group) => ({ label: group.name, value: group.id }))}
           placeholder="Add experiment group..."
-          value={record.groupName}
           onSave={handleGroupSelect}
         />
       );

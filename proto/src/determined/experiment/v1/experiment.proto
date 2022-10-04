@@ -128,9 +128,9 @@ message Experiment {
   // The id of the user who created the parent project.
   int32 project_owner_id = 28;
   // The id of the group associated with this experiment.
-  google.protobuf.Int32Value group_id = 29;
+  optional int32 group_id = 29;
   // The name of the group associated with this experiment.
-  google.protobuf.StringValue group_name = 30;
+  optional string group_name = 30;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.
@@ -149,7 +149,7 @@ message PatchExperiment {
   // The experiment notes.
   google.protobuf.StringValue notes = 5;
   // The experiment group id.
-  google.protobuf.Int32Value group_id = 6;
+  optional int32 group_id = 6;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

@@ -389,7 +389,7 @@ func (a *apiServer) PostExperimentGroup(
 			"`name` must not be an empty or whitespace string.")
 	}
 
-	var g *projectv1.ExperimentGroup
+	g := &projectv1.ExperimentGroup{}
 	err = a.m.db.QueryProto("insert_experiment_group", g, req.ProjectId, req.Name)
 
 	return &apiv1.PostExperimentGroupResponse{Group: g},
@@ -414,15 +414,15 @@ func (a *apiServer) PatchExperimentGroup(
 	}
 
 	madeChanges := false
-	if req.Group.Name != nil && req.Group.Name.Value != currExperimentGroup.Name {
-		if len(strings.TrimSpace(req.Group.Name.Value)) == 0 {
+	if req.Group.Name != nil && *req.Group.Name != currExperimentGroup.Name {
+		if len(strings.TrimSpace(*req.Group.Name)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"`name` must not be an empty or whitespace string.")
 		}
 		log.Infof("experiment group (%d) name changing from \"%s\" to \"%s\"",
-			currExperimentGroup.Id, currExperimentGroup.Name, req.Group.Name.Value)
+			currExperimentGroup.Id, currExperimentGroup.Name, *req.Group.Name)
 		madeChanges = true
-		currExperimentGroup.Name = req.Group.Name.Value
+		currExperimentGroup.Name = *req.Group.Name
 	}
 
 	if !madeChanges {

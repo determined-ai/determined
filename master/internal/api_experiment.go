@@ -462,8 +462,8 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
 		ColumnExpr("p.user_id AS project_owner_id").
 		Column("e.config").
-		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE json_build_object('value', e.group_id) END AS group_id").
-		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE json_build_object('value', g.name) END AS group_name").
+		ColumnExpr("e.group_id").
+		ColumnExpr("CASE WHEN e.group_id IS NULL THEN NULL ELSE g.name END AS group_name").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
@@ -925,6 +925,18 @@ func (a *apiServer) UnarchiveExperiment(
 	}
 }
 
+func mask_contains(mask []string, v string) bool {
+	if len(mask) == 0 {
+		return true
+	}
+	for _, s := range mask {
+			if v == s {
+					return true
+			}
+	}
+	return false
+}
+
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
@@ -946,8 +958,20 @@ func (a *apiServer) PatchExperiment(
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
+	var mask []string
+
+	if req.UpdateMask != nil {
+		req.UpdateMask.Normalize()
+		mask = req.UpdateMask.GetPaths()
+	}
+
+	if len(mask) > 0 && !req.UpdateMask.IsValid(req.Experiment) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"update mask must correspond to experiment type.")
+	}
+
 	madeChanges := false
-	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value {
+	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value && mask_contains(mask, "name") {
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
@@ -956,17 +980,17 @@ func (a *apiServer) PatchExperiment(
 		exp.Name = req.Experiment.Name.Value
 	}
 
-	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value {
+	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value && mask_contains(mask, "notes") {
 		madeChanges = true
 		exp.Notes = req.Experiment.Notes.Value
 	}
 
-	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value {
+	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value && mask_contains(mask, "description") {
 		madeChanges = true
 		exp.Description = req.Experiment.Description.Value
 	}
 
-	if req.Experiment.Labels != nil {
+	if req.Experiment.Labels != nil && mask_contains(mask, "labels") {
 		var reqLabelList []string
 		for _, el := range req.Experiment.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
@@ -982,9 +1006,20 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	if exp.GroupId.GetValue() != req.Experiment.GroupId.GetValue()  {
+	if exp.GroupId != req.Experiment.GroupId && mask_contains(mask, "group_id")  {
+		if req.Experiment.GroupId != nil {
+		destGroup, err := a.GetExperimentGroupByID(*req.Experiment.GroupId)
+		if err != nil {
+			return nil, err
+		}
 		madeChanges = true
-		exp.GroupId = req.Experiment.GroupId
+		exp.GroupId = &destGroup.Id
+		exp.GroupName = &destGroup.Name
+		} else if len(mask) > 0 {
+			madeChanges = true
+			exp.GroupId = nil
+			exp.GroupName = nil
+		}
 	}
 
 	if madeChanges {
