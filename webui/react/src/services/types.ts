@@ -47,7 +47,7 @@ export interface CompareTrialsParams extends TrialSummaryBaseParams {
 
 export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
   filter: TrialWorkloadFilter;
-  metricType?: MetricType;
+  metricType?: MetricType | undefined;
   sortKey?: string;
 }
 
