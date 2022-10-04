@@ -610,7 +610,7 @@ class PyTorchTrialController(det.TrialController):
             pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
-        if self.context.distributed.size > 1 and any(
+        if self.context.distributed.size > 1 and self.use_horovod and any(
             util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
             or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback)
             for c in self.callbacks.values()
