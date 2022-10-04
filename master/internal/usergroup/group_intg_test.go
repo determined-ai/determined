@@ -96,8 +96,8 @@ func TestUserGroups(t *testing.T) {
 		query = query.Where("group_name = ?", testGroup.Name)
 		groups, _, count, err := SearchGroupsPaginated(ctx, query, 0, 0)
 		require.NoError(t, err, "failed to search for group in modified query")
-		index := groupsContain(groups, testGroup.ID)
 		require.Equal(t, 1, count, "modified group search returned wrong count")
+		index := groupsContain(groups, testGroup.ID)
 		require.NotEqual(t, -1, index, "Group user was added to not found when searching by user membership")
 	})
 

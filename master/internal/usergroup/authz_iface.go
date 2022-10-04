@@ -1,6 +1,7 @@
 package usergroup
 
 import (
+	"context"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -11,7 +12,7 @@ import (
 type UserGroupAuthZ interface {
 	// CanGetGroup checks whether a user can get a group.
 	// GET /api/v1/groups/{group_id}
-	CanGetGroup(curUser model.User, gid int) (bool, error)
+	CanGetGroup(ctx context.Context, curUser model.User, gid int) error
 
 	// FilterGroupsList checks what groups a user can get.
 	// POST /api/v1/groups/search

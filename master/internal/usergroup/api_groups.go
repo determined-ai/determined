@@ -128,7 +128,7 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 
 	gid := int(req.GroupId)
 
-	canGet, err := AuthZProvider.Get().CanGetGroup(*curUser, gid)
+	canGet, err := AuthZProvider.Get().CanGetGroup(ctx, *curUser, gid)
 	if err != nil {
 		return nil, err
 	} else if !canGet {

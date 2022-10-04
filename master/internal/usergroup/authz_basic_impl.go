@@ -1,6 +1,7 @@
 package usergroup
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/uptrace/bun"
@@ -12,7 +13,7 @@ import (
 type UserGroupAuthZBasic struct{}
 
 // CanGetGroup always returns nil.
-func (a *UserGroupAuthZBasic) CanGetGroup(curUser model.User, gid int) (bool, error) {
+func (a *UserGroupAuthZBasic) CanGetGroup(ctx context.Context, curUser model.User, gid int) (bool, error) {
 	return true, nil
 }
 
