@@ -61,35 +61,35 @@ func TestWebhooks(t *testing.T) {
 var (
 	testWebhookOne = Webhook{
 		ID:  1000,
-		Url: "http://testwebhook.com",
+		URL: "http://testwebhook.com",
 	}
 	testWebhookTwo = Webhook{
 		ID:  2000,
-		Url: "http://testwebhooktwo.com",
+		URL: "http://testwebhooktwo.com",
 	}
 	testWebhookThree = Webhook{
 		ID:  3000,
-		Url: "http://testwebhookthree.com",
+		URL: "http://testwebhookthree.com",
 	}
 	testWebhookFour = Webhook{
 		ID:  6000,
-		Url: "http://twebhook.com",
+		URL: "http://twebhook.com",
 	}
 	testWebhookFive = Webhook{
 		ID:  7000,
-		Url: "http://twebhooktwo.com",
+		URL: "http://twebhooktwo.com",
 	}
 	testWebhookFourTrigger = Trigger{
 		ID:          6001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		WebhookId:   6000,
+		Webhookid:   6000,
 	}
 	testWebhookFiveTrigger = Trigger{
 		ID:          7001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		WebhookId:   7000,
+		Webhookid:   7000,
 	}
 	testWebhookFourTriggers = []*Trigger{&testWebhookFourTrigger}
 	testWebhookFiveTriggers = []*Trigger{&testWebhookFiveTrigger}
@@ -97,14 +97,14 @@ var (
 		ID:          1001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		WebhookId:   1000,
+		Webhookid:   1000,
 	}
 	testTriggersOne     = []*Trigger{&testTriggerOne}
 	testTriggerTwoState = Trigger{
 		ID:          2001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		WebhookId:   2000,
+		Webhookid:   2000,
 	}
 	testTriggerTwoMetric = Trigger{
 		ID:          2002,
@@ -113,14 +113,14 @@ var (
 			"metricName":  "validation_accuracy",
 			"metricValue": 0.95,
 		},
-		WebhookId: 2000,
+		Webhookid: 2000,
 	}
 	testTriggersTwo  = []*Trigger{&testTriggerTwoState, &testTriggerTwoMetric}
 	testTriggerThree = Trigger{
 		ID:          3001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		WebhookId:   3000,
+		Webhookid:   3000,
 	}
 	testTriggersThree = []*Trigger{&testTriggerThree}
 )
