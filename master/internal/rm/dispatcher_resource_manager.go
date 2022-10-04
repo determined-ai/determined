@@ -159,9 +159,9 @@ func (d *DispatcherResourceManager) ValidateResourcePool(ctx actor.Messenger, na
 	var resp hasSlurmPartitionResponse
 	switch err := d.ask(ctx, hasSlurmPartitionRequest{PoolName: name}, &resp); {
 	case err != nil:
-		return fmt.Errorf("requesting slurm partition: %w", err)
+		return fmt.Errorf("requesting resource pool: %w", err)
 	case !resp.HasResourcePool:
-		return fmt.Errorf("slurm partition not found: %s", name)
+		return fmt.Errorf("resource pool not found: %s", name)
 	default:
 		return nil
 	}
@@ -513,7 +513,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			m.config.LauncherContainerRunType, m.wlmType == pbsSchedulerType)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,
-				"unable to create the Slurm launcher manifest")
+				"unable to create the launcher manifest")
 			return nil
 		}
 
@@ -534,7 +534,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		dispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,
-				"unable to create Slurm job")
+				"unable to create the launcher job")
 			return nil
 		}
 
@@ -1296,7 +1296,7 @@ func (m *dispatcherResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	}
 	m.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
-		msg.Name = "Unnamed-Slurm-Job"
+		msg.Name = "Unnamed-Launcher-Job"
 	}
 
 	ctx.Log().Infof(
@@ -1580,7 +1580,7 @@ func createSlurmResourcesManifest() *launcher.Manifest {
 	payload.SetLaunchParameters(*launchParameters)
 
 	clientMetadata := launcher.NewClientMetadataWithDefaults()
-	clientMetadata.SetName("DAI-Slurm-Resources")
+	clientMetadata.SetName("DAI-HPC-Resources")
 
 	// Create & populate the manifest
 	manifest := *launcher.NewManifest("v1", *clientMetadata)
