@@ -53,6 +53,12 @@ func TestAllocationAuthZ(t *testing.T) {
 			return err
 		}},
 		{"CanEditExperiment", func(id string) error {
+			_, err := api.AllocationWaiting(ctx, &apiv1.AllocationWaitingRequest{
+				AllocationId: id,
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id string) error {
 			_, err := api.AllocationAllGather(ctx, &apiv1.AllocationAllGatherRequest{
 				AllocationId: id,
 			})

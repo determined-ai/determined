@@ -59,7 +59,7 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 			return err
 		}
 
-		curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+		curUser, _, err := grpcutil.GetUser(ctx)
 		if err != nil {
 			return err
 		}
@@ -103,6 +103,10 @@ func (a *apiServer) AllocationReady(
 func (a *apiServer) AllocationWaiting(
 	ctx context.Context, req *apiv1.AllocationWaitingRequest,
 ) (*apiv1.AllocationWaitingResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	resp, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
