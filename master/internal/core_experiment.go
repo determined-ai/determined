@@ -261,13 +261,9 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	agentUserGroup, err := m.db.AgentUserGroup(*dbExp.OwnerID)
+	agentUserGroup, err := user.GetAgentUserGroup(*dbExp.OwnerID, dbExp)
 	if err != nil {
-		return nil, errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
-	}
-
-	if agentUserGroup == nil {
-		agentUserGroup = &m.config.Security.DefaultTask
+		return nil, err
 	}
 
 	ownerFullUser, err := user.UserByID(*dbExp.OwnerID)

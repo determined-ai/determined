@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -282,18 +283,15 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) error {
+func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to read config for experiment: %w", err)
 	}
 
-	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
-	switch {
-	case err != nil:
-		return errors.Errorf("cannot find user and group for experiment")
-	case agentUserGroup == nil:
-		agentUserGroup = &a.m.config.Security.DefaultTask
+	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+	if err != nil {
+		return err
 	}
 
 	taskSpec := *a.m.taskSpec
@@ -311,7 +309,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	taskID := model.NewTaskID()
 	ckptGCTask := newCheckpointGCTask(
 		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-		conf, checkpoints, true, agentUserGroup, user, nil,
+		conf, checkpoints, true, agentUserGroup, userModel, nil,
 	)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")

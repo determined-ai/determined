@@ -19,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -55,22 +56,16 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 ) {
 	var err error
 
-	// Validate the user and get the agent user group.
-	user, _, err := grpcutil.GetUser(ctx)
+	// Validate the userModel and get the agent userModel group.
+	userModel, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
-	agentUserGroup, err := a.m.db.AgentUserGroup(user.ID)
+
+	// TODO(ilia): When commands are workspaced, also use workspace AgentUserGroup here.
+	agentUserGroup, err := user.GetAgentUserGroup(userModel.ID, nil)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"cannot find user and group information for user %s: %s",
-			user.Username,
-			err,
-		)
-	}
-	if agentUserGroup == nil {
-		agentUserGroup = &a.m.config.Security.DefaultTask
+		return nil, err
 	}
 
 	var configBytes []byte
@@ -99,7 +94,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	taskSpec := *a.m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
-	taskSpec.Owner = user
+	taskSpec.Owner = userModel
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
@@ -153,7 +148,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		config.WorkDir = nil
 	}
 
-	token, createSessionErr := a.m.db.StartUserSession(user)
+	token, createSessionErr := a.m.db.StartUserSession(userModel)
 	if createSessionErr != nil {
 		return nil, status.Errorf(codes.Internal,
 			errors.Wrapf(createSessionErr,

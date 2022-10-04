@@ -61,7 +61,8 @@ func newDelayWriter(w io.Writer, delayBytes int) *delayWriter {
 }
 
 func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
-	*expconf.CheckpointStorageConfig, error) {
+	*expconf.CheckpointStorageConfig, error,
+) {
 	checkpoint, err := m.db.CheckpointByUUID(id)
 	if err != nil || checkpoint == nil {
 		return nil, err
@@ -81,7 +82,8 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 }
 
 func (m *Master) getCheckpointImpl(
-	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer) error {
+	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer,
+) error {
 	// Assume a checkpoint always has experiment configs
 	storageConfig, err := m.getCheckpointStorageConfig(id)
 	switch {

@@ -180,6 +180,13 @@ def whoami(parsed_args: Namespace) -> None:
     print("You are logged in as user '{}'".format(user["username"]))
 
 
+AGENT_USER_GROUP_ARGS = [
+    Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
+    Arg("--agent-user", help="user on the agent to run tasks as"),
+    Arg("--agent-gid", type=int, help="GID on agent to run tasks as"),
+    Arg("--agent-group", help="group on the agent to run tasks as"),
+]
+
 # fmt: off
 
 args_description = [
@@ -208,10 +215,7 @@ args_description = [
         ]),
         Cmd("link-with-agent-user", link_with_agent_user, "link a user with UID/GID on agent", [
             Arg("det_username", help="name of Determined user to link"),
-            Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
-            Arg("--agent-user", help="user on the agent to run tasks as"),
-            Arg("--agent-gid", type=int, help="GID on agent to run tasks as"),
-            Arg("--agent-group", help="group on the agent to run tasks as"),
+            *AGENT_USER_GROUP_ARGS,
         ]),
         Cmd("whoami", whoami, "print the active user", [])
     ])

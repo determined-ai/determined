@@ -76,12 +76,12 @@ type tarArchiveWriter struct {
 func (aw *tarArchiveWriter) WriteHeader(path string, size int64) error {
 	hdr := tar.Header{
 		Name: path,
-		Mode: 0666,
+		Mode: 0o666,
 		Size: size,
 	}
 	if strings.HasSuffix(path, "/") {
 		// This a directory
-		hdr.Mode = 0777
+		hdr.Mode = 0o777
 	}
 	return aw.tw.WriteHeader(&hdr)
 }
