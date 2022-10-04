@@ -226,7 +226,6 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
-// TODO(nick) AuthZ with commands.
 func (a *apiServer) GetActiveTasksCount(
 	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
