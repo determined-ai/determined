@@ -310,7 +310,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     assert len(search_runner.state.trials_created) == search_method.created_trials
     assert len(search_runner.state.trials_closed) == search_method.closed_trials
 
-    assert search_method.progress() == pytest.approx(1.0)
+    assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 
 
 @pytest.mark.e2e_cpu
@@ -555,7 +555,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
 
-    assert search_method.progress() == pytest.approx(1.0)
+    assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 
 
 class FallibleSearchRunner(searcher.LocalSearchRunner):

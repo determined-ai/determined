@@ -192,10 +192,14 @@ class SearchMethod:
     To implement your specific hyperparameter tuning approach, subclass ``SearchMethod``
     overriding the event handler methods. Each event handler, except ``progress`` returns a list of
     operations (``List[Operation]``) that will be submitted to master for processing.
+
+    .. note::
+
+        Do not modify ``searcher_state`` passed into event handlers.
     """
 
     @abstractmethod
-    def initial_operations(self, state: SearcherState) -> List[Operation]:
+    def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
         Returns a set of initial operations that the searcher will perform.
 
