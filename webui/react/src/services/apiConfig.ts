@@ -782,6 +782,12 @@ export const getTrialWorkloads: DetApi<
       params.sortKey || 'batches',
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
+      undefined,
+      params.metricType
+        ? params.metricType === Type.MetricType.Training
+          ? 'METRIC_TYPE_TRAINING'
+          : 'METRIC_TYPE_VALIDATION'
+        : undefined,
     ),
 };
 

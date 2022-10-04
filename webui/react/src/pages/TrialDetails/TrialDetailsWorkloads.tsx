@@ -26,7 +26,12 @@ import {
   WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetricSortValue, extractMetricValue } from 'utils/metric';
+import {
+  extractMetricSortValue,
+  extractMetricValue,
+  metricNameToValue,
+  valueToMetricName,
+} from 'utils/metric';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';
@@ -100,7 +105,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
               ? 'ascend'
               : 'descend'
             : undefined,
-        key: metricName.name,
+        key: metricNameToValue(metricName),
         render: metricRenderer(metricName),
         sorter: (a, b) => {
           const aVal = extractMetricSortValue(a, metricName),
@@ -135,9 +140,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
+          metricType: valueToMetricName(settings.sortKey)?.type || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: settings.sortKey,
+          sortKey: valueToMetricName(settings.sortKey)?.name || undefined,
         });
         setWorkloads(wl.workloads);
         setWorkloadCount(wl.pagination.total || 0);

@@ -582,6 +582,9 @@ message GetTrialWorkloadsRequest {
   FilterOption filter = 6;
   // Include per-batch metrics.
   bool include_batch_metrics = 7;
+  // When sorting workloads by sort_key, specify training or validation form of
+  // a metric.
+  MetricType metric_type = 8;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {
