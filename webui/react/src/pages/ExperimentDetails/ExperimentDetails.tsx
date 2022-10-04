@@ -28,8 +28,6 @@ const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const [experiment, setExperiment] = useState<ExperimentBase>();
   const [trial, setTrial] = useState<TrialItem>();
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  const [valHistory, setValHistory] = useState<ValidationHistory[]>([]);
   const [pageError, setPageError] = useState<Error>();
   const [isSingleTrial, setIsSingleTrial] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
@@ -39,15 +37,12 @@ const ExperimentDetails: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const [newExperiment, newValHistory] = await Promise.all([
-        getExperimentDetails({ id }, { signal: canceler.current?.signal }),
-        getExpValidationHistory({ id }, { signal: canceler.current?.signal }),
-      ]);
+      const newExperiment = await getExperimentDetails(
+        { id },
+        { signal: canceler.current?.signal },
+      );
       setExperiment((prevExperiment) =>
         isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
-      );
-      setValHistory((prevValHistory) =>
-        isEqual(prevValHistory, newValHistory) ? prevValHistory : newValHistory,
       );
       setIsSingleTrial(isSingleTrialExperiment(newExperiment));
     } catch (e) {
@@ -74,7 +69,6 @@ const ExperimentDetails: React.FC = () => {
 
       setExperiment(undefined);
       setTrial(undefined);
-      setValHistory([]);
     };
   }, [stopPolling]);
 
