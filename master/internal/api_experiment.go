@@ -522,7 +522,7 @@ func (a *apiServer) GetExperiments(
 			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
 	}
 	if len(req.Groups) > 0 {
-		query = query.Where("g.name IN (?)", bun.In(req.Groups))
+		query = query.Where("g.id IN (?)", bun.In(req.Groups))
 	}
 	if req.Archived != nil {
 		query = query.Where("e.archived = ?", req.Archived.Value)

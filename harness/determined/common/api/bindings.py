@@ -12776,7 +12776,7 @@ def get_GetExperiments(
     experimentIdFilter_lt: "typing.Optional[int]" = None,
     experimentIdFilter_lte: "typing.Optional[int]" = None,
     experimentIdFilter_notIn: "typing.Optional[typing.Sequence[int]]" = None,
-    groups: "typing.Optional[typing.Sequence[str]]" = None,
+    groups: "typing.Optional[typing.Sequence[int]]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,

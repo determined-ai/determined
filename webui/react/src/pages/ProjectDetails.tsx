@@ -108,6 +108,7 @@ const ProjectDetails: React.FC = () => {
       const states = (settings.state || []).map((state) => encodeExperimentState(state));
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
+        groups: settings.group?.map((group) => parseInt(group)),
         labels: settings.label,
         name: settings.search,
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -156,6 +157,7 @@ const ProjectDetails: React.FC = () => {
     canceler.signal,
     id,
     settings.archived,
+    settings.group,
     settings.label,
     settings.pinned,
     settings.search,

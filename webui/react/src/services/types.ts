@@ -76,6 +76,7 @@ export interface GetExperimentsParams extends PaginationParams {
     incl?: Array<number>;
     notIn?: Array<number>;
   };
+  groups?: Array<number>;
   labels?: Array<string>;
   name?: string;
   options?: never;
