@@ -48,7 +48,7 @@ hyperparameters:
         train_seed: 2147483647
     inference:
         generate_training_images: True
-        images_per_prompt: 2
+        images_per_prompt: 3
         inference_scheduler_name: pndm # One of "ddim", "lms-discrete", or "pndm".
         inference_prompts:
           - a watercolor painting of a <det-logo>
