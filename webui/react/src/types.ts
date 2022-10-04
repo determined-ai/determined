@@ -853,6 +853,7 @@ export interface ProjectPagination extends WithPagination {
 export interface ExperimentGroup {
   id: number;
   name: string;
+  numExperiments: number;
   projectId: number;
 }
 

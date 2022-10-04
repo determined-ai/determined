@@ -2482,6 +2482,12 @@ export interface V1ExperimentGroup {
      * @memberof V1ExperimentGroup
      */
     projectId: number;
+    /**
+     * The number of experiments in the group.
+     * @type {number}
+     * @memberof V1ExperimentGroup
+     */
+    numExperiments: number;
 }
 
 /**

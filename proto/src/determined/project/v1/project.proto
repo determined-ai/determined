@@ -97,7 +97,7 @@ message PatchProject {
 // ExperimentGroup is a group of experiments within a project.
 message ExperimentGroup {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "name", "project_id" ] }
+    json_schema: { required: [ "id", "name", "project_id", "num_experiments" ] }
   };
   // The unique id of the group.
   int32 id = 1;
@@ -105,6 +105,8 @@ message ExperimentGroup {
   string name = 2;
   // The id of the associated project.
   int32 project_id = 3;
+  // The number of experiments in the group.
+  int32 num_experiments = 4;
 }
 
 // PatchExperimentGroup is a partial update to a experiment group with all
