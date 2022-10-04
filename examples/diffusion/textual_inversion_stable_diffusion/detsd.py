@@ -76,7 +76,7 @@ class DetSDTextualInversionTrainer:
         append_file_name_to_text: bool = False,
         file_name_split_char: str = "_",
         generate_training_images: bool = True,
-        images_per_worker: int = 1,
+        images_per_prompt: int = 1,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
         inference_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "pndm",
         num_inference_steps: int = 50,
@@ -154,13 +154,13 @@ class DetSDTextualInversionTrainer:
                 "Inference prompts were provided, but are being skipped, as generate_training"
                 " images was set to False."
             )
-        if not generate_training_images and images_per_worker:
+        if not generate_training_images and images_per_prompt:
             self.logger.warning(
-                "images_per_worker was set to a non-zero value, but no images will be"
+                "images_per_prompt was set to a non-zero value, but no images will be"
                 " created, as generate_training images was set to False."
             )
         self.generate_training_images = generate_training_images
-        self.images_per_worker = images_per_worker
+        self.images_per_prompt = images_per_prompt
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
         self.inference_scheduler_name = inference_scheduler_name
@@ -656,7 +656,7 @@ class DetSDTextualInversionTrainer:
             )
             # Set output_type to anything other than `pil` to get numpy arrays out.
             generated_img_array = []
-            for _ in range(self.images_per_worker):
+            for _ in range(self.images_per_prompt):
                 generated_img_array.append(
                     self.pipeline(
                         prompt=dummy_prompt,
@@ -667,7 +667,8 @@ class DetSDTextualInversionTrainer:
                     ).images[0]
                 )
             generated_img_t = torch.from_numpy(np.concatenate(generated_img_array, axis=1))
-            # Gather all images and upload via the chief.
+            # Gather all images and upload via the chief. In tensorboard images, different rows
+            # correspond to different workers, and images_per_prompt sets the number of columns.
             all_generated_img_ts = self.accelerator.gather(
                 generated_img_t.to(self.accelerator.device)
             )

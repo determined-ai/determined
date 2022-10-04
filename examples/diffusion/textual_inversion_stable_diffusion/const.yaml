@@ -34,8 +34,11 @@ hyperparameters:
         metric_report_freq: 50
     inference:
         generate_training_images: True
+        images_per_prompt: 2
         inference_prompts:
-            - a photo of a <det-logo>
-            - a watercolor painting of a <det-logo>
+          - a watercolor painting of a <det-logo>
+          - a Van Gogh painting of a <det-logo> with vibrant colors, thick strokes, masterpiece, incredible composition
+          - a charcoal sketch of a <det-logo>
+          - a photograph of a highly detailed statue of a <det-logo>
 
     

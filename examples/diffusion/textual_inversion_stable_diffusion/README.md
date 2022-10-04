@@ -28,7 +28,6 @@ Below we walk through the Textual Inversion workflow, first fine-tuning Stable D
 user-provided training images featuring a new concept, and then incorporating representations of the
 concept into generated art.
 
-
 ### Training
 
 After including your user access token in the `const.yaml` config file by modifying the final part
@@ -138,11 +137,15 @@ More advanced customizations can be made by modifying the `const_advanced.yaml` 
 
 Generating results of the desired quality is often a balancing act:
 
-* The provided config files only run for 100 SGD steps and are intended for quick demonstration.
-  Increase the `max_length` field, and other training hyperparameters, for more finely tuned
+* Training images are resized to 512 x 512 pixels and can optionally center-cropped (
+  see `const_advanced.yaml`). Resizing your training images accordingly will lead to the most
+  consistent results.
+* The provided config files do not use many SGD steps and are intended for quick demonstration.
+  Increase the `max_length` field, and adjust other training hyperparameters, for more finely tuned
   results.
 * There is generally a tradeoff between how faithfully the training images are reproduced and how
-  well they can be incorporated into the desired scene.
+  well they can be incorporated into the desired scene. Over-training may lead to perfect-likeness,
+  while also overwhelming all other elements in your chosen prompt.
 * Prompts are very sensitive to word order. Stable Diffusion pays much more attention to words at
   the
   beginning of a prompt than it does to words at the end.
