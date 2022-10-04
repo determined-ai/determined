@@ -2,8 +2,9 @@ package usergroup
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 
@@ -37,11 +38,9 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 	if err != nil {
 		return nil, err
 	}
-	canUpdate, err := AuthZProvider.Get().CanUpdateGroups(*curUser)
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
 	if err != nil {
 		return nil, err
-	} else if !canUpdate {
-		return nil, status.Errorf(codes.Internal, "unable to create group: %s", req.Name)
 	}
 
 	group := Group{
@@ -82,7 +81,7 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 		return nil, err
 	}
 
-	query, err = AuthZProvider.Get().FilterGroupsList(*curUser, query)
+	query, err = AuthZProvider.Get().FilterGroupsList(ctx, *curUser, query)
 	if err != nil {
 		return nil, err
 	}
@@ -169,11 +168,9 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 		return nil, err
 	}
 
-	canUpdate, err := AuthZProvider.Get().CanUpdateGroups(*curUser)
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
 	if err != nil {
 		return nil, err
-	} else if !canUpdate {
-		return nil, status.Errorf(codes.NotFound, "group not found: %d", req.GroupId)
 	}
 
 	var addUsers []model.UserID
@@ -217,11 +214,9 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 		return nil, err
 	}
 
-	canUpdate, err := AuthZProvider.Get().CanUpdateGroups(*curUser)
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
 	if err != nil {
 		return nil, err
-	} else if !canUpdate {
-		return nil, status.Errorf(codes.NotFound, "group not found: %d", req.GroupId)
 	}
 
 	err = DeleteGroup(ctx, int(req.GroupId))
