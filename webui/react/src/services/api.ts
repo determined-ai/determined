@@ -86,6 +86,12 @@ export const getUserPermissions = generateDetApi<
   Type.Permission[]
 >(Config.getUserPermissions);
 
+export const getPermissionsSummary = generateDetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.UserPermissionsUpdate
+>(Config.getPermissionsSummary);
+
 /* Groups */
 
 export const createGroup = generateDetApi<

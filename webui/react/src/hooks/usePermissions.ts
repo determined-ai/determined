@@ -159,11 +159,11 @@ const relevantPermissions = (
     return new Set<V1PermissionType>();
   }
   const relevantAssigned = userAssignments
-    .filter((a) => a.cluster || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)))
-    .map((a) => a.name);
+    .filter((a) => a.isGlobal || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)))
+    .map((a) => a.roleId);
   let permissions = Array<Permission>();
   userRoles
-    .filter((r) => relevantAssigned.includes(r.name))
+    .filter((r) => relevantAssigned.includes(r.id))
     .forEach((r) => {
       // TODO: is it possible a role is assigned to this workspace,
       // but not all of its permissions?

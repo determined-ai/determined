@@ -44,6 +44,14 @@ export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission 
   };
 };
 
+export const mapV1UserAssignment = (assignment: Sdk.V1RoleAssignmentSummary): types.UserAssignment => {
+  return {
+    isGlobal: assignment.isGlobal || false,
+    roleId: assignment.roleId || 0,
+    workspaces: assignment.scopeWorkspaceIds || new Array<number>(),
+  };
+};
+
 export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   return {
     limit: data?.limit ?? 0,

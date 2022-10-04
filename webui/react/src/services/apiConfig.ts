@@ -203,6 +203,19 @@ export const getUserPermissions: DetApi<
       .forEach((r) => (permissions = permissions.concat(r.permissions)));
     return permissions;
   },
+  request: (params) => detApi.RBAC.getPermissionsSummary(params.userId),
+};
+
+export const getPermissionsSummary: DetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.UserPermissionsUpdate
+> = {
+  name: 'getPermissionsSummary',
+  postProcess: (response) => ({
+    assignments: response.assignments.map(decoder.mapV1UserAssignment),
+    roles: response.roles.map(decoder.mapV1Role),
+  }),
   request: () => detApi.RBAC.getPermissionsSummary(),
 };
 
