@@ -8,6 +8,7 @@ import {
   MetricName,
   MetricType,
   Note,
+  RunState,
   Scale,
   TrialWorkloadFilter,
 } from 'types';
@@ -46,6 +47,7 @@ export interface CompareTrialsParams extends TrialSummaryBaseParams {
 
 export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
   filter: TrialWorkloadFilter;
+  metricType?: MetricType | undefined;
   sortKey?: string;
 }
 
@@ -90,18 +92,7 @@ export interface GetExperimentsParams extends PaginationParams {
     | 'SORT_BY_PROGRESS'
     | 'SORT_BY_USER'
     | 'SORT_BY_NAME';
-  states?: Array<
-    | 'STATE_UNSPECIFIED'
-    | 'STATE_ACTIVE'
-    | 'STATE_PAUSED'
-    | 'STATE_STOPPING_COMPLETED'
-    | 'STATE_STOPPING_CANCELED'
-    | 'STATE_STOPPING_ERROR'
-    | 'STATE_COMPLETED'
-    | 'STATE_CANCELED'
-    | 'STATE_ERROR'
-    | 'STATE_DELETED'
-  >;
+  states?: Array<`STATE_${RunState}`>;
   userIds?: Array<number>;
   users?: Array<string>;
 }
@@ -364,6 +355,20 @@ export interface DeleteGroupParams {
 
 export interface GetGroupParams {
   groupId: number;
+}
+export interface RemoveRoleFromGroupParams {
+  groupId: number;
+  roleId: number;
+}
+
+export interface AssignRolesToUserParams {
+  roleIds: number[];
+  userId: number;
+}
+
+export interface RemoveRoleFromUserParams {
+  roleId: number;
+  userId: number;
 }
 
 export type GetGroupsParams = PaginationParams;

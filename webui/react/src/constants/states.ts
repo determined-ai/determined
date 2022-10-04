@@ -23,22 +23,31 @@ export const activeRunStates: Array<
   'STATE_ACTIVE' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
 > = ['STATE_ACTIVE', 'STATE_STOPPING_CANCELED', 'STATE_STOPPING_COMPLETED', 'STATE_STOPPING_ERROR'];
 
+/* activeStates are sub-states which replace the previous Active RunState,
+  and Active for backward compatibility  */
+const activeStates: Array<RunState> = [
+  RunState.Active,
+  RunState.Pulling,
+  RunState.Queued,
+  RunState.Running,
+  RunState.Starting,
+];
 const jobStates: Array<JobState> = [
   JobState.QUEUED,
   JobState.SCHEDULED,
   JobState.SCHEDULEDBACKFILLED,
 ];
 export const killableRunStates: CompoundRunState[] = [
-  RunState.Active,
+  ...activeStates,
   RunState.Paused,
   RunState.StoppingCanceled,
   ...jobStates,
 ];
 
-export const pausableRunStates: Set<CompoundRunState> = new Set([RunState.Active, ...jobStates]);
+export const pausableRunStates: Set<CompoundRunState> = new Set([...activeStates, ...jobStates]);
 
 export const cancellableRunStates: Set<CompoundRunState> = new Set([
-  RunState.Active,
+  ...activeStates,
   RunState.Paused,
   ...jobStates,
 ]);
@@ -55,17 +64,21 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-export const deletableRunStates: Set<CompoundRunState> = new Set([
+const runStateList = [
   RunState.Canceled,
   RunState.Completed,
-  RunState.Errored,
+  RunState.Error,
   RunState.DeleteFailed,
-]);
+] as const;
+
+export const deletableRunStates: Set<CompoundRunState> = new Set(runStateList);
 
 export const terminalRunStates: Set<CompoundRunState> = new Set([
   ...deletableRunStates,
   RunState.Deleted,
 ]);
+
+export const terminalRunStatesKeys = [...runStateList, RunState.Deleted];
 
 export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.Active]: 'Active',
@@ -75,11 +88,12 @@ export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.Deleted]: 'Deleted',
   [RunState.Deleting]: 'Deleting',
   [RunState.DeleteFailed]: 'Delete Failed',
-  [RunState.Errored]: 'Errored',
+  [RunState.Error]: 'Errored',
   [RunState.Paused]: 'Paused',
   [RunState.StoppingCanceled]: 'Canceling',
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
+  [RunState.StoppingKilled]: 'Killed',
   [RunState.Unspecified]: 'Unspecified',
   [RunState.Queued]: 'Queued',
   [RunState.Pulling]: 'Pulling Image',

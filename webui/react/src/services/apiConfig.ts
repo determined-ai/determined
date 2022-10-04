@@ -190,20 +190,20 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
-export const getUserPermissions: DetApi<Service.GetUserParams, number, Type.Permission[]> = {
+export const getUserPermissions: DetApi<
+  Service.GetUserParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.Permission[]
+> = {
   name: 'getUserPermissions',
   postProcess: (response) => {
-    const fillerPermission: Type.Permission = {
-      id: response,
-      isGlobal: true,
-      name: 'oss_user',
-    };
-    return [fillerPermission];
+    let permissions = new Array<Type.Permission>();
+    response.roles
+      .map(decoder.mapV1Role)
+      .forEach((r) => (permissions = permissions.concat(r.permissions)));
+    return permissions;
   },
-  request: (params) =>
-    new Promise((resolve) => {
-      resolve(-1 * params.userId);
-    }),
+  request: () => detApi.RBAC.getPermissionsSummary(),
 };
 
 /* Group */
@@ -288,12 +288,10 @@ export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse,
   {
     name: 'listRoles',
     postProcess: (response) => response.roles.map(decoder.mapV1Role),
-    request: () =>
-      new Promise((resolve) => {
-        resolve({
-          pagination: {},
-          roles: new Array<Api.V1Role>(),
-        });
+    request: (params) =>
+      detApi.RBAC.listRoles({
+        limit: params.limit || 0,
+        offset: params.offset || 0,
       }),
   };
 
@@ -310,6 +308,58 @@ export const assignRolesToGroup: DetApi<
         groupId: params.groupId,
         roleAssignment: { role: { roleId } },
       })),
+    }),
+};
+
+export const removeRoleFromGroup: DetApi<
+  Service.RemoveRoleFromGroupParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeRoleFromGroup',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.removeAssignments({
+      groupRoleAssignments: [
+        {
+          groupId: params.groupId,
+          roleAssignment: { role: { roleId: params.roleId } },
+        },
+      ],
+    }),
+};
+
+export const assignRolesToUser: DetApi<
+  Service.AssignRolesToUserParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+> = {
+  name: 'assignRolesToUser',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.assignRoles({
+      userRoleAssignments: params.roleIds.map((roleId) => ({
+        roleAssignment: { role: { roleId } },
+        userId: params.userId,
+      })),
+    }),
+};
+
+export const removeRoleFromUser: DetApi<
+  Service.RemoveRoleFromUserParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeRoleFromUser',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.removeAssignments({
+      userRoleAssignments: [
+        {
+          roleAssignment: { role: { roleId: params.roleId } },
+          userId: params.userId,
+        },
+      ],
     }),
 };
 
@@ -732,6 +782,12 @@ export const getTrialWorkloads: DetApi<
       params.sortKey || 'batches',
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
+      undefined,
+      params.metricType
+        ? params.metricType === Type.MetricType.Training
+          ? 'METRIC_TYPE_TRAINING'
+          : 'METRIC_TYPE_VALIDATION'
+        : undefined,
     ),
 };
 

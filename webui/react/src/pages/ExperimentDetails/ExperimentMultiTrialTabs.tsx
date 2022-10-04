@@ -1,8 +1,9 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import NotesCard from 'components/NotesCard';
+import usePermissions from 'hooks/usePermissions';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
@@ -25,10 +26,10 @@ enum TabType {
   Notes = 'notes',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
   viz?: ExperimentVisualizationType;
-}
+};
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Visualization;
@@ -49,7 +50,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   pageRef,
 }: Props) => {
   const { tab, viz } = useParams<Params>();
-  const history = useHistory();
+  const navigate = useNavigate();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [tabKey, setTabKey] = useState(defaultTabKey);
 
@@ -58,17 +59,17 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   const handleTabChange = useCallback(
     (key) => {
       setTabKey(key);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
+      navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [basePath, navigate, tab, tabKey]);
 
   const handleNotesUpdate = useCallback(
     async (editedNotes: string) => {
@@ -88,6 +89,14 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
+  const { canModifyExperimentMetadata, canViewExperimentArtifacts } = usePermissions();
+  const showExperimentArtifacts = canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
+  const editableNotes = canModifyExperimentMetadata({
+    workspace: { id: experiment.workspaceId },
+  });
+
   return (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="visualization" tab="Visualization">
@@ -102,20 +111,25 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       <TabPane key="trials" tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key="checkpoints" tab="Checkpoints">
-        <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-      </TabPane>
-      <TabPane key="code" tab="Code">
-        <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-          <CodeViewer
-            experimentId={experiment.id}
-            runtimeConfig={experiment.configRaw}
-            submittedConfig={experiment.originalConfig}
-          />
-        </React.Suspense>
-      </TabPane>
+      {showExperimentArtifacts ? (
+        <>
+          <TabPane key="checkpoints" tab="Checkpoints">
+            <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+          </TabPane>
+          <TabPane key="code" tab="Code">
+            <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+              <CodeViewer
+                experimentId={experiment.id}
+                runtimeConfig={experiment.configRaw}
+                submittedConfig={experiment.originalConfig}
+              />
+            </React.Suspense>
+          </TabPane>
+        </>
+      ) : null}
       <TabPane key="notes" tab="Notes">
         <NotesCard
+          disabled={!editableNotes}
           notes={experiment.notes ?? ''}
           style={{ border: 0 }}
           onSave={handleNotesUpdate}

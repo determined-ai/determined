@@ -1,7 +1,8 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Prompt, useLocation } from 'react-router-dom';
+import { Prompt } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
@@ -139,6 +140,7 @@ const NotesCard: React.FC<Props> = ({
       }>
       <Spinner spinning={isLoading}>
         <Markdown
+          disabled={disabled}
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}

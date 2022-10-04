@@ -12,9 +12,9 @@ import {
   useFetchAgents,
   useFetchResourcePools,
 } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';

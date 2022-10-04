@@ -18,7 +18,6 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import {
@@ -28,6 +27,7 @@ import {
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
@@ -280,7 +280,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
   );
 
-  usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
 
   // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {
@@ -295,9 +295,16 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     settings.tableOffset,
   ]);
 
+  // cleanup
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    return () => {
+      canceler.abort();
+      stopPolling();
+
+      setCheckpoints([]);
+      setTotal(0);
+    };
+  }, [canceler, stopPolling]);
 
   const handleTableRowSelect = useCallback(
     (rowKeys) => {

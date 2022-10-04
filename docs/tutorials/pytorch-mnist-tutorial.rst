@@ -182,7 +182,7 @@ Define ``train_batch``
 ======================
 
 The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is passed a single batch of data
-from the validation data set; it should run the forward passes on the models, the backward passes on
+from the training data set; it should run the forward passes on the models, the backward passes on
 the losses, and step the optimizers. This method should return a dictionary with user-defined
 training metrics; Determined will automatically average all the metrics across batches. If an
 optimizer is set to automatically handle zeroing out the gradients, ``step_optimizer`` will zero out

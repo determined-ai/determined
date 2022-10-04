@@ -28,12 +28,12 @@ import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -45,6 +45,7 @@ import { getDisplayName } from 'utils/user';
 import css from './ModelRegistry.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
   ModelColumnName,
   Settings,
 } from './ModelRegistry.settings';
@@ -461,8 +462,7 @@ const ModelRegistry: React.FC = () => {
 
       const newSettings = {
         sortDesc: order === 'descend',
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        sortKey: columnKey as any,
+        sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };

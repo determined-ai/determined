@@ -3,6 +3,9 @@ package rbac
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -14,6 +17,13 @@ func (s *RBACAPIServerWrapper) GetPermissionsSummary(
 	ctx context.Context, req *apiv1.GetPermissionsSummaryRequest,
 ) (*apiv1.GetPermissionsSummaryResponse, error) {
 	return rbacAPIServer.GetPermissionsSummary(ctx, req)
+}
+
+// GetGroupsAndUsersAssignedToWorkspace is a wrapper the same function the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) GetGroupsAndUsersAssignedToWorkspace(
+	ctx context.Context, req *apiv1.GetGroupsAndUsersAssignedToWorkspaceRequest,
+) (*apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse, error) {
+	return rbacAPIServer.GetGroupsAndUsersAssignedToWorkspace(ctx, req)
 }
 
 // GetRolesByID is a wrapper the same function the RBACAPIServer interface.
@@ -64,4 +74,11 @@ func (s *RBACAPIServerWrapper) RemoveAssignments(ctx context.Context,
 	req *apiv1.RemoveAssignmentsRequest,
 ) (*apiv1.RemoveAssignmentsResponse, error) {
 	return rbacAPIServer.RemoveAssignments(ctx, req)
+}
+
+// AssignWorkspaceAdminToUserTx is a wrapper the same function the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) AssignWorkspaceAdminToUserTx(
+	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
+) error {
+	return rbacAPIServer.AssignWorkspaceAdminToUserTx(ctx, idb, workspaceID, userID)
 }

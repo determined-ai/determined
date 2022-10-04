@@ -41,7 +41,6 @@ export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission 
   return {
     id: permission.id,
     isGlobal: permission.isGlobal || false,
-    name: permission.name || '',
   };
 };
 
@@ -356,7 +355,7 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.STOPPINGERROR]: types.RunState.StoppingError,
   [Sdk.Determinedexperimentv1State.CANCELED]: types.RunState.Canceled,
   [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.Completed,
-  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Errored,
+  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Error,
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
   [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
   [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,

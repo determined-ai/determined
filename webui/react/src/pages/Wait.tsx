@@ -1,6 +1,6 @@
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
@@ -18,10 +18,10 @@ import { WaitStatus } from 'utils/wait';
 
 import css from './Wait.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
-}
+};
 
 interface Queries {
   eventUrl?: string;
@@ -34,7 +34,7 @@ const Wait: React.FC = () => {
   const [waitStatus, setWaitStatus] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
-  const capitalizedTaskType = capitalize(taskType);
+  const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;

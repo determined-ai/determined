@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.4-dev0
+    default: 0.19.5-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev12
+    default: v1dev13
   gke-version:
     type: string
     default: "1.21.14"
@@ -228,14 +228,15 @@ commands:
       - install-protoc
       - restore_cache:
           keys:
-            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
           paths:
-            - "/home/circleci/go/pkg/mod/"
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -1022,8 +1023,9 @@ jobs:
             - harness/dist
             - model_hub/dist
             - docs/site/html
+      - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
-          path: docs/site/html
+          path: docs.tgz
 
   publish-docs:
     docker:
@@ -1212,6 +1214,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           executor: <<pipeline.parameters.docker-image>>
@@ -1337,6 +1340,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1352,6 +1356,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1384,6 +1389,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test
@@ -1399,6 +1405,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1418,6 +1425,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1436,6 +1444,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1479,6 +1488,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1502,6 +1512,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1523,6 +1534,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1542,6 +1554,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1562,6 +1575,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1582,6 +1596,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1603,6 +1618,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: false
@@ -1626,6 +1642,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1832,6 +1849,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -1925,6 +1943,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2011,6 +2030,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2162,7 +2182,8 @@ workflows:
   test-intg:
     jobs:
       - test-intg-downstream
-      - test-intg-master
+      - test-intg-master:
+          context: storage-unit-tests
       - test-intg-agent
       - go-coverage:
           requires:
