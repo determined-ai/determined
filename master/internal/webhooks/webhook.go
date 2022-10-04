@@ -27,7 +27,7 @@ type Webhook struct {
 	bun.BaseModel `bun:"table:webhooks"`
 
 	ID  WebhookID `bun:"id,pk,autoincrement"`
-	Url string    `bun:"url,notnull"`
+	URL string    `bun:"url,notnull"`
 
 	Triggers Triggers `bun:"rel:has-many,join:id=webhook_id"`
 }
@@ -36,7 +36,7 @@ type Webhook struct {
 func WebhookFromProto(w *webhookv1.Webhook) Webhook {
 	spew.Dump(w)
 	return Webhook{
-		Url:      w.Url,
+		URL:      w.Url,
 		Triggers: TriggersFromProto(w.Triggers),
 	}
 }
@@ -45,7 +45,7 @@ func WebhookFromProto(w *webhookv1.Webhook) Webhook {
 func (w *Webhook) Proto() *webhookv1.Webhook {
 	return &webhookv1.Webhook{
 		Id:       int32(w.ID),
-		Url:      w.Url,
+		Url:      w.URL,
 		Triggers: w.Triggers.Proto(),
 	}
 }

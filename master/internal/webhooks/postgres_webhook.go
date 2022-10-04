@@ -51,5 +51,4 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 		}
 		return nil
 	})
-	return nil
 }
