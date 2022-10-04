@@ -11,17 +11,13 @@ export const checkpointSize = (checkpoint?: { resources?: Record<RecordKey, numb
 
 export const getWorkload = (
   workload: Type.WorkloadGroup,
-): Type.MetricsWorkload | Type.CheckpointWorkload => {
-  return Object.values(workload).find((val) => !!val);
-};
+): Type.MetricsWorkload | Type.CheckpointWorkload => Object.values(workload).find((val) => !!val);
 
-export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => {
-  return !!workload.checkpoint && workload.checkpoint.state !== Type.CheckpointState.Deleted;
-};
+export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => !!workload.checkpoint
+  && workload.checkpoint.state !== Type.CheckpointState.Deleted;
 
-export const hasCheckpointStep = (step: Type.Step): boolean => {
-  return !!step.checkpoint && step.checkpoint.state !== Type.CheckpointState.Deleted;
-};
+export const hasCheckpointStep = (step: Type.Step): boolean => !!step.checkpoint
+  && step.checkpoint.state !== Type.CheckpointState.Deleted;
 
 export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] => {
   const stepsDict: Record<number, Partial<Type.Step>> = {};

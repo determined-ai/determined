@@ -1,7 +1,8 @@
-import { serverAddress } from 'routes/utils';
-import { paths } from 'routes/utils';
+import { paths, serverAddress } from 'routes/utils';
 import { openBlank } from 'shared/utils/routes';
-import { Command, CommandState, CommandTask, CommandType } from 'types';
+import {
+  Command, CommandState, CommandTask, CommandType,
+} from 'types';
 import { isCommandTask } from 'utils/task';
 
 export interface WaitStatus {
@@ -18,6 +19,8 @@ export const commandToEventUrl = (command: Command | CommandTask): string => {
       break;
     case CommandType.TensorBoard:
       path = `/tensorboard/${command.id}/events?tail=1`;
+      break;
+    default:
       break;
   }
   if (path) path = serverAddress() + path;
