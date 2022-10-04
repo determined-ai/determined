@@ -4,3 +4,4 @@ src/services/api-ts-sdk/
 !.stylelintrc.js
 node_modules
 !.storybook
+*.test.ts

@@ -1,6 +1,10 @@
 module.exports = {
   extends: [
-    './src/shared/configs/eslintrc.js',
+    'airbnb',
+    'airbnb-typescript',
     'plugin:storybook/recommended',
   ],
+  parserOptions: {
+    project: './tsconfig.json'
+  },
 };
