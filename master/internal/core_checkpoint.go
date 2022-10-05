@@ -127,6 +127,7 @@ func (m *Master) getCheckpointImpl(
 	return nil
 }
 
+// nolint:godot
 // @Summary Get a checkpoint's contents in a tgz or zip file.
 // @Tags Checkpoints
 // @ID get-checkpoint
@@ -135,8 +136,6 @@ func (m *Master) getCheckpointImpl(
 // @Param   checkpoint_uuid path string  true  "Checkpoint UUID"
 // @Success 200 {} string ""
 // @Router /checkpoints/{checkpoint_uuid} [get]
-//
-//nolint:godot
 func (m *Master) getCheckpoint(c echo.Context) error {
 	// Get the MIME type. Only a single type is accepted.
 	mimeType := c.Request().Header.Get("Accept")

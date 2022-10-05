@@ -225,7 +225,6 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 //nolint:lll
 //nolint:lll
 //nolint:lll
-//nolint:godot
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -357,7 +356,6 @@ func (m *Master) fetchAggregatedResourceAllocation(
 //nolint:lll
 //nolint:lll
 //nolint:lll
-//nolint:godot
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start  string `query:"start_date"`

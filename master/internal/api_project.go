@@ -373,7 +373,8 @@ func (a *apiServer) GetExperimentGroupByID(id int32) (*projectv1.ExperimentGroup
 }
 
 func (a *apiServer) PostExperimentGroup(
-	ctx context.Context, req *apiv1.PostExperimentGroupRequest) (*apiv1.PostExperimentGroupResponse,
+	ctx context.Context, req *apiv1.PostExperimentGroupRequest) (
+	*apiv1.PostExperimentGroupResponse,
 	error,
 ) {
 	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)
@@ -438,7 +439,8 @@ func (a *apiServer) PatchExperimentGroup(
 }
 
 func (a *apiServer) DeleteExperimentGroup(
-	ctx context.Context, req *apiv1.DeleteExperimentGroupRequest) (*apiv1.DeleteExperimentGroupResponse,
+	ctx context.Context, req *apiv1.DeleteExperimentGroupRequest) (
+	*apiv1.DeleteExperimentGroupResponse,
 	error,
 ) {
 	currProject, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId)

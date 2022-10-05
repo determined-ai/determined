@@ -151,6 +151,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	return checkpointsWithMetric, nil
 }
 
+// nolint:godot
 // @Summary Get individual file from modal definitions for download.
 // @Tags Experiments
 // @ID get-experiment-model-file
@@ -160,8 +161,6 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 // @Param   path query string true "Path to the target file"
 // @Success 200 {} string ""
 // @Router /experiments/{experiment_id}/file/download [get]
-//
-//nolint:godot
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`
@@ -546,13 +545,15 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	g := projectv1.ExperimentGroup{}
 	if params.GroupID == nil {
 		if config.Group() != "" {
-			tmpGroupID, err := m.db.ExperimentGroupByName(int32(projectID), config.Group())
+			tmpGroupID := 0
+			tmpGroupID, err = m.db.ExperimentGroupByName(int32(projectID), config.Group())
 			g.Id = int32(tmpGroupID)
 			if errors.Is(err, db.ErrNotFound) {
 				err = m.db.QueryProto("insert_experiment_group", &g, config.Group(), projectID)
 			}
 			if err != nil {
-				return nil, false, nil, errors.Wrapf(err, errors.Errorf("unable to find or create group").Error())
+				return nil, false, nil, errors.Wrapf(
+					err, errors.Errorf("unable to find or create group").Error())
 			}
 		}
 	} else {

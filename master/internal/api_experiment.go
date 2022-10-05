@@ -467,7 +467,8 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Join("LEFT JOIN experiment_groups g ON e.group_id IS NOT NULL AND e.group_id = g.id AND e.project_id = g.project_id")
+		Join("LEFT JOIN experiment_groups g ON e.group_id IS NOT NULL " +
+			"AND e.group_id = g.id AND e.project_id = g.project_id")
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
@@ -971,7 +972,8 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	madeChanges := false
-	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value && maskContains(mask, "name") {
+	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value &&
+		maskContains(mask, "name") {
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
@@ -980,12 +982,14 @@ func (a *apiServer) PatchExperiment(
 		exp.Name = req.Experiment.Name.Value
 	}
 
-	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value && maskContains(mask, "notes") {
+	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value &&
+		maskContains(mask, "notes") {
 		madeChanges = true
 		exp.Notes = req.Experiment.Notes.Value
 	}
 
-	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value && maskContains(mask, "description") {
+	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value &&
+		maskContains(mask, "description") {
 		madeChanges = true
 		exp.Description = req.Experiment.Description.Value
 	}
@@ -1008,7 +1012,8 @@ func (a *apiServer) PatchExperiment(
 
 	if exp.GroupId != req.Experiment.GroupId && maskContains(mask, "group_id") {
 		if req.Experiment.GroupId != nil {
-			destGroup, err := a.GetExperimentGroupByID(*req.Experiment.GroupId)
+			var destGroup *projectv1.ExperimentGroup
+			destGroup, err = a.GetExperimentGroupByID(*req.Experiment.GroupId)
 			if err != nil {
 				return nil, err
 			}
