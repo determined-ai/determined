@@ -9495,6 +9495,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     errorMessage: string;
+    /**
+     * Optional agent host uid and gid override.
+     * @type {V1AgentUserGroup}
+     * @memberof V1Workspace
+     */
+    agentUserGroup?: V1AgentUserGroup;
 }
 
 /**
