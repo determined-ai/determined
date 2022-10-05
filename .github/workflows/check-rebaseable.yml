@@ -17,6 +17,7 @@ jobs:
         with:
           repository: determined/determined-ee
           fetch-depth: 1 # we only need this branch
+          token: ${{ secrets.DETERMINED_TOKEN }}
       - name: add EE repository remote
         run: |
           git remote add EE github.com:determined-ai/determined-ee
