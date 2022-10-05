@@ -1,0 +1,26 @@
+---
+name: "Check Rebaseable"
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request: {}
+
+jobs:
+  check-rebaseable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: get PR
+        uses: actions/checkout@v3
+        with:
+          repository: determined/determined-ee
+          fetch-depth: 1 # we only need this branch
+      - name: add EE repository remote
+        run: |
+          git remote add EE github.com:determined-ai/determined-ee
+          git fetch EE
+      - name: attempt rebase
+        run: |
+          git rebase EE/master
