@@ -92,13 +92,13 @@ var (
 		ID:          6001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		Webhookid:   6000,
+		WebhookId:   6000,
 	}
 	testWebhookFiveTrigger = Trigger{
 		ID:          7001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		Webhookid:   7000,
+		WebhookId:   7000,
 	}
 	testWebhookFourTriggers = []*Trigger{&testWebhookFourTrigger}
 	testWebhookFiveTriggers = []*Trigger{&testWebhookFiveTrigger}
@@ -106,14 +106,14 @@ var (
 		ID:          1001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		Webhookid:   1000,
+		WebhookId:   1000,
 	}
 	testTriggersOne     = []*Trigger{&testTriggerOne}
 	testTriggerTwoState = Trigger{
 		ID:          2001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		Webhookid:   2000,
+		WebhookId:   2000,
 	}
 	testTriggerTwoMetric = Trigger{
 		ID:          2002,
@@ -122,14 +122,14 @@ var (
 			"metricName":  "validation_accuracy",
 			"metricValue": 0.95,
 		},
-		Webhookid: 2000,
+		WebhookId: 2000,
 	}
 	testTriggersTwo  = []*Trigger{&testTriggerTwoState, &testTriggerTwoMetric}
 	testTriggerThree = Trigger{
 		ID:          3001,
 		TriggerType: TriggerTypeStateChange,
 		Condition:   map[string]interface{}{"state": "COMPLETED"},
-		Webhookid:   3000,
+		WebhookId:   3000,
 	}
 	testTriggersThree = []*Trigger{&testTriggerThree}
 )
