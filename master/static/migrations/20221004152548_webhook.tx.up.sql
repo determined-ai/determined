@@ -1,6 +1,12 @@
+CREATE TYPE public.webhook_type as ENUM (
+  'DEFAULT',
+  'SLACK'
+);
+
 CREATE TABLE webhooks (
   id SERIAL PRIMARY KEY,
-  url TEXT NOT NULL
+  url TEXT NOT NULL,
+  webhook_type public.webhook_type NOT NULL
 );
 
 CREATE TYPE public.trigger_type as ENUM (

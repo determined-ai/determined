@@ -29,29 +29,35 @@ type Webhook struct {
 	ID  WebhookID `bun:"id,pk,autoincrement"`
 	URL string    `bun:"url,notnull"`
 
-	Triggers Triggers `bun:"rel:has-many,join:id=webhook_id"`
+	Triggers    Triggers    `bun:"rel:has-many,join:id=webhook_id"`
+	WebhookType WebhookType `bun:"webhook_type,notnull"`
 }
 
 // WebhookFromProto returns a model Webhook from a proto definition.
 func WebhookFromProto(w *webhookv1.Webhook) Webhook {
 	spew.Dump(w)
 	return Webhook{
-		URL:      w.Url,
-		Triggers: TriggersFromProto(w.Triggers),
+		URL:         w.Url,
+		Triggers:    TriggersFromProto(w.Triggers),
+		WebhookType: WebhookTypeFromProto(w.WebhookType),
 	}
 }
 
 // Proto converts a webhook to its protobuf representation.
 func (w *Webhook) Proto() *webhookv1.Webhook {
 	return &webhookv1.Webhook{
-		Id:       int32(w.ID),
-		Url:      w.URL,
-		Triggers: w.Triggers.Proto(),
+		Id:          int32(w.ID),
+		Url:         w.URL,
+		Triggers:    w.Triggers.Proto(),
+		WebhookType: w.WebhookType.Proto(),
 	}
 }
 
 // WebhookID is the type for Webhook IDs.
 type WebhookID int
+
+// WebhookType is type for the WebhookType enum.
+type WebhookType string
 
 // Triggers is a slice of Trigger objects—primarily useful for its methods.
 type Triggers []*Trigger
@@ -118,6 +124,27 @@ const (
 	TriggerTypeMetricThresholdExceeded TriggerType = "METRIC_THRESHOLD_EXCEEDED"
 )
 
+const (
+	// WebhookTypeDefaultrepresents a default webhook.
+	WebhookTypeDefault WebhookType = "DEFAULT"
+
+	// WebhookTypeSlack represents a slack webhook.
+	WebhookTypeSlack WebhookType = "SLACK"
+)
+
+// WebhookTypeFromProto returns a WebhookType from a proto.
+func WebhookTypeFromProto(w webhookv1.WebhookType) WebhookType {
+	switch w {
+	case webhookv1.WebhookType_WEBHOOK_TYPE_DEFAULT:
+		return WebhookTypeDefault
+	case webhookv1.WebhookType_WEBHOOK_TYPE_SLACK:
+		return WebhookTypeSlack
+	default:
+		// TODO(???): prob don't panic
+		panic(fmt.Errorf("missing mapping for webhook type %s to SQL", w))
+	}
+}
+
 // TriggerTypeFromProto returns a TriggerType from a proto.
 func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 	switch t {
@@ -128,6 +155,18 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 	default:
 		// TODO(???): prob don't panic
 		panic(fmt.Errorf("missing mapping for trigger %s to SQL", t))
+	}
+}
+
+// Proto returns a proto from a WebhookType.
+func (w WebhookType) Proto() webhookv1.WebhookType {
+	switch w {
+	case WebhookTypeDefault:
+		return webhookv1.WebhookType_WEBHOOK_TYPE_DEFAULT
+	case WebhookTypeSlack:
+		return webhookv1.WebhookType_WEBHOOK_TYPE_SLACK
+	default:
+		return webhookv1.WebhookType_WEBHOOK_TYPE_UNSPECIFIED
 	}
 }
 

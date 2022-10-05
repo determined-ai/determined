@@ -25,9 +25,13 @@ func TestWebhooks(t *testing.T) {
 		err = AddWebhook(ctx, &testWebhookFive)
 		require.NoError(t, err, "failure creating webhooks")
 		webhooks, err := GetWebhooks(ctx)
+		webhookFourResponse := getWebhookById(webhooks, testWebhookFour.ID)
 		require.NoError(t, err, "unable to get webhooks")
 		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
 		require.Equal(t, getWebhookIds(webhooks), expectedWebhookIds, "get request returned incorrect webhook Ids")
+		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
+		require.Equal(t, webhookFourResponse.URL, testWebhookFour.URL, "returned webhook url did not match")
+		require.Equal(t, webhookFourResponse.WebhookType, testWebhookFour.WebhookType, "returned webhook type did not match")
 	})
 
 	t.Run("webhook creation should work", func(t *testing.T) {
@@ -60,24 +64,29 @@ func TestWebhooks(t *testing.T) {
 
 var (
 	testWebhookOne = Webhook{
-		ID:  1000,
-		URL: "http://testwebhook.com",
+		ID:          1000,
+		URL:         "http://testwebhook.com",
+		WebhookType: WebhookTypeSlack,
 	}
 	testWebhookTwo = Webhook{
-		ID:  2000,
-		URL: "http://testwebhooktwo.com",
+		ID:          2000,
+		URL:         "http://testwebhooktwo.com",
+		WebhookType: WebhookTypeDefault,
 	}
 	testWebhookThree = Webhook{
-		ID:  3000,
-		URL: "http://testwebhookthree.com",
+		ID:          3000,
+		URL:         "http://testwebhookthree.com",
+		WebhookType: WebhookTypeSlack,
 	}
 	testWebhookFour = Webhook{
-		ID:  6000,
-		URL: "http://twebhook.com",
+		ID:          6000,
+		URL:         "http://twebhook.com",
+		WebhookType: WebhookTypeSlack,
 	}
 	testWebhookFive = Webhook{
-		ID:  7000,
-		URL: "http://twebhooktwo.com",
+		ID:          7000,
+		URL:         "http://twebhooktwo.com",
+		WebhookType: WebhookTypeDefault,
 	}
 	testWebhookFourTrigger = Trigger{
 		ID:          6001,

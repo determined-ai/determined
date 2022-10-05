@@ -5,6 +5,16 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/webhookv1";
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/struct.proto";
 
+// Enum values for expected webhook types.
+enum WebhookType {
+  // Default value
+  WEBHOOK_TYPE_UNSPECIFIED = 0;
+  // For a default webhook
+  WEBHOOK_TYPE_DEFAULT = 1;
+  // For a slack webhook.
+  WEBHOOK_TYPE_SLACK = 2;
+}
+
 // Enum values for expected trigger types.
 enum TriggerType {
   // Default value
@@ -19,8 +29,11 @@ enum TriggerType {
 message Webhook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "id"
-                  "url" ]
+      required: [
+        "id"
+        "url",
+        "webhook_type"
+      ]
     }
   };
   // The id of the webhook.
@@ -29,6 +42,8 @@ message Webhook {
   string url = 2;
   // The triggers of the webhook.
   repeated Trigger triggers = 3;
+  // The type of the webhook.
+  WebhookType webhook_type = 4;
 }
 
 // Representation for a Trigger for a Webhook
