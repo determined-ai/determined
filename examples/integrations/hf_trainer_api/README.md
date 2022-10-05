@@ -8,7 +8,7 @@ enable Determined's distributed training, fault tolerance, checkpointing and met
 * **image_classification.py**: The code from Hugging Face that (1) loads Vision Transformer from Model Hub; (2)
 configure Trainer; (3) uses Determined callback.
 
-The key portion of the code is providing Determined callback to the Trainer in line 413:
+The key portion of the code passing the Determined callback to the Transformers Trainer starts on line 413:
 ```
     det_callback = DetCallback(training_args, filter_metrics=["loss", "accuracy"], tokenizer=feature_extractor)
     trainer.add_callback(det_callback)
@@ -31,7 +31,7 @@ To learn more about DeepSpeed, see [DeepSpeed docs](https://deepspeed.readthedoc
 [HF DeepSpeed integration](https://huggingface.co/docs/transformers/main_classes/deepspeed).
 
 ## Data
-This example uses [beans dataset](https://huggingface.co/datasets/beans).
+This example uses [the beans dataset](https://huggingface.co/datasets/beans).
 
 ## To Run
 If you have not yet installed Determined, installation instructions can be found
