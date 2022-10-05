@@ -3,9 +3,9 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: single
   metric: none
-  max_length: 4 # Number of times the generation pipelie is called
+  max_length: 100 # Number of times the generation pipelie is called
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 4
 max_restarts: 0
 environment:
     environment_variables:
@@ -23,7 +23,7 @@ hyperparameters:
         use_fp16: False
     uuids: []
     call:
-      prompt: a watercolor painting of an astronaut riding a horse
+      prompt: a Van Gogh watercolor painting of a <det-logo>
       rows: 2
       cols: 2
       num_inference_steps: 50
