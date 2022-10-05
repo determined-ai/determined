@@ -18,7 +18,6 @@ const handleActionOne = jest.fn();
 const handleActionTwo = jest.fn();
 
 const DropDownContainer = () => {
-
   const dropDownOnTrigger = () => {
     return {
       [TestAction.ActionOne]: () => handleActionOne(),
@@ -28,17 +27,15 @@ const DropDownContainer = () => {
 
   return (
     <ActionDropdown<TestAction>
-      actionOrder={[
-        TestAction.ActionOne,
-        TestAction.ActionTwo,
-      ]}
+      actionOrder={[TestAction.ActionOne, TestAction.ActionTwo]}
       id={'test-id'}
       kind="test"
-      onError={() => { return; }}
+      onError={() => {
+        return;
+      }}
       onTrigger={dropDownOnTrigger()}
     />
   );
-
 };
 
 const setup = () => {

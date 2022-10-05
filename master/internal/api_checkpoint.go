@@ -15,6 +15,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
@@ -66,18 +67,6 @@ func (a *apiServer) DeleteCheckpoints(
 	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
 
 	taskSpec := *a.m.taskSpec
-	agentUserGroup, err := a.m.db.AgentUserGroup(curUser.ID)
-	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"cannot find user and group information for user %s: %s",
-			curUser.Username,
-			err,
-		)
-	}
-	if agentUserGroup == nil {
-		agentUserGroup = &a.m.config.Security.DefaultTask
-	}
 
 	jobID := model.NewJobID()
 	if err = a.m.db.AddJob(&model.Job{
@@ -94,8 +83,13 @@ func (a *apiServer) DeleteCheckpoints(
 	}
 
 	for _, expIDcUUIDs := range groupCUUIDsByEIDs {
-		exp, eErr := a.m.db.ExperimentByID(expIDcUUIDs.ExperimentID)
-		if eErr != nil {
+		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.ExperimentID)
+		if err != nil {
+			return nil, err
+		}
+
+		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exp)
+		if err != nil {
 			return nil, err
 		}
 

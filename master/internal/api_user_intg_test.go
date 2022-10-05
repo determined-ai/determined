@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -66,6 +67,7 @@ func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 			taskSpec: &tasks.TaskSpec{},
 		},
 	}
+	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
 
 	userModel, err := user.UserByUsername("admin")
 	require.NoError(t, err, "Couldn't get admin user")
@@ -145,13 +147,25 @@ func TestAuthzPostUser(t *testing.T) {
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUserError")
 	authzUsers.On("CanCreateUser", curUser,
 		model.User{Username: "admin", Admin: true},
-		&model.AgentUserGroup{UID: 5, GID: 6}).Return(fmt.Errorf("canCreateUserError")).Once()
+		&model.AgentUserGroup{
+			UID:   5,
+			GID:   6,
+			User:  "five",
+			Group: "six",
+		}).Return(fmt.Errorf("canCreateUserError")).Once()
 
+	var five int32 = 5
+	var six int32 = 6
 	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{
 		User: &userv1.User{
-			Username:       "admin",
-			Admin:          true,
-			AgentUserGroup: &userv1.AgentUserGroup{AgentUid: 5, AgentGid: 6},
+			Username: "admin",
+			Admin:    true,
+			AgentUserGroup: &userv1.AgentUserGroup{
+				AgentUid:   &five,
+				AgentGid:   &six,
+				AgentUser:  ptrs.Ptr("five"),
+				AgentGroup: ptrs.Ptr("six"),
+			},
 		},
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())

@@ -15,9 +15,9 @@ interface Props {
 const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Props) => {
   const container = useRef<HTMLDivElement>(null);
   const resize = useResize(container);
-  const [ isCollapsed, setIsCollapsed ] = useState(false);
-  const [ initVisible, setInitVisible ] = useState(true);
-  const classes = [ css.base ];
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [initVisible, setInitVisible] = useState(true);
+  const classes = [css.base];
 
   if (hasFiltersApplied) classes.push(css.filtersApplied);
   if (isCollapsed) {
@@ -35,7 +35,7 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
       setInitVisible(false);
       setIsCollapsed(true);
     }
-  }, [ isCollapsed, resize.height ]);
+  }, [isCollapsed, resize.height]);
 
   const content = <div className={css.content}>{children}</div>;
 
@@ -51,7 +51,9 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
           <Button className={css.filtersButtonDesktop}>Filters</Button>
           <Button className={css.filtersButtonMobile} icon={<Icon name="filter" />} />
         </Dropdown>
-      ) : content}
+      ) : (
+        content
+      )}
     </div>
   );
 };

@@ -16,13 +16,17 @@
     padding: 0;
     width: 100%;
 
-    &:hover { color: var(--theme-status-active); }
+    &:hover {
+      color: var(--theme-status-active);
+    }
   }
   button:disabled,
   button[disabled] {
     color: var(--theme-float-on);
     cursor: not-allowed;
 
-    &:hover { color: var(--theme-ix-on-active); }
+    &:hover {
+      color: var(--theme-ix-on-active);
+    }
   }
 }

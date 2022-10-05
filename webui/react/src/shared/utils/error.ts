@@ -1,6 +1,6 @@
 import rootLogger from 'shared/utils/Logger';
 
-import { isString } from './data';
+import { isObject, isString } from './data';
 import { LoggerInterface } from './Logger';
 
 export const ERROR_NAMESPACE = 'EH';
@@ -80,22 +80,24 @@ export class DetError extends Error implements DetErrorOptions {
   /** the wrapped error if one was provided. */
   sourceErr: unknown;
 
-  constructor(e?: unknown, options: DetErrorOptions = {}) {
-    const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  constructor(e?: any, options: DetErrorOptions = {}) {
+    const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
-    const eOpts: DetErrorOptions = isDetError(e) ? {
-      id: e.id,
-      isUserTriggered: e.isUserTriggered,
-      level: e.level,
-      logger: e.logger,
-      payload: e.payload,
-      publicMessage: e.publicMessage,
-      publicSubject: e.publicSubject,
-      silent: e.silent,
-      type: e.type,
-    } : {};
+    const eOpts: Partial<DetErrorOptions> = {};
+    if (isObject(e)) {
+      if ('id' in e && e.id != null) eOpts.id = e.id;
+      if ('isUserTriggered' in e && e.isUserTriggered != null)
+        eOpts.isUserTriggered = e.isUserTriggered;
+      if ('level' in e && e.level != null) eOpts.level = e.level;
+      if ('logger' in e && e.logger != null) eOpts.logger = e.logger;
+      if ('payload' in e && e.payload != null) eOpts.payload = e.payload;
+      if ('publicMessage' in e && e.publicMessage != null) eOpts.publicMessage = e.publicMessage;
+      if ('silent' in e && e.silent != null) eOpts.silent = e.silent;
+      if ('type' in e && e.type != null) eOpts.type = e.type;
+    }
 
     this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
     this.isHandled = false;

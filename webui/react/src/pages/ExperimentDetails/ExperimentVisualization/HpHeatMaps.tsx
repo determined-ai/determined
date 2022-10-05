@@ -20,8 +20,12 @@ import { Primitive, Range } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
-  ExperimentBase, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Scale,
+  ExperimentBase,
+  HyperparameterType,
+  MetricName,
+  MetricType,
+  metricTypeParamMap,
+  Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { metricNameToStr } from 'utils/metric';
@@ -36,7 +40,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
-  selectedScale: Scale
+  selectedScale: Scale;
   selectedView: ViewType;
 }
 
@@ -61,9 +65,9 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
 };
 
-const parseHpKey = (key: string): [ hParam1: string, hParam2: string ] => {
+const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
   const parts = key.split(':');
-  return [ parts[0], parts[1] ];
+  return [parts[0], parts[1]];
 };
 
 const HpHeatMaps: React.FC<Props> = ({
@@ -80,26 +84,28 @@ const HpHeatMaps: React.FC<Props> = ({
   const { ui } = useStore();
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
-  const [ hasLoaded, setHasLoaded ] = useState(false);
-  const [ chartData, setChartData ] = useState<HpData>();
-  const [ pageError, setPageError ] = useState<Error>();
-  const [ activeHParam, setActiveHParam ] = useState<string>();
-  const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [chartData, setChartData] = useState<HpData>();
+  const [pageError, setPageError] = useState<Error>();
+  const [activeHParam, setActiveHParam] = useState<string>();
+  const [galleryHeight, setGalleryHeight] = useState<number>(450);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
 
   const smallerIsBetter = useMemo(() => {
-    if (selectedMetric.type === MetricType.Validation &&
-        selectedMetric.name === experiment.config.searcher.metric) {
+    if (
+      selectedMetric.type === MetricType.Validation &&
+      selectedMetric.name === experiment.config.searcher.metric
+    ) {
       return experiment.config.searcher.smallerIsBetter;
     }
     return undefined;
-  }, [ experiment.config.searcher, selectedMetric ]);
+  }, [experiment.config.searcher, selectedMetric]);
 
   const colorScale = useMemo(() => {
     return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
-  }, [ chartData, smallerIsBetter, ui.theme ]);
+  }, [chartData, smallerIsBetter, ui.theme]);
 
   const chartProps = useMemo(() => {
     if (!chartData) return undefined;
@@ -111,8 +117,8 @@ const HpHeatMaps: React.FC<Props> = ({
     const rgbaFill1 = clone(rgbaStroke1);
     rgbaFill0.a = 0.3;
     rgbaFill1.a = 0.3;
-    const fill = [ rgba2str(rgbaFill0), rgba2str(rgbaFill1) ].join(' ');
-    const stroke = [ rgba2str(rgbaStroke0), rgba2str(rgbaStroke1) ].join(' ');
+    const fill = [rgba2str(rgbaFill0), rgba2str(rgbaFill1)].join(' ');
+    const stroke = [rgba2str(rgbaStroke0), rgba2str(rgbaStroke1)].join(' ');
 
     selectedHParams.forEach((hParam1) => {
       selectedHParams.forEach((hParam2) => {
@@ -126,12 +132,14 @@ const HpHeatMaps: React.FC<Props> = ({
         const isYLogarithmic = chartData?.hpLogScales[hParam1];
         const isXCategorical = xHpLabels?.length !== 0;
         const isYCategorical = yHpLabels?.length !== 0;
-        const xScaleKey = isXCategorical ? 'xCategorical' : (isXLogarithmic ? 'xLog' : 'x');
-        const yScaleKey = isYCategorical ? 'yCategorical' : (isYLogarithmic ? 'yLog' : 'y');
+        const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
+        const yScaleKey = isYCategorical ? 'yCategorical' : isYLogarithmic ? 'yLog' : 'y';
         const xSplits = isXCategorical
-          ? new Array(xHpLabels.length).fill(0).map((x, i) => i) : undefined;
+          ? new Array(xHpLabels.length).fill(0).map((x, i) => i)
+          : undefined;
         const ySplits = isYCategorical
-          ? new Array(yHpLabels.length).fill(0).map((x, i) => i) : undefined;
+          ? new Array(yHpLabels.length).fill(0).map((x, i) => i)
+          : undefined;
         const xValues = isXCategorical ? xHpLabels : undefined;
         const yValues = isYCategorical ? yHpLabels : undefined;
 
@@ -153,23 +161,16 @@ const HpHeatMaps: React.FC<Props> = ({
               { scale: yScaleKey, splits: ySplits, values: yValues },
             ],
             cursor: { drag: { setScale: false, x: false, y: false } },
-            series: [ {}, { fill, stroke } ],
+            series: [{}, { fill, stroke }],
             title,
           },
-          tooltipLabels: [
-            xLabel,
-            yLabel,
-            null,
-            metricNameToStr(selectedMetric),
-            null,
-            'trial ID',
-          ],
+          tooltipLabels: [xLabel, yLabel, null, metricNameToStr(selectedMetric), null, 'trial ID'],
         };
       });
     });
 
     return props;
-  }, [ chartData, colorScale, selectedHParams, selectedMetric ]);
+  }, [chartData, colorScale, selectedHParams, selectedMetric]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam(generateHpKey(hParam1, hParam2));
@@ -180,7 +181,7 @@ const HpHeatMaps: React.FC<Props> = ({
   const handleGalleryNext = useCallback(() => {
     setActiveHParam((prev) => {
       if (!prev) return prev;
-      const [ hParam1, hParam2 ] = parseHpKey(prev);
+      const [hParam1, hParam2] = parseHpKey(prev);
       const index0 = selectedHParams.indexOf(hParam1);
       const index1 = selectedHParams.indexOf(hParam2);
       if (index0 === -1 || index1 === -1) return prev;
@@ -192,12 +193,12 @@ const HpHeatMaps: React.FC<Props> = ({
         return generateHpKey(selectedHParams[index0], selectedHParams[index1 + 1]);
       }
     });
-  }, [ selectedHParams ]);
+  }, [selectedHParams]);
 
   const handleGalleryPrevious = useCallback(() => {
     setActiveHParam((prev) => {
       if (!prev) return prev;
-      const [ hParam1, hParam2 ] = parseHpKey(prev);
+      const [hParam1, hParam2] = parseHpKey(prev);
       const index0 = selectedHParams.indexOf(hParam1);
       const index1 = selectedHParams.indexOf(hParam2);
       if (index0 === -1 || index1 === -1) return prev;
@@ -209,7 +210,7 @@ const HpHeatMaps: React.FC<Props> = ({
         return generateHpKey(selectedHParams[index0], selectedHParams[index1 - 1]);
       }
     });
-  }, [ selectedHParams ]);
+  }, [selectedHParams]);
 
   useEffect(() => {
     if (ui.isPageHidden) return;
@@ -239,7 +240,7 @@ const HpHeatMaps: React.FC<Props> = ({
         const hpLogScaleMap: Record<string, boolean> = {};
         const hpMetrics: Record<string, (number | null)[]> = {};
         const hpValues: HpValue = {};
-        const metricRange: Range<number> = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
+        const metricRange: Range<number> = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
         event.trials.forEach((trial) => {
           if (!isObject(trial.hparams)) return;
@@ -315,10 +316,11 @@ const HpHeatMaps: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [
@@ -330,7 +332,7 @@ const HpHeatMaps: React.FC<Props> = ({
     ui.isPageHidden,
   ]);
 
-  useEffect(() => setGalleryHeight(resize.height), [ resize ]);
+  useEffect(() => setGalleryHeight(resize.height), [resize]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -350,12 +352,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section
-        bodyBorder
-        bodyNoPadding
-        bodyScroll
-        filters={filters}
-        loading={!hasLoaded}>
+      <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           {chartProps ? (
             <>
@@ -370,19 +367,21 @@ const HpHeatMaps: React.FC<Props> = ({
                   border={true}
                   minItemWidth={resize.width > 320 ? 350 : 270}
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
-                  {selectedHParams.map((hParam1) => selectedHParams.map((hParam2) => {
-                    const key = generateHpKey(hParam1, hParam2);
-                    return (
-                      <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
-                        <UPlotScatter
-                          colorScaleDistribution={selectedScale}
-                          data={chartProps[key].data}
-                          options={chartProps[key].options}
-                          tooltipLabels={chartProps[key].tooltipLabels}
-                        />
-                      </div>
-                    );
-                  }))}
+                  {selectedHParams.map((hParam1) =>
+                    selectedHParams.map((hParam2) => {
+                      const key = generateHpKey(hParam1, hParam2);
+                      return (
+                        <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                          <UPlotScatter
+                            colorScaleDistribution={selectedScale}
+                            data={chartProps[key].data}
+                            options={chartProps[key].options}
+                            tooltipLabels={chartProps[key].tooltipLabels}
+                          />
+                        </div>
+                      );
+                    }),
+                  )}
                 </Grid>
               </div>
             </>

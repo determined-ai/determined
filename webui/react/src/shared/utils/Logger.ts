@@ -25,10 +25,15 @@ const generateNamespace = (parts: string[], separator = NAMEPACE_SEPARATOR) => {
   return parts.join(separator);
 };
 
+const loggers: Record<string, debug.Debugger> = {};
+
 /** returns the underlying Debug logger. */
-export const getLogger = (namespace: string, level: Level): (...msg: unknown[]) => void => {
-  const logger = debug(`${namespace}:${level}`);
-  return logger;
+export const getLogger = (namespace: string, level: Level): ((...msg: unknown[]) => void) => {
+  const key = `${namespace}:${level}`;
+  if (!loggers[key]) {
+    loggers[key] = debug(key);
+  }
+  return loggers[key];
 };
 
 export interface LoggerInterface {
@@ -51,7 +56,7 @@ class Logger implements LoggerInterface {
   }
 
   extend(...namespace: string[]): Logger {
-    return new Logger(generateNamespace([ this.namespace, ...namespace ]));
+    return new Logger(generateNamespace([this.namespace, ...namespace]));
   }
 
   debug(...msg: unknown[]): void {

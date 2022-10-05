@@ -17,18 +17,47 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 var errUserNotFound = status.Error(codes.NotFound, "user not found")
 
+func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
+	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
+		return status.Error(
+			codes.InvalidArgument,
+			"AgentUid, AgentGid, AgentUser and AgentGroup cannot be empty",
+		)
+	}
+	if *aug.AgentUser == "" || *aug.AgentGroup == "" {
+		return status.Error(
+			codes.InvalidArgument,
+			"AgentUser and AgentGroup names cannot be empty",
+		)
+	}
+
+	return nil
+}
+
+// TODO(ilia): We need null.Int32.
+func i64Ptr2i32(v *int64) *int32 {
+	if v == nil {
+		return nil
+	}
+
+	return ptrs.Ptr(int32(*v))
+}
+
 func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	var agentUserGroup *userv1.AgentUserGroup
-	if user.AgentUID.Valid || user.AgentGID.Valid {
+	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
 		agentUserGroup = &userv1.AgentUserGroup{
-			AgentUid: int32(user.AgentUID.ValueOrZero()),
-			AgentGid: int32(user.AgentGID.ValueOrZero()),
+			AgentUid:   i64Ptr2i32(user.AgentUID.Ptr()),
+			AgentGid:   i64Ptr2i32(user.AgentGID.Ptr()),
+			AgentUser:  user.AgentUser.Ptr(),
+			AgentGroup: user.AgentGroup.Ptr(),
 		}
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
@@ -165,9 +194,22 @@ func (a *apiServer) PostUser(
 
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
+		aug := req.User.AgentUserGroup
+		if err := validateProtoAgentUserGroup(aug); err != nil {
+			return nil, err
+		}
+
 		agentUserGroup = &model.AgentUserGroup{
-			UID: int(req.User.AgentUserGroup.AgentUid),
-			GID: int(req.User.AgentUserGroup.AgentGid),
+			UID:   int(*req.User.AgentUserGroup.AgentUid),
+			GID:   int(*req.User.AgentUserGroup.AgentGid),
+			User:  *req.User.AgentUserGroup.AgentUser,
+			Group: *req.User.AgentUserGroup.AgentGroup,
+		}
+		if agentUserGroup.User == "" || agentUserGroup.Group == "" {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				"AgentUser and AgentGroup names cannot be empty",
+			)
 		}
 	}
 
@@ -332,10 +374,15 @@ func (a *apiServer) PatchUser(
 	}
 
 	var ug *model.AgentUserGroup
-	if pug := req.User.AgentUserGroup; pug != nil {
+	if aug := req.User.AgentUserGroup; aug != nil {
+		if err = validateProtoAgentUserGroup(aug); err != nil {
+			return nil, err
+		}
 		ug = &model.AgentUserGroup{
-			UID: int(req.User.AgentUserGroup.AgentUid),
-			GID: int(req.User.AgentUserGroup.AgentGid),
+			UID:   int(*req.User.AgentUserGroup.AgentUid),
+			GID:   int(*req.User.AgentUserGroup.AgentGid),
+			User:  *req.User.AgentUserGroup.AgentUser,
+			Group: *req.User.AgentUserGroup.AgentGroup,
 		}
 		if err = user.AuthZProvider.Get().
 			CanSetUsersAgentUserGroup(*curUser, targetUser, *ug); err != nil {

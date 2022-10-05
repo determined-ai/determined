@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -141,14 +142,11 @@ func newExperiment(m *Master, expModel *model.Experiment, taskSpec *tasks.TaskSp
 		telemetry.ReportExperimentCreated(m.system, expModel)
 	}
 
-	agentUserGroup, err := m.db.AgentUserGroup(*expModel.OwnerID)
+	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
 	if err != nil {
 		return nil, err
 	}
 
-	if agentUserGroup == nil {
-		agentUserGroup = &m.config.Security.DefaultTask
-	}
 	taskSpec.AgentUserGroup = agentUserGroup
 
 	return &experiment{

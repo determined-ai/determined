@@ -74,6 +74,24 @@ def main() -> int:
             )
             return 1
 
+    # Slurm/PBS: Hack to refresh the working directory using the softlink in the
+    # current container.  Each container's "/run/determined/workdir" is actually
+    # a symlink to a mounted shared directory on the host whose path contains
+    # "*/procs/${SLURM_PROCID}/run/determined/workdir". "os.getcwd()" returns
+    # the real path pointed to by the symlink, instead of the symlink itself.
+    # Because the chief is using "os.getcwd()" to get the working directory, it
+    # is propagating its rank-specific directory to all the workers, causing the
+    # workers' working directory to be set to "*/procs/0/run/determined/workdir".
+    # This results in collisions when the workers are downloading the dataset,
+    # because all the workers are downloading to the same directory.  Each worker
+    # needs to refresh its working directory by getting the real path of the
+    # symlink pointed to by "/run/determined/workdir" to its own working
+    # directory (e.g., "*/procs/1/run/determined/workdir",
+    # "*/procs/2/run/determined/workdir", and so on).
+    cwd = os.getcwd()
+    if cwd.endswith("/run/determined/workdir"):
+        os.chdir("/run/determined/workdir")
+
     proc = subprocess.Popen(args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with det.util.forward_signals(proc):
         with contextlib.ExitStack() as exit_stack:

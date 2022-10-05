@@ -20,10 +20,27 @@ import (
 )
 
 var (
-	bunMutex  sync.Mutex
-	theOneBun *bun.DB
-	tokenKeys *model.AuthTokenKeypair
+	bunMutex         sync.Mutex
+	theOneBun        *bun.DB
+	modelsToRegister []interface{}
+	tokenKeys        *model.AuthTokenKeypair
 )
+
+const id = "id"
+
+// RegisterModel registers a model in Bun or, if theOneBun is not yet initialized,
+// sets it up to be registered once initialized. It's generally best to pass a nil
+// pointer of your model's type as argument m.
+func RegisterModel(m interface{}) {
+	bunMutex.Lock()
+	defer bunMutex.Unlock()
+
+	if theOneBun != nil {
+		theOneBun.RegisterModel(m)
+	} else {
+		modelsToRegister = append(modelsToRegister, m)
+	}
+}
 
 func initTheOneBun(db *sql.DB) {
 	bunMutex.Lock()
@@ -34,6 +51,11 @@ func initTheOneBun(db *sql.DB) {
 		)
 	}
 	theOneBun = bun.NewDB(db, pgdialect.New())
+
+	for _, m := range modelsToRegister {
+		theOneBun.RegisterModel(m)
+	}
+	modelsToRegister = nil
 
 	// This will print every query that runs.
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
@@ -89,13 +111,42 @@ func PaginateBun(
 	limit int,
 ) *bun.SelectQuery {
 	if orderColumn == "" {
-		orderColumn = "id"
+		orderColumn = id
 	}
 	if len(direction) == 0 {
 		direction = SortDirectionAsc
 	}
 	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
+
 	query = query.Order(orderExp)
+
+	query = query.Offset(offset)
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	return query
+}
+
+// PaginateBunUnsafe is a version of PaginateBun that
+// allows an arbitrary order expression like `metrics->>'loss'`.
+func PaginateBunUnsafe(
+	query *bun.SelectQuery,
+	orderColumn string,
+	direction SortDirection,
+	offset,
+	limit int,
+) *bun.SelectQuery {
+	if orderColumn == "" {
+		orderColumn = id
+	}
+	if len(direction) == 0 {
+		direction = SortDirectionAsc
+	}
+	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
+
+	query = query.OrderExpr(orderExp)
 
 	query = query.Offset(offset)
 

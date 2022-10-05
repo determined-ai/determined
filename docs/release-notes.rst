@@ -10,6 +10,49 @@
  Version 0.19
 **************
 
+Version 0.19.4
+==============
+
+**Release Date:** September 22, 2022
+
+**Breaking Changes**
+
+-  ``det deploy aws``: Remove ``--deployment-type=vpc`` option. Please use ``efs`` or ``fsx``
+   deployment types instead.
+
+**API Changes**
+
+-  The ``STATE_ACTIVE`` state for experiments and trials is now divided into four sub-states:
+   ``STATE_QUEUED``, ``STATE_PULLING``, ``STATE_STARTING``, and ``STATE_RUNNING``. Queries to
+   ``GetExperimentsRequest`` that filter by state continue to use ``STATE_ACTIVE``.
+
+-  The possible states of tasks have been adjusted to match those of experiments and trials. The
+   previous ``STATE_PENDING`` and ``STATE_ASSIGNED`` are now ``STATE_QUEUED``.
+
+**Bug Fixes**
+
+-  Checkpoints: Fixed a bug where operations that listed checkpoints could sometimes return the same
+   checkpoint multiple times.
+
+Version 0.19.3
+==============
+
+**Release Date:** September 09, 2022
+
+**Improvements**
+
+-  Slurm: Singularity containers may now use AMD ROCm GPUs.
+-  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler.
+-  Kubernetes: The UID and GID of Fluent Bit logging sidecars may now be configured on a
+   cluster-wide basis.
+
+**New Features**
+
+-  Example: Allow training of models that do not fit into GPU memory using DeepSpeed ZeRO Stage 3
+   with CPU offloading.
+-  Kubernetes: Allow the UID and GID of Fluent Bit logging sidecars to be configured on a
+   cluster-wide basis.
+
 Version 0.19.2
 ==============
 
@@ -31,6 +74,9 @@ Version 0.19.2
 
 -  CLI: ``det job list`` will now return all jobs by default instead of a single API results page.
    Use ``--pages=1`` option for the old behavior.
+
+-  The ``/api/v1/trials/:id`` endpoint no longer returns the ``workloads`` attribute. Workloads
+   should instead be retrieved from the paginated ``/api/v1/trials/:id/workloads`` endpoint.
 
 **Bug Fixes**
 
@@ -337,6 +383,15 @@ Version 0.18.1
    -  Enabling or disabling a slot.
 
 -  Logging: Ensure logs for very short tasks are not truncated in Kubernetes.
+
+-  Web: Centralize sidebar options ``Cluster``, ``Job Queues``, and ``Cluster Logs`` into
+   ``Cluster`` page for a simplified layout.
+
+-  Web: In order to provide a more precise view of resource pools, new fields like ``accelerator``
+   and ``warm slots`` have been added.
+
+-  Web: Clicking on resource pool cards will lead to a detail page, which also includes a ``Stats``
+   tab showing average queued time by day.
 
 **Breaking Changes**
 

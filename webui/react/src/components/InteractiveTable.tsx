@@ -8,19 +8,24 @@ import React, {
   MutableRefObject,
   useCallback,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
-import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
-import { throttle } from 'throttle-debounce';
+import {
+  DraggableCore,
+  DraggableData,
+  DraggableEvent,
+  DraggableEventHandler,
+} from 'react-draggable';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, UnknownRecord } from 'shared/types';
+import { isEqual } from 'shared/utils/data';
 
 import css from './InteractiveTable.module.scss';
 import SkeletonTable from './Skeleton/SkeletonTable';
@@ -34,16 +39,16 @@ export const onRightClickableCell = (): React.HTMLAttributes<HTMLElement> =>
 
 export interface InteractiveTableSettings {
   /**
-     * ColumnWidths: Array of column widths, corresponding to columns array below
-     */
+   * ColumnWidths: Array of column widths, corresponding to columns array below
+   */
   columnWidths: number[];
   /**
-     * Columns: Array of column names
-     */
+   * Columns: Array of column names
+   */
   columns: string[];
   /**
-     * Row: Array of selected row IDs
-     */
+   * Row: Array of selected row IDs
+   */
   row?: number[] | string[];
   sortDesc: boolean;
   sortKey?: Primitive;
@@ -57,7 +62,7 @@ const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
   index?: number;
-}
+};
 export interface ContextMenuProps<RecordType> {
   onVisibleChange: (visible: boolean) => void;
   record: RecordType;
@@ -76,10 +81,11 @@ export type ColumnDefs<ColumnName extends string, RecordType> = Record<
 interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps<RecordType>>;
   areRowsSelected?: boolean;
-  columns: ColumnDef<RecordType>[],
-  containerRef: MutableRefObject<HTMLElement | null>,
+  columns: ColumnDef<RecordType>[];
+  containerRef: MutableRefObject<HTMLElement | null>;
+  numOfPinned?: number;
   settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings<InteractiveTableSettings>
+  updateSettings: UpdateSettings<InteractiveTableSettings>;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
@@ -92,20 +98,22 @@ interface RowProps<RecordType> {
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
+  index: number;
+  numOfPinned?: number;
   record: RecordType;
 }
 
 interface HeaderCellProps {
   className: string;
   columnName: string;
-  dragState : DragState;
+  dragState: DragState;
   dropLeftStyle: CSSProperties;
   dropRightStyle: CSSProperties;
   filterActive: boolean;
   index: number;
   isResizing: boolean;
   moveColumn: (source: number, destination: number) => void;
-  onResize: DraggableEventHandler;
+  onResize: (e: DraggableEvent, data: DraggableData) => number;
   onResizeStart: DraggableEventHandler;
   onResizeStop: DraggableEventHandler;
   title: unknown;
@@ -118,63 +126,27 @@ interface CellProps {
   isCellRightClickable?: boolean;
 }
 
+interface RightClickableCellProps {
+  onContextMenu: (e: React.MouseEvent) => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}
+
+const RightClickableRowContext = createContext({});
+
 const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
   return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
 };
 
-const RightClickableRowContext = createContext({});
-
-const Row: Row = ({
-  className,
-  children,
-  record,
-  ContextMenu,
-  areRowsSelected,
-  ...props
-}) => {
-  const classes = [ className, css.row ];
-
-  const [ rowHovered, setRowHovered ] = useState(false);
-  const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
-  const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
-
-  if (areRowsSelected) {
-    return <tr className={classes.join(' ')} {...props}>{children}</tr>;
-  }
-
-  const rightClickableCellProps = {
-    onContextMenu: (e : React.MouseEvent) => e.stopPropagation(),
-    onMouseEnter: () => setRightClickableCellHovered(true),
-    onMouseLeave: () => setRightClickableCellHovered(false),
-  };
-
-  const rowContextMenuTriggerableOrOpen =
-    (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
-
-  if (rowContextMenuTriggerableOrOpen) {
-    classes.push('ant-table-row-selected');
-  }
-  return (record && ContextMenu) ? (
-    <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
-      <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
-        <tr
-          className={classes.join(' ')}
-          onMouseEnter={() => setRowHovered(true)}
-          onMouseLeave={() => setRowHovered(false)}
-          {...props}>
-          {children}
-        </tr>
-      </ContextMenu>
-    </RightClickableRowContext.Provider>
-  ) : (
-    <tr className={classes.join(' ')} {...props}>{children}</tr>
-  );
-};
-
 const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps) => {
   const rightClickableCellProps = useContext(RightClickableRowContext);
-  const classes = [ className, css.cell ];
-  if (!isCellRightClickable) return <td className={classes.join(' ')} {...props}>{children}</td>;
+  const classes = [className, css.cell];
+  if (!isCellRightClickable)
+    return (
+      <td className={classes.join(' ')} {...props}>
+        {children}
+      </td>
+    );
   return (
     <td className={classes.join(' ')} {...props}>
       <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
@@ -183,6 +155,82 @@ const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps
     </td>
   );
 };
+
+const Row: Row = ({
+  className,
+  children,
+  record,
+  ContextMenu,
+  areRowsSelected,
+  index,
+  numOfPinned,
+  ...props
+}) => {
+  const classes = [className, css.row];
+
+  const [rowHovered, setRowHovered] = useState(false);
+  const [rightClickableCellHovered, setRightClickableCellHovered] = useState(false);
+  const [contextMenuOpened, setContextMenuOpened] = useState(false);
+  const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
+
+  const rightClickableCellProps: RightClickableCellProps = {
+    onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
+    onMouseEnter: () => {
+      if (!rightClickableCellHovered) setRightClickableCellHovered(true);
+    },
+    onMouseLeave: () => {
+      if (rightClickableCellHovered) setRightClickableCellHovered(false);
+    },
+  };
+
+  if (areRowsSelected) {
+    return (
+      <tr className={classes.join(' ')} {...props}>
+        {children}
+      </tr>
+    );
+  }
+
+  const rowContextMenuTriggerableOrOpen =
+    (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
+
+  if (rowContextMenuTriggerableOrOpen) {
+    classes.push('ant-table-row-selected');
+  }
+
+  if (isPinned && numOfPinned === index + 1) {
+    classes.push(css.lastPinnedRow);
+  }
+
+  return record && ContextMenu ? (
+    <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
+      <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
+        <tr
+          className={classes.join(' ')}
+          onMouseEnter={() => {
+            if (!rowHovered) setRowHovered(true);
+          }}
+          onMouseLeave={() => {
+            if (rowHovered) setRowHovered(false);
+          }}
+          {...props}
+          style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
+          {children}
+        </tr>
+      </ContextMenu>
+    </RightClickableRowContext.Provider>
+  ) : (
+    <tr className={classes.join(' ')} {...props}>
+      {children}
+    </tr>
+  );
+};
+
+const ResizeShadow: React.FC<{ display: 'none' | 'block'; x: number }> = React.memo(
+  ({ x, display }) => {
+    return <span className={css.resizeShadow} style={{ display, left: x, position: 'absolute' }} />;
+  },
+);
 
 const HeaderCell = ({
   onResize,
@@ -202,28 +250,36 @@ const HeaderCell = ({
   ...props
 }: HeaderCellProps) => {
   const resizingRef = useRef<HTMLDivElement>(null);
+  const [xValue, setXValue] = useState(0);
+  const [shadowVisibility, setShadowVisibility] = useState<'none' | 'block'>('none');
 
-  const headerCellClasses = [ css.headerCell ];
-  const dropTargetClasses = [ css.dropTarget ];
+  const headerCellClasses = [css.headerCell];
+  const dropTargetClasses = [css.dropTarget];
 
-  const [ , drag ] = useDrag({
+  const [, drag] = useDrag({
     canDrag: () => !isResizing,
     item: { index },
     type: SOURCE_TYPE,
   });
 
-  const [ { isOver }, drop ] = useDrop({
+  const [{ isOver }, drop] = useDrop({
     accept: SOURCE_TYPE,
     canDrop: (_, monitor) => {
-      const dragItem = (monitor.getItem() || {});
+      const dragItem = monitor.getItem() || {};
       const dragIndex = dragItem?.index;
       const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-      const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
+      const internalDragState = (() => {
+        if (!deltaX) return 'notDragging';
+
+        if (deltaX > 0) return 'draggingRight';
+
+        return 'draggingLeft';
+      })();
       if (
         dragIndex == null ||
         dragIndex === index ||
-        (dragState === 'draggingRight' && dragIndex > index) ||
-        (dragState === 'draggingLeft' && dragIndex < index)
+        (internalDragState === 'draggingRight' && dragIndex > index) ||
+        (internalDragState === 'draggingLeft' && dragIndex < index)
       ) {
         return false;
       }
@@ -255,15 +311,27 @@ const HeaderCell = ({
       />
       <DraggableCore
         nodeRef={resizingRef}
-        onDrag={onResize}
-        onStart={onResizeStart}
-        onStop={onResizeStop}>
+        onDrag={(e, data) => {
+          const minWidth = onResize(e, data);
+          const newWidth = data.x < minWidth ? minWidth : data.x;
+
+          if (newWidth !== xValue) setXValue(newWidth);
+        }}
+        onStart={(e, data) => {
+          onResizeStart(e, data);
+          setShadowVisibility('block');
+        }}
+        onStop={(e, data) => {
+          onResizeStop(e, data);
+          setShadowVisibility('none');
+        }}>
         <span
           className={css.columnResizeHandle}
           ref={resizingRef}
           onClick={(e) => e.stopPropagation()}
         />
       </DraggableCore>
+      <ResizeShadow display={shadowVisibility} x={xValue} />
       <span
         className={dropTargetClasses.join(' ')}
         ref={drop}
@@ -271,8 +339,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? dropRightStyle
             : dragState === 'draggingLeft'
-              ? dropLeftStyle
-              : {}
+            ? dropLeftStyle
+            : {}
         }
       />
       <span
@@ -281,8 +349,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? { right: '-3px' }
             : dragState === 'draggingLeft'
-              ? { left: '-3px' }
-              : {}
+            ? { left: '-3px' }
+            : {}
         }
       />
     </th>
@@ -296,6 +364,7 @@ const InteractiveTable: InteractiveTable = ({
   dataSource,
   columns,
   containerRef,
+  numOfPinned,
   settings,
   updateSettings,
   ContextMenu,
@@ -307,25 +376,11 @@ const InteractiveTable: InteractiveTable = ({
       columns
         ?.map((col) => ({ [col.dataIndex as string]: col }))
         .reduce((a, b) => ({ ...a, ...b })),
-    [ columns ],
+    [columns],
   ) as ColumnDefs<string, UnknownRecord>;
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
-  const [ widthData, setWidthData ] = useState({
-    dropLeftStyles: settings?.columnWidths?.map(() => ({})) ?? [],
-    dropRightStyles: settings?.columnWidths?.map(() => ({})) ?? [],
-    widths: settings?.columnWidths ?? [],
-  });
-
-  const [ isResizing, setIsResizing ] = useState(false);
-
-  const { dragState } = useDragLayer((monitor) => {
-    const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-    const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
-    return { dragState };
-  });
-
-  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
+  const timeout = useRef<NodeJS.Timeout>();
 
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
@@ -340,30 +395,44 @@ const InteractiveTable: InteractiveTable = ({
       }
       return newWidths.map(Math.round);
     },
-    [ pageWidth ],
+    [pageWidth],
   );
 
-  useLayoutEffect(() => {
-    const newSettingsWidths = settings.columnWidths;
-    if (!newSettingsWidths) return;
-    const widths = getUpscaledWidths(newSettingsWidths);
-    const dropRightStyles = widths.map((width, idx) => ({
-      left: `${(width / 2)}px`,
-      width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-    }));
-    const dropLeftStyles = widths.map((width, idx) => ({
-      left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-      width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
-    }));
-    setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  }, [ settings.columnWidths,
-    getUpscaledWidths,
-    updateSettings,
-    pageWidth ]);
+  const [widthData, setWidthData] = useState(() => {
+    const widths = settings?.columnWidths || [];
+    return {
+      dropLeftStyles:
+        widths.map((width, idx) => ({
+          left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+          width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        })) ?? [],
+      dropRightStyles:
+        widths.map((width, idx) => ({
+          left: `${width / 2}px`,
+          width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        })) ?? [],
+      widths: widths ?? [],
+    };
+  });
+
+  const [isResizing, setIsResizing] = useState(false);
+
+  const { dragState } = useDragLayer((monitor) => {
+    const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
+    const dragState = (() => {
+      if (!deltaX) return 'notDragging';
+
+      if (deltaX > 0) return 'draggingRight';
+
+      return 'draggingLeft';
+    })();
+    return { dragState };
+  });
+
+  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
-
       if (Array.isArray(tableSorter)) return;
 
       const newSettings: Partial<InteractiveTableSettings> = {
@@ -378,79 +447,98 @@ const InteractiveTable: InteractiveTable = ({
       }
 
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+
+      if (isEqual(newSettings, settings)) return;
+
       updateSettings(newSettings, shouldPush);
     },
-    [ settings, updateSettings, columnDefs ],
+    [settings, updateSettings, columnDefs],
   );
 
   const moveColumn = useCallback(
     (fromIndex, toIndex) => {
-      const reorderedColumns = [ ...settings.columns ];
-      const reorderedWidths = [ ...settings.columnWidths ];
+      const reorderedColumns = [...settings.columns];
+      const reorderedWidths = [...settings.columnWidths];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
+      setWidthData({ ...widthData, widths: reorderedWidths });
     },
-    [ settings.columns, settings.columnWidths, updateSettings ],
+    [settings.columns, settings.columnWidths, widthData, updateSettings],
   );
 
   const handleResize = useCallback(
     (resizeIndex) => {
-      return throttle(DEFAULT_RESIZE_THROTTLE_TIME, (e: Event, { x }: DraggableData) => {
-        setWidthData(({ widths: prevWidths, ...rest }) => {
-          const column = settings.columns[resizeIndex];
-          const minWidth = columnDefs[column].defaultWidth;
-          let targetWidths;
-          if (x < minWidth) {
-            targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              prevWidthIndex === resizeIndex ? minWidth : prevWidth);
-          } else {
-            const newWidth = x;
-            targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              prevWidthIndex === resizeIndex ? newWidth : prevWidth);
-          }
+      return (e: Event, { x }: DraggableData) => {
+        if (timeout.current) clearTimeout(timeout.current);
+        const column = settings.columns[resizeIndex];
+        const minWidth = columnDefs[column].defaultWidth;
+        const currentWidths = widthData.widths;
 
-          const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
-          /**
-           * If the table width is less than the page width, the browser upscales,
-           * and then the resize no longer tracks with the cursor.
-           * we manually do the scaling here to keep the tableWidth >= pageWidth
-           * in particular, we distribute the deficit among the other columns
-           */
-          const shortage = pageWidth - targetWidthSum;
-          if (shortage > 0) {
-            const compensatingPortion = shortage / (prevWidths.length - 1);
-            targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
-              targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion);
-          }
-          return { widths: targetWidths, ...rest };
-        });
-      });
+        if (x === currentWidths[resizeIndex]) return;
+
+        let targetWidths = currentWidths;
+
+        targetWidths[resizeIndex] = x < minWidth ? minWidth : x;
+
+        const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
+        /**
+         * If the table width is less than the page width, the browser upscales,
+         * and then the resize no longer tracks with the cursor.
+         * we manually do the scaling here to keep the tableWidth >= pageWidth
+         * in particular, we distribute the deficit among the other columns
+         */
+        const shortage = pageWidth - targetWidthSum;
+        if (shortage > 0) {
+          const compensatingPortion = shortage / (currentWidths.length - 1);
+          targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
+            targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion,
+          );
+        }
+
+        const dropRightStyles = targetWidths.map((width, idx) => ({
+          left: `${width / 2}px`,
+          width: `${(width + (targetWidths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        }));
+        const dropLeftStyles = targetWidths.map((width, idx) => ({
+          left: `${-((targetWidths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+          width: `${(width + (targetWidths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+        }));
+
+        timeout.current = setTimeout(() => {
+          setWidthData({ dropLeftStyles, dropRightStyles, widths: targetWidths });
+        }, DEFAULT_RESIZE_THROTTLE_TIME);
+
+        return minWidth;
+      };
     },
-    [ settings.columns, pageWidth, columnDefs ],
+    [settings.columns, widthData.widths, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
-    (index) => (e: Event, { x }: DraggableData) => {
-      setIsResizing(true);
-      setWidthData(({ widths, ...rest }) => {
-        const column = settings.columns[index];
-        const startWidth = widths[index];
-        const minWidth = columnDefs[column].defaultWidth;
-        const deltaX = startWidth - minWidth;
-        const minX = x - deltaX;
-        return { minX, widths, ...rest };
-      });
-    },
-    [ setWidthData, settings.columns, columnDefs ],
+    (index) =>
+      (e: Event, { x }: DraggableData) => {
+        setIsResizing(true);
+
+        setWidthData(({ widths, ...rest }) => {
+          const column = settings.columns[index];
+          const startWidth = widths[index];
+          const minWidth = columnDefs[column].defaultWidth;
+          const deltaX = startWidth - minWidth;
+          const minX = x - deltaX;
+          return { minX, widths, ...rest };
+        });
+      },
+    [settings.columns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
+
     updateSettings({ columnWidths: widthData.widths.map(Math.round) });
-  }, [ updateSettings, widthData ]);
+  }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(
     (index, columnDef) => {
@@ -484,31 +572,35 @@ const InteractiveTable: InteractiveTable = ({
     ],
   );
 
-  const renderColumns = useMemo(
-    () => {
-      const columns = settings.columns.filter((columnName) => columnDefs[columnName])
-        .map((columnName, index) => {
-          const column = columnDefs[columnName];
-          const columnWidth = widthData.widths[index];
-          const sortOrder =
-            column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
+  const renderColumns = useMemo(() => {
+    const columns = settings.columns.reduce<ColumnsType<UnknownRecord>>(
+      (acc, columnName, index) => {
+        if (!columnDefs[columnName]) return acc;
 
-          return {
-            onHeaderCell: onHeaderCell(index, column),
-            sortOrder,
-            width: columnWidth,
-            ...column,
-          };
-        }) as ColumnsType<UnknownRecord>;
+        const column = columnDefs[columnName];
+        const currentWidth = widthData.widths[index];
+        const columnWidth = currentWidth < column.defaultWidth ? column.defaultWidth : currentWidth; // avoid rendering a column with less width than the default
+        const sortOrder =
+          column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-      if (columnDefs.action) {
-        columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
-      }
+        acc.push({
+          onHeaderCell: onHeaderCell(index, column),
+          sortOrder,
+          width: columnWidth,
+          ...column,
+        });
 
-      return columns;
-    },
-    [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
-  );
+        return acc;
+      },
+      [],
+    );
+
+    if (columnDefs.action) {
+      columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
+    }
+
+    return columns;
+  }, [settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell]);
 
   const components = {
     body: {
@@ -517,33 +609,58 @@ const InteractiveTable: InteractiveTable = ({
     },
     header: { cell: HeaderCell },
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeout.current) clearTimeout(timeout.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    // this should run only when getting new number of cols
+    if (settings.columnWidths.length === widthData.widths.length) return;
+
+    const widths = getUpscaledWidths(settings.columnWidths);
+    const dropRightStyles = widths.map((width, idx) => ({
+      left: `${width / 2}px`,
+      width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+    }));
+    const dropLeftStyles = widths.map((width, idx) => ({
+      left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+      width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+    }));
+
+    setWidthData({ dropLeftStyles, dropRightStyles, widths });
+  }, [settings.columnWidths, widthData, getUpscaledWidths]);
+
   return (
     <div className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={spinning}>
-        {
-          spinning
-            ? <SkeletonTable columns={renderColumns.length} />
-            : (
-              <Table
-                bordered
-                /* next one is just so ant doesnt complain */
-                /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-                columns={renderColumns as ColumnsType<any>}
-                components={components}
-                dataSource={dataSource}
-                scroll={scroll}
-                tableLayout="fixed"
-                onChange={handleChange}
-                onRow={(record, index) => ({
-                  areRowsSelected,
-                  ContextMenu,
-                  index,
-                  record,
-                } as React.HTMLAttributes<HTMLElement>)}
-                {...props}
-              />
-            )
-        }
+        {spinning ? (
+          <SkeletonTable columns={renderColumns.length} />
+        ) : (
+          <Table
+            bordered
+            /* next one is just so ant doesnt complain */
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            columns={renderColumns as ColumnsType<any>}
+            components={components}
+            dataSource={dataSource}
+            scroll={scroll}
+            tableLayout="fixed"
+            onChange={handleChange}
+            onRow={(record, index) =>
+              ({
+                areRowsSelected,
+                ContextMenu,
+                index,
+                numOfPinned,
+                record,
+              } as React.HTMLAttributes<HTMLElement>)
+            }
+            {...props}
+          />
+        )}
       </Spinner>
     </div>
   );

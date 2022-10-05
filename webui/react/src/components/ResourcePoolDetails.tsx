@@ -6,7 +6,7 @@ import { clone } from 'shared/utils/data';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { ResourcePool } from 'types';
 
-import { PoolLogo } from './ResourcePoolCardLight';
+import { PoolLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
@@ -16,7 +16,6 @@ interface Props {
 }
 
 const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
-
   const details = clone(pool.details);
   for (const key in details) {
     if (details[key] === null) {
@@ -54,7 +53,6 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       ))}
     </Modal>
   );
-
 };
 
 export default ResourcePoolDetails;

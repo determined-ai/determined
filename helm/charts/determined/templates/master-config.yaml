@@ -67,6 +67,10 @@ data:
         group: {{ .Values.security.defaultTask.group }}
         gid: {{ .Values.security.defaultTask.gid }}
       {{- end }}
+      {{- if .Values.security.authz }}
+      authz:
+        {{- toYaml .Values.security.authz | nindent 8}}
+      {{- end }}
       {{- end }}
     port: {{ include "determined.masterPort" . }}
 
@@ -116,13 +120,11 @@ data:
       {{- end }}
       {{- if .Values.fluent }}
       fluent:
-        {{- if .Values.fluent }}
         {{- toYaml .Values.fluent | nindent 8}}
-        {{- end }}
       {{- end }}
 
-    {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094")._1}}
-    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-9119094")._1 -}}
+    {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730")._1}}
+    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730")._1 -}}
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
       {{- if .Values.taskContainerDefaults.networkMode }}

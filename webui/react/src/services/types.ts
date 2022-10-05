@@ -1,8 +1,17 @@
 import { Dayjs } from 'dayjs';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
-import { DetailedUser, Job, Metadata, MetricName, MetricType, Note,
-  Scale, TrialWorkloadFilter } from 'types';
+import {
+  DetailedUser,
+  Job,
+  Metadata,
+  MetricName,
+  MetricType,
+  Note,
+  RunState,
+  Scale,
+  TrialWorkloadFilter,
+} from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -20,24 +29,25 @@ export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
 
 export interface TrialSummaryBaseParams {
-  endBatches?: number,
-  maxDatapoints: number,
-  metricNames: MetricName[],
-  metricType?: MetricType,
-  scale?: Scale,
-  startBatches?: number,
+  endBatches?: number;
+  maxDatapoints: number;
+  metricNames: MetricName[];
+  metricType?: MetricType;
+  scale?: Scale;
+  startBatches?: number;
 }
 
 export interface TrialSummaryParams extends TrialSummaryBaseParams {
-  trialId: number,
+  trialId: number;
 }
 
 export interface CompareTrialsParams extends TrialSummaryBaseParams {
-  trialIds: number[],
+  trialIds: number[];
 }
 
 export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
   filter: TrialWorkloadFilter;
+  metricType?: MetricType | undefined;
   sortKey?: string;
 }
 
@@ -63,16 +73,26 @@ export interface GetTemplatesParams extends PaginationParams {
 export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
+  experimentIdFilter?: {
+    incl?: Array<number>;
+    notIn?: Array<number>;
+  };
   labels?: Array<string>;
   name?: string;
   options?: never;
   projectId?: number;
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'
-  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS'
-  | 'SORT_BY_USER' | 'SORT_BY_NAME';
-  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
-  | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
-  | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
+  sortBy?:
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_ID'
+    | 'SORT_BY_DESCRIPTION'
+    | 'SORT_BY_START_TIME'
+    | 'SORT_BY_END_TIME'
+    | 'SORT_BY_STATE'
+    | 'SORT_BY_NUM_TRIALS'
+    | 'SORT_BY_PROGRESS'
+    | 'SORT_BY_USER'
+    | 'SORT_BY_NAME';
+  states?: Array<`STATE_${RunState}`>;
   userIds?: Array<number>;
   users?: Array<string>;
 }
@@ -83,10 +103,17 @@ export interface GetExperimentParams {
 
 export interface getExperimentCheckpointsParams extends PaginationParams {
   id: number;
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER'
-  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC';
-  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED'
-  | 'STATE_ERROR' | 'STATE_DELETED'>;
+  sortBy?:
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_UUID'
+    | 'SORT_BY_TRIAL_ID'
+    | 'SORT_BY_BATCH_NUMBER'
+    | 'SORT_BY_END_TIME'
+    | 'SORT_BY_STATE'
+    | 'SORT_BY_SEARCHER_METRIC';
+  states?: Array<
+    'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'
+  >;
 }
 
 export interface ExperimentLabelsParams {
@@ -94,11 +121,24 @@ export interface ExperimentLabelsParams {
 }
 
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME'
-  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE';
-  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
-  | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
-  | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
+  sortBy?:
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_ID'
+    | 'SORT_BY_START_TIME'
+    | 'SORT_BY_END_TIME'
+    | 'SORT_BY_STATE';
+  states?: Array<
+    | 'STATE_UNSPECIFIED'
+    | 'STATE_ACTIVE'
+    | 'STATE_PAUSED'
+    | 'STATE_STOPPING_COMPLETED'
+    | 'STATE_STOPPING_CANCELED'
+    | 'STATE_STOPPING_ERROR'
+    | 'STATE_COMPLETED'
+    | 'STATE_CANCELED'
+    | 'STATE_ERROR'
+    | 'STATE_DELETED'
+  >;
 }
 
 export interface GetTaskParams {
@@ -115,8 +155,13 @@ export interface GetModelsParams extends PaginationParams {
   description?: string;
   labels?: string[];
   name?: string;
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'
-  | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS';
+  sortBy?:
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_NAME'
+    | 'SORT_BY_DESCRIPTION'
+    | 'SORT_BY_CREATION_TIME'
+    | 'SORT_BY_LAST_UPDATED_TIME'
+    | 'SORT_BY_NUM_VERSIONS';
   users?: string[];
 }
 
@@ -130,7 +175,7 @@ export type DeleteModelParams = GetModelParams;
 
 export interface GetModelDetailsParams extends PaginationParams {
   modelName: string;
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME';
 }
 
 export interface GetModelVersionParams {
@@ -147,7 +192,7 @@ export interface PatchModelParams {
     metadata?: Record<RecordKey, string>;
     name: string;
     notes?: string;
-  }
+  };
   modelName: string;
 }
 
@@ -159,7 +204,7 @@ export interface PatchModelVersionParams {
     modelName: string;
     name?: string;
     notes?: string;
-  }
+  };
   modelName: string;
   versionId: number;
 }
@@ -180,7 +225,7 @@ export interface PostModelVersionParams {
     modelName: string;
     name?: string;
     notes?: string;
-  }
+  };
   modelName: string;
 }
 
@@ -193,11 +238,11 @@ export interface CreateExperimentParams {
 
 export interface PatchExperimentParams extends ExperimentIdParams {
   body: Partial<{
-    description: string,
-    labels: string[],
-    name: string,
+    description: string;
+    labels: string[];
+    name: string;
     notes: string;
-  }>
+  }>;
 }
 
 export interface LaunchTensorBoardParams {
@@ -211,7 +256,7 @@ export interface LaunchJupyterLabParams {
     resources?: {
       resource_pool?: string;
       slots?: number;
-    }
+    };
   };
   preview?: boolean;
   templateName?: string;
@@ -237,10 +282,11 @@ export interface GetTensorBoardsParams extends FetchOptions, PaginationParams {
   users?: string[];
 }
 export interface GetResourceAllocationAggregatedParams {
-  endDate: Dayjs,
-  period: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
-  | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
-  startDate: Dayjs,
+  endDate: Dayjs;
+  period:
+    | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
+    | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY';
+  startDate: Dayjs;
 }
 
 export interface GetJobQParams extends PaginationParams, FetchOptions {
@@ -256,16 +302,21 @@ export interface GetJobQStatsParams extends FetchOptions {
 }
 
 export interface GetUsersParams extends PaginationParams {
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_USER_NAME'
-  | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' |'SORT_BY_MODIFIED_TIME';
+  sortBy?:
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_USER_NAME'
+    | 'SORT_BY_DISPLAY_NAME'
+    | 'SORT_BY_ADMIN'
+    | 'SORT_BY_ACTIVE'
+    | 'SORT_BY_MODIFIED_TIME';
 }
 export interface GetUserParams {
   userId: number;
 }
 export interface PostUserParams {
-  admin: boolean,
-  displayName?: string,
-  username: string,
+  admin: boolean;
+  displayName?: string;
+  username: string;
 }
 
 export interface SetUserPasswordParams {
@@ -305,8 +356,33 @@ export interface DeleteGroupParams {
 export interface GetGroupParams {
   groupId: number;
 }
+export interface RemoveRoleFromGroupParams {
+  groupId: number;
+  roleId: number;
+}
 
-export type GetGroupsParams = PaginationParams
+export interface AssignRolesToUserParams {
+  roleIds: number[];
+  userId: number;
+}
+
+export interface RemoveRoleFromUserParams {
+  roleId: number;
+  userId: number;
+}
+
+export type GetGroupsParams = PaginationParams;
+
+export interface AssignRolesToGroupParams {
+  groupId: number;
+  roleIds: number[];
+}
+
+export interface ListRolesParams {
+  isGlobal?: boolean;
+  limit?: number;
+  offset?: number;
+}
 
 export interface GetProjectParams {
   id: number;
@@ -343,8 +419,12 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   archived?: boolean;
   id: number;
   name?: string;
-  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' |
-  'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION';
+  sortBy?:
+    | 'SORT_BY_UNSPECIFIED'
+    | 'SORT_BY_CREATION_TIME'
+    | 'SORT_BY_LAST_EXPERIMENT_START_TIME'
+    | 'SORT_BY_NAME'
+    | 'SORT_BY_DESCRIPTION';
   users?: string[];
 }
 

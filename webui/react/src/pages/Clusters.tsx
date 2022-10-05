@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
@@ -16,37 +16,37 @@ const { TabPane } = Tabs;
 enum TabType {
   Overview = 'overview',
   HistoricalUsage = 'historical-usage',
-  Logs = 'logs'
+  Logs = 'logs',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
-}
+};
 
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const Clusters: React.FC = () => {
   const { tab } = useParams<Params>();
   const basePath = paths.clusters();
-  const history = useHistory();
+  const navigate = useNavigate();
 
-  const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const { agents, cluster: overview, resourcePools } = useStore();
 
   const cluster = useMemo(() => {
     return clusterStatusText(overview, resourcePools, agents);
-  }, [ overview, resourcePools, agents ]);
+  }, [overview, resourcePools, agents]);
 
-  const handleTabChange = useCallback((key) => {
-    setTabKey(key);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-  }, [ basePath, history ]);
+  const handleTabChange = useCallback(
+    (key) => {
+      setTabKey(key);
+      navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
+    },
+    [basePath, navigate],
+  );
 
   return (
-    <Page
-      bodyNoPadding
-      id="cluster"
-      title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
+    <Page bodyNoPadding id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <ClustersOverview />

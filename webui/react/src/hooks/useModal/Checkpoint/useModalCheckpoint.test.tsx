@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 import useModalCheckpoint, { Props } from './useModalCheckpoint';
 
@@ -29,7 +29,7 @@ const Container: React.FC = (props: Partial<Props> = {}) => {
     ...props,
   });
 
-  const handleClick = useCallback(() => modalOpen(), [ modalOpen ]);
+  const handleClick = useCallback(() => modalOpen(), [modalOpen]);
 
   return (
     <StoreProvider>

@@ -7,11 +7,11 @@ import ActionSheet from './ActionSheet';
 export default {
   component: ActionSheet,
   parameters: { layout: 'fullscreen' },
-  title: 'ActionSheet',
+  title: 'Determined/ActionSheet',
 };
 
 const ActionSheetContainer = () => {
-  const [ isShowing, setIsShowing ] = useState(false);
+  const [isShowing, setIsShowing] = useState(false);
 
   useEffect(() => {
     setIsShowing(true);

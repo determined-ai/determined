@@ -27,31 +27,29 @@ interface Props {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const ProjectActionDropdown: React.FC<Props> = (
-  {
-    project, children, onVisibleChange, showChildrenIfEmpty = true,
-    className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
-  }
-  : Props,
-) => {
-  const {
-    contextHolder: modalProjectMoveContextHolder,
-    modalOpen: openProjectMove,
-  } = useModalProjectMove({ onClose: onComplete, project });
-  const {
-    contextHolder: modalProjectDeleteContextHolder,
-    modalOpen: openProjectDelete,
-  } = useModalProjectDelete({ onClose: onComplete, project });
-  const {
-    contextHolder: modalProjectEditContextHolder,
-    modalOpen: openProjectEdit,
-  } = useModalProjectEdit({ onClose: onComplete, project });
+const ProjectActionDropdown: React.FC<Props> = ({
+  project,
+  children,
+  onVisibleChange,
+  showChildrenIfEmpty = true,
+  className,
+  direction = 'vertical',
+  onComplete,
+  trigger,
+  workspaceArchived = false,
+}: Props) => {
+  const { contextHolder: modalProjectMoveContextHolder, modalOpen: openProjectMove } =
+    useModalProjectMove({ onClose: onComplete, project });
+  const { contextHolder: modalProjectDeleteContextHolder, modalOpen: openProjectDelete } =
+    useModalProjectDelete({ onClose: onComplete, project });
+  const { contextHolder: modalProjectEditContextHolder, modalOpen: openProjectEdit } =
+    useModalProjectEdit({ onClose: onComplete, project });
 
   const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
-  const handleEditClick = useCallback(() => openProjectEdit(), [ openProjectEdit ]);
+  const handleEditClick = useCallback(() => openProjectEdit(), [openProjectEdit]);
 
-  const handleMoveClick = useCallback(() => openProjectMove(), [ openProjectMove ]);
+  const handleMoveClick = useCallback(() => openProjectMove(), [openProjectMove]);
 
   const handleArchiveClick = useCallback(async () => {
     if (project.archived) {
@@ -69,13 +67,13 @@ const ProjectActionDropdown: React.FC<Props> = (
         handleError(e, { publicSubject: 'Unable to archive project.' });
       }
     }
-  }, [ onComplete, project.archived, project.id ]);
+  }, [onComplete, project.archived, project.id]);
 
   const handleDeleteClick = useCallback(() => {
     openProjectDelete();
-  }, [ openProjectDelete ]);
+  }, [openProjectDelete]);
 
-  const menuProps: {items: MenuProps['items'], onClick: MenuProps['onClick']} = useMemo(() => {
+  const menuProps: { items: MenuProps['items']; onClick: MenuProps['onClick'] } = useMemo(() => {
     enum MenuKey {
       EDIT = 'edit',
       MOVE = 'move',
@@ -84,10 +82,18 @@ const ProjectActionDropdown: React.FC<Props> = (
     }
 
     const funcs = {
-      [MenuKey.EDIT]: () => { handleEditClick(); },
-      [MenuKey.MOVE]: () => { handleMoveClick(); },
-      [MenuKey.SWITCH_ARCHIVED]: () => { handleArchiveClick(); },
-      [MenuKey.DELETE]: () => { handleDeleteClick(); },
+      [MenuKey.EDIT]: () => {
+        handleEditClick();
+      },
+      [MenuKey.MOVE]: () => {
+        handleMoveClick();
+      },
+      [MenuKey.SWITCH_ARCHIVED]: () => {
+        handleArchiveClick();
+      },
+      [MenuKey.DELETE]: () => {
+        handleDeleteClick();
+      },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
@@ -95,21 +101,27 @@ const ProjectActionDropdown: React.FC<Props> = (
     };
 
     const items: MenuProps['items'] = [];
-    if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !project.archived) {
+    if (
+      canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived
+    ) {
       items.push({ key: MenuKey.EDIT, label: 'Edit...' });
     }
-    if (canMoveProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !project.archived) {
+    if (canMoveProjects({ project }) && !project.archived) {
       items.push({ key: MenuKey.MOVE, label: 'Move...' });
     }
-    if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !workspaceArchived) {
+    if (
+      canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !workspaceArchived
+    ) {
       const label = project.archived ? 'Unarchive' : 'Archive';
       items.push({ key: MenuKey.SWITCH_ARCHIVED, label: label });
     }
-    if (canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !project.archived && project.numExperiments === 0) {
+    if (
+      canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
+      !project.archived &&
+      project.numExperiments === 0
+    ) {
       items.push({ danger: true, key: MenuKey.DELETE, label: 'Delete...' });
     }
     return { items: items, onClick: onItemClick };
@@ -125,17 +137,16 @@ const ProjectActionDropdown: React.FC<Props> = (
     workspaceArchived,
   ]);
 
-  const contextHolders = useMemo(() => (
-    <>
-      {modalProjectDeleteContextHolder}
-      {modalProjectEditContextHolder}
-      {modalProjectMoveContextHolder}
-    </>
-  ), [
-    modalProjectDeleteContextHolder,
-    modalProjectEditContextHolder,
-    modalProjectMoveContextHolder,
-  ]);
+  const contextHolders = useMemo(
+    () => (
+      <>
+        {modalProjectDeleteContextHolder}
+        {modalProjectEditContextHolder}
+        {modalProjectMoveContextHolder}
+      </>
+    ),
+    [modalProjectDeleteContextHolder, modalProjectEditContextHolder, modalProjectMoveContextHolder],
+  );
 
   if (menuProps.items?.length === 0 && !showChildrenIfEmpty) {
     return null;
@@ -147,7 +158,7 @@ const ProjectActionDropdown: React.FC<Props> = (
         disabled={menuProps.items?.length === 0}
         overlay={<Menu {...menuProps} />}
         placement="bottomLeft"
-        trigger={trigger ?? [ 'contextMenu', 'click' ]}
+        trigger={trigger ?? ['contextMenu', 'click']}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
@@ -155,14 +166,14 @@ const ProjectActionDropdown: React.FC<Props> = (
     </>
   ) : (
     <div
-      className={[ css.base, className ].join(' ')}
+      className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
         disabled={menuProps.items?.length === 0}
         overlay={<Menu {...menuProps} />}
         placement="bottomRight"
-        trigger={trigger ?? [ 'click' ]}>
+        trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

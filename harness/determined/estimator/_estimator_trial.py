@@ -51,8 +51,8 @@ class DeterminedControlHook(estimator.RunHook):
     cases, execute non-training workloads.
 
     At the beginning of the train_and_evaluate() call and after each training
-    step ends, control_loop() is triggered and blocks on recieving instructions
-    for the next workload. Once instructions are recieved from the main
+    step ends, control_loop() is triggered and blocks on receiving instructions
+    for the next workload. Once instructions are received from the main
     process, control_loop() will compute validation, take a checkpoint, or
     break out of the loop to re-enter train_and_evaluate().
     """
@@ -828,7 +828,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1``).
+    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

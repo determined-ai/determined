@@ -24,21 +24,14 @@ const ClusterLogs: React.FC = () => {
       options.limit = 0;
     }
 
-    return detApi.StreamingCluster.masterLogs(
-      options.offset,
-      options.limit,
-      options.follow,
-      { signal: config.canceler.signal },
-    );
+    return detApi.StreamingCluster.masterLogs(options.offset, options.limit, options.follow, {
+      signal: config.canceler.signal,
+    });
   }, []);
 
   return (
     <div className={css.base}>
-      <LogViewer
-        decoder={jsonToClusterLog}
-        sortKey="id"
-        onFetch={handleFetch}
-      />
+      <LogViewer decoder={jsonToClusterLog} sortKey="id" onFetch={handleFetch} />
     </div>
   );
 };

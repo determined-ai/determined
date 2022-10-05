@@ -18,7 +18,7 @@ interface Props {
 }
 
 const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
-  const [ name, setName ] = useState('');
+  const [name, setName] = useState('');
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -29,13 +29,17 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <p>Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?</p>
+        <p>
+          Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?
+        </p>
         <p>All experiments and notes within it will also be deleted. This cannot be undone.</p>
-        <label className={css.label} htmlFor="name">Enter project name to confirm deletion</label>
+        <label className={css.label} htmlFor="name">
+          Enter project name to confirm deletion
+        </label>
         <Input id="name" value={name} onChange={handleNameInput} />
       </div>
     );
-  }, [ handleNameInput, name, project.name ]);
+  }, [handleNameInput, name, project.name]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -50,24 +54,30 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ project.id, project.workspaceId ]);
+  }, [project.id, project.workspaceId]);
 
-  const getModalProps = useCallback((name = ''): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okButtonProps: { danger: true, disabled: name !== project.name },
-      okText: 'Delete Project',
-      onOk: handleOk,
-      title: 'Delete Project',
-    };
-  }, [ handleOk, modalContent, project.name ]);
+  const getModalProps = useCallback(
+    (name = ''): ModalFuncProps => {
+      return {
+        closable: true,
+        content: modalContent,
+        icon: null,
+        okButtonProps: { danger: true, disabled: name !== project.name },
+        okText: 'Delete Project',
+        onOk: handleOk,
+        title: 'Delete Project',
+      };
+    },
+    [handleOk, modalContent, project.name],
+  );
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    setName('');
-    openOrUpdate({ ...getModalProps(), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      setName('');
+      openOrUpdate({ ...getModalProps(), ...initialModalProps });
+    },
+    [getModalProps, openOrUpdate],
+  );
 
   /**
    * When modal props changes are detected, such as modal content
@@ -75,7 +85,7 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
-  }, [ getModalProps, modalRef, name, openOrUpdate ]);
+  }, [getModalProps, modalRef, name, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

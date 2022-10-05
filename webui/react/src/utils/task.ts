@@ -111,9 +111,7 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
 };
 
 export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
-  return new Array(Math.floor(count))
-    .fill(null)
-    .map((_, idx) => generateOldExperiment(idx));
+  return new Array(Math.floor(count)).fill(null).map((_, idx) => generateOldExperiment(idx));
 };
 
 export const generateExperiment = (id = 1): Type.ExperimentItem => {
@@ -159,20 +157,17 @@ export const generateExperiment = (id = 1): Type.ExperimentItem => {
 };
 
 export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
-  return new Array(Math.floor(count))
-    .fill(null)
-    .map((_, idx) => generateExperiment(idx));
+  return new Array(Math.floor(count)).fill(null).map((_, idx) => generateExperiment(idx));
 };
 
 export const generateTasks = (count = 10): Type.RecentTask[] => {
-  return new Array(Math.floor(count)).fill(0)
-    .map((_, idx) => {
-      if (Math.random() > 0.5) {
-        return generateCommandTask(idx);
-      } else {
-        return generateExperimentTask(idx);
-      }
-    });
+  return new Array(Math.floor(count)).fill(0).map((_, idx) => {
+    if (Math.random() > 0.5) {
+      return generateCommandTask(idx);
+    } else {
+      return generateExperimentTask(idx);
+    }
+  });
 };
 
 // Differentiate Task from Experiment.
@@ -181,12 +176,14 @@ export const isCommandTask = (obj: Type.Command | Type.CommandTask): obj is Type
 };
 
 export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTask => {
-  return ('archived' in task) && !('type' in task);
+  return 'archived' in task && !('type' in task);
 };
 
 export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
-  return killableRunStates.includes(task.state as Type.RunState)
-    || killableCommandStates.includes(task.state as Type.CommandState);
+  return (
+    killableRunStates.includes(task.state as Type.RunState) ||
+    killableCommandStates.includes(task.state as Type.CommandState)
+  );
 };
 
 const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
@@ -206,7 +203,8 @@ const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
 };
 
 const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
-  task: T, users?: string[],
+  task: T,
+  users?: string[],
 ): boolean => {
   if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
   return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
@@ -214,19 +212,24 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
 
 export const filterTasks = <
   T extends Type.CommandType | Type.TaskType = Type.TaskType,
-  A extends Type.CommandTask | Type.AnyTask = Type.AnyTask
+  A extends Type.CommandTask | Type.AnyTask = Type.AnyTask,
 >(
-  tasks: A[], filters: Type.TaskFilters<T>, users: Type.User[], search = '',
+  tasks: A[],
+  filters: Type.TaskFilters<T>,
+  users: Type.User[],
+  search = '',
 ): A[] => {
   return tasks
     .filter((task) => {
       const isExperiment = isExperimentTask(task);
       const type = isExperiment ? Type.TaskType.Experiment : (task as Type.CommandTask).type;
-      return (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
+      return (
+        (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
         matchesState<A>(task, filters.states || []) &&
         matchesSearch<A>(task, search) &&
-        (!isExperiment || !(task as Type.ExperimentTask).archived);
+        (!isExperiment || !(task as Type.ExperimentTask).archived)
+      );
     })
     .filter((task) => matchesSearch<A>(task, search));
 };
@@ -268,24 +271,32 @@ export const tensorBoardMatchesSource = (
 
   return false;
 };
-const commandStateSortValues: Record<CommandState, number> = {
-  [CommandState.Pending]: 0,
-  [CommandState.Assigned]: 1,
-  [CommandState.Pulling]: 2,
-  [CommandState.Starting]: 3,
-  [CommandState.Running]: 4,
-  [CommandState.Terminating]: 5,
-  [CommandState.Terminated]: 6,
-};
+
+const commandStateSortOrder: CommandState[] = [
+  CommandState.Pulling,
+  CommandState.Starting,
+  CommandState.Running,
+  CommandState.Waiting,
+  CommandState.Terminating,
+  CommandState.Terminated,
+];
+
+const commandStateSortValues: Map<CommandState, number> = new Map(
+  commandStateSortOrder.map((state, idx) => [state, idx]),
+);
+
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
-  return commandStateSortValues[a] - commandStateSortValues[b];
+  return (commandStateSortValues.get(a) || 0) - (commandStateSortValues.get(b) || 0);
 };
+
 export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?
-  const aValue = Object.values(RunState).includes(a as RunState) ?
-    runStateSortValues[a as RunState] : commandStateSortValues[a as CommandState];
-  const bValue = Object.values(RunState).includes(b as RunState) ?
-    runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
+  const aValue = Object.values(RunState).includes(a as RunState)
+    ? runStateSortValues.get(a as RunState) || 0
+    : commandStateSortValues.get(a as CommandState) || 0;
+  const bValue = Object.values(RunState).includes(b as RunState)
+    ? runStateSortValues.get(b as RunState) || 0
+    : commandStateSortValues.get(b as CommandState) || 0;
   return aValue - bValue;
 };

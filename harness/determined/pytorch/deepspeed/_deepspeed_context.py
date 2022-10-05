@@ -53,7 +53,8 @@ def overwrite_deepspeed_config(
 
 
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
-    """Contains runtime information for any Determined workflow that uses the ``DeepSpeedTrial`` API.
+    """Contains runtime information for any Determined workflow that uses the ``DeepSpeedTrial``
+    API.
 
     With this class, users can do the following things:
 
@@ -69,7 +70,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     3. Set a custom model parallel configuration that should instantiate a
        :class:`determined.pytorch.deepspeed.ModelParallelUnit` dataclass.  We automatically set the
        mpu for data parallel and standard pipeline parallel training.  This should only be needed
-       if there is additional model parallelism outside of DeepSpeed's supported methods.
+       if there is additional model parallelism outside DeepSpeed's supported methods.
     4. Disable data reproducibility checks to allow custom data loaders.
     5. Disable automatic gradient aggregation for non-pipeline-parallel training.
     """
@@ -83,7 +84,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # Track which types we have issued warnings for in to_device().
         self._to_device_warned_types = set()  # type: Set[Type]
 
-        # DeepSpeed supports mixed precision through NVidia Apex AMP.  ZeRO optimizer requires
+        # DeepSpeed supports mixed precision through Nvidia Apex AMP.  ZeRO optimizer requires
         # Apex AMP and cannot be used with more complex AMP modes.
         apex_available = importlib.util.find_spec("apex") is not None
         if not apex_available:

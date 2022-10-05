@@ -43,13 +43,9 @@
           "network": "projects/dai-public/global/networks/restricted-shared-network",
           "subnetwork": "projects/dai-public/regions/us-west1/subnetworks/restricted-shared-network",
           "externalIp": false,
-          "networkTags": [
-            "https-server"
-          ],
+          "networkTags": ["https-server"],
           "serviceAccountEmail": "x-determined-ai-vm-agent@determined-ai.iam.gserviceaccount.com",
-          "serviceAccountScopes": [
-            "https://www.googleapis.com/auth/cloud-platform"
-          ],
+          "serviceAccountScopes": ["https://www.googleapis.com/auth/cloud-platform"],
           "machineType": "n1-standard-32",
           "gpuType": "nvidia-tesla-v100",
           "gpuNum": 0,
@@ -105,13 +101,9 @@
           "network": "projects/dai-public/global/networks/restricted-shared-network",
           "subnetwork": "projects/dai-public/regions/us-west1/subnetworks/restricted-shared-network",
           "externalIp": false,
-          "networkTags": [
-            "https-server"
-          ],
+          "networkTags": ["https-server"],
           "serviceAccountEmail": "x-determined-ai-vm-agent@determined-ai.iam.gserviceaccount.com",
-          "serviceAccountScopes": [
-            "https://www.googleapis.com/auth/cloud-platform"
-          ],
+          "serviceAccountScopes": ["https://www.googleapis.com/auth/cloud-platform"],
           "machineType": "n1-standard-32",
           "gpuType": "nvidia-tesla-v100",
           "gpuNum": 8,
@@ -167,13 +159,9 @@
           "network": "projects/dai-public/global/networks/restricted-shared-network",
           "subnetwork": "projects/dai-public/regions/us-west1/subnetworks/restricted-shared-network",
           "externalIp": false,
-          "networkTags": [
-            "https-server"
-          ],
+          "networkTags": ["https-server"],
           "serviceAccountEmail": "x-determined-ai-vm-agent@determined-ai.iam.gserviceaccount.com",
-          "serviceAccountScopes": [
-            "https://www.googleapis.com/auth/cloud-platform"
-          ],
+          "serviceAccountScopes": ["https://www.googleapis.com/auth/cloud-platform"],
           "machineType": "n1-standard-32",
           "gpuType": "nvidia-tesla-v100",
           "gpuNum": 8,

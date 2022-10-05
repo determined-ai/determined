@@ -5,8 +5,6 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, overload
 
 import numpy as np
 
-import determined.common.check as check
-
 
 class Reducer(enum.Enum):
     """
@@ -32,7 +30,11 @@ def _simple_reduce_metrics(
 ) -> np.float64:
     if reducer == Reducer.AVG:
         if num_batches:
-            check.check_eq(len(metrics), len(num_batches))
+            if len(metrics) != len(num_batches):
+                raise RuntimeError(
+                    "Lengths of metrics and num_batches are not equal: "
+                    f"{len(metrics)} != {len(num_batches)}."
+                )
         return np.average(metrics, weights=num_batches)
     elif reducer == Reducer.SUM:
         return np.sum(metrics)
@@ -208,7 +210,7 @@ class _SimpleReducer(MetricReducer):
 
 def default_allgather_fn(metrics: Any) -> List:
     """
-    A noop allgather implementation to ensure that custom reducers work outside of Determined.
+    A noop allgather implementation to ensure that custom reducers work outside Determined.
     """
     return [metrics]
 

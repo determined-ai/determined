@@ -4,18 +4,14 @@ import ActionDropdown from './ActionDropdown';
 
 export default {
   component: ActionDropdown,
-  title: 'ActionDropdown',
+  title: 'Shared/ActionDropdown',
 };
 
 const FIRST_ACTION = 'First Action';
 const SECOND_ACTION = 'Second Action';
 const THIRD_ACTION = 'Third Action';
 
-const actions = [
-  FIRST_ACTION,
-  SECOND_ACTION,
-  THIRD_ACTION,
-];
+const actions = [FIRST_ACTION, SECOND_ACTION, THIRD_ACTION];
 
 const disabled = {
   [FIRST_ACTION]: false,
@@ -24,9 +20,15 @@ const disabled = {
 };
 
 const triggers = {
-  [FIRST_ACTION]: () => { return; },
-  [SECOND_ACTION]: () => { return; },
-  [THIRD_ACTION]: () => { return; },
+  [FIRST_ACTION]: () => {
+    return;
+  },
+  [SECOND_ACTION]: () => {
+    return;
+  },
+  [THIRD_ACTION]: () => {
+    return;
+  },
 };
 
 export const Default = (): React.ReactNode => (
@@ -34,7 +36,9 @@ export const Default = (): React.ReactNode => (
     actionOrder={actions}
     id="id"
     kind="kind"
-    onError={() => { return; }}
+    onError={() => {
+      return;
+    }}
     onTrigger={triggers}
   />
 );
@@ -45,7 +49,9 @@ export const DisabledAction = (): React.ReactNode => (
     disabled={disabled}
     id="id"
     kind="kind"
-    onError={() => { return; }}
+    onError={() => {
+      return;
+    }}
     onTrigger={triggers}
   />
 );

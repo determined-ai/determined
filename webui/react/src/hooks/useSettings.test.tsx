@@ -3,6 +3,7 @@ import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import queryString from 'query-string';
 import React from 'react';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -41,7 +42,7 @@ const config: hook.SettingsConfig = {
       type: { baseType: hook.BaseType.Float },
     },
     {
-      defaultValue: [ -5, 0, 1e10 ],
+      defaultValue: [-5, 0, 1e10],
       key: 'numberArray',
       type: { baseType: hook.BaseType.Integer, isArray: true },
     },
@@ -80,13 +81,13 @@ describe('useSettings helper functions', () => {
         { type: hook.BaseType.Boolean, value: true },
         { type: hook.BaseType.Float, value: 3.14159 },
         { type: hook.BaseType.Float, value: 1.5e-10 },
-        { type: hook.BaseType.Float, value: -52.80 },
+        { type: hook.BaseType.Float, value: -52.8 },
         { type: hook.BaseType.Float, value: -0.00321 },
-        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: 0 },
-        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: 123 },
-        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: -123 },
-        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: 5e12 },
-        { type: [ hook.BaseType.Float, hook.BaseType.Integer ], value: -5e12 },
+        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: 0 },
+        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: 123 },
+        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: -123 },
+        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: 5e12 },
+        { type: [hook.BaseType.Float, hook.BaseType.Integer], value: -5e12 },
         { type: hook.BaseType.String, value: 'hello' },
         { type: hook.BaseType.String, value: 'The quick fox jumped over the lazy dog.' },
       ];
@@ -110,20 +111,20 @@ describe('useSettings helper functions', () => {
       const tests = [
         { config: configs[hook.BaseType.Boolean], value: true },
         { config: configs[hook.BaseType.Boolean], value: false },
-        { config: configs[hook.BaseType.Boolean + arraySuffix], value: [ true, false, true ] },
+        { config: configs[hook.BaseType.Boolean + arraySuffix], value: [true, false, true] },
         { config: configs[hook.BaseType.Float], value: 3.14159 },
         { config: configs[hook.BaseType.Float], value: -1.2e-52 },
-        { config: configs[hook.BaseType.Float + arraySuffix], value: [ 3.14159, -1e-52, 0 ] },
+        { config: configs[hook.BaseType.Float + arraySuffix], value: [3.14159, -1e-52, 0] },
         {
-          config: [ configs[hook.BaseType.Float], configs[hook.BaseType.Integer] ],
+          config: [configs[hook.BaseType.Float], configs[hook.BaseType.Integer]],
           value: 0,
         },
         {
-          config: [ configs[hook.BaseType.Float], configs[hook.BaseType.Integer] ],
+          config: [configs[hook.BaseType.Float], configs[hook.BaseType.Integer]],
           value: 1024,
         },
         {
-          config: [ configs[hook.BaseType.Float], configs[hook.BaseType.Integer] ],
+          config: [configs[hook.BaseType.Float], configs[hook.BaseType.Integer]],
           value: -2048,
         },
         {
@@ -131,10 +132,10 @@ describe('useSettings helper functions', () => {
             configs[hook.BaseType.Float + arraySuffix],
             configs[hook.BaseType.Integer + arraySuffix],
           ],
-          value: [ 1024, 0, -2048 ],
+          value: [1024, 0, -2048],
         },
         { config: configs[hook.BaseType.String], value: 'Hello' },
-        { config: configs[hook.BaseType.String + arraySuffix], value: [ 'Hello', 'Jumping Dog' ] },
+        { config: configs[hook.BaseType.String + arraySuffix], value: ['Hello', 'Jumping Dog'] },
       ];
       Object.keys(configs).forEach((key) => {
         const config = configs[key];
@@ -154,7 +155,7 @@ describe('useSettings helper functions', () => {
       boolean: true,
       booleanArray: undefined,
       number: undefined,
-      numberArray: [ -5, 0, 1e10 ],
+      numberArray: [-5, 0, 1e10],
       string: 'foo bar',
       stringArray: undefined,
     };
@@ -165,7 +166,7 @@ describe('useSettings helper functions', () => {
     });
 
     it('should get settings from storage', () => {
-      const storageStringArrayValue = [ 'hello', 'world' ];
+      const storageStringArrayValue = ['hello', 'world'];
       testStorage.set('stringArray', storageStringArrayValue);
 
       const defaultSettings = hook.getDefaultSettings<Settings>(config, testStorage);
@@ -181,11 +182,11 @@ describe('useSettings helper functions', () => {
 describe('useSettings', () => {
   const newSettings = {
     boolean: false,
-    booleanArray: [ false, true ],
+    booleanArray: [false, true],
     number: 3.14e-12,
-    numberArray: [ 0, 100, -5280 ],
+    numberArray: [0, 100, -5280],
     string: 'Hello World',
-    stringArray: [ 'abc', 'def', 'ghi' ],
+    stringArray: ['abc', 'def', 'ghi'],
   };
   const newExtraSettings = { extra: 'fancy' };
   let result: RenderResult<hook.SettingsHook<Settings>>;
@@ -194,17 +195,15 @@ describe('useSettings', () => {
   beforeEach(() => {
     const RouterWrapper: React.FC = ({ children }) => (
       <StoreProvider>
-        <Router history={history}>{children}</Router>
+        <Router history={history}>
+          <CompatRouter>{children}</CompatRouter>
+        </Router>
       </StoreProvider>
     );
-    const hookResult = renderHook(
-      () => useSettings<Settings>(config),
-      { wrapper: RouterWrapper },
-    );
-    const extraHookResult = renderHook(
-      () => useSettings<ExtraSettings>(extraConfig),
-      { wrapper: RouterWrapper },
-    );
+    const hookResult = renderHook(() => useSettings<Settings>(config), { wrapper: RouterWrapper });
+    const extraHookResult = renderHook(() => useSettings<ExtraSettings>(extraConfig), {
+      wrapper: RouterWrapper,
+    });
     result = hookResult.result;
     extraResult = extraHookResult.result;
   });
@@ -223,23 +222,26 @@ describe('useSettings', () => {
 
     config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
-      expect(result.current.settings[settingsKey])
-        .toStrictEqual(newSettings[settingsKey]);
+      expect(result.current.settings[settingsKey]).toStrictEqual(newSettings[settingsKey]);
     });
 
     await waitFor(() => {
-      expect(history.location.search).toContain([
-        'boolean=false',
-        'booleanArray=false&booleanArray=true',
-        'number=3.14e-12',
-        'numberArray=0&numberArray=100&numberArray=-5280',
-        'string=Hello%20World',
-        'stringArray=abc&stringArray=def&stringArray=ghi',
-      ].join('&'));
+      expect(history.location.search).toContain(
+        [
+          'boolean=false',
+          'booleanArray=false&booleanArray=true',
+          'number=3.14e-12',
+          'numberArray=0&numberArray=100&numberArray=-5280',
+          'string=Hello%20World',
+          'stringArray=abc&stringArray=def&stringArray=ghi',
+        ].join('&'),
+      );
     });
   });
 
-  it('should keep track of active settings', () => {
+  it('should keep track of active settings', async () => {
+    await waitFor(() => result.current.updateSettings(newSettings));
+
     expect(result.current.activeSettings()).toStrictEqual(Object.keys(newSettings));
   });
 
@@ -260,29 +262,31 @@ describe('useSettings', () => {
 
     config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
-      expect(result.current.settings[settingsKey])
-        .toStrictEqual(newSettings[settingsKey]);
+      expect(result.current.settings[settingsKey]).toStrictEqual(newSettings[settingsKey]);
     });
 
     extraConfig.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof ExtraSettings;
-      expect(extraResult.current.settings[settingsKey])
-        .toStrictEqual(newExtraSettings[settingsKey]);
+      expect(extraResult.current.settings[settingsKey]).toStrictEqual(
+        newExtraSettings[settingsKey],
+      );
     });
 
-    expect(history.location.search).toContain([
-      'boolean=false',
-      'booleanArray=false&booleanArray=true',
-      'number=3.14e-12',
-      'numberArray=0&numberArray=100&numberArray=-5280',
-      'string=Hello%20World',
-      'stringArray=abc&stringArray=def&stringArray=ghi',
-    ].join('&'));
+    expect(history.location.search).toContain(
+      [
+        'boolean=false',
+        'booleanArray=false&booleanArray=true',
+        'number=3.14e-12',
+        'numberArray=0&numberArray=100&numberArray=-5280',
+        'string=Hello%20World',
+        'stringArray=abc&stringArray=def&stringArray=ghi',
+      ].join('&'),
+    );
 
     expect(history.location.search).toContain('extra=fancy');
   });
 
-  it('should pick up query param changes and read new settings', () => {
+  it('should pick up query param changes and read new settings', async () => {
     const newQueryParams = {
       boolean: true,
       extra: 'donut',
@@ -290,15 +294,15 @@ describe('useSettings', () => {
     };
     const newQuery = queryString.stringify(newQueryParams);
 
-    act(() => {
-      result.current.resetSettings();
-      history.replace(`${history.location.pathname}?${newQuery}`);
-    });
+    await waitFor(() => result.current.resetSettings());
+
+    act(() => history.replace(`${history.location.pathname}?${newQuery}`));
 
     expect(result.current.settings.boolean).toBe(newQueryParams.boolean);
     expect(result.current.settings.number).toBe(newQueryParams.number);
-    expect(result.current.settings.string)
-      .toBe(config.settings.find((setting) => setting.key === 'string')?.defaultValue);
+    expect(result.current.settings.string).toBe(
+      config.settings.find((setting) => setting.key === 'string')?.defaultValue,
+    );
     expect(extraResult.current.settings.extra).toBe(newQueryParams.extra);
 
     /**

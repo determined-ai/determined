@@ -4,21 +4,25 @@ import Link from './Link';
 
 export default {
   component: Link,
-  title: 'Link',
+  title: 'Determined/Link',
 };
 
-export const Default = (): React.ReactNode => (
-  <Link path="test">Plain Link</Link>
-);
+export const Default = (): React.ReactNode => <Link path="">Plain Link</Link>;
 
 export const Popout = (): React.ReactNode => (
-  <Link path="test" popout>Plain Link</Link>
+  <Link path="" popout>
+    Plain Link
+  </Link>
 );
 
 export const Disabled = (): React.ReactNode => (
-  <Link disabled path="test">Disabled Plain Link</Link>
+  <Link disabled path="">
+    Disabled Plain Link
+  </Link>
 );
 
 export const DisabledButton = (): React.ReactNode => (
-  <Link disabled isButton path="test">Disabled Button Link</Link>
+  <Link disabled isButton path="">
+    Disabled Button Link
+  </Link>
 );

@@ -41,6 +41,10 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   totalBatchesProcessed: 74,
 };
 
+export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetExperimentTrialsRequestSortBy => {
+  return Object.values(V1GetExperimentTrialsRequestSortBy).includes(String(sortKey));
+};
+
 export interface Settings extends InteractiveTableSettings {
   columns: TrialColumnName[];
   compare: boolean;

@@ -7,7 +7,7 @@ const generateStrongWeak = (theme: Theme): Theme => {
   const rgbaStrong = str2rgba(theme.strong);
   const rgbaWeak = str2rgba(theme.weak);
 
-  for (const [ key, value ] of Object.entries(theme)) {
+  for (const [key, value] of Object.entries(theme)) {
     const matches = key.match(/^(.+)(Strong|Weak)$/);
     if (matches?.length === 3 && value === undefined) {
       const isStrong = matches[2] === 'Strong';
@@ -231,21 +231,25 @@ const themeDark = {
   overlay: 'rgba(0, 0, 0, 0.75)',
   overlayStrong: 'rgba(0, 0, 0, 1.0)',
   overlayWeak: 'rgba(0, 0, 0, 0.5)',
-  elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
-  elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
-  elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
+  elevation: '0px 6px 12px rgba(255, 255, 255, 0.06)',
+  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.06)',
+  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.12)',
 };
 
-export const themeLightDetermined: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeLight));
-export const themeDarkDetermined: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeDark));
+export const themeLightDetermined: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeLight),
+);
+export const themeDarkDetermined: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeDark),
+);
 const themeHpe = { brand: 'rgba(1, 169, 130, 1.0)' };
 
-export const themeLightHpe: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeLight, themeHpe));
-export const themeDarkHpe: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeDark, themeHpe));
+export const themeLightHpe: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeLight, themeHpe),
+);
+export const themeDarkHpe: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeDark, themeHpe),
+);
 
 export type Theme = Record<keyof typeof themeBase, string>;
 
@@ -275,7 +279,7 @@ export const globalCssVars = {
 export enum Mode {
   System = 'system',
   Light = 'light',
-  Dark = 'dark'
+  Dark = 'dark',
 }
 
 /**

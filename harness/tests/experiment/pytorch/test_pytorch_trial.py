@@ -3,13 +3,14 @@ import os
 import pathlib
 import typing
 
+import numpy as np
 import pytest
 import torch
 
 import determined as det
 from determined import pytorch, workload
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
+from tests.experiment.fixtures import pytorch_onevar_model
 
 # Apex is included only for GPU trials.
 try:
@@ -91,7 +92,7 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    def test_xor_multi_validation(self) -> None:
+    def test_multi_validation(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -99,18 +100,18 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             for metrics in validation_metrics:
-                assert "binary_error" in metrics
-                assert "accuracy" in metrics
+                assert "mse" in metrics
+                assert "val_loss" in metrics
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialWithMultiValidation,
+            trial_class=pytorch_onevar_model.OneVarTrialWithMultiValidation,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
         )
         controller.run()
 
-    def test_xor_training_metrics(self) -> None:
+    def test_training_metrics(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -118,17 +119,17 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             for metrics in training_metrics:
-                assert "accuracy" in metrics
+                assert "mse" in metrics
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialWithTrainingMetrics,
+            trial_class=pytorch_onevar_model.OneVarTrialWithTrainingMetrics,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
         )
         controller.run()
 
-    def test_xor_nonscalar_validation(self) -> None:
+    def test_nonscalar_validation(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -136,11 +137,11 @@ class TestPyTorchTrial:
             training_metrics, validation_metrics = trainer.result()
 
             for metrics in validation_metrics:
-                assert "binary_error" in metrics
+                assert "mse" in metrics
                 assert "predictions" in metrics
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialWithNonScalarValidation,
+            trial_class=pytorch_onevar_model.OneVarTrialWithNonScalarValidation,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -160,7 +161,7 @@ class TestPyTorchTrial:
                 **self.hparams,
             }
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialWithLRScheduler,
+                trial_class=pytorch_onevar_model.OneVarTrialWithLRScheduler,
                 hparams=updated_hparams,
                 workloads=workloads,
                 trial_seed=self.trial_seed,
@@ -235,7 +236,7 @@ class TestPyTorchTrial:
             steps_completed = trainer.get_steps_completed()
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialMulti,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -248,12 +249,12 @@ class TestPyTorchTrial:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
 
-        invalid_hparams = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        invalid_hparams = {**self.hparams, "features": 2}
         assert invalid_hparams != self.hparams
 
         with pytest.raises(RuntimeError):
             invalid_controller = utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialMulti,
+                trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=invalid_hparams,
                 workloads=make_invalid_workloads(),
                 trial_seed=self.trial_seed,
@@ -266,7 +267,7 @@ class TestPyTorchTrial:
     def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrial,
+                trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=self.hparams,
                 workloads=workloads,
                 trial_seed=self.trial_seed,
@@ -287,7 +288,7 @@ class TestPyTorchTrial:
             validation_metrics[tag] = vm
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads("A"),
             trial_seed=self.trial_seed,
@@ -295,7 +296,7 @@ class TestPyTorchTrial:
         controller.run()
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCustomEval,
+            trial_class=pytorch_onevar_model.OneVarTrialCustomEval,
             hparams=self.hparams,
             workloads=make_workloads("B"),
             trial_seed=self.trial_seed,
@@ -304,10 +305,10 @@ class TestPyTorchTrial:
         controller.run()
 
         for original, custom_eval in zip(training_metrics["A"], training_metrics["B"]):
-            assert original["loss"] == custom_eval["loss"]
+            assert np.allclose(original["loss"], custom_eval["loss"], atol=1e-6)
 
         for original, custom_eval in zip(validation_metrics["A"], validation_metrics["B"]):
-            assert original["loss"] == custom_eval["loss"]
+            assert np.allclose(original["val_loss"], custom_eval["val_loss"], atol=1e-6)
 
     def test_grad_clipping(self) -> None:
         training_metrics = {}
@@ -322,7 +323,7 @@ class TestPyTorchTrial:
             validation_metrics[tag] = vm
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialGradClipping,
+            trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=self.hparams,
             workloads=make_workloads("original"),
             trial_seed=self.trial_seed,
@@ -331,7 +332,7 @@ class TestPyTorchTrial:
 
         updated_hparams = {"gradient_clipping_l2_norm": 0.0001, **self.hparams}
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialGradClipping,
+            trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=updated_hparams,
             workloads=make_workloads("clipped_by_norm"),
             trial_seed=self.trial_seed,
@@ -347,7 +348,7 @@ class TestPyTorchTrial:
 
         updated_hparams = {"gradient_clipping_value": 0.0001, **self.hparams}
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialGradClipping,
+            trial_class=pytorch_onevar_model.OneVarTrialGradClipping,
             hparams=updated_hparams,
             workloads=make_workloads("clipped_by_val"),
             trial_seed=self.trial_seed,
@@ -367,7 +368,7 @@ class TestPyTorchTrial:
             yield from trainer.send(steps=2, validation_freq=1, scheduling_unit=1)
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialPerMetricReducers,
+            trial_class=pytorch_onevar_model.OneVarTrialPerMetricReducers,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -381,11 +382,19 @@ class TestPyTorchTrial:
 
         controller = None
 
+        hparams1 = dict(self.hparams)
+        hparams1["global_batch_size"] = 2
+        training_epochs = 2
+        num_batches = (
+            training_epochs
+            * len(pytorch_onevar_model.OnesDataset())
+            // hparams1["global_batch_size"]
+        )
+
         def make_workloads1() -> workload.Stream:
             nonlocal controller
             assert controller.trial.counter.trial_startups == 1
-
-            yield workload.train_workload(1, 1, 0, 4), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0, num_batches), workload.ignore_workload_response
             assert controller is not None, "controller was never set!"
             assert controller.trial.counter.__dict__ == {
                 "trial_startups": 1,
@@ -402,7 +411,6 @@ class TestPyTorchTrial:
             assert controller.trial.legacy_counter.__dict__ == {
                 "legacy_on_training_epochs_start_calls": 2
             }
-
             yield workload.validation_workload(), workload.ignore_workload_response
             assert controller.trial.counter.__dict__ == {
                 "trial_startups": 1,
@@ -441,10 +449,8 @@ class TestPyTorchTrial:
                 "legacy_on_training_epochs_start_calls": 2
             }
 
-        hparams1 = dict(self.hparams)
-        hparams1["global_batch_size"] = 2
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks,
+            trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=hparams1,
             workloads=make_workloads1(),
             checkpoint_dir=str(checkpoint_dir),
@@ -453,12 +459,18 @@ class TestPyTorchTrial:
         assert controller.trial.counter.trial_shutdowns == 1
 
         # Verify the checkpoint loading callback works.
+        training_epochs = 1  # Total of 3
+        num_batches = (
+            training_epochs
+            * len(pytorch_onevar_model.OnesDataset())
+            // self.hparams["global_batch_size"]
+        )
 
         def make_workloads2() -> workload.Stream:
-            yield workload.train_workload(1, 1, 0), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0, num_batches), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks,
+            trial_class=pytorch_onevar_model.OneVarTrialCallbacks,
             hparams=self.hparams,
             workloads=make_workloads2(),
             checkpoint_dir=str(checkpoint_dir),
@@ -498,9 +510,10 @@ class TestPyTorchTrial:
 
         hparams = self.hparams.copy()
         hparams["lr_scheduler_step_mode"] = lr_scheduler_step_mode
+        hparams["global_batch_size"] = 64
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialAccessContext,
+            trial_class=pytorch_onevar_model.OneVarTrialAccessContext,
             hparams=hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -529,7 +542,7 @@ class TestPyTorchTrial:
                 total_batches_processed += num_batches
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
@@ -667,19 +680,66 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    def test_gradient_aggregation(self) -> None:
+        AGG_FREQ = 2
+        exp_config = utils.make_default_exp_config(
+            self.hparams,
+            scheduling_unit=1,
+            searcher_metric=pytorch_onevar_model.OneVarTrial._searcher_metric,
+        )
+        exp_config["optimizations"].update(
+            {
+                "aggregation_frequency": AGG_FREQ,
+                "average_aggregated_gradients": True,
+            }
+        )
+
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=100, validation_freq=10)
+            training_metrics, validation_metrics = trainer.result()
+
+            # Check the gradient update at every step.
+            for idx, batch_metrics in enumerate(training_metrics):
+                if (idx + 1) % AGG_FREQ != 0:
+                    # Only test batches which land on aggregation_frequency boundaries.
+                    continue
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
+
+            for older, newer in zip(training_metrics, training_metrics[1:]):
+                assert newer["loss"] <= older["loss"]
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            exp_config=exp_config,
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
         "trial_class",
         [
-            (pytorch_onevar_model.OneVarApexAMPTrial),
-            (pytorch_onevar_model.OneVarAutoAMPTrial),
-            (pytorch_onevar_model.OneVarManualAMPTrial),
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPWithNoopApexTrial,
+            pytorch_onevar_model.OneVarApexAMPWithNoopScalerTrial,
         ],
         ids=[
             "apex",
             "autocast",
             "manual",
+            "manual-with-noop-apex",
+            "apex-with-noop-scaler",
         ],
     )
     def test_amp(self, trial_class) -> None:
@@ -715,6 +775,63 @@ class TestPyTorchTrial:
 
         amp_metrics_test(trial_class, training_metrics)
 
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.gpu
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_amp_with_gradient_aggregation(self, trial_class) -> None:
+        """Similar to test_amp but with gradient aggregation."""
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
+
+        # The assertions logic in make_amp_workloads require a batch size of one
+        hparams = dict(self.hparams)
+        hparams["global_batch_size"] = 1
+
+        AGG_FREQ = 2
+        exp_config = utils.make_default_exp_config(
+            hparams,
+            scheduling_unit=1,
+            searcher_metric=trial_class._searcher_metric,
+        )
+        exp_config["optimizations"].update(
+            {
+                "aggregation_frequency": AGG_FREQ,
+                "average_aggregated_gradients": True,
+            }
+        )
+
+        training_metrics = {}
+
+        def make_amp_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=20 * AGG_FREQ, validation_freq=1, scheduling_unit=1)
+            nonlocal training_metrics
+            training_metrics, _ = trainer.result()
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            exp_config=exp_config,
+            trial_class=trial_class,
+            hparams=hparams,
+            workloads=make_amp_workloads(),
+            trial_seed=self.trial_seed,
+            expose_gpus=True,
+        )
+        controller.run()
+
+        amp_metrics_test(trial_class, training_metrics, agg_freq=AGG_FREQ)
+
 
 @pytest.mark.parametrize(
     "ckpt,istrial",
@@ -734,7 +851,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, torch.nn.Module), type(trial)
 
 
-def amp_metrics_test(trial_class, training_metrics):
+def amp_metrics_test(trial_class, training_metrics, agg_freq=1):
     loss_prev = None
     GROWTH_INTERVAL = trial_class._growth_interval
     MIN_SCALED_LOSS_TO_REDUCE_SCALE = 32760
@@ -742,6 +859,9 @@ def amp_metrics_test(trial_class, training_metrics):
     # Only attempt assertions up to and including the penultimate batch, because
     #  we may not have the updated scale from the final batch.
     for idx, (metrics, next_metrics) in enumerate(zip(training_metrics[:-1], training_metrics[1:])):
+        if (idx + 1) % agg_freq != 0:
+            # Only test batches which land on aggregation_frequency boundaries.
+            continue
         # Because the scaler is updated during the optimizer step, which occurs after training from
         #  a batch, the metrics dictionary may not have the updated scale, but we can get it
         #  from the next step.

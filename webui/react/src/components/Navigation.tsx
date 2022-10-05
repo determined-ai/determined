@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { useFetchAgents, useFetchPinnedWorkspaces,
-  useFetchResourcePools, useFetchUserSettings } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
+import useFeature from 'hooks/useFeature';
+import {
+  useFetchAgents,
+  useFetchKnownRoles,
+  useFetchPinnedWorkspaces,
+  useFetchResourcePools,
+  useFetchUserSettings,
+} from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
@@ -16,12 +22,13 @@ interface Props {
 
 const Navigation: React.FC<Props> = ({ children }) => {
   const { ui } = useStore();
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const fetchUserSettings = useFetchUserSettings(canceler);
+  const fetchKnownRoles = useFetchKnownRoles(canceler);
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
@@ -31,7 +38,15 @@ const Navigation: React.FC<Props> = ({ children }) => {
     fetchResourcePools();
 
     return () => canceler.abort();
-  }, [ canceler, fetchResourcePools ]);
+  }, [canceler, fetchResourcePools]);
+
+  const rbacEnabled = useFeature().isOn('rbac');
+  useEffect(() => {
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+    return () => canceler.abort();
+  }, [canceler, fetchKnownRoles, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

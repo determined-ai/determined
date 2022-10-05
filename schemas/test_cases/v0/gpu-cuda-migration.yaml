@@ -19,8 +19,6 @@
     registry_auth:
       username: samiam
       password: eggsnham
-    slurm:
-    pbs:
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -44,8 +42,6 @@
     registry_auth:
       username: samiam
       password: eggsnham
-    slurm: []
-    pbs: []
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -72,8 +68,6 @@
     registry_auth:
       username: samiam
       password: eggsnham
-    slurm:
-    pbs:
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -97,8 +91,6 @@
     registry_auth:
       username: samiam
       password: eggsnham
-    slurm: []
-    pbs: []
     add_capabilities:
       - CAP_STRING
     drop_capabilities:

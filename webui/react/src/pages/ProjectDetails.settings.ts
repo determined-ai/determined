@@ -35,17 +35,17 @@ export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   action: 46,
-  archived: 75,
-  description: 147,
+  archived: 80,
+  description: 148,
   duration: 96,
   forkedFrom: 128,
-  id: 57,
+  id: 60,
   name: 150,
   numTrials: 74,
   progress: 111,
-  resourcePool: 128,
-  searcherType: 129,
-  startTime: 117,
+  resourcePool: 140,
+  searcherType: 140,
+  startTime: 118,
   state: 106,
   tags: 106,
   user: 85,
@@ -55,6 +55,7 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: ExperimentColumnName[];
   label?: string[];
+  pinned: Record<number, number[]>; // key is `projectId`, value is array of experimentId
   row?: number[];
   search?: string;
   sortKey: V1GetExperimentsRequestSortBy;
@@ -64,6 +65,13 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
 
 const config: SettingsConfig = {
   settings: [
+    {
+      defaultValue: { 1: [] },
+      key: 'pinned',
+      skipUrlEncoding: true,
+      storageKey: 'pinned',
+      type: { baseType: BaseType.Object },
+    },
     {
       defaultValue: false,
       key: 'archived',
@@ -88,7 +96,6 @@ const config: SettingsConfig = {
         baseType: BaseType.Float,
         isArray: true,
       },
-
     },
     {
       key: 'label',

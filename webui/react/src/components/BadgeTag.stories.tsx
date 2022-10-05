@@ -1,28 +1,28 @@
-import { select, text, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
-import { enumToOptions } from 'storybook/utils';
 import { CommandState } from 'types';
 
 import { BadgeType } from './Badge';
 import BadgeTag from './BadgeTag';
 
 export default {
+  argTypes: {
+    children: { name: 'text' },
+    label: { control: 'text' },
+    prelabel: { control: 'text' },
+    state: { control: 'inline-radio', options: CommandState },
+    type: { control: 'inline-radio', options: BadgeType },
+  },
   component: BadgeTag,
-  decorators: [ withKnobs ],
-  title: 'BadgeTag',
+  title: 'Determined/Badges/BadgeTag',
+} as Meta<typeof BadgeTag>;
+
+export const Default: ComponentStory<typeof BadgeTag> = (args) => <BadgeTag {...args} />;
+
+Default.args = {
+  children: 'a4fdb98',
+  label: 'Label',
+  state: CommandState.Running,
+  type: BadgeType.Default,
 };
-
-const knobTypeOptions = enumToOptions<BadgeType>(BadgeType);
-
-export const Default = (): React.ReactNode => <BadgeTag label="Special ID">a4fdb98</BadgeTag>;
-
-export const Custom = (): React.ReactNode => (
-  <BadgeTag
-    label={text('Label', 'Label')}
-    preLabel={text('Pre Label', '')}
-    state={select('State', CommandState, CommandState.Assigned)}
-    type={select<BadgeType>('Type', knobTypeOptions, BadgeType.Default)}>
-    {text('Content', 'a4fdb98')}
-  </BadgeTag>
-);

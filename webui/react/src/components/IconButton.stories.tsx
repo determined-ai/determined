@@ -1,15 +1,47 @@
-import { text, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
 import IconButton from './IconButton';
 
 export default {
+  argTypes: {
+    icon: {
+      control: {
+        options: [
+          'arrow-down',
+          'arrow-up',
+          'dai-logo',
+          'cluster',
+          'collapse',
+          'command',
+          'expand',
+          'experiment',
+          'grid',
+          'jupyter-lab',
+          'list',
+          'lock',
+          'notebook',
+          'overflow-horizontal',
+          'overflow-vertical',
+          'shell',
+          'star',
+          'tensor-board',
+          'tensorflow',
+          'user',
+          'user-small',
+        ],
+        type: 'select',
+      },
+    },
+  },
   component: IconButton,
-  decorators: [ withKnobs ],
-  title: 'IconButton',
-};
+  title: 'Determined/Buttons/IconButton',
+} as Meta<typeof IconButton>;
 
-export const Default = (): React.ReactNode => <IconButton icon="checkmark" label="Okay" />;
-export const Custom = (): React.ReactNode => (
-  <IconButton icon={text('Icon Name', 'experiment')} label={text('Label', 'Experiment)')} />
-);
+export const Default: ComponentStory<typeof IconButton> = (args) => <IconButton {...args} />;
+
+Default.args = {
+  icon: 'experiment',
+  iconSize: 'medium',
+  label: 'Experiment',
+};

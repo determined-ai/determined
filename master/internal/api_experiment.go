@@ -12,11 +12,14 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -51,6 +54,74 @@ import (
 
 var experimentsAddr = actor.Addr("experiments")
 
+// Catches information on active running experiments.
+type experimentAllocation struct {
+	Job      model.JobID
+	Pulling  bool
+	Running  bool
+	Starting bool
+}
+
+// Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
+func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experiment) error {
+	// filter allocations by JobIDs on this page of experiments
+	jobFilter := make([]string, 0, len(experiments))
+	for _, exp := range experiments {
+		jobFilter = append(jobFilter, exp.JobId)
+	}
+
+	// get active experiments by JobID
+	tasks := []experimentAllocation{}
+	err := a.m.db.Query(
+		"aggregate_allocation_state_by_job",
+		&tasks,
+		strings.Join(jobFilter, ","),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Collect state information by JobID
+	byJobID := make(map[model.JobID]experimentv1.State, len(tasks))
+	for _, task := range tasks {
+		switch {
+		case task.Running:
+			byJobID[task.Job] = experimentv1.State_STATE_RUNNING
+		case task.Starting:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_STARTING)
+		case task.Pulling:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_PULLING)
+		default:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_QUEUED)
+		}
+	}
+
+	// Active experiments converted to Queued, Pulling, Starting, or Running
+	for _, exp := range experiments {
+		if exp.State == experimentv1.State_STATE_ACTIVE {
+			if setState, ok := byJobID[model.JobID(exp.JobId)]; ok {
+				exp.State = setState
+			} else {
+				exp.State = experimentv1.State_STATE_QUEUED
+			}
+		}
+	}
+	return nil
+}
+
+// Return if experiment state is Active or any of its sub-states.
+func isActiveExperimentState(state experimentv1.State) bool {
+	return slices.Contains([]experimentv1.State{
+		experimentv1.State_STATE_ACTIVE,
+		experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
+		experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
+	}, state)
+}
+
+// Return a single experiment with enriched state, if the user can access it.
 func (a *apiServer) getExperiment(
 	curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, error) {
@@ -66,9 +137,9 @@ func (a *apiServer) getExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if ok, err := expauth.AuthZProvider.Get().
-		CanGetExperiment(curUser, modelExp); err != nil {
-		return nil, err
+	if ok, authErr := expauth.AuthZProvider.Get().
+		CanGetExperiment(curUser, modelExp); authErr != nil {
+		return nil, authErr
 	} else if !ok {
 		return nil, expNotFound
 	}
@@ -76,6 +147,11 @@ func (a *apiServer) getExperiment(
 	sort.Slice(exp.TrialIds, func(i, j int) bool {
 		return exp.TrialIds[i] < exp.TrialIds[j]
 	})
+
+	if err = a.enrichExperimentState(exp); err != nil {
+		return nil, err
+	}
+
 	return exp, nil
 }
 
@@ -134,7 +210,8 @@ func (a *apiServer) GetExperiment(
 		Experiment: exp,
 	}
 
-	if model.StateFromProto(exp.State) != model.ActiveState {
+	// Only continue to add a job summary if it's an active experiment.
+	if !isActiveExperimentState(exp.State) {
 		return &resp, nil
 	}
 
@@ -206,18 +283,15 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) error {
+func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to read config for experiment: %w", err)
 	}
 
-	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
-	switch {
-	case err != nil:
-		return errors.Errorf("cannot find user and group for experiment")
-	case agentUserGroup == nil:
-		agentUserGroup = &a.m.config.Security.DefaultTask
+	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+	if err != nil {
+		return err
 	}
 
 	taskSpec := *a.m.taskSpec
@@ -230,13 +304,12 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	if err != nil {
 		return err
 	}
-
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	jobSubmissionTime := exp.StartTime
 	taskID := model.NewTaskID()
 	ckptGCTask := newCheckpointGCTask(
 		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-		conf, checkpoints, true, agentUserGroup, user, nil,
+		conf, checkpoints, true, agentUserGroup, userModel, nil,
 	)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
@@ -390,6 +463,14 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
+	if req.ExperimentIdFilter != nil {
+		var err error
+		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentIdFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
@@ -410,6 +491,10 @@ func (a *apiServer) GetExperiments(
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
+		return nil, err
+	}
+
+	if err = a.enrichExperimentState(resp.Experiments...); err != nil {
 		return nil, err
 	}
 
@@ -777,6 +862,7 @@ func (a *apiServer) PatchExperiment(
 	if err != nil {
 		return nil, err
 	}
+
 	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(*curUser, modelExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
@@ -828,8 +914,8 @@ func (a *apiServer) PatchExperiment(
 			Description: exp.Description,
 			Name:        exp.Name,
 		}
-		marshalledPatches, err := json.Marshal(patches)
-		if err != nil {
+		marshalledPatches, patchErr := json.Marshal(patches)
+		if patchErr != nil {
 			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
 		}
 
@@ -838,6 +924,11 @@ func (a *apiServer) PatchExperiment(
 		if err != nil {
 			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 		}
+	}
+
+	// include queued / pulling / starting / running state
+	if err = a.enrichExperimentState(exp); err != nil {
+		return nil, err
 	}
 
 	return &apiv1.PatchExperimentResponse{Experiment: exp}, nil
@@ -1105,6 +1196,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
@@ -1140,7 +1232,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
-			return nil
+			return err
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -1433,6 +1525,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
 	currentTrials map[int32]bool,

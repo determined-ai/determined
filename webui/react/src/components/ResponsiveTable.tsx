@@ -49,14 +49,12 @@ export const handleTableChange = (
     updateSettings(newSettings, shouldPush);
   };
 };
-
-const ResponsiveTable: ResponsiveTable = ({
-  loading,
-  scroll,
-  ...props
-}) => {
-  const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
-  const [ tableScroll, setTableScroll ] = useState(scroll);
+/**
+ * Depricated. Prefer using InteractiveTable instead.
+ */
+const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
+  const [hasScrollBeenEnabled, setHasScrollBeenEnabled] = useState<boolean>(false);
+  const [tableScroll, setTableScroll] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
   const resize = useResize(tableRef);
 
@@ -75,9 +73,9 @@ const ResponsiveTable: ResponsiveTable = ({
      * it will show the scroll bar. We need to set it to undefined the first time if scrolling
      * is not needed, and 'max-content' if we want to disable scrolling after it has been displayed.
      */
-    let scrollX: 'max-content'|undefined|number = (
-      hasScrollBeenEnabled ? 'max-content' : undefined
-    );
+    let scrollX: 'max-content' | undefined | number = hasScrollBeenEnabled
+      ? 'max-content'
+      : undefined;
     if (rect.width > resize.width) {
       scrollX = rect.width;
       setHasScrollBeenEnabled(true);
@@ -87,23 +85,16 @@ const ResponsiveTable: ResponsiveTable = ({
       x: scrollX,
       y: scroll?.y,
     });
-  }, [ hasScrollBeenEnabled, resize, scroll ]);
+  }, [hasScrollBeenEnabled, resize, scroll]);
 
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
-        {
-          spinning
-            ? <SkeletonTable columns={props.columns?.length} rows={props.columns?.length} />
-            : (
-              <Table
-                bordered
-                scroll={tableScroll}
-                tableLayout="auto"
-                {...props}
-              />
-            )
-        }
+        {spinning ? (
+          <SkeletonTable columns={props.columns?.length} rows={props.columns?.length} />
+        ) : (
+          <Table bordered scroll={tableScroll} tableLayout="auto" {...props} />
+        )}
       </Spinner>
     </div>
   );

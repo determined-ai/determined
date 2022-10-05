@@ -8,7 +8,7 @@ import { openCommand } from 'utils/wait';
 
 const locations: TreeNode[] = [
   {
-    aliases: [ 'agents', 'resourcePools' ],
+    aliases: ['agents', 'resourcePools'],
     onAction: visitAction(paths.cluster()),
     title: 'cluster',
   },
@@ -26,16 +26,13 @@ const locations: TreeNode[] = [
       };
 
       const label = inp === '' ? '<id>' : inp;
-      return [
-        { label, onAction, title: inp },
-      ];
+      return [{ label, onAction, title: inp }];
     },
     title: 'experiment',
   },
   {
     label: 'trial <id>',
     onCustomInput: (inp: string): Children => {
-
       const onAction = async () => {
         const id = parseIds(inp)[0];
         try {
@@ -49,14 +46,12 @@ const locations: TreeNode[] = [
       // we could generate this `<id>` arg label and the label for the
       // parent node together instead of separately.
       const label = inp === '' ? '<id>' : inp;
-      return [
-        { label, onAction, title: inp },
-      ];
+      return [{ label, onAction, title: inp }];
     },
     title: 'trial',
   },
   {
-    aliases: [ 'jupyterLabs', 'tensorBoards', 'commands', 'shells' ],
+    aliases: ['jupyterLabs', 'tensorBoards', 'commands', 'shells'],
     onAction: visitAction(paths.taskList()),
     title: 'tasks',
   },

@@ -203,7 +203,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 		return err
 	}
 
-	log.Errorf("deleting project %d experiments", projectID)
+	log.Debugf("deleting project %d experiments", projectID)
 	for _, exp := range expList {
 		if err = a.deleteExperiment(exp, user); err != nil {
 			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
@@ -211,14 +211,14 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 			return err
 		}
 	}
-	log.Errorf("project %d experiments deleted successfully", projectID)
+	log.Debugf("project %d experiments deleted successfully", projectID)
 	err = a.m.db.QueryProto("delete_project", holder, projectID)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete project %d", projectID)
 		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 		return err
 	}
-	log.Errorf("project %d deleted successfully", projectID)
+	log.Debugf("project %d deleted successfully", projectID)
 	return nil
 }
 

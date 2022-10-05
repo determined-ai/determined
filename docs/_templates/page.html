@@ -1,5 +1,23 @@
 {% extends "base.html" %}
 
+{% block extrahead %}
+<!-- Analytics -->
+<script>
+    window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+
+    ga('create', 'UA-110089850-1', 'auto');
+    ga('set', 'transport', 'beacon');
+    ga('send', 'pageview');
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+<script type="text/javascript">
+    var DID=258260;
+    var MyPageName = window.location.href.replace("http://","");
+</script>
+<script async src="//stats.sa-as.com/live.js"></script>
+{% endblock %}
+
 {% block body -%}
 {% include "partials/icons.html" %}
 

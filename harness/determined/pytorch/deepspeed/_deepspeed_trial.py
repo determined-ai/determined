@@ -246,7 +246,7 @@ class DeepSpeedTrialController(det.TrialController):
                 fn(*args)
 
         # We define on_shutdown here instead of inside the `for callback in...` loop to ensure we
-        # don't bind a the loop iteration variable `callback`, which would likely cause us to call
+        # don't bind the loop iteration variable `callback`, which would likely cause us to call
         # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
         def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
             with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
@@ -350,7 +350,7 @@ class DeepSpeedTrialController(det.TrialController):
                             self._save(path)
                             # If the storage manager is a sharedfs, then the checkpoint directory
                             # will already contain all the files.  Otherwise, checkpoint files are
-                            # saved to a local directory before being uploaded to cloud storage so
+                            # saved to a local directory before being uploaded to cloud storage, so
                             # we'll need to gather all the files across nodes before reporting the
                             # checkpoint.
                             resources = storage.StorageManager._list_directory(path)
@@ -446,7 +446,7 @@ class DeepSpeedTrialController(det.TrialController):
                         callback.on_training_epoch_start(self.get_epoch_idx(batch_idx))
             # This can be inaccurate if the user's data loader does not return batches with
             # the micro batch size.  It is also slightly inaccurate if the data loader can return
-            # partial batches.  The same sort of assumptions are made in the DeepSpeed
+            # partial batches.  The same sort of assumptions is made in the DeepSpeed
             # model engine's accounting and profiling computations.
             batch_inputs = (
                 self.context.train_micro_batch_size_per_gpu
@@ -566,7 +566,7 @@ class DeepSpeedTrialController(det.TrialController):
             # Note that when using pipeline parallelism, each call to evaluate_batch will request
             # self.context.num_micro_batches_per_slot batches from the validation iterator.
             # This is why we set self.num_validation_batches differently for pipeline parallel
-            # and no pipeline parallel when building the data laoders.
+            # and no pipeline parallel when building the data loaders.
             vld_metrics = self.trial.evaluate_batch(validation_iterator, idx)
             if self.context._mpu.should_report_metrics:
                 if not isinstance(vld_metrics, dict):
@@ -666,7 +666,7 @@ class DeepSpeedTrialController(det.TrialController):
         for callback in self.callbacks.values():
             callback.on_checkpoint_load_start(checkpoint)
 
-        # We allow users to override load behavior if needed but we default to using
+        # We allow users to override load behavior if needed, but we default to using
         # the load method provided by DeepSpeed.
         self.trial.load(self.context, load_path)
 
@@ -752,7 +752,7 @@ class DeepSpeedTrialController(det.TrialController):
         ckpt_name = f"det_state_dict_rank{self.context.distributed.rank}.pth"
         torch.save(checkpoint, str(path.joinpath(ckpt_name)))
 
-        # We allow users to override save behavior if needed but we default to using
+        # We allow users to override save behavior if needed, but we default to using
         # the save method provided by DeepSpeed.
         self.trial.save(self.context, path)
 
@@ -774,7 +774,7 @@ class DeepSpeedTrial(det.Trial):
     * **Define the DeepSpeed model engine which includes the model, optimizer, and lr_scheduler**.
 
        In the :meth:`__init__` method, initialize models and, optionally, optimizers and
-       LR schedulers and pass them to deepspeed.initialize to build the model engine.  Then
+       LR schedulers and pass them to ``deepspeed.initialize`` to build the model engine.  Then
        pass the created model engine to ``wrap_model_engine`` provided by
        :class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext`.
        We support multiple DeepSpeed model engines if they only use data parallelism or if
@@ -833,7 +833,7 @@ class DeepSpeedTrial(det.Trial):
         batch_idx: int,
     ) -> Union[torch.Tensor, Dict[str, Any]]:
         """
-        Train one full batch (i.e. train on ``train_batch_size`` samples, perhaps consisting of
+        Train one full batch (i.e. train on ``train_batch_size`` samples, perhaps consisting
         of multiple micro-batches).
 
         If training without pipeline parallelism, users should implement this function by doing

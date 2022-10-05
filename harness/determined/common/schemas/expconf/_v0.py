@@ -49,6 +49,30 @@ class ResourcesConfigV0(schemas.SchemaBase):
         pass
 
 
+class PbsClusterConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
+    pbsbatch_args: Optional[List[str]] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        pbsbatch_args: Optional[List[str]] = None,
+    ) -> None:
+        pass
+
+
+class SlurmClusterConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
+    sbatch_args: Optional[List[str]] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        sbatch_args: Optional[List[str]] = None,
+    ) -> None:
+        pass
+
+
 class OptimizationsConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/optimizations.json"
     aggregation_frequency: Optional[int] = None
@@ -258,12 +282,12 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094"
+            self.cpu = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730"
         if self.rocm is None:
-            self.rocm = "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-9119094"
+            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730"
 
         if self.cuda is None:
-            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-9119094"
+            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
@@ -333,8 +357,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
-    slurm: Optional[List[str]] = None
-    pbs: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
@@ -347,8 +369,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
-        slurm: Optional[List[str]] = None,
-        pbs: Optional[List[str]] = None,
     ) -> None:
         pass
 
@@ -882,6 +902,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     min_validation_period: Optional[LengthV0] = None
     name: Optional[str] = None
     optimizations: Optional[OptimizationsConfigV0] = None
+    pbs: Optional[PbsClusterConfigV0] = None
     perform_initial_validation: Optional[bool] = None
     profiling: Optional[ProfilingConfigV0] = None
     project: Optional[str] = None
@@ -890,6 +911,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     resources: Optional[ResourcesConfigV0] = None
     scheduling_unit: Optional[int] = None
     # security: Optional[SecurityConfigV0] = None
+    slurm: Optional[SlurmClusterConfigV0] = None
     # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
     workspace: Optional[str] = None
 
@@ -913,6 +935,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         min_validation_period: Optional[LengthV0] = None,
         name: Optional[str] = None,
         optimizations: Optional[OptimizationsConfigV0] = None,
+        pbs: Optional[PbsClusterConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
         profiling: Optional[ProfilingConfigV0] = None,
         project: Optional[str] = None,
@@ -921,6 +944,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         resources: Optional[ResourcesConfigV0] = None,
         scheduling_unit: Optional[int] = None,
         # security: Optional[SecurityConfigV0] = None,
+        slurm: Optional[SlurmClusterConfigV0] = None,
         # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
         workspace: Optional[str] = None,
     ) -> None:

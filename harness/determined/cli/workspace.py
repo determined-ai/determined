@@ -1,9 +1,10 @@
 import json
 from argparse import Namespace
 from time import sleep
-from typing import Any, List, Sequence
+from typing import Any, List, Optional, Sequence
 
 from determined import cli
+from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
@@ -11,7 +12,15 @@ from determined.common.declarative_argparse import Arg, Cmd
 from . import render
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
-WORKSPACE_HEADERS = ["ID", "Name", "# Projects"]
+WORKSPACE_HEADERS = [
+    "ID",
+    "Name",
+    "# Projects",
+    "Agent Uid",
+    "Agent Gid",
+    "Agent User",
+    "Agent Group",
+]
 
 
 def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
@@ -20,6 +29,10 @@ def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
             w.id,
             w.name,
             w.numProjects,
+            w.agentUserGroup.agentUid if w.agentUserGroup else None,
+            w.agentUserGroup.agentGid if w.agentUserGroup else None,
+            w.agentUserGroup.agentUser if w.agentUserGroup else None,
+            w.agentUserGroup.agentGroup if w.agentUserGroup else None,
         ]
         for w in workspaces
     ]
@@ -99,9 +112,22 @@ def list_workspace_projects(args: Namespace) -> None:
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
 
+def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUserGroup]:
+    if args.agent_uid or args.agent_gid or args.agent_user or args.agent_group:
+        return bindings.v1AgentUserGroup(
+            agentUid=args.agent_uid,
+            agentGid=args.agent_gid,
+            agentUser=args.agent_user,
+            agentGroup=args.agent_group,
+        )
+    return None
+
+
 @authentication.required
 def create_workspace(args: Namespace) -> None:
-    content = bindings.v1PostWorkspaceRequest(name=args.name)
+    agent_user_group = _parse_agent_user_group_args(args)
+
+    content = bindings.v1PostWorkspaceRequest(name=args.name, agentUserGroup=agent_user_group)
     w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
 
     if args.json:
@@ -174,7 +200,8 @@ def unarchive_workspace(args: Namespace) -> None:
 def edit_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
-    updated = bindings.v1PatchWorkspace(name=args.new_name)
+    agent_user_group = _parse_agent_user_group_args(args)
+    updated = bindings.v1PatchWorkspace(name=args.name, agentUserGroup=agent_user_group)
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
     if args.json:
@@ -259,6 +286,7 @@ args_description = [
                 "create workspace",
                 [
                     Arg("name", type=str, help="unique name of the workspace"),
+                    *AGENT_USER_GROUP_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -291,7 +319,8 @@ args_description = [
                 "edit workspace",
                 [
                     Arg("workspace_name", type=str, help="current name of the workspace"),
-                    Arg("new_name", type=str, help="new name of the workspace"),
+                    Arg("--name", type=str, help="new name of the workspace"),
+                    *AGENT_USER_GROUP_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),

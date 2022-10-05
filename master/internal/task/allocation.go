@@ -112,6 +112,10 @@ type (
 	AllocationReady struct {
 		Message string
 	}
+	// AllocationWaiting marks an allocation as waiting.
+	AllocationWaiting struct {
+		Message string
+	}
 	// SetAllocationProxyAddress manually sets the allocation proxy address.
 	SetAllocationProxyAddress struct {
 		ProxyAddress string
@@ -220,6 +224,11 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.Error(ctx, err)
 		}
 		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.Ptr(true)})
+	case AllocationWaiting:
+		a.setMostProgressedModelState(model.AllocationStateWaiting)
+		if err := a.db.UpdateAllocationState(a.model); err != nil {
+			a.Error(ctx, err)
+		}
 	case MarkResourcesDaemon:
 		if err := a.SetResourcesAsDaemon(ctx, msg.AllocationID, msg.ResourcesID); err != nil {
 			a.Error(ctx, err)

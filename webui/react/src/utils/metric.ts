@@ -42,7 +42,18 @@ export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => 
     return { name, type: MetricType.Validation };
   });
 
-  return [ ...validationMetrics, ...trainingMetrics ].sort(metricNameSorter);
+  return [...validationMetrics, ...trainingMetrics].sort(metricNameSorter);
+};
+
+export const extractMetricSortValue = (
+  workload: WorkloadGroup,
+  metricName: MetricName,
+): number | undefined => {
+  return (
+    extractMetricValue(workload, metricName) ??
+    extractMetricValue(workload, { ...metricName, type: MetricType.Validation }) ??
+    extractMetricValue(workload, { ...metricName, type: MetricType.Training })
+  );
 };
 
 export const extractMetricValue = (
@@ -63,8 +74,10 @@ export const getMetricValue = (
 
 export const metricNameToStr = (metricName: MetricName, truncateLimit = 30): string => {
   const type = metricName.type === MetricType.Training ? 'T' : 'V';
-  const name = metricName.name.length > truncateLimit ?
-    metricName.name.substr(0, truncateLimit) + '...' : metricName.name;
+  const name =
+    metricName.name.length > truncateLimit
+      ? metricName.name.substr(0, truncateLimit) + '...'
+      : metricName.name;
   return `[${type}] ${name}`;
 };
 
@@ -75,6 +88,6 @@ export const metricNameToValue = (metricName: MetricName): string => {
 export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
   if (parts.length !== 2) return;
-  if (![ MetricType.Training, MetricType.Validation ].includes(parts[0] as MetricType)) return;
+  if (![MetricType.Training, MetricType.Validation].includes(parts[0] as MetricType)) return;
   return { name: parts[1], type: parts[0] as MetricType };
 };

@@ -7,13 +7,10 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
 import { Primitive, RecordKey } from 'shared/types';
-import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
-  str2rgba } from 'shared/utils/color';
+import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
-import {
-  HyperparametersFlattened, HyperparameterType, MetricName,
-} from 'types';
+import { HyperparametersFlattened, HyperparameterType, MetricName } from 'types';
 
 import { HpValsMap } from '../CompareVisualization';
 
@@ -24,7 +21,7 @@ interface Props {
   filteredTrialIdMap?: Record<number, boolean>;
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
-  hpVals: HpValsMap
+  hpVals: HpValsMap;
   hyperparameters: HyperparametersFlattened;
   metric: MetricName;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
@@ -36,7 +33,7 @@ interface Props {
 }
 
 export interface TrialHParams {
-  experimentId: number,
+  experimentId: number;
   hparams: Record<RecordKey, Primitive>;
   id: number;
   metric: number | null;
@@ -57,11 +54,11 @@ const HpTrialTable: React.FC<Props> = ({
   handleTableRowSelect,
   selectedRowKeys,
 }: Props) => {
-  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+  const [pageSize, setPageSize] = useState(MINIMUM_PAGE_SIZE);
   const dataSource = useMemo(() => {
     if (!filteredTrialIdMap) return trialHps;
     return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
-  }, [ filteredTrialIdMap, trialHps ]);
+  }, [filteredTrialIdMap, trialHps]);
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
@@ -77,9 +74,7 @@ const HpTrialTable: React.FC<Props> = ({
       return (
         <div className={css.idLayout}>
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
-          <Link path={paths.trialDetails(record.id, record.experimentId)}>
-            {record.id}
-          </Link>
+          <Link path={paths.trialDetails(record.id, record.experimentId)}>{record.id}</Link>
         </div>
       );
     };
@@ -107,9 +102,7 @@ const HpTrialTable: React.FC<Props> = ({
       dataIndex: 'experimentId',
       key: 'experimentId',
       render: (_: string, record: TrialHParams) => (
-        <Link path={paths.experimentDetails(record.experimentId)}>
-          {record.experimentId}
-        </Link>
+        <Link path={paths.experimentDetails(record.experimentId)}>{record.experimentId}</Link>
       ),
       sorter: experimentIdSorter,
       title: 'Exp ID',
@@ -141,8 +134,7 @@ const HpTrialTable: React.FC<Props> = ({
       };
     };
 
-    const hpColumns = Object
-      .keys(hyperparameters || {})
+    const hpColumns = Object.keys(hyperparameters || {})
       .filter((hpParam) => hpVals[hpParam]?.size > 1)
       .map((key) => {
         return {
@@ -153,28 +145,34 @@ const HpTrialTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns ];
-  }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
+    return [idColumn, experimentIdColumn, metricColumn, ...hpColumns];
+  }, [colorScale, hyperparameters, metric, trialIds, hpVals]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
   }, []);
 
-  const handleTableRow = useCallback((record: TrialHParams) => ({
-    onMouseEnter: (event: React.MouseEvent) => {
-      if (onMouseEnter) onMouseEnter(event, record);
-    },
-    onMouseLeave: (event: React.MouseEvent) => {
-      if (onMouseLeave) onMouseLeave(event, record);
-    },
-  }), [ onMouseEnter, onMouseLeave ]);
+  const handleTableRow = useCallback(
+    (record: TrialHParams) => ({
+      onMouseEnter: (event: React.MouseEvent) => {
+        if (onMouseEnter) onMouseEnter(event, record);
+      },
+      onMouseLeave: (event: React.MouseEvent) => {
+        if (onMouseLeave) onMouseLeave(event, record);
+      },
+    }),
+    [onMouseEnter, onMouseLeave],
+  );
 
-  const rowClassName = useCallback((record: TrialHParams) => {
-    return defaultRowClassName({
-      clickable: false,
-      highlighted: record.id === highlightedTrialId,
-    });
-  }, [ highlightedTrialId ]);
+  const rowClassName = useCallback(
+    (record: TrialHParams) => {
+      return defaultRowClassName({
+        clickable: false,
+        highlighted: record.id === highlightedTrialId,
+      });
+    },
+    [highlightedTrialId],
+  );
 
   return (
     <ResponsiveTable<TrialHParams>
@@ -183,15 +181,19 @@ const HpTrialTable: React.FC<Props> = ({
       pagination={getPaginationConfig(dataSource.length, pageSize)}
       rowClassName={rowClassName}
       rowKey="id"
-      rowSelection={selection ? {
-        onChange: handleTableRowSelect,
-        preserveSelectedRowKeys: true,
-        selectedRowKeys,
-      } : undefined}
+      rowSelection={
+        selection
+          ? {
+              onChange: handleTableRowSelect,
+              preserveSelectedRowKeys: true,
+              selectedRowKeys,
+            }
+          : undefined
+      }
       scroll={{ x: 1000 }}
       showSorterTooltip={false}
       size="small"
-      sortDirections={[ 'ascend', 'descend', 'ascend' ]}
+      sortDirections={['ascend', 'descend', 'ascend']}
       onChange={handleTableChange}
       onRow={handleTableRow}
     />

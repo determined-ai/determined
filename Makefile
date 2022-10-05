@@ -2,6 +2,7 @@
 all:
 	$(MAKE) get-deps
 	$(MAKE) build
+	$(MAKE) set-config-dev
 
 .PHONY: get-deps
 get-deps: get-deps-pip get-deps-go get-deps-bindings get-deps-webui
@@ -26,12 +27,17 @@ package:
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
+set-config-dev: .git/hooks/pre-commit
+
+.git/hooks/pre-commit:
+	pre-commit install
+
 .PHONY: build-%
 build-%:
 	$(MAKE) -C $(subst -,/,$*) build
 
 .PHONY: build-docs
-build-docs: build-common build-harness build-cli build-deploy build-model_hub build-examples build-helm build-proto 
+build-docs: build-common build-harness build-cli build-deploy build-model_hub build-examples build-helm build-proto
 	$(MAKE) -C docs build
 
 .PHONY: build-bindings
@@ -51,13 +57,13 @@ build-master: build-proto
 	$(MAKE) -C master build
 
 .PHONY: build
-build: build-master build-agent build-webui build-docs 
+build: build-master build-agent build-webui build-docs
 
 .PHONY: clean-%
 clean-%:
 	$(MAKE) -C $(subst -,/,$*) clean
 .PHONY: clean
-clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings 
+clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
 
 .PHONY: check-%
 check-%:
@@ -70,13 +76,18 @@ check: check-common check-proto check-harness check-cli check-deploy check-model
 fmt-%:
 	$(MAKE) -C $(subst -,/,$*) fmt
 .PHONY: fmt
-fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas fmt-proto 
+fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas fmt-proto
 
 .PHONY: test-%
 test-%:
 	$(MAKE) -C $(subst -,/,$*) test
 .PHONY: test
 test: test-harness test-model_hub test-master test-agent test-webui
+
+# local frontend dev server against current DET_MASTER
+.PHONY: localfrontend
+local: build-bindings get-deps-webui
+	HOST="localhost" DET_WEBPACK_PROXY_URL=${DET_MASTER} $(MAKE) -C webui live
 
 .PHONY: devcluster
 devcluster:

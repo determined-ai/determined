@@ -1038,9 +1038,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1`` for NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.1`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
+   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
 
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
@@ -1099,18 +1099,6 @@ workloads for this experiment. For more information on customizing the trial env
    rather than ``--cap-add``.
 
 .. _exp-environment-slurm:
-
-``slurm``
-   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
-   control of Slurm options not otherwise managed by Determined. For example, to specify required
-   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
-
-   .. code:: yaml
-
-      environment:
-         slurm:
-            - --mem-per-cpu=10
-            - --exclusive
 
 ***************
  Optimizations
@@ -1286,3 +1274,24 @@ To verify your search is working as intended before committing to a full run, yo
 .. code::
 
    det preview-search <configuration.yaml>
+
+***********************
+ Slurm Cluster Details
+***********************
+
+The ``slurm`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
+
+**Optional Fields**
+
+``sbatch_args``
+   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
+   control of Slurm options not otherwise managed by Determined. For example, to specify required
+   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
+
+   .. code:: yaml
+
+      slurm:
+         sbatch_args:
+            - --mem-per-cpu=10
+            - --exclusive

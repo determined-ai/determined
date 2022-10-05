@@ -16,7 +16,6 @@ import {
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
   ExperimentConfig,
-  RunState,
 } from 'types';
 import { checkpointSize } from 'utils/workload';
 
@@ -47,8 +46,9 @@ const getStorageLocation = (
       break;
     case CheckpointStorageType.SharedFS:
       if (hostPath && storagePath) {
-        location = storagePath.startsWith('/') ?
-          `file://${storagePath}` : `file://${hostPath}/${storagePath}`;
+        location = storagePath.startsWith('/')
+          ? `file://${storagePath}`
+          : `file://${hostPath}/${storagePath}`;
       } else if (hostPath) {
         location = `file://${hostPath}`;
       }
@@ -83,18 +83,17 @@ const useModalCheckpoint = ({
 }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
 
-  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [ onClose ]);
+  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [onClose]);
 
-  const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [ onClose ]);
+  const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [onClose]);
 
   const handleDelete = useCallback(() => {
     if (!checkpoint.uuid) return;
-    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
-  }, [ checkpoint ]);
+    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
+  }, [checkpoint]);
 
   const deleteCPModalProps: ModalFuncProps = useMemo(() => {
-    const content =
-      `Are you sure you want to request checkpoint deletion for batch
+    const content = `Are you sure you want to request checkpoint deletion for batch
 ${checkpoint.totalBatches}. This action may complete or fail without further notification.`;
 
     return {
@@ -107,16 +106,16 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
       title: 'Confirm Checkpoint Deletion',
       width: 450,
     };
-  }, [ checkpoint, handleCancel, handleDelete ]);
+  }, [checkpoint, handleCancel, handleDelete]);
 
   const onClickDelete = useCallback(() => {
     openOrUpdate(deleteCPModalProps);
-  }, [ openOrUpdate, deleteCPModalProps ]);
+  }, [openOrUpdate, deleteCPModalProps]);
 
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
 
-    const state = checkpoint.state as unknown as RunState;
+    const state = checkpoint.state;
     const totalSize = humanReadableBytes(checkpointSize(checkpoint));
 
     const searcherMetric = props.searcherValidation;
@@ -128,70 +127,78 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
     return (
       <div className={css.base}>
         {renderRow(
-          'Source', (
-            <div className={css.source}>
-              <Link path={paths.experimentDetails(checkpoint.experimentId)}>
-                Experiment {checkpoint.experimentId}
-              </Link>
-              {checkpoint.trialId && (
-                <>
-                  <span className={css.sourceDivider} />
-                  <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
-                    Trial {checkpoint.trialId}
-                  </Link>
-                </>
-              )}
-              <span className={css.sourceDivider} />
-              <span>Batch {checkpoint.totalBatches}</span>
-            </div>
-          ),
+          'Source',
+          <div className={css.source}>
+            <Link path={paths.experimentDetails(checkpoint.experimentId)}>
+              Experiment {checkpoint.experimentId}
+            </Link>
+            {checkpoint.trialId && (
+              <>
+                <span className={css.sourceDivider} />
+                <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
+                  Trial {checkpoint.trialId}
+                </Link>
+              </>
+            )}
+            <span className={css.sourceDivider} />
+            <span>Batch {checkpoint.totalBatches}</span>
+          </div>,
         )}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {searcherMetric && renderRow(
-          'Validation Metric',
-          <>
-            <HumanReadableNumber num={searcherMetric} />
-            {`(${config.searcher.metric})`}
-          </>,
-        )}
-        {('endTime' in checkpoint && checkpoint?.endTime) &&
+        {searcherMetric &&
+          renderRow(
+            'Validation Metric',
+            <>
+              <HumanReadableNumber num={searcherMetric} />
+              {`(${config.searcher.metric})`}
+            </>,
+          )}
+        {'endTime' in checkpoint &&
+          checkpoint?.endTime &&
           renderRow('End Time', formatDatetime(checkpoint.endTime))}
         {renderRow(
           'Total Size',
-          <div className={css.size}><span>{totalSize}</span>{
-            checkpoint.uuid && (
-              <Button danger type="text" onClick={onClickDelete}>{
-                'Request Checkpoint Deletion'}
+          <div className={css.size}>
+            <span>{totalSize}</span>
+            {checkpoint.uuid && (
+              <Button danger type="text" onClick={onClickDelete}>
+                {'Request Checkpoint Deletion'}
               </Button>
             )}
           </div>,
         )}
-        {resources.length !== 0 && renderRow(
-          'Resources', (
+        {resources.length !== 0 &&
+          renderRow(
+            'Resources',
             <div className={css.resources}>
               {resources.map((resource) => renderResource(resource.name, resource.size))}
-            </div>
-          ),
-        )}
+            </div>,
+          )}
       </div>
     );
-  }, [ checkpoint, config, props.searcherValidation, onClickDelete ]);
+  }, [checkpoint, config, props.searcherValidation, onClickDelete]);
 
-  const modalProps: ModalFuncProps = useMemo(() => ({
-    content,
-    icon: <ExclamationCircleOutlined />,
-    okText: 'Register Checkpoint',
-    onCancel: handleCancel,
-    onOk: handleOk,
-    title: title,
-    width: 768,
-  }), [ content, handleCancel, handleOk, title ]);
+  const modalProps: ModalFuncProps = useMemo(
+    () => ({
+      content,
+      icon: <ExclamationCircleOutlined />,
+      okText: 'Register Checkpoint',
+      onCancel: handleCancel,
+      onOk: handleOk,
+      title: title,
+      width: 768,
+    }),
+    [content, handleCancel, handleOk, title],
+  );
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      openOrUpdate({ ...modalProps, ...initialModalProps });
+    },
+    [modalProps, openOrUpdate],
+  );
 
   /**
    * When modal props changes are detected, such as modal content
@@ -199,7 +206,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
-  }, [ modalProps, modalRef, openOrUpdate ]);
+  }, [modalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

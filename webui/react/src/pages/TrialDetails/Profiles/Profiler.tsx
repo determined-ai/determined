@@ -23,20 +23,19 @@ export interface Props {
  * Shared uPlot chart options.
  */
 
-const getOptionsForMetrics =
-    (metricName: string, seriesNames: string[]): Partial<Options> => {
-      return {
-        axes: [ timeAxis, getAxisForMetricName(metricName) ],
-        height: CHART_HEIGHT,
-        scales: { x: { time: false } },
-        series: [
-          baseSeries.time,
-          baseSeries.batch,
-          ...seriesNames.slice(1).map(getSeriesForSeriesName), // 0th is batch
-        ],
-        tzDate,
-      };
-    };
+const getOptionsForMetrics = (metricName: string, seriesNames: string[]): Partial<Options> => {
+  return {
+    axes: [timeAxis, getAxisForMetricName(metricName)],
+    height: CHART_HEIGHT,
+    scales: { x: { time: false } },
+    series: [
+      baseSeries.time,
+      baseSeries.batch,
+      ...seriesNames.slice(1).map(getSeriesForSeriesName), // 0th is batch
+    ],
+    tzDate,
+  };
+};
 
 export const tzDate = (ts: number): Date => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC');
 
