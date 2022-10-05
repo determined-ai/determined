@@ -7029,7 +7029,7 @@ export interface V1RoleAssignmentSummary {
      * @type {number}
      * @memberof V1RoleAssignmentSummary
      */
-    roleId?: number;
+    roleId: number;
     /**
      * List of workspace IDs to apply the role.
      * @type {Array<number>}

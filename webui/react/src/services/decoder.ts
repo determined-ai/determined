@@ -49,7 +49,7 @@ export const mapV1UserAssignment = (
 ): types.UserAssignment => {
   return {
     isGlobal: assignment.isGlobal || false,
-    roleId: assignment.roleId || 0,
+    roleId: assignment.roleId,
     workspaces: assignment.scopeWorkspaceIds || new Array<number>(),
   };
 };
