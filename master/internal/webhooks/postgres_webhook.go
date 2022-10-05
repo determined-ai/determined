@@ -45,7 +45,7 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 // DeleteWebhook deletes a Webhook and its Triggers from the DB.
 func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
+		_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
 		if err != nil {
 			return err
 		}
