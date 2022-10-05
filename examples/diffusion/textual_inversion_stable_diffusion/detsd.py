@@ -226,35 +226,35 @@ class DetSDTextualInversionTrainer:
         # if generate_training_images is False.
 
     @classmethod
-    def init_on_cluster(cls) -> "DetSDTextualInversionTrainer":
+    def train_on_cluster(cls) -> None:
         """Creates a DetSDTextualInversionTrainer instance on the cluster, drawing hyperparameters
         and other needed information from the Determined master.  Expects the `hyperparameters`
-        section of the config to be broken into `model`, `data`, `training`, and `inference`
-        subsections.
+        section of the config to be organized into the following sections:
+        - `model`: specifies which model weights to use.
+        - `concepts`: all pertinent information about the to-be-added concepts.
+        - `training`: controls details of the training process.
+        - `inference`: optionally generate images during training using parameters specified here.
         """
         info = det.get_cluster_info()
         assert info is not None, "init_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
         latest_checkpoint = info.latest_checkpoint
 
-        return cls(
+        # Instantiate the trainer and train.
+        trainer = cls(
             latest_checkpoint=latest_checkpoint,
             **hparams["model"],
-            **hparams["data"],
+            **hparams["concepts"],
             **hparams["training"],
             **hparams["inference"],
         )
 
-    def train_on_cluster(self) -> None:
-        """Run the full textual inversion training loop. Training must be performed on a
-        Determined cluster.
-        """
-        self.logger.info("--------------- Starting Training ---------------")
-        self.logger.info(f"Effective global batch size: {self.effective_global_batch_size}")
-        self.logger.info(
-            f"{'(Scaled) ' if self.scale_lr else ''}Learning rate: {self.learning_rate}"
+        trainer.logger.info("--------------- Starting Training ---------------")
+        trainer.logger.info(f"Effective global batch size: {trainer.effective_global_batch_size}")
+        trainer.logger.info(
+            f"{'(Scaled) ' if trainer.scale_lr else ''}Learning rate: {trainer.learning_rate}"
         )
-        self.logger.info(f"Train dataset size: {len(self.train_dataset)}")
+        trainer.logger.info(f"Train dataset size: {len(trainer.train_dataset)}")
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
@@ -262,43 +262,45 @@ class DetSDTextualInversionTrainer:
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            self._restore_latest_checkpoint(core_context)
+            trainer._restore_latest_checkpoint(core_context)
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
-                while self.steps_completed < op.length:
-                    for batch_idx, batch in enumerate(self.train_dataloader):
+                while trainer.steps_completed < op.length:
+                    for batch_idx, batch in enumerate(trainer.train_dataloader):
                         # Use the accumulate method for efficient gradient accumulation.
-                        with self.accelerator.accumulate(self.text_encoder):
-                            self._train_one_batch(batch)
-                        # An SGD step has been taken when self.accelerator.sync_gradients is True.
-                        took_sgd_step = self.accelerator.sync_gradients
+                        with trainer.accelerator.accumulate(trainer.text_encoder):
+                            trainer._train_one_batch(batch)
+                        # An SGD step has been taken when trainer.accelerator.sync_gradients is True.
+                        took_sgd_step = trainer.accelerator.sync_gradients
                         if took_sgd_step:
-                            self.steps_completed += 1
-                            self.logger.info(
-                                f"Step {self.steps_completed} completed on batch {batch_idx}"
+                            trainer.steps_completed += 1
+                            trainer.logger.info(
+                                f"Step {trainer.steps_completed} completed on batch {batch_idx}"
                             )
-                            if self._cached_embedding_reg_loss is not None:
-                                self._cached_embedding_reg_loss = None
+                            if trainer._cached_embedding_reg_loss is not None:
+                                trainer._cached_embedding_reg_loss = None
 
-                            is_end_of_training = self.steps_completed == op.length
-                            time_to_report = self.steps_completed % self.metric_report_freq == 0
-                            time_to_ckpt = self.steps_completed % self.checkpoint_freq == 0
+                            is_end_of_training = trainer.steps_completed == op.length
+                            time_to_report = (
+                                trainer.steps_completed % trainer.metric_report_freq == 0
+                            )
+                            time_to_ckpt = trainer.steps_completed % trainer.checkpoint_freq == 0
 
                             # Report metrics, checkpoint, and preempt as appropriate.
                             if is_end_of_training or time_to_report or time_to_ckpt:
-                                self._report_train_metrics(core_context)
+                                trainer._report_train_metrics(core_context)
                                 # report_progress for Web UI progress-bar rendering.
-                                if self.accelerator.is_main_process:
-                                    op.report_progress(self.steps_completed)
+                                if trainer.accelerator.is_main_process:
+                                    op.report_progress(trainer.steps_completed)
                             if is_end_of_training or time_to_ckpt:
-                                self._save(core_context)
+                                trainer._save(core_context)
                                 if core_context.preempt.should_preempt():
                                     return
                             if is_end_of_training:
                                 break
-                if self.accelerator.is_main_process:
+                if trainer.accelerator.is_main_process:
                     # Report the final mean loss.
-                    op.report_completed(self.last_mean_loss)
+                    op.report_completed(trainer.last_mean_loss)
 
     def _train_one_batch(self, batch: TorchData) -> None:
         """Train on a single batch and update internal metrics."""
@@ -793,23 +795,24 @@ class DetSDTextualInversionPipeline:
         }
         self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
 
-        # The below attrs are non-trivially instantiated as necessary through private methods.
+        # The below attrs are non-trivially instantiated as necessary through appropriate methods.
         self.all_checkpoint_paths = []
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
         self.logger = None
         self.steps_completed = 0
-        self.accelerator = accelerate.Accelerator()
+        self.accelerator = None
+        self.curr_seed = None
 
         self._build_models()
         self._build_pipeline()
 
     @classmethod
-    def generate_on_cluster(cls) -> None:
-        """Creates a DetSDTextualInversionPipeline instance on the cluster and generates images,
-        drawing hyperparameters and other needed information from the Determined master.  Expects
-        the `hyperparameters` into the following sections:
+    def generate_on_cluster(cls) -> "DetSDTextualInversionPipeline":
+        """Creates a DetSDTextualInversionPipeline instance on the cluster, drawing hyperparameters
+        and other needed information from the Determined master.  Expects the `hyperparameters`
+        section of the config to be broken into the following sections:
         - `pipeline`: containing all __init__ args
         - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
         the pipeline.
@@ -817,15 +820,20 @@ class DetSDTextualInversionPipeline:
         images.
         """
         info = det.get_cluster_info()
-        assert info is not None, "init_on_cluster() must be called on a Determined cluster."
+        assert info is not None, "generate_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
-
+        # Instantiate and load in any checkpoints via uuid:
         pipeline = cls(**hparams["pipeline"])
         pipeline.load_from_uuids(**hparams["uuids"])
 
-        cls.logger = accelerate.logging.get_logger(__name__)
+        # Update appropriate attrs:
+        pipeline.accelerator = accelerate.Accelerator()
+        pipeline.device = pipeline.accelerator.device
+        pipeline.logger = accelerate.logging.get_logger(__name__)
+        call_args = hparams["call"]
+        pipeline.curr_seed = call_args.pop("seed")
 
-        cls.logger.info("--------------- Generating Images ---------------")
+        pipeline.logger.info("--------------- Generating Images ---------------")
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
@@ -837,30 +845,32 @@ class DetSDTextualInversionPipeline:
             tb_dir = core_context.train.get_tensorboard_path()
             tb_writer = SummaryWriter(log_dir=tb_dir)
             for op in core_context.searcher.operations():
-                while cls.steps_completed < op.length:
-                    call_args = hparams["call"]
-                    # Bump the seed by the worker index in order to avoid repeated results.
-                    call_args["seed"] += cls.accelerator.process_index
-                    image_grid = pipeline(**call_args)
+                while pipeline.steps_completed < op.length:
+                    # Ensuring all workers are using a different, not-previously-used seeds.
+                    pipeline.curr_seed += (
+                        pipeline.accelerator.num_processes * pipeline.steps_completed
+                        + pipeline.accelerator.process_index
+                    )
+                    image_grid = pipeline(seed=pipeline.curr_seed, **call_args)
                     # Use Core API to gather Images; accelerator.gather() ony operates on tensors
                     # (and is technically an all-gather).
                     all_image_grids = core_context.distributed.gather(image_grid)
                     all_image_grids_t = torch.concat(
                         [pil_to_tensor(img) for img in all_image_grids], dim=0
                     )
-                    if cls.accelerator.is_main_process:
-                        tb_writer.add_image(
-                            call_args["prompt"],
-                            img_tensor=all_generated_img_ts,
-                            global_step=cls.steps_completed,
-                            dataformats="HWC",
-                        )
-                        tb_writer.flush()  # Ensure all images are written to disk.
-                        core_context.train.upload_tensorboard_files()
+                    if pipeline.accelerator.is_main_process:
+                        for worker_id, img_t in enumerate(all_image_grids_t):
+                            tb_writer.add_image(
+                                f'{call_args["prompt"]} (worker {worker_id})',
+                                img_tensor=img_t,
+                                global_step=pipeline.steps_completed,
+                            )
+                            tb_writer.flush()  # Ensure all images are written to disk.
+                            core_context.train.upload_tensorboard_files()
                     if core_context.preempt.should_preempt():
                         return
 
-                if cls.accelerator.is_main_process:
+                if pipeline.accelerator.is_main_process:
                     # Report zero when completed.
                     op.report_completed(0)
 
@@ -1049,6 +1059,7 @@ class DetSDTextualInversionPipeline:
                 images.append(image)
                 generated_samples += 1
         if generated_samples == 0:
+            # TODO: Just return blank image with warning.
             print(
                 "max_retries limit reached without generating any non-nsfw images, returning None"
             )
