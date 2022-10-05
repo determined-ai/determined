@@ -15,7 +15,7 @@ under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.ht
 
 1. Set the `DET_MASTER` environment variable, which is the network address of the Determined master.
 For instance, `export DET_MASTER=<master_host:port>`.
-2. Run the following command to start LocalSearchRunner: `python local_search_runner/run_experiment.py`.
+2. Run the following command in `asha_search_method` dir to start LocalSearchRunner: `python local_search_runner/run_experiment.py`.
 
 ## Result
 LocalSearchRunner executes the custom SearchMethod on your local machine, 
