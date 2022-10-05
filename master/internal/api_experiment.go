@@ -925,7 +925,7 @@ func (a *apiServer) UnarchiveExperiment(
 	}
 }
 
-func mask_contains(mask []string, v string) bool {
+func maskContains(mask []string, v string) bool {
 	if len(mask) == 0 {
 		return true
 	}
@@ -971,7 +971,7 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	madeChanges := false
-	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value && mask_contains(mask, "name") {
+	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value && maskContains(mask, "name") {
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument,
@@ -980,17 +980,17 @@ func (a *apiServer) PatchExperiment(
 		exp.Name = req.Experiment.Name.Value
 	}
 
-	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value && mask_contains(mask, "notes") {
+	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value && maskContains(mask, "notes") {
 		madeChanges = true
 		exp.Notes = req.Experiment.Notes.Value
 	}
 
-	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value && mask_contains(mask, "description") {
+	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value && maskContains(mask, "description") {
 		madeChanges = true
 		exp.Description = req.Experiment.Description.Value
 	}
 
-	if req.Experiment.Labels != nil && mask_contains(mask, "labels") {
+	if req.Experiment.Labels != nil && maskContains(mask, "labels") {
 		var reqLabelList []string
 		for _, el := range req.Experiment.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
@@ -1006,7 +1006,7 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	if exp.GroupId != req.Experiment.GroupId && mask_contains(mask, "group_id") {
+	if exp.GroupId != req.Experiment.GroupId && maskContains(mask, "group_id") {
 		if req.Experiment.GroupId != nil {
 			destGroup, err := a.GetExperimentGroupByID(*req.Experiment.GroupId)
 			if err != nil {

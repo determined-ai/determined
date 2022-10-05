@@ -190,8 +190,8 @@ html {
       opacity: 1;
     }
     .ant-select-selector
-    .ant-select-selection-search:first-child
-    .ant-select-selection-search-input {
+      .ant-select-selection-search:first-child
+      .ant-select-selection-search-input {
       margin-left: 0;
     }
   }
@@ -312,62 +312,62 @@ html {
     border: 0;
   }
   .ant-table.ant-table-bordered
-  > .ant-table-container
-  > .ant-table-content
-  > table
-  > .ant-table-thead
-  > tr
-  > th {
+    > .ant-table-container
+    > .ant-table-content
+    > table
+    > .ant-table-thead
+    > tr
+    > th {
     border-color: var(--theme-stage-border);
     border-style: solid;
     border-width: 0 var(--theme-stroke-width) var(--theme-stroke-width) 0;
     white-space: nowrap;
   }
   .ant-table.ant-table-bordered
-  > .ant-table-container
-  > .ant-table-content
-  > table
-  > .ant-table-thead
-  > tr
-  > th:last-child,
+    > .ant-table-container
+    > .ant-table-content
+    > table
+    > .ant-table-thead
+    > tr
+    > th:last-child,
   .ant-table.ant-table-bordered
-  > .ant-table-container
-  > .ant-table-content
-  > table
-  > .ant-table-thead
-  > tr
-  > th:only-child {
+    > .ant-table-container
+    > .ant-table-content
+    > table
+    > .ant-table-thead
+    > tr
+    > th:only-child {
     border-right-width: 0;
   }
   .ant-table.ant-table-bordered
-  > .ant-table-container
-  > .ant-table-content
-  > table
-  > .ant-table-thead
-  > tr
-  > th:hover
-  .ant-table-filter-column
-  > .ant-table-filter-trigger {
+    > .ant-table-container
+    > .ant-table-content
+    > table
+    > .ant-table-thead
+    > tr
+    > th:hover
+    .ant-table-filter-column
+    > .ant-table-filter-trigger {
     background-color: var(--theme-stage-strong);
     color: var(--theme-status-active);
   }
   .ant-table.ant-table-bordered
-  > .ant-table-container
-  > .ant-table-content
-  > table
-  > .ant-table-tbody
-  > tr
-  > td {
+    > .ant-table-container
+    > .ant-table-content
+    > table
+    > .ant-table-tbody
+    > tr
+    > td {
     border-style: solid;
     border-width: 0 0 var(--theme-stroke-width) 0;
   }
   .ant-table.ant-table-bordered
-  > .ant-table-container
-  > .ant-table-content
-  > table
-  > .ant-table-tbody
-  > tr:last-child
-  > td {
+    > .ant-table-container
+    > .ant-table-content
+    > table
+    > .ant-table-tbody
+    > tr:last-child
+    > td {
     border-bottom: 0;
   }
   .ant-table-filter-dropdown {
