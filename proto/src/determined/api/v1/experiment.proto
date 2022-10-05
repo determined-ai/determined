@@ -221,6 +221,7 @@ message UnarchiveExperimentResponse {}
 message PatchExperimentRequest {
   // Patched experiment attributes.
   determined.experiment.v1.PatchExperiment experiment = 2;
+  // FieldMask, used for unsetting group_id
   google.protobuf.FieldMask update_mask               = 3;
 }
 
