@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
@@ -82,12 +82,6 @@ const usePermissions = (): PermissionsHook => {
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-  useEffect(() => console.log('rbacAllPermission'), [rbacAllPermission]);
-  useEffect(() => console.log('rbacEnabled'), [rbacEnabled]);
-  useEffect(() => console.log('rbacReadPermission'), [rbacReadPermission]);
-  useEffect(() => console.log('user'), [user]);
-  useEffect(() => console.log('userAssignments'), [userAssignments]);
-  useEffect(() => console.log('userRols'), [userRoles]);
 
   const rbacOpts = useMemo(
     () => ({
