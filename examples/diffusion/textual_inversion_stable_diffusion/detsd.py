@@ -800,9 +800,6 @@ class DetSDTextualInversionPipeline:
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
-        self.logger = None
-        self.steps_completed = 0
-        self.accelerator = None
 
         self._build_models()
         self._build_pipeline()
@@ -810,8 +807,8 @@ class DetSDTextualInversionPipeline:
     @classmethod
     def generate_on_cluster(cls) -> "DetSDTextualInversionPipeline":
         """Creates a DetSDTextualInversionPipeline instance on the cluster, drawing hyperparameters
-        and other needed information from the Determined master.  Expects the `hyperparameters`
-        section of the config to be broken into the following sections:
+        and other needed information from the Determined master, and then generates images. Expects
+        the `hyperparameters` section of the config to be broken into the following sections:
         - `pipeline`: containing all __init__ args
         - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
         the pipeline.
@@ -834,10 +831,9 @@ class DetSDTextualInversionPipeline:
         # Instantiate the pipeline, load in any checkpoints by uuid, and update attrs.
         pipeline = cls(pipeline_init_kwargs)
         pipeline.load_from_uuids(uuid_list)
-        pipeline.accelerator = accelerator
-        pipeline.logger = accelerate.logging.get_logger(__name__)
+        logger = accelerate.logging.get_logger(__name__)
 
-        pipeline.logger.info("--------------- Generating Images ---------------")
+        logger.info("--------------- Generating Images ---------------")
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
@@ -849,21 +845,21 @@ class DetSDTextualInversionPipeline:
                 # There will be a single op of len max_length, as defined in the searcher config.
                 tb_dir = core_context.train.get_tensorboard_path()
                 tb_writer = SummaryWriter(log_dir=tb_dir)
+                steps_completed = 0
                 for op in core_context.searcher.operations():
-                    while pipeline.steps_completed < op.length:
+                    while steps_completed < op.length:
                         # Ensuring all workers are using different, not-previously-used seeds.
                         call_kwargs["seed"] += (
-                            pipeline.accelerator.num_processes * pipeline.steps_completed
-                            + pipeline.accelerator.process_index
+                            accelerator.num_processes * steps_completed + accelerator.process_index
                         )
                         image_grid = pipeline(**call_kwargs)
                         # Use Core API to gather Images; accelerator.gather() only operates on
                         # tensors (and is technically an all-gather).
                         all_image_grids = core_context.distributed.gather(image_grid)
-                        all_image_grids_t = torch.concat(
-                            [pil_to_tensor(img) for img in all_image_grids], dim=0
-                        )
-                        if pipeline.accelerator.is_main_process:
+                        if accelerator.is_main_process:
+                            all_image_grids_t = torch.concat(
+                                [pil_to_tensor(img) for img in all_image_grids], dim=0
+                            )
                             for img_t in all_image_grids_t:
                                 call_kwargs_str = ", ".join(
                                     [f"{k}: {v}" for k, v in call_kwargs.items() if v]
@@ -871,15 +867,15 @@ class DetSDTextualInversionPipeline:
                                 tb_writer.add_image(
                                     f'{call_kwargs["prompt"]} | {call_kwargs_str}',
                                     img_tensor=img_t,
-                                    global_step=pipeline.steps_completed,
+                                    global_step=steps_completed,
                                 )
                                 tb_writer.flush()  # Ensure all images are written to disk.
                                 core_context.train.upload_tensorboard_files()
-                        pipeline.steps_completed += 1
+                        steps_completed += 1
                         if core_context.preempt.should_preempt():
                             return
 
-                    if pipeline.accelerator.is_main_process:
+                    if accelerator.is_main_process:
                         # Report zero when completed.
                         op.report_completed(0)
 
