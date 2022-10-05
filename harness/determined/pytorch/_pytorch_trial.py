@@ -936,12 +936,12 @@ class PyTorchTrial(det.Trial):
 
         .. warning::
 
-           You might see significantly different metrics for trials which are paused and later
-           continued than trials which are not paused if some of your models, optimizers, and
-           learning rate schedulers are not wrapped. The reason is that the model's state might
-           not be restored accurately or completely from the checkpoint, which is saved to a
-           checkpoint and then later loaded into the trial during resuming training. When using
-           PyTorch, this can sometimes happen if the PyTorch API is not used correctly.
+           You may see metrics for trials that are paused and later continued that are significantly different
+           from trials that are not paused if some of your models, optimizers, and learning rate schedulers
+           are not wrapped. The reason is that the model's state may not be restored accurately or
+           completely from the checkpoint, which is saved to a checkpoint and then later loaded into the
+           trial during resumed training. When using PyTorch, this can sometimes happen if the PyTorch API
+           is not used correctly.
 
         Here is a code example.
 
