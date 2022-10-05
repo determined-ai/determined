@@ -48,12 +48,13 @@ func expFromAllocationID(
 		return false, nil, status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
 	}
 
-	if resp.Parent().Parent().Parent().Address().Local() != "experiments" {
+	parentParent := resp.Parent().Parent()
+	if parentParent.Parent() != nil && parentParent.Parent().Address().Local() != "experiments" {
 		// TaskType not trial.
 		return false, nil, nil
 	}
 
-	expID, err := strconv.Atoi(resp.Parent().Parent().Address().Local())
+	expID, err := strconv.Atoi(parentParent.Address().Local())
 	if err != nil {
 		return false, nil, err
 	}
