@@ -1173,14 +1173,18 @@ jobs:
       - helm/install-helm-client
       - run: helm plugin install https://github.com/chartmuseum/helm-push.git
       - login-helm
-      - run:
-          name: Publish built helm chart
-          command: |
-            go install github.com/goreleaser/goreleaser@v1.1.0
-            git clean -df
-            gobin="$(go env GOBIN)"
-            gopath="$(go env GOPATH)"
-            PATH="${gobin:-${gopath}/bin}:$PATH" make -C helm release
+      - run: make -C helm release
+
+  publish-helm-gh:
+    docker:
+      - image: cimg/go:1.18
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C helm release-gh
 
   publish-python-package:
     parameters:
@@ -2999,6 +3003,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-and-rc-filters
+
+      - publish-helm-gh:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
 
       - upload-try-now-template:
           context: determined-production
