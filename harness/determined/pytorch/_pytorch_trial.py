@@ -610,7 +610,7 @@ class PyTorchTrialController(det.TrialController):
             pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
-        if self.context.distributed.size > 1 and self.use_horovod and any(
+        if self.context.distributed.size > 1 and any(
             util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
             or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback)
             for c in self.callbacks.values()
@@ -619,7 +619,10 @@ class PyTorchTrialController(det.TrialController):
                 "Broadcasting metrics to all worker processes to execute a "
                 "validation step end callback"
             )
-            metrics = hvd.broadcast_object(metrics, root_rank=0)
+            if self.use_horovod:
+                metrics = hvd.broadcast_object(metrics, root_rank=0)
+            else:
+                metrics = self.context.distributed.broadcast(metrics)
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
