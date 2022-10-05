@@ -838,7 +838,7 @@ main_cmd = Cmd(
     [
         # Inspection commands.
         Cmd(
-            "list",
+            "list ls",
             list_experiments,
             "list experiments",
             [

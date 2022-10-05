@@ -233,7 +233,7 @@ args_description = [
         "manage workspaces",
         [
             Cmd(
-                "list",
+                "list ls",
                 list_workspaces,
                 "list all workspaces",
                 [
