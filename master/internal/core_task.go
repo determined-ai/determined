@@ -15,7 +15,7 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 	}
 
 	curUser := c.(*context.DetContext).MustGetUser()
-	for allocationID, _ := range summary {
+	for allocationID := range summary {
 		isExp, exp, err := expFromAllocationID(m, allocationID)
 		if err != nil {
 			return nil, err

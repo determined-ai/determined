@@ -44,12 +44,8 @@ func expFromAllocationID(
 		m.system,
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
-	if err == fmt.Errorf("task handler not found on any resource pool") ||
-		(err != nil && resp == nil) {
-		return false, nil, status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
-	}
 	if err != nil {
-		return false, nil, err
+		return false, nil, status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
 	}
 
 	if resp.Parent().Parent().Parent().Address().Local() != "experiments" {
