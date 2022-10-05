@@ -621,8 +621,8 @@ class PyTorchTrialController(det.TrialController):
             )
             if self.use_horovod:
                 metrics = hvd.broadcast_object(metrics, root_rank=0)
-            else:
-                metrics = self.context.distributed.broadcast(metrics)
+            elif self.use_torch:
+                metrics = dist.broadcast(metrics, src=0)
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
