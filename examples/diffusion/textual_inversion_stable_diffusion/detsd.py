@@ -829,7 +829,7 @@ class DetSDTextualInversionPipeline:
         pipeline_init_kwargs["device"] = accelerator.device
 
         # Instantiate the pipeline, load in any checkpoints by uuid, and update attrs.
-        pipeline = cls(pipeline_init_kwargs)
+        pipeline = cls(**pipeline_init_kwargs)
         pipeline.load_from_uuids(uuid_list)
         logger = accelerate.logging.get_logger(__name__)
 
