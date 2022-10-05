@@ -27,6 +27,7 @@ from diffusers import (
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torchvision.transforms.functional import pil_to_tensor
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 import data
@@ -226,11 +227,13 @@ class DetSDTextualInversionTrainer:
 
     @classmethod
     def init_on_cluster(cls) -> "DetSDTextualInversionTrainer":
-        """Creates a DetStableDiffusion instance on the cluster, drawing hyperparameters and other
-        needed information from the Determined master.  Expects the `hyperparameters` section of the
-        config to be broken into `model`, `data`, `training`, and `inference` subsections.
+        """Creates a DetSDTextualInversionTrainer instance on the cluster, drawing hyperparameters
+        and other needed information from the Determined master.  Expects the `hyperparameters`
+        section of the config to be broken into `model`, `data`, `training`, and `inference`
+        subsections.
         """
         info = det.get_cluster_info()
+        assert info is not None, "init_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
         latest_checkpoint = info.latest_checkpoint
 
@@ -795,9 +798,71 @@ class DetSDTextualInversionPipeline:
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
+        self.logger = None
+        self.steps_completed = 0
+        self.accelerator = accelerate.Accelerator()
 
         self._build_models()
         self._build_pipeline()
+
+    @classmethod
+    def generate_on_cluster(cls) -> None:
+        """Creates a DetSDTextualInversionPipeline instance on the cluster and generates images,
+        drawing hyperparameters and other needed information from the Determined master.  Expects
+        the `hyperparameters` into the following sections:
+        - `pipeline`: containing all __init__ args
+        - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
+        the pipeline.
+        - `call`: all arguments which are to be passed to the `__call__` method which generates
+        images.
+        """
+        info = det.get_cluster_info()
+        assert info is not None, "init_on_cluster() must be called on a Determined cluster."
+        hparams = info.trial.hparams
+
+        pipeline = cls(**hparams["pipeline"])
+        pipeline.load_from_uuids(**hparams["uuids"])
+
+        cls.logger = accelerate.logging.get_logger(__name__)
+
+        cls.logger.info("--------------- Generating Images ---------------")
+        try:
+            distributed = det.core.DistributedContext.from_torch_distributed()
+        except KeyError:
+            distributed = None
+        with det.core.init(
+            distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
+        ) as core_context:
+            # There will be a single op of len max_length, as defined in the searcher config.
+            tb_dir = core_context.train.get_tensorboard_path()
+            tb_writer = SummaryWriter(log_dir=tb_dir)
+            for op in core_context.searcher.operations():
+                while cls.steps_completed < op.length:
+                    call_args = hparams["call"]
+                    # Bump the seed by the worker index in order to avoid repeated results.
+                    call_args["seed"] += cls.accelerator.process_index
+                    image_grid = pipeline(**call_args)
+                    # Use Core API to gather Images; accelerator.gather() ony operates on tensors
+                    # (and is technically an all-gather).
+                    all_image_grids = core_context.distributed.gather(image_grid)
+                    all_image_grids_t = torch.concat(
+                        [pil_to_tensor(img) for img in all_image_grids], dim=0
+                    )
+                    if cls.accelerator.is_main_process:
+                        tb_writer.add_image(
+                            call_args["prompt"],
+                            img_tensor=all_generated_img_ts,
+                            global_step=cls.steps_completed,
+                            dataformats="HWC",
+                        )
+                        tb_writer.flush()  # Ensure all images are written to disk.
+                        core_context.train.upload_tensorboard_files()
+                    if core_context.preempt.should_preempt():
+                        return
+
+                if cls.accelerator.is_main_process:
+                    # Report zero when completed.
+                    op.report_completed(0)
 
     def load_from_checkpoint_paths(
         self, checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]]
