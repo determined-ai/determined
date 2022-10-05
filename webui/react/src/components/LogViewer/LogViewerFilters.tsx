@@ -2,7 +2,6 @@ import { Button, Input, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import MultiSelect from 'components/MultiSelect';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { LogLevelFromApi } from 'types';
 
@@ -30,12 +29,12 @@ export interface Filters {
 export const ARIA_LABEL_RESET = 'Reset';
 
 export const LABELS: Record<keyof Filters, string> = {
-  agentIds: 'Agent',
-  allocationIds: 'Allocation',
-  containerIds: 'Container',
-  levels: 'Level',
-  rankIds: 'Rank',
-  searchText: 'Search',
+  agentIds: 'Agents',
+  allocationIds: 'Allocations',
+  containerIds: 'Containers',
+  levels: 'Levels',
+  rankIds: 'Ranks',
+  searchText: 'Searchs',
 };
 
 const LogViewerFilters: React.FC<Props> = ({
@@ -102,8 +101,11 @@ const LogViewerFilters: React.FC<Props> = ({
           <Input placeholder="Search Logs..." value={values.searchText} onChange={handleSearch} />
         )}
         {moreThanOne.allocationIds && (
-          <MultiSelect
-            itemName={LABELS.allocationIds}
+          <Select
+            maxTagCount="responsive"
+            mode="multiple"
+            placeholder={`All ${LABELS.allocationIds}`}
+            style={{ width: 150 }}
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
@@ -111,11 +113,14 @@ const LogViewerFilters: React.FC<Props> = ({
                 {id || 'No Allocation ID'}
               </Option>
             ))}
-          </MultiSelect>
+          </Select>
         )}
         {moreThanOne.agentIds && (
-          <MultiSelect
-            itemName={LABELS.agentIds}
+          <Select
+            maxTagCount="responsive"
+            mode="multiple"
+            placeholder={`All ${LABELS.agentIds}`}
+            style={{ width: 150 }}
             value={values.agentIds}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
@@ -123,11 +128,13 @@ const LogViewerFilters: React.FC<Props> = ({
                 {id || 'No Agent ID'}
               </Option>
             ))}
-          </MultiSelect>
+          </Select>
         )}
         {moreThanOne.containerIds && (
-          <MultiSelect
-            itemName={LABELS.containerIds}
+          <Select
+            maxTagCount="responsive"
+            mode="multiple"
+            placeholder={`All ${LABELS.containerIds}`}
             style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
@@ -136,11 +143,14 @@ const LogViewerFilters: React.FC<Props> = ({
                 {id || 'No Container ID'}
               </Option>
             ))}
-          </MultiSelect>
+          </Select>
         )}
         {moreThanOne.rankIds && (
-          <MultiSelect
-            itemName={LABELS.rankIds}
+          <Select
+            maxTagCount="responsive"
+            mode="multiple"
+            placeholder={`All ${LABELS.rankIds}`}
+            style={{ width: 150 }}
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
@@ -148,10 +158,13 @@ const LogViewerFilters: React.FC<Props> = ({
                 {id ?? 'No Rank'}
               </Option>
             ))}
-          </MultiSelect>
+          </Select>
         )}
-        <MultiSelect
-          itemName={LABELS.levels}
+        <Select
+          maxTagCount="responsive"
+          mode="multiple"
+          placeholder={`All ${LABELS.levels}`}
+          style={{ width: 150 }}
           value={values.levels}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
@@ -159,7 +172,7 @@ const LogViewerFilters: React.FC<Props> = ({
               {level.label}
             </Option>
           ))}
-        </MultiSelect>
+        </Select>
         {isResetShown && <Button onClick={handleReset}>{ARIA_LABEL_RESET}</Button>}
       </Space>
     </>
