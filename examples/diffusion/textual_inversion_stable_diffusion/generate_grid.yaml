@@ -3,7 +3,7 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: single
   metric: none
-  max_length: 100 # Number of times the generation pipelie is called
+  max_length: 4 # Number of times the generation pipelie is called
 resources:
   slots_per_trial: 2
 max_restarts: 0
@@ -11,7 +11,7 @@ environment:
     environment_variables:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 hyperparameters:
-    pipeline:
+    pipeline: # The `device` arg is handled by the generate_on_cluster method; do not specify.
         learned_embeddings_filename: learned_embeddings_dict.pt
         scheduler_name: pndm
         beta_start: 0.00085
@@ -28,7 +28,7 @@ hyperparameters:
       cols: 2
       num_inference_steps: 50
       guidance_scale: 7.5
-      seed: 2147483647
+      seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
       parallelize_factor: 2
       other_hf_pipeline_call_kwargs: {}
       max_nsfw_retries: 10

@@ -852,21 +852,19 @@ class DetSDTextualInversionPipeline:
                         call_kwargs["seed"] += (
                             accelerator.num_processes * steps_completed + accelerator.process_index
                         )
-                        image_grid = pipeline(**call_kwargs)
+                        img_grid = pipeline(**call_kwargs)
                         # Use Core API to gather Images; accelerator.gather() only operates on
                         # tensors (and is technically an all-gather).
-                        all_image_grids = core_context.distributed.gather(image_grid)
+                        all_img_grids = core_context.distributed.gather(img_grid)
                         if accelerator.is_main_process:
-                            all_image_grids_t = torch.concat(
-                                [pil_to_tensor(img) for img in all_image_grids], dim=0
-                            )
-                            for img_t in all_image_grids_t:
+                            for img_grid in all_img_grids:
                                 call_kwargs_str = ", ".join(
                                     [f"{k}: {v}" for k, v in call_kwargs.items() if v]
                                 )
+                                img_grid_t = pil_to_tensor(img_grid)
                                 tb_writer.add_image(
                                     f'{call_kwargs["prompt"]} | {call_kwargs_str}',
-                                    img_tensor=img_t,
+                                    img_tensor=img_grid_t,
                                     global_step=steps_completed,
                                 )
                                 tb_writer.flush()  # Ensure all images are written to disk.
