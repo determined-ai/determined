@@ -5,7 +5,7 @@ build:
 
 release:
   github:
-    owner: determined-ai
+    owner: asnelling
     name: determined
   mode: keep-existing
   extra_files:
