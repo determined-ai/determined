@@ -803,7 +803,6 @@ class DetSDTextualInversionPipeline:
         self.logger = None
         self.steps_completed = 0
         self.accelerator = None
-        self.curr_seed = None
 
         self._build_models()
         self._build_pipeline()
@@ -822,16 +821,15 @@ class DetSDTextualInversionPipeline:
         info = det.get_cluster_info()
         assert info is not None, "generate_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
-        # Instantiate and load in any checkpoints via uuid:
+
         pipeline = cls(**hparams["pipeline"])
-        pipeline.load_from_uuids(**hparams["uuids"])
+        pipeline.load_from_uuids(hparams["uuids"])
+        call_args = hparams["call"]
 
         # Update appropriate attrs:
         pipeline.accelerator = accelerate.Accelerator()
         pipeline.device = pipeline.accelerator.device
         pipeline.logger = accelerate.logging.get_logger(__name__)
-        call_args = hparams["call"]
-        pipeline.curr_seed = call_args.pop("seed")
 
         pipeline.logger.info("--------------- Generating Images ---------------")
         try:
@@ -847,11 +845,11 @@ class DetSDTextualInversionPipeline:
             for op in core_context.searcher.operations():
                 while pipeline.steps_completed < op.length:
                     # Ensuring all workers are using a different, not-previously-used seeds.
-                    pipeline.curr_seed += (
+                    call_args["seed"] += (
                         pipeline.accelerator.num_processes * pipeline.steps_completed
                         + pipeline.accelerator.process_index
                     )
-                    image_grid = pipeline(seed=pipeline.curr_seed, **call_args)
+                    image_grid = pipeline(**call_args)
                     # Use Core API to gather Images; accelerator.gather() ony operates on tensors
                     # (and is technically an all-gather).
                     all_image_grids = core_context.distributed.gather(image_grid)
@@ -860,13 +858,17 @@ class DetSDTextualInversionPipeline:
                     )
                     if pipeline.accelerator.is_main_process:
                         for worker_id, img_t in enumerate(all_image_grids_t):
+                            call_args_str = ", ".join(
+                                [f"{k}: {v}" for k, v in call_args.items() if v]
+                            )
                             tb_writer.add_image(
-                                f'{call_args["prompt"]} (worker {worker_id})',
+                                f'{call_args["prompt"]} | {call_args_str}',
                                 img_tensor=img_t,
                                 global_step=pipeline.steps_completed,
                             )
                             tb_writer.flush()  # Ensure all images are written to disk.
                             core_context.train.upload_tensorboard_files()
+                    pipeline.steps_completed += 1
                     if core_context.preempt.should_preempt():
                         return
 
@@ -1058,12 +1060,6 @@ class DetSDTextualInversionPipeline:
                     continue
                 images.append(image)
                 generated_samples += 1
-        if generated_samples == 0:
-            # TODO: Just return blank image with warning.
-            print(
-                "max_retries limit reached without generating any non-nsfw images, returning None"
-            )
-            return None
         image_grid = self._create_image_grid(images[:num_samples], rows, cols)
         if saved_img_dir is not None:
             generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
