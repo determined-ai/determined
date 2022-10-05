@@ -20,7 +20,7 @@ under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.ht
 
 1. Set the `DET_MASTER` environment variable, which is the network address of the Determined master.
 For instance, `export DET_MASTER=<master_host:port>`.
-2. Run the following command in `asha_search_method` dir to start RemoteSearchRunner on the Determined cluster: 
+2. Run the following command in the `asha_search_method` directory to start RemoteSearchRunner on the Determined cluster: 
 `det experiment create remote_search_runner/searcher.yaml .`.
 
 
