@@ -72,7 +72,7 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
 
        def initial_operations(
            self,
-           searcher_state: searcher.SearcherState
+           searcher_state: searcher.SearcherState,
        ) -> List[searcher.Operation]:
            # Create and return the initial list of operations
            # immediately after an experiment has been created
@@ -88,7 +88,7 @@ Subclass :class:`~determined.searcher.SearchMethod`. Below is a starting templat
        def on_trial_created(
            self,
            searcher_state: searcher.SearcherState,
-           request_id: uuid.UUID
+           request_id: uuid.UUID,
        ) -> List[searcher.Operation]:
            # note: the request_id argument in this and other methods
            # uniquely identifies a trial

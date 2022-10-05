@@ -7,7 +7,7 @@ search experiment by passing operations from the custom SearchMethod to the mult
 
 We provide two implementations of SearchRunner:
 * LocalSearchRunner: executes the custom SearchMethod locally (see `local_search_runner`),
-* CoreSearchRunner: executes the custom SearchMethod on a Determined cluster (see `core_search_runner`).
+* CoreSearchRunner: executes the custom SearchMethod on a Determined cluster (see `remote_search_runner`).
 
 ## Files
 Custom SearchMethod:
@@ -36,6 +36,6 @@ under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.ht
 For instance, `export DET_MASTER=<master_host:port>`.
 2. To run the experiment see:
     * `local_search_runner/README.md` to execute the custom SearchMethod locally,
-    * `core_search_runner/README.md` to execute the custom SearchMethod on a Determined cluster.
+    * `remote_search_runner/README.md` to execute the custom SearchMethod on a Determined cluster.
    
 
