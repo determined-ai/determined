@@ -484,7 +484,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "e.parent_id",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:    "project_id",
-		apiv1.GetExperimentsRequest_SORT_BY_GROUP: 			   "group_name",
+		apiv1.GetExperimentsRequest_SORT_BY_GROUP:         "group_name",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -930,9 +930,9 @@ func mask_contains(mask []string, v string) bool {
 		return true
 	}
 	for _, s := range mask {
-			if v == s {
-					return true
-			}
+		if v == s {
+			return true
+		}
 	}
 	return false
 }
@@ -1006,15 +1006,15 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	if exp.GroupId != req.Experiment.GroupId && mask_contains(mask, "group_id")  {
+	if exp.GroupId != req.Experiment.GroupId && mask_contains(mask, "group_id") {
 		if req.Experiment.GroupId != nil {
-		destGroup, err := a.GetExperimentGroupByID(*req.Experiment.GroupId)
-		if err != nil {
-			return nil, err
-		}
-		madeChanges = true
-		exp.GroupId = &destGroup.Id
-		exp.GroupName = &destGroup.Name
+			destGroup, err := a.GetExperimentGroupByID(*req.Experiment.GroupId)
+			if err != nil {
+				return nil, err
+			}
+			madeChanges = true
+			exp.GroupId = &destGroup.Id
+			exp.GroupName = &destGroup.Name
 		} else if len(mask) > 0 {
 			madeChanges = true
 			exp.GroupId = nil

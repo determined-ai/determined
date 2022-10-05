@@ -297,7 +297,7 @@ type Experiment struct {
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
-	GroupID 						 *int				`db:"group_id"`
+	GroupID              *int       `db:"group_id"`
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
@@ -345,7 +345,7 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		OwnerID:   uid,
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
-		GroupID: groupID,
+		GroupID:   groupID,
 	}, nil
 }
 
@@ -392,7 +392,7 @@ func NewExperiment(
 		GitCommitter:         gitCommitter,
 		GitCommitDate:        gitCommitDate,
 		ProjectID:            projectID,
-		GroupID: 							groupID,
+		GroupID:              groupID,
 	}, nil
 }
 

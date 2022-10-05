@@ -1,19 +1,17 @@
-.base:global(.ant-modal)
-> :global(.ant-modal-content)
-> :global(.ant-modal-body){
+.base:global(.ant-modal) > :global(.ant-modal-content) > :global(.ant-modal-body) {
   .container {
     display: flex;
     flex-direction: column;
     gap: 8px;
 
-    .groupRow      {
+    .groupRow {
       align-items: center;
       display: flex;
       flex-direction: row;
       gap: 4px;
 
       span {
-        height: fit-content
+        height: fit-content;
       }
     }
   }

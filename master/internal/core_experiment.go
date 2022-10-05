@@ -159,8 +159,9 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 // @Param   experiment_id path int  true  "Experiment ID"
 // @Param   path query string true "Path to the target file"
 // @Success 200 {} string ""
-//nolint:godot
 // @Router /experiments/{experiment_id}/file/download [get]
+//
+//nolint:godot
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`
@@ -390,7 +391,7 @@ type CreateExperimentParams struct {
 	Project       *string         `json:"project"`
 	ProjectID     *int            `json:"project_id"`
 	Workspace     *string         `json:"workspace"`
-	GroupID				*int						`json:"group_id"`
+	GroupID       *int            `json:"group_id"`
 }
 
 // ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
@@ -549,7 +550,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 			g.Id = int32(tmpGroupID)
 			if errors.Is(err, db.ErrNotFound) {
 				err = m.db.QueryProto("insert_experiment_group", &g, config.Group(), projectID)
-			} 
+			}
 			if err != nil {
 				return nil, false, nil, errors.Wrapf(err, errors.Errorf("unable to find or create group").Error())
 			}
