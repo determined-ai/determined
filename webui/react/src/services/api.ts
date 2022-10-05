@@ -83,13 +83,13 @@ export const resetUserSetting = generateDetApi<EmptyParams, Api.V1ResetUserSetti
 export const getUserPermissions = generateDetApi<
   Service.GetUserParams,
   Api.V1GetPermissionsSummaryResponse,
-  Type.Permission[]
+  Type.PermissionsSummary
 >(Config.getUserPermissions);
 
 export const getPermissionsSummary = generateDetApi<
   EmptyParams,
   Api.V1GetPermissionsSummaryResponse,
-  Type.UserPermissionsUpdate
+  Type.PermissionsSummary
 >(Config.getPermissionsSummary);
 
 /* Groups */

@@ -824,9 +824,9 @@ export interface UserAssignment {
   workspaces: number[];
 }
 
-export interface UserPermissionsUpdate {
-  assignments: UserAssignment[],
-  roles: UserRole[],
+export interface PermissionsSummary {
+  assignments: UserAssignment[];
+  roles: UserRole[];
 }
 
 export interface ExperimentPermissionsArgs {

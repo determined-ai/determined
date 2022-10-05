@@ -44,7 +44,9 @@ export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission 
   };
 };
 
-export const mapV1UserAssignment = (assignment: Sdk.V1RoleAssignmentSummary): types.UserAssignment => {
+export const mapV1UserAssignment = (
+  assignment: Sdk.V1RoleAssignmentSummary,
+): types.UserAssignment => {
   return {
     isGlobal: assignment.isGlobal || false,
     roleId: assignment.roleId || 0,

@@ -53,7 +53,15 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
 
   const updatePermissions = useCallback(async () => {
     if (user && canGetPermissions) {
-      const viewPermissions = await getUserPermissions({ userId: user.id });
+      const { roles } = await getUserPermissions({ userId: user.id });
+      const viewPermissions = new Array<Permission>();
+      roles.forEach((r) => {
+        r.permissions.forEach((p) => {
+          if (!viewPermissions.includes(p)) {
+            viewPermissions.push(p);
+          }
+        });
+      });
       setPermissions(viewPermissions);
     }
   }, [canGetPermissions, user]);

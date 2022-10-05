@@ -193,23 +193,20 @@ export const resetUserSetting: DetApi<
 export const getUserPermissions: DetApi<
   Service.GetUserParams,
   Api.V1GetPermissionsSummaryResponse,
-  Type.Permission[]
+  Type.PermissionsSummary
 > = {
   name: 'getUserPermissions',
-  postProcess: (response) => {
-    let permissions = new Array<Type.Permission>();
-    response.roles
-      .map(decoder.mapV1Role)
-      .forEach((r) => (permissions = permissions.concat(r.permissions)));
-    return permissions;
-  },
+  postProcess: (response) => ({
+    assignments: response.assignments.map(decoder.mapV1UserAssignment),
+    roles: response.roles.map(decoder.mapV1Role),
+  }),
   request: (params) => detApi.RBAC.getPermissionsSummary(params.userId),
 };
 
 export const getPermissionsSummary: DetApi<
   EmptyParams,
   Api.V1GetPermissionsSummaryResponse,
-  Type.UserPermissionsUpdate
+  Type.PermissionsSummary
 > = {
   name: 'getPermissionsSummary',
   postProcess: (response) => ({

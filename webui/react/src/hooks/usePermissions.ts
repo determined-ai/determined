@@ -159,7 +159,9 @@ const relevantPermissions = (
     return new Set<V1PermissionType>();
   }
   const relevantAssigned = userAssignments
-    .filter((a) => a.isGlobal || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)))
+    .filter(
+      (a) => a.isGlobal || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)),
+    )
     .map((a) => a.roleId);
   let permissions = Array<Permission>();
   userRoles
