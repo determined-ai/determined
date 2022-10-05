@@ -13,8 +13,8 @@ jobs:
           mkdir -p ./pr
           echo "${{ github.event.number }}" > ./pr/pr_number
           echo 'repo is "${{ github.repositoryUrl }}"' 
-          echo 'github context is ${{ toJSON(github) }}' 
-          echo 'job context is ${{ toJSON(job) }}' 
+          echo 'github context: ' '${{ toJSON(github) }}'
+          echo 'job context: '    '${{ toJSON(job) }}'
       - uses: actions/upload-artifact@v3
         with:
           name: pr_number
