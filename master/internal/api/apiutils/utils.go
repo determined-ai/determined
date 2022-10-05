@@ -1,6 +1,8 @@
 package apiutils
 
 import (
+	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -27,12 +29,13 @@ var (
 	// ErrInternal is the returned standard error for an internal error.
 	ErrInternal       = status.Error(codes.Internal, "internal server error")
 	errPassthroughMap = map[error]bool{
-		nil:                true,
-		ErrBadRequest:      true,
-		ErrInvalidLimit:    true,
-		ErrNotFound:        true,
-		ErrDuplicateRecord: true,
-		ErrInternal:        true,
+		nil:                          true,
+		ErrBadRequest:                true,
+		ErrInvalidLimit:              true,
+		ErrNotFound:                  true,
+		ErrDuplicateRecord:           true,
+		ErrInternal:                  true,
+		grpcutil.ErrPermissionDenied: true,
 	}
 )
 
@@ -40,6 +43,10 @@ var (
 func MapAndFilterErrors(err error) error {
 	if allowed := errPassthroughMap[err]; allowed {
 		return err
+	}
+
+	if _, ok := err.(authz.PermissionDeniedError); ok {
+		return status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	switch {
