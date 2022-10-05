@@ -3,11 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "protoc-gen-swagger/options/annotations.proto";
-import "google/protobuf/wrappers.proto";
-import "google/protobuf/struct.proto";
-import "determined/api/v1/pagination.proto";
 
-import "determined/template/v1/template.proto";
 import "determined/webhook/v1/webhook.proto";
 
 // Get a single webhook.
