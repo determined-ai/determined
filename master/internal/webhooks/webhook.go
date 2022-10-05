@@ -125,7 +125,7 @@ const (
 )
 
 const (
-	// WebhookTypeDefaultrepresents a default webhook.
+	// WebhookTypeDefault represents a default webhook.
 	WebhookTypeDefault WebhookType = "DEFAULT"
 
 	// WebhookTypeSlack represents a slack webhook.
