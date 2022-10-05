@@ -912,26 +912,6 @@ var (
                     }
                 }
             }
-        },
-        "slurm": {
-            "type": [
-                "array",
-                "null"
-            ],
-            "default": [],
-            "items": {
-                "type": "string"
-            }
-        },
-        "pbs": {
-            "type": [
-                "array",
-                "null"
-            ],
-            "default": [],
-            "items": {
-                "type": "string"
-            }
         }
     }
 }
@@ -1092,6 +1072,14 @@ var (
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/optimizations.json"
         },
+        "pbs": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
+        },
         "perform_initial_validation": {
             "type": [
                 "boolean",
@@ -1160,6 +1148,14 @@ var (
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/security.json"
+        },
+        "slurm": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
         },
         "tensorboard_storage": {
             "type": [
@@ -1374,6 +1370,64 @@ var (
             ],
             "default": 1,
             "minimum": 0
+        }
+    }
+}
+`)
+	textPbsConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json",
+    "title": "PbsConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "slots_per_node": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": null
+        },
+        "pbsbatch_args": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}
+`)
+	textSlurmConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json",
+    "title": "SlurmConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "slots_per_node": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": null
+        },
+        "sbatch_args": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }
@@ -3228,6 +3282,10 @@ var (
 
 	schemaHDFSConfigV0 interface{}
 
+	schemaPbsConfigV0 interface{}
+
+	schemaSlurmConfigV0 interface{}
+
 	schemaCategoricalHyperparameterV0 interface{}
 
 	schemaConstHyperparameterV0 interface{}
@@ -3739,6 +3797,46 @@ func ParsedHDFSConfigV0() interface{} {
 		panic("invalid embedded json for HDFSConfigV0")
 	}
 	return schemaHDFSConfigV0
+}
+
+func ParsedPbsConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaPbsConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaPbsConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaPbsConfigV0 != nil {
+		return schemaPbsConfigV0
+	}
+	err := json.Unmarshal(textPbsConfigV0, &schemaPbsConfigV0)
+	if err != nil {
+		panic("invalid embedded json for PbsConfigV0")
+	}
+	return schemaPbsConfigV0
+}
+
+func ParsedSlurmConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSlurmConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSlurmConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaSlurmConfigV0 != nil {
+		return schemaSlurmConfigV0
+	}
+	err := json.Unmarshal(textSlurmConfigV0, &schemaSlurmConfigV0)
+	if err != nil {
+		panic("invalid embedded json for SlurmConfigV0")
+	}
+	return schemaSlurmConfigV0
 }
 
 func ParsedCategoricalHyperparameterV0() interface{} {
@@ -4460,6 +4558,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textGCSConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hdfs.json"
 	cachedSchemaBytesMap[url] = textHDFSConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
+	cachedSchemaBytesMap[url] = textPbsConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
+	cachedSchemaBytesMap[url] = textSlurmConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json"
 	cachedSchemaBytesMap[url] = textCategoricalHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameter-const.json"
