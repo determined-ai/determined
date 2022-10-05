@@ -85,7 +85,7 @@ type Trigger struct {
 	ID          TriggerID              `bun:"id,pk,autoincrement"`
 	TriggerType TriggerType            `bun:"trigger_type,notnull"`
 	Condition   map[string]interface{} `bun:"condition,notnull"`
-	Webhook_id  WebhookID              `bun:"webhook_id,notnull"`
+	WebhookID   WebhookID              `bun:"webhook_id,notnull"`
 
 	Webhook *Webhook `bun:"rel:belongs-to,join:webhook_id=id"`
 }
@@ -104,7 +104,7 @@ func (t *Trigger) Proto() *webhookv1.Trigger {
 		Id:          int32(t.ID),
 		TriggerType: t.TriggerType.Proto(),
 		Condition:   protoutils.ToStruct(t.Condition),
-		Webhook_id:  int32(t.Webhook_id),
+		WebhookID:   int32(t.WebhookID),
 	}
 }
 
