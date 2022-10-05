@@ -437,7 +437,6 @@ func (a *apiServer) PatchExperimentGroup(
 		errors.Wrapf(err, "error updating experiment group (%d) in database", currExperimentGroup.Id)
 }
 
-
 func (a *apiServer) DeleteExperimentGroup(
 	ctx context.Context, req *apiv1.DeleteExperimentGroupRequest) (*apiv1.DeleteExperimentGroupResponse,
 	error,

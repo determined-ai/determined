@@ -186,24 +186,26 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-//go:generate ../gen.sh
 // SlurmConfigV0 configures experiment resource usage.
+//
+//go:generate ../gen.sh
 type SlurmConfigV0 struct {
 	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
 	RawGpuType      *string  `json:"gpu_type,omitempty"`
 	RawSbatchArgs   []string `json:"sbatch_args,omitempty"`
 }
 
-//go:generate ../gen.sh
 // PbsConfigV0 configures experiment resource usage.
+//
+//go:generate ../gen.sh
 type PbsConfigV0 struct {
 	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
 	RawSbatchArgs   []string `json:"pbsbatch_args,omitempty"`
 }
 
-//go:generate ../gen.sh
 // ResourcesConfigV0 configures experiment resource usage.
 //
+//go:generate ../gen.sh
 //go:generate ../gen.sh
 type ResourcesConfigV0 struct {
 	// Slots is used by commands while trials use SlotsPerTrial.

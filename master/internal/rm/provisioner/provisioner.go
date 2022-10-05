@@ -23,14 +23,14 @@ type provisionerTick struct{}
 
 // Provisioner implements an actor to provision and terminate agent instances.
 // It is composed of three parts: a provisioner actor, a scaling decision maker, and a provider.
-// 1. The provisioner actor accepts actor messages with pending tasks and idle agents.
-//    1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
-//         pulls instance data from instance providers.
-// 2. Based on the pending tasks, the scaleDecider chooses how many new instances to launch and
-//    which instances to terminate.
-//    2.1 It terminates instances if they stay idle for more than `maxIdleAgentPeriod` time.
-//    2.2 It checks recently launched instances and avoids provisioning more than needed.
-// 3. The instance providers take actions to launch/terminate instances.
+//  1. The provisioner actor accepts actor messages with pending tasks and idle agents.
+//     1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
+//     pulls instance data from instance providers.
+//  2. Based on the pending tasks, the scaleDecider chooses how many new instances to launch and
+//     which instances to terminate.
+//     2.1 It terminates instances if they stay idle for more than `maxIdleAgentPeriod` time.
+//     2.2 It checks recently launched instances and avoids provisioning more than needed.
+//  3. The instance providers take actions to launch/terminate instances.
 type Provisioner struct {
 	provider     provider
 	scaleDecider *scaleDecider

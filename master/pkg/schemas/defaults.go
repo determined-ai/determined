@@ -26,16 +26,15 @@ type Defaultable interface {
 //
 // Example usage:
 //
-//    config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
+//	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
 //
-//    // Use the cluster checkpoint storage if the user did not specify one.
-//    config.RawCheckpointStorage = schemas.Merge(
-//        config.RawCheckpointStorage, &cluster_default_storage
-//    ).(*expconf.CheckpointStorageConfig)
+//	// Use the cluster checkpoint storage if the user did not specify one.
+//	config.RawCheckpointStorage = schemas.Merge(
+//	    config.RawCheckpointStorage, &cluster_default_storage
+//	).(*expconf.CheckpointStorageConfig)
 //
-//    // Define any remaining undefined values.
-//    config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
-//
+//	// Define any remaining undefined values.
+//	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
 func WithDefaults(obj interface{}) interface{} {
 	vObj := reflect.ValueOf(obj)
 	name := fmt.Sprintf("%T", obj)
@@ -175,20 +174,20 @@ func jsonNameFromJSONTag(tag string) string {
 //
 // For example, with the schema:
 //
-//     {
-//         "properties": {
-//             "hello": {
-//                 "type": ["string", "null"],
-//                 "default": "world"
-//             }
-//          }
-//      }
+//	{
+//	    "properties": {
+//	        "hello": {
+//	            "type": ["string", "null"],
+//	            "default": "world"
+//	        }
+//	     }
+//	 }
 //
 // and with the struct:
 //
-//     type X struct {
-//         Hello    string `json:"hello"`
-//     }
+//	type X struct {
+//	    Hello    string `json:"hello"`
+//	}
 //
 // then findDefaultInSchema(schema, reflect.TypeOf(x).FieldByName("Hello")) returns "world".
 func findDefaultInSchema(schema interface{}, field reflect.StructField) []byte {

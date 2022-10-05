@@ -9,8 +9,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-//go:generate ../gen.sh
 // DataLayerConfigV0 configures data layer storage.
+//
+//go:generate ../gen.sh
 type DataLayerConfigV0 struct {
 	RawSharedFSConfig *SharedFSDataLayerConfigV0 `union:"type,shared_fs" json:"-"`
 	RawS3Config       *S3DataLayerConfigV0       `union:"type,s3" json:"-"`
@@ -36,15 +37,17 @@ func (d *DataLayerConfigV0) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(d)), "failed to parse data layer config")
 }
 
-//go:generate ../gen.sh
 // SharedFSDataLayerConfigV0 configures data layer storage on a local file system.
+//
+//go:generate ../gen.sh
 type SharedFSDataLayerConfigV0 struct {
 	RawContainerStoragePath *string `json:"container_storage_path"`
 	RawHostStoragePath      *string `json:"host_storage_path"`
 }
 
-//go:generate ../gen.sh
 // S3DataLayerConfigV0 configures data layer storage on S3.
+//
+//go:generate ../gen.sh
 type S3DataLayerConfigV0 struct {
 	RawBucket                  *string `json:"bucket"`
 	RawBucketDirectoryPath     *string `json:"bucket_directory_path"`
@@ -55,8 +58,9 @@ type S3DataLayerConfigV0 struct {
 	RawEndpointURL             *string `json:"endpoint_url"`
 }
 
-//go:generate ../gen.sh
 // GCSDataLayerConfigV0 configures data layer storage on GCS.
+//
+//go:generate ../gen.sh
 type GCSDataLayerConfigV0 struct {
 	RawBucket                  *string `json:"bucket"`
 	RawBucketDirectoryPath     *string `json:"bucket_directory_path"`

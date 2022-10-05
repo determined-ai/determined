@@ -15,18 +15,18 @@ const (
 )
 
 // scaleDecider makes decisions based on the following assumptions:
-// 1. All pending tasks cannot fit into all agents when receiving the snapshots from
-//    the scheduler, i.e. we need to launch new agents to fit the pending tasks.
-// 2. All tasks, agents, and instances don't have empty identifiers.
-// 3. All tasks, agents, and instances are not duplicated.
+//  1. All pending tasks cannot fit into all agents when receiving the snapshots from
+//     the scheduler, i.e. we need to launch new agents to fit the pending tasks.
+//  2. All tasks, agents, and instances don't have empty identifiers.
+//  3. All tasks, agents, and instances are not duplicated.
 //
 // scaleDecider ignores the agents that cannot be associated with any instances.
 // scaleDecider considers the following two cases:
-// 1. Instances that can be associated with agents.
-// 2. Instances that cannot be associated with agents. There are several possible causes:
-//    a. The provider is starting up the instances.
-//    b. The instances are already running but agents on them are starting up.
-//    c. The agents are disconnected to the master due to misconfiguration or some unknown reason.
+//  1. Instances that can be associated with agents.
+//  2. Instances that cannot be associated with agents. There are several possible causes:
+//     a. The provider is starting up the instances.
+//     b. The instances are already running but agents on them are starting up.
+//     c. The agents are disconnected to the master due to misconfiguration or some unknown reason.
 type scaleDecider struct {
 	maxIdlePeriod       time.Duration
 	maxStartingPeriod   time.Duration

@@ -134,8 +134,9 @@ func (m *Master) getCheckpointImpl(
 // @Produce  application/gzip,application/zip
 // @Param   checkpoint_uuid path string  true  "Checkpoint UUID"
 // @Success 200 {} string ""
-//nolint:godot
 // @Router /checkpoints/{checkpoint_uuid} [get]
+//
+//nolint:godot
 func (m *Master) getCheckpoint(c echo.Context) error {
 	// Get the MIME type. Only a single type is accepted.
 	mimeType := c.Request().Header.Get("Accept")

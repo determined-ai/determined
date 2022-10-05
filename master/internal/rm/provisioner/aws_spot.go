@@ -71,8 +71,9 @@ type spotRequest struct {
 // these cases, so we handle them identically.
 //
 // AWS documentation on the spot instance lifecycle:
-//nolint:lll
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
+//
+//nolint:lll
 type spotState struct {
 	// Keep track of spot requests that haven't entered a terminal state. This map primarily
 	// exists to handle problems caused by eventual consistency, where we will create a spot

@@ -28,9 +28,10 @@ const experimentSnapshotVersion = 5
 // trial workload sequencer, to the trial, and finally to the experiment. Any event that the
 // trial or trial workload sequencer processes that would trigger a change to the state of the
 // experiment is:
-//   1. Propagated atomically, within a single message, to ensure the experiment handles it all
-//      or nothing
-//   2. With a snapshot affixed to it, to mark that it should trigger a snapshot
+//  1. Propagated atomically, within a single message, to ensure the experiment handles it all
+//     or nothing
+//  2. With a snapshot affixed to it, to mark that it should trigger a snapshot
+//
 // Upon receipt, the experiment handles the event entirely, snapshots its state and saves it
 // along with all the snapshots it has received, atomically.
 //
