@@ -75,8 +75,8 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
   if (!a.isLeaf && !b.isLeaf) return titleA.localeCompare(titleB) - titleB.localeCompare(titleA);
 
   // had to use RegEx due to some files being ".<filename>"
-  const [stringA, extensionA] = titleA.split(/(?<=[a-zA-Z])\./);
-  const [stringB, extensionB] = titleB.split(/(?<=[a-zA-Z])\./);
+  const [stringA, extensionA] = titleA.split(/^(?=[a-zA-Z])\./);
+  const [stringB, extensionB] = titleB.split(/^(?=[a-zA-Z])\./);
 
   if (!extensionA && extensionB) return 1;
 
