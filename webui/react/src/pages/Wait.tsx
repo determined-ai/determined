@@ -55,10 +55,9 @@ const Wait: React.FC = () => {
     return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [storeDispatch]);
 
-  const handleTaskError = (err: Error) => {
-    handleError({
-      error: err,
-      message: 'failed while waiting for command to be ready',
+  const handleTaskError = (e: Error) => {
+    handleError(e, {
+      publicMessage: 'Failed while waiting for command to be ready',
       silent: false,
       type: ErrorType.Server,
     });

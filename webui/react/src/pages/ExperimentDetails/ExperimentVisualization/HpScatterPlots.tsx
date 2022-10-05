@@ -215,10 +215,11 @@ const ScatterPlots: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [

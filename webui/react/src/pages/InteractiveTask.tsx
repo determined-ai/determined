@@ -83,9 +83,8 @@ export const InteractiveTask: React.FC = () => {
           }
         }
       } catch (e) {
-        handleError({
-          error: e,
-          message: 'failed querying for command state',
+        handleError(e, {
+          publicMessage: 'failed querying for command state',
           silent: true,
         });
         clearInterval(queryTask);
