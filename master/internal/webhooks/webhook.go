@@ -104,7 +104,7 @@ func (t *Trigger) Proto() *webhookv1.Trigger {
 		Id:          int32(t.ID),
 		TriggerType: t.TriggerType.Proto(),
 		Condition:   protoutils.ToStruct(t.Condition),
-		WebhookID:   int32(t.WebhookID),
+		WebhookId:   int32(t.WebhookID),
 	}
 }
 
