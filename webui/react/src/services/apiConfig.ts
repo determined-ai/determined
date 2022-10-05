@@ -190,6 +190,11 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
+/**
+ * Returns roles, and workspace/global assignment of those roles,
+ * for a user specified in params.
+ * @param {GetUserParams} params - An object containing userId to look up their roles.
+ */
 export const getUserPermissions: DetApi<
   Service.GetUserParams,
   Api.V1GetPermissionsSummaryResponse,
@@ -203,6 +208,10 @@ export const getUserPermissions: DetApi<
   request: (params) => detApi.RBAC.getPermissionsSummary(params.userId),
 };
 
+/**
+ * Returns roles, and workspace/global assignment of the roles,
+ * associated with the active/requesting user.
+ */
 export const getPermissionsSummary: DetApi<
   EmptyParams,
   Api.V1GetPermissionsSummaryResponse,
