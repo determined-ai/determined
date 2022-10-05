@@ -190,7 +190,7 @@ class DetSDTextualInversionTrainer:
             * self.train_batch_size
             * self.accelerator.num_processes
         )
-        # If scale_lr, we linearly scale the bare learning rate by the effective batch size
+        # If scale_lr, we linearly scale the bare learning rate by the effective batch size.
         if scale_lr:
             self.learning_rate *= self.effective_global_batch_size
             self.logger.info(f"Using scaled learning rate {self.learning_rate}")
@@ -221,9 +221,6 @@ class DetSDTextualInversionTrainer:
         self._build_optimizer()
         self._build_train_scheduler()
         self._wrap_and_prepare()
-
-        # Pipeline construction is deferred until the _save call, as the pipeline is not required
-        # if generate_training_images is False.
 
     @classmethod
     def train_on_cluster(cls) -> None:
@@ -806,6 +803,7 @@ class DetSDTextualInversionPipeline:
 
     @classmethod
     def generate_on_cluster(cls) -> "DetSDTextualInversionPipeline":
+        # TODO Clean up generally, report number of generated images at training data, save & restore.
         """Creates a DetSDTextualInversionPipeline instance on the cluster, drawing hyperparameters
         and other needed information from the Determined master, and then generates images. Expects
         the `hyperparameters` section of the config to be broken into the following sections:
@@ -853,22 +851,29 @@ class DetSDTextualInversionPipeline:
                             accelerator.num_processes * steps_completed + accelerator.process_index
                         )
                         img_grid = pipeline(**call_kwargs)
-                        # Use Core API to gather Images; accelerator.gather() only operates on
-                        # tensors (and is technically an all-gather).
-                        all_img_grids = core_context.distributed.gather(img_grid)
+                        # Use Core API to gather seeds and Images; accelerator.gather() only
+                        # operates on tensors (and is technically an all-gather).
+                        all_img_seed_and_grids = core_context.distributed.gather(
+                            (call_kwargs["seed"], img_grid)
+                        )
                         if accelerator.is_main_process:
-                            for img_grid in all_img_grids:
-                                call_kwargs_str = ", ".join(
-                                    [f"{k}: {v}" for k, v in call_kwargs.items() if v]
+                            for seed, img_grid in all_img_seed_and_grids:
+                                tag = ", ".join(
+                                    [
+                                        f"{k}: {v}"
+                                        for k, v in call_kwargs.items()
+                                        if v and k != "seed"
+                                    ]
                                 )
                                 img_grid_t = pil_to_tensor(img_grid)
                                 tb_writer.add_image(
-                                    call_kwargs_str,
+                                    tag,
                                     img_tensor=img_grid_t,
-                                    global_step=steps_completed,
+                                    global_step=seed,
                                 )
                                 tb_writer.flush()  # Ensure all images are written to disk.
                                 core_context.train.upload_tensorboard_files()
+
                         steps_completed += 1
                         if core_context.preempt.should_preempt():
                             return
