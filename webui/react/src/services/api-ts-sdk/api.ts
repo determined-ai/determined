@@ -8663,6 +8663,23 @@ export interface V1Webhook {
      * @memberof V1Webhook
      */
     triggers?: Array<V1Trigger>;
+    /**
+     * The type of the webhook.
+     * @type {V1WebhookType}
+     * @memberof V1Webhook
+     */
+    webhookType: V1WebhookType;
+}
+
+/**
+ * Enum values for expected webhook types.   - WEBHOOK_TYPE_UNSPECIFIED: Default value  - WEBHOOK_TYPE_DEFAULT: For a default webhook  - WEBHOOK_TYPE_SLACK: For a slack webhook.
+ * @export
+ * @enum {string}
+ */
+export enum V1WebhookType {
+    UNSPECIFIED = <any> 'WEBHOOK_TYPE_UNSPECIFIED',
+    DEFAULT = <any> 'WEBHOOK_TYPE_DEFAULT',
+    SLACK = <any> 'WEBHOOK_TYPE_SLACK'
 }
 
 /**

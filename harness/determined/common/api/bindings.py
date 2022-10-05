@@ -7885,6 +7885,7 @@ class v1Webhook:
     def __init__(
         self,
         *,
+        webhookType: "v1WebhookType",
         id: "typing.Optional[int]" = None,
         triggers: "typing.Optional[typing.Sequence[v1Trigger]]" = None,
         url: "typing.Optional[str]" = None,
@@ -7892,6 +7893,7 @@ class v1Webhook:
         self.id = id
         self.url = url
         self.triggers = triggers
+        self.webhookType = webhookType
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Webhook":
@@ -7899,6 +7901,7 @@ class v1Webhook:
             id=obj.get("id", None),
             url=obj.get("url", None),
             triggers=[v1Trigger.from_json(x) for x in obj["triggers"]] if obj.get("triggers", None) is not None else None,
+            webhookType=v1WebhookType(obj["webhookType"]),
         )
 
     def to_json(self) -> typing.Any:
@@ -7906,7 +7909,13 @@ class v1Webhook:
             "id": self.id if self.id is not None else None,
             "url": self.url if self.url is not None else None,
             "triggers": [x.to_json() for x in self.triggers] if self.triggers is not None else None,
+            "webhookType": self.webhookType.value,
         }
+
+class v1WebhookType(enum.Enum):
+    WEBHOOK_TYPE_UNSPECIFIED = "WEBHOOK_TYPE_UNSPECIFIED"
+    WEBHOOK_TYPE_DEFAULT = "WEBHOOK_TYPE_DEFAULT"
+    WEBHOOK_TYPE_SLACK = "WEBHOOK_TYPE_SLACK"
 
 class v1WorkloadContainer:
     def __init__(
