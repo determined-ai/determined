@@ -287,7 +287,7 @@ function so it could include other steps.
 Connectivity
 ============
 
-Multi-machine training requires that all machines can connect directly [TO WHAT, EACH OTHER?]. There may be firewall rules
+Multi-machine training requires that all machines can connect directly. There may be firewall rules
 or network configuration that prevent machines in your cluster from communicating. Please check that
 agent machines can access each other outside of Determined by using ``ping`` or ``netcat`` tools.
 
