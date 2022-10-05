@@ -3,8 +3,8 @@
 #################################################
 
 When a trial encounters an error or fails unexpectedly, Determined will restart it from the latest
-checkpoint unless we have done so :ref:`max_restarts <max-restarts>` times, which is configured in
-the experiment configuration. Once we have reached ``max_restarts``, any further trials that fail
+checkpoint up to some maximum number of times, which is configured by :ref:`max_restarts <max-restarts>` in
+the experiment configuration. After Determined reaches ``max_restarts``, any further trials that fail
 will be marked as errored and will not be restarted. For search methods that adapt to validation
 metric values (:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`, and
 :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>`), we do not continue

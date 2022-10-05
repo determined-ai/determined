@@ -16,7 +16,7 @@ considerations are:
 
 -  Since many distributed training frameworks expect all workers in training to operate in-step, the
    :meth:`~determined.core.PreemptContext.should_preempt` call is automatically synchronized across
-   workers, so all workers decide to preempt or continue as a unit.
+   workers so that all workers decide to preempt or continue as a unit.
 
 #. Create a ``4_distributed.py`` training script by copying the ``3_hpsearch.py`` from
    :ref:`core-hpsearch`.
@@ -60,7 +60,7 @@ considerations are:
       :start-at: all_increment_bys =
       :end-at: x += sum(all_increment_bys)
 
-#. Frequently, trial logs are easier to read when status is only printed on the chief worker:
+#. Usually, trial logs are easier to read when status is only printed on the chief worker:
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/4_distributed.py
       :language: python
