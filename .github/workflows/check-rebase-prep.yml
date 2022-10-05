@@ -1,0 +1,21 @@
+---
+name: "Prepare for rebase check"
+
+on:
+  pull_request: {}
+
+jobs:
+  pr-prep-rebase-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        run: |
+          mkdir -p ./pr
+          echo "${{ github.event.number }}" > ./pr/pr_number
+          echo "repo is '${{ github.repositoryUrl }}'" 
+          echo "github context is '${{ toJSON(github) }}'" 
+          echo "job context is '${{ toJSON(job) }}'" 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr/
