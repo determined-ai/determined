@@ -2022,6 +2022,14 @@ export interface V1DeleteTrialsCollectionResponse {
 }
 
 /**
+ * Response to DeleteWebhookRequest.
+ * @export
+ * @interface V1DeleteWebhookResponse
+ */
+export interface V1DeleteWebhookResponse {
+}
+
+/**
  * Response to DeleteWorkspaceRequest.
  * @export
  * @interface V1DeleteWorkspaceResponse
@@ -3814,6 +3822,20 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     pagination?: V1Pagination;
+}
+
+/**
+ * Response to GetWebhooksRequest.
+ * @export
+ * @interface V1GetWebhooksResponse
+ */
+export interface V1GetWebhooksResponse {
+    /**
+     * The list of returned webhooks.
+     * @type {Array<V1Webhook>}
+     * @memberof V1GetWebhooksResponse
+     */
+    webhooks: Array<V1Webhook>;
 }
 
 /**
@@ -5837,6 +5859,20 @@ export interface V1PostUserSettingResponse {
 }
 
 /**
+ * Response to PostWebhookRequest.
+ * @export
+ * @interface V1PostWebhookResponse
+ */
+export interface V1PostWebhookResponse {
+    /**
+     * The webhook created.
+     * @type {V1Webhook}
+     * @memberof V1PostWebhookResponse
+     */
+    webhook: V1Webhook;
+}
+
+/**
  * Request for creating a workspace.
  * @export
  * @interface V1PostWorkspaceRequest
@@ -7718,6 +7754,20 @@ export interface V1Tensorboard {
 }
 
 /**
+ * Response to TestWebhookRequest.
+ * @export
+ * @interface V1TestWebhookResponse
+ */
+export interface V1TestWebhookResponse {
+    /**
+     * Status of test.
+     * @type {boolean}
+     * @memberof V1TestWebhookResponse
+     */
+    completed: boolean;
+}
+
+/**
  * Timestamp filters.
  * @export
  * @interface V1TimestampFieldFilter
@@ -8276,6 +8326,49 @@ export interface V1TrialsSnapshotResponseTrial {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1Trigger
+ */
+export interface V1Trigger {
+    /**
+     * The id of the trigger.
+     * @type {number}
+     * @memberof V1Trigger
+     */
+    id?: number;
+    /**
+     * The type of the trigger.
+     * @type {V1TriggerType}
+     * @memberof V1Trigger
+     */
+    triggerType?: V1TriggerType;
+    /**
+     * The trigger condition.
+     * @type {any}
+     * @memberof V1Trigger
+     */
+    condition?: any;
+    /**
+     * The parent webhook of the trigger.
+     * @type {number}
+     * @memberof V1Trigger
+     */
+    webhookId?: number;
+}
+
+/**
+ * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
+ * @export
+ * @enum {string}
+ */
+export enum V1TriggerType {
+    UNSPECIFIED = <any> 'TRIGGER_TYPE_UNSPECIFIED',
+    EXPERIMENTSTATECHANGE = <any> 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE',
+    METRICTHRESHOLDEXCEEDED = <any> 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED'
+}
+
+/**
  * Response to UnarchiveExperimentRequest.
  * @export
  * @interface V1UnarchiveExperimentResponse
@@ -8557,6 +8650,49 @@ export interface V1ValidationHistoryEntry {
      * @memberof V1ValidationHistoryEntry
      */
     searcherMetric: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1Webhook
+ */
+export interface V1Webhook {
+    /**
+     * The id of the webhook.
+     * @type {number}
+     * @memberof V1Webhook
+     */
+    id?: number;
+    /**
+     * The url of the webhook.
+     * @type {string}
+     * @memberof V1Webhook
+     */
+    url?: string;
+    /**
+     * The triggers of the webhook.
+     * @type {Array<V1Trigger>}
+     * @memberof V1Webhook
+     */
+    triggers?: Array<V1Trigger>;
+    /**
+     * The type of the webhook.
+     * @type {V1WebhookType}
+     * @memberof V1Webhook
+     */
+    webhookType: V1WebhookType;
+}
+
+/**
+ * Enum values for expected webhook types.   - WEBHOOK_TYPE_UNSPECIFIED: Default value  - WEBHOOK_TYPE_DEFAULT: For a default webhook  - WEBHOOK_TYPE_SLACK: For a slack webhook.
+ * @export
+ * @enum {string}
+ */
+export enum V1WebhookType {
+    UNSPECIFIED = <any> 'WEBHOOK_TYPE_UNSPECIFIED',
+    DEFAULT = <any> 'WEBHOOK_TYPE_DEFAULT',
+    SLACK = <any> 'WEBHOOK_TYPE_SLACK'
 }
 
 /**
@@ -25070,6 +25206,348 @@ export class UsersApi extends BaseAPI {
      */
     public setUserPassword(userId: number, body: string, options?: any) {
         return UsersApiFp(this.configuration).setUserPassword(userId, body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * WebhooksApi - fetch parameter creator
+ * @export
+ */
+export const WebhooksApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Delete a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWebhook(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling deleteWebhook.');
+            }
+            const localVarPath = `/api/v1/webhooks/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of webhooks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWebhooks(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/webhooks`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a webhook. TODO(???): Simplify req/response structs?
+         * @param {V1Webhook} body The webhook to store.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWebhook(body: V1Webhook, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postWebhook.');
+            }
+            const localVarPath = `/api/v1/webhooks`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1Webhook" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Test a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        testWebhook(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling testWebhook.');
+            }
+            const localVarPath = `/api/v1/webhooks/{id}/test`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * WebhooksApi - functional programming interface
+ * @export
+ */
+export const WebhooksApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Delete a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).deleteWebhook(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of webhooks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWebhooks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWebhooksResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).getWebhooks(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create a webhook. TODO(???): Simplify req/response structs?
+         * @param {V1Webhook} body The webhook to store.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWebhook(body: V1Webhook, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).postWebhook(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Test a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        testWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TestWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).testWebhook(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * WebhooksApi - factory interface
+ * @export
+ */
+export const WebhooksApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Delete a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWebhook(id: number, options?: any) {
+            return WebhooksApiFp(configuration).deleteWebhook(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of webhooks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWebhooks(options?: any) {
+            return WebhooksApiFp(configuration).getWebhooks(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create a webhook. TODO(???): Simplify req/response structs?
+         * @param {V1Webhook} body The webhook to store.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWebhook(body: V1Webhook, options?: any) {
+            return WebhooksApiFp(configuration).postWebhook(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Test a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        testWebhook(id: number, options?: any) {
+            return WebhooksApiFp(configuration).testWebhook(id, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * WebhooksApi - object-oriented interface
+ * @export
+ * @class WebhooksApi
+ * @extends {BaseAPI}
+ */
+export class WebhooksApi extends BaseAPI {
+    /**
+     * 
+     * @summary Delete a webhook.
+     * @param {number} id The id of the webhook.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhooksApi
+     */
+    public deleteWebhook(id: number, options?: any) {
+        return WebhooksApiFp(this.configuration).deleteWebhook(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of webhooks.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhooksApi
+     */
+    public getWebhooks(options?: any) {
+        return WebhooksApiFp(this.configuration).getWebhooks(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create a webhook. TODO(???): Simplify req/response structs?
+     * @param {V1Webhook} body The webhook to store.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhooksApi
+     */
+    public postWebhook(body: V1Webhook, options?: any) {
+        return WebhooksApiFp(this.configuration).postWebhook(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Test a webhook.
+     * @param {number} id The id of the webhook.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhooksApi
+     */
+    public testWebhook(id: number, options?: any) {
+        return WebhooksApiFp(this.configuration).testWebhook(id, options)(this.fetch, this.basePath);
     }
 
 }
