@@ -822,13 +822,19 @@ class DetSDTextualInversionPipeline:
         assert info is not None, "generate_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
 
-        pipeline = cls(**hparams["pipeline"])
-        pipeline.load_from_uuids(hparams["uuids"])
-        call_args = hparams["call"]
+        # Extract relevant groups from hparams.
+        pipeline_init_kwargs = hparams["pipeline"]
+        uuid_list = hparams["uuids"]
+        call_kwargs = hparams["call"]
 
-        # Update appropriate attrs:
-        pipeline.accelerator = accelerate.Accelerator()
-        pipeline.device = pipeline.accelerator.device
+        # Instantiate an Accelerator object to get the correct device required during init.
+        accelerator = accelerate.Accelerator()
+        pipeline_init_kwargs["device"] = accelerator.device
+
+        # Instantiate the pipeline, load in any checkpoints by uuid, and update attrs.
+        pipeline = cls(pipeline_init_kwargs)
+        pipeline.load_from_uuids(uuid_list)
+        pipeline.accelerator = accelerator
         pipeline.logger = accelerate.logging.get_logger(__name__)
 
         pipeline.logger.info("--------------- Generating Images ---------------")
@@ -839,42 +845,43 @@ class DetSDTextualInversionPipeline:
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            # There will be a single op of len max_length, as defined in the searcher config.
-            tb_dir = core_context.train.get_tensorboard_path()
-            tb_writer = SummaryWriter(log_dir=tb_dir)
-            for op in core_context.searcher.operations():
-                while pipeline.steps_completed < op.length:
-                    # Ensuring all workers are using a different, not-previously-used seeds.
-                    call_args["seed"] += (
-                        pipeline.accelerator.num_processes * pipeline.steps_completed
-                        + pipeline.accelerator.process_index
-                    )
-                    image_grid = pipeline(**call_args)
-                    # Use Core API to gather Images; accelerator.gather() ony operates on tensors
-                    # (and is technically an all-gather).
-                    all_image_grids = core_context.distributed.gather(image_grid)
-                    all_image_grids_t = torch.concat(
-                        [pil_to_tensor(img) for img in all_image_grids], dim=0
-                    )
-                    if pipeline.accelerator.is_main_process:
-                        for worker_id, img_t in enumerate(all_image_grids_t):
-                            call_args_str = ", ".join(
-                                [f"{k}: {v}" for k, v in call_args.items() if v]
-                            )
-                            tb_writer.add_image(
-                                f'{call_args["prompt"]} | {call_args_str}',
-                                img_tensor=img_t,
-                                global_step=pipeline.steps_completed,
-                            )
-                            tb_writer.flush()  # Ensure all images are written to disk.
-                            core_context.train.upload_tensorboard_files()
-                    pipeline.steps_completed += 1
-                    if core_context.preempt.should_preempt():
-                        return
+            with torch.no_grad():
+                # There will be a single op of len max_length, as defined in the searcher config.
+                tb_dir = core_context.train.get_tensorboard_path()
+                tb_writer = SummaryWriter(log_dir=tb_dir)
+                for op in core_context.searcher.operations():
+                    while pipeline.steps_completed < op.length:
+                        # Ensuring all workers are using different, not-previously-used seeds.
+                        call_kwargs["seed"] += (
+                            pipeline.accelerator.num_processes * pipeline.steps_completed
+                            + pipeline.accelerator.process_index
+                        )
+                        image_grid = pipeline(**call_kwargs)
+                        # Use Core API to gather Images; accelerator.gather() only operates on
+                        # tensors (and is technically an all-gather).
+                        all_image_grids = core_context.distributed.gather(image_grid)
+                        all_image_grids_t = torch.concat(
+                            [pil_to_tensor(img) for img in all_image_grids], dim=0
+                        )
+                        if pipeline.accelerator.is_main_process:
+                            for img_t in all_image_grids_t:
+                                call_kwargs_str = ", ".join(
+                                    [f"{k}: {v}" for k, v in call_kwargs.items() if v]
+                                )
+                                tb_writer.add_image(
+                                    f'{call_kwargs["prompt"]} | {call_kwargs_str}',
+                                    img_tensor=img_t,
+                                    global_step=pipeline.steps_completed,
+                                )
+                                tb_writer.flush()  # Ensure all images are written to disk.
+                                core_context.train.upload_tensorboard_files()
+                        pipeline.steps_completed += 1
+                        if core_context.preempt.should_preempt():
+                            return
 
-                if pipeline.accelerator.is_main_process:
-                    # Report zero when completed.
-                    op.report_completed(0)
+                    if pipeline.accelerator.is_main_process:
+                        # Report zero when completed.
+                        op.report_completed(0)
 
     def load_from_checkpoint_paths(
         self, checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]]

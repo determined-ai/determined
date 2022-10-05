@@ -23,7 +23,7 @@ hyperparameters:
         use_fp16: False
     uuids: []
     call:
-      prompt: a watercolor painting of an astronaut riding a horses
+      prompt: a watercolor painting of an astronaut riding a horse
       rows: 2
       cols: 2
       num_inference_steps: 50
