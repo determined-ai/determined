@@ -3,7 +3,7 @@ package usergroup
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 
 	"github.com/uptrace/bun"
 
@@ -32,7 +32,7 @@ func (a *UserGroupAuthZBasic) CanUpdateGroups(ctx context.Context, curUser model
 	if curUser.Admin {
 		return nil
 	}
-	return db.ErrNotEnoughPermissions
+	return grpcutil.ErrPermissionDenied
 }
 
 func init() {

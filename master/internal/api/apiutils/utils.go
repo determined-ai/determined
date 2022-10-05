@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+
 	"github.com/determined-ai/determined/master/internal/db"
 )
 
@@ -27,12 +29,13 @@ var (
 	// ErrInternal is the returned standard error for an internal error.
 	ErrInternal       = status.Error(codes.Internal, "internal server error")
 	errPassthroughMap = map[error]bool{
-		nil:                true,
-		ErrBadRequest:      true,
-		ErrInvalidLimit:    true,
-		ErrNotFound:        true,
-		ErrDuplicateRecord: true,
-		ErrInternal:        true,
+		nil:                          true,
+		ErrBadRequest:                true,
+		ErrInvalidLimit:              true,
+		ErrNotFound:                  true,
+		ErrDuplicateRecord:           true,
+		ErrInternal:                  true,
+		grpcutil.ErrPermissionDenied: true,
 	}
 )
 
@@ -47,8 +50,6 @@ func MapAndFilterErrors(err error) error {
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, db.ErrDuplicateRecord):
 		return status.Error(codes.AlreadyExists, err.Error())
-	case errors.Is(err, db.ErrNotEnoughPermissions):
-		return err
 	}
 
 	logrus.WithError(err).Debug("suppressing error at API boundary")
