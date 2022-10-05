@@ -40,6 +40,8 @@ stages:
         agent_id: agent1
         container_master_host: $DOCKER_LOCALHOST
         container_auto_remove_disabled: true
+        hooks:
+          on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]
 
   - agent:
       name: agent2
