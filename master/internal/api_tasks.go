@@ -3,9 +3,9 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -38,42 +37,60 @@ var (
 	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
 
-func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
-	allocNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
-	alloc, err := a.m.db.AllocationByID(model.AllocationID(allocationID))
-	if errors.Is(err, db.ErrNotFound) {
-		return allocNotFound
-	} else if err != nil {
-		return err
+func expFromAllocationID(
+	m *Master, allocationID model.AllocationID,
+) (isExperiment bool, exp *model.Experiment, err error) {
+	resp, err := m.rm.GetAllocationHandler(
+		m.system,
+		sproto.GetAllocationHandler{ID: allocationID},
+	)
+	if err == fmt.Errorf("task handler not found on any resource pool") ||
+		(err != nil && resp == nil) {
+		return false, nil, status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	}
+	if err != nil {
+		return false, nil, err
 	}
 
-	t, err := a.m.db.TaskByID(alloc.TaskID)
+	if resp.Parent().Parent().Parent().Address().Local() != "experiments" {
+		// TaskType not trial.
+		return false, nil, nil
+	}
+
+	expID, err := strconv.Atoi(resp.Parent().Parent().Address().Local())
+	if err != nil {
+		return false, nil, err
+	}
+
+	exp, err = m.db.ExperimentWithoutConfigByID(expID)
+	if err != nil {
+		return false, nil, err
+	}
+	return true, exp, nil
+}
+
+func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
+	isExp, exp, err := expFromAllocationID(a.m, model.AllocationID(allocationID))
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		return nil // TODO(nick) add other task type auth checking.
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
 	}
 
-	switch t.TaskType {
-	case model.TaskTypeTrial:
-		exp, err := a.m.db.ExperimentWithoutConfigByTaskID(t.TaskID)
-		if err != nil {
-			return err
-		}
-
-		curUser, _, err := grpcutil.GetUser(ctx)
-		if err != nil {
-			return err
-		}
-		var ok bool
-		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
-			return err
-		} else if !ok {
-			return allocNotFound
-		}
-		if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
-			return status.Error(codes.PermissionDenied, err.Error())
-		}
-	default:
-		return nil // TODO(nick) add AuthZ for other task types.
+	var ok bool
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+		return err
+	} else if !ok {
+		return status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	}
+	if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
+		return status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	return nil

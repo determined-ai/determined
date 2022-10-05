@@ -6,7 +6,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/context"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
@@ -16,26 +15,19 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 	}
 
 	curUser := c.(*context.DetContext).MustGetUser()
-	for k, s := range summary {
-		t, err := m.db.TaskByID(s.TaskID)
+	for allocationID, _ := range summary {
+		isExp, exp, err := expFromAllocationID(m, allocationID)
 		if err != nil {
 			return nil, err
 		}
+		if !isExp {
+			continue // TODO(nick) add other task type auth checking.
+		}
 
-		switch t.TaskType {
-		case model.TaskTypeTrial:
-			exp, err := m.db.ExperimentWithoutConfigByTaskID(t.TaskID)
-			if err != nil {
-				return nil, err
-			}
-
-			if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
-				return nil, err
-			} else if !ok {
-				delete(summary, k)
-			}
-		default:
-			continue // TODO(nick) add AuthZ for other task types.
+		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
+			return nil, err
+		} else if !ok {
+			delete(summary, allocationID)
 		}
 	}
 	return summary, nil
