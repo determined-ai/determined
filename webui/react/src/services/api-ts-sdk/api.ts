@@ -1828,6 +1828,12 @@ export interface V1CreateExperimentRequest {
      * @memberof V1CreateExperimentRequest
      */
     projectId?: number;
+    /**
+     * Group id to contain the experiment.
+     * @type {number}
+     * @memberof V1CreateExperimentRequest
+     */
+    groupId?: number;
 }
 
 /**

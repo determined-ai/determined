@@ -390,7 +390,7 @@ func (a *apiServer) PostExperimentGroup(
 	}
 
 	g := &projectv1.ExperimentGroup{}
-	err = a.m.db.QueryProto("insert_experiment_group", g, req.ProjectId, req.Name)
+	err = a.m.db.QueryProto("insert_experiment_group", g, req.Name, req.ProjectId)
 
 	return &apiv1.PostExperimentGroupResponse{Group: g},
 		errors.Wrapf(err, "error creating experiment group %s in database", req.Name)

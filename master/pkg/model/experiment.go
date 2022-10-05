@@ -314,6 +314,10 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 	if e.ForkedFrom != nil {
 		parentID = ptrs.Ptr(int(e.ForkedFrom.Value))
 	}
+	var groupID *int
+	if e.GroupId != nil {
+		groupID = ptrs.Ptr(int(*e.GroupId))
+	}
 
 	bytes, err := json.Marshal(e.Config)
 	if err != nil {
@@ -341,6 +345,7 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		OwnerID:   uid,
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
+		GroupID: groupID,
 	}, nil
 }
 

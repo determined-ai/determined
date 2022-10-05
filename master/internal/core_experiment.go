@@ -542,21 +542,27 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
-	var groupID *int
+	g := projectv1.ExperimentGroup{}
 	if params.GroupID == nil {
 		if config.Group() != "" {
-			*groupID, err = m.db.ExperimentGroupByName(int32(projectID), config.Group())
+			tmpGroupID, err := m.db.ExperimentGroupByName(int32(projectID), config.Group())
+			g.Id = int32(tmpGroupID)
 			if errors.Is(err, db.ErrNotFound) {
-				g := projectv1.ExperimentGroup{}
-				err = m.db.QueryProto("insert_experiment_group", &g, projectID, config.Group())
-				*groupID = int(g.Id)
+				err = m.db.QueryProto("insert_experiment_group", &g, config.Group(), projectID)
 			} 
 			if err != nil {
 				return nil, false, nil, errors.Wrapf(err, errors.Errorf("unable to find or create group").Error())
 			}
 		}
 	} else {
-		groupID = params.GroupID
+		g.Id = int32(*params.GroupID)
+	}
+
+	groupID := new(int)
+	if g.Id != 0 {
+		*groupID = int(g.Id)
+	} else {
+		groupID = nil
 	}
 
 	dbExp, err := model.NewExperiment(

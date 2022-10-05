@@ -310,6 +310,8 @@ message CreateExperimentRequest {
   bool activate = 5;
   // Project id to contain the experiment.
   int32 project_id = 6;
+  // Group id to contain the experiment.
+  optional int32 group_id = 7;
 }
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {
