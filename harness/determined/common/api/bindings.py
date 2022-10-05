@@ -7598,12 +7598,12 @@ class v1Trigger:
         condition: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         id: "typing.Optional[int]" = None,
         triggerType: "typing.Optional[v1TriggerType]" = None,
-        webhookid: "typing.Optional[int]" = None,
+        webhookId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.triggerType = triggerType
         self.condition = condition
-        self.webhookid = webhookid
+        self.webhookId = webhookId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Trigger":
@@ -7611,7 +7611,7 @@ class v1Trigger:
             id=obj.get("id", None),
             triggerType=v1TriggerType(obj["triggerType"]) if obj.get("triggerType", None) is not None else None,
             condition=obj.get("condition", None),
-            webhookid=obj.get("webhookid", None),
+            webhookId=obj.get("webhookId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -7619,7 +7619,7 @@ class v1Trigger:
             "id": self.id if self.id is not None else None,
             "triggerType": self.triggerType.value if self.triggerType is not None else None,
             "condition": self.condition if self.condition is not None else None,
-            "webhookid": self.webhookid if self.webhookid is not None else None,
+            "webhookId": self.webhookId if self.webhookId is not None else None,
         }
 
 class v1TriggerType(enum.Enum):

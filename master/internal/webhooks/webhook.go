@@ -3,7 +3,6 @@ package webhooks
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -35,7 +34,6 @@ type Webhook struct {
 
 // WebhookFromProto returns a model Webhook from a proto definition.
 func WebhookFromProto(w *webhookv1.Webhook) Webhook {
-	spew.Dump(w)
 	return Webhook{
 		URL:         w.Url,
 		Triggers:    TriggersFromProto(w.Triggers),
@@ -87,7 +85,7 @@ type Trigger struct {
 	ID          TriggerID              `bun:"id,pk,autoincrement"`
 	TriggerType TriggerType            `bun:"trigger_type,notnull"`
 	Condition   map[string]interface{} `bun:"condition,notnull"`
-	Webhookid   WebhookID              `bun:"webhook_id,notnull"`
+	Webhook_id  WebhookID              `bun:"webhook_id,notnull"`
 
 	Webhook *Webhook `bun:"rel:belongs-to,join:webhook_id=id"`
 }
@@ -106,7 +104,7 @@ func (t *Trigger) Proto() *webhookv1.Trigger {
 		Id:          int32(t.ID),
 		TriggerType: t.TriggerType.Proto(),
 		Condition:   protoutils.ToStruct(t.Condition),
-		Webhookid:   int32(t.Webhookid),
+		Webhook_id:  int32(t.Webhook_id),
 	}
 }
 

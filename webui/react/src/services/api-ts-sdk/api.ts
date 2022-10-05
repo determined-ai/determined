@@ -8341,7 +8341,7 @@ export interface V1Trigger {
      * @type {number}
      * @memberof V1Trigger
      */
-    webhookid?: number;
+    webhookId?: number;
 }
 
 /**

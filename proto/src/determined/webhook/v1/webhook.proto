@@ -61,5 +61,5 @@ message Trigger {
   // The trigger condition.
   google.protobuf.Struct condition = 3;
   // The parent webhook of the trigger.
-  int32 webhookid = 4;
+  int32 webhook_id = 4;
 }
