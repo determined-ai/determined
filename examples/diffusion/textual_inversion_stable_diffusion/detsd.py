@@ -863,7 +863,7 @@ class DetSDTextualInversionPipeline:
                                 )
                                 img_grid_t = pil_to_tensor(img_grid)
                                 tb_writer.add_image(
-                                    f'{call_kwargs["prompt"]} | {call_kwargs_str}',
+                                    call_kwargs_str,
                                     img_tensor=img_grid_t,
                                     global_step=steps_completed,
                                 )
