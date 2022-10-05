@@ -1,4 +1,4 @@
-import { AutoComplete as AutoCompleteAntD } from 'antd';
+import { AutoComplete as AutoCompleteAntD, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import css from './AutoComplete.module.scss';
@@ -29,7 +29,7 @@ const AutoComplete = ({ initialValue, onSave, ...props }: Props): React.ReactEle
   );
 
   const handleBlur = useCallback(() => {
-    const selectedOption = props.options?.find((option) => option.label === value) ?? value;
+    const selectedOption = props.options?.find((option) => option.label === value) ?? value?.trim();
     onSave?.(selectedOption);
   }, [onSave, props.options, value]);
 
@@ -46,8 +46,9 @@ const AutoComplete = ({ initialValue, onSave, ...props }: Props): React.ReactEle
         onBlur={handleBlur}
         onChange={setValue}
         onClear={handleClear}
-        onSelect={handleSelect}
-      />
+        onSelect={handleSelect}>
+        <Input onPressEnter={handleBlur} />
+      </AutoCompleteAntD>
     </div>
   );
 };
