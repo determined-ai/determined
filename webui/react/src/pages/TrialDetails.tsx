@@ -50,7 +50,7 @@ const TrialDetailsComp: React.FC = () => {
   const navigate = useNavigate();
   const { experimentId, tab, trialId: trialID } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_TAB_KEY);
-  const [trialId, setTrialId] = useState<number>(parseInt(trialID ?? ''));
+  const [trialId, setTrialId] = useState<number>(Number(trialID));
   const [trialDetails, setTrialDetails] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
@@ -119,8 +119,8 @@ const TrialDetailsComp: React.FC = () => {
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
   useEffect(() => {
-    setTrialId(trialId);
-  }, [trialId]);
+    setTrialId(Number(trialID));
+  }, [trialID]);
 
   useEffect(() => {
     fetchTrialDetails();
