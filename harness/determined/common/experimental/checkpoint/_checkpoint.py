@@ -170,11 +170,7 @@ class Checkpoint:
                 self._download_via_master(self._session, self.uuid, local_ckpt_dir)
 
             elif mode == DownloadMode.AUTO:
-                try:
-                    self._download_direct(checkpoint_storage, local_ckpt_dir)
-                except errors.NoDirectStorageAccess:
-                    logging.info("Unable to download directly, proxying download through master")
-                    self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+                self._download_auto(checkpoint_storage, local_ckpt_dir)
 
             else:
                 raise ValueError(f"Unknown download mode {mode}")
@@ -189,6 +185,26 @@ class Checkpoint:
             self.write_metadata_file(str(metadata_path))
 
         return str(local_ckpt_dir)
+
+    def _download_auto(
+        self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path
+    ) -> None:
+        try:
+            self._download_direct(checkpoint_storage, local_ckpt_dir)
+
+        except errors.NoDirectStorageAccess:
+            if checkpoint_storage["type"] != "s3":
+                raise
+
+            logging.info("Unable to download directly, proxying download through master")
+            try:
+                self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+            except Exception as e:
+                raise errors.MultipleDownloadsFailed(
+                    "Auto checkpoint download mode was enabled. "
+                    "Attempted direct download and proxied download through master "
+                    "but they both failed."
+                ) from e
 
     def _download_direct(
         self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path
