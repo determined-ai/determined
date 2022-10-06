@@ -148,8 +148,10 @@ const GroupManagement: React.FC = () => {
   }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
 
   useEffect(() => {
-    fetchKnownRoles();
-  }, [fetchKnownRoles]);
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+  }, [fetchKnownRoles, rbacEnabled]);
 
   const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
     useModalCreateGroup({ onClose: fetchGroups, users: users });
