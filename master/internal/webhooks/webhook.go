@@ -179,3 +179,16 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
 	}
 }
+
+// WebhookEventID is the type for Trigger IDs.
+type WebhookEventID int
+
+// Event corresponds to a row in the "webhook_events" DB table.
+type Event struct {
+	bun.BaseModel `bun:"table:webhook_events"`
+
+	ID        WebhookEventID         `bun:"id,pk,autoincrement"`
+	TriggerID TriggerID              `bun:"trigger_id,notnull"`
+	Attempts  int                    `bun:"attempts"`
+	Payload   map[string]interface{} `bun:"payload,notnull"`
+}

@@ -6,11 +6,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-// WebhooksAPIServer is an embedded api server struct.
-type WebhooksAPIServer struct{}
+// APIServer is an embedded api server struct.
+type APIServer struct{}
 
 // GetWebhooks returns all Webhooks.
-func (a *WebhooksAPIServer) GetWebhooks(
+func (a *APIServer) GetWebhooks(
 	ctx context.Context, req *apiv1.GetWebhooksRequest,
 ) (*apiv1.GetWebhooksResponse, error) {
 	webhooks, err := GetWebhooks(ctx)
@@ -21,7 +21,7 @@ func (a *WebhooksAPIServer) GetWebhooks(
 }
 
 // PostWebhook creates a new Webhook.
-func (a *WebhooksAPIServer) PostWebhook(
+func (a *APIServer) PostWebhook(
 	ctx context.Context, req *apiv1.PostWebhookRequest,
 ) (*apiv1.PostWebhookResponse, error) {
 	w := WebhookFromProto(req.Webhook)
@@ -32,7 +32,7 @@ func (a *WebhooksAPIServer) PostWebhook(
 }
 
 // DeleteWebhook deletes a Webhook.
-func (a *WebhooksAPIServer) DeleteWebhook(
+func (a *APIServer) DeleteWebhook(
 	ctx context.Context, req *apiv1.DeleteWebhookRequest,
 ) (*apiv1.DeleteWebhookResponse, error) {
 	if err := DeleteWebhook(ctx, WebhookID(req.Id)); err != nil {
@@ -42,7 +42,7 @@ func (a *WebhooksAPIServer) DeleteWebhook(
 }
 
 // TestWebhook sends a test event for a Webhook.
-func (a *WebhooksAPIServer) TestWebhook(
+func (a *APIServer) TestWebhook(
 	ctx context.Context, req *apiv1.TestWebhookRequest,
 ) (*apiv1.TestWebhookResponse, error) {
 	panic("unimplemented")

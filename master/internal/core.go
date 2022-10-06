@@ -57,6 +57,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -1093,5 +1094,9 @@ func (m *Master) Run(ctx context.Context) error {
 	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
 		return err
 	}
+
+	s := webhooks.NewSender()
+	go s.Run(context.TODO())
+
 	return m.startServers(ctx, cert)
 }
