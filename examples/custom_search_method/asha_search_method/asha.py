@@ -52,8 +52,6 @@ class ASHASearchMethod(searcher.SearchMethod):
         divisor: int,
         max_concurrent_trials: int = 0,
     ) -> None:
-        super().__init__()
-
         # Store all information about ASHASearchMethod in ASHASearchMethodState
         # to support easy saving and loading
         self.asha_search_state = ASHASearchMethodState(
@@ -78,11 +76,11 @@ class ASHASearchMethod(searcher.SearchMethod):
     #         units selection is made in the custom_config.yaml.
     #
     # Note: the order in which trials are created is not guaranteed.
-    def initial_operations(self) -> List[searcher.Operation]:
+    def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
         ops: List[searcher.Operation] = []
         N = self._get_max_concurrent_trials()
 
-        for _ in range(0, N):
+        for __ in range(0, N):
             create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.search_space(),
@@ -105,7 +103,9 @@ class ASHASearchMethod(searcher.SearchMethod):
     # Invoked when a trial with specific request_id is created.
     # In this example, ASHASearchMethodState is updated with
     # information about a trial's progress and no new operations are created.
-    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+    def on_trial_created(
+        self, _: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         self.asha_search_state.rungs[0].outstanding_trials += 1
         self.asha_search_state.trial_rungs[request_id] = 0
         return []
@@ -122,7 +122,7 @@ class ASHASearchMethod(searcher.SearchMethod):
     #    (3) close experiment if all trials are completed and maximum number of
     #        trials is reached.
     def on_validation_completed(
-        self, request_id: uuid.UUID, metric: float, train_length: int
+        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
     ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
@@ -137,7 +137,9 @@ class ASHASearchMethod(searcher.SearchMethod):
     # maximum trials has been reached, Shutdown operation is sent to close
     # the experiment. Note, that Shutdown operation does not take request_id
     # as input, since it refers to the experiment, not a single trial.
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+    def on_trial_closed(
+        self, _: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         self.asha_search_state.completed_trials += 1
         self.asha_search_state.closed_trials.add(request_id)
 
@@ -161,7 +163,10 @@ class ASHASearchMethod(searcher.SearchMethod):
     # Next, ASHA invoked _promote_async function to decided whether to promote
     # existing trial, start a new trial or close the experiment.
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
+        self,
+        _: searcher.SearcherState,
+        request_id: uuid.UUID,
+        exited_reason: searcher.ExitedReason,
     ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
 
@@ -220,7 +225,7 @@ class ASHASearchMethod(searcher.SearchMethod):
     # close the experiment.
     # In this example, progress computation is based on the number of completed trials
     # in rung 0 to the total number of trials.
-    def progress(self) -> float:
+    def progress(self, _: searcher.SearcherState) -> float:
         if (
             0
             < self.asha_search_state.max_concurrent_trials

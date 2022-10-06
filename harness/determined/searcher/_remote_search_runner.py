@@ -53,8 +53,8 @@ class RemoteSearchRunner(searcher.SearchRunner):
         else:
             logger.info("No latest checkpoint. Starting new experiment.")
             exp = client.create_experiment(exp_config, model_dir)
-            self.search_method.searcher_state.experiment_id = exp.id
-            self.search_method.searcher_state.last_event_id = 0
+            self.state.experiment_id = exp.id
+            self.state.last_event_id = 0
             self.save_state(exp.id, [])
             experiment_id = exp.id
 
@@ -68,22 +68,22 @@ class RemoteSearchRunner(searcher.SearchRunner):
 
     def load_state(self, storage_id: str) -> Tuple[int, List[searcher.Operation]]:
         with self.context.checkpoint.restore_path(storage_id) as path:
-            experiment_id = self.search_method.load(path)
+            self.state, experiment_id = self.search_method.load(path)
             with path.joinpath("ops").open("rb") as ops_file:
                 operations = pickle.load(ops_file)
             return experiment_id, operations
 
     def save_state(self, experiment_id: int, operations: List[searcher.Operation]) -> None:
-        steps_completed = self.search_method.searcher_state.last_event_id
+        steps_completed = self.state.last_event_id
         metadata = {"steps_completed": steps_completed}
         with self.context.checkpoint.store_path(metadata) as (path, storage_id):
-            self.search_method.save(path, experiment_id=experiment_id)
+            self.search_method.save(self.state, path, experiment_id=experiment_id)
             with path.joinpath("ops").open("wb") as ops_file:
                 pickle.dump(operations, ops_file)
 
     def _show_experiment_paused_msg(self) -> None:
         logging.warning(
-            f"Experiment {self.search_method.searcher_state.experiment_id} "
+            f"Experiment {self.state.experiment_id} "
             f"has been paused. If you leave searcher experiment running, "
             f"your search method will automatically resume when the experiment "
             f"becomes active again."

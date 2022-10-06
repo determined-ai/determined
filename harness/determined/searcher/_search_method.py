@@ -4,7 +4,7 @@ import pathlib
 import uuid
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from determined.common import experimental
 from determined.common.api import bindings
@@ -192,20 +192,14 @@ class SearchMethod:
     To implement your specific hyperparameter tuning approach, subclass ``SearchMethod``
     overriding the event handler methods. Each event handler, except ``progress`` returns a list of
     operations (``List[Operation]``) that will be submitted to master for processing.
+
+    .. note::
+
+        Do not modify ``searcher_state`` passed into event handlers.
     """
 
-    def __init__(self) -> None:
-        self._searcher_state = SearcherState()
-
-    @property
-    def searcher_state(self) -> SearcherState:
-        """
-        Internal ``SearcherState``
-        """
-        return self._searcher_state
-
     @abstractmethod
-    def initial_operations(self) -> List[Operation]:
+    def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
         Returns a set of initial operations that the searcher will perform.
 
@@ -221,7 +215,9 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_created(
+        self, searcher_state: SearcherState, request_id: uuid.UUID
+    ) -> List[Operation]:
         """
         Informs the searcher that a trial has been created
         as a result of Create operation.
@@ -230,7 +226,7 @@ class SearchMethod:
 
     @abstractmethod
     def on_validation_completed(
-        self, request_id: uuid.UUID, metric: float, train_length: int
+        self, searcher_state: SearcherState, request_id: uuid.UUID, metric: float, train_length: int
     ) -> List[Operation]:
         """
         Informs the searcher that the validation workload
@@ -240,7 +236,9 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+    def on_trial_closed(
+        self, searcher_state: SearcherState, request_id: uuid.UUID
+    ) -> List[Operation]:
         """
         Informs the searcher that a trial has been closed as a result of a Close
         operation.
@@ -248,7 +246,7 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def progress(self) -> float:
+    def progress(self, searcher_state: SearcherState) -> float:
         """
         Returns experiment progress as a float between 0 and 1.
         """
@@ -257,6 +255,7 @@ class SearchMethod:
     @abstractmethod
     def on_trial_exited_early(
         self,
+        searcher_state: SearcherState,
         request_id: uuid.UUID,
         exited_reason: ExitedReason,
     ) -> List[Operation]:
@@ -265,14 +264,16 @@ class SearchMethod:
         """
         pass
 
-    def save(self, path: pathlib.Path, *, experiment_id: int) -> None:
+    def save(
+        self, searcher_state: SearcherState, path: pathlib.Path, *, experiment_id: int
+    ) -> None:
         """
         Saves the searcher state and the search method state.
         It will be called by the ``SearchRunner`` after receiving operations
         from the ``SearchMethod``
         """
         searcher_state_file = path.joinpath(STATE_FILE)
-        d = self.searcher_state.to_dict()
+        d = searcher_state.to_dict()
         d["experimentId"] = experiment_id
         with searcher_state_file.open("w") as f:
             json.dump(d, f)
@@ -285,18 +286,19 @@ class SearchMethod:
         """
         pass
 
-    def load(self, path: pathlib.Path) -> int:
+    def load(self, path: pathlib.Path) -> Tuple[SearcherState, int]:
         """
         Loads searcher state and method-specific state.
         """
         searcher_state_file = path.joinpath(STATE_FILE)
         with searcher_state_file.open("r") as f:
             state_dict = json.load(f)
-            self.searcher_state.from_dict(state_dict)
+            searcher_state = SearcherState()
+            searcher_state.from_dict(state_dict)
             experiment_id = state_dict["experimentId"]  # type: int
 
         self.load_method_state(path)
-        return experiment_id
+        return searcher_state, experiment_id
 
     def load_method_state(
         self,
