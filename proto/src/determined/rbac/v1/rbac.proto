@@ -87,6 +87,9 @@ enum PermissionType {
   // If assigned at a workspace scope, can only assign roles to that workspace
   // scope.
   PERMISSION_TYPE_ASSIGN_ROLES = 6002;
+
+  // Ability to create and delete webhooks.
+  PERMISSION_TYPE_EDIT_WEBHOOKS = 97001;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.
