@@ -12,6 +12,7 @@ export interface Settings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: 'overview',
   settings: [
     {
       defaultValue: TrialWorkloadFilter.CheckpointOrValidation,
