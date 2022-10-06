@@ -235,7 +235,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     (keys?: string[]): string[] => {
       return config.settings.reduce((acc, prop) => {
         const key = prop.key as keyof T;
-        const includesKey = !keys || keys.includes(prop.key);
+        const includesKey = !keys || keys?.includes(prop.key);
         const isDefault = isEqual(settings[key], prop.defaultValue);
         if (includesKey && !isDefault) acc.push(prop.key);
         return acc;
@@ -304,7 +304,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   const resetSettings = useCallback(
     (keys?: string[]) => {
       const newSettings = config.settings.reduce((acc, prop) => {
-        const includesKey = !keys || keys.includes(prop.key);
+        const includesKey = !keys || keys?.includes(prop.key);
         if (includesKey) acc[prop.key] = prop.defaultValue;
         return acc;
       }, {} as GenericSettings) as Partial<T>;
