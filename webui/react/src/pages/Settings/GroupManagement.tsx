@@ -7,6 +7,7 @@ import InteractiveTable, {
 } from 'components/InteractiveTable';
 import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
@@ -147,9 +148,12 @@ const GroupManagement: React.FC = () => {
     fetchUsers();
   }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
 
+  const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
-    fetchKnownRoles();
-  }, [fetchKnownRoles]);
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+  }, [fetchKnownRoles, rbacEnabled]);
 
   const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
     useModalCreateGroup({ onClose: fetchGroups, users: users });

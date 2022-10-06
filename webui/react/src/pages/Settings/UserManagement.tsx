@@ -166,8 +166,10 @@ const UserManagement: React.FC = () => {
   }, [fetchGroups]);
 
   useEffect(() => {
-    fetchKnownRoles();
-  }, [fetchKnownRoles]);
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+  }, [fetchKnownRoles, rbacEnabled]);
 
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
     useModalCreateUser({ groups, onClose: fetchUsers });
