@@ -23,7 +23,6 @@ For instance, `export DET_MASTER=<master_host:port>`.
 2. Run the following command in the `asha_search_method` directory to start RemoteSearchRunner on the Determined cluster: 
 `det experiment create remote_search_runner/searcher.yaml .`.
 
-
 ## Result
 RemoteSearchRunner is submitted to the Determined master as a single trial experiment.
 While running on the cluster, RemoteSearchRunner executes the custom SearchMethod and starts a multi-trial experiment
