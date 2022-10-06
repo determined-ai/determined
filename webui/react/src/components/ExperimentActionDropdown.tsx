@@ -107,7 +107,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.SwitchPin: {
-            const newPinned = { ...settings.pinned };
+            const newPinned = { ...(settings.pinned ?? {}) };
             const pinSet = new Set(newPinned[experiment.projectId]);
             if (pinSet.has(id)) {
               pinSet.delete(id);
@@ -198,7 +198,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
     (action) => {
       if (action === Action.SwitchPin) {
-        const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
+          ? 'Unpin'
+          : 'Pin';
         return { key: action, label };
       } else {
         return { danger: action === Action.Delete, key: action, label: action };

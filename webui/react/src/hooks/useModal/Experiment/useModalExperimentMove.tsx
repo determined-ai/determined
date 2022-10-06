@@ -79,8 +79,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const { settings: destSettings, updateSettings: updateDestSettings } =
     useSettings<Settings>(settingsConfig);
 
-  const { settings: projectSettings, updateSettings: updateProjectSettings } =
-    useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -271,15 +269,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ),
         message: 'Move Success',
       });
-      if (sourceProjectId) {
-        const newPinned = { ...projectSettings.pinned };
-        const pinSet = new Set(newPinned[sourceProjectId]);
-        for (const experimentId of experimentIds) {
-          pinSet.delete(experimentId);
-        }
-        newPinned[sourceProjectId] = Array.from(pinSet);
-        updateProjectSettings({ pinned: newPinned });
-      }
     } else if (numFailures === experimentIds.length) {
       notification.warn({
         description: `Unable to move ${experimentText}`,
@@ -300,15 +289,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         message: 'Partial Move Failure',
       });
     }
-  }, [
-    closeNotification,
-    destSettings.projectId,
-    experimentIds,
-    projectSettings.pinned,
-    projects,
-    sourceProjectId,
-    updateProjectSettings,
-  ]);
+  }, [closeNotification, destSettings.projectId, experimentIds, projects]);
 
   const getModalProps = useCallback(
     (experimentIds, destinationProjectId): ModalFuncProps => {

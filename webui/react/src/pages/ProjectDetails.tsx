@@ -194,7 +194,7 @@ const ProjectDetails: React.FC = () => {
         states: validateDetApiEnumList(Determinedexperimentv1State, states),
         users: settings.user,
       };
-      const pinnedIds = settings.pinned[id] ?? [];
+      const pinnedIds = settings.pinned?.[id] ?? [];
       let pinnedExpResponse: ExperimentPagination = { experiments: [], pagination: {} };
       if (pinnedIds.length > 0) {
         pinnedExpResponse = await getExperiments(
@@ -1005,7 +1005,7 @@ const ProjectDetails: React.FC = () => {
               ContextMenu={ContextMenu}
               dataSource={experiments}
               loading={isLoading}
-              numOfPinned={(settings.pinned[id] ?? []).length}
+              numOfPinned={(settings.pinned?.[id] ?? []).length}
               pagination={getFullPaginationConfig(
                 {
                   limit: settings.tableLimit,

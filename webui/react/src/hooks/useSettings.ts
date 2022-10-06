@@ -58,7 +58,7 @@ export interface SettingsConfigProp {
 }
 
 export interface SettingsConfig {
-  applicableRoutespace: string;
+  applicableRoutespace?: string;
   settings: SettingsConfigProp[];
   storagePath: string;
 }
