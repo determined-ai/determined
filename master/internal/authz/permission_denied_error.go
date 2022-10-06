@@ -10,7 +10,7 @@ import (
 // PermissionDeniedError represents an error that arises when a user does not have sufficient
 // access privileges. RequiredPermissions can be empty for non-rbac errors.
 type PermissionDeniedError struct {
-	RequiredPermissions []rbacv1.Permission
+	RequiredPermissions []*rbacv1.Permission
 }
 
 // Error returns an error string.
