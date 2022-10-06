@@ -66,16 +66,16 @@ class Determined:
 
     def create_user(username: str, password: str, admin: bool):
         # call API create_user
-        # create UserReference object
+        # create User object
         # return that object 
         pass
     
     def get_user():
-        # return UserReference object
+        # return User object
         pass
 
     def list_users():
-        # return list of users. Is there an API for this? Yes old API: api.get(args.master, path="users"). Maybe we should re-write new API?
+        # return list of users. 
         pass
     def create_experiment(
         self,
