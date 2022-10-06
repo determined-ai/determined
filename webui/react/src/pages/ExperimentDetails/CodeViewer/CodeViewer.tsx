@@ -142,7 +142,7 @@ const CodeViewer: React.FC<Props> = ({
     [_submittedConfig],
   );
   const configForExperiment = (experimentId: number): SettingsConfig => ({
-    applicableRoutespace: '/experiments',
+    applicableRoutespace: '/code',
     settings: [
       {
         defaultValue: firstConfig,

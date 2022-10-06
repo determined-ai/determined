@@ -181,9 +181,15 @@ const ProjectDetails: React.FC = () => {
     }
   }, [canceler.signal, id, pageError]);
 
+  const statesString = useMemo(() => settings.state?.join('.'), [settings.state]);
+  const pinnedString = useMemo(() => JSON.stringify(settings.pinned), [settings.pinned]);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = (settings.state || []).map((state) => encodeExperimentState(state));
+      const states = statesString
+        ?.split('.')
+        .map((state) => encodeExperimentState(state as RunState));
+      const pinned = JSON.parse(pinnedString);
       const baseParams: GetExperimentsParams = {
         archived: settings.archived ? undefined : false,
         labels: settings.label,
@@ -194,7 +200,7 @@ const ProjectDetails: React.FC = () => {
         states: validateDetApiEnumList(Determinedexperimentv1State, states),
         users: settings.user,
       };
-      const pinnedIds = settings.pinned[id] ?? [];
+      const pinnedIds = pinned?.[id] ?? [];
       let pinnedExpResponse: ExperimentPagination = { experiments: [], pagination: {} };
       if (pinnedIds.length > 0) {
         pinnedExpResponse = await getExperiments(
@@ -235,11 +241,11 @@ const ProjectDetails: React.FC = () => {
     id,
     settings.archived,
     settings.label,
-    settings.pinned,
+    pinnedString,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
-    settings.state,
+    statesString,
     settings.tableLimit,
     settings.tableOffset,
     settings.user,
@@ -894,8 +900,8 @@ const ProjectDetails: React.FC = () => {
     settings.search,
     settings.sortDesc,
     settings.sortKey,
-    settings.state,
-    settings.pinned,
+    statesString,
+    pinnedString,
     settings.tableLimit,
     settings.tableOffset,
     settings.user,
@@ -1005,7 +1011,7 @@ const ProjectDetails: React.FC = () => {
               ContextMenu={ContextMenu}
               dataSource={experiments}
               loading={isLoading}
-              numOfPinned={(settings.pinned[id] ?? []).length}
+              numOfPinned={(settings.pinned?.[id] ?? []).length}
               pagination={getFullPaginationConfig(
                 {
                   limit: settings.tableLimit,

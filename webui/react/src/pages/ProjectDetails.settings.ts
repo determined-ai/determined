@@ -64,6 +64,7 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: '/projects',
   settings: [
     {
       defaultValue: { 1: [] },
@@ -81,6 +82,7 @@ const config: SettingsConfig = {
     {
       defaultValue: DEFAULT_COLUMNS,
       key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: {
         baseType: BaseType.String,
@@ -107,10 +109,12 @@ const config: SettingsConfig = {
     },
     {
       key: 'row',
+      storageKey: 'row',
       type: { baseType: BaseType.Integer, isArray: true },
     },
     {
       key: 'search',
+      storageKey: 'search',
       type: { baseType: BaseType.String },
     },
     {
@@ -142,6 +146,7 @@ const config: SettingsConfig = {
     {
       defaultValue: 0,
       key: 'tableOffset',
+      storageKey: 'tableOffset',
       type: { baseType: BaseType.Integer },
     },
     {
