@@ -17,6 +17,7 @@ class User:
         self.agent_user = None
         self.agent_group = None
     
+   
     def update_user(username: str, master_address: str, active: Optional[bool] = None,   password: Optional[str] = None,  agent_user_group: Optional[Dict[str, Any]] = None,) -> Response:
         # return API response
         pass
@@ -28,7 +29,7 @@ class User:
     def activate_user(username: str, master_address: str) -> None: 
         #calls update_user with active = true 
         pass 
-
+    
     def deactivate_user(username: str, master_address: str) -> None: 
         #calls update_user with active = false 
         pass 
