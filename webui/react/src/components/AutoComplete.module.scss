@@ -4,12 +4,12 @@
   :global(.ant-select-auto-complete) {
     display: flex;
 
-    :global(.ant-select-selector) {
+    :global(.ant-input) {
       border-color: transparent !important;
       flex-grow: 1;
 
       &:hover {
-        border-color: inherit !important;
+        border-color: initial !important;
       }
     }
   }
