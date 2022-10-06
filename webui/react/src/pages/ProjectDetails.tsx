@@ -785,8 +785,12 @@ const ProjectDetails: React.FC = () => {
     openCustomizeColumns({});
   }, [openCustomizeColumns]);
 
+  const onGroupAction = useCallback(() => {
+    fetchExperiments();
+  }, [fetchExperiments]);
+
   const { contextHolder: modalExperimentGroupsContextHolder, modalOpen: openManageGroups } =
-    useModalExperimentGroups({ projectId: id });
+    useModalExperimentGroups({ onAction: onGroupAction, projectId: id });
 
   const handleManageGroupsClick = useCallback(() => {
     openManageGroups({});

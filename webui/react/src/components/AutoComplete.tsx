@@ -1,5 +1,5 @@
 import { AutoComplete as AutoCompleteAntD, Input } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import css from './AutoComplete.module.scss';
 
@@ -16,6 +16,10 @@ interface Props extends React.ComponentProps<typeof AutoCompleteAntD<string, Opt
 
 const AutoComplete = ({ initialValue, onSave, ...props }: Props): React.ReactElement => {
   const [value, setValue] = useState(initialValue);
+
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
 
   const classes = [css.base];
   if (value === undefined || value.length === 0) classes.push(css.empty);

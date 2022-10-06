@@ -12,11 +12,12 @@ import handleError from 'utils/error';
 import css from './useModalExperimentGroups.module.scss';
 
 interface Props {
+  onAction?: () => void;
   onClose?: () => void;
   projectId: number;
 }
 
-const useModalExperimentGroups = ({ onClose, projectId }: Props): ModalHooks => {
+const useModalExperimentGroups = ({ onAction, onClose, projectId }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [form] = Form.useForm();
   const [experimentGroups, setExperimentGroups] = useState<ExperimentGroup[]>([]);
@@ -35,14 +36,15 @@ const useModalExperimentGroups = ({ onClose, projectId }: Props): ModalHooks => 
   const handleRenameClick = useCallback(
     async (groupId: number) => {
       try {
-        const name: string = form.getFieldValue(`name-${groupId}`);
+        const name = (form.getFieldValue([groupId, 'name']) as string).trim();
         await patchExperimentGroup({ groupId, name, projectId }, { signal: canceler.signal });
         await fetchExperimentGroups();
+        onAction?.();
       } catch (e) {
         handleError(e);
       }
     },
-    [canceler.signal, fetchExperimentGroups, form, projectId],
+    [canceler.signal, fetchExperimentGroups, form, onAction, projectId],
   );
 
   const handleDeleteClick = useCallback(
@@ -50,11 +52,12 @@ const useModalExperimentGroups = ({ onClose, projectId }: Props): ModalHooks => 
       try {
         await deleteExperimentGroup({ groupId, projectId }, { signal: canceler.signal });
         await fetchExperimentGroups();
+        onAction?.();
       } catch (e) {
         handleError(e);
       }
     },
-    [canceler.signal, fetchExperimentGroups, projectId],
+    [canceler.signal, fetchExperimentGroups, onAction, projectId],
   );
 
   const modalContent = useMemo(() => {
@@ -63,7 +66,7 @@ const useModalExperimentGroups = ({ onClose, projectId }: Props): ModalHooks => 
         {experimentGroups.map((group) => (
           <div className={css.groupRow} key={group.id}>
             <span>Name:</span>
-            <Form.Item initialValue={group.name} label="Name" name={`name-${group.id}`} noStyle>
+            <Form.Item initialValue={group.name} label="Name" name={[group.id, 'name']} noStyle>
               <Input />
             </Form.Item>
             <Button onClick={() => handleRenameClick(group.id)}>Rename</Button>
