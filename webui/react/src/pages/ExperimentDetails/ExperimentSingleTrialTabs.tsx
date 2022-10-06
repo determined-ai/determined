@@ -9,6 +9,7 @@ import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/us
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
+import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
@@ -42,6 +43,10 @@ type Params = {
   tab?: TabType;
 };
 
+const NeverTrials: React.FC = () => (
+  <Message title="Experiment will not have trials" type={MessageType.Alert} />
+);
+
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
@@ -70,6 +75,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
   } = useModalHyperparameterSearch({ experiment });
+
+  const waitingForTrials = !trialId && !wontHaveTrials;
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -223,10 +230,20 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
-          <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
+          {waitingForTrials ? (
+            <Spinner spinning={true} tip="Waiting for trials..." />
+          ) : wontHaveTrials ? (
+            <NeverTrials />
+          ) : (
+            <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
+          )}
         </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">
-          <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
+          {wontHaveTrials ? (
+            <NeverTrials />
+          ) : (
+            <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
+          )}
         </TabPane>
         {showExperimentArtifacts ? (
           <>
@@ -257,7 +274,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         </TabPane>
         {showExperimentArtifacts ? (
           <TabPane key="logs" tab="Logs">
-            <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+            {wontHaveTrials ? (
+              <NeverTrials />
+            ) : (
+              <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+            )}
           </TabPane>
         ) : null}
       </Tabs>

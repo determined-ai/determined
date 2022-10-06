@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -153,15 +154,17 @@ func TestAuthzPostUser(t *testing.T) {
 			Group: "six",
 		}).Return(fmt.Errorf("canCreateUserError")).Once()
 
+	var five int32 = 5
+	var six int32 = 6
 	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{
 		User: &userv1.User{
 			Username: "admin",
 			Admin:    true,
 			AgentUserGroup: &userv1.AgentUserGroup{
-				AgentUid:   5,
-				AgentGid:   6,
-				AgentUser:  "five",
-				AgentGroup: "six",
+				AgentUid:   &five,
+				AgentGid:   &six,
+				AgentUser:  ptrs.Ptr("five"),
+				AgentGroup: ptrs.Ptr("six"),
 			},
 		},
 	})

@@ -53,6 +53,7 @@ func TestPostWorkspace(t *testing.T) {
 		NumExperiments: 0,
 		State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
 		ErrorMessage:   "",
+		AgentUserGroup: nil,
 	}
 	proto.Equal(expected, resp.Workspace)
 	require.Equal(t, expected, resp.Workspace)

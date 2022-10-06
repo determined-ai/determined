@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
@@ -80,59 +82,69 @@ const usePermissions = (): PermissionsHook => {
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-  const rbacOpts = {
-    rbacAllPermission,
-    rbacEnabled,
-    rbacReadPermission,
-    user,
-    userAssignments,
-    userRoles,
-  };
 
-  return {
-    canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
-    canCreateExperiment: (args: WorkspacePermissionsArgs) =>
-      canCreateExperiment(rbacOpts, args.workspace),
-    canCreateProject: (args: WorkspacePermissionsArgs) =>
-      canCreateProject(rbacOpts, args.workspace),
-    canCreateWorkspace: canCreateWorkspace(rbacOpts),
-    canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
-      canDeleteExperiment(rbacOpts, args.experiment),
-    canDeleteModel: (args: ModelPermissionsArgs) => canDeleteModel(rbacOpts, args.model),
-    canDeleteModelVersion: (args: ModelVersionPermissionsArgs) =>
-      canDeleteModelVersion(rbacOpts, args.modelVersion),
-    canDeleteProjects: (args: ProjectPermissionsArgs) =>
-      canDeleteWorkspaceProjects(rbacOpts, args.workspace, args.project),
-    canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
-      canDeleteWorkspace(rbacOpts, args.workspace),
-    canGetPermissions: canGetPermissions(rbacOpts),
-    canModifyExperiment: (args: WorkspacePermissionsArgs) =>
-      canModifyExperiment(rbacOpts, args.workspace),
-    canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
-      canModifyExperimentMetadata(rbacOpts, args.workspace),
-    canModifyGroups: canModifyGroups(rbacOpts),
-    canModifyPermissions: canAdministrateUsers(rbacOpts),
-    canModifyProjects: (args: ProjectPermissionsArgs) =>
-      canModifyWorkspaceProjects(rbacOpts, args.workspace, args.project),
-    canModifyUsers: canAdministrateUsers(rbacOpts),
-    canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
-      canModifyWorkspace(rbacOpts, args.workspace),
-    canMoveExperiment: (args: ExperimentPermissionsArgs) =>
-      canMoveExperiment(rbacOpts, args.experiment),
-    canMoveExperimentsTo: (args: MovePermissionsArgs) =>
-      canMoveExperimentsTo(rbacOpts, args.destination),
-    canMoveProjects: (args: ProjectPermissionsArgs) =>
-      canMoveWorkspaceProjects(rbacOpts, args.project),
-    canMoveProjectsTo: (args: MovePermissionsArgs) => canMoveProjectsTo(rbacOpts, args.destination),
-    canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
-    canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
-      canViewExperimentArtifacts(rbacOpts, args.workspace),
-    canViewGroups: canViewGroups(rbacOpts),
-    canViewUsers: canAdministrateUsers(rbacOpts),
-    canViewWorkspace: (args: WorkspacePermissionsArgs) =>
-      canViewWorkspace(rbacOpts, args.workspace),
-    canViewWorkspaces: canViewWorkspaces(rbacOpts),
-  };
+  const rbacOpts = useMemo(
+    () => ({
+      rbacAllPermission,
+      rbacEnabled,
+      rbacReadPermission,
+      user,
+      userAssignments,
+      userRoles,
+    }),
+    [rbacAllPermission, rbacEnabled, rbacReadPermission, user, userAssignments, userRoles],
+  );
+
+  const permissions = useMemo(
+    () => ({
+      canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
+      canCreateExperiment: (args: WorkspacePermissionsArgs) =>
+        canCreateExperiment(rbacOpts, args.workspace),
+      canCreateProject: (args: WorkspacePermissionsArgs) =>
+        canCreateProject(rbacOpts, args.workspace),
+      canCreateWorkspace: canCreateWorkspace(rbacOpts),
+      canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
+        canDeleteExperiment(rbacOpts, args.experiment),
+      canDeleteModel: (args: ModelPermissionsArgs) => canDeleteModel(rbacOpts, args.model),
+      canDeleteModelVersion: (args: ModelVersionPermissionsArgs) =>
+        canDeleteModelVersion(rbacOpts, args.modelVersion),
+      canDeleteProjects: (args: ProjectPermissionsArgs) =>
+        canDeleteWorkspaceProjects(rbacOpts, args.workspace, args.project),
+      canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
+        canDeleteWorkspace(rbacOpts, args.workspace),
+      canGetPermissions: canGetPermissions(rbacOpts),
+      canModifyExperiment: (args: WorkspacePermissionsArgs) =>
+        canModifyExperiment(rbacOpts, args.workspace),
+      canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
+        canModifyExperimentMetadata(rbacOpts, args.workspace),
+      canModifyGroups: canModifyGroups(rbacOpts),
+      canModifyPermissions: canAdministrateUsers(rbacOpts),
+      canModifyProjects: (args: ProjectPermissionsArgs) =>
+        canModifyWorkspaceProjects(rbacOpts, args.workspace, args.project),
+      canModifyUsers: canAdministrateUsers(rbacOpts),
+      canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
+        canModifyWorkspace(rbacOpts, args.workspace),
+      canMoveExperiment: (args: ExperimentPermissionsArgs) =>
+        canMoveExperiment(rbacOpts, args.experiment),
+      canMoveExperimentsTo: (args: MovePermissionsArgs) =>
+        canMoveExperimentsTo(rbacOpts, args.destination),
+      canMoveProjects: (args: ProjectPermissionsArgs) =>
+        canMoveWorkspaceProjects(rbacOpts, args.project),
+      canMoveProjectsTo: (args: MovePermissionsArgs) =>
+        canMoveProjectsTo(rbacOpts, args.destination),
+      canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
+      canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
+        canViewExperimentArtifacts(rbacOpts, args.workspace),
+      canViewGroups: canViewGroups(rbacOpts),
+      canViewUsers: canAdministrateUsers(rbacOpts),
+      canViewWorkspace: (args: WorkspacePermissionsArgs) =>
+        canViewWorkspace(rbacOpts, args.workspace),
+      canViewWorkspaces: canViewWorkspaces(rbacOpts),
+    }),
+    [rbacOpts],
+  );
+
+  return permissions;
 };
 
 // Permissions inside this workspace scope (no workspace = cluster-wide scope)

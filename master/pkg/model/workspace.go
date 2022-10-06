@@ -5,6 +5,7 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
@@ -14,23 +15,39 @@ type Workspace struct {
 	ID            int             `bun:"id,pk,autoincrement"`
 	Name          string          `bun:"name"`
 	Archived      bool            `bun:"archived"`
-	CreatedAt     time.Time       `bun:"created_at"`
+	CreatedAt     time.Time       `bun:"created_at,scanonly"`
 	UserID        UserID          `bun:"user_id"`
 	Immutable     bool            `bun:"immutable"`
 	State         *WorkspaceState `bun:"state"`
+	AgentUID      *int32          `bun:"uid"`
+	AgentUser     *string         `bun:"user_"`
+	AgentGID      *int32          `bun:"gid"`
+	AgentGroup    *string         `bun:"group_"`
 }
 
 // ToProto converts a bun model of a workspace to a proto object.
 // Some fields like username and pinned are not included since they are
 // not on the bun model.
 func (w *Workspace) ToProto() *workspacev1.Workspace {
+	var aug *userv1.AgentUserGroup
+
+	if w.AgentUID != nil || w.AgentGID != nil || w.AgentUser != nil || w.AgentGroup != nil {
+		aug = &userv1.AgentUserGroup{
+			AgentUid:   w.AgentUID,
+			AgentGid:   w.AgentGID,
+			AgentUser:  w.AgentUser,
+			AgentGroup: w.AgentGroup,
+		}
+	}
+
 	return &workspacev1.Workspace{
-		Id:        int32(w.ID),
-		Name:      w.Name,
-		Archived:  w.Archived,
-		UserId:    int32(w.UserID),
-		Immutable: w.Immutable,
-		State:     w.State.ToProto(),
+		Id:             int32(w.ID),
+		Name:           w.Name,
+		Archived:       w.Archived,
+		UserId:         int32(w.UserID),
+		Immutable:      w.Immutable,
+		State:          w.State.ToProto(),
+		AgentUserGroup: aug,
 	}
 }
 
