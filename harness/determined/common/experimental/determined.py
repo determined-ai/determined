@@ -64,6 +64,19 @@ class Determined:
 
         self._session = api.Session(master, user, auth, cert)
 
+    def create_user(username: str, password: str, admin: bool):
+        # call API create_user
+        # create UserReference object
+        # return that object 
+        pass
+    
+    def get_user():
+        # return UserReference object
+        pass
+
+    def list_users():
+        # return list of users. Is there an API for this? Yes old API: api.get(args.master, path="users"). Maybe we should re-write new API?
+        pass
     def create_experiment(
         self,
         config: Union[str, pathlib.Path, Dict],
@@ -255,3 +268,4 @@ class Determined:
         Get a list of labels used on any models, sorted from most-popular to least-popular.
         """
         return list(bindings.get_GetModelLabels(self._session).labels)
+
