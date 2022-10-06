@@ -1,0 +1,5 @@
+:orphan:
+
+** New Features **
+
+-  Custom Searcher enables users to implement their own hyperparameter tuning algorithms.
