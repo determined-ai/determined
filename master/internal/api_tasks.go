@@ -49,7 +49,7 @@ func expFromAllocationID(
 	}
 
 	parentParent := resp.Parent().Parent()
-	if parentParent.Parent() != nil && parentParent.Parent().Address().Local() != "experiments" {
+	if parentParent.Parent() == nil || parentParent.Parent().Address().Local() != "experiments" {
 		// TaskType not trial.
 		return false, nil, nil
 	}
