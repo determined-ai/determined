@@ -34,9 +34,6 @@ var (
 
 	taskLogsBatchMissWaitTime   = time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
-
-	// Common errors.
-	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
 
 func expFromAllocationID(
@@ -352,7 +349,7 @@ func (a *apiServer) taskLogs(
 	var timeSinceLastAuth time.Time
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if err := a.canDoActionsOnTask(ctx, taskID,
+			if err = a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
