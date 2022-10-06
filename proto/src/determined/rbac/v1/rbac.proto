@@ -91,6 +91,10 @@ enum PermissionType {
 
 // RoleAssignmentSummary is used to describe permissions a user has.
 message RoleAssignmentSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "role_id" ] }
+  };
+
   // The id of the role being detailed
   int32 role_id = 1;
 
