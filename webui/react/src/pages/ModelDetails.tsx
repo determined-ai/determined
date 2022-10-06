@@ -73,8 +73,9 @@ const ModelDetails: React.FC = () => {
       setModel((prev) => (!isEqual(modelData, prev) ? modelData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [modelId, pageError, settings]);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -107,7 +108,6 @@ const ModelDetails: React.FC = () => {
   const saveModelVersionTags = useCallback(
     async (modelName, versionId, tags) => {
       try {
-        setIsLoading(true);
         await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
         await fetchModel();
       } catch (e) {
@@ -116,7 +116,6 @@ const ModelDetails: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModel],
@@ -277,7 +276,6 @@ const ModelDetails: React.FC = () => {
           silent: false,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [model?.model.name],
@@ -343,7 +341,6 @@ const ModelDetails: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModel, model?.model.name],

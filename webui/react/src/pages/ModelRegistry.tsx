@@ -98,13 +98,13 @@ const ModelRegistry: React.FC = () => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
       });
-      setIsLoading(false);
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,
         type: ErrorType.Api,
       });
+    } finally {
       setIsLoading(false);
     }
   }, [settings, canceler.signal]);
@@ -149,6 +149,7 @@ const ModelRegistry: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
+      } finally {
         setIsLoading(false);
       }
     },
@@ -158,7 +159,6 @@ const ModelRegistry: React.FC = () => {
   const setModelTags = useCallback(
     async (modelName, tags) => {
       try {
-        setIsLoading(true);
         await patchModel({ body: { labels: tags, name: modelName }, modelName });
         await fetchModels();
       } catch (e) {
@@ -167,7 +167,6 @@ const ModelRegistry: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModels],
@@ -290,7 +289,6 @@ const ModelRegistry: React.FC = () => {
         silent: false,
         type: ErrorType.Api,
       });
-      setIsLoading(false);
     }
   }, []);
 
