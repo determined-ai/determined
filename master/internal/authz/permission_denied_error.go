@@ -2,8 +2,9 @@ package authz
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"strings"
+
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
 // PermissionDeniedError represents an error that arises when a user does not have sufficient
