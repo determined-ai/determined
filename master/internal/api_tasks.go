@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -64,6 +66,46 @@ func expFromAllocationID(
 		return false, nil, err
 	}
 	return true, exp, nil
+}
+
+func (a *apiServer) canDoActionsOnTask(
+	ctx context.Context, taskID model.TaskID, actions ...func(model.User, *model.Experiment) error,
+) error {
+	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
+	t, err := a.m.db.TaskByID(taskID)
+	if errors.Is(err, db.ErrNotFound) {
+		return errTaskNotFound
+	} else if err != nil {
+		return err
+	}
+
+	switch t.TaskType {
+	case model.TaskTypeTrial:
+		exp, err := a.m.db.ExperimentWithoutConfigByTaskID(t.TaskID)
+		if err != nil {
+			return err
+		}
+
+		curUser, _, err := grpcutil.GetUser(ctx)
+		if err != nil {
+			return err
+		}
+		var ok bool
+		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+			return err
+		} else if !ok {
+			return errTaskNotFound
+		}
+
+		for _, action := range actions {
+			if err = action(*curUser, exp); err != nil {
+				return status.Error(codes.PermissionDenied, err.Error())
+			}
+		}
+	default:
+		return nil // TODO(nick) add AuthZ for other task types.
+	}
+	return nil
 }
 
 func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
@@ -215,13 +257,15 @@ func (a *apiServer) TaskLogs(
 		return err
 	}
 
-	taskID := model.TaskID(req.TaskId)
-	switch exists, err := a.m.db.CheckTaskExists(taskID); {
-	case err != nil:
-		return err
-	case !exists:
-		return taskNotFound
-	}
+	/*
+		taskID := model.TaskID(req.TaskId)
+		switch exists, err := a.m.db.CheckTaskExists(taskID); {
+		case err != nil:
+			return err
+		case !exists:
+			return taskNotFound
+		}
+	*/
 
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
@@ -305,7 +349,17 @@ func (a *apiServer) taskLogs(
 	}
 
 	var followState interface{}
+	var timeSinceLastAuth time.Time
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
+		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			if err := a.canDoActionsOnTask(ctx, taskID,
+				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				return nil, err
+			}
+
+			timeSinceLastAuth = time.Now()
+		}
+
 		switch {
 		case r.Follow, r.Limit > taskLogsBatchSize:
 			r.Limit = taskLogsBatchSize
@@ -403,7 +457,18 @@ func (a *apiServer) TaskLogsFields(
 	req *apiv1.TaskLogsFieldsRequest, resp apiv1.Determined_TaskLogsFieldsServer,
 ) error {
 	taskID := model.TaskID(req.TaskId)
+
+	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
+		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			if err := a.canDoActionsOnTask(resp.Context(), taskID,
+				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				return nil, err
+			}
+
+			timeSinceLastAuth = time.Now()
+		}
+
 		fields, err := a.m.taskLogBackend.TaskLogsFields(taskID)
 		return api.ToBatchOfOne(fields), err
 	}
