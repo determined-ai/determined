@@ -22,7 +22,6 @@ class RandomSearchMethod(searcher.SearchMethod):
         test_type: str = "core_api",
         exception_points: Optional[List[str]] = None,
     ) -> None:
-        super().__init__()
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
@@ -35,7 +34,9 @@ class RandomSearchMethod(searcher.SearchMethod):
         self.pending_trials = 0
         self.closed_trials = 0
 
-    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+    def on_trial_created(
+        self, _: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         self.raise_exception("on_trial_created")
         if self.created_trials == 5:
             self.raise_exception("on_trial_created_5")
@@ -43,12 +44,14 @@ class RandomSearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, request_id: uuid.UUID, metric: float, train_length: int
+        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
     ) -> List[searcher.Operation]:
         self.raise_exception("on_validation_completed")
         return []
 
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+    def on_trial_closed(
+        self, _: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         self.pending_trials -= 1
         self.closed_trials += 1
         ops: List[searcher.Operation] = []
@@ -71,24 +74,24 @@ class RandomSearchMethod(searcher.SearchMethod):
         self.raise_exception("on_trial_closed_end")
         return ops
 
-    def progress(self) -> float:
+    def progress(self, searcher_state: searcher.SearcherState) -> float:
         if 0 < self.max_concurrent_trials < self.pending_trials:
             logging.error("pending trials is greater than max_concurrent_trial")
         units_completed = sum(
             (
                 (
                     self.max_length
-                    if r in self.searcher_state.trials_closed
-                    else self.searcher_state.trial_progress[r]
+                    if r in searcher_state.trials_closed
+                    else searcher_state.trial_progress[r]
                 )
-                for r in self.searcher_state.trial_progress
+                for r in searcher_state.trial_progress
             )
         )
         units_expected = self.max_length * self.max_trials
         progress = units_completed / units_expected
         logging.debug(
             f"progress = {progress} = {units_completed} / {units_expected},"
-            f" {self.searcher_state.trial_progress}"
+            f" {searcher_state.trial_progress}"
         )
 
         if progress >= 0.5:
@@ -97,7 +100,7 @@ class RandomSearchMethod(searcher.SearchMethod):
         return progress
 
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
         self.pending_trials -= 1
 
@@ -118,7 +121,7 @@ class RandomSearchMethod(searcher.SearchMethod):
         self._log_stats()
         return ops
 
-    def initial_operations(self) -> List[searcher.Operation]:
+    def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
         self.raise_exception("initial_operations_start")
         initial_trials = self.max_trials
         max_concurrent_trials = self.max_concurrent_trials
@@ -127,7 +130,7 @@ class RandomSearchMethod(searcher.SearchMethod):
 
         ops: List[searcher.Operation] = []
 
-        for _ in range(initial_trials):
+        for __ in range(initial_trials):
             create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
@@ -298,14 +301,15 @@ class ASHASearchMethod(searcher.SearchMethod):
         max_concurrent_trials: int = 0,
         exception_points: Optional[List[str]] = None,
     ) -> None:
-        super().__init__()
         self.asha_search_state = ASHASearchMethodState(
             max_length, max_trials, num_rungs, divisor, max_concurrent_trials
         )
         self.test_type = test_type
         self.exception_points = exception_points
 
-    def on_trial_closed(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+    def on_trial_closed(
+        self, _: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         self.asha_search_state.completed_trials += 1
         self.asha_search_state.closed_trials.add(request_id)
 
@@ -318,14 +322,16 @@ class ASHASearchMethod(searcher.SearchMethod):
 
         return []
 
-    def on_trial_created(self, request_id: uuid.UUID) -> List[searcher.Operation]:
+    def on_trial_created(
+        self, _: searcher.SearcherState, request_id: uuid.UUID
+    ) -> List[searcher.Operation]:
         self.asha_search_state.rungs[0].outstanding_trials += 1
         self.asha_search_state.trial_rungs[request_id] = 0
         self.raise_exception("on_trial_created")
         return []
 
     def on_validation_completed(
-        self, request_id: uuid.UUID, metric: float, train_length: int
+        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
     ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
@@ -335,7 +341,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         return ops
 
     def on_trial_exited_early(
-        self, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if exited_reason == searcher.ExitedReason.INVALID_HP:
@@ -376,7 +382,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         self.asha_search_state.closed_trials.add(request_id)
         return self.promote_async(request_id, sys.float_info.max)
 
-    def initial_operations(self) -> List[searcher.Operation]:
+    def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
         self.raise_exception("initial_operations_start")
         ops: List[searcher.Operation] = []
 
@@ -393,7 +399,7 @@ class ASHASearchMethod(searcher.SearchMethod):
                 ),
             )
 
-        for _ in range(0, max_concurrent_trials):
+        for __ in range(0, max_concurrent_trials):
             create = searcher.Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
@@ -497,7 +503,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         logging.info(f"hparams={hparams}")
         return hparams
 
-    def progress(self) -> float:
+    def progress(self, _: searcher.SearcherState) -> float:
         if 0 < self.asha_search_state.max_concurrent_trials < self.asha_search_state.pending_trials:
             raise RuntimeError("Pending trial is greater than max concurrent trials")
         all_trials = len(self.asha_search_state.rungs[0].metrics)

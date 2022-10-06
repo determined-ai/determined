@@ -72,8 +72,8 @@ def test_run_random_searcher_exp() -> None:
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
     assert search_method.closed_trials == 5
-    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
-    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
+    assert len(search_runner.state.trials_created) == search_method.created_trials
+    assert len(search_runner.state.trials_closed) == search_method.closed_trials
 
 
 @pytest.mark.e2e_cpu_2a
@@ -298,8 +298,8 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
-    assert search_method.searcher_state.last_event_id == 41
-    assert search_method.searcher_state.experiment_completed is True
+    assert search_runner.state.last_event_id == 41
+    assert search_runner.state.experiment_completed is True
     assert client._determined is not None
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
@@ -307,10 +307,10 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
     assert search_method.closed_trials == 5
-    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
-    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
+    assert len(search_runner.state.trials_created) == search_method.created_trials
+    assert len(search_runner.state.trials_closed) == search_method.closed_trials
 
-    assert search_method.progress() == pytest.approx(1.0)
+    assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 
 
 @pytest.mark.e2e_cpu
@@ -343,7 +343,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     assert response.experiment.numTrials == 16
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
-    assert len(search_method.searcher_state.trials_closed) == len(
+    assert len(search_runner.state.trials_closed) == len(
         search_method.asha_search_state.closed_trials
     )
 
@@ -526,7 +526,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
         search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
-    assert search_method.searcher_state.experiment_completed is True
+    assert search_runner.state.experiment_completed is True
     assert client._determined is not None
     session = client._determined._session
     response = bindings.get_GetExperiment(session, experimentId=experiment_id)
@@ -536,10 +536,10 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
     # searcher state
-    assert len(search_method.searcher_state.trials_created) == 16
-    assert len(search_method.searcher_state.trials_closed) == 16
+    assert len(search_runner.state.trials_created) == 16
+    assert len(search_runner.state.trials_closed) == 16
 
-    assert len(search_method.searcher_state.trials_closed) == len(
+    assert len(search_runner.state.trials_closed) == len(
         search_method.asha_search_state.closed_trials
     )
 
@@ -555,7 +555,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
 
-    assert search_method.progress() == pytest.approx(1.0)
+    assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 
 
 class FallibleSearchRunner(searcher.LocalSearchRunner):
