@@ -254,16 +254,6 @@ func (a *apiServer) TaskLogs(
 		return err
 	}
 
-	/*
-		taskID := model.TaskID(req.TaskId)
-		switch exists, err := a.m.db.CheckTaskExists(taskID); {
-		case err != nil:
-			return err
-		case !exists:
-			return taskNotFound
-		}
-	*/
-
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
