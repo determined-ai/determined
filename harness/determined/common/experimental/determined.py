@@ -67,16 +67,17 @@ class Determined:
     def create_user(username: str, password: str, admin: bool):
         # call API create_user
         # create User object
-        # return that object 
+        # return that object
         pass
-    
-    def get_user():
+
+    def get_user(user_id: Optional[int], username: Optional[str]):
         # return User object
         pass
 
     def list_users():
-        # return list of users. 
+        # return list of users.
         pass
+
     def create_experiment(
         self,
         config: Union[str, pathlib.Path, Dict],
@@ -268,4 +269,3 @@ class Determined:
         Get a list of labels used on any models, sorted from most-popular to least-popular.
         """
         return list(bindings.get_GetModelLabels(self._session).labels)
-
