@@ -2,14 +2,12 @@ import json
 import logging
 import os
 import pathlib
-from contextlib import nullcontext
 from PIL import Image
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 
 import determined as det
 import torch
-import torch.nn as nn
 from determined.experimental import client
 from diffusers import (
     AutoencoderKL,
@@ -27,7 +25,8 @@ from detsd import utils, defaults
 class DetSDTextualInversionPipeline:
     """Class for generating images from a Stable Diffusion checkpoint trained using Determined
     AI. Initialize with no arguments in order to run plan Stable Diffusion without any trained
-    textual inversion embeddings.
+    textual inversion embeddings. Can optionally be run on a Determined cluster through the
+    .generate_on_cluster() method for large-scale generation. Only intended for use with a GPU.
     """
 
     def __init__(
@@ -40,8 +39,7 @@ class DetSDTextualInversionPipeline:
         other_scheduler_kwargs: Optional[Dict[str, Any]] = None,
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
-        use_autocast: bool = False,
-        use_fp16: bool = False,
+        use_fp16: bool = True,
     ) -> None:
         # We assume that the Huggingface User Access token has been stored as the HF_AUTH_TOKEN
         # environment variable. See https://huggingface.co/docs/hub/security-tokens
@@ -61,9 +59,6 @@ class DetSDTextualInversionPipeline:
         )
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.device = device
-        if use_fp16 and not use_autocast:
-            raise ValueError("If use_fp16 is True, use_autocast must also be True.")
-        self.use_autocast = use_autocast
         self.use_fp16 = use_fp16
 
         scheduler_kwargs = {
@@ -85,7 +80,6 @@ class DetSDTextualInversionPipeline:
 
     @classmethod
     def generate_on_cluster(cls) -> None:
-        # TODO Clean up generally, report number of generated images at training data, save & restore.
         """Creates a DetSDTextualInversionPipeline instance on the cluster, drawing hyperparameters
         and other needed information from the Determined master, and then generates images. Expects
         the `hyperparameters` section of the config to be broken into the following sections:
@@ -93,7 +87,9 @@ class DetSDTextualInversionPipeline:
         - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
         the pipeline.
         - `call`: all arguments which are to be passed to the `__call__` method which generates
-        images.
+        images, but which cannot contain `seed` or `generator`.
+        - `main_process_seed`: an integer specifying the seed used by the chief worker for
+        generation. Other workers add their process index to this value.
         - `save_freq`: an integer specifying how often to write images to tensorboard.
         """
         info = det.get_cluster_info()
@@ -123,7 +119,6 @@ class DetSDTextualInversionPipeline:
             process_index = core_context.distributed.get_rank()
             is_main_process = process_index == 0
 
-            # TODO: support CPU case?
             device = f"cuda:{process_index}" if distributed is not None else "cuda"
             pipeline_init_kwargs["device"] = device
 
@@ -131,7 +126,7 @@ class DetSDTextualInversionPipeline:
             pipeline = cls(**pipeline_init_kwargs)
             pipeline.load_from_uuids(uuid_list)
 
-            # Tensorboard writer.
+            # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
             tb_writer = SummaryWriter(log_dir=tb_dir)
             # Use the __call__ args apart for the tensorboard tag.
@@ -163,11 +158,10 @@ class DetSDTextualInversionPipeline:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while steps_completed < op.length:
-                    # Ensure all workers are using different, not-previously-used seeds.
                     img_list.extend(pipeline(**call_kwargs))
                     steps_completed += 1
 
-                    # Write to tensorboard at the specified frequency.
+                    # Write to tensorboard and checkpoint at the specified frequency.
                     if steps_completed % save_freq == 0 or steps_completed == op.length:
                         # Gather all and images to the main process
                         tags_and_imgs = core_context.distributed.gather((tb_tag, img_list))
@@ -178,13 +172,14 @@ class DetSDTextualInversionPipeline:
                             logger.info(f"Saving at step {steps_completed}")
                             for tag, img_list in tags_and_imgs:
                                 for idx, img in enumerate(reversed(img_list)):
+                                    print("TEST", steps_completed, idx, call_kwargs)
                                     img_t = pil_to_tensor(img)
                                     tb_writer.add_image(
                                         tag,
                                         img_tensor=img_t,
                                         global_step=steps_completed - idx,
                                     )
-                            tb_writer.flush()  # Ensure all images are written to disk.
+                                    tb_writer.flush()  # Ensure all images are written to disk.
                             core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
                             checkpoint_metadata_dict = {
@@ -222,7 +217,7 @@ class DetSDTextualInversionPipeline:
         """
         if not checkpoint_paths:
             return
-        # Get data from all checkpoints.
+
         if isinstance(checkpoint_paths, str):
             checkpoint_paths = [pathlib.Path(checkpoint_paths)]
         if isinstance(checkpoint_paths, pathlib.Path):
@@ -342,7 +337,6 @@ class DetSDTextualInversionPipeline:
             safety_checker=self.safety_checker,
             feature_extractor=self.feature_extractor,
         ).to(self.device)
-        print("Done!")
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         for concept_token, dummy_tokens in self.concept_to_dummy_tokens_map.items():
@@ -381,15 +375,13 @@ class DetSDTextualInversionPipeline:
         # The dummy prompts are what actually get fed into the pipeline
         dummy_prompt = self._replace_concepts_with_dummies(prompt)
         while generated_samples < num_samples:
-            context = torch.autocast("cuda") if self.use_autocast else nullcontext()
-            with context:
-                output = self.pipeline(
-                    [dummy_prompt] * batch_size,
-                    num_inference_steps=num_inference_steps,
-                    guidance_scale=guidance_scale,
-                    generator=generator,
-                    **other_hf_pipeline_call_kwargs,
-                )
+            output = self.pipeline(
+                [dummy_prompt] * batch_size,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                generator=generator,
+                **other_hf_pipeline_call_kwargs,
+            )
             for nsfw, img in zip(output["nsfw_content_detected"], output["sample"]):
                 if nsfw and retries < max_nsfw_retries:
                     retries += 1
@@ -419,62 +411,8 @@ class DetSDTextualInversionPipeline:
             "other_scheduler_kwargs": self.other_scheduler_kwargs,
             "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
             "device": self.device,
-            "use_autocast": self.use_autocast,
             "use_fp16": self.use_fp16,
             "all_added_concepts": self.all_added_concepts,
         }
         attr_dict_str = ", ".join([f"{key}={value}" for key, value in attr_dict.items()])
         return f"{self.__class__.__name__}({attr_dict_str})"
-
-
-def add_new_tokens_to_tokenizer(
-    concept_token: str,
-    initializer_tokens: Sequence[str],
-    tokenizer: nn.Module,
-) -> Tuple[List[int], List[int], str]:
-    """Helper function for adding new tokens to the tokenizer and extending the corresponding
-    embeddings appropriately, given a single concept token and its sequence of corresponding
-    initializer tokens.  Returns the lists of ids for the initializer tokens and their dummy
-    replacements, as well as the string representation of the dummies.
-    """
-    initializer_ids = tokenizer(
-        initializer_tokens,
-        padding="max_length",
-        truncation=True,
-        max_length=tokenizer.model_max_length,
-        return_tensors="pt",
-        add_special_tokens=False,
-    ).input_ids
-
-    try:
-        special_token_ids = tokenizer.all_special_ids
-    except AttributeError:
-        special_token_ids = []
-
-    non_special_initializer_locations = torch.isin(
-        initializer_ids, torch.tensor(special_token_ids), invert=True
-    )
-    non_special_initializer_ids = initializer_ids[non_special_initializer_locations]
-    if len(non_special_initializer_ids) == 0:
-        raise ValueError(
-            f'"{initializer_tokens}" maps to trivial tokens, please choose a different initializer.'
-        )
-
-    # Add a dummy placeholder token for every token in the initializer.
-    dummy_placeholder_token_list = [
-        f"{concept_token}_{n}" for n in range(len(non_special_initializer_ids))
-    ]
-    dummy_placeholder_tokens = " ".join(dummy_placeholder_token_list)
-    num_added_tokens = tokenizer.add_tokens(dummy_placeholder_token_list)
-    if num_added_tokens != len(dummy_placeholder_token_list):
-        raise ValueError(
-            f"Subset of {dummy_placeholder_token_list} tokens already exist in tokenizer."
-        )
-
-    dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(dummy_placeholder_token_list)
-    # Sanity check
-    assert len(dummy_placeholder_ids) == len(
-        non_special_initializer_ids
-    ), 'Length of "dummy_placeholder_ids" and "non_special_initializer_ids" must match.'
-
-    return non_special_initializer_ids, dummy_placeholder_ids, dummy_placeholder_tokens

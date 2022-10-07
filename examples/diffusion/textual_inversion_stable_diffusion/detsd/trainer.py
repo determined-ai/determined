@@ -3,7 +3,6 @@ import os
 import pathlib
 from typing import List, Literal, Optional, Sequence, Union
 
-
 import accelerate
 import determined as det
 import numpy as np
@@ -14,9 +13,6 @@ from determined.pytorch import TorchData
 from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
-    DDIMScheduler,
-    LMSDiscreteScheduler,
-    PNDMScheduler,
     StableDiffusionPipeline,
     UNet2DConditionModel,
 )
@@ -25,12 +21,11 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
-
 from detsd import data, defaults, layers, utils
 
 
 class DetSDTextualInversionTrainer:
-    """Perform Textual Inversion fine-tuning on a Determined cluster."""
+    """Performs Textual Inversion fine-tuning on a Determined cluster."""
 
     def __init__(
         self,
@@ -233,6 +228,7 @@ class DetSDTextualInversionTrainer:
             f"{'(Scaled) ' if trainer.scale_lr else ''}Learning rate: {trainer.learning_rate}"
         )
         trainer.logger.info(f"Train dataset size: {len(trainer.train_dataset)}")
+
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
