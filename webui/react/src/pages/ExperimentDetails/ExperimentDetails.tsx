@@ -1,25 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { terminalRunStates } from 'constants/states';
-import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
 import { getExperimentDetails, getExpValidationHistory } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-interface Params {
+type Params = {
   experimentId: string;
-}
+};
 
 export const INVALID_ID_MESSAGE = 'Invalid Experiment ID';
 export const ERROR_MESSAGE = 'Unable to fetch Experiment';
@@ -35,7 +35,7 @@ const ExperimentDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
 
-  const id = parseInt(experimentId);
+  const id = parseInt(experimentId ?? '');
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
@@ -66,6 +66,17 @@ const ExperimentDetails: React.FC = () => {
       stopPolling();
     }
   }, [experiment, stopPolling]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setExperiment(undefined);
+      setTrial(undefined);
+      setValHistory([]);
+    };
+  }, [stopPolling]);
 
   useEffect(() => {
     fetchExperimentDetails();

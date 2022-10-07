@@ -80,9 +80,17 @@ export const resetUserSetting = generateDetApi<EmptyParams, Api.V1ResetUserSetti
   Config.resetUserSetting,
 );
 
-export const getUserPermissions = generateDetApi<Service.GetUserParams, number, Type.Permission[]>(
-  Config.getUserPermissions,
-);
+export const getUserPermissions = generateDetApi<
+  Service.GetUserParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+>(Config.getUserPermissions);
+
+export const getPermissionsSummary = generateDetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+>(Config.getPermissionsSummary);
 
 /* Groups */
 
@@ -135,6 +143,24 @@ export const assignRolesToGroup = generateDetApi<
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse
 >(Config.assignRolesToGroup);
+
+export const removeRoleFromGroup = generateDetApi<
+  Service.RemoveRoleFromGroupParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeRoleFromGroup);
+
+export const assignRolesToUser = generateDetApi<
+  Service.AssignRolesToUserParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+>(Config.assignRolesToUser);
+
+export const removeRoleFromUser = generateDetApi<
+  Service.RemoveRoleFromUserParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeRoleFromUser);
 
 /* Info */
 

@@ -484,7 +484,7 @@ def test_k8_mount(using_k8s: bool, sidecar: bool) -> None:
     if sidecar:
         sidecar_container = {
             "name": "sidecar",
-            "image": conf.TF1_CPU_IMAGE,
+            "image": conf.TF2_CPU_IMAGE,
             "command": ["/bin/bash"],
             "args": ["-c", "exit 0"],
         }

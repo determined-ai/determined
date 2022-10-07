@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
@@ -10,7 +10,7 @@ import { isAuthFailure } from 'shared/utils/service';
 import handleError from 'utils/error';
 
 const SignOut: React.FC = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const { info } = useStore();
   const storeDispatch = useStoreDispatch();
@@ -37,12 +37,12 @@ const SignOut: React.FC = () => {
       if (info.externalLogoutUri) {
         routeAll(info.externalLogoutUri);
       } else {
-        history.push(paths.login(), location.state);
+        navigate(paths.login(), { state: location.state });
       }
     };
 
     if (!isSigningOut) signOut();
-  }, [history, info.externalLogoutUri, location.state, isSigningOut, storeDispatch]);
+  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, storeDispatch]);
 
   return null;
 };

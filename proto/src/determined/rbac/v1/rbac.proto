@@ -69,6 +69,8 @@ enum PermissionType {
   PERMISSION_TYPE_UPDATE_WORKSPACE = 4003;
   // Ability to delete workspace.
   PERMISSION_TYPE_DELETE_WORKSPACE = 4004;
+  // Ability to set workspace agent user group config.
+  PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP = 4005;
 
   // Ability to create projects.
   PERMISSION_TYPE_CREATE_PROJECT = 5001;
@@ -89,6 +91,10 @@ enum PermissionType {
 
 // RoleAssignmentSummary is used to describe permissions a user has.
 message RoleAssignmentSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "role_id" ] }
+  };
+
   // The id of the role being detailed
   int32 role_id = 1;
 

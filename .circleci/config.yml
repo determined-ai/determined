@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.4-dev0
+    default: 0.19.5-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev12
+    default: v1dev14
   gke-version:
     type: string
     default: "1.21.14"
@@ -229,14 +229,15 @@ commands:
       - install-protoc
       - restore_cache:
           keys:
-            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
           paths:
-            - "/home/circleci/go/pkg/mod/"
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -427,6 +428,9 @@ commands:
       extra-pytest-flags:
         type: string
         default: ""
+      wait-for-master:
+        type: boolean
+        default: true
     steps:
       - run:
           name: Split tests
@@ -445,8 +449,11 @@ commands:
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
-      - unless:
-          condition: <<parameters.managed-devcluster>>
+      - when:
+          condition:
+            and:
+              - not: <<parameters.managed-devcluster>>
+              - <<parameters.wait-for-master>>
           steps:
             - wait-for-master:
                 scheme: <<parameters.master-scheme>>
@@ -950,11 +957,18 @@ commands:
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
   pre-package-and-push-system:
+    parameters:
+      check:
+        type: boolean
+        default: true
     steps:
       - go-get-deps
       - run: make -C proto build
-      - run: make -C master check
-      - run: make -C agent check
+      - when:
+          condition: <<parameters.check>>
+          steps:
+            - run: make -C master check
+            - run: make -C agent check
 
   install-devcluster:
     steps:
@@ -1052,7 +1066,8 @@ jobs:
           at: .
       - setup_remote_docker:
           version: 19.03.12
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -1081,7 +1096,8 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
@@ -1173,14 +1189,18 @@ jobs:
       - helm/install-helm-client
       - run: helm plugin install https://github.com/chartmuseum/helm-push.git
       - login-helm
-      - run:
-          name: Publish built helm chart
-          command: |
-            go install github.com/goreleaser/goreleaser@v1.1.0
-            git clean -df
-            gobin="$(go env GOBIN)"
-            gopath="$(go env GOPATH)"
-            PATH="${gobin:-${gopath}/bin}:$PATH" make -C helm release
+      - run: make -C helm release
+
+  publish-helm-gh:
+    docker:
+      - image: cimg/go:1.18
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C helm release-gh
 
   publish-python-package:
     parameters:
@@ -1214,6 +1234,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           executor: <<pipeline.parameters.docker-image>>
@@ -1339,6 +1360,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1354,6 +1376,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1386,6 +1409,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test
@@ -1401,6 +1425,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1420,6 +1445,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1438,6 +1464,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1481,6 +1508,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1504,6 +1532,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1525,6 +1554,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1544,6 +1574,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1564,6 +1595,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1584,6 +1616,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1605,6 +1638,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: false
@@ -1628,6 +1662,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1693,6 +1728,9 @@ jobs:
       extra-pytest-flags:
         type: string
         default: ""
+      wait-for-master:
+        type: boolean
+        default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -1735,6 +1773,7 @@ jobs:
           master-host: localhost
           managed-devcluster: <<parameters.managed-devcluster>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
+          wait-for-master: <<parameters.wait-for-master>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -1834,6 +1873,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -1927,6 +1967,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2013,6 +2054,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2164,7 +2206,8 @@ workflows:
   test-intg:
     jobs:
       - test-intg-downstream
-      - test-intg-master
+      - test-intg-master:
+          context: storage-unit-tests
       - test-intg-agent
       - go-coverage:
           requires:
@@ -2286,6 +2329,16 @@ workflows:
           matrix:
             parameters:
               agent-version: ['0.17.10']
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
 
       - deploy:
           name: deploy-latest-master-cluster
@@ -2980,6 +3033,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-and-rc-filters
+
+      - publish-helm-gh:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
 
       - upload-try-now-template:
           context: determined-production

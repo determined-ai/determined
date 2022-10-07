@@ -166,8 +166,7 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
 def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     """
     Start a random experiment, start a TensorBoard instance pointed
-    to the experiment with custom image, verify the image has been set,
-    and kill the TensorBoard instance.
+    to the experiment with custom image, verify the image has been set.
     """
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single-one-short-step.yaml"),
@@ -196,3 +195,36 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         and config["environment"]["image"]["cuda"] == "alpine"
         and config["environment"]["image"]["rocm"] == "alpine"
     ), config
+
+
+@pytest.mark.e2e_cpu
+def test_tensorboard_inherit_image_pull_secrets(tmp_path: Path) -> None:
+    """
+    Start a random experiment with image_pull_secrets, start a TensorBoard
+    instance pointed to the experiment, verify the secrets are inherited.
+    """
+    exp_secrets = [{"name": "ips"}]
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
+    pod = config_obj.setdefault("environment", {}).setdefault("pod_spec", {})
+    pod.setdefault("spec", {})["imagePullSecrets"] = [{"name": "ips"}]
+    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
+
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "tensorboard",
+        "start",
+        str(experiment_id),
+        "--no-browser",
+        "--detach",
+    ]
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+    t_id = res.stdout.strip("\n")
+    command = ["det", "-m", conf.make_master_url(), "tensorboard", "config", t_id]
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+    config = yaml.safe_load(res.stdout)
+
+    ips = config["environment"]["pod_spec"]["spec"]["imagePullSecrets"]
+
+    assert ips == exp_secrets, (ips, exp_secrets)

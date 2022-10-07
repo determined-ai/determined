@@ -181,10 +181,11 @@ const LearningCurve: React.FC<Props> = ({
         // One successful event as come through.
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden]);

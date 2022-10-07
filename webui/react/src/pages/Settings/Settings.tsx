@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useState } from 'react';
-import { useParams } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
@@ -19,9 +18,9 @@ export enum TabType {
   GroupManagement = 'Group Management',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
-}
+};
 
 const TAB_KEYS = {
   [TabType.Account]: 'account',
@@ -31,7 +30,7 @@ const TAB_KEYS = {
 const DEFAULT_TAB_KEY = TabType.Account;
 
 const SettingsContent: React.FC = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { tab } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
@@ -41,9 +40,9 @@ const SettingsContent: React.FC = () => {
   const handleTabChange = useCallback(
     (key) => {
       setTabKey(key);
-      history.replace(paths.settings(key));
+      navigate(paths.settings(key), { replace: true });
     },
-    [history],
+    [navigate],
   );
 
   return (

@@ -60,6 +60,14 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
     fetchWorkspace();
   }, [fetchWorkspace]);
 
+  // cleanup
+  useEffect(() => {
+    return () => {
+      setWorkspace(undefined);
+      setActiveTab(tabs[0]);
+    };
+  }, [tabs]);
+
   if (project.immutable) {
     const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
     return (

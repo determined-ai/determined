@@ -1,0 +1,13 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .label {
+    color: var(--theme-float-on);
+    margin-bottom: -8px;
+  }
+  :global(p) {
+    margin: 0;
+  }
+}

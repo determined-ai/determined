@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"syscall"
@@ -67,6 +68,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
 		err := a.connect(ctx)
+		if err != nil {
+			a.onConnectionLost(ctx)
+		}
 
 		// Set up SIGINT and SIGTERM listeners after we try to connect to master.
 		// Ironically listening before we connect to master means we are unable
@@ -132,6 +136,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 				return nil
 			}
 			ctx.Log().Warn("master socket disconnected, shutting down agent...")
+			a.onConnectionLost(ctx)
 		case a.cm:
 			ctx.Log().Warn("container manager failed, shutting down agent...")
 		case a.fluent:
@@ -195,6 +200,19 @@ func (a *agent) restartFluent(ctx *actor.Context) error {
 			ctx.Log().Infof("trying to restart Fluent daemon in %s", t)
 			time.Sleep(t)
 		}
+	}
+}
+
+func (a *agent) onConnectionLost(ctx *actor.Context) {
+	cmd := a.Options.Hooks.OnConnectionLost
+	if len(cmd) == 0 {
+		return
+	}
+	if out, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil { //nolint:gosec
+		ctx.Log().
+			WithError(err).
+			WithField("output", string(out)).
+			Error("error running connection failure hook")
 	}
 }
 

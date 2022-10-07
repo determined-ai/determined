@@ -51,8 +51,8 @@ class DeterminedControlHook(estimator.RunHook):
     cases, execute non-training workloads.
 
     At the beginning of the train_and_evaluate() call and after each training
-    step ends, control_loop() is triggered and blocks on recieving instructions
-    for the next workload. Once instructions are recieved from the main
+    step ends, control_loop() is triggered and blocks on receiving instructions
+    for the next workload. Once instructions are received from the main
     process, control_loop() will compute validation, take a checkpoint, or
     break out of the loop to re-enter train_and_evaluate().
     """

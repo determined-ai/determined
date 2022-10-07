@@ -1,4 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
+import { V1Group } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
@@ -806,16 +807,9 @@ export interface ProjectPagination extends WithPagination {
   projects: Project[];
 }
 
-export interface UserAssignment {
-  cluster: boolean;
-  name: string;
-  workspaces?: number[];
-}
-
 export interface Permission {
-  id: number;
+  id: Api.V1PermissionType;
   isGlobal: boolean;
-  name: string;
 }
 
 export interface UserRole {
@@ -824,6 +818,28 @@ export interface UserRole {
   permissions: Permission[];
 }
 
+export interface UserAssignment {
+  isGlobal: boolean;
+  roleId: number;
+  workspaces: number[];
+}
+
+export interface PermissionsSummary {
+  assignments: UserAssignment[];
+  roles: UserRole[];
+}
+
 export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
+
+export interface PermissionWorkspace {
+  id: number;
+  userId?: number;
+}
+
+export interface WorkspacePermissionsArgs {
+  workspace?: PermissionWorkspace;
+}
+
+export type UserOrGroup = User | V1Group;

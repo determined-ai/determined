@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal, notification } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -71,135 +71,147 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: experiment.id ? [experiment.id] : undefined,
+      experimentIds: id ? [id] : undefined,
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
-  }, [openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId]);
+  }, [openExperimentMove, id, experiment.projectId, experiment.workspaceId]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
   }, [openModalHyperparameterSearch]);
 
-  const handleMenuClick = async (params: MenuInfo): Promise<void> => {
-    params.domEvent.stopPropagation();
-    try {
-      const action = params.key as Action;
-      switch (
-        action // Cases should match menu items.
-      ) {
-        case Action.Activate:
-          await activateExperiment({ experimentId: id });
-          if (onComplete) onComplete(action);
-          break;
-        case Action.Archive:
-          await archiveExperiment({ experimentId: id });
-          if (onComplete) onComplete(action);
-          break;
-        case Action.Cancel:
-          await cancelExperiment({ experimentId: id });
-          if (onComplete) onComplete(action);
-          break;
-        case Action.OpenTensorBoard: {
-          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
-          openCommand(tensorboard);
-          break;
-        }
-        case Action.SwitchPin: {
-          const newPinned = { ...settings.pinned };
-          const pinSet = new Set(newPinned[experiment.projectId]);
-          if (pinSet.has(id)) {
-            pinSet.delete(id);
-          } else {
-            if (pinSet.size >= 5) {
-              notification.warn({
-                description: 'Up to 5 pinned items',
-                message: 'Unable to pin this item',
-              });
-              break;
-            }
-            pinSet.add(id);
+  const handleMenuClick = useCallback(
+    async (params: MenuInfo): Promise<void> => {
+      params.domEvent.stopPropagation();
+      try {
+        const action = params.key as Action;
+        switch (
+          action // Cases should match menu items.
+        ) {
+          case Action.Activate:
+            await activateExperiment({ experimentId: id });
+            if (onComplete) onComplete(action);
+            break;
+          case Action.Archive:
+            await archiveExperiment({ experimentId: id });
+            if (onComplete) onComplete(action);
+            break;
+          case Action.Cancel:
+            await cancelExperiment({ experimentId: id });
+            if (onComplete) onComplete(action);
+            break;
+          case Action.OpenTensorBoard: {
+            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
+            openCommand(tensorboard);
+            break;
           }
-          newPinned[experiment.projectId] = Array.from(pinSet);
-          updateSettings({ pinned: newPinned });
-          break;
-        }
-        case Action.Kill:
-          Modal.confirm({
-            content: `
+          case Action.SwitchPin: {
+            const newPinned = { ...(settings.pinned ?? {}) };
+            const pinSet = new Set(newPinned[experiment.projectId]);
+            if (pinSet.has(id)) {
+              pinSet.delete(id);
+            } else {
+              if (pinSet.size >= 5) {
+                notification.warn({
+                  description: 'Up to 5 pinned items',
+                  message: 'Unable to pin this item',
+                });
+                break;
+              }
+              pinSet.add(id);
+            }
+            newPinned[experiment.projectId] = Array.from(pinSet);
+            updateSettings({ pinned: newPinned });
+            break;
+          }
+          case Action.Kill:
+            Modal.confirm({
+              content: `
               Are you sure you want to kill
               experiment ${id}?
             `,
-            icon: <ExclamationCircleOutlined />,
-            okText: 'Kill',
-            onOk: async () => {
-              await killExperiment({ experimentId: id });
-              onComplete?.(action);
-            },
-            title: 'Confirm Experiment Kill',
-          });
-          break;
-        case Action.Pause:
-          await pauseExperiment({ experimentId: id });
-          if (onComplete) onComplete(action);
-          break;
-        case Action.Unarchive:
-          await unarchiveExperiment({ experimentId: id });
-          if (onComplete) onComplete(action);
-          break;
-        case Action.Delete:
-          Modal.confirm({
-            content: `
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Kill',
+              onOk: async () => {
+                await killExperiment({ experimentId: id });
+                onComplete?.(action);
+              },
+              title: 'Confirm Experiment Kill',
+            });
+            break;
+          case Action.Pause:
+            await pauseExperiment({ experimentId: id });
+            if (onComplete) onComplete(action);
+            break;
+          case Action.Unarchive:
+            await unarchiveExperiment({ experimentId: id });
+            if (onComplete) onComplete(action);
+            break;
+          case Action.Delete:
+            Modal.confirm({
+              content: `
             Are you sure you want to delete
             experiment ${id}?
           `,
-            icon: <ExclamationCircleOutlined />,
-            okText: 'Delete',
-            onOk: async () => {
-              await deleteExperiment({ experimentId: id });
-              if (onComplete) onComplete(action);
-            },
-            title: 'Confirm Experiment Deletion',
-          });
-          break;
-        case Action.Move:
-          handleExperimentMove();
-          break;
-        case Action.HyperparameterSearch:
-          handleHyperparameterSearch();
-          break;
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Delete',
+              onOk: async () => {
+                await deleteExperiment({ experimentId: id });
+                if (onComplete) onComplete(action);
+              },
+              title: 'Confirm Experiment Deletion',
+            });
+            break;
+          case Action.Move:
+            handleExperimentMove();
+            break;
+          case Action.HyperparameterSearch:
+            handleHyperparameterSearch();
+            break;
+        }
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: `Unable to ${params.key} experiment ${id}.`,
+          publicSubject: `${capitalize(params.key.toString())} failed.`,
+          silent: false,
+          type: ErrorType.Server,
+        });
+      } finally {
+        onVisibleChange?.(false);
       }
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: `Unable to ${params.key} experiment ${experiment.id}.`,
-        publicSubject: `${capitalize(params.key.toString())} failed.`,
-        silent: false,
-        type: ErrorType.Server,
-      });
-    } finally {
-      onVisibleChange?.(false);
-    }
-    // TODO show loading indicator when we have a button component that supports it.
-  };
+      // TODO show loading indicator when we have a button component that supports it.
+    },
+    [
+      experiment.projectId,
+      handleExperimentMove,
+      handleHyperparameterSearch,
+      id,
+      onComplete,
+      onVisibleChange,
+      settings.pinned,
+      updateSettings,
+    ],
+  );
 
-  const { canMoveExperiment, canDeleteExperiment } = usePermissions();
-
-  const menuItems = getActionsForExperiment(experiment, dropdownActions)
-    .filter((action) =>
-      [Action.Delete, Action.Move].includes(action)
-        ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-          (action === Action.Move && canMoveExperiment({ experiment }))
-        : true,
-    )
-    .map((action) => {
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
+    (action) => {
       if (action === Action.SwitchPin) {
-        const label = (settings?.pinned[experiment.projectId] ?? []).includes(id) ? 'Unpin' : 'Pin';
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
+          ? 'Unpin'
+          : 'Pin';
         return { key: action, label };
       } else {
         return { danger: action === Action.Delete, key: action, label: action };
       }
-    });
+    },
+  );
+
+  const menu = useMemo(
+    () => <Menu items={menuItems} onClick={handleMenuClick} />,
+    [menuItems, handleMenuClick],
+  );
 
   if (menuItems.length === 0) {
     return (
@@ -212,8 +224,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       )
     );
   }
-
-  const menu = <Menu items={menuItems} onClick={handleMenuClick} />;
 
   return children ? (
     <>

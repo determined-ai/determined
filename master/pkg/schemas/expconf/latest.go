@@ -41,6 +41,8 @@ type (
 	SharedFSConfig            = SharedFSConfigV0
 	SharedFSDataLayerConfig   = SharedFSDataLayerConfigV0
 	SingleConfig              = SingleConfigV0
+	SlurmConfig               = SlurmConfigV0
+	PbsConfig                 = PbsConfigV0
 )
 
 // These are EOL searchers, not to be used in new experiments.

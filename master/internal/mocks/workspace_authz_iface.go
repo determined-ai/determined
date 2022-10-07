@@ -44,6 +44,20 @@ func (_m *WorkspaceAuthZ) CanCreateWorkspace(curUser model.User) error {
 	return r0
 }
 
+// CanCreateWorkspaceWithAgentUserGroup provides a mock function with given fields: curUser
+func (_m *WorkspaceAuthZ) CanCreateWorkspaceWithAgentUserGroup(curUser model.User) error {
+	ret := _m.Called(curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User) error); ok {
+		r0 = rf(curUser)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanDeleteWorkspace provides a mock function with given fields: curUser, _a1
 func (_m *WorkspaceAuthZ) CanDeleteWorkspace(curUser model.User, _a1 *workspacev1.Workspace) error {
 	ret := _m.Called(curUser, _a1)
@@ -81,6 +95,20 @@ func (_m *WorkspaceAuthZ) CanGetWorkspace(curUser model.User, _a1 *workspacev1.W
 
 // CanPinWorkspace provides a mock function with given fields: curUser, _a1
 func (_m *WorkspaceAuthZ) CanPinWorkspace(curUser model.User, _a1 *workspacev1.Workspace) error {
+	ret := _m.Called(curUser, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User, *workspacev1.Workspace) error); ok {
+		r0 = rf(curUser, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanSetWorkspacesAgentUserGroup provides a mock function with given fields: curUser, _a1
+func (_m *WorkspaceAuthZ) CanSetWorkspacesAgentUserGroup(curUser model.User, _a1 *workspacev1.Workspace) error {
 	ret := _m.Called(curUser, _a1)
 
 	var r0 error

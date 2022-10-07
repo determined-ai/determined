@@ -1100,18 +1100,6 @@ workloads for this experiment. For more information on customizing the trial env
 
 .. _exp-environment-slurm:
 
-``slurm``
-   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
-   control of Slurm options not otherwise managed by Determined. For example, to specify required
-   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
-
-   .. code:: yaml
-
-      environment:
-         slurm:
-            - --mem-per-cpu=10
-            - --exclusive
-
 ***************
  Optimizations
 ***************
@@ -1286,3 +1274,24 @@ To verify your search is working as intended before committing to a full run, yo
 .. code::
 
    det preview-search <configuration.yaml>
+
+***********************
+ Slurm Cluster Details
+***********************
+
+The ``slurm`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
+
+**Optional Fields**
+
+``sbatch_args``
+   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
+   control of Slurm options not otherwise managed by Determined. For example, to specify required
+   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
+
+   .. code:: yaml
+
+      slurm:
+         sbatch_args:
+            - --mem-per-cpu=10
+            - --exclusive

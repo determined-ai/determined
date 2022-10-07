@@ -1,7 +1,7 @@
 import { Button, notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
@@ -11,12 +11,12 @@ import PageMessage from 'components/PageMessage';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
-import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
 import { StoreActionUI } from 'shared/contexts/UIStore';
+import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
@@ -37,7 +37,7 @@ const logoConfig: Record<RecordKey, string> = {
 };
 
 const SignIn: React.FC = () => {
-  const location = useLocation<{ loginRedirect: Location }>();
+  const location = useLocation();
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
   const [canceler] = useState(new AbortController());

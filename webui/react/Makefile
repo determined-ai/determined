@@ -40,12 +40,22 @@ live: check-requirements start
 start:
 	npm start
 
+.PHONY: prettier-check
+prettier:
+	npm run prettier $(PRE_ARGS)
+.PHONY: stylelint
+stylelint:
+	npm run stylelint $(ST_ARGS)
+.PHONY: eslint
+eslint:
+	npm run eslint $(ES_ARGS)
+
 .PHONY: check-eslint
 check-eslint:
-	npm run eslint
+	npm run lint:eslint
 .PHONY: check-stylelint
 check-stylelint:
-	npm run stylelint
+	npm run lint:style
 check-prettier-js:
 	npm run format-check:js > /dev/null
 check-prettier-css:
@@ -80,7 +90,12 @@ fmt-misc:
 	npm run  format:misc > /dev/null
 .PHONY: fmt-package-lock
 fmt-package-lock:
+# check if we're running on MacOS
+ifeq "$(shell uname)" "Darwin"
 	sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
+else
+	sed -i -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
+endif
 .PHONY: fmt
 fmt: fmt-js fmt-css fmt-misc fmt-package-lock
 

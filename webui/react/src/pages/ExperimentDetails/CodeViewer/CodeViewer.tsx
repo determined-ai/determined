@@ -54,6 +54,11 @@ interface TreeNode extends DataNode {
   text?: string;
 }
 
+const DEFAULT_DOWNLOAD_INFO = {
+  fileName: '',
+  url: '',
+};
+
 const sortTree = (a: TreeNode, b: TreeNode) => {
   if (a.children) a.children.sort(sortTree);
 
@@ -70,8 +75,8 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
   if (!a.isLeaf && !b.isLeaf) return titleA.localeCompare(titleB) - titleB.localeCompare(titleA);
 
   // had to use RegEx due to some files being ".<filename>"
-  const [stringA, extensionA] = titleA.split(/(?<=[a-zA-Z])\./);
-  const [stringB, extensionB] = titleB.split(/(?<=[a-zA-Z])\./);
+  const [stringA, extensionA] = titleA.split(/^(?=[a-zA-Z])\./);
+  const [stringB, extensionB] = titleB.split(/^(?=[a-zA-Z])\./);
 
   if (!extensionA && extensionB) return 1;
 
@@ -137,7 +142,7 @@ const CodeViewer: React.FC<Props> = ({
     [_submittedConfig],
   );
   const configForExperiment = (experimentId: number): SettingsConfig => ({
-    applicableRoutespace: '/experiments',
+    applicableRoutespace: '/code',
     settings: [
       {
         defaultValue: firstConfig,
@@ -186,10 +191,7 @@ const CodeViewer: React.FC<Props> = ({
   const [activeFile, setActiveFile] = useState<TreeNode>();
   const [isFetchingFile, setIsFetchingFile] = useState(false);
   const [isFetchingTree, setIsFetchingTree] = useState(false);
-  const [downloadInfo, setDownloadInfo] = useState({
-    fileName: '',
-    url: '',
-  });
+  const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
   const [viewMode, setViewMode] = useState<'tree' | 'editor' | 'split'>(() =>
@@ -431,9 +433,16 @@ const CodeViewer: React.FC<Props> = ({
   }, [resize.width, switchSplitViewToTree]);
 
   // clear the timeout ref from memory
+  // cleanup
   useEffect(() => {
     return () => {
       if (timeout.current) clearTimeout(timeout.current);
+      setPageError(PageError.none);
+      setTreeData([]);
+      setActiveFile(undefined);
+      setIsFetchingFile(false);
+      setIsFetchingTree(false);
+      setDownloadInfo(DEFAULT_DOWNLOAD_INFO);
     };
   }, []);
 

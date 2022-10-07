@@ -4,32 +4,52 @@ import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
+import useFeature from 'hooks/useFeature';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
+import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
 import usePermissions from 'hooks/usePermissions';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { Workspace } from 'types';
+import { UserOrGroup, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
 
 interface Props {
+  addableUsersAndGroups: UserOrGroup[];
   fetchWorkspace: () => void;
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
+const WorkspaceDetailsHeader: React.FC<Props> = ({
+  addableUsersAndGroups,
+  workspace,
+  fetchWorkspace,
+}: Props) => {
+  const { canAssignRoles } = usePermissions();
+
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
 
-  const canModify = usePermissions().canModifyWorkspace;
+  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
+    useModalWorkspaceAddMember({
+      addableUsersAndGroups,
+    });
+
+  const rbacEnabled = useFeature().isOn('rbac');
+
+  const { canCreateProject, canModifyWorkspace } = usePermissions();
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
   }, [openProjectCreate]);
+
+  const handleAddMembersClick = useCallback(() => {
+    openWorkspaceAddMember();
+  }, [openWorkspaceAddMember]);
 
   const handleNameChange = useCallback(
     async (name: string) => {
@@ -56,7 +76,9 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
         <h1 className={css.name}>
           <InlineEditor
             disabled={
-              workspace.immutable || workspace.archived || !canModify({ workspace: workspace })
+              workspace.immutable ||
+              workspace.archived ||
+              !canModifyWorkspace({ workspace: workspace })
             }
             maxLength={80}
             value={workspace.name}
@@ -84,9 +106,18 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
           </WorkspaceActionDropdown>
         )}
       </Space>
-      {!workspace.immutable && !workspace.archived && (
-        <Button onClick={handleProjectCreateClick}>New Project</Button>
-      )}
+      <div className={css.headerButton}>
+        {rbacEnabled &&
+          canAssignRoles({ workspace }) &&
+          !workspace.immutable &&
+          !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
+        {!workspace.immutable &&
+          !workspace.archived &&
+          canCreateProject({ workspace: workspace }) && (
+            <Button onClick={handleProjectCreateClick}>New Project</Button>
+          )}
+      </div>
+      {workspaceAddMemberContextHolder}
       {contextHolder}
     </div>
   );

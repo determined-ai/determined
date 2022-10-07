@@ -47,6 +47,7 @@ export interface CompareTrialsParams extends TrialSummaryBaseParams {
 
 export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
   filter: TrialWorkloadFilter;
+  metricType?: MetricType | undefined;
   sortKey?: string;
 }
 
@@ -354,6 +355,20 @@ export interface DeleteGroupParams {
 
 export interface GetGroupParams {
   groupId: number;
+}
+export interface RemoveRoleFromGroupParams {
+  groupId: number;
+  roleId: number;
+}
+
+export interface AssignRolesToUserParams {
+  roleIds: number[];
+  userId: number;
+}
+
+export interface RemoveRoleFromUserParams {
+  roleId: number;
+  userId: number;
 }
 
 export type GetGroupsParams = PaginationParams;

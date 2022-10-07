@@ -1,6 +1,6 @@
 import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
@@ -85,7 +85,7 @@ const getHpImportanceMap = (hpImportanceMetrics: {
 
 const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }: Props) => {
   const { ui } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<MetricName>({
@@ -117,9 +117,15 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
   const [activeMetric, setActiveMetric] = useState<MetricName>(initFilters.metric);
   const [batches, setBatches] = useState<number[]>();
-  const [metricNames, setMetricNames] = useState<MetricName[]>([]);
   const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
+
+  const handleMetricNamesError = useCallback(() => {
+    setPageError(PageError.MetricNames);
+  }, []);
+
+  // Stream available metrics.
+  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
@@ -156,9 +162,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
   const handleTabChange = useCallback(
     (type: string) => {
       setTypeKey(type as ExperimentVisualizationType);
-      history.replace(`${basePath}/${type}`);
+      navigate(`${basePath}/${type}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   // Sets the default sub route.
@@ -166,19 +172,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
     const isVisualizationRoute = location.pathname.includes(basePath);
     const isInvalidType = type && !TYPE_KEYS.includes(type);
     if (isVisualizationRoute && (!type || isInvalidType)) {
-      history.replace(`${basePath}/${typeKey}`);
+      navigate(`${basePath}/${typeKey}`, { replace: true });
     }
-  }, [basePath, history, location, type, typeKey]);
-
-  // Stream available metrics.
-  useMetricNames({
-    errorHandler: () => {
-      setPageError(PageError.MetricNames);
-    },
-    experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
-  });
+  }, [basePath, navigate, location, type, typeKey]);
 
   useEffect(() => {
     if (!isSupported || ui.isPageHidden) return;
@@ -195,9 +191,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
           [MetricType.Validation]: getHpImportanceMap(event.validationMetrics),
         });
       },
-    ).catch(() => {
-      setPageError(PageError.MetricHpImportance);
-    });
+      () => setPageError(PageError.MetricHpImportance),
+    );
 
     return () => canceler.abort();
   }, [experiment.id, filters?.metric, isSupported, metricNames, ui.isPageHidden]);
@@ -225,9 +220,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
         const newBatches = Object.values(batchesMap).sort(alphaNumericSorter);
         setBatches(newBatches);
       },
-    ).catch(() => {
-      setPageError(PageError.MetricBatches);
-    });
+      () => setPageError(PageError.MetricBatches),
+    );
 
     return () => canceler.abort();
   }, [activeMetric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
@@ -290,7 +284,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
         />
       </div>
     );
-  } else if (pageError) {
+  } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
     return <Spinner tip="Fetching metrics..." />;

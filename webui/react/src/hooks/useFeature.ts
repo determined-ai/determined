@@ -3,7 +3,12 @@ import queryString from 'query-string';
 import { useStore } from 'contexts/Store';
 import { DeterminedInfo } from 'types';
 
-type ValidFeature = 'rbac'; // Add new feature switches here using `|`
+// Add new feature switches below using `|`
+type ValidFeature =
+  | 'rbac'
+  | 'mock_workspace_members'
+  | 'mock_permissions_read'
+  | 'mock_permissions_all';
 const queryParams = queryString.parse(window.location.search);
 
 interface FeatureHook {

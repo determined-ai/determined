@@ -56,7 +56,7 @@ func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username
+		 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.project_id = $1`, id)
@@ -508,7 +508,7 @@ FROM trials t
 WHERE t.id=$2
   AND s.state = 'COMPLETED'
   AND total_batches >= $3
-  AND total_batches <= $4
+  AND ($4 <= 0 OR total_batches <= $4)
   AND s.end_time > $5
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
@@ -536,7 +536,7 @@ JOIN validations v ON t.id = v.trial_id
 WHERE t.id=$2
   AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
-  AND v.total_batches <= $4
+  AND ($4 <= 0 OR v.total_batches <= $4)
   AND v.end_time > $5
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
@@ -944,7 +944,7 @@ func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
-			 u.username as username
+       u.username as username, project_id
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)

@@ -15,7 +15,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
-import usePolling from 'hooks/usePolling';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
@@ -25,6 +25,7 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import usePolling from 'shared/hooks/usePolling';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
@@ -64,6 +65,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [canceler] = useState(new AbortController());
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+
+  const workspace = { id: experiment.workspaceId };
+  const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
+  const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -121,13 +126,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const dropDownOnTrigger = useCallback(
     (trial: TrialItem) => {
-      return {
+      const opts: Partial<Record<TrialAction, () => Promise<void> | void>> = {
         [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
         [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
       };
+      if (!canHparam) {
+        delete opts[TrialAction.HyperparameterSearch];
+      }
+      return opts;
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
   );
 
   const columns = useMemo(() => {
@@ -153,7 +162,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
         const hasMetric = (obj: TrialItem[keyof TrialItem]): obj is MetricsWorkload => {
-          return typeof obj === 'object' && 'metrics' in obj;
+          return !!obj && typeof obj === 'object' && 'metrics' in obj;
         };
 
         const item: TrialItem[keyof TrialItem] = record[key];
@@ -246,11 +255,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [columns, settings.tableOffset, updateSettings],
   );
 
+  const stateString = useMemo(() => settings.state?.join('.'), [settings.state]);
   const fetchExperimentTrials = useCallback(async () => {
     try {
-      const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+      const states = stateString
+        ?.split('.')
+        .map((state) => encodeExperimentState(state as RunState));
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -278,7 +288,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     canceler,
     settings.sortDesc,
     settings.sortKey,
-    settings.state,
+    stateString,
     settings.tableLimit,
     settings.tableOffset,
   ]);
@@ -327,15 +337,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   useEffect(() => {
     fetchExperimentTrials();
     setIsLoading(true);
-  }, [
-    fetchExperimentTrials,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.state,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
-
+  }, [fetchExperimentTrials]);
   useEffect(() => {
     if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
   }, [experiment.state, stopPolling]);

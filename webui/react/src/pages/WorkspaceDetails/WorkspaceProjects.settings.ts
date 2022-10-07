@@ -49,6 +49,7 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: 'projects',
   settings: [
     {
       defaultValue: false,

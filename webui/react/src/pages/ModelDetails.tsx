@@ -1,6 +1,6 @@
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
@@ -19,7 +19,6 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
   archiveModel,
@@ -31,6 +30,7 @@ import {
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
@@ -46,13 +46,13 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 
-interface Params {
+type Params = {
   modelId: string;
-}
+};
 
 const ModelDetails: React.FC = () => {
   const [model, setModel] = useState<ModelVersions>();
-  const modelId = decodeURIComponent(useParams<Params>().modelId);
+  const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
@@ -73,8 +73,9 @@ const ModelDetails: React.FC = () => {
       setModel((prev) => (!isEqual(modelData, prev) ? modelData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [modelId, pageError, settings]);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -107,7 +108,6 @@ const ModelDetails: React.FC = () => {
   const saveModelVersionTags = useCallback(
     async (modelName, versionId, tags) => {
       try {
-        setIsLoading(true);
         await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
         await fetchModel();
       } catch (e) {
@@ -116,7 +116,6 @@ const ModelDetails: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModel],
@@ -277,7 +276,6 @@ const ModelDetails: React.FC = () => {
           silent: false,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [model?.model.name],
@@ -343,7 +341,6 @@ const ModelDetails: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModel, model?.model.name],

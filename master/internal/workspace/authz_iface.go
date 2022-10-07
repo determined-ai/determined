@@ -26,9 +26,11 @@ type WorkspaceAuthZ interface {
 
 	// POST /api/v1/workspaces
 	CanCreateWorkspace(curUser model.User) error
+	CanCreateWorkspaceWithAgentUserGroup(curUser model.User) error
 
 	// PATCH /api/v1/workspaces/:workspace_id
 	CanSetWorkspacesName(curUser model.User, workspace *workspacev1.Workspace) error
+	CanSetWorkspacesAgentUserGroup(curUser model.User, workspace *workspacev1.Workspace) error
 
 	// DELETE /api/v1/workspaces/:workspace_id
 	CanDeleteWorkspace(curUser model.User, workspace *workspacev1.Workspace) error
