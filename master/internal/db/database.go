@@ -172,11 +172,17 @@ type DB interface {
 	RecordTaskStats(stats *model.TaskStats) error
 }
 
-// ErrNotFound is returned if nothing is found.
-var ErrNotFound = errors.New("not found")
+var (
+	// ErrNotFound is returned if nothing is found.
+	ErrNotFound = errors.New("not found")
 
-// ErrTooManyRowsAffected is returned if too many rows are affected.
-var ErrTooManyRowsAffected = errors.New("too many rows are affected")
+	// ErrTooManyRowsAffected is returned if too many rows are affected.
+	ErrTooManyRowsAffected = errors.New("too many rows are affected")
 
-// ErrDuplicateRecord is returned when trying to create a row that already exists.
-var ErrDuplicateRecord = errors.New("row already exists")
+	// ErrDuplicateRecord is returned when trying to create a row that already exists.
+	ErrDuplicateRecord = errors.New("row already exists")
+
+	// ErrInvalidInput is returned when the data passed to a function is invalid for semantic or
+	// syntactic reasons.
+	ErrInvalidInput = errors.New("invalid input")
+)
