@@ -218,8 +218,9 @@ class DetSDTextualInversionPipeline:
                             op.report_progress(steps_completed)
                         # Reset image list.
                         img_list = []
-                    if core_context.preempt.should_preempt():
-                        return
+                        # Only preempt after a checkpoint has been saved.
+                        if core_context.preempt.should_preempt():
+                            return
 
                 if is_main_process:
                     # Report zero upon completion.
