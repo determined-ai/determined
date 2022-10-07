@@ -48,39 +48,39 @@ class User:
         password: Optional[str] = None,
         agent_user_group: Optional[AgentUserGroup] = None,
     ) -> Response:
-        # new API -> bindings.patch_PatchUser(user_id, patchUser)
+        # new API -> bindings.patch_PatchUser(self.user_id, patchUser)
         # return API response
         pass
      
     def update_username(self, new_username: str) -> Response:
         # return API response
-        # can use the edited API patch_PatchUser(username, patchUser) API (need to also add username to message PatchUser in user.proto)
+        # API: bindings.patch_PatchUser(self.userid, patchUser) API (need to add username to message PatchUser in user.proto)
 
         pass
 
     def activate_user(self) -> None:
         # calls update_user with active = true
-        # can use the edited API patch_PatchUser(username, patchUser) API
+        # bindings.patch_PatchUser(self.userid, patchUser) 
         pass
 
     def activate_user(self) -> None:
         # calls update_user with active = true
-        # new API -> bindings.patch_PatchUser(user_id, patchUser)
+        # API -> bindings.patch_PatchUser(user_id, patchUser)
         pass
 
     def deactivate_user(self) -> None:
         # calls update_user with active = false
-        # can use the edited API patch_PatchUser(username, patchUser) API
+        # bindings.patch_PatchUser(self.user_id, patchUser) API
         pass
 
     def deactivate_user(self) -> None:
         # calls update_user with active = false
-        # can use the edited API patch_PatchUser(user_id, patchUser) API
+        # bindings.patch_PatchUser(user_id, patchUser) API
         pass
 
     def change_password(self, new_password: str) -> None:
         # can also get user from authentication.must_cli_auth().get_session_user()
-        # API bindings.patch_PatchUser (add username part) can't change the password. Should I edit this (need to also add username to message PatchUser in user.proto) or add new API method in api_user.go
+        # API bindings.patch_PatchUser need to add password to message PatchUser in user.proto
         pass
 
     def link_with_agent_user(self, agent_user_group: AgentUserGroup) -> None:
