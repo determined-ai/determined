@@ -1,3 +1,3 @@
-from finetune import DetSDTextualInversionTrainer
-from generate import DetSDTextualInversionPipeline
-from utils import gallery
+__all__ = ["DetSDTextualInversionTrainer", "DetSDTextualInversionPipeline"]
+from detsd.finetune import DetSDTextualInversionTrainer
+from detsd.generate import DetSDTextualInversionPipeline

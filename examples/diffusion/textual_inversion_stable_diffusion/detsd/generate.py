@@ -24,7 +24,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms.functional import pil_to_tensor
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
-import utils
+import detsd.utils
 
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,
@@ -192,15 +192,14 @@ class DetSDTextualInversionPipeline:
                         if is_main_process:
                             # Upload images to tensorboard.
                             for tag, img_list in tags_and_imgs:
-                                for idx, img in enumerate(reversed(img_list)):
-                                    img_t = pil_to_tensor(img)
-                                    tb_writer.add_image(
-                                        tag,
-                                        img_tensor=img_t,
-                                        global_step=steps_completed - idx,
-                                    )
-                                    tb_writer.flush()  # Ensure all images are written to disk.
-                                    core_context.train.upload_tensorboard_files()
+                                img_ts = torch.cat([pil_to_tensor(img) for img in img_list], dim=0)
+                                tb_writer.add_images(
+                                    tag,
+                                    img_tensor=img_ts,
+                                    global_step=steps_completed,
+                                )
+                                tb_writer.flush()  # Ensure all images are written to disk.
+                                core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
                             checkpoint_metadata_dict = {
                                 "steps_completed": steps_completed,
