@@ -119,6 +119,7 @@ class DetSDTextualInversionPipeline:
         pipeline_init_kwargs = hparams["pipeline"]
         uuid_list = hparams["uuids"]
         call_kwargs = hparams["call"]
+        main_process_seed = hparams["main_process_seed"]
         save_freq = hparams["save_freq"]
 
         logger = logging.getLogger(__name__)
@@ -136,12 +137,6 @@ class DetSDTextualInversionPipeline:
             process_index = core_context.distributed.get_rank()
             is_main_process = process_index == 0
 
-            # Choose random seeds to be unique, to avoid repeated images.
-            assert (
-                "seed" in call_kwargs
-            ), "`seed` must be specified when calling `generate_on_cluster`."
-            call_kwargs["seed"] += process_index
-
             # TODO: support CPU case?
             device = f"cuda:{process_index}" if distributed is not None else "cuda"
             pipeline_init_kwargs["device"] = device
@@ -156,9 +151,10 @@ class DetSDTextualInversionPipeline:
             # Use the __call__ args apart for the tensorboard tag.
             tb_tag = ", ".join([f"{k}: {v}" for k, v in call_kwargs.items() if v])
 
-            # Trade the seed for its equivalent generator in order to be able to restore the state.
-            generator = torch.Generator(device=device).manual_seed(call_kwargs["seed"])
-            del call_kwargs["seed"]
+            # Use unique seeds, to avoid repeated images, and add the corresponding generator to the
+            # call_kwargs.
+            seed = main_process_seed + process_index
+            generator = torch.Generator(device=device).manual_seed(seed)
             call_kwargs["generator"] = generator
 
             steps_completed = 0

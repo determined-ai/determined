@@ -37,8 +37,8 @@ hyperparameters:
         minval: 5.
         maxval: 20.
         count: 4
-      seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
       other_hf_pipeline_call_kwargs: {}
       max_nsfw_retries: 10
+    main_process_seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
     save_freq: 4
 
