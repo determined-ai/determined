@@ -28,9 +28,10 @@ Below we walk through the Textual Inversion workflow, first fine-tuning Stable D
 user-provided training images featuring a new concept, and then incorporating representations of the
 concept into generated art.
 
-### Training
+### Fine-Tuning
 
-After including your user access token in the `const.yaml` config file by modifying the final part
+After including your user access token in the `finetune_finetune_const.yaml` config file by
+modifying the final part
 of the lines which read
 
 ```yaml
@@ -42,7 +43,7 @@ environment:
 a ready-to-go fine-tuning experiment can be run by executing the following in the present directory:
 
 ```bash
-det -m MASTER_URL_WITH_PORT e create const.yaml .
+det -m MASTER_URL_WITH_PORT e create finetune_const.yaml .
 ```
 
 with the appropriate url for your Determined cluster substituted in
@@ -62,7 +63,7 @@ in the config, will then be available for use in our prompts to signify the conc
 By default, sample images are generated during training which can be viewed by launching a
 Tensorboard instance from the experiment in the WebUI.
 
-### Notebook Inference
+### Notebook Generation
 
 Once training has completed, interactive inference can be run by using the included
 `textual_inversion.ipynb` on the same Master which performed the Experiment.
@@ -85,20 +86,41 @@ corresponding Determined checkpoints in the relevant `uuids` list under the _Loa
 Checkpoints_ section. Then simply run the notebook from top to bottom. Further instructions may be
 found in the notebook itself.
 
+### Cluster Generation
+
+Notebooks are excellent for quick experimentation with prompt-selections and tuning of parameters,
+but are limited in their capacity
+to generate images at scale. Parallelized generation using arbitrary resources can be accomplished
+by submitting
+an experiment with the `generate_grid.yaml` config file, as in
+
+```bash
+det -m MASTER_URL_WITH_PORT e create generate_grid.yaml .
+```
+
+where one must again modify the `HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE` line in `generate_grid.yaml`
+as previously.
+
+The provided configuration will perform multi-GPU generation, scanning across
+multiple
+prompts and settings of the `guidance_scale` parameter, logging all images to Tensorboard for easy
+retrieval and
+organization.
+
 #### Typical Results
 
 ***To be added!***
 
 ## Customization
 
-The basic `const.yaml` config can be easily customized to accommodate your own concepts.
+The basic `finetune_const.yaml` config can be easily customized to accommodate your own concepts.
 
 The relevant parts of the `hyperparameters` section read:
 
 ```yaml
 hyperparameters:
 #...
-data:
+concepts:
   learnable_properties: # One of 'object' or 'style' 
     - object
   concept_tokens: # Special tokens representing new concepts. Must not exist in tokenizer.  
@@ -131,14 +153,16 @@ relevant entries under the
 `train_img_dirs`, `learnable_properties`, `concept_tokens`, and `initializer_tokens` fields,
 keeping the same relative ordering across each.
 
-More advanced customizations can be made by modifying the `const_advanced.yaml` config file.
+More advanced customizations can be made by modifying the `finetune_const_advanced.yaml` config
+file.
 
 ## Some Tips
 
 Generating results of the desired quality is often a balancing act:
 
-* Training images are resized to 512 x 512 pixels and can optionally center-cropped (
-  see `const_advanced.yaml`). Resizing your training images accordingly will lead to the most
+* Training images are resized to 512 x 512 pixels and can optionally be center-cropped (
+  see `finetune_const_advanced.yaml`) first. Res izing your training images accordingly will lead to
+  the most
   consistent results.
 * The provided config files do not use many SGD steps and are intended for quick demonstration.
   Increase the `max_length` field, and adjust other training hyperparameters, for more finely tuned
@@ -150,8 +174,10 @@ Generating results of the desired quality is often a balancing act:
   the
   beginning of a prompt than it does to words at the end.
 * Longer prompts often result in better results. See
-  the [Prompt Development](https://www.reddit.com/r/StableDiffusion/comments/xcq819/dreamers_guide_to_getting_started_w_stable/)
-  section of this link for more detailed tips on prompt-engineering.
+  the _Prompt Development_
+  section of
+  this [Reddit guide](https://www.reddit.com/r/StableDiffusion/comments/xcq819/dreamers_guide_to_getting_started_w_stable/)
+  for more detailed tips on prompt-engineering.
 
 ## The Code
 
@@ -166,23 +192,7 @@ official [Stable Diffusion Discord Server](https://www.diffusion.gg).
 
 A very incomplete list:
 
-* Still tuning the ready-to-go experiment, trying to find a balance between results and speed.
-* The current `entrypoint`
-  is `python -m determined.launch.torch_distributed accelerate launch main.py` which uses
-  the [Accelerate launcher](https://huggingface.co/docs/transformers/accelerate) on top of
-  our own `torch_distributed` launcher. This is probably a hack? Maybe write our own `accelerate`
-  launcher?
-* Should also support distributed inference for faster generation.
+* Write a launch script which uses the `accelerate` launcher?
 * fp16 training
-* Test training at 256 * 256 and image generation at other scales. Separate the `img_size` args for
-  training and inference here.
 * lr scheduler
-* `accelerate --config` support/example
-* Multi-experiment visualizations currently showing no data for some reason.
-* Trial stats are only uploaded upon trial completion due to some change between 0.19.0 and 0.19.2,
-  for unclear reasons
-* Tensorboard doesn't seem to update when new images are generated. Need to kill TB agent and
-  restart it to see new images.
-* Images generated towards the end of training are inconsistently uploaded at all to TB.
 * Link to blog post, when published.
-* Hitting some CUDA OOM errors when resuming training with ADAM or ADAM4 on T4 GPUs.

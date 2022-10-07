@@ -132,12 +132,9 @@ class DetSDTextualInversionPipeline:
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            logger.info("--------------- Generating Images ---------------")
-
             # Get worker data.
             process_index = core_context.distributed.get_rank()
             is_main_process = process_index == 0
-            num_processes = core_context.distributed.get_size()
 
             # Choose random seeds to be unique, to avoid repeated images.
             assert (
@@ -175,7 +172,13 @@ class DetSDTextualInversionPipeline:
                             path.joinpath("generator_state_dict.pt"),
                             map_location=device,
                         )
+                        print(generator_state_dict)
+                        print(generator_state_dict[device])
+                        print(type(generator_state_dict[device]))
                         generator.set_state(generator_state_dict[device])
+
+            if is_main_process:
+                logger.info("--------------- Generating Images ---------------")
 
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
