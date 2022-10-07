@@ -7,7 +7,7 @@ searcher:
   max_length: 16 # Number of times the generation pipeline is called, per-worker.
 resources:
   slots_per_trial: 2
-max_restarts: 0
+max_restarts: 1
 environment:
     environment_variables:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
@@ -26,8 +26,8 @@ hyperparameters:
       prompt:
         type: categorical
         vals:
-          - a Van Gogh painting of a <det-logo>
-          - a <det-logo> in outer space
+          - a Van Gogh painting of a <det-logo> with thick strokes, masterful composition
+          - a watercolor painting of a <det-logo> with soft strokes, masterful composition
       num_samples: 2
       batch_size: 2
       num_inference_steps: 50

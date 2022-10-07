@@ -6,7 +6,7 @@ searcher:
   max_length: 250 # Number of SGD steps.
 resources:
   slots_per_trial: 2
-max_restarts: 0
+max_restarts: 1
 environment:
     environment_variables:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE

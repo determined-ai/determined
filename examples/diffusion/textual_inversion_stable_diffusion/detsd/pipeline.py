@@ -124,6 +124,7 @@ class DetSDTextualInversionPipeline:
 
             # Instantiate the pipeline and load in any checkpoints by uuid.
             pipeline = cls(**pipeline_init_kwargs)
+            # TODO: Currently every worker downloads the checkpoint; change.
             pipeline.load_from_uuids(uuid_list)
 
             # Create the Tensorboard writer.
