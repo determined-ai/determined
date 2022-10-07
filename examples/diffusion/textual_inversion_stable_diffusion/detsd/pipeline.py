@@ -13,9 +13,6 @@ import torch.nn as nn
 from determined.experimental import client
 from diffusers import (
     AutoencoderKL,
-    DDIMScheduler,
-    LMSDiscreteScheduler,
-    PNDMScheduler,
     StableDiffusionPipeline,
     UNet2DConditionModel,
 )
@@ -24,18 +21,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms.functional import pil_to_tensor
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
-from detsd import utils
-
-NOISE_SCHEDULER_DICT = {
-    "ddim": DDIMScheduler,
-    "lms-discrete": LMSDiscreteScheduler,
-    "pndm": PNDMScheduler,
-}
-DEFAULT_SCHEDULER_KWARGS_DICT = {
-    "pndm": {"skip_prk_steps": True},
-    "ddim": {"clip_sample": False},
-    "lms-discrete": {},
-}
+from detsd import utils, defaults
 
 
 class DetSDTextualInversionPipeline:
@@ -71,7 +57,7 @@ class DetSDTextualInversionPipeline:
         self.beta_end = beta_end
         self.beta_schedule = beta_schedule
         self.other_scheduler_kwargs = (
-            other_scheduler_kwargs or DEFAULT_SCHEDULER_KWARGS_DICT[scheduler_name]
+            other_scheduler_kwargs or defaults.DEFAULT_SCHEDULER_KWARGS_DICT[scheduler_name]
         )
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.device = device
@@ -86,7 +72,7 @@ class DetSDTextualInversionPipeline:
             "beta_schedule": self.beta_schedule,
             **self.other_scheduler_kwargs,
         }
-        self.scheduler = NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
+        self.scheduler = defaults.NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
 
         # The below attrs are non-trivially instantiated as necessary through appropriate methods.
         self.all_checkpoint_paths = []
@@ -191,16 +177,15 @@ class DetSDTextualInversionPipeline:
                         if is_main_process:
                             logger.info(f"Saving at step {steps_completed}")
                             for tag, img_list in tags_and_imgs:
-                                img_ts = torch.stack(
-                                    [pil_to_tensor(img) for img in img_list], dim=0
-                                )
-                                tb_writer.add_images(
-                                    tag,
-                                    img_tensor=img_ts,
-                                    global_step=steps_completed,
-                                )
-                                tb_writer.flush()  # Ensure all images are written to disk.
-                                core_context.train.upload_tensorboard_files()
+                                for idx, img in enumerate(reversed(img_list)):
+                                    img_t = pil_to_tensor(img)
+                                    tb_writer.add_image(
+                                        tag,
+                                        img_tensor=img_t,
+                                        global_step=steps_completed - idx,
+                                    )
+                            tb_writer.flush()  # Ensure all images are written to disk.
+                            core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
                             checkpoint_metadata_dict = {
                                 "steps_completed": steps_completed,

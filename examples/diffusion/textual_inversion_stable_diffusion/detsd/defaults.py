@@ -1,3 +1,25 @@
+from diffusers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
+from torchvision import transforms
+
+DEFAULT_SCHEDULER_KWARGS_DICT = {
+    "pndm": {"skip_prk_steps": True},
+    "ddim": {"clip_sample": False},
+    "lms-discrete": {},
+}
+
+INTERPOLATION_DICT = {
+    "nearest": transforms.InterpolationMode.NEAREST,
+    "bilinear": transforms.InterpolationMode.BILINEAR,
+    "bicubic": transforms.InterpolationMode.BICUBIC,
+}
+
+
+NOISE_SCHEDULER_DICT = {
+    "ddim": DDIMScheduler,
+    "lms-discrete": LMSDiscreteScheduler,
+    "pndm": PNDMScheduler,
+}
+
 TEMPLATE_DICT = {
     "object": [
         "a photo of a {}",

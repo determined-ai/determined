@@ -8,13 +8,7 @@ from typing import List, Tuple, Sequence
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from detsd.templates import TEMPLATE_DICT
-
-INTERPOLATION_DICT = {
-    "nearest": transforms.InterpolationMode.NEAREST,
-    "bilinear": transforms.InterpolationMode.BILINEAR,
-    "bicubic": transforms.InterpolationMode.BICUBIC,
-}
+from detsd import defaults
 
 
 class TextualInversionDataset(Dataset):
@@ -37,13 +31,13 @@ class TextualInversionDataset(Dataset):
         ), "img_dirs, concept_tokens, and learnable_properties must have equal lens."
 
         assert (
-            interpolation in INTERPOLATION_DICT
-        ), f"interpolation must be in {list(INTERPOLATION_DICT.keys())}"
-        self.interpolation = INTERPOLATION_DICT[interpolation]
+            interpolation in defaults.INTERPOLATION_DICT
+        ), f"interpolation must be in {list(defaults.INTERPOLATION_DICT.keys())}"
+        self.interpolation = defaults.INTERPOLATION_DICT[interpolation]
         for prop in learnable_properties:
             assert (
-                prop in TEMPLATE_DICT
-            ), f"learnable_properties must be one of {list(TEMPLATE_DICT.keys())}, not {prop}."
+                prop in defaults.TEMPLATE_DICT
+            ), f"learnable_properties must be one of {list(defaults.TEMPLATE_DICT.keys())}, not {prop}."
 
         self.img_dirs = img_dirs
         self.learnable_properties = learnable_properties
@@ -66,7 +60,7 @@ class TextualInversionDataset(Dataset):
         for dir_path, concept_token, prop in zip(
             self.img_dirs, concept_tokens, self.learnable_properties
         ):
-            templates = TEMPLATE_DICT[prop]
+            templates = defaults.TEMPLATE_DICT[prop]
             imgs_and_paths = self._get_imgs_and_paths_from_dir_path(dir_path)
             for img, path in imgs_and_paths:
                 img_tensor = self._convert_img_to_tensor(img)

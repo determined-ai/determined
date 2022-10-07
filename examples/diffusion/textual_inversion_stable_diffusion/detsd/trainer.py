@@ -26,18 +26,7 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 
-from detsd import data, layers, utils
-
-NOISE_SCHEDULER_DICT = {
-    "ddim": DDIMScheduler,
-    "lms-discrete": LMSDiscreteScheduler,
-    "pndm": PNDMScheduler,
-}
-DEFAULT_SCHEDULER_KWARGS_DICT = {
-    "pndm": {"skip_prk_steps": True},
-    "ddim": {"clip_sample": False},
-    "lms-discrete": {},
-}
+from detsd import data, defaults, layers, utils
 
 
 class DetSDTextualInversionTrainer:
@@ -139,8 +128,8 @@ class DetSDTextualInversionTrainer:
         )
         accelerate.utils.set_seed(self.train_seed)
 
-        assert inference_scheduler_name in NOISE_SCHEDULER_DICT, (
-            f"inference_scheduler must be one {list(NOISE_SCHEDULER_DICT.keys())},"
+        assert inference_scheduler_name in defaults.NOISE_SCHEDULER_DICT, (
+            f"inference_scheduler must be one {list(defaults.NOISE_SCHEDULER_DICT.keys())},"
             f" but got {inference_scheduler_name}"
         )
         if not generate_training_images and inference_prompts is not None:
@@ -164,7 +153,7 @@ class DetSDTextualInversionTrainer:
         self.generator_seed = generator_seed
 
         if other_inference_scheduler_kwargs is None:
-            other_inference_scheduler_kwargs = DEFAULT_SCHEDULER_KWARGS_DICT[
+            other_inference_scheduler_kwargs = defaults.DEFAULT_SCHEDULER_KWARGS_DICT[
                 self.inference_scheduler_name
             ]
         self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
@@ -627,7 +616,7 @@ class DetSDTextualInversionTrainer:
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))
 
     def _build_pipeline(self) -> None:
-        inference_scheduler = NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
+        inference_scheduler = defaults.NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
         self.inference_scheduler_kwargs = {
             "beta_start": self.beta_start,
             "beta_end": self.beta_end,
