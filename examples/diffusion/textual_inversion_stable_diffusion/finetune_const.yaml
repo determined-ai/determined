@@ -23,7 +23,7 @@ hyperparameters:
             - <det-logo>
         initializer_tokens: # Phrases which are closely related to added concepts.
             - brain logo, concept art
-        train_img_dirs:
+        img_dirs:
             - det_logos
     training:
         train_batch_size: 1

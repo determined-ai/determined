@@ -22,7 +22,7 @@ class TextualInversionDataset(Dataset):
 
     def __init__(
         self,
-        train_img_dirs: Sequence[str],
+        img_dirs: Sequence[str],
         concept_tokens: Sequence[str],
         learnable_properties: Sequence[str],
         img_size: int = 512,
@@ -33,8 +33,8 @@ class TextualInversionDataset(Dataset):
         file_name_split_char: str = "_",
     ):
         assert (
-            len(train_img_dirs) == len(concept_tokens) == len(learnable_properties)
-        ), "train_img_dirs, concept_tokens, and learnable_properties must have equal lens."
+            len(img_dirs) == len(concept_tokens) == len(learnable_properties)
+        ), "img_dirs, concept_tokens, and learnable_properties must have equal lens."
 
         assert (
             interpolation in INTERPOLATION_DICT
@@ -45,7 +45,7 @@ class TextualInversionDataset(Dataset):
                 prop in TEMPLATE_DICT
             ), f"learnable_properties must be one of {list(TEMPLATE_DICT.keys())}, not {prop}."
 
-        self.train_img_dirs = train_img_dirs
+        self.img_dirs = img_dirs
         self.learnable_properties = learnable_properties
         self.img_size = img_size
         self.concept_tokens = concept_tokens
@@ -64,7 +64,7 @@ class TextualInversionDataset(Dataset):
 
         self.records = []
         for dir_path, concept_token, prop in zip(
-            self.train_img_dirs, concept_tokens, self.learnable_properties
+            self.img_dirs, concept_tokens, self.learnable_properties
         ):
             templates = TEMPLATE_DICT[prop]
             imgs_and_paths = self._get_imgs_and_paths_from_dir_path(dir_path)

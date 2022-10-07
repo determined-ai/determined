@@ -45,7 +45,7 @@ class DetSDTextualInversionTrainer:
 
     def __init__(
         self,
-        train_img_dirs: Union[str, Sequence[str]],
+        img_dirs: Union[str, Sequence[str]],
         concept_tokens: Union[str, Sequence[str]],
         initializer_tokens: Union[str, Sequence[str]],
         learnable_properties: Sequence[Literal["object", "style"]],
@@ -129,9 +129,9 @@ class DetSDTextualInversionTrainer:
         self.beta_end = beta_end
         self.beta_schedule = beta_schedule
         self.num_train_timesteps = num_train_timesteps
-        if isinstance(train_img_dirs, str):
-            train_img_dirs = [train_img_dirs]
-        self.train_img_dirs = train_img_dirs
+        if isinstance(img_dirs, str):
+            img_dirs = [img_dirs]
+        self.img_dirs = img_dirs
         self.train_seed = train_seed
 
         self.accelerator = accelerate.Accelerator(
@@ -510,7 +510,7 @@ class DetSDTextualInversionTrainer:
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
         self.train_dataset = data.TextualInversionDataset(
-            train_img_dirs=self.train_img_dirs,
+            img_dirs=self.img_dirs,
             concept_tokens=self.concept_tokens,
             learnable_properties=self.learnable_properties,
             img_size=self.img_size,

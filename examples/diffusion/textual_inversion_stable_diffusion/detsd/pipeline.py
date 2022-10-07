@@ -170,11 +170,7 @@ class DetSDTextualInversionPipeline:
                         steps_completed = json.load(f)["steps_completed"]
                         generator_state_dict = torch.load(
                             path.joinpath("generator_state_dict.pt"),
-                            map_location=device,
                         )
-                        print(generator_state_dict)
-                        print(generator_state_dict[device])
-                        print(type(generator_state_dict[device]))
                         generator.set_state(generator_state_dict[device])
 
             if is_main_process:
