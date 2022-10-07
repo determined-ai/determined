@@ -7,7 +7,7 @@ import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import history from 'shared/routes/history';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
@@ -193,13 +193,13 @@ const SlotAllocationBar: React.FC<Props> = ({
   const onClickQueued = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    poolName && history.push(`${paths.resourcePool(poolName)}/queued`);
+    poolName && routeToReactUrl(`${paths.resourcePool(poolName)}/queued`);
   };
 
   const onClickScheduled = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    poolName && history.push(`${paths.resourcePool(poolName)}`);
+    poolName && routeToReactUrl(`${paths.resourcePool(poolName)}`);
   };
 
   const renderFooterJobs = () => {
