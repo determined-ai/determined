@@ -121,6 +121,8 @@ class DetSDTextualInversionPipeline:
         call_kwargs = hparams["call"]
         save_freq = hparams["save_freq"]
 
+        logger = logging.getLogger(__name__)
+
         # Get the distributed context, as needed.
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
@@ -130,7 +132,7 @@ class DetSDTextualInversionPipeline:
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            logging.info("--------------- Generating Images ---------------")
+            logger.info("--------------- Generating Images ---------------")
 
             # Get worker data.
             process_index = core_context.distributed.get_rank()
@@ -217,7 +219,8 @@ class DetSDTextualInversionPipeline:
                                     generator_state_dict, path.joinpath("generator_state_dict.pt")
                                 )
                             op.report_progress(steps_completed)
-
+                        # Reset image list.
+                        img_list = []
                     if core_context.preempt.should_preempt():
                         return
 

@@ -8,7 +8,7 @@ from typing import List, Tuple, Sequence
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from detsd import templates
+from detsd.templates import TEMPLATE_DICT
 
 INTERPOLATION_DICT = {
     "nearest": transforms.InterpolationMode.NEAREST,
@@ -42,8 +42,8 @@ class TextualInversionDataset(Dataset):
         self.interpolation = INTERPOLATION_DICT[interpolation]
         for prop in learnable_properties:
             assert (
-                prop in templates.TEMPLATE_DICT
-            ), f"learnable_properties must be one of {list(templates.TEMPLATE_DICT.keys())}, not {prop}."
+                prop in TEMPLATE_DICT
+            ), f"learnable_properties must be one of {list(TEMPLATE_DICT.keys())}, not {prop}."
 
         self.train_img_dirs = train_img_dirs
         self.learnable_properties = learnable_properties
@@ -66,7 +66,7 @@ class TextualInversionDataset(Dataset):
         for dir_path, concept_token, prop in zip(
             self.train_img_dirs, concept_tokens, self.learnable_properties
         ):
-            templates = templates.TEMPLATE_DICT[prop]
+            templates = TEMPLATE_DICT[prop]
             imgs_and_paths = self._get_imgs_and_paths_from_dir_path(dir_path)
             for img, path in imgs_and_paths:
                 img_tensor = self._convert_img_to_tensor(img)
