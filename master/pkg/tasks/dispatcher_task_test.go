@@ -547,29 +547,29 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				"total": 16,
 			},
 		},
-		// {
-		// 	name:             "Test custom slurmArgs",
-		// 	containerRunType: "singularity",
-		// 	slotType:         device.CUDA,
-		// 	Slurm:            []string{"--want=slurmArgs", "--X=Y"},
-		// 	wantSlurmArgs:    []string{"--want=slurmArgs", "--X=Y"},
-		// },
-		// {
-		// 	name:             "Test custom pbsArgs",
-		// 	containerRunType: "singularity",
-		// 	slotType:         device.CUDA,
-		// 	Pbs:              []string{"--want=pbsArgs", "--AB"},
-		// 	wantPbsArgs:      []string{"--want=pbsArgs", "--AB"},
-		// },
-		// {
-		// 	name:             "Test error case",
-		// 	containerRunType: "singularity",
-		// 	slotType:         device.CUDA,
-		// 	Slurm:            []string{"--gpus=2"},
-		// 	Pbs:              []string{},
-		// 	wantErr:          true,
-		// 	errorContains:    "is not configurable",
-		// },
+		{
+			name:             "Test custom slurmArgs",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Slurm:            []string{"--want=slurmArgs", "--X=Y"},
+			wantSlurmArgs:    []string{"--want=slurmArgs", "--X=Y"},
+		},
+		{
+			name:             "Test custom pbsArgs",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Pbs:              []string{"--want=pbsArgs", "--AB"},
+			wantPbsArgs:      []string{"--want=pbsArgs", "--AB"},
+		},
+		{
+			name:             "Test error case",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Slurm:            []string{"--gpus=2"},
+			Pbs:              []string{},
+			wantErr:          true,
+			errorContains:    "is not configurable",
+		},
 	}
 
 	for _, tt := range tests {
@@ -594,11 +594,21 @@ func Test_ToDispatcherManifest(t *testing.T) {
 					"podmanPortMapping2": 443, "PodMan3": 3000,
 				},
 			}
+			slurmOpts := expconf.SlurmConfig{
+				RawSlotsPerNode: new(int),
+				RawSbatchArgs:   tt.Slurm,
+			}
+			pbsOpts := expconf.PbsConfig{
+				RawSlotsPerNode: new(int),
+				RawSbatchArgs:   tt.Pbs,
+			}
 
 			ts := &TaskSpec{
 				AgentUserGroup: aug,
 				WorkDir:        "/run/determined/workdir",
 				Environment:    environment,
+				PbsConfig:      pbsOpts,
+				SlurmConfig:    slurmOpts,
 			}
 
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
