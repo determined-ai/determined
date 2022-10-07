@@ -1,4 +1,4 @@
-name: textual_inversion_stable_diffusion_train
+name: detsd_finetune
 entrypoint: python3 -m determined.launch.torch_distributed python3 finetune.py
 searcher:
   name: single

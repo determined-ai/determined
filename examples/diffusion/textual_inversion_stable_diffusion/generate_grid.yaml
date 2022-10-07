@@ -1,4 +1,4 @@
-name: textual_inversion_stable_diffusion_generate
+name: detsd_generate
 entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
