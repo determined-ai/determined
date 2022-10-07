@@ -4,7 +4,7 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
   metric: none
-  max_length: 100 # Number of times the generation pipeline is called, per-worker.
+  max_length: 16 # Number of times the generation pipeline is called, per-worker.
 resources:
   slots_per_trial: 2
 max_restarts: 0
@@ -28,7 +28,7 @@ hyperparameters:
         type: categorical
         vals:
           - a Van Gogh painting of a <det-logo>
-          - a <det-logo> riding a horse
+          - a <det-logo> in outer space
       num_samples: 2
       batch_size: 2
       num_inference_steps: 50
@@ -40,5 +40,5 @@ hyperparameters:
       seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
       other_hf_pipeline_call_kwargs: {}
       max_nsfw_retries: 10
-    tb_write_freq: 10
+    save_freq: 4
 
