@@ -6313,8 +6313,8 @@ class v1RoleAssignmentSummary:
     def __init__(
         self,
         *,
+        roleId: int,
         isGlobal: "typing.Optional[bool]" = None,
-        roleId: "typing.Optional[int]" = None,
         scopeWorkspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.roleId = roleId
@@ -6324,14 +6324,14 @@ class v1RoleAssignmentSummary:
     @classmethod
     def from_json(cls, obj: Json) -> "v1RoleAssignmentSummary":
         return cls(
-            roleId=obj.get("roleId", None),
+            roleId=obj["roleId"],
             scopeWorkspaceIds=obj.get("scopeWorkspaceIds", None),
             isGlobal=obj.get("isGlobal", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roleId": self.roleId if self.roleId is not None else None,
+            "roleId": self.roleId,
             "scopeWorkspaceIds": self.scopeWorkspaceIds if self.scopeWorkspaceIds is not None else None,
             "isGlobal": self.isGlobal if self.isGlobal is not None else None,
         }

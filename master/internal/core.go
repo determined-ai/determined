@@ -910,7 +910,6 @@ func (m *Master) Run(ctx context.Context) error {
 	)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
-	tasksGroup.GET("/:task_id", api.Route(m.getTask))
 
 	// Distributed lock server.
 	rwCoordinator := newRWCoordinator()

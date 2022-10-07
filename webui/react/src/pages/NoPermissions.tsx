@@ -1,18 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useRef } from 'react';
 
 import Page from 'components/Page';
-import { useStoreDispatch } from 'contexts/Store';
 import Icon from 'shared/components/Icon/Icon';
-import { StoreActionUI } from 'shared/contexts/UIStore';
 
 import css from './NoPermissions.module.scss';
 
 const NoPermissions: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
-  useEffect(() => storeDispatch({ type: StoreActionUI.HideUIChrome }), [storeDispatch]);
+  const pageRef = useRef<HTMLElement>(null);
 
   return (
-    <Page bodyNoPadding>
+    <Page bodyNoPadding containerRef={pageRef}>
       <div className={css.base}>
         <div className={css.icon}>
           <Icon name="warning-large" size="mega" />

@@ -1136,7 +1136,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
 }
 
-// TODO(nick) auth with allocations.
+// TODO(nick) auth with tasks.
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {

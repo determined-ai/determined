@@ -103,7 +103,7 @@ const ResourcepoolDetail: React.FC = () => {
       if (!pool) return;
       setTabKey(key);
       const basePath = paths.resourcePool(pool.name);
-      navigate(`${basePath}/${key}`, { replace: true });
+      navigate(`${basePath}/${key}`);
     },
     [navigate, pool],
   );

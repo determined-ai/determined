@@ -4,6 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -29,6 +33,15 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	group := Group{
 		Name: req.Name,
@@ -61,8 +74,20 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 		return nil, apiutils.ErrInvalidLimit
 	}
 
-	groups, memberCounts, tableCount, err := SearchGroupsWithoutPersonalGroups(ctx,
-		req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
+	query := SearchGroupsQuery(req.Name, model.UserID(req.UserId), false)
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query, err = AuthZProvider.Get().FilterGroupsList(ctx, *curUser, query)
+	if err != nil {
+		return nil, err
+	}
+
+	groups, memberCounts, tableCount, err := SearchGroupsPaginated(ctx,
+		query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +120,20 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 		err = apiutils.MapAndFilterErrors(err)
 	}()
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	gid := int(req.GroupId)
+
+	canGet, err := AuthZProvider.Get().CanGetGroup(ctx, *curUser, gid)
+	if err != nil {
+		return nil, err
+	} else if !canGet {
+		return nil, errors.Wrapf(db.ErrNotFound, "Error getting group %d", gid)
+	}
+
 	g, err := GroupByIDTx(ctx, nil, gid)
 	if err != nil {
 		return nil, err
@@ -124,6 +162,16 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	var addUsers []model.UserID
 	var removeUsers []model.UserID
@@ -160,6 +208,16 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	err = DeleteGroup(ctx, int(req.GroupId))
 	if err != nil {
