@@ -8,7 +8,7 @@ from typing import List, Tuple, Sequence
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from training_templates import TEMPLATE_DICT
+from templates import TEMPLATE_DICT
 
 INTERPOLATION_DICT = {
     "nearest": transforms.InterpolationMode.NEAREST,
