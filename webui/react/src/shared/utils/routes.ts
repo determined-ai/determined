@@ -69,5 +69,7 @@ export const routeToExternalUrl = (path: string): void => {
 };
 export const routeToReactUrl = (path: string): void => {
   logger.trace('routing to react url', path);
-  history.push(stripUrl(path), { loginRedirect: filterOutLoginLocation(window.location) });
+  history.push(`${process.env.PUBLIC_URL}${stripUrl(path)}`, {
+    loginRedirect: filterOutLoginLocation(window.location),
+  });
 };

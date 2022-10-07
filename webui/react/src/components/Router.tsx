@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom-v5-compat';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';

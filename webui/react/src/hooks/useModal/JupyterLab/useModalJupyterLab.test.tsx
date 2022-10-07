@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 
@@ -52,11 +51,9 @@ const setup = async () => {
 
   render(
     <BrowserRouter>
-      <CompatRouter>
-        <StoreProvider>
-          <ModalTrigger />
-        </StoreProvider>
-      </CompatRouter>
+      <StoreProvider>
+        <ModalTrigger />
+      </StoreProvider>
     </BrowserRouter>,
   );
 

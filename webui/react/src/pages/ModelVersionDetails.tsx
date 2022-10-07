@@ -1,6 +1,6 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
