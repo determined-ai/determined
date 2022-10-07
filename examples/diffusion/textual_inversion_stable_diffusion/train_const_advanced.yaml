@@ -1,5 +1,5 @@
 name: textual_inversion_stable_diffusion_train
-entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
+entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
 searcher:
   name: single
   metric: loss
@@ -8,7 +8,7 @@ resources:
   slots_per_trial: 2
 max_restarts: 0
 environment:
-    environment_variables:  
+    environment_variables:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 checkpoint_storage:
     save_trial_best: 1
@@ -22,7 +22,7 @@ hyperparameters:
         concept_tokens: # Special tokens representing new concepts. Must not exist in tokenizer.  
             - <det-logo>
         initializer_tokens: # Phrases which are closely related to added concepts.
-            - orange brain logo, connected circles, concept art, high resolution, sharp lines
+            - brain logo, concept art
         train_img_dirs:
             - det_logos
         img_size: 512
