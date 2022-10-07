@@ -192,7 +192,9 @@ class DetSDTextualInversionPipeline:
                         if is_main_process:
                             # Upload images to tensorboard.
                             for tag, img_list in tags_and_imgs:
-                                img_ts = torch.cat([pil_to_tensor(img) for img in img_list], dim=0)
+                                img_ts = torch.stack(
+                                    [pil_to_tensor(img) for img in img_list], dim=0
+                                )
                                 tb_writer.add_images(
                                     tag,
                                     img_tensor=img_ts,
