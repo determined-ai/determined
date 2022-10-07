@@ -1,6 +1,6 @@
 import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -28,19 +28,19 @@ const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Code = 'code',
-  Checkpoints = 'checkpoints',
-  Hyperparameters = 'hyperparameters',
-  Logs = 'logs',
-  Overview = 'overview',
-  Profiler = 'profiler',
-  Workloads = 'workloads',
-  Notes = 'notes',
-}
+const TabType = {
+  Checkpoints: 'checkpoints',
+  Code: 'code',
+  Hyperparameters: 'hyperparameters',
+  Logs: 'logs',
+  Notes: 'notes',
+  Overview: 'overview',
+  Profiler: 'profiler',
+  Workloads: 'workloads',
+} as const;
 
 type Params = {
-  tab?: TabType;
+  tab?: typeof TabType[keyof typeof TabType];
 };
 
 const NeverTrials: React.FC = () => (
@@ -64,6 +64,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   pageRef,
 }: Props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [trialId, setFirstTrialId] = useState<number>();
   const [wontHaveTrials, setWontHaveTrials] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
@@ -128,7 +129,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
 
   const handleTabChange = useCallback(
     (key) => {
-      setTabKey(key);
       navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],
@@ -138,6 +138,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     setTabKey(TabType.Logs);
     navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
   }, [basePath, navigate]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [location.pathname, tab]);
 
   // Sets the default sub route.
   useEffect(() => {
@@ -221,7 +225,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       <Tabs
         activeKey={tabKey}
         tabBarExtraContent={
-          tabKey === 'hyperparameters' && showCreateExperiment ? (
+          tabKey === TabType.Hyperparameters && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
               <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
             </div>
@@ -229,7 +233,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         }
         tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}>
-        <TabPane key="overview" tab="Overview">
+        <TabPane key={TabType.Overview} tab="Overview">
           {waitingForTrials ? (
             <Spinner spinning={true} tip="Waiting for trials..." />
           ) : wontHaveTrials ? (
@@ -238,7 +242,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
           )}
         </TabPane>
-        <TabPane key="hyperparameters" tab="Hyperparameters">
+        <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
           {wontHaveTrials ? (
             <NeverTrials />
           ) : (
@@ -247,10 +251,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         </TabPane>
         {showExperimentArtifacts ? (
           <>
-            <TabPane key="checkpoints" tab="Checkpoints">
+            <TabPane key={TabType.Checkpoints} tab="Checkpoints">
               <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
             </TabPane>
-            <TabPane key="code" tab="Code">
+            <TabPane key={TabType.Code} tab="Code">
               <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
                 <CodeViewer
                   experimentId={experiment.id}
@@ -261,7 +265,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             </TabPane>
           </>
         ) : null}
-        <TabPane key="notes" tab="Notes">
+        <TabPane key={TabType.Notes} tab="Notes">
           <NotesCard
             disabled={!editableNotes}
             notes={experiment.notes ?? ''}
@@ -269,11 +273,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             onSave={handleNotesUpdate}
           />
         </TabPane>
-        <TabPane key="profiler" tab="Profiler">
+        <TabPane key={TabType.Profiler} tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
         {showExperimentArtifacts ? (
-          <TabPane key="logs" tab="Logs">
+          <TabPane key={TabType.Logs} tab="Logs">
             {wontHaveTrials ? (
               <NeverTrials />
             ) : (
