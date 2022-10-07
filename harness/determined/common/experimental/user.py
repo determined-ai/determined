@@ -42,7 +42,7 @@ class User:
         self.agent_group = None
         self.session = session
 
-    def update_user(
+    def update(
         self, username: str,
         active: Optional[bool] = None,
         password: Optional[str] = None,
@@ -58,36 +58,22 @@ class User:
 
         pass
 
-    def activate_user(self) -> None:
+    def activate(self) -> None:
         # calls update_user with active = true
         # bindings.patch_PatchUser(self.userid, patchUser) 
         pass
 
-    def activate_user(self) -> None:
-        # calls update_user with active = true
-        # API -> bindings.patch_PatchUser(self.user_id, patchUser)
-        pass
-
-    def deactivate_user(self) -> None:
+    def deactivate(self) -> None:
         # calls update_user with active = false
         # bindings.patch_PatchUser(self.user_id, patchUser) API
         pass
 
-    def deactivate_user(self) -> None:
-        # calls update_user with active = false
-        # bindings.patch_PatchUser(self.user_id, patchUser) API
-        pass
 
     def change_password(self, new_password: str) -> None:
         # can also get user from authentication.must_cli_auth().get_session_user()
         # API bindings.patch_PatchUser need to add password to message PatchUser in user.proto
         pass
 
-    def link_with_agent_user(self, agent_user_group: AgentUserGroup) -> None:
+    def link_with_agent(self, agent_user_group: AgentUserGroup) -> None:
         # calls update user with these args wrapped in agent_user_group.
-        pass
-
-
-    def whoami() -> str:
-        # return self.username
         pass

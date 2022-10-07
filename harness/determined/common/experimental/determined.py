@@ -73,15 +73,19 @@ class Determined:
 
         pass
 
-    def get_user(user_id: int):
+    def get_user_by_id(user_id: int):
         # return User object
 
         # new API -> bindings.get_GetUser(user_id) (in api_user.go) ++ need to do username
         pass
 
-    def get_user(user_name: str):
+    def get_user_by_name(user_name: str):
         # return User object
-        # new API -> need to edit for username: bindings.get_GetUser(user_name)
+        # new API -> need to edit for username: bindings.get_GetUser(user_name) (in api_user.go)
+        pass
+
+    def whoami():
+        # return current user. 
         pass
 
     def list_users():
