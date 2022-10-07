@@ -1,8 +1,8 @@
 description: An experiment that attempts to supply a slurm option that is controlled by Determined
-environment:
-  slurm:
-   - -G7
-   - --error=xxx
+slurm:
+  sbatch_args:
+    - -G7
+    - --error=xxx
 searcher:
   name: single
   metric: error

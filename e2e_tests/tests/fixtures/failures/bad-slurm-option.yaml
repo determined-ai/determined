@@ -1,7 +1,7 @@
 description: An experiment that uses an invalid slurm option.
-environment:
-  slurm:
-   - --thisisnotavalidslurmoption = willfail
+slurm:
+  sbatch_args:
+    - --thisisnotavalidslurmoption = willfail
 searcher:
   name: single
   metric: error
