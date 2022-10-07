@@ -172,6 +172,8 @@ class DetSDTextualInversionPipeline:
                             path.joinpath("generator_state_dict.pt"),
                         )
                         generator.set_state(generator_state_dict[device])
+                        if is_main_process:
+                            logger.info(f"Resumed from checkpoint at step {steps_completed}")
 
             if is_main_process:
                 logger.info("--------------- Generating Images ---------------")
@@ -191,7 +193,7 @@ class DetSDTextualInversionPipeline:
                             (device, generator.get_state())
                         )
                         if is_main_process:
-                            # Upload images to tensorboard.
+                            logger.info(f"Saving at step {steps_completed}")
                             for tag, img_list in tags_and_imgs:
                                 img_ts = torch.stack(
                                     [pil_to_tensor(img) for img in img_list], dim=0
