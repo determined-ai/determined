@@ -27,12 +27,10 @@ class User:
         self,
         user_id: int, 
         username: str,
-        password: str,
         admin: bool,
         session: api.Session,
     ):
         self.username = username
-        self.password = password
         self.admin = admin
         self.user_id = user_id
         self.active = True
