@@ -1,3 +1,4 @@
+# A grid search over multiple prompts and pipeline settings
 name: detsd_generate
 entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
@@ -28,12 +29,15 @@ hyperparameters:
         vals:
           - a Van Gogh painting of a <det-logo>
           - a <det-logo> riding a horse
-      rows: 2
-      cols: 2
+      num_samples: 2
+      batch_size: 2
       num_inference_steps: 50
-      guidance_scale: 7.5
+      guidance_scale:
+        type: double
+        minval: 5.
+        maxval: 20.
+        count: 4
       seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
-      parallelize_factor: 2
       other_hf_pipeline_call_kwargs: {}
       max_nsfw_retries: 10
     tb_write_freq: 10
