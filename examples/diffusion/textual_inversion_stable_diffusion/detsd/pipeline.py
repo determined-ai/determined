@@ -3,7 +3,7 @@ import logging
 import os
 import pathlib
 from PIL import Image
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 
 import determined as det

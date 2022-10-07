@@ -20,8 +20,7 @@ hyperparameters:
         beta_schedule: scaled_linear
         other_scheduler_kwargs: {}
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
-        use_autocast: False
-        use_fp16: False
+        use_fp16: True
     uuids: []
     call:
       prompt:
