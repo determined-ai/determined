@@ -97,3 +97,9 @@ class ProxiedDownloadFailed(Exception):
     """Proxied checkpoint download through master failed"""
 
     pass
+
+
+class MultipleDownloadsFailed(Exception):
+    """Multiple checkpoint download methods failed"""
+
+    pass
