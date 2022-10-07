@@ -68,14 +68,26 @@ class Determined:
         # call API create_user
         # create User object
         # return that object
+
+        # new API -> bindings.post_PostUser 
+
         pass
 
-    def get_user(user_id: Optional[int], username: Optional[str]):
+    def get_user(user_id: int):
         # return User object
+
+        # new API -> bindings.get_GetUser(user_id) ++ need to do username
+        pass
+
+    def get_user(user_name: str):
+        # return User object
+        # new API -> need to edit for username: bindings.get_GetUser(user_name)
         pass
 
     def list_users():
         # return list of users.
+
+        # new API -> bindings.get_GetUsers()
         pass
 
     def create_experiment(

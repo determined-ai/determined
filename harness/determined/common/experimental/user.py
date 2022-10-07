@@ -46,19 +46,46 @@ class User:
         password: Optional[str] = None,
         agent_user_group: Optional[AgentUserGroup] = None,
     ) -> Response:
+        # new API -> bindings.patch_PatchUser(user_id, patchUser)
         # return API response
         pass
 
+    def update_user(
+        user_id: str,
+        active: Optional[bool] = None,
+        password: Optional[str] = None,
+        agent_user_group: Optional[AgentUserGroup] = None,
+    ) -> Response:
+        # new API -> bindings.patch_PatchUser(user_id, patchUser)
+        # edit above API for bindings.patch_PatchUser(username, patchUser)
+        # return API response
+        pass
+     
     def update_username(current_username: str, new_username: str) -> Response:
         # return API response
+
+        # can use the edited API patch_PatchUser(username, patchUser) API
+
         pass
 
     def activate_user(username: str) -> None:
         # calls update_user with active = true
+        # can use the edited API patch_PatchUser(username, patchUser) API
+        pass
+
+    def activate_user(user_id: int) -> None:
+        # calls update_user with active = true
+        # new API -> bindings.patch_PatchUser(user_id, patchUser)
         pass
 
     def deactivate_user(username: str) -> None:
         # calls update_user with active = false
+        # can use the edited API patch_PatchUser(username, patchUser) API
+        pass
+
+    def deactivate_user(user_id: int) -> None:
+        # calls update_user with active = false
+        # can use the edited API patch_PatchUser(user_id, patchUser) API
         pass
 
     def log_in_user(username: str, password: str) -> None:
