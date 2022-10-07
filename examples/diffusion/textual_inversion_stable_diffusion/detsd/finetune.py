@@ -25,9 +25,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
-import detsd.data
-import detsd.layers
-import detsd.utils
+
+from detsd import data, layers, utils
 
 NOISE_SCHEDULER_DICT = {
     "ddim": DDIMScheduler,

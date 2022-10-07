@@ -1,5 +1,5 @@
 name: textual_inversion_stable_diffusion_train
-entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
+entrypoint: python3 -m determined.launch.torch_distributed python3 finetune.py
 searcher:
   name: single
   metric: loss
@@ -8,7 +8,7 @@ resources:
   slots_per_trial: 2
 max_restarts: 0
 environment:
-    environment_variables:  
+    environment_variables:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 checkpoint_storage:
     save_trial_best: 1
@@ -25,20 +25,40 @@ hyperparameters:
             - brain logo, concept art
         train_img_dirs:
             - det_logos
+        img_size: 512
+        interpolation: bicubic # One of "nearest", "bilinear", or "bicubic".
+        flip_p: 0.0
+        center_crop: True
+        append_file_name_to_text: True # For additional control over training prompts.
+        file_name_split_char: '_'
     training:
         train_batch_size: 1
         gradient_accumulation_steps: 4
         optimizer_name: adam
         learning_rate: 5e-4
+        scale_lr: True
+        embedding_reg_weight: null
+        latent_reg_weight: null
         checkpoint_freq: 50
         metric_report_freq: 50
+        beta_start: 0.00085
+        beta_end: .012
+        beta_schedule: scaled_linear # One of "linear", "scaled_linear", or "squaredcos_cap_v2".
+        num_train_timesteps: 1000
+        train_seed: 2147483647
     inference:
         generate_training_images: True
         images_per_prompt: 3
+        inference_scheduler_name: pndm # One of "ddim", "lms-discrete", or "pndm".
         inference_prompts:
           - a watercolor painting of a <det-logo>
           - a Van Gogh painting of a <det-logo> with vibrant colors, thick strokes, masterpiece, incredible composition
           - a charcoal sketch of a <det-logo>
           - a photograph of a highly detailed statue of a <det-logo>
+        num_inference_steps: 50
+        guidance_scale: 7.5
+        generator_seed: 2147483647
+        other_inference_scheduler_kwargs:
+            skip_prk_steps: True
 
     
