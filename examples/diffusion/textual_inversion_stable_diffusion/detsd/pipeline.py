@@ -139,12 +139,15 @@ class DetSDTextualInversionPipeline:
             call_kwargs["generator"] = generator
 
             steps_completed = 0
-            img_list = []
+            generated_imgs = 0
+            img_history = []
 
             if latest_checkpoint is not None:
                 with core_context.checkpoint.restore_path(latest_checkpoint) as path:
                     with open(path.joinpath("metadata.json"), "r") as f:
-                        steps_completed = json.load(f)["steps_completed"]
+                        metadata_dict = json.load(f)
+                        steps_completed = metadata_dict["steps_completed"]
+                        generated_imgs = metadata_dict["generated_imgs"]
                         generator_state_dict = torch.load(
                             path.joinpath("generator_state_dict.pt"),
                         )
@@ -158,32 +161,33 @@ class DetSDTextualInversionPipeline:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while steps_completed < op.length:
-                    img_list.extend(pipeline(**call_kwargs))
+                    img_history.extend(pipeline(**call_kwargs))
                     steps_completed += 1
 
                     # Write to tensorboard and checkpoint at the specified frequency.
                     if steps_completed % save_freq == 0 or steps_completed == op.length:
                         # Gather all and images to the main process
-                        tags_and_imgs = core_context.distributed.gather((tb_tag, img_list))
+                        tags_and_imgs = core_context.distributed.gather((tb_tag, img_history))
                         devices_and_generators = core_context.distributed.gather(
                             (device, generator.get_state())
                         )
                         if is_main_process:
                             logger.info(f"Saving at step {steps_completed}")
                             for tag, img_list in tags_and_imgs:
-                                for idx, img in enumerate(reversed(img_list)):
-                                    print("TEST", steps_completed, idx, call_kwargs)
+                                for idx, img in enumerate(img_list):
                                     img_t = pil_to_tensor(img)
                                     tb_writer.add_image(
                                         tag,
                                         img_tensor=img_t,
-                                        global_step=steps_completed - idx,
+                                        global_step=generated_imgs + idx,
                                     )
-                                    tb_writer.flush()  # Ensure all images are written to disk.
+                            tb_writer.flush()  # Ensure all images are written to disk.
                             core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
+                            generated_imgs += len(img_history)
                             checkpoint_metadata_dict = {
                                 "steps_completed": steps_completed,
+                                "generated_imgs": generated_imgs,
                             }
                             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
                                 path,
@@ -197,7 +201,7 @@ class DetSDTextualInversionPipeline:
                                 )
                             op.report_progress(steps_completed)
                         # Reset image list.
-                        img_list = []
+                        img_history = []
                         # Only preempt after a checkpoint has been saved.
                         if core_context.preempt.should_preempt():
                             return
