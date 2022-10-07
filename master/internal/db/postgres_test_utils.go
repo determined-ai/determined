@@ -105,6 +105,7 @@ func RequireMockUser(t *testing.T, db *PgDB) model.User {
 	return user
 }
 
+//nolint: exhaustivestruct
 func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Experiment {
 	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{

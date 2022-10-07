@@ -54,7 +54,7 @@ func echoPostExperiment(
 func TestAuthZPostExperimentEcho(t *testing.T) {
 	api, authZExp, _, curUser, ctx := SetupExpAuthTestEcho(t)
 
-	_, _, _, _, grpcCtx := SetupExpAuthTest(t)
+	_, _, _, _, grpcCtx := SetupExpAuthTest(t) //nolint: dogsled
 	_, projectID := createProjectAndWorkspace(grpcCtx, t, api)
 
 	// Can't view project passed in.

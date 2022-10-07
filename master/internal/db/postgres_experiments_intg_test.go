@@ -17,9 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -102,35 +99,6 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 	return nil
 }
 
-func mockExpconf() expconf.ExperimentConfig {
-	return schemas.WithDefaults(expconf.ExperimentConfigV0{
-		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
-			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.Ptr("/home/ckpts"),
-			},
-		},
-		RawEntrypoint: &expconf.EntrypointV0{
-			RawEntrypoint: ptrs.Ptr("model.Classifier"),
-		},
-		RawHyperparameters: map[string]expconf.HyperparameterV0{
-			"global_batch_size": {
-				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.Ptr(1),
-				},
-			},
-		},
-		RawSearcher: &expconf.SearcherConfigV0{
-			RawSingleConfig: &expconf.SingleConfigV0{
-				RawMaxLength: &expconf.LengthV0{
-					Unit:  expconf.Batches,
-					Units: 1,
-				},
-			},
-			RawMetric: ptrs.Ptr(defaultSearcherMetric),
-		},
-	}).(expconf.ExperimentConfigV0)
-}
-
 func TestCheckpointMetadata(t *testing.T) {
 	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
@@ -196,7 +164,7 @@ func TestCheckpointMetadata(t *testing.T) {
 						BatchMetrics: []*structpb.Struct{},
 					},
 				}
-				err := db.AddValidationMetrics(context.TODO(), m)
+				err = db.AddValidationMetrics(context.TODO(), m)
 				require.NoError(t, err)
 			}
 

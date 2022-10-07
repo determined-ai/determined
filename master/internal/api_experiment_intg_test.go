@@ -647,7 +647,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Can't view project passed in.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
@@ -655,7 +655,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
 
 	// Can't view project passed in from config.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
@@ -669,7 +669,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
 	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
@@ -680,7 +680,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't activate experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
 	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).Return(nil).Once()
 	authZExp.On("CanEditExperiment", curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()

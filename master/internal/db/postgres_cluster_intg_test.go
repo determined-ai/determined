@@ -78,6 +78,7 @@ func TestClusterAPI(t *testing.T) {
 
 	// Retrieve the open allocation and check if end time is set to cluster_heartbeat
 	aOut, err := db.AllocationByID(aIn.AllocationID)
+	require.NoError(t, err)
 	require.NotNil(t, aOut, "aOut is Nil")
 	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")
 	require.Equal(t, *aOut.EndTime, clusterHeartbeat, "Expected end time of open allocation is = %q but it is = %q instead", clusterHeartbeat.String(), (*aOut.EndTime).String())

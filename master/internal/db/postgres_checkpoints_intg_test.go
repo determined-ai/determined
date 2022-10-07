@@ -70,8 +70,10 @@ func TestDeleteCheckpoints(t *testing.T) {
 	// Register checkpoint_1 and checkpoint_2 in ModelRegistry
 	var retCkpt1 checkpointv1.Checkpoint
 	err = db.QueryProto("get_checkpoint", &retCkpt1, checkpoint1.UUID)
+	require.NoError(t, err)
 	var retCkpt2 checkpointv1.Checkpoint
 	err = db.QueryProto("get_checkpoint", &retCkpt2, checkpoint2.UUID)
+	require.NoError(t, err)
 
 	addmv := modelv1.ModelVersion{
 		Model:      &pmdl,

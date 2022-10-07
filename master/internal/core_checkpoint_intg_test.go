@@ -141,12 +141,6 @@ func createCheckpoint(t *testing.T, pgDB *db.PgDB) (string, error) {
 	return id.String(), err
 }
 
-func newEchoContext() (echo.Context, *httptest.ResponseRecorder) {
-	e := echo.New()
-	rec := httptest.NewRecorder()
-	return e.NewContext(nil, rec), rec
-}
-
 func SetupCheckpointTestEcho(t *testing.T) (
 	*apiServer, echo.Context, *httptest.ResponseRecorder,
 ) {

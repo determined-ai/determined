@@ -23,7 +23,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
-var projectAuthZ *mocks.ProjectAuthZ
+var pAuthZ *mocks.ProjectAuthZ
 
 func projectNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
@@ -34,11 +34,11 @@ func SetupProjectAuthZTest(
 ) (*apiServer, *mocks.ProjectAuthZ, *mocks.WorkspaceAuthZ, model.User, context.Context) {
 	api, workspaceAuthZ, curUser, ctx := SetupWorkspaceAuthZTest(t)
 
-	if projectAuthZ == nil {
-		projectAuthZ = &mocks.ProjectAuthZ{}
+	if pAuthZ == nil {
+		pAuthZ = &mocks.ProjectAuthZ{}
 		project.AuthZProvider.Register("mock", projectAuthZ)
 	}
-	return api, projectAuthZ, workspaceAuthZ, curUser, ctx
+	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
 
 func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {

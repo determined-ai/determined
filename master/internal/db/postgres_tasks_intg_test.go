@@ -173,10 +173,6 @@ func TestAllocationState(t *testing.T) {
 	}
 }
 
-const (
-	postgresExhaustiveEnum = "postgresexhaustiveenum"
-)
-
 func TestExhaustiveEnums(t *testing.T) {
 	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
