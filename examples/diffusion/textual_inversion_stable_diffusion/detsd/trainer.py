@@ -152,7 +152,7 @@ class DetSDTextualInversionTrainer:
         self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
 
         self.steps_completed = 0
-        self.metrics_history = {"loss": []}
+        self.metrics_history = {"noise_pred_loss": []}
         if self.hidden_reg_weight:
             self.metrics_history["hidden_reg_loss"] = []
         self.last_mean_loss = None
@@ -308,9 +308,9 @@ class DetSDTextualInversionTrainer:
             text=dummy_prompts, noisy_latents=noisy_latents, timesteps=rand_timesteps
         )
 
-        loss = F.mse_loss(dummy_prompts_noise_pred, noise)
-        self.metrics_history["loss"].append(loss.item())
-        self.accelerator.backward(loss)
+        noise_pred_loss = F.mse_loss(dummy_prompts_noise_pred, noise)
+        self.metrics_history["noise_pred_loss"].append(noise_pred_loss.item())
+        self.accelerator.backward(noise_pred_loss)
 
         # A similar regularization for the encoder hidden states.
         if self.hidden_reg_weight:
@@ -329,9 +329,7 @@ class DetSDTextualInversionTrainer:
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-    def _get_noise_pred(
-        self, text: List[str], noisy_latents: torch.Tensor, timesteps: torch.Tensor
-    ) -> torch.Tensor:
+    def _get_encoder_hidden_states(self, text: List[str]) -> torch.Tensor:
         tokenized_text = self.tokenizer(
             text,
             padding="max_length",
@@ -340,6 +338,12 @@ class DetSDTextualInversionTrainer:
             return_tensors="pt",
         ).input_ids
         encoder_hidden_states = self.text_encoder(tokenized_text).last_hidden_state
+        return encoder_hidden_states
+
+    def _get_noise_pred(
+        self, text: List[str], noisy_latents: torch.Tensor, timesteps: torch.Tensor
+    ) -> torch.Tensor:
+        encoder_hidden_states = self._get_encoder_hidden_states(text)
         noise_pred = self.unet(noisy_latents, timesteps, encoder_hidden_states).sample
         return noise_pred
 
@@ -644,6 +648,8 @@ class DetSDTextualInversionTrainer:
             / self.accelerator.num_processes
             for metric_name, mean_metric_value in mean_metrics.items()
         }
+        # Add the total loss to the metrics dict.
+        reduced_mean_metrics["loss"] = sum(v for v in reduced_mean_metrics.values())
         self.last_mean_loss = reduced_mean_metrics["loss"]
         # Reset the local metrics history
         self.metrics_history = {metric_name: [] for metric_name in self.metrics_history}
