@@ -76,7 +76,7 @@ class Determined:
     def get_user(user_id: int):
         # return User object
 
-        # new API -> bindings.get_GetUser(user_id) ++ need to do username
+        # new API -> bindings.get_GetUser(user_id) (in api_user.go) ++ need to do username
         pass
 
     def get_user(user_name: str):

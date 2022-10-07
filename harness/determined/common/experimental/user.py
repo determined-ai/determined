@@ -64,7 +64,7 @@ class User:
     def update_username(current_username: str, new_username: str) -> Response:
         # return API response
 
-        # can use the edited API patch_PatchUser(username, patchUser) API
+        # can use the edited API patch_PatchUser(username, patchUser) API (need to also add username to message PatchUser in user.proto)
 
         pass
 
@@ -91,22 +91,31 @@ class User:
     def log_in_user(username: str, password: str) -> None:
         # for password should they pass in plain text or hashed value (applies to other methods too.)
         #  but how would we unhash it?
+
         pass
 
     def log_out_user(username: str) -> None:
         pass
 
-    def rename(name_target_user: str, new_username: str) -> None:
+    def change_password(username: str, new_password: str) -> None:
+        # can also get user from authentication.must_cli_auth().get_session_user()
+        # API bindings.patch_PatchUser (add username part) can't change the password. Should I edit this (need to also add username to message PatchUser in user.proto) or add new API method in api_user.go
         pass
 
-    def change_password(new_password: str, username: Optional[str]) -> None:
-        # can get user from authentication.must_cli_auth().get_session_user()
+    def change_password(user_id: str, new_password: str) -> None:
+        # can also get user from authentication.must_cli_auth().get_session_user()
+        # API bindings.patch_PatchUser can't change the password. Should I edit this (need to also add username to message PatchUser in user.proto) or add new API method in api_user.go
         pass
 
-    def link_with_agent_user(agent_user_group: AgentUserGroup) -> None:
+    def link_with_agent_user(username: str, agent_user_group: AgentUserGroup) -> None:
+        # calls update user with these args wrapped in agent_user_group.
+        pass
+
+    def link_with_agent_user(user_id: int, agent_user_group: AgentUserGroup) -> None:
         # calls update user with these args wrapped in agent_user_group.
         pass
 
     def whoami() -> str:
         # return username
+        # need to return curr_user username. 
         pass
