@@ -47,6 +47,7 @@ class DetSDTextualInversionTrainer:
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         num_train_timesteps: int = 1000,
         train_seed: int = 2147483647,
+        hidden_reg_weight: float = 1e-4,
         img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.0,
@@ -113,6 +114,7 @@ class DetSDTextualInversionTrainer:
             img_dirs = [img_dirs]
         self.img_dirs = img_dirs
         self.train_seed = train_seed
+        self.hidden_reg_weight = hidden_reg_weight
 
         self.accelerator = accelerate.Accelerator(
             gradient_accumulation_steps=self.gradient_accumulation_steps,
@@ -151,6 +153,8 @@ class DetSDTextualInversionTrainer:
 
         self.steps_completed = 0
         self.metrics_history = {"loss": []}
+        if self.hidden_reg_weight:
+            self.metrics_history["hidden_reg_loss"] = []
         self.last_mean_loss = None
 
         self.effective_global_batch_size = (
@@ -307,6 +311,20 @@ class DetSDTextualInversionTrainer:
         loss = F.mse_loss(dummy_prompts_noise_pred, noise)
         self.metrics_history["loss"].append(loss.item())
         self.accelerator.backward(loss)
+
+        # A similar regularization for the encoder hidden states.
+        if self.hidden_reg_weight:
+            dummy_hidden_states = self._get_encoder_hidden_states(text=dummy_prompts)
+            with torch.no_grad():
+                intializer_prompts = [
+                    self._replace_concepts_with_initializers(text) for text in prompts
+                ]
+                initializer_hidden_states = self._get_encoder_hidden_states(text=intializer_prompts)
+            hidden_reg_loss = self.hidden_reg_weight * F.mse_loss(
+                dummy_hidden_states, initializer_hidden_states
+            )
+            self.metrics_history["hidden_reg_loss"].append(hidden_reg_loss.item())
+            self.accelerator.backward(hidden_reg_loss)
 
         self.optimizer.step()
         self.optimizer.zero_grad()
