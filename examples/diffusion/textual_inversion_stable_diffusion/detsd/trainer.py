@@ -47,7 +47,7 @@ class DetSDTextualInversionTrainer:
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         num_train_timesteps: int = 1000,
         train_seed: int = 2147483647,
-        hidden_reg_weight: float = 1e-4,
+        hidden_reg_weight: float = 1e-5,
         img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.0,
