@@ -36,7 +36,7 @@ type (
 
 		// Resource configuration.
 		SlotsNeeded         int
-		Label               string
+		AgentLabel          string
 		ResourcePool        string
 		FittingRequirements FittingRequirements
 
