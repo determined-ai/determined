@@ -65,7 +65,7 @@ class User:
 
     def activate_user(self) -> None:
         # calls update_user with active = true
-        # API -> bindings.patch_PatchUser(user_id, patchUser)
+        # API -> bindings.patch_PatchUser(self.user_id, patchUser)
         pass
 
     def deactivate_user(self) -> None:
@@ -75,7 +75,7 @@ class User:
 
     def deactivate_user(self) -> None:
         # calls update_user with active = false
-        # bindings.patch_PatchUser(user_id, patchUser) API
+        # bindings.patch_PatchUser(self.user_id, patchUser) API
         pass
 
     def change_password(self, new_password: str) -> None:
