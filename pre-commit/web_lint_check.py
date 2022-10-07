@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import multiprocessing
 import os
@@ -9,7 +11,7 @@ def web_lint_check():
     parser.add_argument(
         "target", help="Either js, css, or misc", choices=["js", "css", "misc"]
     )
-    parser.add_argument("file_paths", help="1 or more file paths", nargs="*")
+    parser.add_argument("file_paths", help="1 or more file paths", nargs="+")
     args = parser.parse_args()
     DIR = "webui/react/"
 
