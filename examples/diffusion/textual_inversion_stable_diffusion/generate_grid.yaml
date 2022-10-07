@@ -1,11 +1,11 @@
 name: textual_inversion_stable_diffusion_generate
 entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
-  name: single
+  name: grid
   metric: none
-  max_length: 100 # Number of times the generation pipelie is called
+  max_length: 100 # Number of times the generation pipeline is called, per-worker.
 resources:
-  slots_per_trial: 4
+  slots_per_trial: 2
 max_restarts: 0
 environment:
     environment_variables:
@@ -23,7 +23,11 @@ hyperparameters:
         use_fp16: False
     uuids: []
     call:
-      prompt: a Van Gogh watercolor painting of a <det-logo>
+      prompt:
+        type: categorical
+        vals:
+          - a Van Gogh painting of a <det-logo>
+          - a <det-logo> riding a horse
       rows: 2
       cols: 2
       num_inference_steps: 50
@@ -32,4 +36,5 @@ hyperparameters:
       parallelize_factor: 2
       other_hf_pipeline_call_kwargs: {}
       max_nsfw_retries: 10
+    tb_write_freq: 10
 

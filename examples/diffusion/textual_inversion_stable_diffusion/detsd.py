@@ -1,8 +1,8 @@
 import json
+import logging
 import os
 import pathlib
 from contextlib import nullcontext
-from datetime import datetime
 from PIL import Image
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
@@ -84,7 +84,6 @@ class DetSDTextualInversionTrainer:
         guidance_scale: float = 7.5,
         generator_seed: int = 2147483647,
         other_inference_scheduler_kwargs: Optional[dict] = None,
-        latest_checkpoint: Optional[str] = None,
     ) -> None:
         # We assume that the Huggingface User Access token has been stored as a HF_AUTH_TOKEN
         # environment variable. See https://huggingface.co/docs/hub/security-tokens
@@ -96,7 +95,6 @@ class DetSDTextualInversionTrainer:
             )
         self.logger = accelerate.logging.get_logger(__name__)
 
-        self.latest_checkpoint = latest_checkpoint
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
 
         if isinstance(learnable_properties, str):
@@ -239,7 +237,6 @@ class DetSDTextualInversionTrainer:
 
         # Instantiate the trainer and train.
         trainer = cls(
-            latest_checkpoint=latest_checkpoint,
             **hparams["model"],
             **hparams["concepts"],
             **hparams["training"],
@@ -256,10 +253,15 @@ class DetSDTextualInversionTrainer:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
             distributed = None
+
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            trainer._restore_latest_checkpoint(core_context)
+            if latest_checkpoint is not None:
+                trainer._restore_latest_checkpoint(
+                    core_context=core_context, latest_checkpoint=latest_checkpoint
+                )
+
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while trainer.steps_completed < op.length:
@@ -557,44 +559,45 @@ class DetSDTextualInversionTrainer:
         self.vae.eval()
         self.unet.eval()
 
-    def _restore_latest_checkpoint(self, core_context: det.core.Context) -> None:
+    def _restore_latest_checkpoint(
+        self, core_context: det.core.Context, latest_checkpoint: str
+    ) -> None:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
-        if self.latest_checkpoint is not None:
-            with core_context.checkpoint.restore_path(self.latest_checkpoint) as path:
-                with self.accelerator.local_main_process_first():
-                    with open(path.joinpath("metadata.json"), "r") as f:
-                        checkpoint_metadata_dict = json.load(f)
-                        self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+        with core_context.checkpoint.restore_path(latest_checkpoint) as path:
+            with self.accelerator.local_main_process_first():
+                with open(path.joinpath("metadata.json"), "r") as f:
+                    checkpoint_metadata_dict = json.load(f)
+                    self.steps_completed = checkpoint_metadata_dict["steps_completed"]
 
-                    optimizer_state_dict = torch.load(
-                        path.joinpath("optimizer_state_dict.pt"),
-                        map_location=self.accelerator.device,
-                    )
-                    self.optimizer.load_state_dict(optimizer_state_dict)
+                optimizer_state_dict = torch.load(
+                    path.joinpath("optimizer_state_dict.pt"),
+                    map_location=self.accelerator.device,
+                )
+                self.optimizer.load_state_dict(optimizer_state_dict)
 
-                    learned_embeddings_dict = torch.load(
-                        path.joinpath("learned_embeddings_dict.pt"),
-                        map_location=self.accelerator.device,
-                    )
+                learned_embeddings_dict = torch.load(
+                    path.joinpath("learned_embeddings_dict.pt"),
+                    map_location=self.accelerator.device,
+                )
 
-                    token_embedding_layer = self._get_token_embedding_layer()
-                    for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
-                        learned_embeddings = learned_embeddings_dict[concept_token][
-                            "learned_embeddings"
-                        ]
-                        # Sanity check on length.
-                        # TODO: replace with strict=True in zip after upgrade to py >= 3.10.
-                        assert len(dummy_ids) == len(
-                            learned_embeddings
-                        ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'
-                        id_offset = token_embedding_layer.original_embedding.weight.shape[0]
-                        new_embedding_layer = token_embedding_layer.new_embedding
-                        for dummy_id, tensor in zip(
-                            dummy_ids,
-                            learned_embeddings,
-                        ):
+                token_embedding_layer = self._get_token_embedding_layer()
+                for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
+                    learned_embeddings = learned_embeddings_dict[concept_token][
+                        "learned_embeddings"
+                    ]
+                    # Sanity check on length.
+                    # TODO: replace with strict=True in zip after upgrade to py >= 3.10.
+                    assert len(dummy_ids) == len(
+                        learned_embeddings
+                    ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'
+                    id_offset = token_embedding_layer.original_embedding.weight.shape[0]
+                    new_embedding_layer = token_embedding_layer.new_embedding
+                    for dummy_id, tensor in zip(
+                        dummy_ids,
+                        learned_embeddings,
+                    ):
 
-                            new_embedding_layer.weight.data[dummy_id - id_offset] = tensor
+                        new_embedding_layer.weight.data[dummy_id - id_offset] = tensor
 
     def _save(self, core_context: det.core.Context) -> None:
         """Save the training state, metadata, and any generated images."""
@@ -812,81 +815,100 @@ class DetSDTextualInversionPipeline:
         the pipeline.
         - `call`: all arguments which are to be passed to the `__call__` method which generates
         images.
+        - `tb_write_freq`: an integer specifying how often to write images to tensorboard.
         """
         info = det.get_cluster_info()
         assert info is not None, "generate_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
+        latest_checkpoint = info.latest_checkpoint
 
         # Extract relevant groups from hparams.
         pipeline_init_kwargs = hparams["pipeline"]
         uuid_list = hparams["uuids"]
         call_kwargs = hparams["call"]
+        tb_write_freq = hparams["tb_write_freq"]
 
-        # Instantiate an Accelerator object to get the correct device required during init.
-        accelerator = accelerate.Accelerator()
-        pipeline_init_kwargs["device"] = accelerator.device
-
-        # Instantiate the pipeline, load in any checkpoints by uuid, and update attrs.
-        pipeline = cls(**pipeline_init_kwargs)
-        pipeline.load_from_uuids(uuid_list)
-        logger = accelerate.logging.get_logger(__name__)
-
-        logger.info("--------------- Generating Images ---------------")
+        # Get the distributed context, as needed.
         try:
             distributed = det.core.DistributedContext.from_torch_distributed()
         except KeyError:
             distributed = None
+
         with det.core.init(
             distributed=distributed, tensorboard_mode=det.core.TensorboardMode.MANUAL
         ) as core_context:
-            with torch.no_grad():
-                # There will be a single op of len max_length, as defined in the searcher config.
-                tb_dir = core_context.train.get_tensorboard_path()
-                tb_writer = SummaryWriter(log_dir=tb_dir)
-                steps_completed = 0
-                for op in core_context.searcher.operations():
-                    while steps_completed < op.length:
-                        # Ensuring all workers are using different, not-previously-used seeds.
-                        call_kwargs["seed"] += (
-                            accelerator.num_processes * steps_completed + accelerator.process_index
-                        )
-                        img_grid = pipeline(**call_kwargs)
-                        # Use Core API to gather seeds and Images; accelerator.gather() only
-                        # operates on tensors (and is technically an all-gather).
-                        all_img_seed_and_grids = core_context.distributed.gather(
-                            (call_kwargs["seed"], img_grid)
-                        )
-                        if accelerator.is_main_process:
-                            for seed, img_grid in all_img_seed_and_grids:
-                                tag = ", ".join(
-                                    [
-                                        f"{k}: {v}"
-                                        for k, v in call_kwargs.items()
-                                        if v and k != "seed"
-                                    ]
-                                )
-                                img_grid_t = pil_to_tensor(img_grid)
-                                tb_writer.add_image(
-                                    tag,
-                                    img_tensor=img_grid_t,
-                                    global_step=seed,
-                                )
-                                tb_writer.flush()  # Ensure all images are written to disk.
-                                core_context.train.upload_tensorboard_files()
+            logging.info("--------------- Generating Images ---------------")
 
-                        steps_completed += 1
-                        if core_context.preempt.should_preempt():
-                            return
+            # Get worker data.
+            process_index = core_context.distributed.get_rank()
+            is_main_process = process_index == 0
+            num_processes = core_context.distributed.get_size()
 
-                    if accelerator.is_main_process:
-                        # Report zero when completed.
-                        op.report_completed(0)
+            # Update random seeds to be unique, to avoid repeated images.
+            call_kwargs["seed"] += process_index
+
+            # TODO: support CPU case, if the user really wants it.
+            device = f"cuda:{process_index}" if distributed is not None else "cuda"
+            pipeline_init_kwargs["device"] = device
+
+            # Instantiate the pipeline and load in any checkpoints by uuid.
+            pipeline = cls(**pipeline_init_kwargs)
+            pipeline.load_from_uuids(uuid_list)
+
+            # Tensorboard writer.
+            tb_dir = core_context.train.get_tensorboard_path()
+            tb_writer = SummaryWriter(log_dir=tb_dir)
+            # Use the __call__ args apart for the tensorboard tag.
+            tb_tag = ", ".join([f"{k}: {v}" for k, v in call_kwargs.items() if v and k != "seed"])
+
+            steps_completed = 0
+            img_list = []
+
+            if latest_checkpoint is not None:
+                with core_context.checkpoint.restore_path(latest_checkpoint) as path:
+                    with open(path.joinpath("metadata.json"), "r") as f:
+                        steps_completed = json.load(f)["steps_completed"]
+
+            # There will be a single op of len max_length, as defined in the searcher config.
+            for op in core_context.searcher.operations():
+                while steps_completed < op.length:
+                    # Ensure all workers are using different, not-previously-used seeds.
+                    call_kwargs["seed"] += num_processes * steps_completed + process_index
+                    img_list.extend(pipeline(**call_kwargs))
+                    steps_completed += 1
+                    # Write to tensorboard at the specified frequency.
+                    if steps_completed % tb_write_freq == 0 or steps_completed == op.length:
+                        all_img_dicts = core_context.distributed.gather(img_dict)
+                        if is_main_process:
+                            for img_d in all_img_dicts:
+                                for seed, img in img_d.items():
+                                    img_t = pil_to_tensor(img)
+                                    tb_writer.add_image(
+                                        tb_tag,
+                                        img_tensor=img_t,
+                                        global_step=seed,
+                                    )
+                                    tb_writer.flush()  # Ensure all images are written to disk.
+                                    core_context.train.upload_tensorboard_files()
+                            checkpoint_metadata_dict = {
+                                "steps_completed": steps_completed,
+                            }
+                            with core_context.checkpoint.store_path(checkpoint_metadata_dict) as _:
+                                pass
+                            op.report_progress(steps_completed)
+
+                    if core_context.preempt.should_preempt():
+                        return
+
+                if is_main_process:
+                    # Report zero upon completion.
+                    op.report_completed(0)
 
     def load_from_checkpoint_paths(
         self, checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]]
     ) -> None:
         """Load concepts from one or more checkpoint paths, each of which is expected contain a
-        file with the name specified by the `learned_embeddings_filename` init arg. The file is
+        file with the name matching the `learned_embeddings_filename` init arg. The file is
         expected to contain a dictionary whose keys are the `concept_token`s and whose values are
         dictionaries containing an `initializer_token` key and a `learned_embeddings` whose
         corresponding values are the initializer string and learned embedding tensors, respectively.
@@ -1020,68 +1042,61 @@ class DetSDTextualInversionPipeline:
             text = text.replace(concept_token, dummy_tokens)
         return text
 
-    def _save_image(self, image: Image.Image, filename: str, saved_img_dir: str) -> None:
-        """Saves the image as a time-stamped png file."""
+    def _save_img(self, img: Image.Image, filename: str, saved_img_dir: str) -> None:
         saved_img_dir = pathlib.Path(saved_img_dir)
         save_path = saved_img_dir.joinpath(filename)
-        image.save(save_path)
+        img.save(save_path)
 
     def __call__(
         self,
         prompt: str,
-        rows: int = 1,
-        cols: int = 1,
         num_inference_steps: int = 50,
         guidance_scale: int = 7.5,
         saved_img_dir: Optional[str] = None,
         seed: int = 2147483647,
-        parallelize_factor: int = 1,
+        num_samples: int = 1,
+        batch_size: int = 1,
         other_hf_pipeline_call_kwargs: Optional[dict] = None,
         max_nsfw_retries: int = 10,
-    ) -> Optional[Image.Image]:
-        """Generates an image from the provided prompt and optionally writes the results to disk."""
+    ) -> List[Image.Image]:
+        """Generates a list of images from the provided prompt and optionally writes the results to
+        disk.
+        """
         other_hf_pipeline_call_kwargs = other_hf_pipeline_call_kwargs or {}
-        num_samples = rows * cols
-        # Could insert a check that num_samples % parallelize_factor == 0, else wasting compute
+        # TODO: insert a check that num_samples % batch_size == 0, else wasting compute
 
-        images = []
+        imgs = []
         generated_samples = retries = 0
         # The dummy prompts are what actually get fed into the pipeline
         dummy_prompt = self._replace_concepts_with_dummies(prompt)
-        generator = torch.Generator(device="cuda").manual_seed(seed)
-        while generated_samples < num_samples and retries < max_nsfw_retries:
+        generator = torch.Generator(device=self.device).manual_seed(seed)
+        while generated_samples < num_samples:
             context = torch.autocast("cuda") if self.use_autocast else nullcontext()
             with context:
-                out = self.pipeline(
-                    [dummy_prompt] * parallelize_factor,
+                output = self.pipeline(
+                    [dummy_prompt] * batch_size,
                     num_inference_steps=num_inference_steps,
                     guidance_scale=guidance_scale,
                     generator=generator,
                     **other_hf_pipeline_call_kwargs,
                 )
-            for nsfw, image in zip(out["nsfw_content_detected"], out["sample"]):
+            for nsfw, img in zip(output["nsfw_content_detected"], output["sample"]):
                 # Re-try, if nsfw_content_detected
-                if nsfw:
+                if nsfw and retries < max_nsfw_retries:
                     retries += 1
                     continue
-                images.append(image)
+                imgs.append(img)
                 generated_samples += 1
-        image_grid = self._create_image_grid(images[:num_samples], rows, cols)
-        if saved_img_dir is not None:
-            generation_details = f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_"
-            timestamp = "_".join(f"_{datetime.now().strftime('%c')}".split())
-            file_suffix = generation_details + timestamp + ".png"
-            joined_split_prompt = "_".join(prompt.split())
-            filename = joined_split_prompt[: 255 - len(file_suffix)] + file_suffix
-            self._save_image(image_grid, filename, saved_img_dir)
-        return image_grid
 
-    def _create_image_grid(self, images: List[Image.Image], rows: int, cols: int) -> Image.Image:
-        w, h = images[0].size
-        image_grid = Image.new("RGB", size=(cols * w, rows * h))
-        for idx, img in enumerate(images):
-            image_grid.paste(img, box=(idx % cols * w, idx // cols * h))
-        return image_grid
+        if saved_img_dir is not None:
+            for idx, img in enumerate(imgs):
+                file_ending = (
+                    f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_{idx}.png"
+                )
+                joined_split_prompt = "_".join(prompt.split())
+                filename = joined_split_prompt[: 255 - len(file_ending)] + file_ending
+                self._save_img(img, filename, saved_img_dir)
+        return imgs
 
     def __repr__(self) -> str:
         attr_dict = {
