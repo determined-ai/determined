@@ -47,7 +47,7 @@ class DetSDTextualInversionTrainer:
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         num_train_timesteps: int = 1000,
         train_seed: int = 2147483647,
-        hidden_reg_weight: float = 1e-5,
+        hidden_reg_weight: float = 1e-6,
         img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
         flip_p: float = 0.0,
@@ -312,7 +312,9 @@ class DetSDTextualInversionTrainer:
         self.metrics_history["noise_pred_loss"].append(noise_pred_loss.item())
         self.accelerator.backward(noise_pred_loss)
 
-        # A similar regularization for the encoder hidden states.
+        # Optional regularization penalty for changing the encoder hidden states too much.
+        # Inspired by similar ideas in the original Textual Inversion repo and discussions on
+        # the Stable Diffusion #community-research channel.
         if self.hidden_reg_weight:
             dummy_hidden_states = self._get_encoder_hidden_states(text=dummy_prompts)
             with torch.no_grad():

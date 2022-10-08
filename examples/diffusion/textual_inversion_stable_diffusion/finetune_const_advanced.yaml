@@ -44,6 +44,7 @@ hyperparameters:
         beta_schedule: scaled_linear # One of "linear", "scaled_linear", or "squaredcos_cap_v2".
         num_train_timesteps: 1000
         train_seed: 2147483647
+        hidden_reg_weight: 1e-6
     inference:
         generate_training_images: True
         images_per_prompt: 3
