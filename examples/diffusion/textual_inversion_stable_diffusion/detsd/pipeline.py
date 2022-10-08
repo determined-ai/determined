@@ -75,7 +75,6 @@ class DetSDTextualInversionPipeline:
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
 
-        self._build_models()
         self._build_pipeline()
 
     @classmethod
@@ -256,11 +255,11 @@ class DetSDTextualInversionPipeline:
                 ) = utils.add_new_tokens_to_tokenizer(
                     concept_token=concept_token,
                     initializer_tokens=initializer_tokens,
-                    tokenizer=self.tokenizer,
+                    tokenizer=self.pipeline.tokenizer,
                 )
 
-                self.text_encoder.resize_token_embeddings(len(self.tokenizer))
-                token_embeddings = self.text_encoder.get_input_embeddings().weight.data
+                self.pipeline.text_encoder.resize_token_embeddings(len(self.pipeline.tokenizer))
+                token_embeddings = self.pipeline.text_encoder.get_input_embeddings().weight.data
                 # Sanity check on length.
                 # TODO: replace with strict=True in zip after upgrade to py >= 3.10
                 assert len(dummy_placeholder_ids) == len(
@@ -290,61 +289,15 @@ class DetSDTextualInversionPipeline:
         self.load_from_checkpoint_paths(checkpoint_paths)
         return checkpoint_paths
 
-    def _build_models(self) -> None:
-        revision = "fp16" if self.use_fp16 else "main"
-        self.tokenizer = CLIPTokenizer.from_pretrained(
-            pretrained_model_name_or_path=self.pretrained_model_name_or_path,
-            subfolder="tokenizer",
-            use_auth_token=self.use_auth_token,
-            revision=revision,
-            torch_dtype="auto",
-        )
-        self.text_encoder = CLIPTextModel.from_pretrained(
-            pretrained_model_name_or_path=self.pretrained_model_name_or_path,
-            subfolder="text_encoder",
-            use_auth_token=self.use_auth_token,
-            revision=revision,
-            torch_dtype="auto",
-        )
-        self.vae = AutoencoderKL.from_pretrained(
-            pretrained_model_name_or_path=self.pretrained_model_name_or_path,
-            subfolder="vae",
-            use_auth_token=self.use_auth_token,
-            revision=revision,
-            torch_dtype="auto",
-        )
-        self.unet = UNet2DConditionModel.from_pretrained(
-            pretrained_model_name_or_path=self.pretrained_model_name_or_path,
-            subfolder="unet",
-            use_auth_token=self.use_auth_token,
-            revision=revision,
-            torch_dtype="auto",
-        )
-        self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
-            pretrained_model_name_or_path="CompVis/stable-diffusion-safety-checker"
-        )
-        self.feature_extractor = CLIPFeatureExtractor.from_pretrained(
-            pretrained_model_name_or_path="openai/clip-vit-base-patch32"
-        )
-
-        for model in (
-            self.text_encoder,
-            self.vae,
-            self.unet,
-        ):
-            model.to(self.device)
-            model.eval()
-
     def _build_pipeline(self) -> None:
-        self.text_encoder.eval()
-        self.pipeline = StableDiffusionPipeline(
-            text_encoder=self.text_encoder,
-            vae=self.vae,
-            unet=self.unet,
-            tokenizer=self.tokenizer,
+        revision = "fp16" if self.use_fp16 else "main"
+        torch_dtype = torch.float16 if self.use_fp16 else None
+        self.pipeline = StableDiffusionPipeline.from_pretrained(
+            pretrained_model_name_or_path=self.pretrained_model_name_or_path,
             scheduler=self.scheduler,
-            safety_checker=self.safety_checker,
-            feature_extractor=self.feature_extractor,
+            use_auth_token=self.use_auth_token,
+            revision=revision,
+            torch_dtype=torch_dtype,
         ).to(self.device)
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
