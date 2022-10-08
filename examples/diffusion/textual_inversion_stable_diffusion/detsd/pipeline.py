@@ -152,17 +152,26 @@ class DetSDTextualInversionPipeline:
             img_history = []
 
             if latest_checkpoint is not None:
-                with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-                    with open(path.joinpath("metadata.json"), "r") as f:
-                        metadata_dict = json.load(f)
-                        steps_completed = metadata_dict["steps_completed"]
-                        generated_imgs = metadata_dict["generated_imgs"]
-                        generator_state_dict = torch.load(
-                            path.joinpath("generator_state_dict.pt"),
-                        )
-                        generator.set_state(generator_state_dict[device])
-                        if is_main_process:
-                            logger.info(f"Resumed from checkpoint at step {steps_completed}")
+                # Only the local chief worker performs the download.
+                if is_local_main_process:
+                    with core_context.checkpoint.restore_path(latest_checkpoint) as path:
+                        with open(path.joinpath("metadata.json"), "r") as f:
+                            metadata_dict = json.load(f)
+                            generator_state_dict = torch.load(
+                                path.joinpath("generator_state_dict.pt"),
+                            )
+                else:
+                    metadata_dict = None
+                    generator_state_dict = None
+                metadata_dict = core_context.distributed.broadcast_local(metadata_dict)
+                generator_state_dict = core_context.distributed.broadcast_local(
+                    generator_state_dict
+                )
+                steps_completed = metadata_dict["steps_completed"]
+                generated_imgs = metadata_dict["generated_imgs"]
+                generator.set_state(generator_state_dict[device])
+                if is_main_process:
+                    logger.info(f"Resumed from checkpoint at step {steps_completed}")
 
             if is_main_process:
                 logger.info("--------------- Generating Images ---------------")
