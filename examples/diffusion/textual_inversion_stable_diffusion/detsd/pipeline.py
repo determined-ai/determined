@@ -5,19 +5,14 @@ import pathlib
 from PIL import Image
 from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
-
 import determined as det
 import torch
 from determined.experimental import client
 from diffusers import (
-    AutoencoderKL,
     StableDiffusionPipeline,
-    UNet2DConditionModel,
 )
-from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms.functional import pil_to_tensor
-from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 from detsd import utils, defaults
 
