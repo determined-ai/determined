@@ -297,24 +297,28 @@ class DetSDTextualInversionPipeline:
             subfolder="tokenizer",
             use_auth_token=self.use_auth_token,
             revision=revision,
+            torch_dtype="auto",
         )
         self.text_encoder = CLIPTextModel.from_pretrained(
             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
             subfolder="text_encoder",
             use_auth_token=self.use_auth_token,
             revision=revision,
+            torch_dtype="auto",
         )
         self.vae = AutoencoderKL.from_pretrained(
             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
             subfolder="vae",
             use_auth_token=self.use_auth_token,
             revision=revision,
+            torch_dtype="auto",
         )
         self.unet = UNet2DConditionModel.from_pretrained(
             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
             subfolder="unet",
             use_auth_token=self.use_auth_token,
             revision=revision,
+            torch_dtype="auto",
         )
         self.safety_checker = StableDiffusionSafetyChecker.from_pretrained(
             pretrained_model_name_or_path="CompVis/stable-diffusion-safety-checker"
