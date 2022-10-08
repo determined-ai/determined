@@ -118,14 +118,22 @@ class DetSDTextualInversionPipeline:
             # Get worker data.
             process_index = core_context.distributed.get_rank()
             is_main_process = process_index == 0
+            local_process_index = core_context.distributed.get_local_rank()
+            is_local_main_process = local_process_index == 0
 
             device = f"cuda:{process_index}" if distributed is not None else "cuda"
             pipeline_init_kwargs["device"] = device
 
             # Instantiate the pipeline and load in any checkpoints by uuid.
             pipeline = cls(**pipeline_init_kwargs)
-            # TODO: Currently every worker downloads the checkpoint; change.
-            pipeline.load_from_uuids(uuid_list)
+            # Only the local chief worker performs the download
+            if is_local_main_process:
+                paths = pipeline.load_from_uuids(uuid_list)
+            else:
+                paths = None
+            paths = core_context.distributed.broadcast_local(paths)
+            if not is_local_main_process:
+                pipeline.load_from_checkpoint_paths(paths)
 
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
@@ -265,15 +273,13 @@ class DetSDTextualInversionPipeline:
                 self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
             self.all_checkpoint_paths.append(path)
 
-        print(f"Successfully loaded checkpoints. All loaded concepts: {self.all_added_concepts}")
-
     def load_from_uuids(
         self,
         uuids: Union[str, Sequence[str]],
-    ) -> None:
-        """Load concepts from one or more Determined checkpoint uuids. Must be logged into the
-        Determined cluster to use this method.  If not logged-in, call
-        determined.experimental.client.login first.
+    ) -> List[pathlib.Path]:
+        """Load concepts from one or more Determined checkpoint uuids and returns a list of all
+        downloaded checkpoint paths. Must be logged into the Determined cluster to use this method.
+        If not logged-in, call determined.experimental.client.login first.
         """
         if isinstance(uuids, str):
             uuids = [uuids]
@@ -282,9 +288,9 @@ class DetSDTextualInversionPipeline:
             checkpoint = client.get_checkpoint(u)
             checkpoint_paths.append(pathlib.Path(checkpoint.download()))
         self.load_from_checkpoint_paths(checkpoint_paths)
+        return checkpoint_paths
 
     def _build_models(self) -> None:
-        print(80 * "-", "Downloading pre-trained models...", 80 * "-", sep="\n")
         revision = "fp16" if self.use_fp16 else "main"
         self.tokenizer = CLIPTokenizer.from_pretrained(
             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
@@ -326,12 +332,6 @@ class DetSDTextualInversionPipeline:
             model.eval()
 
     def _build_pipeline(self) -> None:
-        print(
-            80 * "-",
-            "Building the pipeline...",
-            80 * "-",
-            sep="\n",
-        )
         self.text_encoder.eval()
         self.pipeline = StableDiffusionPipeline(
             text_encoder=self.text_encoder,
