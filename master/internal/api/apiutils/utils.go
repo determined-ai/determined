@@ -1,7 +1,6 @@
 package apiutils
 
 import (
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,8 +27,11 @@ var (
 	// ErrDuplicateRecord is the returned standard error for finding duplicates.
 	ErrDuplicateRecord = status.Error(codes.AlreadyExists, "duplicate record")
 	// ErrInternal is the returned standard error for an internal error.
-	ErrInternal       = status.Error(codes.Internal, "internal server error")
-	errPassthroughMap = map[error]bool{
+	ErrInternal = status.Error(codes.Internal, "internal server error")
+
+	// ErrorPassthroughSet is the default set of errors that will be passed through by
+	// MapAndFilterErrors without blocking or mapping.
+	ErrorPassthroughSet = map[error]bool{
 		nil:                          true,
 		ErrBadRequest:                true,
 		ErrInvalidLimit:              true,
@@ -38,11 +40,30 @@ var (
 		ErrInternal:                  true,
 		grpcutil.ErrPermissionDenied: true,
 	}
+
+	// ErrorMapping is the default mapping of errors used by MapAndFilterErrors to, for example,
+	// map errors from other application layers to what an API package will want to return.
+	ErrorMapping = map[error]error{
+		db.ErrNotFound:        ErrNotFound,
+		db.ErrDuplicateRecord: ErrDuplicateRecord,
+		db.ErrInvalidInput:    ErrBadRequest,
+	}
 )
 
 // MapAndFilterErrors takes in an error at the db level and translates it into a standard error.
-func MapAndFilterErrors(err error) error {
-	if allowed := errPassthroughMap[err]; allowed {
+func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error]error) error {
+	if err == nil {
+		return nil
+	}
+	if passthrough == nil {
+		passthrough = ErrorPassthroughSet
+	}
+	if mapping == nil {
+		mapping = ErrorMapping
+	}
+
+	// Filter
+	if allowed := passthrough[err]; allowed {
 		return err
 	}
 
@@ -50,16 +71,11 @@ func MapAndFilterErrors(err error) error {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, db.ErrDuplicateRecord):
-		return status.Error(codes.AlreadyExists, err.Error())
-	case errors.Is(err, db.ErrInvalidInput):
-		return ErrBadRequest
+	// Map
+	if mappedErr := mapping[err]; mappedErr != nil {
+		return mappedErr
 	}
 
 	logrus.WithError(err).Debug("suppressing error at API boundary")
-
 	return ErrInternal
 }
