@@ -2,11 +2,11 @@ package webhooks
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/uptrace/bun"
-	"gopkg.in/square/go-jose.v2/json"
 )
 
 // AddWebhook adds a Webhook and its Triggers to the DB.
@@ -90,16 +90,16 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 	// get webhook types and trigger ids - DONE
 	var triggers []Trigger
 
-	err := db.Bun().NewSelect().Model(&triggers).Relation("Webhooks").Where("triggerType = ?", TriggerTypeStateChange).Where("condition ->> state = ?", e.State).Scan(ctx)
+	err := db.Bun().NewSelect().Model(&triggers).Relation("Webhooks").
+		Where("triggerType = ?", TriggerTypeStateChange).
+		Where("condition -> 'state' = ?", e.State).
+		Scan(ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, trigger := range triggers {
-		webhookType := trigger.Webhook.WebhookType
-
-		// generate payload
-		payload := generateEventPayload(webhookType, e)
+		payload := generateEventPayload(trigger.Webhook.WebhookType, e)
 
 		// generate model
 		m := Event{
@@ -112,14 +112,41 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 		_, err := db.Bun().NewInsert().Model(m).Exec(ctx)
 	}
 
-	// call something to wakeup the sender
+	singletonShipper.Wake()
 }
 
-func getEvents(ctx context.Context) ([]Event, error) {
-	var events []Event
-	err := db.Bun().NewSelect().Model(&events).Order("id ASC").Scan(ctx)
+func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
+	tx, err := db.Bun().Begin()
 	if err != nil {
 		return nil, err
 	}
-	return events, nil
+
+	var events []Event
+	if err := tx.NewRaw(`
+DELETE FROM webhook_events
+USING ( SELECT * FROM webhook_events LIMIT ? FOR UPDATE SKIP LOCKED ) q
+WHERE q.id = webhook_events.id RETURNING q.*`,
+		limit).Scan(ctx, &events); err != nil {
+		return nil, err
+	}
+
+	return &eventBatch{tx: &tx, events: events}, nil
+}
+
+type eventBatch struct {
+	tx       *bun.Tx
+	consumed bool
+	events   []Event
+}
+
+func (b *eventBatch) consume(ctx context.Context) error {
+	b.consumed = true
+	return b.tx.Commit()
+}
+
+func (b *eventBatch) close() error {
+	if b.consumed {
+		return nil
+	}
+	return b.tx.Rollback()
 }

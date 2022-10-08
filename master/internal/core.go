@@ -1095,8 +1095,8 @@ func (m *Master) Run(ctx context.Context) error {
 		return err
 	}
 
-	s := webhooks.NewSender()
-	go s.Run(context.TODO())
+	webhooks.Init(context.TODO())
+	defer webhooks.Deinit()
 
 	return m.startServers(ctx, cert)
 }

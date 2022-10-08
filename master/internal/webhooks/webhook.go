@@ -187,8 +187,6 @@ type WebhookEventID int
 type Event struct {
 	bun.BaseModel `bun:"table:webhook_events"`
 
-	ID        WebhookEventID         `bun:"id,pk,autoincrement"`
-	TriggerID TriggerID              `bun:"trigger_id,notnull"`
-	Attempts  int                    `bun:"attempts"`
-	Payload   map[string]interface{} `bun:"payload,notnull"`
+	ID      WebhookEventID `bun:"id,pk,autoincrement"`
+	Payload []byte         `bun:"payload,notnull"`
 }
