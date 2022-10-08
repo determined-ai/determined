@@ -25,11 +25,11 @@ func (ws Webhooks) Proto() []*webhookv1.Webhook {
 type Webhook struct {
 	bun.BaseModel `bun:"table:webhooks"`
 
-	ID  WebhookID `bun:"id,pk,autoincrement"`
-	URL string    `bun:"url,notnull"`
-
-	Triggers    Triggers    `bun:"rel:has-many,join:id=webhook_id"`
+	ID          WebhookID   `bun:"id,pk,autoincrement"`
 	WebhookType WebhookType `bun:"webhook_type,notnull"`
+	URL         string      `bun:"url,notnull"`
+
+	Triggers Triggers `bun:"rel:has-many,join:id=webhook_id"`
 }
 
 // WebhookFromProto returns a model Webhook from a proto definition.
@@ -189,4 +189,24 @@ type Event struct {
 
 	ID      WebhookEventID `bun:"id,pk,autoincrement"`
 	Payload []byte         `bun:"payload,notnull"`
+}
+
+type Field struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+type SlackBlock struct {
+	Type   string  `json:"type"`
+	Text   Field   `json:"text"`
+	Fields []Field `json:"fields"`
+}
+
+type SlackAttachment struct {
+	Color  string       `json:"color"`
+	Blocks []SlackBlock `json:"blocks"`
+}
+
+type SlackMessageBody struct {
+	Blocks      []SlackBlock      `json:"blocks"`
+	Attachments []SlackAttachment `json:"attachments"`
 }
