@@ -126,7 +126,7 @@ class DetSDTextualInversionPipeline:
 
             # Instantiate the pipeline and load in any checkpoints by uuid.
             pipeline = cls(**pipeline_init_kwargs)
-            # Only the local chief worker performs the download
+            # Only the local chief worker performs the download.
             if is_local_main_process:
                 paths = pipeline.load_from_uuids(uuid_list)
             else:
