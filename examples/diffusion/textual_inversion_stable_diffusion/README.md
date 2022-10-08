@@ -153,13 +153,21 @@ relevant entries under the
 `img_dirs`, `learnable_properties`, `concept_tokens`, and `initializer_tokens` fields,
 keeping the same relative ordering across each.
 
+#### Advanced Options
+
 More advanced customizations can be made by modifying the `finetune_const_advanced.yaml` config
-file. For instance, images in `det_logos/` use `_`-separated, descriptive filenames, which can be
-appended to the
-training prompts, as controlled by the `append_file_name_to_text` and `file_name_split_char` fields
-in
-the `concepts` section of this advanced config. Use similar
-filenames and config settings with your own images for a boost in results.
+file. Examples:
+
+* Images in `det_logos/` use `_`-separated, descriptive filenames, which can be
+  appended to the
+  training prompts, as controlled by the `append_file_name_to_text` and `file_name_split_char`
+  fields
+  in
+  the `concepts` section of this advanced config. Use similar
+  filenames and config settings with your own images for a boost in results.
+* Optionally add regularization to training by setting `hidden_reg_weight` to a non-zero value. When
+  used, this penalizes the model for moving the encoder hidden states far from their initialization
+  point.
 
 ## Some Tips
 
