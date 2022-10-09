@@ -132,7 +132,7 @@ class DetSDTextualInversionPipeline:
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
             tb_writer = SummaryWriter(log_dir=tb_dir)
-            # Use the __call__ args apart for the tensorboard tag.
+            # Include the __call__ args in the tensorboard tag.
             tb_tag = ", ".join([f"{k}: {v}" for k, v in call_kwargs.items() if v])
 
             # Use unique seeds, to avoid repeated images, and add the corresponding generator to the
@@ -140,6 +140,8 @@ class DetSDTextualInversionPipeline:
             seed = main_process_seed + process_index
             generator = torch.Generator(device=device).manual_seed(seed)
             call_kwargs["generator"] = generator
+            # Add seed information to the tensorboard tag.
+            tb_tag += f", seed: {seed}"
 
             steps_completed = 0
             generated_imgs = 0
@@ -300,11 +302,6 @@ class DetSDTextualInversionPipeline:
             text = text.replace(concept_token, dummy_tokens)
         return text
 
-    def _save_img(self, img: Image.Image, filename: str, saved_img_dir: str) -> None:
-        saved_img_dir = pathlib.Path(saved_img_dir)
-        save_path = saved_img_dir.joinpath(filename)
-        img.save(save_path)
-
     def __call__(
         self,
         prompt: str,
@@ -316,7 +313,7 @@ class DetSDTextualInversionPipeline:
         num_samples: int = 1,
         batch_size: int = 1,
         other_hf_pipeline_call_kwargs: Optional[dict] = None,
-        max_nsfw_retries: Optional[int] = 5,
+        max_nsfw_retries: int = 0,
     ) -> List[Image.Image]:
         """Generates a list of num_samples images from the provided prompt and optionally writes the
         results to disk.
@@ -350,12 +347,16 @@ class DetSDTextualInversionPipeline:
 
         if saved_img_dir is not None:
             for idx, img in enumerate(imgs):
-                file_ending = (
-                    f"_{num_inference_steps}_steps_{guidance_scale}_gs_{seed}_seed_{idx}.png"
-                )
+                call_args_str = f"_{num_inference_steps}_steps_{guidance_scale}_gs"
+                if seed is not None:
+                    call_args_str += f"_seed_{seed}"
+                elif generator is not None:
+                    call_args_str += f"_seed_{generator.initial_seed()}"
+                file_ending = call_args_str + ".png"
                 joined_split_prompt = "_".join(prompt.split())
                 filename = joined_split_prompt[: 255 - len(file_ending)] + file_ending
-                self._save_img(img, filename, saved_img_dir)
+                save_path = pathlib.Path(saved_img_dir).joinpath(filename)
+                img.save(save_path)
 
         return imgs
 
