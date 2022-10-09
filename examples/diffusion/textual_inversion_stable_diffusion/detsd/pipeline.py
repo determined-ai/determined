@@ -81,7 +81,8 @@ class DetSDTextualInversionPipeline:
         - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
         the pipeline.
         - `call`: all arguments which are to be passed to the `__call__` method which generates
-        images, but which cannot contain `seed` or `generator`.
+        images, but which cannot contain `seed` or `generator` or `max_nsfw_retries` for efficiency
+        and reproducibility reasons.
         - `main_process_seed`: an integer specifying the seed used by the chief worker for
         generation. Other workers add their process index to this value.
         - `save_freq`: an integer specifying how often to write images to tensorboard.
@@ -97,6 +98,10 @@ class DetSDTextualInversionPipeline:
         call_kwargs = hparams["call"]
         main_process_seed = hparams["main_process_seed"]
         save_freq = hparams["save_freq"]
+
+        assert not call_kwargs.get(
+            "max_nsfw_retries", 0
+        ), "max_nsfw_retries must be 0 when using generate_on_cluster()."
 
         logger = logging.getLogger(__name__)
 
