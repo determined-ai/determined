@@ -25,6 +25,8 @@ class TextualInversionDataset(Dataset):
         center_crop: bool = False,
         append_file_name_to_text: bool = False,
         file_name_split_char: str = "_",
+        num_blank_prompts: int = 100,
+        num_a_prompts: int = 100,
     ):
         assert (
             len(img_dirs) == len(concept_tokens) == len(learnable_properties)
@@ -61,6 +63,8 @@ class TextualInversionDataset(Dataset):
             self.img_dirs, concept_tokens, self.learnable_properties
         ):
             templates = defaults.TEMPLATE_DICT[prop]
+            templates.extend(["{}"] * num_blank_prompts)
+            templates.extend(["a {}"] * num_a_prompts)
             imgs_and_paths = self._get_imgs_and_paths_from_dir_path(dir_path)
             for img, path in imgs_and_paths:
                 img_tensor = self._convert_img_to_tensor(img)
