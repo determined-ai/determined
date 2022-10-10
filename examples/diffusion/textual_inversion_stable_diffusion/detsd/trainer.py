@@ -252,9 +252,7 @@ class DetSDTextualInversionTrainer:
                         took_sgd_step = trainer.accelerator.sync_gradients
                         if took_sgd_step:
                             trainer.steps_completed += 1
-                            trainer.logger.info(
-                                f"Step {trainer.steps_completed} completed on batch {batch_idx}"
-                            )
+                            trainer.logger.info(f"Step {trainer.steps_completed} completed")
 
                             is_end_of_training = trainer.steps_completed == op.length
                             time_to_report = (
