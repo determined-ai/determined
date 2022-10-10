@@ -22,7 +22,7 @@ func TestDispatchPersistence(t *testing.T) {
 
 	u := RequireMockUser(t, db)
 	tk := RequireMockTask(t, db, &u.ID)
-	a := requireMockAllocation(t, db, tk.TaskID)
+	a := RequireMockAllocation(t, db, tk.TaskID)
 
 	// Hack, to avoid circular imports.
 	rID := sproto.ResourcesID(uuid.NewString())
