@@ -350,7 +350,7 @@ class ProfilerAgent:
         self.sync_device = sync_device
 
     @staticmethod
-    def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
+    def from_env(env: Any, global_rank: int, local_rank: int) -> "ProfilerAgent":
         begin_on_batch, end_after_batch = env.experiment_config.profiling_interval()
         return ProfilerAgent(
             trial_id=env.det_trial_id,

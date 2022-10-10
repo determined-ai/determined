@@ -1,0 +1,16 @@
+name: core-api-stage-5
+entrypoint: python3 5_profiling.py
+
+# Remaining configuration is unchanged since stage 0.
+profiling:
+  enabled: true
+  begin_on_batch: 0
+  end_after_batch: 10
+  sync_timings: false
+searcher:
+  name: single
+  metric: x
+  max_length: 1
+resources:
+  slots_per_trial: 1
+max_restarts: 0

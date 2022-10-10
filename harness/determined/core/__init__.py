@@ -24,4 +24,9 @@ from determined.core._preempt import (
     _PreemptionWatcher,
     PreemptMode,
 )
+
+from determined.core._profile import (
+    ProfilerContext,
+)
+
 from determined.core._context import Context, init, _dummy_init

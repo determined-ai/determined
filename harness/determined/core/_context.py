@@ -39,20 +39,24 @@ class Context:
         preempt: Optional[core.PreemptContext] = None,
         train: Optional[core.TrainContext] = None,
         searcher: Optional[core.SearcherContext] = None,
+        profiler: Optional[core.ProfilerContext] = None,
     ) -> None:
         self.checkpoint = checkpoint
         self.distributed = distributed or core.DummyDistributedContext()
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
+        self.profiler = profiler
 
     def __enter__(self) -> "Context":
         self.preempt.start()
+        self.profiler.start()
         return self
 
     def __exit__(self, typ: type, value: Exception, tb: Any) -> None:
         self.preempt.close()
         self.distributed.close()
+        self.profiler.end()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
             self.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
@@ -172,6 +176,7 @@ def init(
 
     train = None
     searcher = None
+    profiler = None
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
@@ -221,6 +226,17 @@ def init(
             tensorboard_manager,
         )
 
+        profiler = core.ProfilerContext(
+            dist=distributed,
+            trial_id=str(info.trial.trial_id),
+            agent_id=info.agent_id,
+            master_url=info.master_url,
+            enabled=bool(info.trial._config["profiling"]["enabled"]),
+            begin_on_batch=int(info.trial._config["profiling"]["begin_on_batch"]),
+            end_after_batch=int(info.trial._config["profiling"]["end_after_batch"]),
+            sync_timings=bool(info.trial._config["profiling"]["sync_timings"]),
+        )
+
     else:
         # TODO: support checkpointing for non-trial tasks.
         if storage_manager is None:
@@ -237,4 +253,5 @@ def init(
         preempt=preempt,
         train=train,
         searcher=searcher,
+        profiler=profiler
     )
