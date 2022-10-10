@@ -96,7 +96,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, label hard constraint",
-			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0, Label: "label2"},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0, AgentLabel: "label2"},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "label1", 4, 0, 100, 0),
 				newMockAgent("agent2", "label2", 4, 0, 100, 0),
@@ -262,7 +262,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "4-slot multiple fits, label hard constraint",
-			Task: sproto.AllocateRequest{AllocationID: "task1", Label: "label2", SlotsNeeded: 4},
+			Task: sproto.AllocateRequest{AllocationID: "task1", AgentLabel: "label2", SlotsNeeded: 4},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "label1", 4, 0, 100, 0),
 				newMockAgent("agent2", "label2", 4, 0, 100, 0),

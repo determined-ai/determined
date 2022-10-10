@@ -134,7 +134,7 @@ func calculateGroupStates(
 	groupMapping := make(map[*group]*groupState)
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.Label] {
+		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.AgentLabel] {
 			continue
 		}
 		group := groups[req.Group]
@@ -144,7 +144,7 @@ func calculateGroupStates(
 				group:    group,
 				disabled: false,
 			}
-			states[req.Label] = append(states[req.Label], state)
+			states[req.AgentLabel] = append(states[req.AgentLabel], state)
 			groupMapping[group] = state
 		}
 		state.reqs = append(state.reqs, req)

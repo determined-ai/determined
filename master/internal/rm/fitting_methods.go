@@ -13,7 +13,7 @@ func slotsSatisfied(req *sproto.AllocateRequest, agent *AgentState) bool {
 }
 
 func labelSatisfied(req *sproto.AllocateRequest, agent *AgentState) bool {
-	return req.Label == agent.Label
+	return req.AgentLabel == agent.Label
 }
 
 func maxZeroSlotContainersSatisfied(req *sproto.AllocateRequest, agent *AgentState) bool {
