@@ -69,7 +69,7 @@ class Determined:
         # create User object
         # return that object
 
-        # new API -> bindings.post_PostUser 
+        # new API -> bindings.post_PostUser
 
         pass
 
@@ -85,7 +85,7 @@ class Determined:
         pass
 
     def whoami():
-        # return current user. 
+        # return current user.
         pass
 
     def list_users():

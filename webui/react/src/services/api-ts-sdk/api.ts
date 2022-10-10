@@ -5504,6 +5504,18 @@ export interface V1PatchTrialsCollectionResponse {
  */
 export interface V1PatchUser {
     /**
+     * String denoting the username of the user.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    username?: string;
+    /**
+     * String denoting the password of the user.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    password?: string;
+    /**
      * Bool denoting whether the account is an admin account.
      * @type {boolean}
      * @memberof V1PatchUser
@@ -5516,31 +5528,19 @@ export interface V1PatchUser {
      */
     active?: boolean;
     /**
-     * The user and group on the agent host machine.
-     * @type {V1AgentUserGroup}
-     * @memberof V1PatchUser
-     */
-    agentUserGroup?: V1AgentUserGroup;
-    /**
-     * The new username.
-     * @type {string}
-     * @memberof V1PatchUser
-     */
-    username?: string;
-    /**
      * Name to display in the web UI.
      * @type {string}
      * @memberof V1PatchUser
      */
     displayName?: string;
     /**
-     * Password of user.
-     * @type {string}
+     * The user and group on the agent host machine.
+     * @type {V1AgentUserGroup}
      * @memberof V1PatchUser
      */
-    password?: string;
+    agentUserGroup?: V1AgentUserGroup;
     /**
-     * Indicates if the password field is sent salted and client side hashed.
+     * Indicate whether the provided password is pre-salted & hashed or not.
      * @type {boolean}
      * @memberof V1PatchUser
      */

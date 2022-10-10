@@ -25,7 +25,7 @@ class AgentUserGroup:
 class User:
     def __init__(
         self,
-        user_id: int, 
+        user_id: int,
         username: str,
         admin: bool,
         session: api.Session,
@@ -41,37 +41,61 @@ class User:
         self.session = session
 
     def update(
-        self, username: str,
+        self,
+        username: Optional[str] = None,
         active: Optional[bool] = None,
         password: Optional[str] = None,
         agent_user_group: Optional[AgentUserGroup] = None,
+        admin=Optional,
     ) -> Response:
         # new API -> bindings.patch_PatchUser(self.user_id, patchUser)
+        v1agent_user_group = bindings.v1AgentUserGroup(
+            agentGid=agent_user_group.agent_gid,
+            agentGroup=agent_user_group.agent_group,
+            agentUid=agent_user_group.agent_uid,
+            agentUser=agent_user_group.agent_user,
+        )
+        patch_user = bindings.v1PatchUser(
+            username=username,
+            password=password,
+            active=active,
+            admin=admin,
+            agentUserGroup=v1agent_user_group,
+        )
+        resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
         # return API response
-        pass
-     
+        return resp
+
     def update_username(self, new_username: str) -> Response:
         # return API response
         # API: bindings.patch_PatchUser(self.userid, patchUser) API (need to add username to message PatchUser in user.proto)
-
+        patch_user = bindings.v1PatchUser(username=new_username)
+        resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
+        # return API response
+        return resp
         pass
 
-    def activate(self) -> None:
+    def activate(self) -> Response:
         # calls update_user with active = true
-        # bindings.patch_PatchUser(self.userid, patchUser) 
-        pass
+        # bindings.patch_PatchUser(self.userid, patchUser)
+        patchUser = bindings.v1PatchUser(active=True)
+        resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
 
-    def deactivate(self) -> None:
+        return resp
+
+    def deactivate(self) -> Response:
         # calls update_user with active = false
         # bindings.patch_PatchUser(self.user_id, patchUser) API
         pass
 
-
-    def change_password(self, new_password: str) -> None:
+    def change_password(self, new_password: str) -> Response:
         # can also get user from authentication.must_cli_auth().get_session_user()
         # API bindings.patch_PatchUser need to add password to message PatchUser in user.proto
-        pass
+        patch_user = bindings.v1PatchUser(password=new_password)
+        resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
+        # return API response
+        return resp
 
-    def link_with_agent(self, agent_user_group: AgentUserGroup) -> None:
+    def link_with_agent(self, agent_user_group: AgentUserGroup) -> Response:
         # calls update user with these args wrapped in agent_user_group.
         pass
