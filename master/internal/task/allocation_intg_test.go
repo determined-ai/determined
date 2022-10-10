@@ -173,7 +173,7 @@ func TestAllocation(t *testing.T) {
 }
 
 func TestAllocationAllGather(t *testing.T) {
-	system, _, rm, trialImpl, _, _, a, self := setup(t)
+	system, _, rm, trialImpl, _, _, a, self := setup(t) //nolint: dogsled
 
 	// Pre-allocated stage.
 	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {

@@ -7,12 +7,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math"
 	"math/rand"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -43,7 +41,7 @@ func TestTrialDetail(t *testing.T) {
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
-	trialDetailAPITests(t, creds, cl, pgDB)
+	trialDetailAPITests(creds, t, cl, pgDB)
 }
 
 func TestTrialProfilerMetrics(t *testing.T) {
@@ -52,7 +50,7 @@ func TestTrialProfilerMetrics(t *testing.T) {
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
-	trialProfilerMetricsTests(t, creds, cl, pgDB)
+	trialProfilerMetricsTests(creds, t, cl, pgDB)
 }
 
 func TestTrialProfilerMetricsAvailableSeries(t *testing.T) {
@@ -61,11 +59,11 @@ func TestTrialProfilerMetricsAvailableSeries(t *testing.T) {
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
-	trialProfilerMetricsAvailableSeriesTests(t, creds, cl, pgDB)
+	trialProfilerMetricsAvailableSeriesTests(creds, t, cl, pgDB)
 }
 
 func trialDetailAPITests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
 	type testCase struct {
 		name    string
@@ -121,7 +119,8 @@ func trialDetailAPITests(
 			err = pgDB.AddTrainingMetrics(context.Background(), &metrics)
 			assert.NilError(t, err, "failed to insert step")
 
-			ctx, _ := context.WithTimeout(creds, 10*time.Second)
+			ctx, cancel := context.WithTimeout(creds, 10*time.Second)
+			defer cancel()
 			req := apiv1.GetTrialRequest{TrialId: int32(trial.ID)}
 
 			_, err = cl.GetTrial(ctx, &req)
@@ -140,7 +139,7 @@ func TestTrialWorkloadsHugeMetrics(t *testing.T) {
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
-	trialWorkloadsAPIHugeMetrics(t, creds, cl, pgDB)
+	trialWorkloadsAPIHugeMetrics(creds, t, cl, pgDB)
 }
 
 func makeMetrics() *structpb.Struct {
@@ -148,12 +147,12 @@ func makeMetrics() *structpb.Struct {
 		Fields: map[string]*structpb.Value{
 			"loss1": {
 				Kind: &structpb.Value_NumberValue{
-					NumberValue: rand.Float64(),
+					NumberValue: rand.Float64(), //nolint: gosec
 				},
 			},
 			"loss2": {
 				Kind: &structpb.Value_NumberValue{
-					NumberValue: rand.Float64(),
+					NumberValue: rand.Float64(), //nolint: gosec
 				},
 			},
 		},
@@ -161,7 +160,7 @@ func makeMetrics() *structpb.Struct {
 }
 
 func trialWorkloadsAPIHugeMetrics(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
 	_, trial := setupTrial(t, pgDB)
 
@@ -191,7 +190,8 @@ func trialWorkloadsAPIHugeMetrics(
 		IncludeBatchMetrics: true,
 		Limit:               1,
 	}
-	ctx, _ := context.WithTimeout(creds, 30*time.Second)
+	ctx, cancel := context.WithTimeout(creds, 30*time.Second)
+	defer cancel()
 	resp, err := cl.GetTrialWorkloads(ctx, &req)
 	assert.NilError(t, err, "failed to fetch trial workloads")
 
@@ -205,12 +205,13 @@ func trialWorkloadsAPIHugeMetrics(
 }
 
 func trialProfilerMetricsTests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
 	_, trial := setupTrial(t, pgDB)
 
 	// If we begin to stream for metrics.
-	ctx, _ := context.WithTimeout(creds, time.Minute)
+	ctx, cancel := context.WithTimeout(creds, time.Minute)
+	defer cancel()
 	tlCl, err := cl.GetTrialProfilerMetrics(ctx, &apiv1.GetTrialProfilerMetricsRequest{
 		Labels: &trialv1.TrialProfilerMetricLabels{
 			TrialId:    int32(trial.ID),
@@ -225,7 +226,7 @@ func trialProfilerMetricsTests(
 	for i := 0; i < 10; i++ {
 		// When we add some metrics that match our stream.
 		match := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "brad's agent", "1")
-		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
+		_, err = cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
 			Batches: []*trialv1.TrialProfilerMetricsBatch{
 				match,
 			},
@@ -242,8 +243,8 @@ func trialProfilerMetricsTests(
 		assert.NilError(t, err, "failed to insert mocked unmatched trial profiler metrics")
 
 		// Then when we receive the metrics, they should be the metrics we expect.
-		recvMetricsBatch, err := tlCl.Recv()
-		assert.NilError(t, err, "failed to stream metrics")
+		recvMetricsBatch, metricErr := tlCl.Recv()
+		assert.NilError(t, metricErr, "failed to stream metrics")
 
 		// Just nil the values since the floats and timestamps lose a little precision getting thrown
 		// around so much.
@@ -252,11 +253,11 @@ func trialProfilerMetricsTests(
 		recvMetricsBatch.Batch.Values = nil
 		recvMetricsBatch.Batch.Timestamps = nil
 
-		bOrig, err := protojson.Marshal(match)
-		assert.NilError(t, err, "failed marshal original metrics")
+		bOrig, b0Err := protojson.Marshal(match)
+		assert.NilError(t, b0Err, "failed marshal original metrics")
 
-		bRecv, err := protojson.Marshal(recvMetricsBatch.Batch)
-		assert.NilError(t, err, "failed marshal received metrics")
+		bRecv, bRecvErr := protojson.Marshal(recvMetricsBatch.Batch)
+		assert.NilError(t, bRecvErr, "failed marshal received metrics")
 
 		origEqRecv := bytes.Equal(bOrig, bRecv)
 		assert.Assert(t, origEqRecv, "received:\nt\t%s\noriginal:\n\t%s", bRecv, bOrig)
@@ -272,11 +273,12 @@ func trialProfilerMetricsTests(
 }
 
 func trialProfilerMetricsAvailableSeriesTests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
 	_, trial := setupTrial(t, pgDB)
 
-	ctx, _ := context.WithTimeout(creds, time.Minute)
+	ctx, cancel := context.WithTimeout(creds, time.Minute)
+	defer cancel()
 	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
 		TrialId: int32(trial.ID),
 		Follow:  true,
@@ -303,11 +305,13 @@ func trialProfilerMetricsAvailableSeriesTests(
 		})
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
-		// This may need 2 or more attempts; gRPC streaming does not provide any backpressure mechanism, if the client
-		// is not ready to receive a message when it is sent to the stream server side, the server will buffer it and
-		// any calls to Send will return, allowing the code to chug along merrily and Send more and more data while the
-		// client doesn't consume it. Because of this, we give the test a chance to read out stale entries before
-		// marking the attempt as a failure. For more detail, see https://github.com/grpc/grpc-go/issues/2159.
+		// This may need 2 or more attempts; gRPC streaming does not provide any backpressure
+		// mechanism, if the client is not ready to receive a message when it is sent to the
+		// stream server side, the server will buffer it and any calls to Send will return,
+		// allowing the code to chug along merrily and Send more and more data while the
+		// client doesn't consume it. Because of this, we give the test a chance to read
+		// out stale entries before marking the attempt as a failure. For more detail, see
+		// https://github.com/grpc/grpc-go/issues/2159.
 		shots := 5
 		var resp *apiv1.GetTrialProfilerAvailableSeriesResponse
 		for i := 1; i <= shots; i++ {
@@ -335,23 +339,6 @@ func trialProfilerMetricsAvailableSeriesTests(
 	}
 }
 
-func assertStringContains(t *testing.T, actual, expected string) {
-	assert.Assert(t, strings.Contains(actual, expected),
-		fmt.Sprintf("%s not in %s", expected, actual))
-}
-
-// stringWithPrefix is a convenience function that returns a pointer.
-func stringWithPrefix(p, s string) *string {
-	x := p + s
-	return &x
-}
-
-// timePlusDuration is a convenience function that returns a pointer.
-func timePlusDuration(t time.Time, d time.Duration) *time.Time {
-	t2 := t.Add(d)
-	return &t2
-}
-
 func sequentialIntSlice(start, n int) []int32 {
 	fs := make([]int32, n)
 	for i := 0; i < n; i++ {
@@ -363,7 +350,7 @@ func sequentialIntSlice(start, n int) []int32 {
 func randFloatSlice(n int) []float32 {
 	fs := make([]float32, n)
 	for i := 0; i < n; i++ {
-		fs[i] = rand.Float32()
+		fs[i] = rand.Float32() //nolint: gosec
 	}
 	return fs
 }
@@ -373,7 +360,8 @@ func pbTimestampSlice(n int) []*timestamppb.Timestamp {
 	for i := 0; i < n; i++ {
 		ts[i] = ptypes.TimestampNow()
 		// Round off to millis.
-		ts[i].Nanos = int32(math.Round(float64(ts[i].Nanos)/float64(time.Millisecond)) * float64(time.Millisecond))
+		ts[i].Nanos = int32(math.Round(float64(ts[i].Nanos)/float64(time.Millisecond)) *
+			float64(time.Millisecond))
 	}
 	return ts
 }

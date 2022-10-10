@@ -58,10 +58,10 @@ func expNotFoundErr(expID int) error {
 
 var authZExp *mocks.ExperimentAuthZ
 
-func SetupExpAuthTest(t *testing.T) (
+func setupExpAuthTest(t *testing.T) (
 	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, context.Context,
 ) {
-	api, projectAuthZ, _, user, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t)
 	if authZExp == nil {
 		authZExp = &mocks.ExperimentAuthZ{}
 		expauth.AuthZProvider.Register("mock", authZExp)
@@ -81,28 +81,29 @@ func minExpConfToYaml(t *testing.T) string {
 	return string(bytes)
 }
 
+//nolint: exhaustivestruct
 var minExpConfig = expconf.ExperimentConfig{
 	RawResources: &expconf.ResourcesConfig{
 		RawResourcePool: ptrs.Ptr("kubernetes"),
 	},
-	RawEntrypoint: &expconf.EntrypointV0{"test"},
+	RawEntrypoint: &expconf.EntrypointV0{RawEntrypoint: "test"},
 	RawCheckpointStorage: &expconf.CheckpointStorageConfig{
 		RawSharedFSConfig: &expconf.SharedFSConfig{
 			RawHostPath: ptrs.Ptr("/"),
 		},
 	},
 	RawHyperparameters: expconf.Hyperparameters{},
-	RawReproducibility: &expconf.ReproducibilityConfig{ptrs.Ptr(uint32(42))},
+	RawReproducibility: &expconf.ReproducibilityConfig{RawExperimentSeed: ptrs.Ptr(uint32(42))},
 	RawSearcher: &expconf.SearcherConfig{
 		RawMetric: ptrs.Ptr("loss"),
 		RawSingleConfig: &expconf.SingleConfig{
-			&expconf.Length{Units: 10, Unit: "batches"},
+			RawMaxLength: &expconf.Length{Units: 10, Unit: "batches"},
 		},
 	},
 }
 
 func TestGetExperimentLabels(t *testing.T) {
-	api, curUser, ctx := SetupAPITest(t)
+	api, curUser, ctx := setupAPITest(t)
 	_, p0 := createProjectAndWorkspace(ctx, t, api)
 	_, p1 := createProjectAndWorkspace(ctx, t, api)
 
@@ -119,7 +120,7 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Equal(t, labels[:2], resp.Labels)
 
 	// Exact label arrays don't count multiple times
-	// (behaviour is kinda weird since Postgres can save
+	// (behavior is kinda weird since Postgres can save
 	// ["a", "b"] either as ["b", "a"] or ["a", "b"] breaking this distinct).
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
@@ -140,9 +141,10 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+//nolint: exhaustivestruct
 func TestGetExperiments(t *testing.T) {
 	// Setup.
-	api, _, ctx := SetupAPITest(t)
+	api, _, ctx := setupAPITest(t)
 
 	workResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
@@ -185,7 +187,7 @@ func TestGetExperiments(t *testing.T) {
 		Notes:                "notes",
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("12345"),
-			RawName:        expconf.Name{ptrs.Ptr("name")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 			RawLabels:      expconf.Labels{"l0": true, "l1": true},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(1)),
@@ -238,7 +240,7 @@ func TestGetExperiments(t *testing.T) {
 		ParentID:             ptrs.Ptr(exp0.ID),
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("234"),
-			RawName:        expconf.Name{ptrs.Ptr("longername")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("longername")},
 			RawLabels:      expconf.Labels{"l0": true},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
@@ -271,83 +273,84 @@ func TestGetExperiments(t *testing.T) {
 	}
 
 	// Filtering tests.
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
+	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "12345"}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "234"}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "123456"})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "longername"}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "name"}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "longlongername"})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1"}}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0"}}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1", "l3"}})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(false)}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(true)}, exp1Expected)
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_PAUSED},
 		}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_ERROR},
 		}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{
 				experimentv1.State_STATE_PAUSED,
 				experimentv1.State_STATE_ERROR,
 			},
 		}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_CANCELED},
 		})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin"}}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{userResp.User.Username}}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin", userResp.User.Username}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
+	getExperimentsTest(ctx, t, api, pid,
+		&apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1}}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{userResp.User.Id}}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1, userResp.User.Id}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
+	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
 
 	// Sort and order by tests.
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy: apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_ASC,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
@@ -355,21 +358,21 @@ func TestGetExperiments(t *testing.T) {
 
 	// Pagination tests.
 	// No experiments should be returned for Limit -2.
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: -2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Offset: 1},
+	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -2})
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 0, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: 1},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1},
 		&apiv1.Pagination{Offset: 0, Limit: 1, StartIndex: 0, EndIndex: 1, Total: 2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 1, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Offset: 2},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 2},
 		&apiv1.Pagination{Offset: 2, Limit: 0, StartIndex: 2, EndIndex: 2, Total: 2})
 
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: -1},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -1},
 		&apiv1.Pagination{Offset: 0, Limit: -1, StartIndex: 0, EndIndex: 2, Total: 2})
 }
 
-func getExperimentsPageTest(t *testing.T, api *apiServer, ctx context.Context, pid int32,
+func getExperimentsPageTest(ctx context.Context, t *testing.T, api *apiServer, pid int32,
 	req *apiv1.GetExperimentsRequest, expected *apiv1.Pagination,
 ) {
 	req.ProjectId = pid
@@ -379,7 +382,7 @@ func getExperimentsPageTest(t *testing.T, api *apiServer, ctx context.Context, p
 	require.Equal(t, expected, res.Pagination)
 }
 
-func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context, pid int32,
+func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid int32,
 	req *apiv1.GetExperimentsRequest, expected ...*experimentv1.Experiment,
 ) {
 	req.ProjectId = pid
@@ -416,13 +419,14 @@ func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context, pid i
 
 var res *apiv1.GetExperimentsResponse // Avoid compiler optimizing res out.
 
+//nolint: exhaustivestruct
 func benchmarkGetExperiments(b *testing.B, n int) {
 	// This should be fine as long as no error happens. For some
 	// reason passing nil gives an error. In addition this
 	// benchmark won't run when integration tests run
 	// (since it needs the -bench flag) so if this breaks in the
 	// future it won't cause any issues.
-	api, _, ctx := SetupAPITest((*testing.T)(unsafe.Pointer(b)))
+	api, _, ctx := setupAPITest((*testing.T)(unsafe.Pointer(b))) //nolint: gosec
 
 	// Create n records in the database from the new user we created.
 	userResp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
@@ -456,7 +460,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 		State:                model.PausedState,
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("desc"),
-			RawName:        expconf.Name{ptrs.Ptr("name")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
 		ProjectID: 1,
@@ -475,7 +479,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 	for i := 0; i < b.N; i++ {
 		var err error
 		res, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
-			Limit: -1, UserIds: []int32{int32(userResp.User.Id)},
+			Limit: -1, UserIds: []int32{userResp.User.Id},
 		})
 		if err != nil {
 			b.Fatal(err)
@@ -492,6 +496,7 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
+//nolint: exhaustivestruct
 func createTestExpWithProjectID(
 	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
 ) *model.Experiment {
@@ -510,7 +515,7 @@ func createTestExpWithProjectID(
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawLabels:      labelMap,
 			RawDescription: ptrs.Ptr("desc"),
-			RawName:        expconf.Name{ptrs.Ptr("name")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 		}).(expconf.ExperimentConfig),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp))
@@ -522,7 +527,7 @@ func createTestExpWithProjectID(
 }
 
 func TestAuthZGetExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	exp := createTestExp(t, api, curUser)
 
 	// Not found returns same as permission denied.
@@ -546,7 +551,7 @@ func TestAuthZGetExperiment(t *testing.T) {
 }
 
 func TestAuthZGetExperiments(t *testing.T) {
-	api, authZExp, authZProject, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 	exp0 := createTestExpWithProjectID(t, api, curUser, projectID)
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
@@ -579,7 +584,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 }
 
 func TestAuthZPreviewHPSearch(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 
 	// Can't preview hp search returns error with PermissionDenied
 	expectedErr := status.Errorf(codes.PermissionDenied, "canPreviewHPSearchError")
@@ -589,7 +594,7 @@ func TestAuthZPreviewHPSearch(t *testing.T) {
 }
 
 func TestAuthZGetExperimentLabels(t *testing.T) {
-	api, authZExp, authZProject, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 	exp0Label := uuid.New().String()
 	exp0 := createTestExpWithProjectID(t, api, curUser, projectID, exp0Label)
@@ -625,7 +630,7 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 }
 
 func TestAuthZCreateExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	forkFrom := createTestExp(t, api, curUser)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
@@ -647,7 +652,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Can't view project passed in.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
@@ -655,13 +660,13 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
 
 	// Can't view project passed in from config.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
 	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
 
-	// Same as passing in a non existant project.
+	// Same as passing in a non existent project.
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",
 	})
@@ -669,7 +674,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
 	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
@@ -680,7 +685,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't activate experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
 	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).Return(nil).Once()
 	authZExp.On("CanEditExperiment", curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()
@@ -692,7 +697,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 }
 
 func TestAuthZExpCompareTrialsSample(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 
 	exp0 := createTestExp(t, api, curUser)
 	exp1 := createTestExp(t, api, curUser)
@@ -720,7 +725,7 @@ func TestAuthZExpCompareTrialsSample(t *testing.T) {
 }
 
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	exp := createTestExp(t, api, curUser)
 
 	cases := []struct {
