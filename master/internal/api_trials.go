@@ -191,7 +191,6 @@ func (a *apiServer) TrialLogs(
 	case t.LogVersion == model.TaskLogVersion1:
 		// Translate the request.
 		res := make(chan api.BatchResult, taskLogsChanBuffer)
-		// TODO(nick) make a.taskLogs recheck auth.
 		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
 			TaskId:          string(taskID),
 			Limit:           req.Limit,
@@ -922,11 +921,14 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	allocationID := model.AllocationID(req.AllocationId)
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
@@ -955,10 +957,13 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AckAllocationPreemptionSignal(
-	_ context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
+	ctx context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
 ) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	allocationID := model.AllocationID(req.AllocationId)
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
@@ -976,11 +981,14 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationPendingPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPendingPreemptionSignalRequest,
 ) (*apiv1.AllocationPendingPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	if err := a.m.rm.ExternalPreemptionPending(
 		a.m.system,
 		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
@@ -991,11 +999,14 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	return &apiv1.AllocationPendingPreemptionSignalResponse{}, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) MarkAllocationResourcesDaemon(
-	_ context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
+	ctx context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
 	allocationID := model.AllocationID(req.AllocationId)
+
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
 		sproto.GetAllocationHandler{ID: allocationID},
@@ -1136,11 +1147,11 @@ func (a *apiServer) ReportTrialValidationMetrics(
 	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
 }
 
-// TODO(nick) auth with tasks.
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {
-	if err := a.checkTaskExists(model.TaskID(req.Checkpoint.TaskId)); err != nil {
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
@@ -1194,12 +1205,14 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 	return c, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationRendezvousInfo(
 	ctx context.Context, req *apiv1.AllocationRendezvousInfoRequest,
 ) (*apiv1.AllocationRendezvousInfoResponse, error) {
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
@@ -1247,18 +1260,6 @@ func (a *apiServer) PostTrialRunnerMetadata(
 	}
 
 	return &apiv1.PostTrialRunnerMetadataResponse{}, nil
-}
-
-func (a *apiServer) checkTaskExists(id model.TaskID) error {
-	ok, err := a.m.db.CheckTaskExists(id)
-	switch {
-	case err != nil:
-		return status.Errorf(codes.Internal, "failed to check if task exists: %s", err)
-	case !ok:
-		return status.Errorf(codes.NotFound, "task %s not found", id)
-	default:
-		return nil
-	}
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and

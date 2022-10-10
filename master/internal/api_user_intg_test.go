@@ -54,9 +54,10 @@ func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 
 	api := &apiServer{
 		m: &Master{
-			system: system,
-			db:     pgDB,
-			rm:     mockRM,
+			system:         system,
+			db:             pgDB,
+			taskLogBackend: pgDB,
+			rm:             mockRM,
 			config: &config.Config{
 				InternalConfig:        config.InternalConfig{},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
