@@ -196,10 +196,12 @@ class DetSDTextualInversionPipeline:
                                 )
                                 for idx, img in enumerate(img_list):
                                     img_t = pil_to_tensor(img)
+                                    global_step = generated_imgs + idx
+                                    print("global_step", global_step)
                                     tb_writer.add_image(
                                         tag,
                                         img_tensor=img_t,
-                                        global_step=generated_imgs + idx,
+                                        global_step=global_step,
                                     )
                                 tb_writer.flush()  # Ensure all images are written to disk.
                                 core_context.train.upload_tensorboard_files()
