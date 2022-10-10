@@ -34,8 +34,8 @@ import (
 )
 
 const (
-	S3_TEST_BUCKET = "storage-unit-tests"
-	S3_TEST_PREFIX = "master/checkpoint-download"
+	S3TestBucket = "storage-unit-tests"
+	S3TestPrefix = "master/checkpoint-download"
 )
 
 var mockCheckpointContent = map[string]string{
@@ -97,7 +97,7 @@ func checkTgz(t *testing.T, content io.Reader, id string) {
 		require.NoError(t, err, "failed to read record header")
 		buf := &strings.Builder{}
 		if hdr.Size > 0 {
-			_, err := io.Copy(buf, tr)
+			_, err := io.Copy(buf, tr) //nolint: gosec
 			require.NoError(t, err, "failed to read content of file", hdr.Name)
 		}
 		gotMap[hdr.Name] = buf.String()
@@ -113,16 +113,16 @@ func checkZip(t *testing.T, content string, id string) {
 		buf := &strings.Builder{}
 		rc, err := f.Open()
 		require.NoError(t, err, "unable to decompress file", f.Name)
-		_, err = io.Copy(buf, rc)
+		_, err = io.Copy(buf, rc) //nolint: gosec
 		require.NoError(t, err, "unable to read content of file", f.Name)
-		rc.Close()
+		require.NoError(t, rc.Close())
 		gotMap[f.Name] = buf.String()
 	}
 	require.Equal(t, mockCheckpointContent, gotMap)
 }
 
 func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
-	etc.SetRootPath(db.RootFromDB)
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	user := db.RequireMockUser(t, pgDB)
 	// Using a different path than DefaultTestSrcPath since we are one level up than most db tests
 	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch")
@@ -137,14 +137,14 @@ func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
 func createCheckpoint(t *testing.T, pgDB *db.PgDB) (string, error) {
 	id := uuid.New()
 	addMockCheckpointDB(t, pgDB, id)
-	err := createMockCheckpointS3(S3_TEST_BUCKET, S3_TEST_PREFIX+"/"+id.String())
+	err := createMockCheckpointS3(S3TestBucket, S3TestPrefix+"/"+id.String())
 	return id.String(), err
 }
 
-func SetupCheckpointTestEcho(t *testing.T) (
+func setupCheckpointTestEcho(t *testing.T) (
 	*apiServer, echo.Context, *httptest.ResponseRecorder,
 ) {
-	api, _, _ := SetupAPITest(t)
+	api, _, _ := setupAPITest(t)
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	return api, e.NewContext(nil, rec), rec
@@ -163,7 +163,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 		Params       []any
 	}{
 		{"CanGetCheckpointTgz", func(id string) error {
-			api, ctx, rec := SetupCheckpointTestEcho(t)
+			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
 				return err
@@ -178,7 +178,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			return err
 		}, []any{mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func(id string) error {
-			api, ctx, rec := SetupCheckpointTestEcho(t)
+			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
 				return err
@@ -199,7 +199,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 	}
 }
 
-// TestGetCheckpointEchoExpErr expects specific errors are returned for each check
+// TestGetCheckpointEchoExpErr expects specific errors are returned for each check.
 func TestGetCheckpointEchoExpErr(t *testing.T) {
 	cases := []struct {
 		DenyFuncName string
@@ -207,7 +207,7 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 		Params       []any
 	}{
 		{"CanGetCheckpointTgz", func(id string) error {
-			api, ctx, _ := SetupCheckpointTestEcho(t)
+			api, ctx, _ := setupCheckpointTestEcho(t)
 			ctx.SetParamNames("checkpoint_uuid")
 			ctx.SetParamValues(id)
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
@@ -215,7 +215,7 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 			return api.m.getCheckpoint(ctx)
 		}, []any{mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func(id string) error {
-			api, ctx, _ := SetupCheckpointTestEcho(t)
+			api, ctx, _ := setupCheckpointTestEcho(t)
 			ctx.SetParamNames("checkpoint_uuid")
 			ctx.SetParamValues(id)
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
@@ -227,23 +227,28 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 	for _, curCase := range cases {
 		// Checkpoint not found
 		require.Equal(t,
-			echo.NewHTTPError(http.StatusNotFound, "checkpoint 7e0bad2c-b3f6-4988-916c-eb3081b19db0 does not exist"),
+			echo.NewHTTPError(http.StatusNotFound,
+				"checkpoint 7e0bad2c-b3f6-4988-916c-eb3081b19db0 does not exist"),
 			curCase.IDToReqCall("7e0bad2c-b3f6-4988-916c-eb3081b19db0"))
 
 		// Invalid checkpoint UUID
 		require.Equal(t,
 			echo.NewHTTPError(http.StatusBadRequest,
-				"unable to parse checkpoint UUID badbad-b3f6-4988-916c-eb5581b19db0: invalid UUID length: 34"),
+				"unable to parse checkpoint UUID badbad-b3f6-4988-916c-eb5581b19db0: "+
+					"invalid UUID length: 34"),
 			curCase.IDToReqCall("badbad-b3f6-4988-916c-eb5581b19db0"))
 	}
 }
 
-func mockExperimentS3(t *testing.T, pgDB *db.PgDB, user model.User, folderPath string) *model.Experiment {
+//nolint: exhaustivestruct
+func mockExperimentS3(
+	t *testing.T, pgDB *db.PgDB, user model.User, folderPath string,
+) *model.Experiment {
 	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawS3Config: &expconf.S3ConfigV0{
-				RawBucket: aws.String(S3_TEST_BUCKET),
-				RawPrefix: aws.String(S3_TEST_PREFIX),
+				RawBucket: aws.String(S3TestBucket),
+				RawPrefix: aws.String(S3TestPrefix),
 			},
 		},
 		RawEntrypoint: &expconf.EntrypointV0{

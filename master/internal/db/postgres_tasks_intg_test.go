@@ -28,7 +28,7 @@ import (
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -107,7 +107,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 }
 
 func TestAllocationState(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -130,11 +130,12 @@ func TestAllocationState(t *testing.T) {
 		}
 		require.NoError(t, db.AddTask(task), "failed to add task")
 
+		s := state
 		a := &model.Allocation{
 			TaskID:       tID,
 			AllocationID: model.AllocationID(tID + "allocationID"),
 			ResourcePool: "default",
-			State:        &state,
+			State:        &s,
 		}
 		require.NoError(t, db.AddAllocation(a), "failed to add allocation")
 
@@ -174,7 +175,7 @@ func TestAllocationState(t *testing.T) {
 }
 
 func TestExhaustiveEnums(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 

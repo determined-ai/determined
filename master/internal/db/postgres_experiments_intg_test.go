@@ -24,7 +24,7 @@ import (
 )
 
 func TestExperimentCheckpointsToGCRaw(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -34,15 +34,15 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	a := RequireMockAllocation(t, db, tr.TaskID)
 	var expectedCheckpoints []uuid.UUID
 	for i := 1; i <= 3; i++ {
-		ckptUuid := uuid.New()
-		ckpt := MockModelCheckpoint(ckptUuid, tr, a)
+		ckptUUID := uuid.New()
+		ckpt := MockModelCheckpoint(ckptUUID, tr, a)
 		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
 		require.NoError(t, err)
 		if i == 2 { // add this checkpoint to the model registry
-			err = addCheckpointToModelRegistry(db, ckptUuid, user)
+			err = addCheckpointToModelRegistry(db, ckptUUID, user)
 			require.NoError(t, err)
 		} else {
-			expectedCheckpoints = append(expectedCheckpoints, ckptUuid)
+			expectedCheckpoints = append(expectedCheckpoints, ckptUUID)
 		}
 	}
 
@@ -67,7 +67,7 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
 	}
-	mdlNotes := "some notes"
+	mdlNotes := "some notes1"
 	var pmdl modelv1.Model
 	if err := db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
@@ -100,7 +100,7 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 }
 
 func TestCheckpointMetadata(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -125,10 +125,10 @@ func TestCheckpointMetadata(t *testing.T) {
 			tr := RequireMockTrial(t, db, exp)
 			a := RequireMockAllocation(t, db, tr.TaskID)
 
-			ckptUuid := uuid.New()
+			ckptUUID := uuid.New()
 			stepsCompleted := int32(10)
 			ckpt := model.CheckpointV2{
-				UUID:         ckptUuid,
+				UUID:         ckptUUID,
 				TaskID:       tr.TaskID,
 				AllocationID: a.AllocationID,
 				ReportTime:   time.Now().UTC(),
@@ -192,7 +192,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			}
 
 			var retCkpt checkpointv1.Checkpoint
-			err = db.QueryProto("get_checkpoint", &retCkpt, ckptUuid)
+			err = db.QueryProto("get_checkpoint", &retCkpt, ckptUUID)
 			require.NoError(t, err, "failed to get checkpoint")
 			requireCheckpointOk(&ckpt, &retCkpt)
 

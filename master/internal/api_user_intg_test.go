@@ -38,7 +38,7 @@ var (
 	mockRM    *rm.ActorResourceManager
 )
 
-func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
+func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 	if pgDB == nil {
 		pgDB = db.MustResolveTestPostgres(t)
 		db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
@@ -79,8 +79,8 @@ func SetupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 	return api, *userModel, ctx
 }
 
-func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
-	api, curUser, ctx := SetupAPITest(t)
+func setupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
+	api, curUser, ctx := setupAPITest(t)
 
 	if authzUser == nil {
 		authzUser = &mocks.UserAuthZ{}
@@ -93,7 +93,7 @@ func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User,
 }
 
 func TestAuthzGetUsers(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	// Error just passes error through.
 	expectedErr := fmt.Errorf("filterUseList")
@@ -118,7 +118,7 @@ func TestAuthzGetUsers(t *testing.T) {
 }
 
 func TestAuthzGetUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	// Error passes through when CanGetUser returns non nil error.
 	expectedErr := fmt.Errorf("canGetUserError")
@@ -142,7 +142,7 @@ func TestAuthzGetUser(t *testing.T) {
 }
 
 func TestAuthzPostUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUserError")
 	authzUsers.On("CanCreateUser", curUser,
@@ -172,7 +172,7 @@ func TestAuthzPostUser(t *testing.T) {
 }
 
 func TestAuthzSetUserPassword(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	// If we can view the user we can get the error message from CanSetUsersPassword.
 	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersPassword")
@@ -203,7 +203,7 @@ func TestAuthzSetUserPassword(t *testing.T) {
 }
 
 func TestAuthzPatchUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	// If we can view the user we get the error from canSetUsersDisplayName.
 	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersDisplayName")
@@ -241,7 +241,7 @@ func TestAuthzPatchUser(t *testing.T) {
 }
 
 func TestAuthzGetUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canGetUsersOwnSettings")
 	authzUsers.On("CanGetUsersOwnSettings", curUser).
@@ -252,7 +252,7 @@ func TestAuthzGetUserSetting(t *testing.T) {
 }
 
 func TestAuthzPostUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
 	authzUsers.On("CanCreateUsersOwnSetting", curUser,
@@ -266,7 +266,7 @@ func TestAuthzPostUserSetting(t *testing.T) {
 }
 
 func TestAuthzResetUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canResetUsersOwnSettings")
 	authzUsers.On("CanResetUsersOwnSettings", curUser).

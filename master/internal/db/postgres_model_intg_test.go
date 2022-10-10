@@ -24,7 +24,7 @@ import (
 var emptyMetadata = []byte(`{}`)
 
 func TestModels(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 

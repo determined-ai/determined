@@ -65,7 +65,8 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	// Check if there are tasks.
 	var taskSummaries map[model.AllocationID]sproto.AllocationSummary
 	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+		agentRMRef, sproto.GetAllocationSummaries{}).
+		Get().(map[model.AllocationID]sproto.AllocationSummary)
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Start CPU tasks actors
@@ -95,7 +96,8 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 		agentRMRef, sproto.GetAllocationSummary{ID: cpuTask1.id}).Get().(*sproto.AllocationSummary)
 	assert.Equal(t, taskSummary.ResourcePool, cpuTask1.resourcePool)
 	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+		agentRMRef, sproto.GetAllocationSummaries{}).
+		Get().(map[model.AllocationID]sproto.AllocationSummary)
 	assert.Equal(t, taskSummaries[cpuTask1.id].ResourcePool, taskSummaries[cpuTask2.id].ResourcePool)
 
 	// Let the GPU task actors request resources.
@@ -107,21 +109,24 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 		agentRMRef, sproto.GetAllocationSummary{ID: gpuTask1.id}).Get().(*sproto.AllocationSummary)
 	assert.Equal(t, taskSummary.ResourcePool, gpuTask1.resourcePool)
 	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+		agentRMRef, sproto.GetAllocationSummaries{}).
+		Get().(map[model.AllocationID]sproto.AllocationSummary)
 	assert.Equal(t, taskSummaries[gpuTask1.id].ResourcePool, taskSummaries[gpuTask2.id].ResourcePool)
 
 	// Let the CPU task actors release resources.
 	system.Ask(cpuTask1Ref, SendResourcesReleasedToResourceManager{}).Get()
 	system.Ask(cpuTask2Ref, SendResourcesReleasedToResourceManager{}).Get()
 	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+		agentRMRef, sproto.GetAllocationSummaries{}).
+		Get().(map[model.AllocationID]sproto.AllocationSummary)
 	assert.Equal(t, len(taskSummaries), 2)
 
 	// Let the GPU task actors release resources.
 	system.Ask(gpuTask1Ref, SendResourcesReleasedToResourceManager{}).Get()
 	system.Ask(gpuTask2Ref, SendResourcesReleasedToResourceManager{}).Get()
 	taskSummaries = system.Ask(
-		agentRMRef, sproto.GetAllocationSummaries{}).Get().(map[model.AllocationID]sproto.AllocationSummary)
+		agentRMRef, sproto.GetAllocationSummaries{}).
+		Get().(map[model.AllocationID]sproto.AllocationSummary)
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Fetch average queued time for resource pool

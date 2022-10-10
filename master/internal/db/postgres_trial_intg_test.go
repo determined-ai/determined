@@ -25,7 +25,7 @@ import (
 )
 
 func TestProtoGetTrial(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -77,7 +77,7 @@ func TestProtoGetTrial(t *testing.T) {
 // is at most one unarchived result.
 func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	ctx := context.Background()
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
