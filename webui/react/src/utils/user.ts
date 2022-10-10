@@ -18,7 +18,10 @@ export function isUser(userOrGroup: UserOrGroup): string | undefined {
 export function getName(userOrGroup: UserOrGroup): string {
   const user = userOrGroup as User;
   const group = userOrGroup as V1Group;
-  return isUser(userOrGroup) ? getDisplayName(user) : group.name ? group.name : '';
+  if (isUser(userOrGroup)) {
+    return getDisplayName(user);
+  }
+  return group.name ? group.name : '';
 }
 
 export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {

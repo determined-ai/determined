@@ -45,6 +45,14 @@ export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => 
   return [...validationMetrics, ...trainingMetrics].sort(metricNameSorter);
 };
 
+export const extractMetricValue = (
+  workload: WorkloadGroup,
+  metricName: MetricName,
+): number | undefined => {
+  const source = workload[metricName.type]?.metrics ?? {};
+  return source[metricName.name];
+};
+
 export const extractMetricSortValue = (
   workload: WorkloadGroup,
   metricName: MetricName,
@@ -54,14 +62,6 @@ export const extractMetricSortValue = (
     extractMetricValue(workload, { ...metricName, type: MetricType.Validation }) ??
     extractMetricValue(workload, { ...metricName, type: MetricType.Training })
   );
-};
-
-export const extractMetricValue = (
-  workload: WorkloadGroup,
-  metricName: MetricName,
-): number | undefined => {
-  const source = workload[metricName.type]?.metrics ?? {};
-  return source[metricName.name];
 };
 
 export const getMetricValue = (

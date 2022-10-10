@@ -6,6 +6,9 @@ import { CommandState, RunState, State } from 'types';
 
 import { runStateSortValues } from './experiment';
 
+export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTask =>
+  'archived' in task && !('type' in task);
+
 export const canBeOpened = (task: Type.AnyTask): boolean => {
   if (isExperimentTask(task)) return true;
   if (terminalCommandStates.has(task.state)) return false;
@@ -73,6 +76,51 @@ export function generateCommandTask(idx: number): Type.RecentCommandTask {
   };
 }
 
+export const generateExperiment = (id = 1): Type.ExperimentItem => {
+  const experimentTask = generateExperimentTask(id);
+  const user = sampleUsers.random();
+  const config = {
+    name: experimentTask.name,
+    resources: {},
+    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+  };
+  return {
+    ...experimentTask,
+    config: {
+      checkpointPolicy: 'best',
+      checkpointStorage: {
+        hostPath: '/tmp',
+        saveExperimentBest: 0,
+        saveTrialBest: 1,
+        saveTrialLatest: 1,
+        storagePath: 'determined-integration-checkpoints',
+        type: 'shared_fs',
+      },
+      dataLayer: { type: 'shared_fs' },
+      hyperparameters: {},
+      maxRestarts: 5,
+      name: experimentTask.name,
+      resources: {},
+      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+    },
+    configRaw: config,
+    hyperparameters: {},
+    id,
+    jobId: id.toString(),
+    labels: [],
+    name: experimentTask.name,
+    numTrials: Math.round(Math.random() * 60000),
+    projectId: 1,
+    resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
+    searcherType: 'single',
+    userId: user.id,
+    username: user.username,
+  } as Type.ExperimentItem;
+};
+
+export const generateExperiments = (count = 30): Type.ExperimentItem[] =>
+  new Array(Math.floor(count)).fill(null).map((_, idx) => generateExperiment(idx));
+
 export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
@@ -104,87 +152,30 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
     },
     configRaw: config,
     hyperparameters: {},
-    id: id,
+    id,
     name: experimentTask.name,
     userId: user.id,
   } as Type.ExperimentOld;
 };
 
-export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
-  return new Array(Math.floor(count)).fill(null).map((_, idx) => generateOldExperiment(idx));
-};
+export const generateOldExperiments = (count = 10): Type.ExperimentOld[] =>
+  new Array(Math.floor(count)).fill(null).map((_, idx) => generateOldExperiment(idx));
 
-export const generateExperiment = (id = 1): Type.ExperimentItem => {
-  const experimentTask = generateExperimentTask(id);
-  const user = sampleUsers.random();
-  const config = {
-    name: experimentTask.name,
-    resources: {},
-    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
-  };
-  return {
-    ...experimentTask,
-    config: {
-      checkpointPolicy: 'best',
-      checkpointStorage: {
-        hostPath: '/tmp',
-        saveExperimentBest: 0,
-        saveTrialBest: 1,
-        saveTrialLatest: 1,
-        storagePath: 'determined-integration-checkpoints',
-        type: 'shared_fs',
-      },
-      dataLayer: { type: 'shared_fs' },
-      hyperparameters: {},
-      maxRestarts: 5,
-      name: experimentTask.name,
-      resources: {},
-      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
-    },
-    configRaw: config,
-    hyperparameters: {},
-    id: id,
-    jobId: id.toString(),
-    labels: [],
-    name: experimentTask.name,
-    numTrials: Math.round(Math.random() * 60000),
-    projectId: 1,
-    resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
-    searcherType: 'single',
-    userId: user.id,
-    username: user.username,
-  } as Type.ExperimentItem;
-};
-
-export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
-  return new Array(Math.floor(count)).fill(null).map((_, idx) => generateExperiment(idx));
-};
-
-export const generateTasks = (count = 10): Type.RecentTask[] => {
-  return new Array(Math.floor(count)).fill(0).map((_, idx) => {
+export const generateTasks = (count = 10): Type.RecentTask[] =>
+  new Array(Math.floor(count)).fill(0).map((_, idx) => {
     if (Math.random() > 0.5) {
       return generateCommandTask(idx);
-    } else {
-      return generateExperimentTask(idx);
     }
+    return generateExperimentTask(idx);
   });
-};
 
 // Differentiate Task from Experiment.
-export const isCommandTask = (obj: Type.Command | Type.CommandTask): obj is Type.CommandTask => {
-  return 'type' in obj;
-};
+export const isCommandTask = (obj: Type.Command | Type.CommandTask): obj is Type.CommandTask =>
+  'type' in obj;
 
-export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTask => {
-  return 'archived' in task && !('type' in task);
-};
-
-export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
-  return (
-    killableRunStates.includes(task.state as Type.RunState) ||
-    killableCommandStates.includes(task.state as Type.CommandState)
-  );
-};
+export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean =>
+  killableRunStates.includes(task.state as Type.RunState) ||
+  killableCommandStates.includes(task.state as Type.CommandState);
 
 const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T,
@@ -207,7 +198,7 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   users?: string[],
 ): boolean => {
   if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
-  return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
+  return users.findIndex((user) => task.userId === parseInt(user, 10)) !== -1;
 };
 
 export const filterTasks = <
@@ -218,8 +209,8 @@ export const filterTasks = <
   filters: Type.TaskFilters<T>,
   users: Type.User[],
   search = '',
-): A[] => {
-  return tasks
+): A[] =>
+  tasks
     .filter((task) => {
       const isExperiment = isExperimentTask(task);
       const type = isExperiment ? Type.TaskType.Experiment : (task as Type.CommandTask).type;
@@ -232,19 +223,16 @@ export const filterTasks = <
       );
     })
     .filter((task) => matchesSearch<A>(task, search));
-};
 
 /* Conversions to Tasks */
 
-export const taskFromCommandTask = (command: Type.CommandTask): Type.RecentCommandTask => {
-  return {
-    ...command,
-    lastEvent: {
-      date: command.startTime,
-      name: 'requested',
-    },
-  };
-};
+export const taskFromCommandTask = (command: Type.CommandTask): Type.RecentCommandTask => ({
+  ...command,
+  lastEvent: {
+    date: command.startTime,
+    name: 'requested',
+  },
+});
 
 // Checks whether tensorboard source matches a given source list.
 export const tensorBoardMatchesSource = (
@@ -285,9 +273,8 @@ const commandStateSortValues: Map<CommandState, number> = new Map(
   commandStateSortOrder.map((state, idx) => [state, idx]),
 );
 
-export const commandStateSorter = (a: CommandState, b: CommandState): number => {
-  return (commandStateSortValues.get(a) || 0) - (commandStateSortValues.get(b) || 0);
-};
+export const commandStateSorter = (a: CommandState, b: CommandState): number =>
+  (commandStateSortValues.get(a) || 0) - (commandStateSortValues.get(b) || 0);
 
 export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
