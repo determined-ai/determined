@@ -466,3 +466,7 @@ export interface PinWorkspaceParams {
 }
 
 export type UnpinWorkspaceParams = ArchiveWorkspaceParams;
+
+export interface GetWebhookParams {
+  id: number;
+}

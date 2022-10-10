@@ -2,13 +2,16 @@ import { InteractiveTableSettings } from 'components/InteractiveTable';
 // import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export type WebhookColumnName = 'id' | 'url';
+export type WebhookColumnName = 'action' | 'test' | 'triggers' | 'type' | 'url';
 
-export const DEFAULT_COLUMNS: WebhookColumnName[] = ['id', 'url'];
+export const DEFAULT_COLUMNS: WebhookColumnName[] = ['action', 'test', 'triggers', 'type', 'url'];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<WebhookColumnName, number> = {
-  id: 46,
-  url: 75,
+  action: 40,
+  test: 60,
+  triggers: 60,
+  type: 60,
+  url: 70,
 };
 
 export interface Settings extends InteractiveTableSettings {

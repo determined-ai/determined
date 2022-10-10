@@ -1,4 +1,4 @@
-// import { Button, Space } from 'antd';
+import { Button, Dropdown } from 'antd';
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -12,7 +12,7 @@ import { defaultRowClassName } from 'components/Table';
 // import TableFilterSearch from 'components/TableFilterSearch';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 // import { paths } from 'routes/utils';
-import { getWebhooks } from 'services/api';
+import { deleteWebhook, getWebhooks } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
@@ -70,21 +70,79 @@ const WebhooksView: React.FC = () => {
   //   resetSettings([...filterKeys, 'tableOffset']);
   // }, [resetSettings]);
 
+  const WebhookActionMenu = useCallback(
+    (record: Webhook) => {
+      enum MenuKey {
+        DELETE_WEBHOOK = 'delete-webhook',
+      }
+
+      const funcs = {
+        [MenuKey.WebhookActionMenu]: () => {
+          deleteWebhook({ id: record.id });
+        },
+      };
+
+      const onItemClick: MenuProps['onClick'] = (e) => {
+        funcs[e.key as MenuKey]();
+      };
+
+      const menuItems: MenuProps['items'] = [
+        { danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete Model' },
+      ];
+
+      return <Menu items={menuItems} onClick={onItemClick} />;
+    },
+    [showConfirmDelete],
+  );
+
   const columns = useMemo(() => {
+    const actionRenderer = (_: string, record: Webhook) => (
+      <Dropdown overlay={() => WebhookActionMenu(record)} trigger={['click']}>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
+        </Button>
+      </Dropdown>
+    );
+
     return [
-      {
-        dataIndex: 'id',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
-        key: 'id',
-        sorter: true,
-        title: 'ID',
-      },
       {
         dataIndex: 'url',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['url'],
         key: 'url',
         sorter: true,
         title: 'URL',
+      },
+      {
+        dataIndex: 'triggers',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['triggers'],
+        key: 'triggers',
+        sorter: true,
+        title: 'Experiment State Triggers',
+      },
+      {
+        dataIndex: 'type',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
+        key: 'type',
+        sorter: true,
+        title: 'Type',
+      },
+      {
+        dataIndex: 'test',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['test'],
+        key: 'test',
+        sorter: true,
+        title: 'Test',
+      },
+      {
+        align: 'right',
+        className: 'fullCell',
+        dataIndex: 'action',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        fixed: 'right',
+        key: 'action',
+        render: actionRenderer,
+        title: '',
+        width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<Webhook>[];
   }, []);
@@ -111,6 +169,18 @@ const WebhooksView: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
+
+  const WebhookActionDropdown = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <Dropdown
+        overlay={() => WebhookActionMenu(record)}
+        trigger={['contextMenu']}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+    ),
+    [WebhookActionMenu],
+  );
 
   return (
     <Page containerRef={pageRef} id="webhooks" title="Webhooks">

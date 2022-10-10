@@ -837,6 +837,12 @@ export const getActiveTasks: DetApi<
 
 /* Webhooks */
 
+export const deleteWebhook: DetApi<GetWebhookParams, Api.V1DeleteWebhookResponse, void> = {
+  name: 'deleteWebhook',
+  postProcess: noOp,
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.deleteWebhook(params.id),
+};
+
 export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]> = {
   name: 'getWebhooks',
   postProcess: (response) => {
