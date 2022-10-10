@@ -4,7 +4,7 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
   metric: none
-  max_length: 16 # Number of times the generation pipeline is called, per-worker.
+  max_length: 10 # Number of times the generation pipeline is called, per-worker.
 resources:
   slots_per_trial: 2
 max_restarts: 1
@@ -12,6 +12,9 @@ environment:
     environment_variables:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 hyperparameters:
+    batch_size: 2
+    main_process_seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
+    save_freq: 4
     pipeline: # The `device` arg is handled by the generate_on_cluster method; do not specify.
         learned_embeddings_filename: learned_embeddings_dict.pt
         scheduler_name: pndm
@@ -22,21 +25,16 @@ hyperparameters:
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
         use_fp16: True
     uuids: []
-    call:
+    call_kwargs:
       prompt:
         type: categorical
         vals:
           - a Van Gogh painting of a <det-logo> with thick strokes, masterful composition
           - a watercolor painting of a <det-logo> with soft strokes, masterful composition
-      num_samples: 2
-      batch_size: 2
       num_inference_steps: 50
       guidance_scale:
         type: double
         minval: 5.
         maxval: 20.
         count: 4
-      other_hf_pipeline_call_kwargs: {}
-    main_process_seed: 2147483647 # Various seeds are scanned during generation; don't scan over seed in an HP search.
-    save_freq: 4
 

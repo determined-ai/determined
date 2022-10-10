@@ -2,14 +2,14 @@ import json
 import logging
 import os
 import pathlib
-from PIL import Image
 from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 import determined as det
 import torch
 from determined.experimental import client
-from diffusers import (
+from diffusers.pipelines.stable_diffusion import (
     StableDiffusionPipeline,
+    StableDiffusionPipelineOutput,
 )
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms.functional import pil_to_tensor
@@ -77,15 +77,14 @@ class DetSDTextualInversionPipeline:
         """Creates a DetSDTextualInversionPipeline instance on the cluster, drawing hyperparameters
         and other needed information from the Determined master, and then generates images. Expects
         the `hyperparameters` section of the config to be broken into the following sections:
-        - `pipeline`: containing all __init__ args
-        - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
-        the pipeline.
-        - `call`: all arguments which are to be passed to the `__call__` method which generates
-        images, but which cannot contain `seed` or `generator` or `max_nsfw_retries` for efficiency
-        and reproducibility reasons.
+        - `batch_size`: The batch size to use for generation.
         - `main_process_seed`: an integer specifying the seed used by the chief worker for
         generation. Other workers add their process index to this value.
         - `save_freq`: an integer specifying how often to write images to tensorboard.
+        - `pipeline`: containing all __init__ args
+        - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
+        the pipeline.
+        - `call_kwargs`: all arguments which are to be passed to the `__call__` method.
         """
         info = det.get_cluster_info()
         assert info is not None, "generate_on_cluster() must be called on a Determined cluster."
@@ -93,11 +92,12 @@ class DetSDTextualInversionPipeline:
         latest_checkpoint = info.latest_checkpoint
 
         # Extract relevant groups from hparams.
-        pipeline_init_kwargs = hparams["pipeline"]
-        uuid_list = hparams["uuids"]
-        call_kwargs = hparams["call"]
+        batch_size = hparams["batch_size"]
         main_process_seed = hparams["main_process_seed"]
         save_freq = hparams["save_freq"]
+        pipeline_init_kwargs = hparams["pipeline"]
+        uuid_list = hparams["uuids"]
+        call_kwargs = hparams["call_kwargs"]
 
         assert not call_kwargs.get(
             "max_nsfw_retries", 0
@@ -146,12 +146,16 @@ class DetSDTextualInversionPipeline:
             generator = torch.Generator(device=device).manual_seed(seed)
             call_kwargs["generator"] = generator
             # Add seed information to the tensorboard tag.
-            tb_tag += f", seed: {seed}"
+            tb_tag += f", seed: {seed}:
+            # Update the call_kwargs with the batch size, if needed.
+            if batch_size > 1:
+                call_kwargs['prompt'] = [call_kwargs['prompt']] * batch_size
 
             steps_completed = 0
-            generated_imgs = 0
+            num_generated_imgs = 0
             img_history = []
 
+            # Restore from a checkpoint, if necessary.
             if latest_checkpoint is not None:
                 with core_context.checkpoint.restore_path(latest_checkpoint) as path:
                     with open(path.joinpath("metadata.json"), "r") as f:
@@ -160,7 +164,7 @@ class DetSDTextualInversionPipeline:
                             path.joinpath("generator_state_dict.pt"),
                         )
                         steps_completed = metadata_dict["steps_completed"]
-                        generated_imgs = metadata_dict["generated_imgs"]
+                        num_generated_imgs = metadata_dict["num_generated_imgs"]
                         generator.set_state(generator_state_dict[device])
                 if is_main_process:
                     logger.info(f"Resumed from checkpoint at step {steps_completed}")
@@ -171,7 +175,7 @@ class DetSDTextualInversionPipeline:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while steps_completed < op.length:
-                    img_history.extend(pipeline(**call_kwargs))
+                    img_history.extend(pipeline(**call_kwargs).images)
                     steps_completed += 1
 
                     # Write to tensorboard and checkpoint at the specified frequency.
@@ -186,7 +190,7 @@ class DetSDTextualInversionPipeline:
                             for tag, img_list in tags_and_imgs:
                                 for idx, img in enumerate(img_list):
                                     img_t = pil_to_tensor(img)
-                                    global_step = generated_imgs + idx
+                                    global_step = num_generated_imgs + idx
                                     tb_writer.add_image(
                                         tag,
                                         img_tensor=img_t,
@@ -195,10 +199,10 @@ class DetSDTextualInversionPipeline:
                             tb_writer.flush()
                             core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
-                            generated_imgs += len(img_history)
+                            num_generated_imgs += len(img_history)
                             checkpoint_metadata_dict = {
                                 "steps_completed": steps_completed,
-                                "generated_imgs": generated_imgs,
+                                "num_generated_imgs": num_generated_imgs,
                             }
                             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
                                 path,
@@ -308,63 +312,12 @@ class DetSDTextualInversionPipeline:
             text = text.replace(concept_token, dummy_tokens)
         return text
 
-    def __call__(
-        self,
-        prompt: str,
-        num_inference_steps: int = 50,
-        guidance_scale: int = 7.5,
-        saved_img_dir: Optional[str] = None,
-        seed: Optional[int] = None,
-        generator: Optional[torch.Generator] = None,
-        num_samples: int = 1,
-        batch_size: int = 1,
-        other_hf_pipeline_call_kwargs: Optional[dict] = None,
-        max_nsfw_retries: int = 0,
-    ) -> List[Image.Image]:
-        """Generates a list of num_samples images from the provided prompt and optionally writes the
-        results to disk.
+    def __call__(self, *args, **kwargs) -> StableDiffusionPipelineOutput:
+        """Return the results of the HF pipeline's StableDiffusionPipeline __call__ method. See the
+        HF docs for more information.
         """
-        assert not (
-            seed is not None and generator is not None
-        ), "Only one of `seed` or `generator` can be provided."
-        if seed is not None:
-            generator = torch.Generator(device=self.device).manual_seed(seed)
-        other_hf_pipeline_call_kwargs = other_hf_pipeline_call_kwargs or {}
-        imgs = []
-        generated_samples = retries = 0
-        # The dummy prompts are what actually get fed into the pipeline
-        dummy_prompt = self._replace_concepts_with_dummies(prompt)
-        while generated_samples < num_samples:
-            output = self.pipeline(
-                [dummy_prompt] * batch_size,
-                num_inference_steps=num_inference_steps,
-                guidance_scale=guidance_scale,
-                generator=generator,
-                **other_hf_pipeline_call_kwargs,
-            )
-            for nsfw, img in zip(output["nsfw_content_detected"], output["sample"]):
-                if nsfw and retries < max_nsfw_retries:
-                    retries += 1
-                    continue
-                imgs.append(img)
-                generated_samples += 1
-                if generated_samples == num_samples:
-                    break
-
-        if saved_img_dir is not None:
-            for idx, img in enumerate(imgs):
-                call_args_str = f"_{num_inference_steps}_steps_{guidance_scale}_gs"
-                if seed is not None:
-                    call_args_str += f"_seed_{seed}"
-                elif generator is not None:
-                    call_args_str += f"_seed_{generator.initial_seed()}"
-                file_ending = call_args_str + ".png"
-                joined_split_prompt = "_".join(prompt.split())
-                filename = joined_split_prompt[: 255 - len(file_ending)] + file_ending
-                save_path = pathlib.Path(saved_img_dir).joinpath(filename)
-                img.save(save_path)
-
-        return imgs
+        output = self.pipeline(*args, **kwargs)
+        return output
 
     def __repr__(self) -> str:
         attr_dict = {
