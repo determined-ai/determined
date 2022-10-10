@@ -8664,13 +8664,13 @@ export interface V1Webhook {
      * @type {number}
      * @memberof V1Webhook
      */
-    id?: number;
+    id: number;
     /**
      * The url of the webhook.
      * @type {string}
      * @memberof V1Webhook
      */
-    url?: string;
+    url: string;
     /**
      * The triggers of the webhook.
      * @type {Array<V1Trigger>}

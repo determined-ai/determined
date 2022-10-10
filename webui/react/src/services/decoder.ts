@@ -764,6 +764,20 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   };
 };
 
+export const mapV1Webhook = (data: Sdk.V1Webhook): types.Webhook => {
+  return {
+    id: data.id,
+    triggers: data.triggers || [],
+    url: data.url,
+    webhookType:
+      {
+        [Sdk.V1WebhookType.UNSPECIFIED]: 'Unspecified',
+        [Sdk.V1WebhookType.DEFAULT]: 'Default',
+        [Sdk.V1WebhookType.SLACK]: 'Slack',
+      }[data.webhookType] || 'Unspecified',
+  };
+};
+
 export const decodeJobStates = (
   states?: Sdk.Determinedjobv1State[],
 ): Array<

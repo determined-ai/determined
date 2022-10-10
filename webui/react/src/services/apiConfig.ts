@@ -42,6 +42,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
     Users: new Api.UsersApi(config),
+    Webhooks: new Api.WebhooksApi(config),
     Workspaces: new Api.WorkspacesApi(config),
   };
 };
@@ -832,6 +833,16 @@ export const getActiveTasks: DetApi<
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
   request: () => detApi.Tasks.getActiveTasksCount(),
+};
+
+/* Webhooks */
+
+export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]> = {
+  name: 'getWebhooks',
+  postProcess: (response) => {
+    return response.webhooks.map((hook) => decoder.mapV1Webhook(hook));
+  },
+  request: () => detApi.Webhooks.getWebhooks(),
 };
 
 /* Models */

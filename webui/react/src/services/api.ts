@@ -358,6 +358,12 @@ export const getActiveTasks = generateDetApi<
   Type.TaskCounts
 >(Config.getActiveTasks);
 
+/* Webhooks */
+
+export const getWebhooks = generateDetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]>(
+  Config.getWebhooks,
+);
+
 /* Models */
 
 export const getModels = generateDetApi<
