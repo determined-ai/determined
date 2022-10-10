@@ -6,6 +6,8 @@ module.exports = {
     node: true,
   },
   extends: [
+    'airbnb',
+    'airbnb-typescript',
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:jest/recommended',
@@ -22,9 +24,10 @@ module.exports = {
   parserOptions: {
     ecmaFeatures: { jsx: true },
     ecmaVersion: 2018,
+    project: './tsconfig.json',
     sourceType: 'module',
   },
-  plugins: ['import', 'react', 'react-hooks', 'sort-keys-fix'],
+  plugins: ['import', 'jest', 'react', 'react-hooks', 'sort-keys-fix'],
   root: true,
   rules: {
     // Can disagree with @typescript-eslint/member-ordering.

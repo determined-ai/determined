@@ -125,7 +125,7 @@
     "eslint-config-react": "^1.1.7",
     "eslint-import-resolver-typescript": "^2.3.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^24.7.0",
+    "eslint-plugin-jest": "^27.1.1",
     "eslint-plugin-jsx-a11y": "^6.6.1",
     "eslint-plugin-react": "^7.31.8",
     "eslint-plugin-react-hooks": "^4.6.0",

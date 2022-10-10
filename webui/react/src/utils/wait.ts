@@ -1,8 +1,6 @@
 import { paths, serverAddress } from 'routes/utils';
 import { openBlank } from 'shared/utils/routes';
-import {
-  Command, CommandState, CommandTask, CommandType,
-} from 'types';
+import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
 
 export interface WaitStatus {
