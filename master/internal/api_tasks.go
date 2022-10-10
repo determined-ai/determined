@@ -78,7 +78,7 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		exp, err := a.m.db.ExperimentWithoutConfigByTaskID(t.TaskID)
+		exp, err := db.ExperimentWithoutConfigByTaskID(ctx, t.TaskID)
 		if err != nil {
 			return err
 		}
