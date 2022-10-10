@@ -56,7 +56,7 @@ hyperparameters:
           - a charcoal sketch of a <det-logo>
         num_inference_steps: 50
         guidance_scale: 7.5
-        generator_seed: 2147483647
+        main_process_generator_seed: 2147483647
         other_inference_scheduler_kwargs:
             skip_prk_steps: True
 

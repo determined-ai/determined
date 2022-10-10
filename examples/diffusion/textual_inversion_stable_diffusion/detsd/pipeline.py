@@ -80,7 +80,7 @@ class DetSDTextualInversionPipeline:
         and other needed information from the Determined master, and then generates images. Expects
         the `hyperparameters` section of the config to be broken into the following sections:
         - `batch_size`: The batch size to use for generation.
-        - `main_process_seed`: an integer specifying the seed used by the chief worker for
+        - `main_process_generator_seed`: an integer specifying the seed used by the chief worker for
         generation. Other workers add their process index to this value.
         - `save_freq`: an integer specifying how often to write images to tensorboard.
         - `pipeline`: containing all __init__ args
@@ -95,7 +95,7 @@ class DetSDTextualInversionPipeline:
 
         # Extract relevant groups from hparams.
         batch_size = hparams["batch_size"]
-        main_process_seed = hparams["main_process_seed"]
+        main_process_generator_seed = hparams["main_process_generator_seed"]
         save_freq = hparams["save_freq"]
         pipeline_init_kwargs = hparams["pipeline"]
         uuid_list = hparams["uuids"]
@@ -145,7 +145,7 @@ class DetSDTextualInversionPipeline:
 
             # Use unique seeds, to avoid repeated images, and add the corresponding generator to the
             # call_kwargs.
-            seed = main_process_seed + process_index
+            seed = main_process_generator_seed + process_index
             generator = torch.Generator(device=device).manual_seed(seed)
             call_kwargs["generator"] = generator
             # Add seed information to the tensorboard tag.
@@ -183,26 +183,27 @@ class DetSDTextualInversionPipeline:
 
                     # Write to tensorboard and checkpoint at the specified frequency.
                     if steps_completed % save_freq == 0 or steps_completed == op.length:
-                        # Gather all and images to the main process
-                        tags_and_imgs = core_context.distributed.gather((tb_tag, img_history))
+                        # Tensorboard
+                        for idx, img in enumerate(img_history):
+                            img_t = pil_to_tensor(img)
+                            global_step = num_generated_imgs + idx
+                            tb_writer.add_image(
+                                tb_tag,
+                                img_tensor=img_t,
+                                global_step=global_step,
+                            )
+                        tb_writer.flush()
+                        core_context.train.upload_tensorboard_files()
+                        num_generated_imgs += len(img_history)
+                        img_history = []
+
+                        # Checkpointing.
                         devices_and_generators = core_context.distributed.gather(
                             (device, generator.get_state())
                         )
                         if is_main_process:
                             logger.info(f"Saving at step {steps_completed}")
-                            for tag, img_list in tags_and_imgs:
-                                for idx, img in enumerate(img_list):
-                                    img_t = pil_to_tensor(img)
-                                    global_step = num_generated_imgs + idx
-                                    tb_writer.add_image(
-                                        tag,
-                                        img_tensor=img_t,
-                                        global_step=global_step,
-                                    )
-                            tb_writer.flush()
-                            core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
-                            num_generated_imgs += len(img_history)
                             checkpoint_metadata_dict = {
                                 "steps_completed": steps_completed,
                                 "num_generated_imgs": num_generated_imgs,
@@ -218,8 +219,6 @@ class DetSDTextualInversionPipeline:
                                     generator_state_dict, path.joinpath("generator_state_dict.pt")
                                 )
                             op.report_progress(steps_completed)
-                        # Reset image list.
-                        img_history = []
                         # Only preempt after a checkpoint has been saved.
                         if core_context.preempt.should_preempt():
                             return

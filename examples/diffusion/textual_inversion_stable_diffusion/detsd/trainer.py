@@ -62,7 +62,7 @@ class DetSDTextualInversionTrainer:
         inference_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "pndm",
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
-        generator_seed: int = 2147483647,
+        main_process_generator_seed: int = 2147483647,
         other_inference_scheduler_kwargs: Optional[dict] = None,
     ) -> None:
         # We assume that the Huggingface User Access token has been stored as a HF_AUTH_TOKEN
@@ -147,7 +147,7 @@ class DetSDTextualInversionTrainer:
         self.inference_prompts = inference_prompts
         self.num_inference_steps = num_inference_steps
         self.guidance_scale = guidance_scale
-        self.generator_seed = generator_seed
+        self.main_process_generator_seed = main_process_generator_seed
 
         if other_inference_scheduler_kwargs is None:
             other_inference_scheduler_kwargs = defaults.DEFAULT_SCHEDULER_KWARGS_DICT[
@@ -252,7 +252,7 @@ class DetSDTextualInversionTrainer:
                         took_sgd_step = trainer.accelerator.sync_gradients
                         if took_sgd_step:
                             trainer.steps_completed += 1
-                            trainer.logger.info(f"Step {trainer.steps_completed} completed")
+                            trainer.logger.info(f"Step {trainer.steps_completed} completed.")
 
                             is_end_of_training = trainer.steps_completed == op.length
                             time_to_report = (
@@ -609,7 +609,7 @@ class DetSDTextualInversionTrainer:
             dummy_prompt = self._replace_concepts_with_dummies(prompt)
             # Fix the seed for reproducibility, unique to each worker.
             generator = torch.Generator(device=self.accelerator.device).manual_seed(
-                self.generator_seed + self.accelerator.process_index
+                self.main_process_generator_seed + self.accelerator.process_index
             )
             # Set output_type to anything other than `pil` to get numpy arrays out.
             generated_img_array = []
