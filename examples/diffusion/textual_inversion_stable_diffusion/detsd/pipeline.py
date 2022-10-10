@@ -319,11 +319,16 @@ class DetSDTextualInversionPipeline:
             text = text.replace(concept_token, dummy_tokens)
         return text
 
-    def __call__(self, *args, **kwargs) -> StableDiffusionPipelineOutput:
-        """Return the results of the HF pipeline's StableDiffusionPipeline __call__ method. See the
-        HF docs for more information.
+    def __call__(self, **kwargs) -> StableDiffusionPipelineOutput:
+        """Return the results of the HF pipeline's StableDiffusionPipeline __call__ method, only
+        which must be passed in a key-word arguments. See the HF docs for information on all
+        available args.
         """
-        output = self.pipeline(*args, **kwargs)
+        if isinstance(kwargs["prompt"], str):
+            kwargs["prompt"] = self._replace_concepts_with_dummies(kwargs["prompt"])
+        elif isinstance(kwargs["prompt"], list):
+            kwargs["prompt"] = [self._replace_concepts_with_dummies(p) for p in kwargs["prompt"]]
+        output = self.pipeline(**kwargs)
         return output
 
     def __repr__(self) -> str:
