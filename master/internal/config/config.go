@@ -1,7 +1,9 @@
 package config
 
 import (
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -223,6 +225,14 @@ func (c *Config) Resolve() error {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
+	if c.Security.WebhookSigningKey == "" {
+		b := make([]byte, 6)
+		if _, err := rand.Read(b); err != nil {
+			return err
+		}
+		c.Security.WebhookSigningKey = hex.EncodeToString(b)
+	}
+
 	if err := c.ResolveResource(); err != nil {
 		return err
 	}
@@ -236,10 +246,11 @@ func (c *Config) Resolve() error {
 
 // SecurityConfig is the security configuration for the master.
 type SecurityConfig struct {
-	DefaultTask model.AgentUserGroup `json:"default_task"`
-	TLS         TLSConfig            `json:"tls"`
-	SSH         SSHConfig            `json:"ssh"`
-	AuthZ       AuthZConfig          `json:"authz"`
+	DefaultTask       model.AgentUserGroup `json:"default_task"`
+	TLS               TLSConfig            `json:"tls"`
+	SSH               SSHConfig            `json:"ssh"`
+	AuthZ             AuthZConfig          `json:"authz"`
+	WebhookSigningKey string               `json:"webhook_signing_key"`
 }
 
 // SSHConfig is the configuration setting for SSH.
