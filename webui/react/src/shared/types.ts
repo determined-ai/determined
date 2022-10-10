@@ -1,4 +1,4 @@
-import { RouteProps } from 'react-router-dom-v5-compat';
+import { RouteProps } from 'react-router-dom';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
@@ -68,7 +68,7 @@ export type EmptyParams = {};
  * meaning React will attempt to load the path outside of the internal routing
  * mechanism.
  */
-export interface RouteConfig extends RouteProps {
+export type RouteConfig = {
   icon?: string;
   id: string;
   needAuth?: boolean;
@@ -77,7 +77,7 @@ export interface RouteConfig extends RouteProps {
   redirect?: string;
   suffixIcon?: string;
   title?: string;
-}
+} & RouteProps;
 
 export interface ClassNameProp {
   /** classname to be applied to the base element */

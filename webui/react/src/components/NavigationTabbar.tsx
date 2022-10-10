@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';

@@ -9,7 +9,7 @@
 
 import queryString from 'query-string';
 import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Reload: React.FC = () => {
   const navigate = useNavigate();

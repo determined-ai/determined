@@ -1,7 +1,7 @@
 import { Button, notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';

@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -40,11 +39,9 @@ const setup = () => {
   return render(
     <StoreProvider>
       <HelmetProvider>
-        <Router history={history}>
-          <CompatRouter>
-            <Container />
-          </CompatRouter>
-        </Router>
+        <HistoryRouter history={history}>
+          <Container />
+        </HistoryRouter>
       </HelmetProvider>
     </StoreProvider>,
   );
