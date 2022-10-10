@@ -136,7 +136,7 @@ class DetSDTextualInversionPipeline:
 
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
-            tb_writer = SummaryWriter(log_dir=tb_dir)
+            tb_writer = SummaryWriter(log_dir=tb_dir, max_queue=1)
             # Include the __call__ args in the tensorboard tag.
             tb_tag = ", ".join([f"{k}: {v}" for k, v in call_kwargs.items() if v])
 
@@ -183,28 +183,17 @@ class DetSDTextualInversionPipeline:
                         )
                         if is_main_process:
                             logger.info(f"Saving at step {steps_completed}")
-                            print("tags_and_imgs", tags_and_imgs)
                             for tag, img_list in tags_and_imgs:
-                                print(
-                                    "TEST",
-                                    "tag",
-                                    tag,
-                                    "img_list",
-                                    img_list,
-                                    "generated_imgs",
-                                    generated_imgs,
-                                )
                                 for idx, img in enumerate(img_list):
                                     img_t = pil_to_tensor(img)
                                     global_step = generated_imgs + idx
-                                    print("global_step", global_step)
                                     tb_writer.add_image(
                                         tag,
                                         img_tensor=img_t,
                                         global_step=global_step,
                                     )
-                                tb_writer.flush()  # Ensure all images are written to disk.
-                                core_context.train.upload_tensorboard_files()
+                            tb_writer.flush()
+                            core_context.train.upload_tensorboard_files()
                             # Save the state of the generators as the checkpoint.
                             generated_imgs += len(img_history)
                             checkpoint_metadata_dict = {
