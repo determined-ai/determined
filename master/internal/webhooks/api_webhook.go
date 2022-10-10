@@ -20,10 +20,9 @@ func AuthorizeRequest(ctx context.Context) error {
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
-	if ok, authErr := AuthZProvider.Get().
-		CanEditWebhooks(curUser); authErr != nil {
-		return authErr
-	} else if !ok {
+	authErr := AuthZProvider.Get().
+		CanEditWebhooks(curUser)
+	if authErr != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil

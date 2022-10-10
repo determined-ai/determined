@@ -11,7 +11,7 @@ type WebhookAuthZ interface {
 	// POST /api/v1/webhooks
 	// DELETE /api/v1/webhooks/:webhook_id
 	// POST /api/v1/webhooks/test/:webhook_id
-	CanEditWebhooks(curUser *model.User) (canEditWeb bool, serverError error)
+	CanEditWebhooks(curUser *model.User) (serverError error)
 }
 
 // AuthZProvider is the authz registry for experiments.
