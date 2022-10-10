@@ -39,4 +39,5 @@ hyperparameters:
         minval: 5.
         maxval: 20.
         count: 4
+      num_images_per_prompt: 1
 
