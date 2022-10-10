@@ -23,7 +23,7 @@ func AuthorizeRequest(ctx context.Context) error {
 	authErr := AuthZProvider.Get().
 		CanEditWebhooks(curUser)
 	if authErr != nil {
-		return status.Error(codes.PermissionDenied, err.Error())
+		return status.Error(codes.PermissionDenied, authErr.Error())
 	}
 	return nil
 }
