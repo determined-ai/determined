@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -23,21 +25,45 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
+func errCheckpointNotFound(id string) error {
+	return status.Errorf(codes.NotFound, "checkpoint not found: %s", id)
+}
+
+func errCheckpointsNotFound(ids []string) error {
+	tmp := make([]string, len(ids))
+	for i, id := range ids {
+		tmp[i] = id
+	}
+	sort.Strings(tmp)
+	return status.Errorf(codes.NotFound, "checkpoints not found: %s", strings.Join(tmp, ", "))
+}
+
 func (a *apiServer) GetCheckpoint(
-	_ context.Context, req *apiv1.GetCheckpointRequest,
+	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
-	switch err := a.m.db.QueryProto("get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err {
-	case db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
-	default:
-		return resp,
+
+	if err := a.m.db.QueryProto(
+		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); errors.Is(err, db.ErrNotFound) {
+		return nil, errCheckpointNotFound(req.CheckpointUuid)
+	} else if err != nil {
+		return nil,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
 	}
+
+	taskID := model.TaskID(resp.Checkpoint.TaskId)
+	if err := a.canDoActionsOnTask(
+		ctx, taskID, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		if err == errTaskNotFound(taskID) {
+			err = errCheckpointNotFound(req.CheckpointUuid)
+		}
+		return nil, err
+	}
+	return resp, nil
 }
 
+// TODO...
 func (a *apiServer) DeleteCheckpoints(
 	ctx context.Context,
 	req *apiv1.DeleteCheckpointsRequest,
@@ -82,10 +108,43 @@ func (a *apiServer) DeleteCheckpoints(
 		return nil, err
 	}
 
+	// Are we missing any checkpoints?
+	checkpointsRequested := make(map[string]bool)
+	for _, c := range req.CheckpointUuids {
+		checkpointsRequested[c] = true
+	}
+	for _, expIDcUUIDs := range groupCUUIDsByEIDs {
+		for _, c := range strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",") {
+			checkpointsRequested[c] = false
+		}
+	}
+	var notFoundCheckpoints []string
+	for c, notFound := range checkpointsRequested {
+		if notFound {
+			notFoundCheckpoints = append(notFoundCheckpoints, c)
+		}
+	}
+
 	for _, expIDcUUIDs := range groupCUUIDsByEIDs {
 		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.ExperimentID)
 		if err != nil {
 			return nil, err
+		}
+		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+			return nil, err
+		} else if !ok {
+			notFoundCheckpoints = append(notFoundCheckpoints,
+				strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")...)
+			continue
+		}
+		if err := expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		// Don't delete any checkpoints when we already haven't found a checkpoint.
+		// We will however keep looking to gather all checkpoints a user can't find.
+		if len(notFoundCheckpoints) > 0 {
+			continue
 		}
 
 		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exp)
@@ -104,19 +163,32 @@ func (a *apiServer) DeleteCheckpoints(
 		a.m.system.MustActorOf(addr, ckptGCTask)
 	}
 
+	if len(notFoundCheckpoints) > 0 {
+		return nil, errCheckpointsNotFound(notFoundCheckpoints)
+	}
 	return &apiv1.DeleteCheckpointsResponse{}, nil
 }
 
 func (a *apiServer) PostCheckpointMetadata(
 	ctx context.Context, req *apiv1.PostCheckpointMetadataRequest,
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
-	getResp, err := a.GetCheckpoint(ctx,
-		&apiv1.GetCheckpointRequest{CheckpointUuid: req.Checkpoint.Uuid})
-	if err != nil {
-		return nil, err
+	currCheckpoint := &checkpointv1.Checkpoint{}
+	if err := a.m.db.QueryProto(
+		"get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); errors.Is(err, db.ErrNotFound) {
+		return nil, errCheckpointNotFound(req.Checkpoint.Uuid)
+	} else if err != nil {
+		return nil,
+			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
 	}
 
-	currCheckpoint := getResp.Checkpoint
+	taskID := model.TaskID(currCheckpoint.TaskId)
+	if err := a.canDoActionsOnTask(
+		ctx, taskID, expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		if err == errTaskNotFound(taskID) {
+			err = errCheckpointNotFound(req.Checkpoint.Uuid)
+		}
+		return nil, err
+	}
 
 	currMeta, err := protojson.Marshal(currCheckpoint.Metadata)
 	if err != nil {

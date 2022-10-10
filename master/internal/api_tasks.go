@@ -36,6 +36,10 @@ var (
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 )
 
+func errTaskNotFound(id model.TaskID) error {
+	return status.Errorf(codes.NotFound, "task not found: %s", id)
+}
+
 func expFromAllocationID(
 	m *Master, allocationID model.AllocationID,
 ) (isExperiment bool, exp *model.Experiment, err error) {
@@ -68,10 +72,9 @@ func expFromAllocationID(
 func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID, actions ...func(model.User, *model.Experiment) error,
 ) error {
-	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
 	t, err := a.m.db.TaskByID(taskID)
 	if errors.Is(err, db.ErrNotFound) {
-		return errTaskNotFound
+		return errTaskNotFound(taskID)
 	} else if err != nil {
 		return err
 	}
@@ -91,7 +94,7 @@ func (a *apiServer) canDoActionsOnTask(
 		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 			return err
 		} else if !ok {
-			return errTaskNotFound
+			return errTaskNotFound(taskID)
 		}
 
 		for _, action := range actions {
