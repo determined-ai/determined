@@ -285,6 +285,9 @@ func (t *TaskSpec) computeLaunchConfig(
 	launchConfig := map[string]string{
 		"workingDir":          workDir,
 		"enableWritableTmpFs": trueValue,
+		// Pass along all variables (PBS) otherwise we only inherit a
+		// minimal PATH from PBS that is missing /usr/sbin etc.
+		"exportAll": "true",
 	}
 	if slurmPartition != "" {
 		// Use queue config as both Slurm/PBS support it
