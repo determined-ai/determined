@@ -189,6 +189,7 @@ type Event struct {
 
 	ID      WebhookEventID `bun:"id,pk,autoincrement"`
 	Payload []byte         `bun:"payload,notnull"`
+	Trigger *Trigger       `bun:"rel:belongs-to,join:trigger_id=id"`
 }
 
 type Field struct {
