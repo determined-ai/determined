@@ -36,10 +36,6 @@ var (
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 )
 
-func errTaskNotFound(id model.TaskID) error {
-	return status.Errorf(codes.NotFound, "task not found: %s", id)
-}
-
 func expFromAllocationID(
 	m *Master, allocationID model.AllocationID,
 ) (isExperiment bool, exp *model.Experiment, err error) {
@@ -72,9 +68,10 @@ func expFromAllocationID(
 func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID, actions ...func(model.User, *model.Experiment) error,
 ) error {
+	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
 	t, err := a.m.db.TaskByID(taskID)
 	if errors.Is(err, db.ErrNotFound) {
-		return errTaskNotFound(taskID)
+		return errTaskNotFound
 	} else if err != nil {
 		return err
 	}
@@ -94,7 +91,7 @@ func (a *apiServer) canDoActionsOnTask(
 		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 			return err
 		} else if !ok {
-			return errTaskNotFound(taskID)
+			return errTaskNotFound
 		}
 
 		for _, action := range actions {
@@ -329,6 +326,7 @@ func (a *apiServer) GetActiveTasksCount(
 func (a *apiServer) taskLogs(
 	ctx context.Context, req *apiv1.TaskLogsRequest, res chan api.BatchResult,
 ) {
+	fmt.Println("TASK LOGS")
 	taskID := model.TaskID(req.TaskId)
 	filters, err := constructTaskLogsFilters(req)
 	if err != nil {
@@ -342,6 +340,7 @@ func (a *apiServer) taskLogs(
 	var timeSinceLastAuth time.Time
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			fmt.Println("TASK LOGS")
 			if err = a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err

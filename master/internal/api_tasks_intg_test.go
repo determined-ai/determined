@@ -12,10 +12,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
+
+func errTaskNotFound(id string) error {
+	return status.Errorf(codes.NotFound, "task not found: %s", id)
+}
 
 func TestTaskAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
@@ -56,7 +59,7 @@ func TestTaskAuthZ(t *testing.T) {
 
 		// Can't view allocation's experiment gives same error.
 		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
-		require.ErrorIs(t, curCase.IDToReqCall(taskID), errTaskNotFound(model.TaskID(taskID)))
+		require.ErrorIs(t, curCase.IDToReqCall(taskID), errTaskNotFound(taskID))
 
 		// Experiment view error is returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
