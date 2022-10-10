@@ -21,7 +21,7 @@ func errTaskNotFound(id string) error {
 }
 
 func TestTaskAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 
 	trial := createTestTrial(t, api, curUser)
 	taskID := string(trial.TaskID)
