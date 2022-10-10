@@ -107,6 +107,7 @@ func generateEventPayload(wt WebhookType, e model.Experiment) ([]byte, error) {
 }
 
 func generateSlackPayload(e model.Experiment) ([]byte, error) {
+	// TODO: get correct project URL
 	var status string
 	var eUrl string
 	var c string
@@ -166,12 +167,6 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	return message, nil
 }
 
-// addEvent adds a webhook event to the DB.
-func addEvent(ctx context.Context, e *Event) error {
-	_, err := db.Bun().NewInsert().Model(&e).Exec(ctx)
-	return err
-}
-
 type eventBatch struct {
 	tx       *bun.Tx
 	events   []Event
@@ -187,7 +182,10 @@ func (b *eventBatch) close() error {
 
 func (b *eventBatch) consume() error {
 	b.consumed = true
-	return b.tx.Commit()
+	if err := b.tx.Commit(); err != nil {
+		return fmt.Errorf("consuming event batch: %w", err)
+	}
+	return nil
 }
 
 func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
@@ -200,9 +198,9 @@ func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 	if err = tx.NewRaw(`
 DELETE FROM webhook_events
 USING ( SELECT * FROM webhook_events LIMIT ? FOR UPDATE SKIP LOCKED ) q
-WHERE q.id = webhook_events.id RETURNING q.*
+WHERE q.id = webhook_events.id RETURNING webhook_events.*
 `, limit).Scan(ctx, &events); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scanning events: %w", err)
 	}
 	return &eventBatch{tx: &tx, events: events}, nil
 }

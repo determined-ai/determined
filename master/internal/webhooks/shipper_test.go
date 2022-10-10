@@ -14,160 +14,65 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
-const pathToMigrations = "file://../../static/migrations"
+const (
+	pathToMigrations = "file://../../static/migrations"
+	subtestTimeout   = 10 * time.Second
+)
 
-// func TestShipper(t *testing.T) {
-// 	ctx, cancel := context.WithCancel(context.Background())
-// 	defer cancel()
-
-// 	pgDB := db.MustResolveTestPostgres(t)
-// 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
-
-// 	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1 = 1").Exec(ctx)
-// 	require.NoError(t, err)
-
-// 	var actual *model.Experiment
-// 	var postsLock sync.Mutex
-// 	received := make(chan struct{})
-// 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		var e model.Experiment
-// 		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
-// 			t.Logf("error decoding webhook: %v", err)
-// 			t.FailNow()
-// 			return
-// 		}
-// 		t.Logf("received event for experiment: %v", e.ID)
-
-// 		postsLock.Lock()
-// 		defer postsLock.Unlock()
-// 		actual = &e
-// 		received <- struct{}{}
-// 	}))
-// 	url = ts.URL
-// 	defer ts.Close()
-
-// 	Init(ctx)
-// 	defer Deinit()
-
-// 	t.Run("no triggers for event type", func(t *testing.T) {
-// 		startCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-
-// 		require.NoError(t, webhooks.AddWebhook(ctx, mockWebhook()))
-// 		require.NoError(t, webhooks.ReportExperimentStateChanged(ctx, model.Experiment{
-// 			State: model.CanceledState,
-// 		}))
-
-// 		endCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-// 		require.Equal(t, startCount, endCount)
-// 	})
-
-// 	t.Run("no match triggers for event type", func(t *testing.T) {
-// 		startCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-
-// 		w := mockWebhook()
-// 		w.Triggers = append(w.Triggers, &webhooks.Trigger{
-// 			TriggerType: webhooks.TriggerTypeStateChange,
-// 			Condition:   map[string]interface{}{"state": model.CompletedState},
-// 		})
-// 		require.NoError(t, webhooks.AddWebhook(ctx, w))
-// 		require.NoError(t, webhooks.ReportExperimentStateChanged(ctx, model.Experiment{
-// 			State: model.CanceledState,
-// 		}))
-
-// 		endCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-// 		require.Equal(t, startCount, endCount)
-// 	})
-
-// 	_, err = db.Bun().NewDelete().Model((*webhooks.Webhook)(nil)).Where("1 = 1").Exec(ctx)
-// 	require.NoError(t, err)
-
-// 	t.Run("one trigger for event type", func(t *testing.T) {
-// 		startCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-
-// 		w := mockWebhook()
-// 		w.Triggers = append(w.Triggers, &webhooks.Trigger{
-// 			TriggerType: webhooks.TriggerTypeStateChange,
-// 			Condition:   map[string]interface{}{"state": model.CompletedState},
-// 		})
-// 		require.NoError(t, webhooks.AddWebhook(ctx, w))
-// 		require.NoError(t, webhooks.ReportExperimentStateChanged(ctx, model.Experiment{
-// 			State: model.CompletedState,
-// 		}))
-
-// 		endCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-// 		require.Equal(t, startCount+1, endCount)
-// 	})
-
-// 	_, err = db.Bun().NewDelete().Model((*webhooks.Webhook)(nil)).Where("1 = 1").Exec(ctx)
-// 	require.NoError(t, err)
-
-// 	t.Run("many triggers for event type", func(t *testing.T) {
-// 		startCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-
-// 		w := mockWebhook()
-// 		n := 10
-// 		for i := 0; i < n; i++ {
-// 			w.Triggers = append(w.Triggers, &webhooks.Trigger{
-// 				TriggerType: webhooks.TriggerTypeStateChange,
-// 				Condition:   map[string]interface{}{"state": model.CompletedState},
-// 			})
-// 		}
-// 		require.NoError(t, webhooks.AddWebhook(ctx, w))
-// 		require.NoError(t, webhooks.ReportExperimentStateChanged(ctx, model.Experiment{
-// 			State: model.CompletedState,
-// 		}))
-
-// 		endCount, err := webhooks.CountEvents(ctx)
-// 		require.NoError(t, err)
-// 		require.Equal(t, startCount+n, endCount)
-// 	})
-// }
-
-func TestSender(t *testing.T) {
+func TestShipper(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	t.Log("setup db")
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
 
+	t.Log("clear db")
 	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1=1").Exec(ctx)
 	require.NoError(t, err)
 	_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("1=1").Exec(ctx)
 	require.NoError(t, err)
 
-	var actual *model.Experiment
-	var postsLock sync.Mutex
-	received := make(chan struct{})
+	t.Log("setup test webhook receiver")
+	received := make(chan model.Experiment, 100)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var e model.Experiment
-		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
-			t.Logf("error decoding webhook: %v", err)
+		if json.NewDecoder(r.Body).Decode(&e); err != nil {
+			t.Logf("error reading webhook body: %v", err)
 			t.FailNow()
 			return
 		}
-		t.Logf("received event for experiment: %v", e.ID)
-
-		postsLock.Lock()
-		defer postsLock.Unlock()
-		actual = &e
-		received <- struct{}{}
+		t.Logf("received event for experiment %d:%v", e.ID, e.State)
+		received <- e
 	}))
-	url = ts.URL
 	defer ts.Close()
+	url = ts.URL
 
-	Init(ctx)
-	defer Deinit()
-	singletonShipper.cl = ts.Client()
-
+	t.Log("setup a few test webhooks")
+	// One with two triggers so it fires twice.
+	require.NoError(t, AddWebhook(ctx, &Webhook{
+		URL: "localhost:8080",
+		Triggers: []*Trigger{
+			{
+				TriggerType: TriggerTypeStateChange,
+				Condition: map[string]interface{}{
+					"state": model.CompletedState,
+				},
+			},
+			{
+				TriggerType: TriggerTypeStateChange,
+				Condition: map[string]interface{}{
+					"state": model.CompletedState,
+				},
+			},
+		},
+		WebhookType: WebhookTypeDefault,
+	}))
+	// And one that just fires once.
 	require.NoError(t, AddWebhook(ctx, &Webhook{
 		URL: "localhost:8080",
 		Triggers: []*Trigger{
@@ -181,34 +86,50 @@ func TestSender(t *testing.T) {
 		WebhookType: WebhookTypeDefault,
 	}))
 
-	expected := model.Experiment{ID: 99, State: model.CompletedState}
-	require.NoError(t, ReportExperimentStateChanged(ctx, expected))
+	t.Log("build shipper")
+	shipper := newShipper(ctx)
+	shipper.cl = ts.Client()
+	singletonShipper = shipper
+	defer shipper.Close()
 
-	ctx, cancel = context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	select {
-	case <-received:
-	case <-ctx.Done():
-		t.Log("webhook receive timed out")
-		t.FailNow()
-	}
+	schedule := []time.Duration{0} // 0, 1, 1, 0, 0, 2, 2, 0, 1, 0, 2, 0}
 
-	expectedBytes, err := json.Marshal(expected)
-	require.NoError(t, err)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-	actualBytes, err := json.Marshal(actual)
-	require.NoError(t, err)
+		actual := model.Experiment{State: model.CompletedState}
+		for id, delay := range schedule {
+			time.Sleep(10 * delay * time.Millisecond)
+			actual.ID = id
+			t.Logf("reporting %d", actual.ID)
+			require.NoError(t, ReportExperimentStateChanged(ctx, actual))
+		}
+	}()
 
-	require.JSONEq(t, string(expectedBytes), string(actualBytes))
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-	n, err := CountEvents(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 0, n, "there should be no events left")
-}
+		actual := map[int]int{} // Received IDs to count of hits.
+		for range schedule {
+			select {
+			case exp := <-received:
+				actual[exp.ID]++
+			case <-ctx.Done():
+				t.Error("webhook exited early")
+				return
+			}
+		}
 
-func mockWebhook() *Webhook {
-	return &Webhook{
-		URL:         "localhost:8080",
-		WebhookType: WebhookTypeDefault,
-	}
+		actualIDs := maps.Keys(actual)
+		slices.Sort(actualIDs)
+		for i := 0; i < len(actualIDs)-1; i++ {
+			require.Equalf(t, actualIDs[i]+1, actualIDs[i+1], "missing an id: %+v", actualIDs)
+			require.Equal(t, 3, actual[i], "should've received event 3 times")
+			require.Equal(t, 3, actual[i+1], "should've received event 3 times")
+		}
+	}()
+	wg.Wait()
 }
