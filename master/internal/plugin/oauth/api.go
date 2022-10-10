@@ -16,7 +16,7 @@ func RegisterAPIHandler(e *echo.Echo, s *Service) {
 	oauth.Any("/token", s.token)
 
 	// Client management.
-	oauth.POST("/clients", s.addClient, s.users.ProcessAdminAuthentication)
-	oauth.GET("/clients", s.clients, s.users.ProcessAdminAuthentication)
-	oauth.DELETE("/clients/:id", s.deleteClient, s.users.ProcessAdminAuthentication)
+	oauth.POST("/clients", s.addClient, s.users.ProcessAuthentication)
+	oauth.GET("/clients", s.clients, s.users.ProcessAuthentication)
+	oauth.DELETE("/clients/:id", s.deleteClient, s.users.ProcessAuthentication)
 }
