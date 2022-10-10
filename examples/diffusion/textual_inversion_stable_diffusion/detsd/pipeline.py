@@ -129,7 +129,6 @@ class DetSDTextualInversionPipeline:
             pipeline = cls(**pipeline_init_kwargs)
             # Only the local chief worker performs the download.
             if uuid_list:
-                print("LOADING UUIDS")
                 if is_local_main_process:
                     paths = pipeline.load_from_uuids(uuid_list)
                 else:
