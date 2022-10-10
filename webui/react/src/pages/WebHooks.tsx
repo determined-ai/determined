@@ -1,4 +1,5 @@
-import { Button, Dropdown } from 'antd';
+import { Button, Dropdown, Menu, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -7,17 +8,18 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 // import Link from 'components/Link';
 import Page from 'components/Page';
-import { defaultRowClassName } from 'components/Table';
-// import TableFilterDropdown from 'components/TableFilterDropdown';
-// import TableFilterSearch from 'components/TableFilterSearch';
+import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import TagList from 'components/TagList';
+import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 // import { paths } from 'routes/utils';
 import { deleteWebhook, getWebhooks } from 'services/api';
+import { V1Trigger, V1WebhookType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-// import { alphaNumericSorter } from 'shared/utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { Webhook } from 'types';
 import handleError from 'utils/error';
 
@@ -29,6 +31,9 @@ const WebhooksView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+
+  const { contextHolder: modalWebhookCreateContextHolder, modalOpen: openWebhookCreate } =
+    useModalWebhookCreate({});
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
@@ -70,30 +75,27 @@ const WebhooksView: React.FC = () => {
   //   resetSettings([...filterKeys, 'tableOffset']);
   // }, [resetSettings]);
 
-  const WebhookActionMenu = useCallback(
-    (record: Webhook) => {
-      enum MenuKey {
-        DELETE_WEBHOOK = 'delete-webhook',
-      }
+  const WebhookActionMenu = useCallback((record: Webhook) => {
+    enum MenuKey {
+      DELETE_WEBHOOK = 'delete-webhook',
+    }
 
-      const funcs = {
-        [MenuKey.WebhookActionMenu]: () => {
-          deleteWebhook({ id: record.id });
-        },
-      };
+    const funcs = {
+      [MenuKey.DELETE_WEBHOOK]: () => {
+        deleteWebhook({ id: record.id });
+      },
+    };
 
-      const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
-      };
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as MenuKey]();
+    };
 
-      const menuItems: MenuProps['items'] = [
-        { danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete Model' },
-      ];
+    const menuItems: MenuProps['items'] = [
+      { danger: true, key: MenuKey.DELETE_WEBHOOK, label: 'Delete Webhook' },
+    ];
 
-      return <Menu items={menuItems} onClick={onItemClick} />;
-    },
-    [showConfirmDelete],
-  );
+    return <Menu items={menuItems} onClick={onItemClick} />;
+  }, []);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
@@ -104,33 +106,48 @@ const WebhooksView: React.FC = () => {
       </Dropdown>
     );
 
+    const webhookTestRenderer = (_: string, record: Webhook) => (
+      <Button className={css.overflow} type="text">
+        Test
+      </Button>
+    );
+
+    const webhookTriggerRenderer = (triggers: V1Trigger[]) => (
+      <TagList
+        compact
+        disabled={true}
+        tags={triggers.map((t) => `${t.triggerType}|${t.condition}`)}
+      />
+    );
+
     return [
       {
         dataIndex: 'url',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['url'],
         key: 'url',
-        sorter: true,
+        sorter: (a: Webhook, b: Webhook): number => alphaNumericSorter(a.url, b.url),
         title: 'URL',
       },
       {
         dataIndex: 'triggers',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['triggers'],
         key: 'triggers',
-        sorter: true,
+        render: webhookTriggerRenderer,
         title: 'Experiment State Triggers',
       },
       {
-        dataIndex: 'type',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
-        key: 'type',
-        sorter: true,
+        dataIndex: 'webhookType',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['webhookType'],
+        key: 'webhookType',
+        sorter: (a: Webhook, b: Webhook): number =>
+          alphaNumericSorter(a.webhookType, b.webhookType),
         title: 'Type',
       },
       {
         dataIndex: 'test',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['test'],
         key: 'test',
-        sorter: true,
+        render: webhookTestRenderer,
         title: 'Test',
       },
       {
@@ -157,8 +174,8 @@ const WebhooksView: React.FC = () => {
       const newSettings = {
         sortDesc: order === 'descend',
         sortKey: columnKey,
-        // tableLimit: tablePagination.pageSize,
-        // tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableLimit: tablePagination.pageSize,
+        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
       // const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, true);
@@ -169,6 +186,8 @@ const WebhooksView: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
+
+  const showCreateWebhookModal = useCallback(() => openWebhookCreate(), [openWebhookCreate]);
 
   const WebhookActionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
@@ -183,7 +202,15 @@ const WebhooksView: React.FC = () => {
   );
 
   return (
-    <Page containerRef={pageRef} id="webhooks" title="Webhooks">
+    <Page
+      containerRef={pageRef}
+      id="webhooks"
+      options={
+        <Space>
+          <Button onClick={showCreateWebhookModal}>New Webhook</Button>
+        </Space>
+      }
+      title="Webhooks">
       {webhooks.length === 0 && !isLoading ? (
         <div className={css.emptyBase}>
           <div className={css.icon}>
@@ -201,6 +228,13 @@ const WebhooksView: React.FC = () => {
           // ContextMenu={ModelActionDropdown}
           dataSource={webhooks}
           loading={isLoading}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            webhooks.length,
+          )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="name"
           settings={settings as InteractiveTableSettings}
@@ -210,6 +244,7 @@ const WebhooksView: React.FC = () => {
           onChange={handleTableChange}
         />
       )}
+      {modalWebhookCreateContextHolder}
     </Page>
   );
 };

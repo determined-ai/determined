@@ -360,9 +360,13 @@ export const getActiveTasks = generateDetApi<
 
 /* Webhooks */
 
+export const createWebhook = generateDetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook>(
+  Config.createWebhook,
+);
+
 export const deleteWebhook = generateDetApi<
   Service.GetWebhookParams,
-  Api.V1GetWebookDeleteResponse,
+  Api.V1DeleteWebhookResponse,
   void
 >(Config.deleteWebhook);
 

@@ -1,16 +1,16 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
-// import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export type WebhookColumnName = 'action' | 'test' | 'triggers' | 'type' | 'url';
+export type WebhookColumnName = 'action' | 'test' | 'triggers' | 'url' | 'webhookType';
 
-export const DEFAULT_COLUMNS: WebhookColumnName[] = ['action', 'test', 'triggers', 'type', 'url'];
+export const DEFAULT_COLUMNS: WebhookColumnName[] = ['url', 'webhookType', 'triggers', 'test'];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<WebhookColumnName, number> = {
-  action: 40,
-  test: 60,
+  action: 30,
+  test: 30,
   triggers: 60,
-  type: 60,
+  webhookType: 60,
   url: 70,
 };
 
@@ -39,6 +39,17 @@ const config: SettingsConfig = {
         baseType: BaseType.Float,
         isArray: true,
       },
+    },
+    {
+      defaultValue: MINIMUM_PAGE_SIZE,
+      key: 'tableLimit',
+      storageKey: 'tableLimit',
+      type: { baseType: BaseType.Integer },
+    },
+    {
+      defaultValue: 0,
+      key: 'tableOffset',
+      type: { baseType: BaseType.Integer },
     },
   ],
   storagePath: 'webhook-list',

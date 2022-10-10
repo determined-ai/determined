@@ -8664,7 +8664,7 @@ export interface V1Webhook {
      * @type {number}
      * @memberof V1Webhook
      */
-    id: number;
+    id?: number;
     /**
      * The url of the webhook.
      * @type {string}
