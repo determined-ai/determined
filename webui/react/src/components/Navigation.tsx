@@ -7,7 +7,6 @@ import {
   useFetchMyRoles,
   useFetchPinnedWorkspaces,
   useFetchResourcePools,
-  useFetchUserSettings,
 } from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
@@ -27,12 +26,11 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
-  const fetchUserSettings = useFetchUserSettings(canceler);
   const fetchMyRoles = useFetchMyRoles(canceler);
+  const fetchKnownRoles = useFetchKnownRoles(canceler);
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
-  usePolling(fetchUserSettings, { interval: 60000 });
 
   const rbacEnabled = useFeature().isOn('rbac');
   usePolling(
