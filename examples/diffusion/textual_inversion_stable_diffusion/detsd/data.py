@@ -1,10 +1,11 @@
+import logging
 import os
 import PIL
-import torch
 from pathlib import Path
 from PIL import Image
 from typing import List, Tuple, Sequence
 
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -58,6 +59,8 @@ class TextualInversionDataset(Dataset):
             ]
         )
 
+        self.logger = logging.getLogger(__name__)
+
         self.records = []
         for dir_path, concept_token, prop in zip(
             self.img_dirs, concept_tokens, self.learnable_properties
@@ -91,7 +94,9 @@ class TextualInversionDataset(Dataset):
                         img = img.convert("RGB")
                     imgs_and_paths.append((img, path))
                 except PIL.UnidentifiedImageError:
-                    print(f"File at {path} raised UnidentifiedImageError and will be skipped.")
+                    self.logger.warning(
+                        f"File at {path} raised UnidentifiedImageError and will be skipped."
+                    )
         return imgs_and_paths
 
     def _convert_img_to_tensor(self, img: Image.Image) -> torch.Tensor:

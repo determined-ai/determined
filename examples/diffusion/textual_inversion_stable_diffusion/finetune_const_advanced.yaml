@@ -30,6 +30,8 @@ hyperparameters:
         center_crop: True
         append_file_name_to_text: True # For additional control over training prompts.
         file_name_split_char: '_'
+        num_blank_prompts: 10
+        num_a_prompts: 10
     training:
         train_batch_size: 1
         gradient_accumulation_steps: 4
