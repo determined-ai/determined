@@ -3,6 +3,9 @@ package webhooks
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"sync"
@@ -144,14 +147,32 @@ func (w *worker) deliverWithRetries(ctx context.Context, e Event) {
 	w.log.Errorf("exhausted tries to deliver %v, giving up", e.ID)
 }
 
+func generateSignedPayload(req *http.Request, t time.Time) string {
+	// Replace with actual secret key get call
+	var API_SECRET []byte
+	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
+	mac := hmac.New(sha256.New, API_SECRET)
+	mac.Write(message)
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
 var url string // TODO(Brad): Hack.
 
 func (w *worker) deliver(ctx context.Context, e Event) error {
-	resp, err := w.cl.Post(
+	t := time.Now()
+	req, err := http.NewRequest(
+		http.MethodPost,
 		url,
-		"application/json; charset=UTF-8",
 		bytes.NewBuffer(e.Payload),
 	)
+	if err != nil {
+		return err
+	}
+	signedPayload := generateSignedPayload(req, t)
+	req.Header.Add("X-Determined-AI-Signature-Timestamp", fmt.Sprintf("%v", t))
+	req.Header.Add("X-Determined-AI-Signature", signedPayload)
+	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
+	resp, err := w.cl.Do(req)
 	if err != nil {
 		return err
 	}
