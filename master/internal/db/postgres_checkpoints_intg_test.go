@@ -25,8 +25,6 @@ func sortUUIDSlice(uuids []uuid.UUID) {
 	})
 }
 
-const mdlNotes = "some notes"
-
 func TestDeleteCheckpoints(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
@@ -60,6 +58,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
 	}
+	mdlNotes := "some notes2"
 	var pmdl modelv1.Model
 	err = db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,

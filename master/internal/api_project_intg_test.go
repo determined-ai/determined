@@ -43,13 +43,13 @@ func setupProjectAuthZTest(
 
 func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {
 	if wAuthZ != nil {
-		pAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	}
 	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, werr)
 
 	if wAuthZ != nil {
-		pAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+		wAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	}
 	if pAuthZ != nil {
 		pAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
