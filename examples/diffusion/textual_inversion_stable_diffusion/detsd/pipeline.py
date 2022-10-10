@@ -35,6 +35,7 @@ class DetSDTextualInversionPipeline:
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
         use_fp16: bool = True,
+        disable_progress_bar: bool = False,
     ) -> None:
         # We assume that the Huggingface User Access token has been stored as the HF_AUTH_TOKEN
         # environment variable. See https://huggingface.co/docs/hub/security-tokens
@@ -55,6 +56,7 @@ class DetSDTextualInversionPipeline:
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.device = device
         self.use_fp16 = use_fp16
+        self.disable_progress_bar = disable_progress_bar
 
         scheduler_kwargs = {
             "beta_start": self.beta_start,
@@ -70,7 +72,7 @@ class DetSDTextualInversionPipeline:
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
 
-        self._build_pipeline()
+        self._build_pipeline(disable_progress_bar=self.disable_progress_bar)
 
     @classmethod
     def generate_on_cluster(cls) -> None:
@@ -126,13 +128,15 @@ class DetSDTextualInversionPipeline:
             # Instantiate the pipeline and load in any checkpoints by uuid.
             pipeline = cls(**pipeline_init_kwargs)
             # Only the local chief worker performs the download.
-            if is_local_main_process:
-                paths = pipeline.load_from_uuids(uuid_list)
-            else:
-                paths = None
-            paths = core_context.distributed.broadcast_local(paths)
-            if not is_local_main_process:
-                pipeline.load_from_checkpoint_paths(paths)
+            if uuid_list:
+                print("LOADING UUIDS")
+                if is_local_main_process:
+                    paths = pipeline.load_from_uuids(uuid_list)
+                else:
+                    paths = None
+                paths = core_context.distributed.broadcast_local(paths)
+                if not is_local_main_process:
+                    pipeline.load_from_checkpoint_paths(paths)
 
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
@@ -296,7 +300,7 @@ class DetSDTextualInversionPipeline:
         self.load_from_checkpoint_paths(checkpoint_paths)
         return checkpoint_paths
 
-    def _build_pipeline(self) -> None:
+    def _build_pipeline(self, disable_progress_bar: bool = True) -> None:
         revision = "fp16" if self.use_fp16 else "main"
         torch_dtype = torch.float16 if self.use_fp16 else None
         self.pipeline = StableDiffusionPipeline.from_pretrained(
@@ -306,6 +310,9 @@ class DetSDTextualInversionPipeline:
             revision=revision,
             torch_dtype=torch_dtype,
         ).to(self.device)
+        # Disable the progress bar.
+        if disable_progress_bar:
+            self.pipeline.set_progress_bar_config(disable=True)
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         for concept_token, dummy_tokens in self.concept_to_dummy_tokens_map.items():

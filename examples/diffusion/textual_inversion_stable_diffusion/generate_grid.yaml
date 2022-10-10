@@ -4,9 +4,10 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
   metric: none
-  max_length: 10 # Number of times the generation pipeline is called, per-worker.
+  max_length: 16 # Number of times the generation pipeline is called, per-worker.
 resources:
   slots_per_trial: 2
+  max_slots: 4
 max_restarts: 1
 environment:
     environment_variables:
@@ -24,6 +25,7 @@ hyperparameters:
         other_scheduler_kwargs: {}
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
         use_fp16: True
+        disable_progress_bar: True
     uuids: []
     call_kwargs:
       prompt:
