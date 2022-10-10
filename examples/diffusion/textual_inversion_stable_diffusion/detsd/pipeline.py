@@ -146,10 +146,10 @@ class DetSDTextualInversionPipeline:
             generator = torch.Generator(device=device).manual_seed(seed)
             call_kwargs["generator"] = generator
             # Add seed information to the tensorboard tag.
-            tb_tag += f", seed: {seed}:
+            tb_tag += f", seed: {seed}"
             # Update the call_kwargs with the batch size, if needed.
             if batch_size > 1:
-                call_kwargs['prompt'] = [call_kwargs['prompt']] * batch_size
+                call_kwargs["prompt"] = [call_kwargs["prompt"]] * batch_size
 
             steps_completed = 0
             num_generated_imgs = 0
