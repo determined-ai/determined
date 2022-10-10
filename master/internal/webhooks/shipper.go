@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
@@ -148,10 +149,10 @@ func (w *worker) deliverWithRetries(ctx context.Context, e Event) {
 }
 
 func generateSignedPayload(req *http.Request, t time.Time) string {
-	// Replace with actual secret key get call
-	var API_SECRET []byte
+	config := conf.GetMasterConfig()
+	key := []byte(config.Security.WebhookSigningKey)
 	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
-	mac := hmac.New(sha256.New, API_SECRET)
+	mac := hmac.New(sha256.New, key)
 	mac.Write(message)
 	return hex.EncodeToString(mac.Sum(nil))
 }
