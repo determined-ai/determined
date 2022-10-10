@@ -90,7 +90,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
     return currentDate.isBefore(value.afterDate) || currentDate.isAfter(dayjs());
   };
 
-  let periodFilters = null;
+  let periodFilters: JSX.Element = <></>;
   if (value.groupBy === GroupBy.Day) {
     periodFilters = (
       <>

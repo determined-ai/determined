@@ -429,7 +429,11 @@ const ProjectDetails: React.FC = () => {
     );
 
     const actionRenderer: ExperimentRenderer = (_, record) => {
-      return <ContextMenu record={record} />;
+      return (
+        <ContextMenu record={record} onVisibleChange={undefined}>
+          <></>
+        </ContextMenu>
+      );
     };
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (

@@ -10,7 +10,7 @@ import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { Job, JobType } from 'types';
+import { CommandTask, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { openCommand } from 'utils/wait';
 
@@ -23,7 +23,7 @@ export type JobTypeRenderer = Renderer<Job>;
 export const SCHEDULING_VAL_KEY = 'schedulingVal';
 
 const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
-  let cmds = [];
+  let cmds: CommandTask[] = [];
   switch (jobType) {
     case JobType.TENSORBOARD:
       cmds = await getTensorBoards({});

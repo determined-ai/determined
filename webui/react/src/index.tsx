@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 /**
  * It's considered unstable until `react-router-dom` can detect
  * history version mismatches when supplying your own history.
@@ -23,13 +23,16 @@ if (process.env.PUBLIC_URL && history.location.pathname === '/') {
   history.replace(process.env.PUBLIC_URL);
 }
 
-ReactDOM.render(
-  <React.StrictMode>
-    <HistoryRouter basename={process.env.PUBLIC_URL} history={history}>
-      <App />
-    </HistoryRouter>
-  </React.StrictMode>,
-  document.getElementById('root'),
+const container = document.getElementById('root');
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const root = createRoot(container!);
+
+root.render(
+  // <React.StrictMode>
+  <HistoryRouter basename={process.env.PUBLIC_URL} history={history}>
+    <App />
+  </HistoryRouter>,
+  // </React.StrictMode>,
 );
 
 /*
