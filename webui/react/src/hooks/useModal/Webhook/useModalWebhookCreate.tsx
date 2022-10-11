@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
-import { V1Trigger, V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
+import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -12,7 +12,7 @@ import { RunState } from 'types';
 import handleError from 'utils/error';
 
 interface FormInputs {
-  trigger: V1Trigger;
+  triggerEvents: RunState[];
   url: string;
   webhookType: V1WebhookType;
 }
@@ -46,9 +46,9 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
         </Form.Item>
         <Form.Item
           label="Trigger"
-          name="trigger"
-          rules={[{ message: 'A trigger event is required ', required: true }]}>
-          <Select placeholder="Select trigger event">
+          name="triggerEvents"
+          rules={[{ message: 'At least one trigger event is required', required: true }]}>
+          <Select mode="multiple" placeholder="Select trigger event">
             <Select.Option key={RunState.Completed} value={RunState.Completed}>
               {RunState.Completed}
             </Select.Option>
@@ -67,12 +67,10 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
     try {
       if (values) {
         await createWebhook({
-          triggers: [
-            {
-              condition: { state: values.trigger },
-              triggerType: V1TriggerType.EXPERIMENTSTATECHANGE,
-            },
-          ],
+          triggers: values.triggerEvents.map((state) => ({
+            condition: { state },
+            triggerType: V1TriggerType.EXPERIMENTSTATECHANGE,
+          })),
           url: values.url,
           webhookType: values.webhookType,
         });
