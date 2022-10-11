@@ -1,0 +1,93 @@
+commands:
+  p: make -C harness clean build  # rebuild Python
+  w: make -C webui build          # rebuild Webui
+  c: make -C docs build           # rebuild doCs
+
+stages:
+  - db:
+      port: 5432
+      db_name: determined
+      password: postgres
+      container_name: determined_db
+      image_name: "postgres:10.14"
+      data_dir: ~/.postgres
+
+  # To run the application with valid service-account credentials, we'll
+  # fetch suitable credentials for `my-service-account`, and store them in
+  # /tmp/det-creds.  This runs as its own stage because k8s v1.24+ expects to
+  # only use time-limited tokens, which must be continuously refreshed.
+  # Run `tools/k8s/fetch-creds.sh --help` for more info.
+  - custom:
+      name: creds
+      cmd:
+        - tools/k8s/fetch-creds.sh
+        - /tmp/det-creds
+        - my-service-account
+      post:
+        - logcheck:
+            regex: successfully fetched initial token
+
+  # We'll run the coscheduler in a docker container.  In real life, if you are
+  # not actually developing a custom sheduler, you might choose to run the
+  # coscheduler via a k8s deployment, rather than here in devcluster.  But this
+  # also works and it illustrates how to combine fetch-creds.sh with a k8s
+  # application packaged as a docker image.
+  - custom_docker:
+      name: coscheduler
+      container_name: coscheduler
+      run_args:
+        # options for docker run
+        - "-v=/tmp/det-creds:/var/run/secrets/kubernetes.io/serviceaccount"
+        - "--env-file=/tmp/det-creds/docker-env-file"
+        - "--network=host"
+        # image name
+        - "k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.21.6"
+        # command + args
+        - "kube-scheduler"
+        - "-v=7"
+        - "--scheduler-name=coscheduler"
+        - "--leader-elect=false"
+
+  - master:
+      pre:
+        - sh: make -C proto build
+        - sh: make -C master build
+        - sh: make -C tools prep-root
+        - sh: mkdir -p /tmp/determined-cp
+      post:
+        - logcheck:
+            regex: accepting incoming connections on port
+      cmdline:
+        - master/build/determined-master
+        - --config-file
+        - :config
+
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp/determined-cp
+        cache:
+          cache_dir: /tmp/determined-cache
+        log:
+          level: debug
+        enable_cors: true
+        root: tools/build
+
+        resource_manager:
+          type: kubernetes
+          namespace: default
+          max_slots_per_pod: 1
+          slot_type: "cpu"
+          slot_resource_requests:
+            cpu: 1
+          default_scheduler: "coscheduler"
+          # Special settings for running determined-master outside of k8s:
+          _creds_dir: /tmp/det-creds
+          _master_ip: $DOCKER_LOCALHOST
+          _master_port: 8080

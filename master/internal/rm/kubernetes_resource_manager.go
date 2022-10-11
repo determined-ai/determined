@@ -200,6 +200,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.SlotType,
 			kubernetes.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 			k.config.Fluent,
+			k.config.CredsDir,
+			k.config.MasterIP,
+			k.config.MasterPort,
 		)
 
 	case
