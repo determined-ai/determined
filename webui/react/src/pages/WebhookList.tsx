@@ -175,7 +175,6 @@ const WebhooksView: React.FC = () => {
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
-      // const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, true);
     },
     [columns, updateSettings],
@@ -221,7 +220,7 @@ const WebhooksView: React.FC = () => {
             webhooks.length,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="name"
+          rowKey="id"
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"

@@ -40,6 +40,18 @@ const config: SettingsConfig = {
       },
     },
     {
+      defaultValue: true,
+      key: 'sortDesc',
+      storageKey: 'sortDesc',
+      type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: 'id',
+      key: 'sortKey',
+      storageKey: 'sortKey',
+      type: { baseType: BaseType.String },
+    },
+    {
       defaultValue: MINIMUM_PAGE_SIZE,
       key: 'tableLimit',
       storageKey: 'tableLimit',
