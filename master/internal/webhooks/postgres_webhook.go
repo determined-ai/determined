@@ -197,7 +197,7 @@ func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 	var esis []EventShippingInfo
 	if err = tx.NewRaw(`
 	DELETE FROM webhook_events                                                        
-	USING ( SELECT e.* , w.url, w.webhook_type FROM webhook_events e JOIN webhook_triggers t on e.trigger_id = t.id JOIN webhooks w on w.id = t.webhook_id LIMIT 1 FOR UPDATE SKIP LOCKED ) q
+	USING ( SELECT e.* , w.url, w.webhook_type FROM webhook_events e JOIN webhook_triggers t on e.trigger_id = t.id JOIN webhooks w on w.id = t.webhook_id LIMIT ? FOR UPDATE SKIP LOCKED ) q
 	WHERE q.id = webhook_events.id RETURNING q.*
 `, limit).Scan(ctx, &esis); err != nil {
 		return nil, fmt.Errorf("scanning events: %w", err)

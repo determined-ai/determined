@@ -278,10 +278,12 @@ func TestDequeueEvents(t *testing.T) {
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp))
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
+		require.NoError(t, batch.consume())
 		require.NoError(t, err)
 		require.Equal(t, 1, len(batch.events))
-		require.NoError(t, batch.consume())
 	})
+
+	Removed since a hardcoded limit of 1 exists
 
 	t.Run("dequeueing and consuming a full batch of events should work", func(t *testing.T) {
 		for i := 0; i < maxEventBatchSize; i++ {
@@ -290,11 +292,11 @@ func TestDequeueEvents(t *testing.T) {
 		}
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
+		require.NoError(t, batch.consume())
 		require.NoError(t, err)
 		require.Equal(t, maxEventBatchSize, len(batch.events))
-		require.NoError(t, batch.consume())
 	})
-
+	
 	t.Run("rolling back an event should work, and it should be reconsumed", func(t *testing.T) {
 		exp := model.Experiment{State: model.CompletedState}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp))
@@ -304,8 +306,8 @@ func TestDequeueEvents(t *testing.T) {
 		require.NoError(t, batch.close())
 
 		batch, err = dequeueEvents(ctx, maxEventBatchSize)
+		require.NoError(t, batch.consume())
 		require.NoError(t, err)
 		require.Equal(t, 1, len(batch.events))
-		require.NoError(t, batch.consume())
 	})
 }
