@@ -41,6 +41,7 @@ type Params = {
   trialId: string;
 };
 
+const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const TrialDetailsComp: React.FC = () => {
@@ -49,7 +50,8 @@ const TrialDetailsComp: React.FC = () => {
   const [isFetching, setIsFetching] = useState(false);
   const navigate = useNavigate();
   const { experimentId, tab, trialId: trialID } = useParams<Params>();
-  const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_TAB_KEY);
+  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
+  const [tabKey, setTabKey] = useState<TabType>(defaultTabKey);
   const [trialId, setTrialId] = useState<number>(Number(trialID));
   const [trialDetails, setTrialDetails] = useState<ApiState<TrialDetails>>({
     data: undefined,
@@ -103,13 +105,18 @@ const TrialDetailsComp: React.FC = () => {
 
   const handleTabChange = useCallback(
     (key) => {
-      setIsFetching(true);
       setTabKey(key);
-      navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
-      setIsFetching(false);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],
   );
+
+  // Sets the default sub route.
+  useEffect(() => {
+    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
+      navigate(`${basePath}/${tabKey}`, { replace: true });
+    }
+  }, [basePath, navigate, tab, tabKey]);
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
