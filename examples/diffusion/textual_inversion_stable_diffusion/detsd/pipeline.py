@@ -139,7 +139,7 @@ class DetSDTextualInversionPipeline:
 
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
-            tb_writer = SummaryWriter(log_dir=tb_dir, max_queue=1)
+            tb_writer = SummaryWriter(log_dir=tb_dir)
             # Include the __call__ args in the tensorboard tag.
             tb_tag = ", ".join([f"{k}: {v}" for k, v in call_kwargs.items() if v])
 

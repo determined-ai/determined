@@ -1,11 +1,11 @@
 import json
 import os
 import pathlib
-from PIL import Image
 from typing import List, Literal, Optional, Sequence, Union
 
 import accelerate
 import determined as det
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,7 +19,6 @@ from diffusers import (
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.transforms.functional import pil_to_tensor
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 from detsd import data, defaults, layers, utils
@@ -600,30 +599,37 @@ class DetSDTextualInversionTrainer:
         tb_writer = SummaryWriter(log_dir=tb_dir)
         for prompt in self.inference_prompts:
             dummy_prompt = self._replace_concepts_with_dummies(prompt)
-            # Fix the seed for reproducibility, unique to each worker.
-            generator_seed = self.main_process_generator_seed + self.accelerator.process_index
-            generator = torch.Generator(device=self.accelerator.device).manual_seed(generator_seed)
-            img_list = []
+            # Fix the seed for reproducibility, unique to each worker to avoid duplicate generation.
+            seed = self.main_process_generator_seed + self.accelerator.process_index
+            generator = torch.Generator(device=self.accelerator.device).manual_seed(seed)
+            # Set output_type to anything other than `pil` to get numpy arrays out.
+            generated_img_array = []
             for _ in range(self.num_pipeline_calls):
-                img_list.extend(
+                generated_img_array.append(
                     self.pipeline(
-                        prompt=[dummy_prompt] * self.inference_batch_size,
+                        prompt=dummy_prompt,
                         num_inference_steps=self.num_inference_steps,
                         guidance_scale=self.guidance_scale,
                         generator=generator,
-                    ).images
+                        output_type="np",
+                    ).images[0]
                 )
-            img_grid = Image.new("RGB", size=(self.img_size * len(img_list), self.img_size))
-            for idx, img in enumerate(img_list):
-                img_grid.paste(img, box=(idx * self.img_size, 0))
-            img_grid_t = pil_to_tensor(img_grid)
-            tag = prompt + f" , seed = {generator_seed}"
-            tb_writer.add_image(
-                tag,
-                img_tensor=img_grid_t,
-                global_step=self.steps_completed,
+            generated_img_t = torch.from_numpy(np.concatenate(generated_img_array, axis=1))
+            # Gather all images and upload via the chief to get nice-looking image grids.
+            # In tensorboard images, different rows correspond to different workers, and
+            # num_pipeline_calls sets the number of columns.
+            all_generated_img_ts = self.accelerator.gather(
+                generated_img_t.to(self.accelerator.device)
             )
-            tb_writer.flush()  # Ensure images are written to disk.
+            if self.accelerator.is_main_process:
+                tb_writer.add_image(
+                    prompt,
+                    img_tensor=all_generated_img_ts,
+                    global_step=self.steps_completed,
+                    dataformats="HWC",
+                )
+        if self.accelerator.is_main_process:
+            tb_writer.flush()  # Ensure all images are written to disk.
             core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
