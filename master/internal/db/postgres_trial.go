@@ -306,6 +306,7 @@ INSERT INTO checkpoints_v2
 VALUES
 	(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata)`
 
+	fmt.Println(m.TaskID, m.AllocationID)
 	if _, err := db.sql.NamedExecContext(ctx, query, m); err != nil {
 		return errors.Wrap(err, "inserting checkpoint")
 	}

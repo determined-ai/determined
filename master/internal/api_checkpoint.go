@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -46,13 +45,14 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
+	fmt.Println("ACTION?")
 	checkpoint, err := m.db.CheckpointByUUID(uuid)
-	if errors.Is(err, db.ErrNotFound) {
-		return errCheckpointNotFound(id)
-	} else if err != nil {
+	if err != nil {
 		return err
+	} else if checkpoint == nil {
+		return errCheckpointNotFound(id)
 	}
-	if checkpoint.CheckpointTrainingMetadata.ExperimentID != 0 {
+	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
 	}
 	exp, err := m.db.ExperimentWithoutConfigByID(checkpoint.CheckpointTrainingMetadata.ExperimentID)
@@ -61,8 +61,10 @@ func (m *Master) canDoActionOnCheckpoint(
 	}
 
 	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
+		fmt.Println("ERR HERE?", err)
 		return err
 	} else if !ok {
+		fmt.Println("!OKERR HERE?", err)
 		return errCheckpointNotFound(id)
 	}
 	if err := action(curUser, exp); err != nil {
@@ -80,8 +82,10 @@ func (a *apiServer) GetCheckpoint(
 	}
 	if err = a.m.canDoActionOnCheckpoint(*curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		fmt.Println("NIL NIL??")
 		return nil, err
 	}
+	fmt.Println("NIL NIL")
 
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
@@ -134,33 +138,37 @@ func (a *apiServer) DeleteCheckpoints(
 		return nil, fmt.Errorf("persisting new job: %w", err)
 	}
 
+	fmt.Println(checkpointsToDelete)
 	groupCUUIDsByEIDs, err := a.m.db.GroupCheckpointUUIDsByExperimentID(checkpointsToDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	// Are we missing any checkpoints?
+	// Get checkpoints IDs not associated to any experiments.
 	checkpointsRequested := make(map[string]bool)
 	for _, c := range req.CheckpointUuids {
-		checkpointsRequested[c] = true
+		checkpointsRequested[c] = false
 	}
 	for _, expIDcUUIDs := range groupCUUIDsByEIDs {
 		for _, c := range strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",") {
-			checkpointsRequested[c] = false
+			checkpointsRequested[c] = true
 		}
 	}
 	var notFoundCheckpoints []string
-	for c, notFound := range checkpointsRequested {
-		if notFound {
+	for c, found := range checkpointsRequested {
+		if !found {
 			notFoundCheckpoints = append(notFoundCheckpoints, c)
 		}
 	}
 
-	for _, expIDcUUIDs := range groupCUUIDsByEIDs {
+	// Get experiments for all checkpoints and validate that the user has permission to view.
+	exps := make([]*model.Experiment, len(groupCUUIDsByEIDs))
+	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
 		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.ExperimentID)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println(i, "iN LOOP", expIDcUUIDs)
 		var ok bool
 		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 			return nil, err
@@ -173,13 +181,15 @@ func (a *apiServer) DeleteCheckpoints(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		// Don't delete any checkpoints when we already haven't found a checkpoint.
-		// We will however keep looking to gather all checkpoints a user can't find.
-		if len(notFoundCheckpoints) > 0 {
-			continue
-		}
+		exps[i] = exp
+	}
+	if len(notFoundCheckpoints) > 0 {
+		return nil, errCheckpointsNotFound(notFoundCheckpoints)
+	}
 
-		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exp)
+	// Submit checkpoint GC tasks for all checkpoints.
+	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
+		agentUserGroup, err := user.GetAgentUserGroup(curUser.ID, exps[i])
 		if err != nil {
 			return nil, err
 		}
@@ -189,15 +199,12 @@ func (a *apiServer) DeleteCheckpoints(
 		conv := &protoconverter.ProtoConverter{}
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
 		ckptGCTask := newCheckpointGCTask(
-			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exp.ID,
-			exp.Config.AsLegacy(), checkpointUUIDs, false, agentUserGroup, curUser, nil,
+			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
+			exps[i].Config.AsLegacy(), checkpointUUIDs, false, agentUserGroup, curUser, nil,
 		)
 		a.m.system.MustActorOf(addr, ckptGCTask)
 	}
 
-	if len(notFoundCheckpoints) > 0 {
-		return nil, errCheckpointsNotFound(notFoundCheckpoints)
-	}
 	return &apiv1.DeleteCheckpointsResponse{}, nil
 }
 

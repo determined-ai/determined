@@ -97,7 +97,7 @@ func (m *Master) getCheckpointImpl(
 				id.String(), err.Error()))
 	case storageConfig == nil:
 		return echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("checkpoint %s does not exist", id.String()))
+			fmt.Sprintf("checkpoint not found: %s", id.String()))
 	}
 
 	// DelayWriter delays the first write until we have successfully downloaded
