@@ -45,15 +45,18 @@ class User:
         username: Optional[str] = None,
         active: Optional[bool] = None,
         password: Optional[str] = None,
-        agent_user_group: Optional[AgentUserGroup] = None,
-        admin=Optional,
+        agent_uid: Optional[int] = None,
+        agent_gid: Optional[int] = None,
+        agent_user: Optional[str] = None,
+        agent_group: Optional[str] = None,
+        admin=Optional[bool],
     ) -> Response:
         # new API -> bindings.patch_PatchUser(self.user_id, patchUser)
         v1agent_user_group = bindings.v1AgentUserGroup(
-            agentGid=agent_user_group.agent_gid,
-            agentGroup=agent_user_group.agent_group,
-            agentUid=agent_user_group.agent_uid,
-            agentUser=agent_user_group.agent_user,
+            agentGid=agent_gid,
+            agentGroup=agent_group,
+            agentUid=agent_uid,
+            agentUser=agent_user,
         )
         patch_user = bindings.v1PatchUser(
             username=username,
@@ -78,7 +81,7 @@ class User:
     def activate(self) -> Response:
         # calls update_user with active = true
         # bindings.patch_PatchUser(self.userid, patchUser)
-        patchUser = bindings.v1PatchUser(active=True)
+        patch_user = bindings.v1PatchUser(active=True)
         resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
 
         return resp
@@ -86,7 +89,9 @@ class User:
     def deactivate(self) -> Response:
         # calls update_user with active = false
         # bindings.patch_PatchUser(self.user_id, patchUser) API
-        pass
+        patch_user = bindings.v1PatchUser(active=False)
+        resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
+        return resp
 
     def change_password(self, new_password: str) -> Response:
         # can also get user from authentication.must_cli_auth().get_session_user()
@@ -96,6 +101,14 @@ class User:
         # return API response
         return resp
 
-    def link_with_agent(self, agent_user_group: AgentUserGroup) -> Response:
+    def link_with_agent(self, agent_gid, agent_group, agent_uid, agent_user) -> Response:
         # calls update user with these args wrapped in agent_user_group.
-        pass
+        v1agent_user_group = bindings.v1AgentUserGroup(
+            agentGid=agent_gid,
+            agentGroup=agent_group,
+            agentUid=agent_uid,
+            agentUser=agent_user,
+        )
+        patch_user = bindings.v1PatchUser(agentUserGroup=v1agent_user_group)
+        resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
+        return resp
