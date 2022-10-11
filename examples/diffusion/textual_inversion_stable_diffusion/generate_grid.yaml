@@ -4,9 +4,9 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
   metric: none
-  max_length: 16 # Number of times the generation pipeline is called, per-worker.
+  max_length: 5 # Number of times the generation pipeline is called, per-worker.
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 2 # Also equal to the number of unique initial seeds which will be used.
   max_slots: 4
 max_restarts: 1
 environment:
@@ -14,7 +14,7 @@ environment:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 hyperparameters:
     batch_size: 2
-    main_process_generator_seed: 2147483647
+    main_process_generator_seed: 214748367
     save_freq: 4
     pipeline: # The `device` arg is handled by the generate_on_cluster method; do not specify.
         learned_embeddings_filename: learned_embeddings_dict.pt
@@ -35,9 +35,9 @@ hyperparameters:
           - a watercolor painting of a <det-logo> with soft strokes, masterful composition
       num_inference_steps: 50
       guidance_scale:
-        type: double
-        minval: 5.
-        maxval: 20.
-        count: 4
+        type: float
+        minval: 5.0
+        maxval: 15.0
+        count: 3
       num_images_per_prompt: 1
 

@@ -33,7 +33,7 @@ hyperparameters:
         metric_report_freq: 100
     inference:
         generate_training_images: True
-        images_per_prompt: 3
+        num_pipeline_calls: 3
         inference_prompts:
           - a watercolor painting of a <det-logo>
           - a Van Gogh painting of a <det-logo> with vibrant colors, thick strokes, masterpiece, incredible composition

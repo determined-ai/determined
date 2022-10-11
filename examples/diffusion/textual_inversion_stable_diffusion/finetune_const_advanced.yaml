@@ -48,7 +48,8 @@ hyperparameters:
         hidden_reg_weight: 1e-5
     inference:
         generate_training_images: True
-        images_per_prompt: 3
+        inference_batch_size: 2
+        num_pipeline_calls: 2
         inference_scheduler_name: pndm # One of "ddim", "lms-discrete", or "pndm".
         inference_prompts:
           - a watercolor painting of a <det-logo>

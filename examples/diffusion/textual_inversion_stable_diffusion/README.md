@@ -188,6 +188,9 @@ Generating results of the desired quality is often a balancing act:
   results. See the _Prompt Development_  section of
   this [Reddit guide](https://www.reddit.com/r/StableDiffusion/comments/xcq819/dreamers_guide_to_getting_started_w_stable/)
   for more detailed tips on prompt-engineering.
+* When generating using new concepts trained with Textual Inversion, it often seems helpful to set
+  the `guidance_scale` to a lower value than one would normally do, e.g., setting it as low
+  as `guidance_scale = 2`.
 
 ## The Code
 

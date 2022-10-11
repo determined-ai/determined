@@ -1,11 +1,11 @@
 import json
 import os
 import pathlib
+from PIL import Image
 from typing import List, Literal, Optional, Sequence, Union
 
 import accelerate
 import determined as det
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,6 +19,7 @@ from diffusers import (
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torchvision.transforms.functional import pil_to_tensor
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
 from detsd import data, defaults, layers, utils
@@ -57,7 +58,8 @@ class DetSDTextualInversionTrainer:
         num_blank_prompts: int = 0,
         num_a_prompts: int = 0,
         generate_training_images: bool = True,
-        images_per_prompt: int = 1,
+        inference_batch_size: int = 1,
+        num_pipeline_calls: int = 1,
         inference_prompts: Optional[Union[str, Sequence[str]]] = None,
         inference_scheduler_name: Literal["ddim", "lms-discrete", "pndm"] = "pndm",
         num_inference_steps: int = 50,
@@ -129,18 +131,9 @@ class DetSDTextualInversionTrainer:
             f"inference_scheduler must be one {list(defaults.NOISE_SCHEDULER_DICT.keys())},"
             f" but got {inference_scheduler_name}"
         )
-        if not generate_training_images and inference_prompts is not None:
-            self.logger.warning(
-                "Inference prompts were provided, but are being skipped, as generate_training"
-                " images was set to False."
-            )
-        if not generate_training_images and images_per_prompt:
-            self.logger.warning(
-                "images_per_prompt was set to a non-zero value, but no images will be"
-                " created, as generate_training images was set to False."
-            )
         self.generate_training_images = generate_training_images
-        self.images_per_prompt = images_per_prompt
+        self.inference_batch_size = inference_batch_size
+        self.num_pipeline_calls = num_pipeline_calls
         if isinstance(inference_prompts, str):
             inference_prompts = [inference_prompts]
         self.inference_scheduler_name = inference_scheduler_name
@@ -608,36 +601,29 @@ class DetSDTextualInversionTrainer:
         for prompt in self.inference_prompts:
             dummy_prompt = self._replace_concepts_with_dummies(prompt)
             # Fix the seed for reproducibility, unique to each worker.
-            generator = torch.Generator(device=self.accelerator.device).manual_seed(
-                self.main_process_generator_seed + self.accelerator.process_index
-            )
-            # Set output_type to anything other than `pil` to get numpy arrays out.
-            generated_img_array = []
-            for _ in range(self.images_per_prompt):
-                generated_img_array.append(
+            generator_seed = self.main_process_generator_seed + self.accelerator.process_index
+            generator = torch.Generator(device=self.accelerator.device).manual_seed(generator_seed)
+            img_list = []
+            for _ in range(self.num_pipeline_calls):
+                img_list.extend(
                     self.pipeline(
-                        prompt=dummy_prompt,
+                        prompt=[dummy_prompt] * self.inference_batch_size,
                         num_inference_steps=self.num_inference_steps,
                         guidance_scale=self.guidance_scale,
                         generator=generator,
-                        output_type="np",
-                    ).images[0]
+                    ).images
                 )
-            generated_img_t = torch.from_numpy(np.concatenate(generated_img_array, axis=1))
-            # Gather all images and upload via the chief. In tensorboard images, different rows
-            # correspond to different workers, and images_per_prompt sets the number of columns.
-            all_generated_img_ts = self.accelerator.gather(
-                generated_img_t.to(self.accelerator.device)
+            img_grid = Image.new("RGB", size=(self.img_size * len(img_list), self.img_size))
+            for idx, img in enumerate(img_list):
+                img_grid.paste(img, box=(idx * self.img_size, 0))
+            img_grid_t = pil_to_tensor(img_grid)
+            tag = prompt + f" , seed = {generator_seed}"
+            tb_writer.add_image(
+                tag,
+                img_tensor=img_grid_t,
+                global_step=self.steps_completed,
             )
-            if self.accelerator.is_main_process:
-                tb_writer.add_image(
-                    prompt,
-                    img_tensor=all_generated_img_ts,
-                    global_step=self.steps_completed,
-                    dataformats="HWC",
-                )
-        if self.accelerator.is_main_process:
-            tb_writer.flush()  # Ensure all images are written to disk.
+            tb_writer.flush()  # Ensure images are written to disk.
             core_context.train.upload_tensorboard_files()
 
     def _report_train_metrics(self, core_context: det.core.Context) -> None:
