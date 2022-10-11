@@ -35,24 +35,18 @@ const config: SettingsConfig<Omit<InteractiveTableSettings, 'sortDesc' | 'sortKe
     columns: {
       defaultValue: columns.map((column) => column.dataIndex),
       storageKey: 'columns',
-      type: {
-        baseType: array(string),
-        isArray: true,
-      },
+      type: array(string),
     },
     columnWidths: {
       defaultValue: columns.map((column) => column.defaultWidth),
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: array(number),
-        isArray: true,
-      },
+      type: array(number),
     },
     row: {
       defaultValue: [],
       storageKey: 'row',
-      type: { baseType: union([undefined, array(string), array(number)]), isArray: true },
+      type: union([undefined, array(string), array(number)]),
     },
   },
   storagePath: 'storybook',

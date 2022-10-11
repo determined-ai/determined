@@ -1,231 +1,183 @@
+import { Type } from 'io-ts';
 import queryString from 'query-string';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useCallback, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import usePrevious from 'shared/hooks/usePrevious';
-import {
-  clone,
-  hasObjectKeys,
-  isBoolean,
-  isEqual,
-  isNumber,
-  isObject,
-  isString,
-} from 'shared/utils/data';
-import { Storage } from 'shared/utils/storage';
+import { useStore } from 'contexts/Store';
+import { updateUserSetting } from 'services/api';
+import { UpdateUserSettingParams } from 'services/types';
+import { Primitive } from 'shared/types';
+import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import { Primitive, RecordKey, ValueOf } from '../shared/types';
-import { ErrorType } from '../shared/utils/error';
+import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
-import useStorage from './useStorage';
-
-export const BaseType = {
-  Boolean: 'Boolean',
-  Float: 'Float',
-  Integer: 'Integer',
-  Object: 'Object',
-  String: 'String',
-} as const;
-
-export type BaseType = ValueOf<typeof BaseType>;
-
-const PathChangeType = {
-  None: 'none',
-  Push: 'push',
-  Replace: 'replace',
-} as const;
-
-type PathChangeType = ValueOf<typeof PathChangeType>;
-
-type GenericSettingsType = Primitive | Primitive[] | Record<number, number[]> | undefined;
-type GenericSettings = Record<string, GenericSettingsType>;
-type PathChange<T> = { querySettings: Partial<T>; type: PathChangeType };
-
-/*
- * defaultValue     - Optional default value. `undefined` as ultimate default.
- * skipUrlEncoding  - Avoid preserving setting in the URL query param.
- * storageKey       - If provided, save/load setting into/from storage.
- * type.baseType    - How to decode the string-based query param.
- * type.isArray     - List based query params can be non-array.
- */
-export interface SettingsConfigProp {
-  defaultValue?: GenericSettingsType;
-  key: string;
-  skipUrlEncoding?: boolean;
-  storageKey?: string;
-  type: {
-    baseType: BaseType;
-    isArray?: boolean;
-  };
+export enum BaseType {
+  Boolean = 'Boolean',
+  Float = 'Float',
+  Integer = 'Integer',
+  Object = 'Object',
+  String = 'String',
 }
 
-export interface SettingsConfig {
-  applicableRoutespace?: string;
-  settings: SettingsConfigProp[];
+export interface SettingsConfigProp<A> {
+  defaultValue: A;
+  skipUrlEncoding?: boolean;
+  storageKey: string;
+  type: Type<A>;
+}
+
+export interface SettingsConfig<T> {
+  applicableRoutespace: string;
+  settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
   storagePath: string;
 }
 
-/*
- * Provide the ability to override hook options with
- * dynamic values during initialization.
- */
-export interface SettingsHookOptions {
-  storagePath?: string;
+interface UserSettingUpdate extends UpdateUserSettingParams {
+  userId: number;
 }
 
-export type UpdateSettings<T> = (newSettings: Partial<T>, push?: boolean) => void;
+export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
+export type ResetSettings = (settings?: string[]) => void;
 
-export interface SettingsHook<T> {
+export type UseSettingsReturn<T> = {
   activeSettings: (keys?: string[]) => string[];
-  resetSettings: (keys?: string[]) => void;
-  settings: T;
-  updateSettings: UpdateSettings<T>;
-}
-
-export const validateBaseType = (type: BaseType, value: unknown): boolean => {
-  if (type === BaseType.Boolean && isBoolean(value)) return true;
-  if (type === BaseType.Float && isNumber(value)) return true;
-  if (type === BaseType.Integer && isNumber(value) && Math.ceil(value) === Math.floor(value))
-    return true;
-  if (type === BaseType.String && isString(value)) return true;
-  if (type === BaseType.Object && isObject(value)) return true;
-  return false;
+  isLoading: boolean;
+  resetSettings: ResetSettings;
+  settings: T | null;
+  updateSettings: UpdateSettings;
 };
 
-export const validateSetting = (config: SettingsConfigProp, value: unknown): boolean => {
-  if (value === undefined) return true;
-  if (config.type.isArray) {
-    if (!Array.isArray(value)) return false;
-    return value.every((val) => validateBaseType(config.type.baseType, val));
-  }
-  return validateBaseType(config.type.baseType, value);
-};
+const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
+  const fullSettings = (Object.values(config.settings) as SettingsConfigProp<T>[]).reduce<Settings>(
+    (acc, setting) => {
+      // Save settings into query if there is value defined and is not the default value.
+      const value = settings[setting.storageKey];
+      const isDefault = isEqual(setting.defaultValue, value);
 
-export const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage): T => {
-  return config.settings.reduce((acc, prop) => {
-    let defaultValue = prop.defaultValue;
-    if (prop.storageKey) {
-      defaultValue = storage.getWithDefault(prop.storageKey, defaultValue);
-    }
-    acc[prop.key] = defaultValue;
-    return acc;
-  }, {} as GenericSettings) as unknown as T;
-};
+      acc[setting.storageKey] = !setting.skipUrlEncoding && !isDefault ? value : undefined;
 
-export const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
-  if (param == null) return undefined;
-  if (type === BaseType.Boolean) return param === 'true';
-  if (type === BaseType.Float || type === BaseType.Integer) {
-    const value = type === BaseType.Float ? parseFloat(param) : parseInt(param);
-    return !isNaN(value) ? value : undefined;
-  }
-  if (type === BaseType.Object) return JSON.parse(param);
-
-  if (type === BaseType.String) return param;
-  return undefined;
-};
-
-export const queryToSettings = <T>(config: SettingsConfig, query: string): T => {
-  const params = queryString.parse(query);
-  return config.settings.reduce((acc, prop) => {
-    /*
-     * Attempt to decode the query parameter and if anything
-     * goes wrong, set it to the default value.
-     */
-    try {
-      const paramValue = params[prop.key];
-      const baseType = prop.type.baseType;
-
-      /*
-       * Convert the string-based query params to primitives.
-       * `undefined` values can happen if the query param values are invalid.
-       *   string[] => Primitive[] | undefined
-       *   string   => Primitive | undefined
-       *   null     => undefined
-       */
-      const queryValue = Array.isArray(paramValue)
-        ? paramValue
-            .map((value) => queryParamToType(baseType, value))
-            .filter((value): value is Primitive => value !== undefined)
-        : queryParamToType(baseType, paramValue);
-
-      /*
-       * When expecting an array, convert valid non-array values into an array.
-       * Example - 'PULLING' => [ 'PULLING' ]
-       */
-      const normalizedValue =
-        prop.type.isArray && queryValue != null && !Array.isArray(queryValue)
-          ? [queryValue]
-          : queryValue;
-
-      if (normalizedValue !== undefined) acc[prop.key] = normalizedValue;
-    } catch (e) {
-      handleError(e, { silent: true, type: ErrorType.Ui });
-    }
-
-    return acc;
-  }, {} as GenericSettings) as unknown as T;
-};
-
-export const settingsToQuery = <T>(config: SettingsConfig, settings: T): string => {
-  const fullSettings = config.settings.reduce((acc, prop) => {
-    // Save settings into query if there is value defined and is not the default value.
-    const value = settings[prop.key as keyof T];
-    const isDefault = isEqual(prop.defaultValue, value);
-    acc[prop.key as keyof T] = !prop.skipUrlEncoding && !isDefault ? value : undefined;
-    return acc;
-  }, {} as Partial<T>);
+      return acc;
+    },
+    {},
+  );
 
   return queryString.stringify(fullSettings);
 };
 
-export const getConfigKeyMap = (config: SettingsConfig): Record<RecordKey, boolean> => {
-  return config.settings.reduce((acc, prop) => {
-    acc[prop.key] = true;
-    return acc;
-  }, {} as Record<RecordKey, boolean>);
+const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
+  if (param === null || param === undefined) return undefined;
+  if (type === BaseType.Boolean) return param === 'true';
+  if (type === BaseType.Float || type === BaseType.Integer) {
+    const value = Number(param);
+    return !isNaN(value) ? value : undefined;
+  }
+  if (type === BaseType.Object) return JSON.parse(param);
+  if (type === BaseType.String) return param;
+  return undefined;
 };
 
-const getNewQueryPath = (
-  config: SettingsConfig,
-  basePath: string,
-  currentQuery: string,
-  newQuery: string,
-): string => {
-  // Strip out existing config settings from the current query.
-  const keyMap = getConfigKeyMap(config);
-  const params = queryString.parse(currentQuery);
-  const cleanParams = {} as Record<RecordKey, unknown>;
-  Object.keys(params).forEach((key) => {
-    if (!keyMap[key] && params[key]) cleanParams[key] = params[key];
-  });
+const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
+  const params = queryString.parse(query);
 
-  // Add new query to the clean query.
-  const cleanQuery = queryString.stringify(cleanParams);
-  const queries = [cleanQuery, newQuery].filter((query) => !!query).join('&');
-  return `${basePath}?${queries}`;
-};
+  return (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).reduce<Settings>(
+    (acc, setting) => {
+      /*
+       * Attempt to decode the query parameter and if anything
+       * goes wrong, set it to the default value.
+       */
+      try {
+        const paramValue = params[setting.storageKey];
+        const baseType = setting.type;
+        const expectingArray = baseType.is([]);
 
-const defaultPathChange = {
-  querySettings: {},
-  type: PathChangeType.None,
-};
+        if (paramValue !== null) {
+          let queryValue: Primitive | Primitive[] | undefined;
+          /*
+           * Convert the string-based query params to primitives.
+           * `undefined` values can happen if the query param values are invalid.
+           *   string[] => Primitive[] | undefined
+           *   string   => Primitive | undefined
+           */
+          if (Array.isArray(paramValue)) {
+            queryValue = paramValue.reduce<Primitive[]>((acc, value) => {
+              const parsedValue = queryParamToType(baseType.name as BaseType, value);
 
-const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): SettingsHook<T> => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const storage = useStorage(options?.storagePath || config.storagePath);
-  const prevSearch = usePrevious(location.search, undefined);
-  const [settings, setSettings] = useState<T>(() => getDefaultSettings<T>(config, storage));
-  const [pathChange, setPathChange] = useState<PathChange<T>>(defaultPathChange);
+              if (parsedValue !== undefined) acc.push(parsedValue);
 
-  const configMap = useMemo(() => {
-    return config.settings.reduce((acc, prop) => {
-      acc[prop.key] = prop;
+              return acc;
+            }, []);
+          } else {
+            queryValue = queryParamToType(baseType.name as BaseType, paramValue);
+          }
+
+          if (queryValue !== undefined) {
+            /*
+             * When expecting an array, convert valid non-array values into an array.
+             * Example - 'PULLING' => [ 'PULLING' ]
+             */
+            const normalizedValue = (() => {
+              if (expectingArray && !Array.isArray(queryValue)) {
+                return [queryValue];
+              }
+              return queryValue;
+            })();
+
+            acc[setting.storageKey] = normalizedValue;
+          }
+        }
+      } catch (e) {
+        handleError(e, { silent: true, type: ErrorType.Ui });
+      }
+
       return acc;
-    }, {} as Record<RecordKey, SettingsConfigProp>);
-  }, [config.settings]);
+    },
+    {},
+  );
+};
+
+const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
+  const {
+    auth: { user },
+  } = useStore();
+  const { isLoading, querySettings, state, update } = useContext(UserSettings);
+  const navigate = useNavigate();
+
+  // creates an entry at the global state
+  useEffect(() => {
+    const settings = state.get(config.applicableRoutespace);
+
+    if (settings) return;
+
+    const newSettings: Settings = {};
+
+    for (const key in config.settings) {
+      const setting = config.settings[key];
+
+      newSettings[setting.storageKey] = setting.defaultValue;
+    }
+
+    update(config.applicableRoutespace, newSettings);
+  }, [config, state, update]);
+
+  // parse navigation url to state
+  useEffect(() => {
+    if (!querySettings) return;
+
+    const settings = queryToSettings<T>(config, querySettings);
+    let stateSettings = state.get(config.applicableRoutespace) ?? {};
+
+    if (isEqual(settings, stateSettings)) return;
+
+    Object.keys(settings).forEach((setting) => {
+      stateSettings = Object.assign(stateSettings, { [setting]: settings[setting] });
+    });
+
+    update(config.applicableRoutespace, stateSettings, true);
+  }, [config, querySettings, state, update]);
+
+  const settings: T | null = (state.get(config.applicableRoutespace) as T) ?? null;
 
   /*
    * A setting is considered active if it is set to a value and the
@@ -233,127 +185,115 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
    */
   const activeSettings = useCallback(
     (keys?: string[]): string[] => {
-      return config.settings.reduce((acc, prop) => {
-        const key = prop.key as keyof T;
-        const includesKey = !keys || keys?.includes(prop.key);
+      return (Object.values(config.settings) as SettingsConfigProp<T>[]).reduce((acc, prop) => {
+        if (!settings) return [];
+
+        const key = prop.storageKey as keyof T;
+        const includesKey = !keys || keys.includes(prop.storageKey);
         const isDefault = isEqual(settings[key], prop.defaultValue);
-        if (includesKey && !isDefault) acc.push(prop.key);
+
+        if (includesKey && !isDefault) acc.push(prop.storageKey);
+
         return acc;
       }, [] as string[]);
     },
     [config.settings, settings],
   );
 
-  const updateSettings = useCallback(
-    (partialSettings: Partial<T>, push = false) => {
-      if (!location.pathname.includes(config.applicableRoutespace ?? '')) {
-        return;
-      }
-      const changes = Object.keys(partialSettings) as (keyof T)[];
-      const { internalSettings, querySettings } = changes.reduce(
-        (acc, key) => {
-          // Check to make sure the settings key is defined in the config.
-          const config = configMap[key];
-          if (!config) return acc;
-
-          // Set default settings to be undefined.
-          acc.internalSettings[key] = undefined;
-          acc.querySettings[key] = undefined;
-
-          // If the settings value is invalid, set to undefined.
-          const value = partialSettings[key];
-          const isValid = validateSetting(config, value);
-          const isDefault = isEqual(config.defaultValue, value);
-
-          // Store or clear setting if `storageKey` is available.
-          if (config.storageKey && isValid) {
-            if (value === undefined || isDefault) {
-              storage.remove(config.storageKey);
-            } else {
-              storage.set(config.storageKey, value);
-            }
-          }
-
-          // Keep track of internal setting changes to update async from query settings.
-          if (isValid) acc.internalSettings[key] = value as T[keyof T];
-
-          // Preserve the setting for updating query params unless `skipUrlEncoding` is set.
-          if (!config.skipUrlEncoding && !isDefault && isValid)
-            acc.querySettings[key] = value as T[keyof T];
-
-          return acc;
-        },
-        {
-          internalSettings: {} as Partial<T>,
-          querySettings: {} as Partial<T>,
-        },
-      );
-
-      // Update internal settings state for when skipping url encoding of settings.
-      setSettings((prev) => ({ ...clone(prev), ...internalSettings }));
-
-      // Mark to trigger side effect of updating path.
-      setPathChange({
-        querySettings,
-        type: push ? PathChangeType.Push : PathChangeType.Replace,
-      });
-    },
-    [configMap, config.applicableRoutespace, location.pathname, storage],
-  );
-
   const resetSettings = useCallback(
-    (keys?: string[]) => {
-      const newSettings = config.settings.reduce((acc, prop) => {
-        const includesKey = !keys || keys?.includes(prop.key);
-        if (includesKey) acc[prop.key] = prop.defaultValue;
-        return acc;
-      }, {} as GenericSettings) as Partial<T>;
+    (settings?: string[]) => {
+      const array = settings ?? Object.keys(config.settings);
 
-      updateSettings(newSettings);
+      array.forEach((setting) => {
+        let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined = undefined;
+
+        for (const key in config.settings) {
+          const conf = config.settings[key];
+
+          if (conf.storageKey === setting) {
+            defaultSetting = conf;
+            break;
+          }
+        }
+
+        if (!defaultSetting) return;
+
+        state.set(config.applicableRoutespace, { [setting]: defaultSetting.defaultValue });
+      });
     },
-    [config.settings, updateSettings],
+    [config, state],
   );
 
-  useEffect(() => {
-    if (location.search === prevSearch) return;
-    if (!location.pathname.includes(config.applicableRoutespace ?? '')) return;
+  const updateSettings = useCallback(
+    async (updates: Settings, shouldPush = false) => {
+      if (!settings) return;
 
-    /*
-     * Set the initial query string if:
-     * 1) current settings have set values
-     * 2) there are no user specified query settings set
-     *    (ignores defaults values since they are not user triggered)
-     */
-    const locationSearch = location.search.substr(/^\?/.test(location.search) ? 1 : 0);
-    const currentQuery = settingsToQuery(config, settings);
-    const searchSettings = queryToSettings(config, locationSearch);
-    if (currentQuery && !hasObjectKeys(searchSettings)) {
-      const newQueries = [currentQuery];
-      if (locationSearch) newQueries.unshift(locationSearch);
-      navigate(`${location.pathname}?${newQueries.join('&')}`, { replace: true });
-    } else {
-      // Otherwise read settings from the query string.
-      setSettings((prevSettings) => {
-        const defaultSettings = getDefaultSettings<T>(config, storage);
-        const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
-        return { ...prevSettings, ...defaultSettings, ...querySettings };
-      });
-    }
-  }, [config, navigate, location.pathname, location.search, prevSearch, settings, storage]);
+      if (
+        config.applicableRoutespace.includes('/') &&
+        !window.location.pathname.includes(config.applicableRoutespace)
+      )
+        return;
 
-  useEffect(() => {
-    if (pathChange.type === PathChangeType.None) return;
+      const newSettings = { ...settings, ...updates };
 
-    // Update path with new and validated settings.
-    const query = settingsToQuery(config, { ...clone(settings), ...pathChange.querySettings });
-    const path = getNewQueryPath(config, location.pathname, location.search, query);
-    pathChange.type === PathChangeType.Push ? navigate(path) : navigate(path, { replace: true });
+      if (isEqual(newSettings, settings)) return;
 
-    // Reset path change.
-    setPathChange(defaultPathChange);
-  }, [config, navigate, location.pathname, location.search, pathChange, settings]);
+      update(config.applicableRoutespace, newSettings);
 
-  return { activeSettings, resetSettings, settings, updateSettings };
+      const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
+        const newSetting = newSettings[setting];
+        const stateSetting = settings[setting];
+
+        if (user?.id && !isEqual(newSetting, stateSetting)) {
+          acc.push({
+            setting: {
+              key: setting,
+              storagePath: config.applicableRoutespace,
+              value: JSON.stringify(newSettings[setting]),
+            },
+            storagePath: config.applicableRoutespace,
+            userId: user.id,
+          });
+        }
+
+        return acc;
+      }, []);
+
+      if (dbUpdates.length !== 0) {
+        try {
+          // Persist storage to backend.
+          await Promise.allSettled(
+            dbUpdates.map((update) => {
+              updateUserSetting(update);
+            }),
+          );
+        } catch (e) {
+          handleError(e, {
+            isUserTriggered: false,
+            publicMessage: 'Unable to update user settings.',
+            publicSubject: 'Some POST user settings failed.',
+            silent: true,
+            type: ErrorType.Api,
+          });
+        }
+      }
+
+      const queries = window.location.search;
+      const querySettings = queries.substr(/^\?/.test(location.search) ? 1 : 0);
+      const mappedSettings = settingsToQuery(config, newSettings);
+
+      const filteredQueries = querySettings
+        .split('&')
+        .filter((query) => !Object.keys(newSettings).includes(query))
+        .join('&');
+      const url = `${filteredQueries ? `?${filteredQueries}&` : '?'}${mappedSettings}`;
+
+      shouldPush ? navigate(url) : navigate(url, { replace: true });
+    },
+    [config, settings, navigate, update, user?.id],
+  );
+
+  return { activeSettings, isLoading, resetSettings, settings, updateSettings };
 };
 
-export default useSettings;
+export { SettingsProvider, useSettings };

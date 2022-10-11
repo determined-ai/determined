@@ -23,7 +23,7 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
   getModelDetails,
@@ -434,7 +434,7 @@ const ModelDetails: React.FC = () => {
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
             onChange={handleTableChange}
           />
         )}

@@ -45,7 +45,7 @@ const settingsConfig: SettingsConfig<Settings> = {
       defaultValue: false,
       skipUrlEncoding: true,
       storageKey: 'navbarCollapsed',
-      type: { baseType: boolean },
+      type: boolean,
     },
   },
   storagePath: 'navigation',
