@@ -1742,17 +1742,17 @@ service Determined {
       tags: "Projects"
     };
   }
-  // Get experiment groups within a project (alpha).
+  // Get experiment groups within a project.
   rpc GetExperimentGroups(GetExperimentGroupsRequest)
       returns (GetExperimentGroupsResponse) {
     option (google.api.http) = {
       get: "/api/v1/projects/{project_id}/groups"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
+      tags: "Internal"
     };
   }
-  // Create an experiment group within a project (alpha).
+  // Create an experiment group within a project.
   rpc PostExperimentGroup(PostExperimentGroupRequest)
       returns (PostExperimentGroupResponse) {
     option (google.api.http) = {
@@ -1760,10 +1760,10 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
+      tags: "Internal"
     };
   }
-  // Update an experiment group within a project (alpha).
+  // Update an experiment group within a project.
   rpc PatchExperimentGroup(PatchExperimentGroupRequest)
       returns (PatchExperimentGroupResponse) {
     option (google.api.http) = {
@@ -1771,17 +1771,17 @@ service Determined {
       body: "group"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
+      tags: "Internal"
     };
   }
-  // Delete an experiment group within a project (alpha).
+  // Delete an experiment group within a project.
   rpc DeleteExperimentGroup(DeleteExperimentGroupRequest)
       returns (DeleteExperimentGroupResponse) {
     option (google.api.http) = {
       delete: "/api/v1/projects/{project_id}/groups/{group_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
+      tags: "Internal"
     };
   }
   // Move a project into a workspace.
