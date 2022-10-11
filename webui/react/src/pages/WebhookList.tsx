@@ -9,6 +9,7 @@ import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
+import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
@@ -20,14 +21,16 @@ import { alphaNumericSorter } from 'shared/utils/sort';
 import { Webhook } from 'types';
 import handleError from 'utils/error';
 
-import css from './Webhooks.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './Webhooks.settings';
+import css from './WebhookList.module.scss';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './WebhookList.settings';
 
 const WebhooksView: React.FC = () => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+
+  const { canEditWebhooks } = usePermissions();
 
   const { contextHolder: modalWebhookCreateContextHolder, modalOpen: openWebhookCreate } =
     useModalWebhookCreate({});
@@ -190,7 +193,7 @@ const WebhooksView: React.FC = () => {
       id="webhooks"
       options={
         <Space>
-          <Button onClick={showCreateWebhookModal}>New Webhook</Button>
+          {canEditWebhooks && <Button onClick={showCreateWebhookModal}>New Webhook</Button>}
         </Space>
       }
       title="Webhooks">
