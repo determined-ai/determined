@@ -4,14 +4,15 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
-import { V1Trigger, V1WebhookType } from 'services/api-ts-sdk/api';
+import { V1Trigger, V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { RunState } from 'types';
 import handleError from 'utils/error';
 
 interface FormInputs {
-  triggers: V1Trigger[];
+  trigger: V1Trigger;
   url: string;
   webhookType: V1WebhookType;
 }
@@ -30,7 +31,10 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
         <Form.Item label="URL" name="url" rules={[{ message: 'URL is required ', required: true }]}>
           <Input />
         </Form.Item>
-        <Form.Item label="Type" name="webhookType">
+        <Form.Item
+          label="Type"
+          name="webhookType"
+          rules={[{ message: 'Webhook type is required ', required: true }]}>
           <Select placeholder="Select type of Webhook">
             <Select.Option key={V1WebhookType.DEFAULT} value={V1WebhookType.DEFAULT}>
               Default
@@ -40,7 +44,19 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
             </Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item label="Triggers" name="triggers"></Form.Item>
+        <Form.Item
+          label="Trigger"
+          name="trigger"
+          rules={[{ message: 'A trigger event is required ', required: true }]}>
+          <Select placeholder="Select trigger event">
+            <Select.Option key={RunState.Completed} value={RunState.Completed}>
+              {RunState.Completed}
+            </Select.Option>
+            <Select.Option key={RunState.Error} value={RunState.Error}>
+              {RunState.Error}
+            </Select.Option>
+          </Select>
+        </Form.Item>
       </Form>
     );
   }, [form]);
@@ -50,8 +66,13 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
 
     try {
       if (values) {
-        const response = await createWebhook({
-          triggers: values.triggers,
+        await createWebhook({
+          triggers: [
+            {
+              condition: { state: values.trigger },
+              triggerType: V1TriggerType.EXPERIMENTSTATECHANGE,
+            },
+          ],
           url: values.url,
           webhookType: values.webhookType,
         });

@@ -3,15 +3,15 @@ import type { MenuProps } from 'antd';
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Badge, { BadgeType } from 'components/Badge';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
-import TagList from 'components/TagList';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
-import { V1Trigger } from 'services/api-ts-sdk/api';
+import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
@@ -115,13 +115,12 @@ const WebhooksView: React.FC = () => {
       </Dropdown>
     );
 
-    const webhookTriggerRenderer = (triggers: V1Trigger[]) => (
-      <TagList
-        compact
-        disabled={true}
-        tags={triggers.map((t) => `${t.triggerType}|${JSON.stringify(t.condition)}`)}
-      />
-    );
+    const webhookTriggerRenderer = (triggers: V1Trigger[]) =>
+      triggers.map((t) => {
+        if (t.triggerType === V1TriggerType.EXPERIMENTSTATECHANGE) {
+          return <Badge state={t.condition.state} type={BadgeType.State} />;
+        }
+      });
 
     return [
       {
