@@ -25,7 +25,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	dets3 "github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -148,7 +150,13 @@ func setupCheckpointTestEcho(t *testing.T) (
 	api, _, _ := setupAPITest(t)
 	e := echo.New()
 	rec := httptest.NewRecorder()
-	return api, e.NewContext(nil, rec), rec
+	ctx := &detContext.DetContext{Context: e.NewContext(nil, rec)}
+
+	admin, err := user.UserByUsername("admin")
+	require.NoError(t, err)
+	ctx.SetUser(*admin)
+
+	return api, ctx, rec
 }
 
 func TestGetCheckpointEcho(t *testing.T) {
