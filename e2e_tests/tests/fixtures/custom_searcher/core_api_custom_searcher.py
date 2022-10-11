@@ -2,8 +2,8 @@ import argparse
 import logging
 from typing import List, Optional, Tuple
 
-from searchers import ASHASearchMethod, RandomSearchMethod
-from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
+import searchers
+from urllib3 import connectionpool
 
 import determined as det
 from determined import searcher
@@ -32,7 +32,7 @@ def parse_args():
 
 def create_search_method(args, exception_points: Optional[List[str]] = None):
     if args.searcher == "asha":
-        return ASHASearchMethod(
+        return searchers.ASHASearchMethod(
             max_trials=args.max_trials,
             max_length=args.max_length,
             divisor=args.divisor,
@@ -40,7 +40,7 @@ def create_search_method(args, exception_points: Optional[List[str]] = None):
             exception_points=exception_points,
         )
     elif args.searcher == "random":
-        return RandomSearchMethod(
+        return searchers.RandomSearchMethod(
             max_trials=args.max_trials,
             max_length=args.max_length,
             max_concurrent_trials=args.max_concurrent_trials,
@@ -79,7 +79,9 @@ class FallibleSearchRunner(searcher.RemoteSearchRunner):
             logging.info(
                 "Raising exception in after saving the state and before posting operations"
             )
-            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl"
+            )
             raise ex
 
 

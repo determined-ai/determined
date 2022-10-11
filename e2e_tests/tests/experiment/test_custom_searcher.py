@@ -1,17 +1,16 @@
 import logging
+import pathlib
 import subprocess
 import tempfile
 import time
-from pathlib import Path
 from typing import List, Optional
 
 import pytest
 import yaml
-from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
+from urllib3 import connectionpool
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.common.api.bindings import determinedexperimentv1State
 from determined.experimental import client
 from tests import config as conf
 from tests import experiment as exp
@@ -21,7 +20,7 @@ TIMESTAMP = int(time.time())
 
 
 @pytest.mark.e2e_cpu
-def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
+def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     # example searcher script
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
@@ -62,7 +61,7 @@ def test_run_random_searcher_exp() -> None:
         search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -189,7 +188,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
         exp.wait_for_experiment_state(
             searcher_exp_id,
-            determinedexperimentv1State.STATE_RUNNING,
+            bindings.determinedexperimentv1State.STATE_RUNNING,
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
@@ -283,11 +282,11 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                     exception_points=[exception_point],
                 )
                 search_runner_mock = FallibleSearchRunner(
-                    exception_point, search_method, Path(searcher_dir)
+                    exception_point, search_method, pathlib.Path(searcher_dir)
                 )
                 search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
-            except MaxRetryError:
+            except connectionpool.MaxRetryError:
                 failures += 1
 
         assert failures == failures_expected
@@ -295,7 +294,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_runner.state.last_event_id == 41
@@ -314,7 +313,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_run_asha_batches_exp(tmp_path: Path) -> None:
+def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -511,11 +510,11 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                     exception_points=[exception_point],
                 )
                 search_runner_mock = FallibleSearchRunner(
-                    exception_point, search_method, Path(searcher_dir)
+                    exception_point, search_method, pathlib.Path(searcher_dir)
                 )
                 search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
-            except MaxRetryError:
+            except connectionpool.MaxRetryError:
                 failures += 1
 
         assert failures == failures_expected
@@ -523,7 +522,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
         search_method = searchers.ASHASearchMethod(
             max_length, max_trials, num_rungs, divisor, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_runner.state.experiment_completed is True
@@ -563,7 +562,7 @@ class FallibleSearchRunner(searcher.LocalSearchRunner):
         self,
         exception_point: str,
         search_method: searcher.SearchMethod,
-        searcher_dir: Optional[Path] = None,
+        searcher_dir: Optional[pathlib.Path] = None,
     ):
         super(FallibleSearchRunner, self).__init__(search_method, searcher_dir)
         self.fail_on_save = False
@@ -576,5 +575,7 @@ class FallibleSearchRunner(searcher.LocalSearchRunner):
             logging.info(
                 "Raising exception in after saving the state and before posting operations"
             )
-            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl"
+            )
             raise ex

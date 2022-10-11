@@ -29,7 +29,6 @@ class RandomSearchMethod(searcher.SearchMethod):
         self.test_type = test_type
         self.exception_points = exception_points
 
-        # TODO remove created_trials and closed_trials before merging the feature branch
         self.created_trials = 0
         self.pending_trials = 0
         self.closed_trials = 0

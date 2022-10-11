@@ -13,7 +13,6 @@ import numpy as np
 
 import determined as det
 from determined import layers, tensorboard, util, workload
-from determined.common import check
 
 
 class NoOpTrialContext(det.TrialContext):
@@ -49,7 +48,7 @@ class NoOpTrialController(det.TrialController):
 
         check_startup_hook_ran = self.env.hparams.get("check_startup_hook_ran", False)
         if check_startup_hook_ran:
-            check.true(os.path.isfile("startup-hook-ran"), "File should exists.")
+            assert os.path.isfile("startup-hook-ran"), "startup-hook-ran file not found."
 
         self.chaos = random.SystemRandom()
         self._batch_size = self.context.get_per_slot_batch_size()
@@ -231,9 +230,9 @@ class NoOpTrialController(det.TrialController):
         with fpath.open("r") as f:
             jbody = {int(k): v for k, v in json.load(f).items()}
             for k, v in jbody.items():
-                check.gt_eq(k, 0)
-                check.is_type(v, int)
-                check.gt_eq(v, 0)
+                assert k >= 0
+                assert isinstance(v, int)
+                assert v >= 0
             self.trained_steps = collections.Counter(jbody)
             logging.info(
                 "Loaded checkpoint {}, steps_trained {}".format(fpath, self.steps_trained())
