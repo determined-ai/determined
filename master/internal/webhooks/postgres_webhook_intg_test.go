@@ -260,7 +260,7 @@ func getWebhookById(ws Webhooks, id WebhookID) Webhook {
 
 func mockWebhook() *Webhook {
 	return &Webhook{
-		URL:         "localhost:8080",
+		URL:         "http://localhost:8080",
 		WebhookType: WebhookTypeDefault,
 	}
 }

@@ -54,7 +54,7 @@ func TestShipper(t *testing.T) {
 	t.Log("setup a few test webhooks")
 	// One with two triggers so it fires twice.
 	require.NoError(t, AddWebhook(ctx, &Webhook{
-		URL: "localhost:8080",
+		URL: "http://localhost:8080",
 		Triggers: []*Trigger{
 			{
 				TriggerType: TriggerTypeStateChange,
@@ -73,7 +73,7 @@ func TestShipper(t *testing.T) {
 	}))
 	// And one that just fires once.
 	require.NoError(t, AddWebhook(ctx, &Webhook{
-		URL: "localhost:8080",
+		URL: "http://localhost:8080",
 		Triggers: []*Trigger{
 			{
 				TriggerType: TriggerTypeStateChange,
