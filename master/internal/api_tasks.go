@@ -326,7 +326,6 @@ func (a *apiServer) GetActiveTasksCount(
 func (a *apiServer) taskLogs(
 	ctx context.Context, req *apiv1.TaskLogsRequest, res chan api.BatchResult,
 ) {
-	fmt.Println("TASK LOGS")
 	taskID := model.TaskID(req.TaskId)
 	filters, err := constructTaskLogsFilters(req)
 	if err != nil {
@@ -340,7 +339,6 @@ func (a *apiServer) taskLogs(
 	var timeSinceLastAuth time.Time
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			fmt.Println("TASK LOGS")
 			if err = a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err

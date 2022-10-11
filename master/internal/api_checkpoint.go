@@ -39,13 +39,8 @@ func errCheckpointsNotFound(ids []string) error {
 }
 
 func (m *Master) canDoActionOnCheckpoint(
-	ctx context.Context, id string, action func(model.User, *model.Experiment) error,
+	curUser model.User, id string, action func(model.User, *model.Experiment) error,
 ) error {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return err
-	}
-
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return err
@@ -65,12 +60,12 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
 		return err
 	} else if !ok {
 		return errCheckpointNotFound(id)
 	}
-	if err := action(*curUser, exp); err != nil {
+	if err := action(curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil
@@ -79,8 +74,12 @@ func (m *Master) canDoActionOnCheckpoint(
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
-	if err := a.m.canDoActionOnCheckpoint(
-		ctx, req.CheckpointUuid, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = a.m.canDoActionOnCheckpoint(*curUser, req.CheckpointUuid,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -162,14 +161,15 @@ func (a *apiServer) DeleteCheckpoints(
 		if err != nil {
 			return nil, err
 		}
-		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+		var ok bool
+		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 			return nil, err
 		} else if !ok {
 			notFoundCheckpoints = append(notFoundCheckpoints,
 				strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")...)
 			continue
 		}
-		if err := expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
+		if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -204,13 +204,17 @@ func (a *apiServer) DeleteCheckpoints(
 func (a *apiServer) PostCheckpointMetadata(
 	ctx context.Context, req *apiv1.PostCheckpointMetadataRequest,
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
-	if err := a.m.canDoActionOnCheckpoint(
-		ctx, req.Checkpoint.Uuid, expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = a.m.canDoActionOnCheckpoint(*curUser, req.Checkpoint.Uuid,
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
 	currCheckpoint := &checkpointv1.Checkpoint{}
-	if err := a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
+	if err = a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
 	}
