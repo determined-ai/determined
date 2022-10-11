@@ -190,7 +190,8 @@ Generating results of the desired quality is often a balancing act:
   for more detailed tips on prompt-engineering.
 * When generating using new concepts trained with Textual Inversion, it often seems helpful to set
   the `guidance_scale` to a lower value than one would normally do, e.g., setting it as low
-  as `guidance_scale = 2`.
+  as `guidance_scale = 1.1` for a very highly-trained concept (the prompt is ignored entirely
+  when `guidance_scale <= 1.`).
 
 ## The Code
 
