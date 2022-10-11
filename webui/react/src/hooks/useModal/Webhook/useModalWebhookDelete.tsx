@@ -3,10 +3,7 @@ import { useCallback } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteWebhook } from 'services/api';
-import useModal, {
-  ModalHooks as Hooks,
-  ModalCloseReason,
-} from 'shared/hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { Webhook } from 'types';

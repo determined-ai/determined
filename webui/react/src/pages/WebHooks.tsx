@@ -76,32 +76,35 @@ const WebhooksView: React.FC = () => {
     [openWebhookDelete],
   );
 
-  const WebhookActionMenu = useCallback((record: Webhook) => {
-    enum MenuKey {
-      DELETE_WEBHOOK = 'delete-webhook',
-      TEST_WEBHOOK = 'test-webhook',
-    }
+  const WebhookActionMenu = useCallback(
+    (record: Webhook) => {
+      enum MenuKey {
+        DELETE_WEBHOOK = 'delete-webhook',
+        TEST_WEBHOOK = 'test-webhook',
+      }
 
-    const funcs = {
-      [MenuKey.DELETE_WEBHOOK]: () => {
-        showConfirmDelete(record);
-      },
-      [MenuKey.TEST_WEBHOOK]: () => {
-        testWebhook({ id: record.id });
-      },
-    };
+      const funcs = {
+        [MenuKey.DELETE_WEBHOOK]: () => {
+          showConfirmDelete(record);
+        },
+        [MenuKey.TEST_WEBHOOK]: () => {
+          testWebhook({ id: record.id });
+        },
+      };
 
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
-    };
+      const onItemClick: MenuProps['onClick'] = (e) => {
+        funcs[e.key as MenuKey]();
+      };
 
-    const menuItems: MenuProps['items'] = [
-      { key: MenuKey.TEST_WEBHOOK, label: 'Test Webhook' },
-      { danger: true, key: MenuKey.DELETE_WEBHOOK, label: 'Delete Webhook' },
-    ];
+      const menuItems: MenuProps['items'] = [
+        { key: MenuKey.TEST_WEBHOOK, label: 'Test Webhook' },
+        { danger: true, key: MenuKey.DELETE_WEBHOOK, label: 'Delete Webhook' },
+      ];
 
-    return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [showConfirmDelete]);
+      return <Menu items={menuItems} onClick={onItemClick} />;
+    },
+    [showConfirmDelete],
+  );
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
