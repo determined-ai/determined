@@ -7,14 +7,14 @@ import { terminalRunStates } from 'constants/states';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
-import { getExperimentDetails, getExpValidationHistory } from 'services/api';
+import { getExperimentDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
-import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
+import { ExperimentBase, TrialItem } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 type Params = {
