@@ -187,9 +187,18 @@ type WebhookEventID int
 type Event struct {
 	bun.BaseModel `bun:"table:webhook_events"`
 
-	ID      WebhookEventID `bun:"id,pk,autoincrement"`
-	Payload []byte         `bun:"payload,notnull"`
-	Trigger *Trigger       `bun:"rel:belongs-to,join:id=trigger_id"`
+	ID        WebhookEventID `bun:"id,pk,autoincrement"`
+	Payload   []byte         `bun:"payload,notnull"`
+	TriggerID TriggerID      `bun:"trigger_id,notnull"`
+	Trigger   *Trigger       `bun:"rel:belongs-to,join:trigger_id=id"`
+}
+
+type EventShippingInfo struct {
+	ID          WebhookEventID `bun:"id,pk,autoincrement"`
+	Payload     []byte         `bun:"payload,notnull"`
+	TriggerID   TriggerID      `bun:"trigger_id,notnull"`
+	WebhookType WebhookType    `bun:"webhook_type"`
+	URL         string         `bun:"url,notnull"`
 }
 
 type Field struct {

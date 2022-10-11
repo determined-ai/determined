@@ -76,7 +76,7 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 		if err != nil {
 			return err
 		}
-		es = append(es, Event{Payload: p})
+		es = append(es, Event{Payload: p, TriggerID: t.ID})
 	}
 
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
@@ -193,14 +193,21 @@ func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var events []Event
+	var esis []EventShippingInfo
 	if err = tx.NewRaw(`
 	DELETE FROM webhook_events                                                        
-	USING ( SELECT e.*, t.*, w.*, FROM webhook_events e JOIN webhook_triggers t on e.trigger_id = t.id JOIN webhooks w on w.id = t.webhook_id LIMIT 1 FOR UPDATE SKIP LOCKED ) q
-	WHERE q.id = webhook_events.id RETURNING *
-`, limit).Scan(ctx, &events); err != nil {
+	USING ( SELECT e.* , w.url, w.webhook_type FROM webhook_events e JOIN webhook_triggers t on e.trigger_id = t.id JOIN webhooks w on w.id = t.webhook_id LIMIT 1 FOR UPDATE SKIP LOCKED ) q
+	WHERE q.id = webhook_events.id RETURNING q.*
+`, limit).Scan(ctx, &esis); err != nil {
 		return nil, fmt.Errorf("scanning events: %w", err)
+	}
+	for _, esi := range esis {
+		events = append(events, Event{
+			ID:        esi.ID,
+			Payload:   esi.Payload,
+			TriggerID: esi.TriggerID,
+		})
 	}
 	return &eventBatch{tx: &tx, events: events}, nil
 }
