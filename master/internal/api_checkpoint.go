@@ -85,7 +85,7 @@ func (a *apiServer) GetCheckpoint(
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
 
-	if err := a.m.db.QueryProto(
+	if err = a.m.db.QueryProto(
 		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err != nil {
 		return resp,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
