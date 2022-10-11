@@ -8,8 +8,8 @@
 | :doc:`/reference/reference-training/training/api-core-reference` |
 +------------------------------------------------------------------+
 
-With the Core API you can train arbitrary models on the Determined platform with seamless access to the
-the following capabilities:
+With the Core API you can train arbitrary models on the Determined platform with seamless access to
+the the following capabilities:
 
 -  metrics tracking
 -  checkpoint tracking and preemption support

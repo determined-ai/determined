@@ -9,12 +9,13 @@
 +---------------------------------------------------------------------+
 
 This document guides you through training a PyTorch model in Determined. You need to implement a
-trial class that inherits from :class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint
-in the :doc:`experiment configuration </reference/reference-training/experiment-config-reference>`.
+trial class that inherits from :class:`~determined.pytorch.PyTorchTrial` and specify it as the
+entrypoint in the :doc:`experiment configuration
+</reference/reference-training/experiment-config-reference>`.
 
-To implement a :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions that
-represent the components that are used in the training procedure. It is helpful to work off of a
-skeleton to keep track of what is still required. A good starting template can be found below:
+To implement a :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions
+that represent the components that are used in the training procedure. It is helpful to work off of
+a skeleton to keep track of what is still required. A good starting template can be found below:
 
 .. code:: python
 
@@ -39,7 +40,8 @@ skeleton to keep track of what is still required. A good starting template can b
        def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
            return {}
 
-To learn more about the PyTorch API, you can start by reading the trial definitions from the following examples:
+To learn more about the PyTorch API, you can start by reading the trial definitions from the
+following examples:
 
 -  :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
 -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
@@ -55,8 +57,8 @@ For tips on debugging, see :doc:`/training/debug-models`.
 
 .. note::
 
-   Before continuing, read how to :doc:`/training/load-model-data` to understand how to
-   work with different sources of data.
+   Before continuing, read how to :doc:`/training/load-model-data` to understand how to work with
+   different sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
 
@@ -64,11 +66,11 @@ There are two ways to download your dataset in the PyTorch API:
 #. Download the data in the constructor function :meth:`~determined.pytorch.PyTorchTrial.__init__`
    of :class:`~determined.pytorch.PyTorchTrial`.
 
-If you are running a distributed training experiment, we suggest you to use the second approach. During
-distributed training, a trial needs running multiple processes on different containers. In order for
-all the processes to have access to the data and to prevent multiple download download processes (one
-process per GPU) from conflicting with one another, the data should be downloaded to unique
-directories for different ranks.
+If you are running a distributed training experiment, we suggest you to use the second approach.
+During distributed training, a trial needs running multiple processes on different containers. In
+order for all the processes to have access to the data and to prevent multiple download download
+processes (one process per GPU) from conflicting with one another, the data should be downloaded to
+unique directories for different ranks.
 
 See the following code as an example:
 
@@ -133,32 +135,32 @@ See the following code as an example:
        )
        return train_loader
 
-The output :meth:`~determined.pytorch.PyTorchTrial.train_batch` returns a batch of data in one
-of the following formats:
+The output :meth:`~determined.pytorch.PyTorchTrial.train_batch` returns a batch of data in one of
+the following formats:
 
-..  code:: python
+.. code:: python
 
-    # A numpy array
-    batch: np.ndarray = np.array([0, 0], [0, 0]])
-    # A PyTorch tensor
-    batch: torch.Tensor = torch.Tensor([[0, 0], [0, 0]])
-    # A tuple of arrays or tensors
-    batch: Tuple[np.ndarray] = (np.array([0, 0]), np.array([0, 0]))
-    batch: Tuple[torch.Tensor] = (torch.Tensor([0, 0]), torch.Tensor([0, 0]))
-    # A list of arrays or tensors
-    batch: List[np.ndarray] = [np.array([0, 0]), np.array([0, 0])]
-    batch: List[torch.Tensor] = [torch.Tensor([0, 0]), torch.Tensor([0, 0])]
-    # A dictionary mapping strings to arrays or tensors
-    batch: Dict[str, np.ndarray] = {"data": np.array([0, 0]), "label": np.array([0, 0])}
-    batch: Dict[str, torch.Tensor] = {"data": torch.Tensor([0, 0]), "label": torch.Tensor([0, 0])}
-    # A combination of the above
-    batch = {
-        "data": [
-            {"sub_data1": torch.Tensor([[0, 0], [0, 0]])},
-            {"sub_data2": torch.Tensor([0, 0])},
-        ],
-        "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
-    }
+   # A numpy array
+   batch: np.ndarray = np.array([0, 0], [0, 0]])
+   # A PyTorch tensor
+   batch: torch.Tensor = torch.Tensor([[0, 0], [0, 0]])
+   # A tuple of arrays or tensors
+   batch: Tuple[np.ndarray] = (np.array([0, 0]), np.array([0, 0]))
+   batch: Tuple[torch.Tensor] = (torch.Tensor([0, 0]), torch.Tensor([0, 0]))
+   # A list of arrays or tensors
+   batch: List[np.ndarray] = [np.array([0, 0]), np.array([0, 0])]
+   batch: List[torch.Tensor] = [torch.Tensor([0, 0]), torch.Tensor([0, 0])]
+   # A dictionary mapping strings to arrays or tensors
+   batch: Dict[str, np.ndarray] = {"data": np.array([0, 0]), "label": np.array([0, 0])}
+   batch: Dict[str, torch.Tensor] = {"data": torch.Tensor([0, 0]), "label": torch.Tensor([0, 0])}
+   # A combination of the above
+   batch = {
+       "data": [
+           {"sub_data1": torch.Tensor([[0, 0], [0, 0]])},
+           {"sub_data2": torch.Tensor([0, 0])},
+       ],
+       "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
+   }
 
 **********************
  Initializing Objects
@@ -166,18 +168,18 @@ of the following formats:
 
 You need to initialize the objects that will be used in training in the constructor
 :meth:`~determined.pytorch.PyTorchTrial.__init__` of :class:`determined.pytorch.PyTorchTrial` using
-the provided ``context``: these objects include the model(s), optimizer(s), learning rate scheduler(s), and custom loss
-and metric functions. See :meth:`~determined.pytorch.PyTorchTrial.__init__` for details.
+the provided ``context``: these objects include the model(s), optimizer(s), learning rate
+scheduler(s), and custom loss and metric functions. See
+:meth:`~determined.pytorch.PyTorchTrial.__init__` for details.
 
 .. warning::
 
-   Be sure to wrap your objects!
-   You may see metrics for trials that are paused and later continued that are significantly different
-   from trials that are not paused if some of your models, optimizers, and learning rate schedulers
-   are not wrapped. The reason is that the model's state may not be restored accurately or
-   completely from the checkpoint, which is saved to a checkpoint and then later loaded into the
-   trial during resumed training. When using PyTorch, this can sometimes happen if the PyTorch API
-   is not used correctly.
+   Be sure to wrap your objects! You may see metrics for trials that are paused and later continued
+   that are significantly different from trials that are not paused if some of your models,
+   optimizers, and learning rate schedulers are not wrapped. The reason is that the model's state
+   may not be restored accurately or completely from the checkpoint, which is saved to a checkpoint
+   and then later loaded into the trial during resumed training. When using PyTorch, this can
+   sometimes happen if the PyTorch API is not used correctly.
 
 Optimizers
 ==========
@@ -248,9 +250,9 @@ Optimization Step
 You need to implement the :meth:`~determined.pytorch.PyTorchTrial.train_batch` method of your
 ``PyTorchTrial`` subclass.
 
-Typically when training with native PyTorch, you write a training loop, which iterates
-through the dataloader to access and train your model one batch at a time. You can usually identify
-this code by finding the common code snippet: ``for batch in dataloader``. In Determined,
+Typically when training with native PyTorch, you write a training loop, which iterates through the
+dataloader to access and train your model one batch at a time. You can usually identify this code by
+finding the common code snippet: ``for batch in dataloader``. In Determined,
 :meth:`~determined.pytorch.PyTorchTrial.train_batch` also works with one batch at a time.
 
 Take `this script implemented with the native PyTorch
@@ -289,13 +291,13 @@ following code for the training loop.
        if i % args.print_freq == 0:
            progress.display(i + 1)
 
-Notice that this pure-PyTorch loop manages the per-batch metrics. With Determined, metrics returned by
-:meth:`~determined.pytorch.PyTorchTrial.train_batch` are automatically averaged and
-displayed, so we do not need to do this ourselves.
+Notice that this pure-PyTorch loop manages the per-batch metrics. With Determined, metrics returned
+by :meth:`~determined.pytorch.PyTorchTrial.train_batch` are automatically averaged and displayed, so
+we do not need to do this ourselves.
 
 Next, we will convert some PyTorch functions to use Determined’s equivalents. We need to change
-``optimizer.zero_grad()``, ``loss.backward()``, and ``optimizer.step()``. The ``self.context`` object will
-be used to call ``loss.backwards`` and handle zeroing and stepping the optimizer.
+``optimizer.zero_grad()``, ``loss.backward()``, and ``optimizer.step()``. The ``self.context``
+object will be used to call ``loss.backwards`` and handle zeroing and stepping the optimizer.
 
 The final :meth:`~determined.pytorch.PyTorchTrial.train_batch` will look like:
 
@@ -333,19 +335,19 @@ which are the ``state_dict`` of the models, optimizers, LR schedulers, and callb
 ****************************
 
 You need to implement either the :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` or
-:meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` method. To load data into the validation
-loop, define :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`. To define
-reducing metrics, define :meth:`~determined.pytorch.PyTorchTrial.evaluation_reducer`.
+:meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` method. To load data into the
+validation loop, define :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`. To
+define reducing metrics, define :meth:`~determined.pytorch.PyTorchTrial.evaluation_reducer`.
 
 For example,
 
 .. code:: python
 
-    def evaluate_batch(self, batch: TorchData):
-        images, target = batch
-        output = self.model(images)
-        validation_loss = self.criterion(output, target)
-        return {"validation_loss": loss.item()}
+   def evaluate_batch(self, batch: TorchData):
+       images, target = batch
+       output = self.model(images)
+       validation_loss = self.criterion(output, target)
+       return {"validation_loss": loss.item()}
 
 ***********
  Callbacks

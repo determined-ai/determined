@@ -93,12 +93,12 @@ distributed training, we encourage users to be mindful of their model size when 
 Debug Performance Bottlenecks
 =============================
 
-When scaling up distributed training, it's fairly common to see non-linear speedup when scaling
-from one machine to two machines as intra-machine communication (e.g., NVLink) is often
-significantly faster than inter-machine communication. Scaling up beyond two machines often provides
-close to linear speed-up, but it does vary depending on the model characteristics. If observing
-unexpected scaling performance, assuming you have scaled your ``global_batch_size`` proportionally
-with ``slots_per_trial``, it's possible that training performance is being bottlenecked by network
+When scaling up distributed training, it's fairly common to see non-linear speedup when scaling from
+one machine to two machines as intra-machine communication (e.g., NVLink) is often significantly
+faster than inter-machine communication. Scaling up beyond two machines often provides close to
+linear speed-up, but it does vary depending on the model characteristics. If observing unexpected
+scaling performance, assuming you have scaled your ``global_batch_size`` proportionally with
+``slots_per_trial``, it's possible that training performance is being bottlenecked by network
 communication or disk I/O.
 
 To check if your training is bottlenecked by communication, we suggest setting
@@ -108,9 +108,9 @@ Comparing throughput with ``aggregation_frequency`` of 1 vs. ``aggregation_frequ
 demonstrate the communication overhead. If you do observe significant communication overhead, refer
 to :ref:`multi-gpu-training` for guidance on how to optimize communication.
 
-To check if your training is bottlenecked by I/O, we encourage users to experiment with using synthetic
-datasets. If you observe that I/O is a significant bottleneck, we suggest optimizing the data input
-pipeline to the model (e.g., copy training data to local SSDs).
+To check if your training is bottlenecked by I/O, we encourage users to experiment with using
+synthetic datasets. If you observe that I/O is a significant bottleneck, we suggest optimizing the
+data input pipeline to the model (e.g., copy training data to local SSDs).
 
 .. _reproducibility:
 
@@ -314,9 +314,9 @@ workloads.
 
 Multi-machine parallelism offers the ability to further parallelize training across more GPUs. To
 use multi-machine parallelism, set ``slots_per_trial`` to be a multiple of the total number of GPUs
-on an agent machine. For example, if your resource pool consists of multiple 8-GPU agent machines, valid
-values for ``slots_per_trial`` would be 16, 24, 32, etc. In this configuration, trials use all the resources of
-multiple machines to train a model:
+on an agent machine. For example, if your resource pool consists of multiple 8-GPU agent machines,
+valid values for ``slots_per_trial`` would be 16, 24, 32, etc. In this configuration, trials use all
+the resources of multiple machines to train a model:
 
 .. code:: yaml
 
@@ -329,8 +329,8 @@ the fastest one in :ref:`cluster-configuration` under
 ``task_container_defaults.dtrain_network_interface``.
 
 When the ``slots_per_trial`` field is set, the per-slot (i.e., per-GPU) batch size is set to
-``global_batch_size // slots_per_trial``. The per-slot and global batch sizes should be
-accessed via the context using :func:`context.get_per_slot_batch_size()
+``global_batch_size // slots_per_trial``. The per-slot and global batch sizes should be accessed via
+the context using :func:`context.get_per_slot_batch_size()
 <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
 <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not
 evenly divisible by ``slots_per_trial``, the remainder is dropped.
@@ -339,9 +339,8 @@ If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than
 on a single agent, Determined schedules it over multiple machines. When scheduling a multi-machine
 distributed training job, Determined requires that the job uses all of the slots (GPUs) on an agent.
 For example, in a cluster that consists of 8-GPU agents, an experiment with :ref:`slots_per_trial
-<exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled and will wait
-indefinitely. The section on :ref:`Scheduling Behavior <dtrain-scheduling>` describes this
-in more detail.
+<exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled and will wait indefinitely.
+The section on :ref:`Scheduling Behavior <dtrain-scheduling>` describes this in more detail.
 
 There might also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
 single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free slots
@@ -353,8 +352,8 @@ Global Batch Size
 When doing distributed training, the ``global_batch_size`` specified in the
 :ref:`experiment-config-reference` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
 size is set to: ``global_batch_size // slots_per_trial``. If ``slots_per_trial`` does not divide
-``global_batch_size`` evenly, the remainder is dropped. For convenience, the per-GPU batch
-size can be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
+``global_batch_size`` evenly, the remainder is dropped. For convenience, the per-GPU batch size can
+be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
 <determined.TrialContext.get_per_slot_batch_size>`.
 
 For improved performance, *weak-scaling* is recommended. That is, increasing your
@@ -645,8 +644,8 @@ however, depends on the value's type:
    Note that there are exceptions to this rule for ``bind_mounts`` and ``resources.devices``. It may
    be the case that the both the original config and the template will attempt to mount to the same
    ``container_path``, which would result in an unstable config. In those situations, the original
-   config is preferred, and the conflicting bind mount or device from the template is omitted in
-   the merged result.
+   config is preferred, and the conflicting bind mount or device from the template is omitted in the
+   merged result.
 
 -  If the field specifies an object value, the resulting value will be the object generated by
    recursively applying this merging algorithm to both objects.

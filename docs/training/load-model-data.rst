@@ -9,13 +9,12 @@ your ML models depends on several factors, including whether you are running on-
 cloud, the size of your data sets, and your security requirements. Accordingly, Determined supports
 a variety of methods for accessing data.
 
-The easiest way to include data in your experiment is to add the data
-to the same directory as your model code. When you create a new experiment, all files in your
-model code directory will be packaged and uploaded to the Determined cluster, assuming the package
-is smaller than 96MB.
+The easiest way to include data in your experiment is to add the data to the same directory as your
+model code. When you create a new experiment, all files in your model code directory will be
+packaged and uploaded to the Determined cluster, assuming the package is smaller than 96MB.
 
-If your dataset is larger than 96MB, you can use a :ref:`Startup Hook <startup-hooks>` shell
-script to download the dataset prior to training.
+If your dataset is larger than 96MB, you can use a :ref:`Startup Hook <startup-hooks>` shell script
+to download the dataset prior to training.
 
 This document also introduces production data source options, such as Object Store ( `Amazon S3
 <https://aws.amazon.com/s3/>`__, `Google Cloud Storage <https://cloud.google.com/storage>`__) or

@@ -24,8 +24,8 @@ docs below depending on your ML Framework.
 -  :doc:`/training/apis-howto/api-keras-ug`
 -  :doc:`/training/apis-howto/deepspeed/overview`
 
-If you'd like a review of implementing the Determined APIs on simple models, please take a look
-at our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an
+If you'd like a review of implementing the Determined APIs on simple models, please take a look at
+our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an
 existing model that already runs on Determined, take a look at our :doc:`examples
 </example-solutions/examples>` to see if the model you'd like to train is already available.
 
@@ -36,9 +36,10 @@ existing model that already runs on Determined, take a look at our :doc:`example
 TensorFlow Core Models
 ======================
 
-Determined has support for TensorFlow models that use the :doc:`Keras </training/apis-howto/api-keras-ug>`
-or :doc:`Estimator </training/apis-howto/api-estimator-ug>` APIs. For models that use the low-level TensorFlow
-Core APIs, we recommend wrapping your model in Keras, as recommended by the official `TensorFlow
+Determined has support for TensorFlow models that use the :doc:`Keras
+</training/apis-howto/api-keras-ug>` or :doc:`Estimator </training/apis-howto/api-estimator-ug>`
+APIs. For models that use the low-level TensorFlow Core APIs, we recommend wrapping your model in
+Keras, as recommended by the official `TensorFlow
 <https://www.tensorflow.org/guide/basics#training_loops>`_ documentation.
 
 TensorFlow 1 vs 2

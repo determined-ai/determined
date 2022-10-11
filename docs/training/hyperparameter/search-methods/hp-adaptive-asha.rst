@@ -4,8 +4,8 @@
  Adaptive (Asynchronous) Method
 ################################
 
-The ``adaptive_asha`` search method employs an Asynchronous version of the Successive
-Halving Algorithm (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is suitable for large-scale
+The ``adaptive_asha`` search method employs an Asynchronous version of the Successive Halving
+Algorithm (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is suitable for large-scale
 experiments with hundreds or thousands of trials.
 
 *************

@@ -65,8 +65,8 @@ are launched or deep learning operations are performed. The startup hook can be 
 the container environment, install additional dependencies, and download data sets among other shell
 script commands.
 
-Startup hooks are not cached and run before the start of every workload, so expensive or long-running
-operations in a startup hook can result in poor performance.
+Startup hooks are not cached and run before the start of every workload, so expensive or
+long-running operations in a startup hook can result in poor performance.
 
 This example startup hook installs the ``wget`` utility and the ``pandas`` Python package:
 
@@ -75,8 +75,8 @@ This example startup hook installs the ``wget`` utility and the ``pandas`` Pytho
    apt-get update && apt-get install -y wget
    python3 -m pip install pandas
 
-This :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model
-that uses a startup hook to install an additional Python dependency.
+This :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model that
+uses a startup hook to install an additional Python dependency.
 
 .. _container-images:
 

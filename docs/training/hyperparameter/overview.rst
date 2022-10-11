@@ -6,20 +6,20 @@
  Hyperparameter Tuning
 #######################
 
-Hyperparameter tuning is the common machine learning process of selecting
-the data, features, model architecture, and learning algorithm to yield an effective model. Hyperparameter
-tuning is a :ref:`challenging problem <topic-guides_hp-tuning-basics-difficulty>`
-given the potentially large number of hyperparameters to consider.
+Hyperparameter tuning is the common machine learning process of selecting the data, features, model
+architecture, and learning algorithm to yield an effective model. Hyperparameter tuning is a
+:ref:`challenging problem <topic-guides_hp-tuning-basics-difficulty>` given the potentially large
+number of hyperparameters to consider.
 
-******************************
-Why Do Hyperparameters Matter?
-******************************
+********************************
+ Why Do Hyperparameters Matter?
+********************************
 
 .. _topic-guides_hp-tuning-basics-example-hyperparameters:
 
-During the model development lifecycle, a machine learning engineer
-makes a wide range of decisions impacting model performance. For example, a computer vision model
-requires decisions on sample features, model architecture, and training algorithm parameters, e.g.:
+During the model development lifecycle, a machine learning engineer makes a wide range of decisions
+impacting model performance. For example, a computer vision model requires decisions on sample
+features, model architecture, and training algorithm parameters, e.g.:
 
 -  Should we consider features aside from the raw images in the training set?
 
@@ -40,18 +40,17 @@ requires decisions on sample features, model architecture, and training algorith
    -  What optimizer should we use, and how should we parameterize it (e.g., learning rate)?
 
 A machine learning engineer can manually guess and test hyperparameters, or they might narrow the
-search space by using a pretrained model. However, even if the engineer achieves
-seemingly good model performance, they're left wondering how much better they might do with
-additional tuning.
+search space by using a pretrained model. However, even if the engineer achieves seemingly good
+model performance, they're left wondering how much better they might do with additional tuning.
 
-*********************
-Hyperparameter Tuning
-*********************
+***********************
+ Hyperparameter Tuning
+***********************
 
 .. _topic-guides_hp-tuning-basics-difficulty:
 
-Hyperparameter tuning is a crucial phase in the model development lifecycle.
-However, tuning deep learning models is difficult because:
+Hyperparameter tuning is a crucial phase in the model development lifecycle. However, tuning deep
+learning models is difficult because:
 
 -  A deep learning model's objective (e.g., validation loss) as a function of the hyperparameters is
    non-continuous and noisy, so we can't apply analytical or continuous optimization techniques to
@@ -74,8 +73,8 @@ first-class workflow that is tightly integrated with Determined's job scheduler,
 efficient execution of state-of-the-art early-stopping based approaches as well as seamless
 parallelization of these methods.
 
-An intuitive interface is provided to use hyperparameter searching, and is described in the following
-sections.
+An intuitive interface is provided to use hyperparameter searching, and is described in the
+following sections.
 
 .. toctree::
    :maxdepth: 1

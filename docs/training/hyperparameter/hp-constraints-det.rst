@@ -5,10 +5,9 @@
 ###################################
 
 Determined's Hyperparameter (HP) Search Constraints API enables finer-grained control over the
-hyperparameter search space through the specification of additional constraints.
-This functionality is particularly useful for incorporating prior knowledge/domain expertise into a
-hyperparameter search and constraining the search to models that fit a particular deployment
-environment.
+hyperparameter search space through the specification of additional constraints. This functionality
+is particularly useful for incorporating prior knowledge/domain expertise into a hyperparameter
+search and constraining the search to models that fit a particular deployment environment.
 
 Using Determined's HP Search Constraints requires no changes to the configuration files. Rather,
 users can simply raise a ``determined.InvalidHP`` exception in their model code when the trial is
@@ -27,15 +26,15 @@ information to the search method.
  HP Search Constraints in PyTorch vs. TF Keras/Estimator
 *********************************************************
 
-Since the PyTorch and TF Keras/Estimator APIs have different behavior, the
-timing/placement of user-raised InvalidHP exceptions are somewhat different.
+Since the PyTorch and TF Keras/Estimator APIs have different behavior, the timing/placement of
+user-raised InvalidHP exceptions are somewhat different.
 
-In the case of PyTorch, this exception can be raised in the trial's ``__init__``,
-``train_batch``, or ``evaluate_batch`` methods. In the case of either TF Keras or TF Estimator,
-this exception can be raised in the ``__init__`` method or in an ``on_checkpoint_end``
-callback.
+In the case of PyTorch, this exception can be raised in the trial's ``__init__``, ``train_batch``,
+or ``evaluate_batch`` methods. In the case of either TF Keras or TF Estimator, this exception can be
+raised in the ``__init__`` method or in an ``on_checkpoint_end`` callback.
 
-See the `hp_constraints_mnist_pytorch <https://github.com/determined-ai/determined/tree/master/examples/features/hp_constraints_mnist_pytorch>`_
+See the `hp_constraints_mnist_pytorch
+<https://github.com/determined-ai/determined/tree/master/examples/features/hp_constraints_mnist_pytorch>`_
 example for a demonstration of HP Search Constraints with PyTorch.
 
 ******************************************************
