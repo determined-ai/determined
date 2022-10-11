@@ -62,9 +62,11 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const { settings, isLoading: isLoadingSettings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const fetchModel = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const modelData = await getModelDetails({
         limit: settings.tableLimit,
@@ -234,7 +236,7 @@ const ModelDetails: React.FC = () => {
 
   const handleTableChange = useCallback(
     (tablePagination, tableFilters, tableSorter) => {
-      if (Array.isArray(tableSorter)) return;
+      if (Array.isArray(tableSorter) || !settings?.tableOffset) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
@@ -248,7 +250,7 @@ const ModelDetails: React.FC = () => {
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings.tableOffset, updateSettings],
+    [columns, settings?.tableOffset, updateSettings],
   );
 
   const saveMetadata = useCallback(
@@ -421,11 +423,11 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading}
+            loading={isLoading || isLoadingSettings}
             pagination={getFullPaginationConfig(
               {
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
+                limit: settings?.tableLimit ?? 0,
+                offset: settings?.tableOffset ?? 0,
               },
               total,
             )}

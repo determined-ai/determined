@@ -112,6 +112,8 @@ export const useTheme = (): void => {
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
+    if (!settings?.mode) return;
+
     if (isSettingsReady) {
       // We have read from the settings, going forward any mode difference requires an update.
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
@@ -120,7 +122,7 @@ export const useTheme = (): void => {
       storeDispatch({ type: StoreActionUI.SetMode, value: settings.mode });
       setIsSettingsReady(true);
     }
-  }, [isSettingsReady, settings, storeDispatch, ui.mode, updateSettings]);
+  }, [isSettingsReady, settings?.mode, storeDispatch, ui.mode, updateSettings]);
 };
 
 export default useTheme;

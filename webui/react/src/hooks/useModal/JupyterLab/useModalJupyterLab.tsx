@@ -93,10 +93,10 @@ const useModalJupyterLab = (): ModalHooks => {
   const fetchConfig = useCallback(async () => {
     try {
       const newConfig = await previewJupyterLab({
-        name: fields.name,
-        pool: fields.pool,
-        slots: fields.slots,
-        template: fields.template,
+        name: fields?.name,
+        pool: fields?.pool,
+        slots: fields?.slots,
+        template: fields?.template,
       });
       setConfig(yaml.dump(newConfig));
     } catch (e) {
@@ -115,10 +115,10 @@ const useModalJupyterLab = (): ModalHooks => {
       launchJupyterLab({ config: yaml.load(config || '') as RawJson });
     } else {
       launchJupyterLab({
-        name: fields.name,
-        pool: fields.pool,
-        slots: fields.slots,
-        template: fields.template,
+        name: fields?.name,
+        pool: fields?.pool,
+        slots: fields?.slots,
+        template: fields?.template,
       });
     }
     modalClose();
@@ -131,8 +131,10 @@ const useModalJupyterLab = (): ModalHooks => {
   }, []);
 
   const formContent = useMemo(
-    () =>
-      showFullConfig ? (
+    () => {
+      if (!fields) return <Spinner spinning />;
+
+      return showFullConfig ? (
         <JupyterLabFullConfig
           config={config}
           configError={configError}
@@ -141,7 +143,8 @@ const useModalJupyterLab = (): ModalHooks => {
         />
       ) : (
         <JupyterLabForm fields={fields} updateFields={updateFields} />
-      ),
+      );
+    },
     [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
   );
 
@@ -224,7 +227,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
 
   const handleConfigChange = useCallback(
     (_, allFields) => {
-      if (!Array.isArray(allFields) || allFields.length === 0) return;
+      if (!Array.isArray(allFields) || allFields?.length === 0) return;
       try {
         const configString = allFields[0].value;
         onChange?.(configString);
@@ -292,7 +295,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   const [resourcePools, setResourcePools] = useState<ResourcePool[]>([]);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find((pool) => pool.name === fields.pool);
+    const selectedPool = resourcePools.find((pool) => pool.name === fields?.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -305,14 +308,14 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
     if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
-    if (hasComputeCapacity && fields.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
+    if (hasComputeCapacity && fields?.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [fields.pool, updateFields, resourcePools, fields.slots]);
+  }, [fields?.pool, updateFields, resourcePools, fields?.slots]);
 
   const fetchResourcePools = useCallback(async () => {
     try {
@@ -339,11 +342,11 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   }, [fetchTemplates]);
 
   useEffect(() => {
-    if (!fields.pool && resourcePools[0]?.name) {
+    if (!fields?.pool && resourcePools[0]?.name) {
       const pool = resourcePools[0]?.name;
       updateFields?.({ pool });
     }
-  }, [resourcePools, fields.pool, updateFields]);
+  }, [resourcePools, fields?.pool, updateFields]);
 
   return (
     <div className={css.form}>
@@ -353,7 +356,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
             <Select
               allowClear
               placeholder="No template (optional)"
-              value={fields.template}
+              value={fields?.template}
               onChange={(value) => updateFields?.({ template: value?.toString() })}>
               {templates.map((temp) => (
                 <Option key={temp.name} value={temp.name}>
@@ -368,7 +371,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
           content: (
             <Input
               placeholder="Name (optional)"
-              value={fields.name}
+              value={fields?.name}
               onChange={(e) => updateFields?.({ name: e.target.value })}
             />
           ),
@@ -379,7 +382,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
             <Select
               allowClear
               placeholder="Pick the best option"
-              value={fields.pool}
+              value={fields?.pool}
               onChange={(value) => updateFields?.({ pool: value })}>
               {resourcePools.map((pool) => (
                 <Option key={pool.name} value={pool.name}>
@@ -394,10 +397,10 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
           condition: resourceInfo.hasCompute,
           content: (
             <InputNumber
-              defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
+              defaultValue={fields?.slots !== undefined ? fields?.slots : DEFAULT_SLOT_COUNT}
               max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
-              value={fields.slots}
+              value={fields?.slots}
               onChange={(value) => updateFields?.({ slots: value })}
             />
           ),

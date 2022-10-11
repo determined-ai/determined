@@ -30,7 +30,7 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -95,13 +95,13 @@ const TaskList: React.FC = () => {
     return filterTasks<CommandType, CommandTask>(
       loadedTasks,
       {
-        limit: settings.tableLimit,
-        states: settings.state,
-        types: settings.type as CommandType[],
-        users: settings.user,
+        limit: settings?.tableLimit ?? 0,
+        states: settings?.state,
+        types: settings?.type as CommandType[],
+        users: settings?.user,
       },
       users || [],
-      settings.search,
+      settings?.search,
     );
   }, [loadedTasks, settings, users]);
 
@@ -113,8 +113,8 @@ const TaskList: React.FC = () => {
   }, [loadedTasks]);
 
   const selectedTasks = useMemo(() => {
-    return (settings.row || []).map((id) => taskMap[id]).filter((task) => !!task);
-  }, [settings.row, taskMap]);
+    return (settings?.row || []).map((id) => taskMap[id]).filter((task) => !!task);
+  }, [settings?.row, taskMap]);
 
   const hasKillable = useMemo(() => {
     for (const task of selectedTasks) {
@@ -182,12 +182,12 @@ const TaskList: React.FC = () => {
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings.search || ''}
+        value={settings?.search || ''}
         onReset={handleNameSearchReset}
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search],
+    [handleNameSearchApply, handleNameSearchReset, settings?.search],
   );
 
   const handleTypeFilterApply = useCallback(
@@ -209,13 +209,13 @@ const TaskList: React.FC = () => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.type}
+        values={settings?.type}
         width={180}
         onFilter={handleTypeFilterApply}
         onReset={handleTypeFilterReset}
       />
     ),
-    [handleTypeFilterApply, handleTypeFilterReset, settings.type],
+    [handleTypeFilterApply, handleTypeFilterReset, settings?.type],
   );
 
   const handleStateFilterApply = useCallback(
@@ -237,12 +237,12 @@ const TaskList: React.FC = () => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.state}
+        values={settings?.state}
         onFilter={handleStateFilterApply}
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state],
+    [handleStateFilterApply, handleStateFilterReset, settings?.state],
   );
 
   const handleUserFilterApply = useCallback(
@@ -265,12 +265,12 @@ const TaskList: React.FC = () => {
         {...filterProps}
         multiple
         searchable
-        values={settings.user}
+        values={settings?.user}
         onFilter={handleUserFilterApply}
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user],
+    [handleUserFilterApply, handleUserFilterReset, settings?.user],
   );
 
   const columns = useMemo(() => {
@@ -487,7 +487,7 @@ const TaskList: React.FC = () => {
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
-      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+      const shouldPush = settings?.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
     [columns, settings, updateSettings],
@@ -534,7 +534,7 @@ const TaskList: React.FC = () => {
       <div className={css.base}>
         <TableBatch
           actions={[{ disabled: !hasKillable, label: Action.Kill, value: Action.Kill }]}
-          selectedRowCount={(settings.row ?? []).length}
+          selectedRowCount={(settings?.row ?? []).length}
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
@@ -543,11 +543,11 @@ const TaskList: React.FC = () => {
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
-          loading={tasks === undefined}
+          loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
+              limit: settings?.tableLimit ?? 0,
+              offset: settings?.tableOffset ?? 0,
             },
             filteredTasks.length,
           )}
@@ -556,12 +556,12 @@ const TaskList: React.FC = () => {
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
+            selectedRowKeys: settings?.row ?? [],
           }}
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
       </div>

@@ -7,7 +7,7 @@ import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters
 import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -44,11 +44,11 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
 
   const filterValues: Filters = useMemo(
     () => ({
-      agentIds: settings.agentId,
-      containerIds: settings.containerId,
-      levels: settings.level,
-      rankIds: settings.rankId,
-      searchText: settings.searchText,
+      agentIds: settings?.agentId,
+      containerIds: settings?.containerId,
+      levels: settings?.level,
+      rankIds: settings?.rankId,
+      searchText: settings?.searchText,
     }),
     [settings],
   );
@@ -99,17 +99,17 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         taskId,
         options.limit,
         options.follow,
-        settings.allocationId,
-        settings.agentId,
-        settings.containerId,
-        settings.rankId,
-        settings.level,
+        settings?.allocationId,
+        settings?.agentId,
+        settings?.containerId,
+        settings?.rankId,
+        settings?.level,
         undefined,
         undefined,
         options.timestampBefore ? new Date(options.timestampBefore) : undefined,
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
-        settings.searchText,
+        settings?.searchText,
         { signal: config.canceler.signal },
       );
     },
