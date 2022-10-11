@@ -10,6 +10,25 @@
  Version 0.19
 **************
 
+Version 0.19.5
+==============
+
+**Release Date:** October 10, 2022
+
+**Improvements**
+
+-  Added the ability to set what Unix user and group tasks will run as on the agent at the workspace
+   level. The setting takes precedence over users' individual user and group settings.
+-  CLI: The ``det workspace edit`` command now accepts a new workspace name as an optional
+   ``--name`` flag, e.g., ``det workspace edit OLD_WORKSPACE_NAME --name NEW_WORKSPACE_NAME``.
+
+**Bug Fixes**
+
+-  Agent: Fixed a bug where in certain cases of the master restarting with active tasks, the agent
+   resource manager could prevent other tasks from running.
+-  Kubernetes: When a TensorBoard inherits its images from an experiment configuration, it now also
+   inherits the ``environment.pod_spec.spec.imagePullSecrets`` value.
+
 Version 0.19.4
 ==============
 
