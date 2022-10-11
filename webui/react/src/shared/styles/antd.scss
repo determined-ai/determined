@@ -34,8 +34,8 @@ html {
     border-color: var(--theme-ix-border-active);
     color: var(--theme-ix-on-active);
   }
-  .ant-btn[disabled]:not(.ant-btn-link):not(.ant-btn-primary),
-  .ant-btn[disabled]:not(.ant-btn-link):not(.ant-btn-primary):hover {
+  .ant-btn[disabled]:not(.ant-btn-link, .ant-btn-primary),
+  .ant-btn[disabled]:not(.ant-btn-link, .ant-btn-primary):hover {
     background-color: var(--theme-ix-inactive);
     border-color: var(--theme-ix-border-inactive);
     color: var(--theme-ix-on-inactive);
@@ -119,8 +119,8 @@ html {
     font-size: 16px;
   }
   .ant-input-number-status-error,
-  .ant-input-number-status-error:not(.ant-input-number-disabled):not(.ant-input-number-borderless).ant-input-number,
-  .ant-input-number-status-error:not(.ant-input-number-disabled):not(.ant-input-number-borderless).ant-input-number:hover {
+  .ant-input-number-status-error:not(.ant-input-number-disabled, .ant-input-number-borderless).ant-input-number,
+  .ant-input-number-status-error:not(.ant-input-number-disabled, .ant-input-number-borderless).ant-input-number:hover {
     background-color: inherit;
   }
 
@@ -394,10 +394,7 @@ html {
   }
   .ant-tabs.no-padding {
     & > .ant-tabs-nav {
-      padding-bottom: 0;
-      padding-left: calc(16px + var(--theme-density) * 1px);
-      padding-right: calc(16px + var(--theme-density) * 1px);
-      padding-top: calc(16px + var(--theme-density) * 1px);
+      padding-top: calc(16px + var(--theme-density) * 1px) calc(16px + var(--theme-density) * 1px) 0;
     }
   }
 
