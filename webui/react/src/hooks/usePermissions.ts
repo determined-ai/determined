@@ -503,7 +503,7 @@ const canEditWebhooks = ({
   const permitted = relevantPermissions(userAssignments, userRoles);
   return rbacEnabled
     ? rbacAllPermission || permitted.has(V1PermissionType.EDITWEBHOOKS)
-    : user?.isAdmin;
+    : !!user && user.isAdmin;
 };
 
 export default usePermissions;
