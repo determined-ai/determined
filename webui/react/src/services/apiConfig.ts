@@ -857,6 +857,12 @@ export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.We
   request: () => detApi.Webhooks.getWebhooks(),
 };
 
+export const testWebhook: DetApi<Service.GetWebhookParams, Api.V1TestWebhookResponse, void> = {
+  name: 'testWebhook',
+  postProcess: noOp,
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.testWebhook(params.id),
+};
+
 /* Models */
 
 export const getModels: DetApi<

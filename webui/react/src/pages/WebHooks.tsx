@@ -3,18 +3,15 @@ import type { MenuProps } from 'antd';
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// import FilterCounter from 'components/FilterCounter';
-// import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
-// import Link from 'components/Link';
 import Page from 'components/Page';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import TagList from 'components/TagList';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
+import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-// import { paths } from 'routes/utils';
-import { deleteWebhook, getWebhooks } from 'services/api';
-import { V1Trigger, V1WebhookType } from 'services/api-ts-sdk/api';
+import { getWebhooks, testWebhook } from 'services/api';
+import { V1Trigger } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
@@ -69,20 +66,28 @@ const WebhooksView: React.FC = () => {
     fetchWebhooks();
   }, [fetchWebhooks]);
 
-  // const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  const { contextHolder: modalWebhookDeleteContextHolder, modalOpen: openWebhookDelete } =
+    useModalWebhookDelete();
 
-  // const resetFilters = useCallback(() => {
-  //   resetSettings([...filterKeys, 'tableOffset']);
-  // }, [resetSettings]);
+  const showConfirmDelete = useCallback(
+    (webhook: Webhook) => {
+      openWebhookDelete(webhook);
+    },
+    [openWebhookDelete],
+  );
 
   const WebhookActionMenu = useCallback((record: Webhook) => {
     enum MenuKey {
       DELETE_WEBHOOK = 'delete-webhook',
+      TEST_WEBHOOK = 'test-webhook',
     }
 
     const funcs = {
       [MenuKey.DELETE_WEBHOOK]: () => {
-        deleteWebhook({ id: record.id });
+        showConfirmDelete(record);
+      },
+      [MenuKey.TEST_WEBHOOK]: () => {
+        testWebhook({ id: record.id });
       },
     };
 
@@ -91,11 +96,12 @@ const WebhooksView: React.FC = () => {
     };
 
     const menuItems: MenuProps['items'] = [
+      { key: MenuKey.TEST_WEBHOOK, label: 'Test Webhook' },
       { danger: true, key: MenuKey.DELETE_WEBHOOK, label: 'Delete Webhook' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, []);
+  }, [showConfirmDelete]);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
@@ -106,17 +112,11 @@ const WebhooksView: React.FC = () => {
       </Dropdown>
     );
 
-    const webhookTestRenderer = (_: string, record: Webhook) => (
-      <Button className={css.overflow} type="text">
-        Test
-      </Button>
-    );
-
     const webhookTriggerRenderer = (triggers: V1Trigger[]) => (
       <TagList
         compact
         disabled={true}
-        tags={triggers.map((t) => `${t.triggerType}|${t.condition}`)}
+        tags={triggers.map((t) => `${t.triggerType}|${JSON.stringify(t.condition)}`)}
       />
     );
 
@@ -144,13 +144,6 @@ const WebhooksView: React.FC = () => {
         title: 'Type',
       },
       {
-        dataIndex: 'test',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['test'],
-        key: 'test',
-        render: webhookTestRenderer,
-        title: 'Test',
-      },
-      {
         align: 'right',
         className: 'fullCell',
         dataIndex: 'action',
@@ -162,7 +155,7 @@ const WebhooksView: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<Webhook>[];
-  }, []);
+  }, [WebhookActionMenu]);
 
   const handleTableChange = useCallback(
     (tablePagination, tableFilters, tableSorter) => {
@@ -180,7 +173,7 @@ const WebhooksView: React.FC = () => {
       // const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, true);
     },
-    [columns, settings.tableOffset, updateSettings],
+    [columns, updateSettings],
   );
 
   useEffect(() => {
@@ -188,18 +181,6 @@ const WebhooksView: React.FC = () => {
   }, [canceler]);
 
   const showCreateWebhookModal = useCallback(() => openWebhookCreate(), [openWebhookCreate]);
-
-  const WebhookActionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
-      <Dropdown
-        overlay={() => WebhookActionMenu(record)}
-        trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}>
-        {children}
-      </Dropdown>
-    ),
-    [WebhookActionMenu],
-  );
 
   return (
     <Page
@@ -225,7 +206,6 @@ const WebhooksView: React.FC = () => {
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
-          // ContextMenu={ModelActionDropdown}
           dataSource={webhooks}
           loading={isLoading}
           pagination={getFullPaginationConfig(
@@ -245,6 +225,7 @@ const WebhooksView: React.FC = () => {
         />
       )}
       {modalWebhookCreateContextHolder}
+      {modalWebhookDeleteContextHolder}
     </Page>
   );
 };

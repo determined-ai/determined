@@ -374,6 +374,12 @@ export const getWebhooks = generateDetApi<EmptyParams, Api.V1GetWebhooksResponse
   Config.getWebhooks,
 );
 
+export const testWebhook = generateDetApi<
+  Service.GetWebhookParams,
+  Api.V1TestWebhookResponse,
+  void
+>(Config.testWebhook);
+
 /* Models */
 
 export const getModels = generateDetApi<
