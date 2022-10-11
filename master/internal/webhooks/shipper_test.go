@@ -50,7 +50,6 @@ func TestShipper(t *testing.T) {
 		received <- e
 	}))
 	defer ts.Close()
-	url = ts.URL
 
 	t.Log("setup a few test webhooks")
 	// One with two triggers so it fires twice.

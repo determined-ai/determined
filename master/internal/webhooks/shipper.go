@@ -157,13 +157,11 @@ func generateSignedPayload(req *http.Request, t time.Time) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-var url string // TODO(Brad): Hack.
-
 func (w *worker) deliver(ctx context.Context, e Event) error {
 	t := time.Now()
 	req, err := http.NewRequest(
 		http.MethodPost,
-		url,
+		e.URL,
 		bytes.NewBuffer(e.Payload),
 	)
 	if err != nil {

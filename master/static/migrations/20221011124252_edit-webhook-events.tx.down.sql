@@ -1,4 +1,4 @@
-DROP TABLE webhook_events;
+DROP TABLE webhook_events_que;
 
 CREATE TABLE webhook_events (
   id SERIAL PRIMARY KEY,

@@ -194,20 +194,12 @@ func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 		return nil, err
 	}
 	var events []Event
-	var esis []EventShippingInfo
 	if err = tx.NewRaw(`
-	DELETE FROM webhook_events                                                        
-	USING ( SELECT e.* , w.url, w.webhook_type FROM webhook_events e JOIN webhook_triggers t on e.trigger_id = t.id JOIN webhooks w on w.id = t.webhook_id LIMIT ? FOR UPDATE SKIP LOCKED ) q
-	WHERE q.id = webhook_events.id RETURNING q.*
-`, limit).Scan(ctx, &esis); err != nil {
+	DELETE FROM webhook_events_que
+	USING ( SELECT * FROM webhook_events_que LIMIT ? FOR UPDATE SKIP LOCKED ) q
+	WHERE q.id = webhook_events_que.id RETURNING webhook_events_que.*
+`, limit).Scan(ctx, &events); err != nil {
 		return nil, fmt.Errorf("scanning events: %w", err)
-	}
-	for _, esi := range esis {
-		events = append(events, Event{
-			ID:        esi.ID,
-			Payload:   esi.Payload,
-			TriggerID: esi.TriggerID,
-		})
 	}
 	return &eventBatch{tx: &tx, events: events}, nil
 }

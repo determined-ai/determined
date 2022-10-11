@@ -185,20 +185,13 @@ type WebhookEventID int
 
 // Event corresponds to a row in the "webhook_events" DB table.
 type Event struct {
-	bun.BaseModel `bun:"table:webhook_events"`
+	bun.BaseModel `bun:"table:webhook_events_que"`
 
 	ID        WebhookEventID `bun:"id,pk,autoincrement"`
 	Payload   []byte         `bun:"payload,notnull"`
 	TriggerID TriggerID      `bun:"trigger_id,notnull"`
+	URL       string         `bun:"url,notnull"`
 	Trigger   *Trigger       `bun:"rel:belongs-to,join:trigger_id=id"`
-}
-
-type EventShippingInfo struct {
-	ID          WebhookEventID `bun:"id,pk,autoincrement"`
-	Payload     []byte         `bun:"payload,notnull"`
-	TriggerID   TriggerID      `bun:"trigger_id,notnull"`
-	WebhookType WebhookType    `bun:"webhook_type"`
-	URL         string         `bun:"url,notnull"`
 }
 
 type Field struct {
