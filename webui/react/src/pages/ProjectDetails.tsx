@@ -404,7 +404,15 @@ const ProjectDetails: React.FC = () => {
     });
 
   const ContextMenu = useCallback(
-    ({ record, onVisibleChange, children }) => {
+    ({
+      record,
+      onVisibleChange,
+      children,
+    }: {
+      children?: React.ReactNode;
+      onVisibleChange?: ((visible: boolean) => void) | undefined;
+      record: ExperimentItem;
+    }) => {
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -428,12 +436,8 @@ const ProjectDetails: React.FC = () => {
       />
     );
 
-    const actionRenderer: ExperimentRenderer = (_, record) => {
-      return (
-        <ContextMenu record={record} onVisibleChange={undefined}>
-          <></>
-        </ContextMenu>
-      );
+    const actionRenderer: ExperimentRenderer = (_, record: ExperimentItem) => {
+      return <ContextMenu record={record} />;
     };
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
