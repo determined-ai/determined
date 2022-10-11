@@ -27,7 +27,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const fetchMyRoles = useFetchMyRoles(canceler);
-  const fetchKnownRoles = useFetchKnownRoles(canceler);
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);

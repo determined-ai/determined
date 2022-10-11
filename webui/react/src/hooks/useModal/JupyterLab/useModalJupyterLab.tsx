@@ -1,11 +1,12 @@
 import { Alert, Button, InputNumber } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalFuncProps } from 'antd';
+import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
+import { SettingsConfig, UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -23,38 +24,40 @@ const { Item } = Form;
 const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
-const settingsConfig: SettingsConfig = {
-  settings: [
-    {
+const settingsConfig: SettingsConfig<JupyterLabOptions> = {
+  applicableRoutespace: STORAGE_PATH,
+  settings: {
+    name: {
       defaultValue: '',
-      key: 'name',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'name',
+      type: { baseType: union([string, undefinedType]) },
     },
-    {
+    pool: {
       defaultValue: '',
-      key: 'pool',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'pool',
+      type: { baseType: union([string, undefinedType]) },
     },
-    {
+    slots: {
       defaultValue: DEFAULT_SLOT_COUNT,
-      key: 'slots',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.Integer },
+      storageKey: 'slots',
+      type: { baseType: union([number, undefinedType]) },
     },
-    {
-      key: 'template',
+    template: {
+      defaultValue: '',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'template',
+      type: { baseType: union([string, undefinedType]) },
     },
-  ],
+  },
   storagePath: STORAGE_PATH,
 };
 
 interface FormProps {
   fields: JupyterLabOptions;
-  updateFields?: UpdateSettings<JupyterLabOptions>;
+  updateFields?: UpdateSettings;
 }
 
 interface FullConfigProps {

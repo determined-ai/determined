@@ -15,6 +15,7 @@ import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracke
 import usePageVisibility from 'hooks/usePageVisibility';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
+import { SettingsProvider } from 'hooks/useSettings';
 import useTelemetry from 'hooks/useTelemetry';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
@@ -149,7 +150,9 @@ const App: React.FC = () => {
     <HelmetProvider>
       <StoreProvider>
         <DndProvider backend={HTML5Backend}>
-          <AppView />
+          <SettingsProvider>
+            <AppView />
+          </SettingsProvider>
         </DndProvider>
       </StoreProvider>
     </HelmetProvider>

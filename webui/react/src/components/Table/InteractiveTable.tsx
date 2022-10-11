@@ -87,7 +87,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   interactiveColumns?: boolean;
   numOfPinned?: number;
   settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings<InteractiveTableSettings>;
+  updateSettings: UpdateSettings;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
