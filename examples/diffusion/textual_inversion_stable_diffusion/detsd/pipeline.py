@@ -140,8 +140,9 @@ class DetSDTextualInversionPipeline:
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
             tb_writer = SummaryWriter(log_dir=tb_dir)
-            # Include the __call__ args in the tensorboard tag.
-            tb_tag = ", ".join([f"{k}: {v}" for k, v in call_kwargs.items() if v])
+            # Include relevant __call__ args in the tensorboard tag.
+            important_generation_params = {"guidance_scale", "num_inference_steps", "prompt"}
+            tb_tag = ", ".join([f"{k}: {call_kwargs[k]}" for k in important_generation_params])
 
             # Use unique seeds, to avoid repeated images, and add the corresponding generator to the
             # call_kwargs.

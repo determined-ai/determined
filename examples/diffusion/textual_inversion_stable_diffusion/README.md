@@ -192,6 +192,8 @@ Generating results of the desired quality is often a balancing act:
   the `guidance_scale` to a lower value than one would normally do, e.g., setting it as low
   as `guidance_scale = 1.1` for a very highly-trained concept (the prompt is ignored entirely
   when `guidance_scale <= 1.`).
+* Scanning across multiple seeds leads to more diverse results. A single fixed seed can lead to
+  similar results across different prompts, for instance.
 
 ## The Code
 
