@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -363,6 +365,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return errors.New("experiment is already in a terminal state")
 		}
 		telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
+		webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment)
 
 		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 			return err
@@ -609,6 +612,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 		return true
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
+	webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment)
 
 	ctx.Log().Infof("experiment state changed to %s", state.State)
 	ctx.TellAll(state, ctx.Children()...)
