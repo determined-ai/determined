@@ -20,7 +20,7 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
   const [isConfirmLoading, setIsConfirmLoading] = useState<boolean>(false);
   const [form] = Form.useForm<FormInputs>();
   const classes = useMemo(() => {
-    const classList = [];
+    const classList: string[] = [];
     if (!value) classList.push(css.buttonBlur);
     return classList.join(' ');
   }, [value]);
