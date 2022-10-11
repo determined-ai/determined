@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -452,8 +453,19 @@ func (a *apiServer) DeleteExperimentGroup(
 			currProject.Id)
 	}
 
-	holder := &projectv1.ExperimentGroup{}
-	err = a.m.db.QueryProto("delete_experiment_group", holder, req.GroupId)
+	subq := db.Bun().NewUpdate().
+		Model(experimentv1.Experiment{}).
+		ModelTableExpr("experiments as e").
+		Set("group_id = ?", nil).
+		Where("group_id = ?", req.GroupId)
+	_, err = db.Bun().NewDelete().
+		With("exp", subq).
+		Model(projectv1.ExperimentGroup{}).
+		ModelTableExpr("experiment_groups as g").
+		Where("id = ?", req.GroupId).
+		Returning("id").
+		Exec(ctx)
+
 	return &apiv1.DeleteExperimentGroupResponse{},
 		errors.Wrapf(err, "error deleting experiment group (%d)", req.GroupId)
 }
