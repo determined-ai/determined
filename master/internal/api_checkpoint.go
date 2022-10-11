@@ -45,7 +45,6 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	fmt.Println("ACTION?")
 	checkpoint, err := m.db.CheckpointByUUID(uuid)
 	if err != nil {
 		return err
@@ -61,10 +60,8 @@ func (m *Master) canDoActionOnCheckpoint(
 	}
 
 	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
-		fmt.Println("ERR HERE?", err)
 		return err
 	} else if !ok {
-		fmt.Println("!OKERR HERE?", err)
 		return errCheckpointNotFound(id)
 	}
 	if err := action(curUser, exp); err != nil {
@@ -82,10 +79,8 @@ func (a *apiServer) GetCheckpoint(
 	}
 	if err = a.m.canDoActionOnCheckpoint(*curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		fmt.Println("NIL NIL??")
 		return nil, err
 	}
-	fmt.Println("NIL NIL")
 
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
@@ -138,7 +133,6 @@ func (a *apiServer) DeleteCheckpoints(
 		return nil, fmt.Errorf("persisting new job: %w", err)
 	}
 
-	fmt.Println(checkpointsToDelete)
 	groupCUUIDsByEIDs, err := a.m.db.GroupCheckpointUUIDsByExperimentID(checkpointsToDelete)
 	if err != nil {
 		return nil, err
@@ -168,7 +162,6 @@ func (a *apiServer) DeleteCheckpoints(
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(i, "iN LOOP", expIDcUUIDs)
 		var ok bool
 		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 			return nil, err

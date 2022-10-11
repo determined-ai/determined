@@ -12,14 +12,43 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
+
+func versionOneCheckpoint(
+	ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
+) string {
+	trial := createTestTrial(t, api, curUser)
+	checkpointBun := struct {
+		bun.BaseModel `bun:"table:checkpoints"`
+		TrialID       int
+		TrialRunID    int
+		TotalBatches  int
+		State         model.State
+		UUID          string
+		EndTime       time.Time
+	}{
+		TrialID:      trial.ID,
+		TrialRunID:   1,
+		TotalBatches: 1,
+		State:        model.ActiveState,
+		UUID:         uuid.New().String(),
+		EndTime:      time.Now().UTC().Truncate(time.Millisecond),
+	}
+
+	_, err := db.Bun().NewInsert().Model(&checkpointBun).Exec(ctx)
+	require.NoError(t, err)
+
+	return checkpointBun.UUID
+}
 
 func versionTwoCheckpoint(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
@@ -59,15 +88,6 @@ func versionTwoCheckpoint(
 func TestCheckpointAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 
-	//trial := createTestTrial(t, api, curUser)
-
-	/*
-		checkpointIDUUID := uuid.New()
-		//addMockCheckpointDB(t, api.m.db, checkpointIDUUID)
-		checkpointID := checkpointIDUUID.String()
-	*/
-	checkpointID := versionTwoCheckpoint(ctx, t, api, curUser)
-
 	cases := []struct {
 		DenyFuncName            string
 		IDToReqCall             func(id string) error
@@ -93,31 +113,38 @@ func TestCheckpointAuthZ(t *testing.T) {
 		}, false},
 	}
 
-	for _, curCase := range cases {
-		notFoundUUID := uuid.New().String()
-		if curCase.UseMultiCheckpointError {
-			require.Equal(t, errCheckpointsNotFound([]string{notFoundUUID}),
-				curCase.IDToReqCall(notFoundUUID))
-		} else {
-			require.Equal(t, errCheckpointNotFound(notFoundUUID), curCase.IDToReqCall(notFoundUUID))
+	for _, checkpointID := range []string{
+		versionOneCheckpoint(ctx, t, api, curUser),
+		versionTwoCheckpoint(ctx, t, api, curUser),
+	} {
+		for _, curCase := range cases {
+			notFoundUUID := uuid.New().String()
+			if curCase.UseMultiCheckpointError {
+				require.Equal(t, errCheckpointsNotFound([]string{notFoundUUID}),
+					curCase.IDToReqCall(notFoundUUID))
+			} else {
+				require.Equal(t, errCheckpointNotFound(notFoundUUID),
+					curCase.IDToReqCall(notFoundUUID))
+			}
+
+			authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+			if curCase.UseMultiCheckpointError {
+				require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
+					curCase.IDToReqCall(checkpointID))
+			} else {
+				require.Equal(t, errCheckpointNotFound(checkpointID),
+					curCase.IDToReqCall(checkpointID))
+			}
+
+			expectedErr := fmt.Errorf("canGetExperimentError")
+			authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
+
+			expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
+			authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
+			authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
+				Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
+			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
 		}
-
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
-		if curCase.UseMultiCheckpointError {
-			require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
-				curCase.IDToReqCall(checkpointID))
-		} else {
-			require.Equal(t, errCheckpointNotFound(checkpointID), curCase.IDToReqCall(checkpointID))
-		}
-
-		expectedErr := fmt.Errorf("canGetExperimentError")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
-		require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
-
-		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
-			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
-		require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
 	}
 }
