@@ -203,10 +203,13 @@ class RandomSearchMethod(searcher.SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self) -> Dict[str, int]:
-        increment = random.randint(1, 20)
-        while increment in self.tried:
+        if self.test_type == "core_api":
             increment = random.randint(1, 20)
-        hparams = {"increment_by": increment}
+            while increment in self.tried:
+                increment = random.randint(1, 20)
+            hparams = {"increment_by": increment}
+        else:
+            hparams = {"global_batch_size": random.randint(10, 100)}
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -553,10 +556,13 @@ class ASHASearchMethod(searcher.SearchMethod):
 
     def sample_params(self) -> Dict[str, object]:
         hparams = {
-            "global_batch_size": 10,
             "metrics_base": 0.05 * (len(self.asha_search_state.trial_rungs) + 1),
             "metrics_progression": "constant",
         }
+        if self.test_type == "core_api":
+            hparams["increment_by"] = 10
+        else:
+            hparams["global_batch_size"] = 10
         logging.info(f"hparams={hparams}")
         return hparams
 
