@@ -56,8 +56,8 @@ const Avatar: React.FC<Props> = ({
 }) => {
   const style = {
     backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, darkLight),
-    color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
     borderRadius: square ? '10%' : '100%',
+    color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
   };
   const classes = [css.base, css[size]];
 
