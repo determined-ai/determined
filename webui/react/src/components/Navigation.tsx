@@ -34,21 +34,19 @@ const Navigation: React.FC<Props> = ({ children }) => {
   usePolling(fetchPinnedWorkspaces);
   usePolling(fetchUserSettings, { interval: 60000 });
 
-  const rbacEnabled = useFeature().isOn('rbac');
-  usePolling(
-    () => {
-      if (rbacEnabled) {
-        fetchMyRoles();
-      }
-    },
-    { interval: 120000 },
-  );
-
   useEffect(() => {
     fetchResourcePools();
 
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
+
+  const rbacEnabled = useFeature().isOn('rbac');
+  useEffect(() => {
+    if (rbacEnabled) {
+      fetchMyRoles();
+    }
+    return () => canceler.abort();
+  }, [canceler, fetchMyRoles, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>
