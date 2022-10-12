@@ -41,12 +41,8 @@ type SearchMethod interface {
 	expconf.InUnits
 }
 
-// CustomSearchMethod is the interface for custom search method so that it can hold
-// getSearcherEventQueue.
+// CustomSearchMethod is the interface for the custom search method.
 type CustomSearchMethod interface {
-	// this is only meaningful in the custom searcher method.
-	// All the other methods will not implement this which is okay
-	// if defaultSearchMethod is a part of that method's struct.
 	getSearcherEventQueue() *SearcherEventQueue
 	setCustomSearcherProgress(progress float64)
 	trialProgress(ctx context, requestID model.RequestID, progress PartialUnits)
@@ -69,7 +65,7 @@ const (
 	ASHASearch SearchMethodType = "asha"
 	// AdaptiveASHASearch is the SearchMethodType for an adaptive ASHA searcher.
 	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
-	// CustomSearch is the custom search method type for a custom searcher.
+	// CustomSearch is the SearchMethodType for a custom searcher.
 	CustomSearch SearchMethodType = "custom_search"
 )
 

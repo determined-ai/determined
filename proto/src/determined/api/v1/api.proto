@@ -1378,7 +1378,7 @@ service Determined {
     };
   }
 
-  // Get list of SearcherEvents with long polling.
+  // Get the list of custom searcher events with long polling.
   rpc GetSearcherEvents(GetSearcherEventsRequest)
       returns (GetSearcherEventsResponse) {
     option (google.api.http) = {
@@ -1389,7 +1389,7 @@ service Determined {
     };
   }
 
-  // Post list of SearcherOperations.
+  // Submit operations to a custom searcher.
   rpc PostSearcherOperations(PostSearcherOperationsRequest)
       returns (PostSearcherOperationsResponse) {
     option (google.api.http) = {
