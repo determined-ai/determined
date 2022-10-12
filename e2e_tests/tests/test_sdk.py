@@ -1,4 +1,6 @@
+import os
 import random
+import tempfile
 import time
 
 import pytest
@@ -22,7 +24,13 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
         config = yaml.safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
-    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+    # Test the use of the includes parameter, by feeding the model definition file via includes.
+    emptydir = tempfile.mkdtemp()
+    try:
+        model_def = conf.fixtures_path("no_op/model_def.py")
+        exp = client.create_experiment(config, emptydir, includes=[model_def])
+    finally:
+        os.rmdir(emptydir)
     assert exp.wait() == _client.ExperimentState.COMPLETED
 
     trials = exp.get_trials()
