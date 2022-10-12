@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -431,9 +431,32 @@ func (a *apiServer) PatchExperimentGroup(
 		return &apiv1.PatchExperimentGroupResponse{Group: currExperimentGroup}, nil
 	}
 
-	finalExperimentGroup := &projectv1.ExperimentGroup{}
-	err = a.m.db.QueryProto("update_experiment_group",
-		finalExperimentGroup, currExperimentGroup.Id, currExperimentGroup.Name)
+	finalExperimentGroup := &projectv1.ExperimentGroup{Id: currExperimentGroup.Id}
+	// err = a.m.db.QueryProto("update_experiment_group",
+	// 	finalExperimentGroup, currExperimentGroup.Id, currExperimentGroup.Name)
+
+		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			count, err := tx.NewSelect().
+				Table("experiments").
+				Where("group_id = ?", req.GroupId).
+				Count(ctx)
+			if err != nil {
+				return err
+			}
+	
+			_, err = tx.NewUpdate().
+				Table("experiment_groups").
+				Set("name = ?", currExperimentGroup.Name).
+				Where("id = ?", currExperimentGroup.Id).
+				Returning("id, name, project_id").
+				Exec(ctx, finalExperimentGroup)
+			if err != nil {
+				return err
+			}
+			finalExperimentGroup.NumExperiments = int32(count)
+	
+			return err
+		})
 
 	return &apiv1.PatchExperimentGroupResponse{Group: finalExperimentGroup},
 		errors.Wrapf(err, "error updating experiment group (%d) in database", currExperimentGroup.Id)
@@ -453,18 +476,23 @@ func (a *apiServer) DeleteExperimentGroup(
 			currProject.Id)
 	}
 
-	subq := db.Bun().NewUpdate().
-		Model(experimentv1.Experiment{}).
-		ModelTableExpr("experiments as e").
-		Set("group_id = ?", nil).
-		Where("group_id = ?", req.GroupId)
-	_, err = db.Bun().NewDelete().
-		With("exp", subq).
-		Model(projectv1.ExperimentGroup{}).
-		ModelTableExpr("experiment_groups as g").
-		Where("id = ?", req.GroupId).
-		Returning("id").
-		Exec(ctx)
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err = tx.NewUpdate().
+			TableExpr("experiments as e").
+			Set("group_id = NULL").
+			Where("group_id = ?", req.GroupId).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.NewDelete().
+			TableExpr("experiment_groups as g").
+			Where("id = ?", req.GroupId).
+			Exec(ctx)
+
+		return err
+	})
 
 	return &apiv1.DeleteExperimentGroupResponse{},
 		errors.Wrapf(err, "error deleting experiment group (%d)", req.GroupId)
