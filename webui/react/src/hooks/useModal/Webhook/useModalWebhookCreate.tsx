@@ -28,7 +28,13 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
   const modalContent = useMemo(() => {
     return (
       <Form autoComplete="off" form={form} layout="vertical">
-        <Form.Item label="URL" name="url" rules={[{ message: 'URL is required ', required: true }]}>
+        <Form.Item
+          label="URL"
+          name="url"
+          rules={[
+            { message: 'URL is required.', required: true },
+            { message: 'URL must be valid.', type: 'url', whitespace: true },
+          ]}>
           <Input />
         </Form.Item>
         <Form.Item
