@@ -3625,19 +3625,19 @@ class v1InitialOperations:
     def __init__(
         self,
         *,
-        holder: "typing.Optional[str]" = None,
+        placeholder: "typing.Optional[int]" = None,
     ):
-        self.holder = holder
+        self.placeholder = placeholder
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1InitialOperations":
         return cls(
-            holder=obj.get("holder", None),
+            placeholder=obj.get("placeholder", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "holder": self.holder if self.holder is not None else None,
+            "placeholder": self.placeholder if self.placeholder is not None else None,
         }
 
 class v1Int32FieldFilter:
@@ -6928,19 +6928,19 @@ class v1ShutdownOperation:
     def __init__(
         self,
         *,
-        emptyField: "typing.Optional[int]" = None,
+        placeholder: "typing.Optional[int]" = None,
     ):
-        self.emptyField = emptyField
+        self.placeholder = placeholder
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ShutdownOperation":
         return cls(
-            emptyField=obj.get("emptyField", None),
+            placeholder=obj.get("placeholder", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "emptyField": self.emptyField if self.emptyField is not None else None,
+            "placeholder": self.placeholder if self.placeholder is not None else None,
         }
 
 class v1Slot:

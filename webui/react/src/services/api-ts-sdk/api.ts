@@ -1553,13 +1553,13 @@ export interface V1CheckpointWorkload {
 }
 
 /**
- * Close a trial with given id.
+ * Close a trial with given ID.
  * @export
  * @interface V1CloseTrialOperation
  */
 export interface V1CloseTrialOperation {
     /**
-     * request_id is the id of the trial to close.
+     * The ID of the trial to close.
      * @type {string}
      * @memberof V1CloseTrialOperation
      */
@@ -1867,13 +1867,13 @@ export interface V1CreateGroupResponse {
  */
 export interface V1CreateTrialOperation {
     /**
-     * request_id is the id of the trial to close.
+     * The ID of the trial to close.
      * @type {string}
      * @memberof V1CreateTrialOperation
      */
     requestId?: string;
     /**
-     * The key refers to which part of the model this hyperparameters are for.
+     * A JSON object representing the hyperparameters.
      * @type {string}
      * @memberof V1CreateTrialOperation
      */
@@ -2415,13 +2415,13 @@ export interface V1Experiment {
 }
 
 /**
- * 
+ * ExperimentInactive is a searcher event triggered when an experiment is no longer active.
  * @export
  * @interface V1ExperimentInactive
  */
 export interface V1ExperimentInactive {
     /**
-     * 
+     * Current state of the experiment.
      * @type {Determinedexperimentv1State}
      * @memberof V1ExperimentInactive
      */
@@ -3479,7 +3479,7 @@ export interface V1GetRolesByIDResponse {
  */
 export interface V1GetSearcherEventsResponse {
     /**
-     * The requested list of searcher events. str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed appended with a counter id to represent order.
+     * The list of events.b in the queue.
      * @type {Array<V1SearcherEvent>}
      * @memberof V1GetSearcherEventsResponse
      */
@@ -4067,11 +4067,11 @@ export interface V1IdleNotebookResponse {
  */
 export interface V1InitialOperations {
     /**
-     * cannot have an empty class.
-     * @type {string}
+     * Cannot have an empty message type.
+     * @type {number}
      * @memberof V1InitialOperations
      */
-    holder?: string;
+    placeholder?: number;
 }
 
 /**
@@ -5816,19 +5816,19 @@ export interface V1PostProjectResponse {
  */
 export interface V1PostSearcherOperationsRequest {
     /**
-     * 
+     * The experiment ID.
      * @type {number}
      * @memberof V1PostSearcherOperationsRequest
      */
     experimentId?: number;
     /**
-     * list of operations in the method.
+     * List of operations in the method.
      * @type {Array<V1SearcherOperation>}
      * @memberof V1PostSearcherOperationsRequest
      */
     searcherOperations?: Array<V1SearcherOperation>;
     /**
-     * The event that triggered client to send the above operations to master.
+     * The event that triggered the client to send these operations to the master.
      * @type {V1SearcherEvent}
      * @memberof V1PostSearcherOperationsRequest
      */
@@ -7257,55 +7257,55 @@ export interface V1SearchRolesAssignableToScopeResponse {
 }
 
 /**
- * 
+ * SearcherEvent is a message from master to a client-driven custom searcher informing it of relevant changes in the state of an experiment.
  * @export
  * @interface V1SearcherEvent
  */
 export interface V1SearcherEvent {
     /**
-     * 
+     * Incremental ID of the event.
      * @type {number}
      * @memberof V1SearcherEvent
      */
     id: number;
     /**
-     * 
+     * An experiment has just been created.
      * @type {V1InitialOperations}
      * @memberof V1SearcherEvent
      */
     initialOperations?: V1InitialOperations;
     /**
-     * 
+     * A trial has been created.
      * @type {V1TrialCreated}
      * @memberof V1SearcherEvent
      */
     trialCreated?: V1TrialCreated;
     /**
-     * 
+     * Validation has completed.
      * @type {V1ValidationCompleted}
      * @memberof V1SearcherEvent
      */
     validationCompleted?: V1ValidationCompleted;
     /**
-     * 
+     * Trial has finished.
      * @type {V1TrialClosed}
      * @memberof V1SearcherEvent
      */
     trialClosed?: V1TrialClosed;
     /**
-     * 
+     * Trial exited early.
      * @type {V1TrialExitedEarly}
      * @memberof V1SearcherEvent
      */
     trialExitedEarly?: V1TrialExitedEarly;
     /**
-     * 
+     * Trial progress.
      * @type {V1TrialProgress}
      * @memberof V1SearcherEvent
      */
     trialProgress?: V1TrialProgress;
     /**
-     * 
+     * Experiment is inactive.
      * @type {V1ExperimentInactive}
      * @memberof V1SearcherEvent
      */
@@ -7337,13 +7337,13 @@ export interface V1SearcherOperation {
      */
     closeTrial?: V1CloseTrialOperation;
     /**
-     * ShutdownOperation is issued to shutdown the custom searcher method.
+     * ShutdownOperation is issued to shutdown the custom search method.
      * @type {V1ShutdownOperation}
      * @memberof V1SearcherOperation
      */
     shutdown?: V1ShutdownOperation;
     /**
-     * SearcherProgressOperation is issued to get the progress of custom searcher method.
+     * SearcherProgressOperation is issued to get the progress of custom search method.
      * @type {V1SearcherProgressOperation}
      * @memberof V1SearcherOperation
      */
@@ -7357,7 +7357,7 @@ export interface V1SearcherOperation {
  */
 export interface V1SearcherProgressOperation {
     /**
-     * progress is experiment progress as a float between 0.0 and 1.0.
+     * Experiment progress as a float between 0.0 and 1.0.
      * @type {number}
      * @memberof V1SearcherProgressOperation
      */
@@ -7613,17 +7613,17 @@ export interface V1Shell {
 }
 
 /**
- * Shutdown custom searcher method.
+ * Shut down custom searcher method.
  * @export
  * @interface V1ShutdownOperation
  */
 export interface V1ShutdownOperation {
     /**
-     * A message field can't be empty because bindings won't compile. Making this a message to keep it consistent with other operations.
+     * Cannot have an empty message type.
      * @type {number}
      * @memberof V1ShutdownOperation
      */
-    emptyField?: number;
+    placeholder?: number;
 }
 
 /**
@@ -7957,13 +7957,13 @@ export interface V1TimestampFieldFilter {
 }
 
 /**
- * 
+ * TrialClosed is a searcher event triggered when a trial has successfully finished.
  * @export
  * @interface V1TrialClosed
  */
 export interface V1TrialClosed {
     /**
-     * 
+     * UUID identifying the trial to the searcher.
      * @type {string}
      * @memberof V1TrialClosed
      */
@@ -7977,7 +7977,7 @@ export interface V1TrialClosed {
  */
 export interface V1TrialCreated {
     /**
-     * 
+     * UUID identifying the trial to the searcher.
      * @type {string}
      * @memberof V1TrialCreated
      */
@@ -8010,13 +8010,13 @@ export enum V1TrialEarlyExitExitedReason {
 }
 
 /**
- * 
+ * TrialExitedEarly is a searcher event triggered when a trial exited prematurely.
  * @export
  * @interface V1TrialExitedEarly
  */
 export interface V1TrialExitedEarly {
     /**
-     * 
+     * UUID identifying the trial to the searcher.
      * @type {string}
      * @memberof V1TrialExitedEarly
      */
@@ -8343,7 +8343,7 @@ export interface V1TrialProfilerMetricsBatch {
  */
 export interface V1TrialProgress {
     /**
-     * 
+     * UUID identifying the trial to the searcher.
      * @type {string}
      * @memberof V1TrialProgress
      */
@@ -8823,7 +8823,7 @@ export interface V1UserWebSetting {
  */
 export interface V1ValidateAfterOperation {
     /**
-     * request_id is the id of the trial to close.
+     * The ID of the trial to close.
      * @type {string}
      * @memberof V1ValidateAfterOperation
      */
@@ -8843,19 +8843,19 @@ export interface V1ValidateAfterOperation {
  */
 export interface V1ValidationCompleted {
     /**
-     * 
+     * UUID identifying the trial to the searcher.
      * @type {string}
      * @memberof V1ValidationCompleted
      */
     requestId: string;
     /**
-     * 
+     * Value of the validation metric used to direct the search.
      * @type {number}
      * @memberof V1ValidationCompleted
      */
     metric: number;
     /**
-     * length from ValidateAfterOperation.
+     * Length from ValidateAfterOperation.
      * @type {string}
      * @memberof V1ValidationCompleted
      */
@@ -12169,8 +12169,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get list of SearcherEvents with long polling.
-         * @param {number} experimentId The id of the experiment.
+         * @summary Get the list of custom searcher events with long polling.
+         * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12508,8 +12508,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Post list of SearcherOperations.
-         * @param {number} experimentId The experiment id
+         * @summary Submit operations to a custom searcher.
+         * @param {number} experimentId The experiment ID.
          * @param {V1PostSearcherOperationsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13166,8 +13166,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get list of SearcherEvents with long polling.
-         * @param {number} experimentId The id of the experiment.
+         * @summary Get the list of custom searcher events with long polling.
+         * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13325,8 +13325,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Post list of SearcherOperations.
-         * @param {number} experimentId The experiment id
+         * @summary Submit operations to a custom searcher.
+         * @param {number} experimentId The experiment ID.
          * @param {V1PostSearcherOperationsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13653,8 +13653,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get list of SearcherEvents with long polling.
-         * @param {number} experimentId The id of the experiment.
+         * @summary Get the list of custom searcher events with long polling.
+         * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13740,8 +13740,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Post list of SearcherOperations.
-         * @param {number} experimentId The experiment id
+         * @summary Submit operations to a custom searcher.
+         * @param {number} experimentId The experiment ID.
          * @param {V1PostSearcherOperationsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14045,8 +14045,8 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get list of SearcherEvents with long polling.
-     * @param {number} experimentId The id of the experiment.
+     * @summary Get the list of custom searcher events with long polling.
+     * @param {number} experimentId The ID of the experiment.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
@@ -14148,8 +14148,8 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Post list of SearcherOperations.
-     * @param {number} experimentId The experiment id
+     * @summary Submit operations to a custom searcher.
+     * @param {number} experimentId The experiment ID.
      * @param {V1PostSearcherOperationsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

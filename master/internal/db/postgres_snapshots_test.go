@@ -27,38 +27,33 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 		RawCustomConfig: &expconf.CustomConfig{},
 	}
 
-	customSearchMethod := searcher.NewSearchMethod(config)
-	cSearcher1 := searcher.NewSearcher(3, customSearchMethod, nil)
-
-	// Add initialOperations
-	_, err := cSearcher1.InitialOperations()
+	// Create a searcher and add some operations to it.
+	searcher1 := searcher.NewSearcher(3, searcher.NewSearchMethod(config), nil)
+	_, err := searcher1.InitialOperations()
 	require.NoError(t, err)
-	// Add trialExitedEarly
-	requestID := model.RequestID(uuid.New())
-	exitedReason := model.Errored
-	_, err = cSearcher1.TrialExitedEarly(requestID, exitedReason)
+	_, err = searcher1.TrialExitedEarly(model.RequestID(uuid.New()), model.Errored)
+	require.NoError(t, err)
 
-	// Save the snapshot to database.
-	snapshot, err := cSearcher1.Snapshot()
+	// Save snapshot to database.
+	snapshot, err := searcher1.Snapshot()
 	require.NoError(t, err)
 	err = db.SaveSnapshot(exp.ID, 2, snapshot)
 	require.NoError(t, err)
 
 	// Retrieve snapshot from database.
-	restored_snapshotSearcher1, _, err1 := db.ExperimentSnapshot(exp.ID)
-	require.NoError(t, err1)
-
-	// Restore snapshot from custom searcher 1 to custom searcher 2 to
-	// verify Restore of customSearchMethod.
-	customSearchMethod2 := searcher.NewSearchMethod(config)
-	cSearcher2 := searcher.NewSearcher(4, customSearchMethod2, nil)
-	err2 := cSearcher2.Restore(restored_snapshotSearcher1)
-	require.NoError(t, err2)
-	queue1, err := cSearcher1.GetCustomSearcherEventQueue()
+	restoredSnapshot, _, err := db.ExperimentSnapshot(exp.ID)
 	require.NoError(t, err)
-	queue2, err := cSearcher2.GetCustomSearcherEventQueue()
+
+	// Verify that restoring the snapshot yields a searcher in the same state as before.
+	searcher2 := searcher.NewSearcher(4, searcher.NewSearchMethod(config), nil)
+	err = searcher2.Restore(restoredSnapshot)
+	require.NoError(t, err)
+	queue1, err := searcher1.GetCustomSearcherEventQueue()
+	require.NoError(t, err)
+	queue2, err := searcher2.GetCustomSearcherEventQueue()
 	require.NoError(t, err)
 	require.Equal(t, queue1.GetEvents(), queue2.GetEvents())
+
 	db.DeleteSnapshotsForExperiment(exp.ID)
 	db.DeleteExperiment(exp.ID)
 }
