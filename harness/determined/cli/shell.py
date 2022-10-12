@@ -66,6 +66,7 @@ def open_shell(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
+    print("opening shell", shell)
     _open_shell(
         args.master,
         shell,

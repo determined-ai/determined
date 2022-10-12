@@ -61,6 +61,12 @@ func (c AuthZConfig) IsRBACUIEnabled() bool {
 	return c.Type != BasicAuthZType
 }
 
+// EnforceStrictNTSC returns if non-admin users
+// can only see and access their own notebooks, tasks, commands, shells.
+func EnforceStrictNTSC() bool {
+	return GetMasterConfig().Security.AuthZ.Type == "rbac" || true // TODO remove
+}
+
 func initAuthZTypes() {
 	authZConfigMutex.Lock()
 	defer authZConfigMutex.Unlock()

@@ -22,7 +22,9 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -47,6 +49,13 @@ const (
 
 var tensorboardsAddr = actor.Addr("tensorboard")
 
+func canAccessTensorboard(curUser model.User, tensorboard *tensorboardv1.Tensorboard) bool {
+	if !config.EnforceStrictNTSC() {
+		return true
+	}
+	return curUser.Admin || model.UserID(tensorboard.UserId) == curUser.ID
+}
+
 func filesToArchive(files []*utilv1.File) archive.Archive {
 	filesArchive := make([]archive.Item, 0, len(files))
 	for _, file := range files {
@@ -65,30 +74,61 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 }
 
 func (a *apiServer) GetTensorboards(
-	_ context.Context, req *apiv1.GetTensorboardsRequest,
+	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = a.ask(tensorboardsAddr, req, &resp); err != nil {
 		return nil, err
 	}
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
+
+	a.filter(&resp.Tensorboards, func(i int) bool {
+		return canAccessTensorboard(*curUser, resp.Tensorboards[0])
+	})
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetTensorboard(
-	_ context.Context, req *apiv1.GetTensorboardRequest,
+	ctx context.Context, req *apiv1.GetTensorboardRequest,
 ) (resp *apiv1.GetTensorboardResponse, err error) {
-	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := tensorboardsAddr.Child(req.TensorboardId)
+	if err := a.ask(addr, req, &resp); err != nil {
+		return nil, err
+	}
+	if !canAccessTensorboard(*curUser, resp.Tensorboard) {
+		return nil, errActorNotFound(addr)
+	}
+	return resp, nil
 }
 
 func (a *apiServer) KillTensorboard(
-	_ context.Context, req *apiv1.KillTensorboardRequest,
+	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
+	if _, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) SetTensorboardPriority(
-	_ context.Context, req *apiv1.SetTensorboardPriorityRequest,
+	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
+	if _, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
