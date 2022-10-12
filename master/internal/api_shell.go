@@ -57,11 +57,12 @@ func (a *apiServer) GetShells(
 	if err = a.ask(shellsAddr, req, &resp); err != nil {
 		return nil, err
 	}
-	a.sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
 
 	a.filter(&resp.Shells, func(i int) bool {
 		return canAccessShell(*curUser, resp.Shells[i])
 	})
+
+	a.sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Shells, req.Offset, req.Limit)
 }
 
