@@ -13,16 +13,17 @@ import (
 )
 
 type (
-	// SearcherEventQueue stores the list of custom searcher events and the event
-	// that was event that was processed last by client and acknowledged by master.
+	// SearcherEventQueue stores the list of custom searcher events and the event that was event that
+	// was processed last by client and acknowledged by master.
 	SearcherEventQueue struct {
 		events     []*experimentv1.SearcherEvent
-		eventCount int32 // stores the number of events in the queue.
+		eventCount int32
 		watchers   map[uuid.UUID]chan<- []*experimentv1.SearcherEvent
 	}
 
+	// searcherEventQueueJSON is used internally for JSON marshaling purposes.
 	searcherEventQueueJSON struct {
-		EventsJSON []json.RawMessage `json:"custom_searcher_events"`
+		Events     []json.RawMessage `json:"custom_searcher_events"`
 		EventCount int32             `json:"custom_searcher_event_count"`
 	}
 
@@ -34,14 +35,15 @@ type (
 )
 
 func newSearcherEventQueue() *SearcherEventQueue {
-	events := make([]*experimentv1.SearcherEvent, 0)
 	return &SearcherEventQueue{
-		events: events, eventCount: 0,
-		watchers: map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{},
+		events:     nil,
+		eventCount: 0,
+		watchers:   map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{},
 	}
 }
 
-func (q *SearcherEventQueue) addEventsToWatcher(id uuid.UUID,
+func (q *SearcherEventQueue) sendEventsToWatcher(
+	id uuid.UUID,
 	w chan<- []*experimentv1.SearcherEvent,
 ) {
 	events := make([]*experimentv1.SearcherEvent, len(q.events))
@@ -51,22 +53,22 @@ func (q *SearcherEventQueue) addEventsToWatcher(id uuid.UUID,
 	delete(q.watchers, id)
 }
 
-// Watch creates a eventsWatcher. If events are available add events and close it.
+// Watch creates an eventsWatcher. If any events are currently in the queue, they are immediately
+// sent; otherwise, the channel in the result will block until an event comes in.
 func (q *SearcherEventQueue) Watch() (EventsWatcher, error) {
-	// buffer size is 1 because we don't want to block
-	//  until another goroutine receives from this channel.
-	// and only one event list can be sent to a channel.
-	id := uuid.New()
+	// Buffer size is 1 because we don't want to block until another goroutine receives from this
+	// channel and only one event list can be sent to a channel.
 	w := make(chan []*experimentv1.SearcherEvent, 1)
+	id := uuid.New()
 	q.watchers[id] = w
 
 	if len(q.events) > 0 {
-		q.addEventsToWatcher(id, w)
+		q.sendEventsToWatcher(id, w)
 	}
 	return EventsWatcher{ID: id, C: w}, nil
 }
 
-// Unwatch unregisters a eventsWatcher.
+// Unwatch unregisters an eventsWatcher.
 func (q *SearcherEventQueue) Unwatch(id uuid.UUID) {
 	if q == nil {
 		return
@@ -74,15 +76,15 @@ func (q *SearcherEventQueue) Unwatch(id uuid.UUID) {
 	delete(q.watchers, id)
 }
 
-// Enqueue an event.
+// Enqueue adds an event to the queue, setting its ID automatically.
 func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 	q.eventCount++
 	event.Id = q.eventCount
 	q.events = append(q.events, event)
 
-	// add events to all watcher channels.
+	// Add events to all watcher channels.
 	for id, w := range q.watchers {
-		q.addEventsToWatcher(id, w)
+		q.sendEventsToWatcher(id, w)
 	}
 }
 
@@ -91,7 +93,7 @@ func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 	return q.events
 }
 
-// RemoveUpTo the given event Id.
+// RemoveUpTo removes all events up to and including the one with the given event ID.
 func (q *SearcherEventQueue) RemoveUpTo(eventID int) error {
 	for i, v := range q.events {
 		if v.Id == int32(eventID) {
@@ -102,57 +104,55 @@ func (q *SearcherEventQueue) RemoveUpTo(eventID int) error {
 	return fmt.Errorf("event %d not found", eventID)
 }
 
-// MarshalJSON returns a marshaled searcherEventQueueJSON.
+// MarshalJSON implements the json.Marshaler interface.
 func (q *SearcherEventQueue) MarshalJSON() ([]byte, error) {
-	marshaledPBEvents, err := marshalPBEvents(q.events)
+	events, err := marshalEvents(q.events)
 	if err != nil {
 		return nil, err
 	}
 
 	return json.Marshal(searcherEventQueueJSON{
-		EventsJSON: marshaledPBEvents,
+		Events:     events,
 		EventCount: q.eventCount,
 	})
 }
 
-// UnmarshalJSON unmarshals searcherEventQueueJSON.
-func (q *SearcherEventQueue) UnmarshalJSON(sJSON []byte) error {
-	var searcherEQJSON searcherEventQueueJSON
-	if err := json.Unmarshal(sJSON, &searcherEQJSON); err != nil {
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (q *SearcherEventQueue) UnmarshalJSON(data []byte) error {
+	var js searcherEventQueueJSON
+	if err := json.Unmarshal(data, &js); err != nil {
 		return err
 	}
-	events, err := unmarshalPBEvents(searcherEQJSON.EventsJSON)
+	events, err := unmarshalEvents(js.Events)
 	if err != nil {
 		return err
 	}
 	q.events = events
-	q.eventCount = searcherEQJSON.EventCount
+	q.eventCount = js.EventCount
 	q.watchers = map[uuid.UUID]chan<- []*experimentv1.SearcherEvent{}
 	return nil
 }
 
-func marshalPBEvents(pbEvents []*experimentv1.SearcherEvent) ([]json.RawMessage, error) {
-	marshaledPBEvents := make([]json.RawMessage, 0)
-	for _, event := range pbEvents {
-		mEvent, err := protojson.Marshal(event)
+func marshalEvents(pbEvents []*experimentv1.SearcherEvent) ([]json.RawMessage, error) {
+	var events []json.RawMessage
+	for _, pbEvent := range pbEvents {
+		event, err := protojson.Marshal(pbEvent)
 		if err != nil {
-			return nil,
-				errors.Wrap(err, "failed to marshal protobuf events list in (custom) SearcherEventQueue")
+			return nil, errors.Wrap(err, "failed to marshal searcher event")
 		}
-		marshaledPBEvents = append(marshaledPBEvents, mEvent)
+		events = append(events, event)
 	}
-	return marshaledPBEvents, nil
+	return events, nil
 }
 
-func unmarshalPBEvents(mEvents []json.RawMessage) ([]*experimentv1.SearcherEvent, error) {
-	unmarshaledPBEvents := make([]*experimentv1.SearcherEvent, 0)
-	for _, mEvent := range mEvents {
+func unmarshalEvents(events []json.RawMessage) ([]*experimentv1.SearcherEvent, error) {
+	var pbEvents []*experimentv1.SearcherEvent
+	for _, event := range events {
 		var pbEvent experimentv1.SearcherEvent
-		if err := protojson.Unmarshal(mEvent, &pbEvent); err != nil {
-			return nil,
-				errors.Wrap(err, "failed to save unmarshal events list in (custom) SearcherEventQueue")
+		if err := protojson.Unmarshal(event, &pbEvent); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal searcher event")
 		}
-		unmarshaledPBEvents = append(unmarshaledPBEvents, &pbEvent)
+		pbEvents = append(pbEvents, &pbEvent)
 	}
-	return unmarshaledPBEvents, nil
+	return pbEvents, nil
 }

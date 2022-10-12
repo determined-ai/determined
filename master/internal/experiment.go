@@ -12,8 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -73,8 +71,8 @@ type (
 		reason    model.ExitedReason
 	}
 
-	// UnwatchEvents is initiated from the get searcher events API.
-	// It deletes a watcher with id from the map of watchers.
+	// UnwatchEvents is initiated from the get searcher events API. It deletes the watcher with the
+	// given ID.
 	UnwatchEvents struct {
 		id uuid.UUID
 	}
@@ -425,8 +423,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Error(codes.Internal, err.Error()))
 			return nil
 		}
-		ops := make([]searcher.Operation, 0)
-		log.Info("Actor is processing post operations")
+		var ops []searcher.Operation
 		for _, searcherOp := range msg.SearcherOperations {
 			switch concreteOperation := searcherOp.GetUnion().(type) {
 			case *experimentv1.SearcherOperation_CreateTrial:
@@ -443,9 +440,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
 			}
 		}
-		ctx.Log().Warnf("Processing operations %+v", ops)
+		ctx.Log().Infof("processing searcher operations %+v", ops)
 
-		// remove from queue
+		// Remove newly processed events from queue.
 		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
 			ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
 		} else {
@@ -610,8 +607,7 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
 		case searcher.SearcherProgress:
-			err := e.searcher.SetCustomSearcherProgress(op.Progress)
-			if err != nil {
+			if err := e.searcher.SetCustomSearcherProgress(op.Progress); err != nil {
 				ctx.Respond(status.Error(codes.Internal, err.Error()))
 			}
 

@@ -59,7 +59,7 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 	}
 }
 
-func nonCustomSearchMethodError(method SearchMethod, unsupportedOp string) error {
+func unsupportedMethodError(method SearchMethod, unsupportedOp string) error {
 	return fmt.Errorf("%T search method does not support %s", method, unsupportedOp)
 }
 
@@ -117,16 +117,16 @@ func (s *Searcher) TrialExitedEarly(
 		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", requestID)
 	}
 	s.Exits[requestID] = true
-
 	s.Record(operations)
-	_, isCustomSMethod := s.method.(CustomSearchMethod)
-	// for non custom-search methods you can make the assumption
-	// that trials will be created immediately.
-	if s.TrialsRequested == len(s.TrialsClosed) && !isCustomSMethod { // if not custom search method.
+
+	_, isCustom := s.method.(CustomSearchMethod)
+	// For non-custom-search methods, you can assume that trials will be created immediately.
+	if s.TrialsRequested == len(s.TrialsClosed) && !isCustom {
 		shutdown := Shutdown{Failure: len(s.Failures) >= s.TrialsRequested}
 		s.Record([]Operation{shutdown})
 		operations = append(operations, shutdown)
 	}
+
 	return operations, nil
 }
 
@@ -162,12 +162,11 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
 	}
-
 	s.Record(operations)
-	_, isCustomSMethod := s.method.(CustomSearchMethod)
-	// for non custom-search methods you can make the assumption
-	// that trials will be created immediately.
-	if s.TrialsRequested == len(s.TrialsClosed) && !isCustomSMethod { // if not custom search method.
+
+	_, isCustom := s.method.(CustomSearchMethod)
+	// For non-custom-search methods, you can assume that trials will be created immediately.
+	if s.TrialsRequested == len(s.TrialsClosed) && !isCustom {
 		shutdown := Shutdown{
 			Cancel:  len(s.Cancels) >= s.TrialsRequested,
 			Failure: len(s.Failures) >= s.TrialsRequested,
@@ -175,6 +174,7 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 		s.Record([]Operation{shutdown})
 		operations = append(operations, shutdown)
 	}
+
 	return operations, nil
 }
 
@@ -187,14 +187,13 @@ func (s *Searcher) Progress() float64 {
 	return progress
 }
 
-// GetCustomSearcherEventQueue returns the SearcherEventQueue of the custom searcher method.
-// It returns an error if the queue is nil because it means the searcher
-// method is not of type CustomSearcher.
+// GetCustomSearcherEventQueue returns the searcher's custom searcher event queue. It returns an
+// error if the search method is not a custom searcher.
 func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
 	if sMethod, ok := s.method.(CustomSearchMethod); ok {
 		return sMethod.getSearcherEventQueue(), nil
 	}
-	return nil, nonCustomSearchMethodError(s.method, "GetCustomSearcherEventQueue")
+	return nil, unsupportedMethodError(s.method, "GetCustomSearcherEventQueue")
 }
 
 // SetCustomSearcherProgress sets the custom searcher progress.
@@ -203,8 +202,7 @@ func (s *Searcher) SetCustomSearcherProgress(progress float64) error {
 		sMethod.setCustomSearcherProgress(progress)
 		return nil
 	}
-
-	return nonCustomSearchMethodError(s.method, "SetCustomSearcherProgress")
+	return unsupportedMethodError(s.method, "SetCustomSearcherProgress")
 }
 
 // Record records operations that were requested by the searcher for a specific trial.

@@ -12,9 +12,17 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
-// Testing a few methods (not all because they are similar)
-// from customSearcherMethod to ensure that the methods
-// and the queue is working well.
+type idMaker struct {
+	num int32
+}
+
+func (m *idMaker) next() int32 {
+	m.num++
+	return m.num
+}
+
+// Testing a few methods (not all because they are similar) from customSearcherMethod to ensure that
+// the methods and the queue are working well.
 func TestCustomSearchMethod(t *testing.T) {
 	config := expconf.SearcherConfig{
 		RawCustomConfig: &expconf.CustomConfig{},
@@ -24,26 +32,25 @@ func TestCustomSearchMethod(t *testing.T) {
 	rand := nprand.New(0)
 	ctx := context{rand: rand}
 
-	var queue *SearcherEventQueue
-	queue = customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
-
-	expEvents := make([]*experimentv1.SearcherEvent, 0)
+	queue := customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
 	require.Equal(t, 0, len(queue.events))
-	// Add initialOperations
+
+	var expEvents []*experimentv1.SearcherEvent
+	var ids idMaker
+
+	// Add initialOperations.
 	_, err := customSearchMethod.initialOperations(ctx)
 	require.NoError(t, err)
-	var expEventCount int32
-	initOpsEvent := experimentv1.SearcherEvent_InitialOperations{
-		InitialOperations: &experimentv1.InitialOperations{},
-	}
-	expEventCount++
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &initOpsEvent,
-		Id:    expEventCount,
-	}
-	expEvents = append(expEvents, &searcherEvent)
+
+	expEvents = append(expEvents, &experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_InitialOperations{
+			InitialOperations: &experimentv1.InitialOperations{},
+		},
+		Id: ids.next(),
+	})
 	require.Equal(t, expEvents, queue.GetEvents())
-	// Add trialExitedEarly
+
+	// Add trialExitedEarly.
 	requestID := model.NewRequestID(rand)
 	exitedReason := model.Errored
 	_, err = customSearchMethod.trialExitedEarly(ctx, requestID, exitedReason)
@@ -54,12 +61,10 @@ func TestCustomSearchMethod(t *testing.T) {
 			ExitedReason: experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED,
 		},
 	}
-	expEventCount++
-	searcherEvent2 := experimentv1.SearcherEvent{
+	expEvents = append(expEvents, &experimentv1.SearcherEvent{
 		Event: &trialExitedEarlyEvent,
-		Id:    expEventCount,
-	}
-	expEvents = append(expEvents, &searcherEvent2)
+		Id:    ids.next(),
+	})
 	require.Equal(t, expEvents, queue.GetEvents())
 
 	// Add validationAfter.
@@ -74,30 +79,26 @@ func TestCustomSearchMethod(t *testing.T) {
 			ValidateAfterLength: validateAfterOp.ToProto().Length,
 		},
 	}
-	expEventCount++
-	searcherEvent3 := experimentv1.SearcherEvent{
+	expEvents = append(expEvents, &experimentv1.SearcherEvent{
 		Event: &validationCompletedEvent,
-		Id:    expEventCount,
-	}
-	expEvents = append(expEvents, &searcherEvent3)
+		Id:    ids.next(),
+	})
 	require.Equal(t, expEvents, queue.GetEvents())
 
 	// Add trialProgress.
 	trialProgress := 0.02
 	customSearchMethod.(CustomSearchMethod).trialProgress(ctx, requestID, PartialUnits(trialProgress))
 	require.NoError(t, err)
-	trialProgressEvent := experimentv1.SearcherEvent_TrialProgress{
-		TrialProgress: &experimentv1.TrialProgress{
-			RequestId:    requestID.String(),
-			PartialUnits: trialProgress,
+
+	expEvents = append(expEvents, &experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_TrialProgress{
+			TrialProgress: &experimentv1.TrialProgress{
+				RequestId:    requestID.String(),
+				PartialUnits: trialProgress,
+			},
 		},
-	}
-	expEventCount++
-	searcherEvent4 := experimentv1.SearcherEvent{
-		Event: &trialProgressEvent,
-		Id:    expEventCount,
-	}
-	expEvents = append(expEvents, &searcherEvent4)
+		Id: ids.next(),
+	})
 	require.Equal(t, expEvents, queue.GetEvents())
 
 	// Set customSearcherProgress.
@@ -105,7 +106,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	customSearchMethod.(CustomSearchMethod).setCustomSearcherProgress(searcherProgress)
 	require.Equal(t, searcherProgress, customSearchMethod.progress(nil, nil))
 
-	// Check removeUpto
+	// Check removeUpto.
 	err = queue.RemoveUpTo(2)
 	require.NoError(t, err)
 	require.Equal(t, expEvents[2:], queue.events)
@@ -120,47 +121,41 @@ func TestCustomSearchWatcher(t *testing.T) {
 	rand := nprand.New(0)
 	ctx := context{rand: rand}
 
-	var queue *SearcherEventQueue
-	queue = customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
+	queue := customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
 	w, err := queue.Watch()
 	require.NoError(t, err)
 
-	// should immediately receive initial status.
+	// Should immediately receive initial status.
 	select {
 	case <-w.C:
 		t.Fatal("received a non-empty channel but should not have")
 	default:
 	}
 
-	expEvents := make([]*experimentv1.SearcherEvent, 0)
-	// Add initialOperations
+	var expEvents []*experimentv1.SearcherEvent
+	var ids idMaker
+
+	// Add initialOperations.
 	_, err = customSearchMethod.initialOperations(ctx)
 	require.NoError(t, err)
-	var expEventCount int32
-	initOpsEvent := experimentv1.SearcherEvent_InitialOperations{
-		InitialOperations: &experimentv1.InitialOperations{},
-	}
-	expEventCount++
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &initOpsEvent,
-		Id:    expEventCount,
-	}
-	expEvents = append(expEvents, &searcherEvent)
+
+	expEvents = append(expEvents, &experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_InitialOperations{
+			InitialOperations: &experimentv1.InitialOperations{},
+		},
+		Id: ids.next(),
+	})
 	require.Equal(t, expEvents, queue.GetEvents())
 
-	//  Receive events in the watcher channel after it's added.
+	// Receive events in the watcher channel after it's added.
 	select {
 	case eventsInWatcher := <-w.C:
 		require.Equal(t, queue.GetEvents(), eventsInWatcher)
-		print("length")
-		print(len(queue.events))
-		print("\n")
-		print(len(eventsInWatcher))
 	default:
 		t.Fatal("did not receive events")
 	}
 
-	// unwatching should work.
+	// Unwatching should work.
 	queue.Unwatch(w.ID)
 
 	// Receive events when you create a new watcher after events exist.
@@ -169,14 +164,10 @@ func TestCustomSearchWatcher(t *testing.T) {
 	select {
 	case eventsInWatcher2 := <-w2.C:
 		require.Equal(t, queue.GetEvents(), eventsInWatcher2)
-		print("length")
-		print(len(queue.events))
-		print("\n")
-		print(len(eventsInWatcher2))
 	default:
 		t.Fatal("did not receive events")
 	}
 
-	// unwatching should work.
+	// Unwatching should work.
 	queue.Unwatch(w2.ID)
 }
