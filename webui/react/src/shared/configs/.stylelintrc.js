@@ -20,6 +20,8 @@ module.exports = {
     },
   ],
   plugins: ['stylelint-order', 'stylelint-scss', 'stylelint-less'],
+  // *-pattern keys are all null since StyleLint v14 sets the value as kabeb case by default
+  // However, we want to use both kabab and camel cases
   rules: {
     'at-rule-no-unknown': null,
     'at-rule-semicolon-space-before': 'never',
@@ -53,6 +55,7 @@ module.exports = {
     'scss/at-rule-no-unknown': true,
     'selector-class-pattern': null,
     'selector-id-pattern': null,
+    'selector-not-notation': 'simple',
     'selector-pseudo-class-no-unknown': [true, { ignorePseudoClasses: ['global'] }],
     'string-quotes': 'single',
     'value-keyword-case': null,
