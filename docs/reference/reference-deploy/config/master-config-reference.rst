@@ -308,11 +308,11 @@ The master supports the following configuration settings:
          node.
 
          For Slurm, ``GresTypes=gpu`` is set in the Slurm configuration, and nodes with GPUs have
-         properly configured GRES indicating the presence of any GPUs. The default is true. When
+         properly configured GRES to indicate the presence of any GPUs. The default is true. When
          false, Determined will request ``slots_per_trial`` nodes and utilize only GPU 0 on each
          node. It is the user's responsibility to ensure that GPUs will be available on nodes
-         selected for the job using other configurations such as targeting a specific resource pool
-         with only GPU nodes or specifying a Slurm constraint in the experiment configurSation.
+         selected for the job using other configurations, such as targeting a specific resource pool
+         with only GPU nodes or specifying a Slurm constraint in the experiment configuration.
 
       -  ``partition_overrides``: A map of partition/queue names to partition-level overrides. For
          each configuration, if it is set for a given partition, it overrides the setting at the

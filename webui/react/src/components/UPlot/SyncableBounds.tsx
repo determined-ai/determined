@@ -21,9 +21,13 @@ interface SyncableBounds {
   zoomed: boolean;
 }
 
+interface Props {
+  children: React.ReactNode;
+}
+
 const SyncContext = createContext<SyncContext | undefined>(undefined);
 
-export const SyncProvider: React.FC = ({ children }) => {
+export const SyncProvider: React.FC<Props> = ({ children }) => {
   const syncRef = useRef(uPlot.sync('x'));
   const [zoomed, setZoomed] = useState(false);
 

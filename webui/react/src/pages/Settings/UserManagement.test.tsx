@@ -4,8 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -62,11 +61,9 @@ const setup = () =>
     <StoreProvider>
       <DndProvider backend={HTML5Backend}>
         <HelmetProvider>
-          <Router history={history}>
-            <CompatRouter>
-              <Container />
-            </CompatRouter>
-          </Router>
+          <HistoryRouter history={history}>
+            <Container />
+          </HistoryRouter>
         </HelmetProvider>
       </DndProvider>
     </StoreProvider>,

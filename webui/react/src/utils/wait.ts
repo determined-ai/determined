@@ -1,6 +1,6 @@
 import { serverAddress } from 'routes/utils';
 import { paths } from 'routes/utils';
-import { windowOpenFeatures } from 'shared/utils/routes';
+import { openBlank } from 'shared/utils/routes';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
 
@@ -25,11 +25,7 @@ export const commandToEventUrl = (command: Command | CommandTask): string => {
 };
 
 export const openCommand = (command: CommandTask): void => {
-  window.open(
-    process.env.PUBLIC_URL + paths.interactive(command),
-    '_blank',
-    windowOpenFeatures.join(','),
-  );
+  openBlank(`${process.env.PUBLIC_URL}${paths.interactive(command)}`);
 };
 
 export const CANNOT_OPEN_COMMAND_ERROR = 'Command cannot be opened.';

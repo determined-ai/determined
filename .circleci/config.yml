@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev13
+    default: v1dev14
   gke-version:
     type: string
     default: "1.21.14"
@@ -137,7 +137,8 @@ commands:
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
-            if [ "$DIFF_DIRS" = "shared" ] ; then
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"shared"* ]]; then
               echo "shared code changed, running downstream test"
             else
               echo "shared code not affected, halting job now"
@@ -427,6 +428,9 @@ commands:
       extra-pytest-flags:
         type: string
         default: ""
+      wait-for-master:
+        type: boolean
+        default: true
     steps:
       - run:
           name: Split tests
@@ -445,8 +449,11 @@ commands:
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
-      - unless:
-          condition: <<parameters.managed-devcluster>>
+      - when:
+          condition:
+            and:
+              - not: <<parameters.managed-devcluster>>
+              - <<parameters.wait-for-master>>
           steps:
             - wait-for-master:
                 scheme: <<parameters.master-scheme>>
@@ -950,11 +957,18 @@ commands:
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
   pre-package-and-push-system:
+    parameters:
+      check:
+        type: boolean
+        default: true
     steps:
       - go-get-deps
       - run: make -C proto build
-      - run: make -C master check
-      - run: make -C agent check
+      - when:
+          condition: <<parameters.check>>
+          steps:
+            - run: make -C master check
+            - run: make -C agent check
 
   install-devcluster:
     steps:
@@ -1052,7 +1066,8 @@ jobs:
           at: .
       - setup_remote_docker:
           version: 19.03.12
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -1081,7 +1096,8 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
@@ -1173,14 +1189,18 @@ jobs:
       - helm/install-helm-client
       - run: helm plugin install https://github.com/chartmuseum/helm-push.git
       - login-helm
-      - run:
-          name: Publish built helm chart
-          command: |
-            go install github.com/goreleaser/goreleaser@v1.1.0
-            git clean -df
-            gobin="$(go env GOBIN)"
-            gopath="$(go env GOPATH)"
-            PATH="${gobin:-${gopath}/bin}:$PATH" make -C helm release
+      - run: make -C helm release
+
+  publish-helm-gh:
+    docker:
+      - image: cimg/go:1.18
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C helm release-gh
 
   publish-python-package:
     parameters:
@@ -1708,6 +1728,9 @@ jobs:
       extra-pytest-flags:
         type: string
         default: ""
+      wait-for-master:
+        type: boolean
+        default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -1750,6 +1773,7 @@ jobs:
           master-host: localhost
           managed-devcluster: <<parameters.managed-devcluster>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
+          wait-for-master: <<parameters.wait-for-master>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -2305,6 +2329,16 @@ workflows:
           matrix:
             parameters:
               agent-version: ['0.17.10']
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
 
       - deploy:
           name: deploy-latest-master-cluster
@@ -2999,6 +3033,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-and-rc-filters
+
+      - publish-helm-gh:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
 
       - upload-try-now-template:
           context: determined-production

@@ -1,6 +1,6 @@
 import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
@@ -11,16 +11,16 @@ import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
+import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
+import Message, { MessageType } from 'shared/components/Message';
 import usePolling from 'shared/hooks/usePolling';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { floatToPercent } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import { ResourceState } from 'types';
-import { JobState } from 'types';
+import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
 
@@ -103,7 +103,7 @@ const ResourcepoolDetail: React.FC = () => {
       if (!pool) return;
       setTabKey(key);
       const basePath = paths.resourcePool(pool.name);
-      navigate(`${basePath}/${key}`, { replace: true });
+      navigate(`${basePath}/${key}`);
     },
     [navigate, pool],
   );
@@ -135,6 +135,7 @@ const ResourcepoolDetail: React.FC = () => {
   }, [pool]);
 
   if (!pool) return <div />;
+
   return (
     <Page className={css.poolDetailPage}>
       <Section>
@@ -158,24 +159,35 @@ const ResourcepoolDetail: React.FC = () => {
         />
       </Section>
       <Section>
-        <Tabs
-          activeKey={tabKey}
-          className="no-padding"
-          destroyInactiveTabPane={true}
-          onChange={handleTabChange}>
-          <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
-            <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
-          </TabPane>
-          <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
-            <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
-          </TabPane>
-          <TabPane key={TabType.Stats} tab="Stats">
-            <ClustersQueuedChart poolStats={poolStats} />
-          </TabPane>
-          <TabPane key={TabType.Configuration} tab="Configuration">
-            {renderPoolConfig()}
-          </TabPane>
-        </Tabs>
+        {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
+          <Page className={css.poolDetailPage}>
+            <Section>
+              <Message
+                title="Resource Pool is unavailable for Round Robin schedulers."
+                type={MessageType.Empty}
+              />
+            </Section>
+          </Page>
+        ) : (
+          <Tabs
+            activeKey={tabKey}
+            className="no-padding"
+            destroyInactiveTabPane={true}
+            onChange={handleTabChange}>
+            <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
+              <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
+            </TabPane>
+            <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
+              <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
+            </TabPane>
+            <TabPane key={TabType.Stats} tab="Stats">
+              <ClustersQueuedChart poolStats={poolStats} />
+            </TabPane>
+            <TabPane key={TabType.Configuration} tab="Configuration">
+              {renderPoolConfig()}
+            </TabPane>
+          </Tabs>
+        )}
       </Section>
     </Page>
   );

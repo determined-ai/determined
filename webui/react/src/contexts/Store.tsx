@@ -175,7 +175,13 @@ const initState: State = {
   resourcePools: [],
   ui: { ...initUI, omnibar: { isShowing: false } },
   userAssignments: [],
-  userRoles: [],
+  userRoles: [
+    {
+      id: -10,
+      name: 'INITIALIZATION',
+      permissions: [],
+    },
+  ],
   users: [],
   userSettings: [],
 };

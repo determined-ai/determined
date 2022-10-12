@@ -236,6 +236,13 @@ func (a *apiServer) PostWorkspace(
 			"name '%s' must be at most 80 character long", req.Name)
 	}
 
+	if req.AgentUserGroup != nil {
+		err = workspace.AuthZProvider.Get().CanCreateWorkspaceWithAgentUserGroup(*curUser)
+		if err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
+
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -247,6 +254,14 @@ func (a *apiServer) PostWorkspace(
 	}()
 
 	w := &model.Workspace{Name: req.Name, UserID: curUser.ID}
+
+	if req.AgentUserGroup != nil {
+		w.AgentUID = req.AgentUserGroup.AgentUid
+		w.AgentGID = req.AgentUserGroup.AgentGid
+		w.AgentUser = req.AgentUserGroup.AgentUser
+		w.AgentGroup = req.AgentUserGroup.AgentGroup
+	}
+
 	_, err = tx.NewInsert().Model(w).Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
@@ -280,7 +295,9 @@ func (a *apiServer) PatchWorkspace(
 		return nil, err
 	}
 
-	madeChanges := false
+	insertColumns := []string{}
+	updatedWorkspace := model.Workspace{}
+
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
 		if err = workspace.AuthZProvider.Get().
 			CanSetWorkspacesName(currUser, currWorkspace); err != nil {
@@ -289,26 +306,48 @@ func (a *apiServer) PatchWorkspace(
 
 		log.Infof("workspace (%d) name changing from \"%s\" to \"%s\"",
 			currWorkspace.Id, currWorkspace.Name, req.Workspace.Name.Value)
-		madeChanges = true
-		currWorkspace.Name = req.Workspace.Name.Value
+		insertColumns = append(insertColumns, "name")
+		updatedWorkspace.Name = req.Workspace.Name.Value
 	}
 
-	if !madeChanges {
+	if req.Workspace.AgentUserGroup != nil {
+		if err = workspace.AuthZProvider.Get().
+			CanSetWorkspacesAgentUserGroup(currUser, currWorkspace); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		updateAug := req.Workspace.AgentUserGroup
+
+		updatedWorkspace.AgentUID = updateAug.AgentUid
+		updatedWorkspace.AgentGID = updateAug.AgentGid
+		updatedWorkspace.AgentUser = updateAug.AgentUser
+		updatedWorkspace.AgentGroup = updateAug.AgentGroup
+
+		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
+	}
+
+	if len(insertColumns) == 0 {
 		return &apiv1.PatchWorkspaceResponse{Workspace: currWorkspace}, nil
 	}
 
-	finalWorkspace := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("update_workspace",
-		finalWorkspace, currWorkspace.Id, currWorkspace.Name, currUser.ID)
+	_, err = db.Bun().NewUpdate().Model(&updatedWorkspace).
+		Column(insertColumns...).
+		Where("id = ?", currWorkspace.Id).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 
+	// TODO(ilia): Avoid second refetch.
+	finalWorkspace, err := a.GetWorkspaceByID(currWorkspace.Id, currUser, false)
 	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
-		errors.Wrapf(err, "error updating workspace (%d) in database", currWorkspace.Id)
+		errors.Wrapf(err, "error refetching updated workspace (%d) from db", currWorkspace.Id)
 }
 
 func (a *apiServer) deleteWorkspace(
 	ctx context.Context, workspaceID int32, projects []*projectv1.Project,
 ) {
-	log.Errorf("deleting workspace %d projects", workspaceID)
+	log.Debugf("deleting workspace %d projects", workspaceID)
 	holder := &workspacev1.Workspace{}
 	for _, pj := range projects {
 		expList, err := a.m.db.ProjectExperiments(int(pj.Id))
@@ -332,7 +371,7 @@ func (a *apiServer) deleteWorkspace(
 		_ = a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID, err.Error())
 		return
 	}
-	log.Errorf("workspace %d deleted successfully", workspaceID)
+	log.Debugf("workspace %d deleted successfully", workspaceID)
 }
 
 func (a *apiServer) DeleteWorkspace(

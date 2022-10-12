@@ -14,6 +14,7 @@ import {
   relativeTimeRenderer,
 } from 'components/Table';
 import useFeature from 'hooks/useFeature';
+import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -112,6 +113,8 @@ const UserManagement: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers, canViewUsers } = usePermissions();
 
+  const fetchKnownRoles = useFetchKnownRoles(canceler);
+
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
       const response = await getUsers(
@@ -161,6 +164,12 @@ const UserManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
+
+  useEffect(() => {
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+  }, [fetchKnownRoles, rbacEnabled]);
 
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
     useModalCreateUser({ groups, onClose: fetchUsers });

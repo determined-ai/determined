@@ -1,6 +1,6 @@
 import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
@@ -117,9 +117,15 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
   const [activeMetric, setActiveMetric] = useState<MetricName>(initFilters.metric);
   const [batches, setBatches] = useState<number[]>();
-  const [metricNames, setMetricNames] = useState<MetricName[]>([]);
   const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
+
+  const handleMetricNamesError = useCallback(() => {
+    setPageError(PageError.MetricNames);
+  }, []);
+
+  // Stream available metrics.
+  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
@@ -170,16 +176,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
     }
   }, [basePath, navigate, location, type, typeKey]);
 
-  // Stream available metrics.
-  useMetricNames({
-    errorHandler: () => {
-      setPageError(PageError.MetricNames);
-    },
-    experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
-  });
-
   useEffect(() => {
     if (!isSupported || ui.isPageHidden) return;
     const canceler = new AbortController();
@@ -195,9 +191,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
           [MetricType.Validation]: getHpImportanceMap(event.validationMetrics),
         });
       },
-    ).catch(() => {
-      setPageError(PageError.MetricHpImportance);
-    });
+      () => setPageError(PageError.MetricHpImportance),
+    );
 
     return () => canceler.abort();
   }, [experiment.id, filters?.metric, isSupported, metricNames, ui.isPageHidden]);
@@ -225,9 +220,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
         const newBatches = Object.values(batchesMap).sort(alphaNumericSorter);
         setBatches(newBatches);
       },
-    ).catch(() => {
-      setPageError(PageError.MetricBatches);
-    });
+      () => setPageError(PageError.MetricBatches),
+    );
 
     return () => canceler.abort();
   }, [activeMetric, experiment.id, filters.batch, isSupported, ui.isPageHidden]);
@@ -290,7 +284,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment, type }
         />
       </div>
     );
-  } else if (pageError) {
+  } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
     return <Spinner tip="Fetching metrics..." />;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -7,14 +7,14 @@ import { terminalRunStates } from 'constants/states';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
-import { getExperimentDetails, getExpValidationHistory } from 'services/api';
+import { getExperimentDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { isAborted } from 'shared/utils/service';
-import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
+import { ExperimentBase, TrialItem } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 type Params = {
@@ -28,8 +28,6 @@ const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const [experiment, setExperiment] = useState<ExperimentBase>();
   const [trial, setTrial] = useState<TrialItem>();
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  const [valHistory, setValHistory] = useState<ValidationHistory[]>([]);
   const [pageError, setPageError] = useState<Error>();
   const [isSingleTrial, setIsSingleTrial] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
@@ -39,15 +37,12 @@ const ExperimentDetails: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const [newExperiment, newValHistory] = await Promise.all([
-        getExperimentDetails({ id }, { signal: canceler.current?.signal }),
-        getExpValidationHistory({ id }, { signal: canceler.current?.signal }),
-      ]);
+      const newExperiment = await getExperimentDetails(
+        { id },
+        { signal: canceler.current?.signal },
+      );
       setExperiment((prevExperiment) =>
         isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment,
-      );
-      setValHistory((prevValHistory) =>
-        isEqual(prevValHistory, newValHistory) ? prevValHistory : newValHistory,
       );
       setIsSingleTrial(isSingleTrialExperiment(newExperiment));
     } catch (e) {
@@ -74,7 +69,6 @@ const ExperimentDetails: React.FC = () => {
 
       setExperiment(undefined);
       setTrial(undefined);
-      setValHistory([]);
     };
   }, [stopPolling]);
 

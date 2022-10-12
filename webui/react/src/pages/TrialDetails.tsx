@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -41,6 +41,7 @@ type Params = {
   trialId: string;
 };
 
+const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const TrialDetailsComp: React.FC = () => {
@@ -49,8 +50,9 @@ const TrialDetailsComp: React.FC = () => {
   const [isFetching, setIsFetching] = useState(false);
   const navigate = useNavigate();
   const { experimentId, tab, trialId: trialID } = useParams<Params>();
-  const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_TAB_KEY);
-  const [trialId, setTrialId] = useState<number>(parseInt(trialID ?? ''));
+  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
+  const [tabKey, setTabKey] = useState<TabType>(defaultTabKey);
+  const [trialId, setTrialId] = useState<number>(Number(trialID));
   const [trialDetails, setTrialDetails] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
@@ -103,13 +105,18 @@ const TrialDetailsComp: React.FC = () => {
 
   const handleTabChange = useCallback(
     (key) => {
-      setIsFetching(true);
       setTabKey(key);
-      navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
-      setIsFetching(false);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],
   );
+
+  // Sets the default sub route.
+  useEffect(() => {
+    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
+      navigate(`${basePath}/${tabKey}`, { replace: true });
+    }
+  }, [basePath, navigate, tab, tabKey]);
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
@@ -119,8 +126,8 @@ const TrialDetailsComp: React.FC = () => {
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
   useEffect(() => {
-    setTrialId(trialId);
-  }, [trialId]);
+    setTrialId(Number(trialID));
+  }, [trialID]);
 
   useEffect(() => {
     fetchTrialDetails();

@@ -4,7 +4,7 @@ import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import {
   useFetchAgents,
-  useFetchKnownRoles,
+  useFetchMyRoles,
   useFetchPinnedWorkspaces,
   useFetchResourcePools,
   useFetchUserSettings,
@@ -28,25 +28,27 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const fetchUserSettings = useFetchUserSettings(canceler);
-  const fetchKnownRoles = useFetchKnownRoles(canceler);
+  const fetchMyRoles = useFetchMyRoles(canceler);
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
   usePolling(fetchUserSettings, { interval: 60000 });
+
+  const rbacEnabled = useFeature().isOn('rbac');
+  usePolling(
+    () => {
+      if (rbacEnabled) {
+        fetchMyRoles();
+      }
+    },
+    { interval: 120000 },
+  );
 
   useEffect(() => {
     fetchResourcePools();
 
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
-
-  const rbacEnabled = useFeature().isOn('rbac');
-  useEffect(() => {
-    if (rbacEnabled) {
-      fetchKnownRoles();
-    }
-    return () => canceler.abort();
-  }, [canceler, fetchKnownRoles, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

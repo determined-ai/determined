@@ -1,6 +1,6 @@
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import Page from 'components/Page';
 import Message from 'shared/components/Message';

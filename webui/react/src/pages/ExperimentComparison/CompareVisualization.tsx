@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import { getExperimentDetails } from 'services/api';
@@ -205,9 +205,8 @@ const CompareVisualization: React.FC = () => {
         );
         setChartData(newChartData);
       },
-    ).catch((e) => {
-      setPageError(e);
-    });
+      () => setPageError(PageError.ExperimentSample),
+    );
 
     return () => canceler.abort();
   }, [filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds]);
@@ -236,9 +235,8 @@ const CompareVisualization: React.FC = () => {
         ];
         setMetrics(newMetrics);
       },
-    ).catch(() => {
-      setPageError(PageError.MetricNames);
-    });
+      () => setPageError(PageError.MetricNames),
+    );
 
     return () => canceler.abort();
   }, [trialIds, ui.isPageHidden]);

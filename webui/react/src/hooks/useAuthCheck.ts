@@ -1,6 +1,6 @@
 import queryString from 'query-string';
 import { useCallback } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { globalStorage } from 'globalStorage';

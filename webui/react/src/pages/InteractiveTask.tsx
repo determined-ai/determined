@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
 import { useStore, useStoreDispatch } from 'contexts/Store';
@@ -83,9 +83,8 @@ export const InteractiveTask: React.FC = () => {
           }
         }
       } catch (e) {
-        handleError({
-          error: e,
-          message: 'failed querying for command state',
+        handleError(e, {
+          publicMessage: 'failed querying for command state',
           silent: true,
         });
         clearInterval(queryTask);

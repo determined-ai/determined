@@ -4,6 +4,7 @@ import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getWorkspaces, moveProject } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -25,6 +26,7 @@ interface Props {
 const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const { canMoveProjectsTo } = usePermissions();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -32,7 +34,9 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
     try {
       const response = await getWorkspaces({ limit: 0 });
       setWorkspaces((prev) => {
-        const withoutDefault = response.workspaces.filter((w) => !w.immutable);
+        const withoutDefault = response.workspaces.filter(
+          (w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } }),
+        );
         if (isEqual(prev, withoutDefault)) return prev;
         return withoutDefault;
       });
@@ -45,7 +49,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, []);
+  }, [canMoveProjectsTo]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();

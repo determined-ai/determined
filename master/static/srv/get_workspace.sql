@@ -8,6 +8,9 @@ exp_count AS (
 )
 SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id,
   'WORKSPACE_STATE_' || w.state AS state, w.error_message,
+  (CASE WHEN uid IS NOT NULL OR gid IS NOT NULL OR user_ IS NOT NULL OR group_ IS NOT NULL THEN
+    jsonb_build_object('agent_uid', uid, 'agent_user', user_, 'agent_gid', gid, 'agent_group', group_)
+    ELSE NULL END) as agent_user_group,
   (SELECT COUNT(*) FROM p) AS num_projects,
   (SELECT count FROM exp_count) AS num_experiments,
   (SELECT COUNT(*) > 0 FROM workspace_pins

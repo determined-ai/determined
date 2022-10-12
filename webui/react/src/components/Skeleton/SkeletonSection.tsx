@@ -47,7 +47,7 @@ const SkeletonSection: React.FC<Props> = ({
   const filterSkeleton = useMemo(() => {
     if (!filters) return null;
 
-    let content = null;
+    let content: React.ReactNode[] = [];
     if (isNumber(filters)) {
       content = new Array(filters).fill(null).map((_, index) => renderFilter(index));
     } else {
@@ -60,7 +60,7 @@ const SkeletonSection: React.FC<Props> = ({
   const contentSkeleton = useMemo(() => {
     if (React.isValidElement(children)) return children;
 
-    let content = null;
+    let content: React.ReactNode = undefined;
     if (contentType === ContentType.Chart) content = <img src={iconChart} />;
     if (contentType === ContentType.Logs) content = <img src={iconLogs} />;
     return <div className={css.content}>{content}</div>;

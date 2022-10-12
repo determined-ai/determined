@@ -21,8 +21,15 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   title,
   children,
 }: Props) => {
+  const handleOnCloseCreateModel = useCallback(
+    (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
+      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+    },
+    [openModalCheckpointRegister],
+  );
+
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
-    useModalModelCreate();
+    useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const handleOnCloseCheckpointRegister = useCallback(
     (reason?: ModalCloseReason, checkpoints?: string[]) => {
@@ -31,7 +38,9 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     [openModalCreateModel],
   );
 
-  const {
+  // Has to use var to hoist openModalCheckpointRegister for use above
+  /* eslint-disable-next-line no-var */
+  var {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({ onClose: handleOnCloseCheckpointRegister });

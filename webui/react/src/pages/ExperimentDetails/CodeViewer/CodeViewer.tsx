@@ -75,8 +75,8 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
   if (!a.isLeaf && !b.isLeaf) return titleA.localeCompare(titleB) - titleB.localeCompare(titleA);
 
   // had to use RegEx due to some files being ".<filename>"
-  const [stringA, extensionA] = titleA.split(/(?<=[a-zA-Z])\./);
-  const [stringB, extensionB] = titleB.split(/(?<=[a-zA-Z])\./);
+  const [stringA, extensionA] = titleA.split(/^(?=[a-zA-Z])\./);
+  const [stringB, extensionB] = titleB.split(/^(?=[a-zA-Z])\./);
 
   if (!extensionA && extensionB) return 1;
 
@@ -142,7 +142,7 @@ const CodeViewer: React.FC<Props> = ({
     [_submittedConfig],
   );
   const configForExperiment = (experimentId: number): SettingsConfig => ({
-    applicableRoutespace: '/experiments',
+    applicableRoutespace: '/code',
     settings: [
       {
         defaultValue: firstConfig,
@@ -471,14 +471,18 @@ const CodeViewer: React.FC<Props> = ({
         <section className={viewMode === 'tree' ? css.hideElement : css.fileDir}>
           <div className={css.fileInfo}>
             <div className={css.buttonContainer}>
-              {viewMode === 'editor' && (
-                <LeftOutlined className={css.leftChevron} onClick={switchEditorViewToTree} />
-              )}
-              {activeFile.icon ?? <FileOutlined />}
-              <span className={css.filePath}>{activeFile.title}</span>
-              {isConfig(activeFile.key) && (
-                <span className={css.fileDesc}> {descForConfig[activeFile.key]}</span>
-              )}
+              <>
+                {viewMode === 'editor' && (
+                  <LeftOutlined className={css.leftChevron} onClick={switchEditorViewToTree} />
+                )}
+                {activeFile.icon ?? <FileOutlined />}
+                <span className={css.filePath}>
+                  <>{activeFile.title}</>
+                </span>
+                {isConfig(activeFile.key) && (
+                  <span className={css.fileDesc}> {descForConfig[activeFile.key]}</span>
+                )}
+              </>
             </div>
             <div className={css.buttonsContainer}>
               {

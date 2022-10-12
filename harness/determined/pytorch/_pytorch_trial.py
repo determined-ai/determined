@@ -619,7 +619,7 @@ class PyTorchTrialController(det.TrialController):
                 "Broadcasting metrics to all worker processes to execute a "
                 "validation step end callback"
             )
-            metrics = hvd.broadcast_object(metrics, root_rank=0)
+            metrics = self.context.distributed.broadcast(metrics)
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):

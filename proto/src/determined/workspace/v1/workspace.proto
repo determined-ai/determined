@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.workspace.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/workspacev1";
 
+import "determined/user/v1/user.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
@@ -61,10 +62,14 @@ message Workspace {
   WorkspaceState state = 10;
   // Message stored from errors on async-deleting a workspace.
   string error_message = 11;
+  // Optional agent host uid and gid override.
+  optional determined.user.v1.AgentUserGroup agent_user_group = 12;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
 message PatchWorkspace {
   // The new name for the workspace.
   google.protobuf.StringValue name = 1;
+  // Optional agent host uid and gid override.
+  optional determined.user.v1.AgentUserGroup agent_user_group = 12;
 }

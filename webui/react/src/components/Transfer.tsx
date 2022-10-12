@@ -194,7 +194,13 @@ const Transfer: React.FC<Props> = ({
             width="100%">
             {renderVisibleRow}
           </List>
-          <Button type="link" onClick={() => moveToLeft(filteredVisibleEntries)}>
+          <Button
+            type="link"
+            onClick={() => {
+              moveToLeft(filteredVisibleEntries);
+              // removing everything was keeping the columns out of sync with the UI...
+              moveToRight(['id', 'name']);
+            }}>
             Remove All
           </Button>
         </div>

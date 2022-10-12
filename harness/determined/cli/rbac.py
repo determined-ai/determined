@@ -386,14 +386,19 @@ args_description = [
                 [
                     Arg("role_name", help="name of role to assign"),
                     Arg(
+                        "-w",
                         "--workspace-name",
                         default=None,
                         help="name of the workspace the role is assigned to",
                     ),
                     Arg(
-                        "--username-to-assign", default=None, help="username to assign the role to"
+                        "-u",
+                        "--username-to-assign",
+                        default=None,
+                        help="username to assign the role to",
                     ),
                     Arg(
+                        "-g",
                         "--group-name-to-assign",
                         default=None,
                         help="name of the group the role is assigned to",
@@ -407,16 +412,19 @@ args_description = [
                 [
                     Arg("role_name", help="name of role to unassign"),
                     Arg(
+                        "-w",
                         "--workspace-name",
                         default=None,
                         help="name of the workspace the role is unassigned from",
                     ),
                     Arg(
+                        "-u",
                         "--username-to-assign",
                         default=None,
                         help="username the role is unassigned from",
                     ),
                     Arg(
+                        "-g",
                         "--group-name-to-assign",
                         default=None,
                         help="name of the group the role is unassigned from",

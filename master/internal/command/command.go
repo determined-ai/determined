@@ -300,7 +300,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
-			Label:        c.Config.Resources.AgentLabel,
+			AgentLabel:   c.Config.Resources.AgentLabel,
 			ResourcePool: c.Config.Resources.ResourcePool,
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,

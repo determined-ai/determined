@@ -155,6 +155,6 @@ to optimize how Determined interacts with PBS:
       choose to implement a checkpoint script, you may initiate a Determined checkpoint by sending a
       ``SIGTERM`` signal to the Determined job. When a Determined job receives a ``SIGTERM``, it
       begins a checkpoint and graceful shutdown. To prevent unnecessary loss of work, it is
-      recommended that you then wait at least one Determined ``scheduling_unit`` for the job to
-      complete after sending the ``SIGTERM``. If after that period of time the job has not yet
+      recommended that you wait for at least one Determined ``scheduling_unit`` for the job to
+      complete after sending the ``SIGTERM``. If after that period of time the job has not
       terminated, then send a ``SIGKILL`` to forcibly release all resources.

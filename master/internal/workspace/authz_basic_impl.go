@@ -37,6 +37,14 @@ func (a *WorkspaceAuthZBasic) CanCreateWorkspace(curUser model.User) error {
 	return nil
 }
 
+// CanCreateWorkspaceWithAgentUserGroup requires user to be an admin.
+func (a *WorkspaceAuthZBasic) CanCreateWorkspaceWithAgentUserGroup(curUser model.User) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can set workspace agent user groups")
+	}
+	return nil
+}
+
 // CanSetWorkspacesName returns an error if the user is not an admin
 // or not the owner of the workspace.
 func (a *WorkspaceAuthZBasic) CanSetWorkspacesName(
@@ -44,6 +52,16 @@ func (a *WorkspaceAuthZBasic) CanSetWorkspacesName(
 ) error {
 	if !curUser.Admin && curUser.ID != model.UserID(workspace.UserId) {
 		return fmt.Errorf("only admins may set other user's workspaces names")
+	}
+	return nil
+}
+
+// CanSetWorkspacesAgentUserGroup can only be done by admins.
+func (a *WorkspaceAuthZBasic) CanSetWorkspacesAgentUserGroup(
+	curUser model.User, workspace *workspacev1.Workspace,
+) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users can set workspace agent user groups")
 	}
 	return nil
 }

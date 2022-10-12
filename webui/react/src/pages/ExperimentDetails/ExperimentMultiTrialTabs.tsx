@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import usePermissions from 'hooks/usePermissions';
@@ -18,16 +18,16 @@ const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Code = 'code',
-  Checkpoints = 'checkpoints',
-  Trials = 'trials',
-  Visualization = 'visualization',
-  Notes = 'notes',
-}
+const TabType = {
+  Checkpoints: 'checkpoints',
+  Code: 'code',
+  Notes: 'notes',
+  Trials: 'trials',
+  Visualization: 'visualization',
+} as const;
 
 type Params = {
-  tab?: TabType;
+  tab?: typeof TabType[keyof typeof TabType];
   viz?: ExperimentVisualizationType;
 };
 
@@ -51,6 +51,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
 }: Props) => {
   const { tab, viz } = useParams<Params>();
   const navigate = useNavigate();
+  const location = useLocation();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [tabKey, setTabKey] = useState(defaultTabKey);
 
@@ -58,11 +59,14 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
 
   const handleTabChange = useCallback(
     (key) => {
-      setTabKey(key);
       navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],
   );
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [location.pathname, tab]);
 
   // Sets the default sub route.
   useEffect(() => {
@@ -98,8 +102,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   });
 
   return (
-    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
-      <TabPane key="visualization" tab="Visualization">
+    <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+      <TabPane key={TabType.Visualization} tab="Visualization">
         <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization
             basePath={`${basePath}/${TabType.Visualization}`}
@@ -108,15 +112,15 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
           />
         </React.Suspense>
       </TabPane>
-      <TabPane key="trials" tab="Trials">
+      <TabPane key={TabType.Trials} tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
       {showExperimentArtifacts ? (
         <>
-          <TabPane key="checkpoints" tab="Checkpoints">
+          <TabPane key={TabType.Checkpoints} tab="Checkpoints">
             <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
           </TabPane>
-          <TabPane key="code" tab="Code">
+          <TabPane key={TabType.Code} tab="Code">
             <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
               <CodeViewer
                 experimentId={experiment.id}
@@ -127,7 +131,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
           </TabPane>
         </>
       ) : null}
-      <TabPane key="notes" tab="Notes">
+      <TabPane key={TabType.Notes} tab="Notes">
         <NotesCard
           disabled={!editableNotes}
           notes={experiment.notes ?? ''}

@@ -25,8 +25,6 @@ const IsOn = (feature: string, info: DeterminedInfo): boolean => {
   switch (feature) {
     case 'rbac':
       return rbacEnabled || queryParams[`f_${feature}`] === 'on';
-    case 'mock_workspace_members':
-      return rbacEnabled || queryParams[`f_${feature}`] === 'on';
     default:
       return queryParams[`f_${feature}`] === 'on';
   }

@@ -223,9 +223,12 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     return newColumns;
   }, [dropDownOnTrigger, experiment, settings.sortDesc, settings.sortKey, stateFilterDropdown]);
 
+  const stateString = settings.state?.join('.');
   const fetchExperimentCheckpoints = useCallback(async () => {
     try {
-      const states = (settings.state ?? []).map((state) => encodeCheckpointState(state));
+      const states = stateString
+        ?.split('.')
+        .map((state) => encodeCheckpointState(state as CheckpointState));
       const response = await getExperimentCheckpoints(
         {
           id: experiment.id,
@@ -253,7 +256,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     canceler,
     settings.sortDesc,
     settings.sortKey,
-    settings.state,
+    stateString,
     settings.tableLimit,
     settings.tableOffset,
   ]);
@@ -290,7 +293,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     fetchExperimentCheckpoints,
     settings.sortDesc,
     settings.sortKey,
-    settings.state,
+    stateString,
     settings.tableLimit,
     settings.tableOffset,
   ]);

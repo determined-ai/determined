@@ -119,19 +119,18 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
     [getCheckpointSize, trialsDetails],
   );
 
-  const [metricNames, setMetricNames] = useState<MetricName[]>([]);
-  useMetricNames({
-    errorHandler: () => {
-      handleError({
+  const handleMetricNamesError = useCallback(
+    (e: unknown) => {
+      handleError(e, {
         publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
     },
-    experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
-  });
+    [experiment.id],
+  );
+
+  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
 
   useEffect(() => {
     setSelectedMetrics(metricNames);

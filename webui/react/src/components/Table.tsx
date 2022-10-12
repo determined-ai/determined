@@ -132,7 +132,14 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
-      wrapper={(ch) => <Link path={paths.interactive(record)}>{ch}</Link>}>
+      wrapper={(ch) => (
+        <a
+          href={`${process.env.PUBLIC_URL}${paths.interactive(record)}`}
+          rel="noopener noreferrer"
+          target="_blank">
+          {ch}
+        </a>
+      )}>
       <span>{record.name}</span>
     </ConditionalWrapper>
   </div>
@@ -210,7 +217,7 @@ export const defaultRowClassName = (options?: {
   clickable?: boolean;
   highlighted?: boolean;
 }): string => {
-  const classes = [];
+  const classes: string[] = [];
   if (options?.clickable) classes.push('clickable');
   if (options?.highlighted) classes.push('highlighted');
   return classes.join(' ');
