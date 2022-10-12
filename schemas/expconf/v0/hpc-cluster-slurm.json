@@ -19,7 +19,7 @@
                 "array",
                 "null"
             ],
-            "default": [],
+            "default": null,
             "items": {
                 "type": "string"
             }
