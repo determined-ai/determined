@@ -63,8 +63,8 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
   user?: string[];
 }
 
-const config: SettingsConfig = {
-  applicableRoutespace: '/projects',
+const configForProject = (id: number): SettingsConfig => ({
+  applicableRoutespace: `/projects/${id}`,
   settings: [
     {
       defaultValue: { 1: [] },
@@ -166,7 +166,7 @@ const config: SettingsConfig = {
       },
     },
   ],
-  storagePath: 'project-details',
-};
+  storagePath: `project-details-${id}`,
+});
 
-export default config;
+export default configForProject;

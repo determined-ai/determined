@@ -98,7 +98,7 @@ import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
 import css from './ProjectDetails.module.scss';
-import settingsConfig, {
+import settingsConfigForProject, {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
   ExperimentColumnName,
@@ -150,6 +150,8 @@ const ProjectDetails: React.FC = () => {
   }, [updateDestinationSettings, project?.workspaceId]);
 
   const id = parseInt(projectId ?? '1');
+
+  const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ProjectDetailsSettings>(settingsConfig);

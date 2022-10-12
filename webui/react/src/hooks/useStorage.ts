@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { resetUserSetting } from 'services/api';
@@ -15,8 +15,12 @@ export const userPreferencesStorage = (): (() => void) => {
 
 export const useStorage = (basePath: string, store: Store = window.localStorage): Storage => {
   const { auth } = useStore();
-  const userNamespace = auth.user ? `u:${auth.user.id}` : '';
-  const [storage] = useState(new Storage({ basePath: `${userNamespace}/${basePath}`, store }));
+
+  const storage = useMemo(() => {
+    const userNamespace = auth.user ? `u:${auth.user.id}` : '';
+    return new Storage({ basePath: `${userNamespace}/${basePath}`, store });
+  }, [basePath, auth.user, store]);
+
   return storage;
 };
 

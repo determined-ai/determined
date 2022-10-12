@@ -214,6 +214,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   const location = useLocation();
   const storage = useStorage(options?.storagePath || config.storagePath);
   const prevSearch = usePrevious(location.search, undefined);
+  const prevPath = usePrevious(location.pathname, undefined); // console.log(prevSearch, location.search);
   const [settings, setSettings] = useState<T>(() => getDefaultSettings<T>(config, storage));
   const [pathChange, setPathChange] = useState<PathChange<T>>(defaultPathChange);
 
@@ -322,9 +323,9 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
      *    (ignores defaults values since they are not user triggered)
      */
     const locationSearch = location.search.substr(/^\?/.test(location.search) ? 1 : 0);
-    const currentQuery = settingsToQuery(config, settings);
+    const currentQuery = settingsToQuery(config, getDefaultSettings(config, storage));
     const searchSettings = queryToSettings(config, locationSearch);
-    if (currentQuery && !hasObjectKeys(searchSettings)) {
+    if (location.pathname !== prevPath && currentQuery && !hasObjectKeys(searchSettings)) {
       const newQueries = [currentQuery];
       if (locationSearch) newQueries.unshift(locationSearch);
       navigate(`${location.pathname}?${newQueries.join('&')}`, { replace: true });
@@ -336,7 +337,16 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }
-  }, [config, navigate, location.pathname, location.search, prevSearch, settings, storage]);
+  }, [
+    config,
+    navigate,
+    prevPath,
+    location.pathname,
+    location.search,
+    prevSearch,
+    settings,
+    storage,
+  ]);
 
   useEffect(() => {
     if (pathChange.type === PathChangeType.None) return;
