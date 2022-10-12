@@ -1,14 +1,14 @@
 import dataclasses
 import json
 import logging
+import pathlib
 import pickle
 import random
 import sys
 import uuid
-from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
+from urllib3 import connectionpool
 
 from determined import searcher
 
@@ -43,9 +43,9 @@ class SingleSearchMethod(searcher.SearchMethod):
         return searcher_state.trial_progress[the_trial] / self.max_length
 
     def on_trial_exited_early(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
-        logging.warning(f"Trial {request_id} exited early: {exit_reason}")
+        logging.warning(f"Trial {request_id} exited early: {exited_reason}")
         return [searcher.Shutdown()]
 
     def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
@@ -80,10 +80,10 @@ class RandomSearchMethod(searcher.SearchMethod):
         self.test_type = test_type
         self.exception_points = exception_points
 
-        # TODO remove created_trials and closed_trials before merging the feature branch
         self.created_trials = 0
         self.pending_trials = 0
         self.closed_trials = 0
+        self.tried = set()
 
     def on_trial_created(
         self, _: searcher.SearcherState, request_id: uuid.UUID
@@ -151,12 +151,12 @@ class RandomSearchMethod(searcher.SearchMethod):
         return progress
 
     def on_trial_exited_early(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
         self.pending_trials -= 1
 
         ops: List[searcher.Operation] = []
-        if exit_reason == searcher.ExitedReason.INVALID_HP:
+        if exited_reason == searcher.ExitedReason.INVALID_HP:
             request_id = uuid.uuid4()
             ops.append(
                 searcher.Create(
@@ -203,11 +203,17 @@ class RandomSearchMethod(searcher.SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self) -> Dict[str, int]:
-        hparams = {"global_batch_size": random.randint(10, 100)}
+        if self.test_type == "core_api":
+            increment = random.randint(1, 20)
+            while increment in self.tried:
+                increment = random.randint(1, 20)
+            hparams = {"increment_by": increment}
+        else:
+            hparams = {"global_batch_size": random.randint(10, 100)}
         logging.info(f"hparams={hparams}")
         return hparams
 
-    def save_method_state(self, path: Path) -> None:
+    def save_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("save_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("w") as f:
@@ -222,7 +228,7 @@ class RandomSearchMethod(searcher.SearchMethod):
             }
             json.dump(state, f)
 
-    def load_method_state(self, path: Path) -> None:
+    def load_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("load_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("r") as f:
@@ -247,8 +253,8 @@ class RandomSearchMethod(searcher.SearchMethod):
             and exception_id == self.exception_points[0]
         ):
             logging.info(f"Raising exception in {exception_id}")
-            ex = MaxRetryError(
-                HTTPConnectionPool(host="dummyhost", port=8080),
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080),
                 "http://dummyurl",
             )
             raise ex
@@ -550,10 +556,13 @@ class ASHASearchMethod(searcher.SearchMethod):
 
     def sample_params(self) -> Dict[str, object]:
         hparams = {
-            "global_batch_size": 10,
             "metrics_base": 0.05 * (len(self.asha_search_state.trial_rungs) + 1),
             "metrics_progression": "constant",
         }
+        if self.test_type == "core_api":
+            hparams["increment_by"] = 10
+        else:
+            hparams["global_batch_size"] = 10
         logging.info(f"hparams={hparams}")
         return hparams
 
@@ -572,7 +581,7 @@ class ASHASearchMethod(searcher.SearchMethod):
 
         return progress
 
-    def save_method_state(self, path: Path) -> None:
+    def save_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("save_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("wb") as f:
@@ -582,7 +591,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         with exception_path.open("wb") as f:
             pickle.dump(self.exception_points, f)
 
-    def load_method_state(self, path: Path) -> None:
+    def load_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("load_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("rb") as f:
@@ -603,5 +612,7 @@ class ASHASearchMethod(searcher.SearchMethod):
             and exception_id == self.exception_points[0]
         ):
             logging.info(f"Raising exception in {exception_id}")
-            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl"
+            )
             raise ex
