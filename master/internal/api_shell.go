@@ -75,7 +75,7 @@ func (a *apiServer) GetShell(
 	}
 
 	addr := shellsAddr.Child(req.ShellId)
-	if err := a.ask(addr, req, &resp); err != nil {
+	if err = a.ask(addr, req, &resp); err != nil {
 		return nil, err
 	}
 
