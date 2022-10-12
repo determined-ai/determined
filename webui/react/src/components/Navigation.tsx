@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import {
   useFetchMyRoles,

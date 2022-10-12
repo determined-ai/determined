@@ -40,19 +40,26 @@ export const useFetchAgents = (canceler: AbortController): (() => Promise<void>)
   return useCallback(async (): Promise<void> => {
     try {
       const agents = await getAgents({ signal: canceler.signal });
-
       updateAgents(Loaded(agents));
-      // TODO: handle this another way
-      // updateFaviconType(
-      //   cluster[ResourceType.ALL].allocation !== 0,
-      //   info.branding || BrandingType.Determined,
-      // );
     } catch (e) {
       handleError(e);
     }
   }, [canceler, updateAgents]);
 };
 
+export const useEnsureAgentsFetched = (canceler: AbortController): (() => Promise<void>) => {
+  const { agents, updateAgents } = useContext(AgentsContext);
+
+  return useCallback(async (): Promise<void> => {
+    if (agents !== NotLoaded) return;
+    try {
+      const agents = await getAgents({ signal: canceler.signal });
+      updateAgents(Loaded(agents));
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, updateAgents, agents]);
+};
 export const useAgents = (): Loadable<Agent[]> => {
   // TODO: check undefined
   const { agents } = useContext(AgentsContext);
@@ -63,6 +70,7 @@ export const useAgents = (): Loadable<Agent[]> => {
 export const useClusterOverview = (): Loadable<ClusterOverview> => {
   // Deep clone for render detection.
   const agents = useAgents();
+  // TODO: memoize
   return Loadable.map(agents, (agents) => {
     const overview: ClusterOverview = clone(initClusterOverview);
 

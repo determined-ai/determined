@@ -15,7 +15,7 @@ import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
-import { useFetchAgents } from 'stores/agents';
+import { useEnsureAgentsFetched } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 
@@ -97,7 +97,7 @@ const ClusterOverview: React.FC = () => {
 
   const fetchActiveExperiments = useFetchActiveExperiments(canceler);
   const fetchActiveTasks = useFetchActiveTasks(canceler);
-  const fetchAgents = useFetchAgents(canceler);
+  const fetchAgents = useEnsureAgentsFetched(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
   const fetchActiveRunning = useCallback(async () => {
