@@ -139,15 +139,13 @@ def wait_for_experiment_by_name_is_active(
 
 
 def _is_experiment_active(exp_state: determinedexperimentv1State) -> bool:
-    if (
-        exp_state == determinedexperimentv1State.STATE_ACTIVE
-        or exp_state == determinedexperimentv1State.STATE_RUNNING
-        or exp_state == determinedexperimentv1State.STATE_QUEUED
-        or exp_state == determinedexperimentv1State.STATE_PULLING
-        or exp_state == determinedexperimentv1State.STATE_STARTING
-    ):
-        return True
-    return False
+    return exp_state in (
+        determinedexperimentv1State.STATE_ACTIVE,
+        determinedexperimentv1State.STATE_RUNNING,
+        determinedexperimentv1State.STATE_QUEUED,
+        determinedexperimentv1State.STATE_PULLING,
+        determinedexperimentv1State.STATE_STARTING,
+    )
 
 
 def wait_for_experiment_state(

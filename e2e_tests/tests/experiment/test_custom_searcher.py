@@ -1,17 +1,16 @@
 import logging
+import pathlib
 import subprocess
 import tempfile
 import time
-from pathlib import Path
 from typing import List, Optional
 
 import pytest
 import yaml
-from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
+from urllib3 import connectionpool
 
 from determined import searcher
 from determined.common.api import bindings
-from determined.common.api.bindings import determinedexperimentv1State
 from determined.experimental import client
 from tests import config as conf
 from tests import experiment as exp
@@ -21,7 +20,7 @@ TIMESTAMP = int(time.time())
 
 
 @pytest.mark.e2e_cpu
-def test_run_custom_searcher_experiment(tmp_path: Path) -> None:
+def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     # example searcher script
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
@@ -62,7 +61,7 @@ def test_run_random_searcher_exp() -> None:
         search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -99,23 +98,6 @@ def test_run_random_searcher_exp() -> None:
         (
             "core_api_model.yaml",
             f"custom-searcher-random-test-fail5-{TIMESTAMP}",
-            [
-                "on_trial_created",
-                "after_save",
-                "after_save",
-                "on_validation_completed",
-                "after_save",
-            ],
-        ),
-        ("noop.yaml", f"custom-searcher-random-test-noop-{TIMESTAMP}", []),
-        (
-            "noop.yaml",
-            f"custom-searcher-random-test-noop-fail1-{TIMESTAMP}",
-            ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
-        ),
-        (
-            "noop.yaml",
-            f"custom-searcher-random-test-noop-fail2-{TIMESTAMP}",
             [
                 "on_trial_created",
                 "after_save",
@@ -178,7 +160,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
     exp_name = f"random-pause-{TIMESTAMP}"
     config["entrypoint"] += " --exp-name " + exp_name
-    config["entrypoint"] += " --config-name noop.yaml"
+    config["entrypoint"] += " --config-name core_api_model.yaml"
 
     model_def_path = conf.fixtures_path("custom_searcher")
 
@@ -189,7 +171,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
         exp.wait_for_experiment_state(
             searcher_exp_id,
-            determinedexperimentv1State.STATE_RUNNING,
+            bindings.determinedexperimentv1State.STATE_RUNNING,
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
@@ -283,11 +265,11 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                     exception_points=[exception_point],
                 )
                 search_runner_mock = FallibleSearchRunner(
-                    exception_point, search_method, Path(searcher_dir)
+                    exception_point, search_method, pathlib.Path(searcher_dir)
                 )
                 search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
-            except MaxRetryError:
+            except connectionpool.MaxRetryError:
                 failures += 1
 
         assert failures == failures_expected
@@ -295,7 +277,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_runner.state.last_event_id == 41
@@ -313,8 +295,8 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     assert search_method.progress(search_runner.state) == pytest.approx(1.0)
 
 
-@pytest.mark.e2e_cpu
-def test_run_asha_batches_exp(tmp_path: Path) -> None:
+@pytest.mark.nightly
+def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -325,7 +307,7 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
     config["name"] = "asha"
     config["description"] = "custom searcher"
 
-    max_length = 3000
+    max_length = 2000
     max_trials = 16
     num_rungs = 3
     divisor = 4
@@ -349,12 +331,12 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
+    # 16 trials in rung 1 (#batches = 125)
+    assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 500)
+    assert sum(t.totalBatchesProcessed >= 500 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2000)
+    assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -388,16 +370,6 @@ def test_run_asha_batches_exp(tmp_path: Path) -> None:
                 "shutdown",
             ],
         ),
-        ("noop.yaml", f"custom-searcher-asha-noop-test-{TIMESTAMP}", []),
-        (
-            "noop.yaml",
-            f"custom-searcher-asha-test-noop-fail1-{TIMESTAMP}",
-            [
-                "initial_operations_start",
-                "after_save",
-                "on_validation_completed",
-            ],
-        ),
     ],
 )
 def test_run_asha_searcher_exp_core_api(
@@ -429,12 +401,12 @@ def test_run_asha_searcher_exp_core_api(
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
 
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
+    # 16 trials in rung 1 (#batches = 150)
+    assert sum(t.totalBatchesProcessed >= 150 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 600)
+    assert sum(t.totalBatchesProcessed >= 600 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2400)
+    assert sum(t.totalBatchesProcessed == 2400 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -453,7 +425,7 @@ def test_run_asha_searcher_exp_core_api(
     assert resubmissions == sum([x == "after_save" for x in exception_points])
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.nightly
 @pytest.mark.parametrize(
     "exceptions",
     [
@@ -490,7 +462,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     config["name"] = "asha"
     config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
 
-    max_length = 3000
+    max_length = 2000
     max_trials = 16
     num_rungs = 3
     divisor = 4
@@ -511,11 +483,11 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                     exception_points=[exception_point],
                 )
                 search_runner_mock = FallibleSearchRunner(
-                    exception_point, search_method, Path(searcher_dir)
+                    exception_point, search_method, pathlib.Path(searcher_dir)
                 )
                 search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
                 pytest.fail("Expected an exception")
-            except MaxRetryError:
+            except connectionpool.MaxRetryError:
                 failures += 1
 
         assert failures == failures_expected
@@ -523,7 +495,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
         search_method = searchers.ASHASearchMethod(
             max_length, max_trials, num_rungs, divisor, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_runner.state.experiment_completed is True
@@ -545,12 +517,12 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
+    # 16 trials in rung 1 (#batches = 125)
+    assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 500)
+    assert sum(t.totalBatchesProcessed >= 500 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2000)
+    assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -563,7 +535,7 @@ class FallibleSearchRunner(searcher.LocalSearchRunner):
         self,
         exception_point: str,
         search_method: searcher.SearchMethod,
-        searcher_dir: Optional[Path] = None,
+        searcher_dir: Optional[pathlib.Path] = None,
     ):
         super(FallibleSearchRunner, self).__init__(search_method, searcher_dir)
         self.fail_on_save = False
@@ -576,5 +548,7 @@ class FallibleSearchRunner(searcher.LocalSearchRunner):
             logging.info(
                 "Raising exception in after saving the state and before posting operations"
             )
-            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl"
+            )
             raise ex
