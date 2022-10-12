@@ -76,7 +76,7 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 		if err != nil {
 			return err
 		}
-		es = append(es, Event{Payload: p, TriggerID: t.ID})
+		es = append(es, Event{Payload: p, TriggerID: t.ID, URL: t.Webhook.URL})
 	}
 
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
@@ -111,38 +111,46 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	var status string
 	var eUrl string
 	var c string
+	var mStatus string
 	if e.State == model.CompletedState {
 		status = "Your experiment completed successfully 🎉"
-		eUrl = fmt.Sprintf("✅ <something.com| %v (%v)>", e.Config.Name(), e.ID)
+
+		eUrl = fmt.Sprintf("✅ %v (%v)", e.Config.Name(), e.ID)
 		c = "#13B670"
+		mStatus = "Completed"
 	} else {
 		status = "Your experiment has stopped with errors"
-		eUrl = fmt.Sprintf("❌ <something.com| %v (%v)>", e.Config.Name(), e.ID)
+		eUrl = fmt.Sprintf("❌ %v (%v)", e.Config.Name(), e.ID)
 		c = "#DD5040"
+		mStatus = "Errored"
 	}
 	hours := e.EndTime.Sub(e.StartTime).Hours()
 	hours, m := math.Modf(hours)
 	minutes := int(m * 60)
 	duration := fmt.Sprintf("%vh %vmin", hours, minutes)
-	experimentBlock := SlackBlock{
+	expBlockFields := []Field{
+		{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Status*: %v", mStatus),
+		},
+		{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Duration*: %v", duration),
+		},
+	}
+	if e.Config.Project() != "" {
+		expBlockFields = append(expBlockFields, Field{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Project*: %v>", e.Config.Project()),
+		})
+	}
+	experimentBlock := SlackBlockWithFields{
 		Text: Field{
+			Type: "mrkdwn",
 			Text: eUrl,
 		},
-		Type: "section",
-		Fields: []Field{
-			{
-				Type: "mrkdwn",
-				Text: "*Status*: Completed",
-			},
-			{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("*Duration*: %v", duration),
-			},
-			{
-				Type: "mrkdwn",
-				Text: fmt.Sprintf("*Project*: <something.com| %v>", e.Config.Project()),
-			},
-		},
+		Type:   "section",
+		Fields: expBlockFields,
 	}
 	messageBlock := SlackBlock{
 		Text: Field{
@@ -153,7 +161,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	}
 	attachment := SlackAttachment{
 		Color:  c,
-		Blocks: []SlackBlock{experimentBlock},
+		Blocks: []SlackBlockWithFields{experimentBlock},
 	}
 	messageBody := SlackMessageBody{
 		Blocks:      []SlackBlock{messageBlock},

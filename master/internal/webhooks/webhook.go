@@ -198,15 +198,20 @@ type Field struct {
 	Type string `json:"type"`
 	Text string `json:"text"`
 }
-type SlackBlock struct {
+type SlackBlockWithFields struct {
 	Type   string  `json:"type"`
 	Text   Field   `json:"text"`
 	Fields []Field `json:"fields"`
 }
 
+type SlackBlock struct {
+	Type string `json:"type"`
+	Text Field  `json:"text"`
+}
+
 type SlackAttachment struct {
-	Color  string       `json:"color"`
-	Blocks []SlackBlock `json:"blocks"`
+	Color  string                 `json:"color"`
+	Blocks []SlackBlockWithFields `json:"blocks"`
 }
 
 type SlackMessageBody struct {
