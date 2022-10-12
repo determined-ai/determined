@@ -2,4 +2,7 @@
 
 ** New Features **
 
--  Custom Searcher enables users to implement their own hyperparameter tuning algorithms.
+- Custom Searcher provides an API for users to implement their own logic to coordinate across
+  multiple training jobs. This enables easy implementation of custom meta algorithms like
+  hyperparameter tuning and ensembling methods. See
+  :ref:`Custom Search Methods<topic-guides_hp-tuning-det_custom>` for more information.
