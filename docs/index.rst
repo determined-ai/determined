@@ -18,7 +18,7 @@
    Training API Guides <training/apis-howto/overview>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Submit Experiment <training/submit-experiment>
-   How to Get Notification <integrations/notification/index>
+   Monitor Experiment Through Webhooks  <integrations/notification/index>
    How to Debug Models <training/debug-models>
    Model Management <training/model-management/overview>
    Best Practices <training/best-practices/overview>
