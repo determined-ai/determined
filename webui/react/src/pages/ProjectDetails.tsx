@@ -362,9 +362,8 @@ const ProjectDetails: React.FC = () => {
           if (option === undefined || option === '') {
             if (record.groupId === undefined || record.groupId === null) return;
             await patchExperiment({
-              body: { groupId: undefined },
+              body: { groupId: null },
               experimentId: record.id,
-              updateMask: { paths: ['group_id'] },
             });
           } else if (isString(option)) {
             const response = await createExperimentGroup({

@@ -238,7 +238,6 @@ export interface CreateExperimentParams {
 
 export interface PatchExperimentParams extends ExperimentIdParams {
   body: Omit<Api.V1PatchExperiment, 'id'>;
-  updateMask?: Api.ProtobufFieldMask;
 }
 
 export interface LaunchTensorBoardParams {

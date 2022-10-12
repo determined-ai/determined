@@ -5501,26 +5501,6 @@ export interface V1PatchExperimentGroupResponse {
 }
 
 /**
- * Patch an experiment by providing the updated attributes. Only description, label, name, notes, and group_id fields will be updated through this endpoint, and others will be ignored.
- * @export
- * @interface V1PatchExperimentRequest
- */
-export interface V1PatchExperimentRequest {
-    /**
-     * Patched experiment attributes.
-     * @type {V1PatchExperiment}
-     * @memberof V1PatchExperimentRequest
-     */
-    experiment?: V1PatchExperiment;
-    /**
-     * 
-     * @type {ProtobufFieldMask}
-     * @memberof V1PatchExperimentRequest
-     */
-    updateMask?: ProtobufFieldMask;
-}
-
-/**
  * Response to PatchExperimentRequest.
  * @export
  * @interface V1PatchExperimentResponse
@@ -25756,11 +25736,11 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
-         * @param {V1PatchExperimentRequest} body 
+         * @param {V1PatchExperiment} body Patched experiment attributes.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options: any = {}): FetchArgs {
+        patchExperiment(experimentId: number, body: V1PatchExperiment, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling patchExperiment.');
@@ -25790,7 +25770,7 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchExperimentRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchExperiment" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -26553,11 +26533,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
-         * @param {V1PatchExperimentRequest} body 
+         * @param {V1PatchExperiment} body Patched experiment attributes.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
+        patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).patchExperiment(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -26957,11 +26937,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
-         * @param {V1PatchExperimentRequest} body 
+         * @param {V1PatchExperiment} body Patched experiment attributes.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options?: any) {
+        patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
             return ExperimentsApiFp(configuration).patchExperiment(experimentId, body, options)(fetch, basePath);
         },
         /**
@@ -28068,12 +28048,12 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Patch an experiment's fields.
      * @param {number} experimentId The id of the experiment.
-     * @param {V1PatchExperimentRequest} body 
+     * @param {V1PatchExperiment} body Patched experiment attributes.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public patchExperiment(experimentId: number, body: V1PatchExperimentRequest, options?: any) {
+    public patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
         return ExperimentsApiFp(this.configuration).patchExperiment(experimentId, body, options)(this.fetch, this.basePath);
     }
 
@@ -28909,6 +28889,49 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Delete an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {number} groupId The id of the group.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperimentGroup(projectId: number, groupId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling deleteExperimentGroup.');
+            }
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling deleteExperimentGroup.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/groups/{groupId}`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -29123,6 +29146,43 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get experiment groups within a project.
+         * @param {number} projectId The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentGroups(projectId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling getExperimentGroups.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/groups`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -29695,6 +29755,58 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Update an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {number} groupId The id of the group.
+         * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling patchExperimentGroup.');
+            }
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling patchExperimentGroup.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchExperimentGroup.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/groups/{groupId}`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchExperimentGroup" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -29732,6 +29844,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"V1PostAllocationProxyAddressRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {V1PostExperimentGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling postExperimentGroup.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postExperimentGroup.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/groups`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostExperimentGroupRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -30517,6 +30675,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {number} groupId The id of the group.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperimentGroup(projectId: number, groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteExperimentGroup(projectId, groupId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -30608,6 +30786,25 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get experiment groups within a project.
+         * @param {number} projectId The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentGroups(projectId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getExperimentGroups(projectId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30867,6 +31064,27 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Update an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {number} groupId The id of the group.
+         * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchExperimentGroup(projectId, groupId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -30875,6 +31093,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {V1PostExperimentGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostExperimentGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postExperimentGroup(projectId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -31241,6 +31479,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Delete an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {number} groupId The id of the group.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperimentGroup(projectId: number, groupId: number, options?: any) {
+            return InternalApiFp(configuration).deleteExperimentGroup(projectId, groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Remove a group.
          * @param {number} groupId The id of the group that should be deleted.
          * @param {*} [options] Override http request option.
@@ -31296,6 +31545,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any) {
             return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get experiment groups within a project.
+         * @param {number} projectId The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentGroups(projectId: number, options?: any) {
+            return InternalApiFp(configuration).getExperimentGroups(projectId, options)(fetch, basePath);
         },
         /**
          * 
@@ -31438,6 +31697,18 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Update an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {number} groupId The id of the group.
+         * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options?: any) {
+            return InternalApiFp(configuration).patchExperimentGroup(projectId, groupId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -31446,6 +31717,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
             return InternalApiFp(configuration).postAllocationProxyAddress(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create an experiment group within a project.
+         * @param {number} projectId The id of the project.
+         * @param {V1PostExperimentGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options?: any) {
+            return InternalApiFp(configuration).postExperimentGroup(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -31727,6 +32009,19 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary Delete an experiment group within a project.
+     * @param {number} projectId The id of the project.
+     * @param {number} groupId The id of the group.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteExperimentGroup(projectId: number, groupId: number, options?: any) {
+        return InternalApiFp(this.configuration).deleteExperimentGroup(projectId, groupId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Remove a group.
      * @param {number} groupId The id of the group that should be deleted.
      * @param {*} [options] Override http request option.
@@ -31791,6 +32086,18 @@ export class InternalApi extends BaseAPI {
      */
     public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
         return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get experiment groups within a project.
+     * @param {number} projectId The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getExperimentGroups(projectId: number, options?: any) {
+        return InternalApiFp(this.configuration).getExperimentGroups(projectId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -31958,6 +32265,20 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary Update an experiment group within a project.
+     * @param {number} projectId The id of the project.
+     * @param {number} groupId The id of the group.
+     * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options?: any) {
+        return InternalApiFp(this.configuration).patchExperimentGroup(projectId, groupId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
      * @param {string} allocationId The id of the allocation.
      * @param {V1PostAllocationProxyAddressRequest} body 
@@ -31967,6 +32288,19 @@ export class InternalApi extends BaseAPI {
      */
     public postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
         return InternalApiFp(this.configuration).postAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create an experiment group within a project.
+     * @param {number} projectId The id of the project.
+     * @param {V1PostExperimentGroupRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options?: any) {
+        return InternalApiFp(this.configuration).postExperimentGroup(projectId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -34454,49 +34788,6 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Delete an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {number} groupId The id of the group.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        deleteExperimentGroup(projectId: number, groupId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'projectId' is not null or undefined
-            if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling deleteExperimentGroup.');
-            }
-            // verify required parameter 'groupId' is not null or undefined
-            if (groupId === null || groupId === undefined) {
-                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling deleteExperimentGroup.');
-            }
-            const localVarPath = `/api/v1/projects/{projectId}/groups/{groupId}`
-                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
-                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Delete a project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -34511,43 +34802,6 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get experiment groups within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentGroups(projectId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'projectId' is not null or undefined
-            if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling getExperimentGroups.');
-            }
-            const localVarPath = `/api/v1/projects/{projectId}/groups`
-                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -34654,58 +34908,6 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Update an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {number} groupId The id of the group.
-         * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options: any = {}): FetchArgs {
-            // verify required parameter 'projectId' is not null or undefined
-            if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling patchExperimentGroup.');
-            }
-            // verify required parameter 'groupId' is not null or undefined
-            if (groupId === null || groupId === undefined) {
-                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling patchExperimentGroup.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling patchExperimentGroup.');
-            }
-            const localVarPath = `/api/v1/projects/{projectId}/groups/{groupId}`
-                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
-                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchExperimentGroup" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Update a project.
          * @param {number} id The id of the project.
          * @param {V1PatchProject} body The desired project fields and values to update.
@@ -34743,52 +34945,6 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"V1PatchProject" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Create an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {V1PostExperimentGroupRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'projectId' is not null or undefined
-            if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling postExperimentGroup.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling postExperimentGroup.');
-            }
-            const localVarPath = `/api/v1/projects/{projectId}/groups`
-                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PostExperimentGroupRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -34975,26 +35131,6 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Delete an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {number} groupId The id of the group.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        deleteExperimentGroup(projectId: number, groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentGroupResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteExperimentGroup(projectId, groupId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Delete a project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -35002,25 +35138,6 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          */
         deleteProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteProject(id, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get experiment groups within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentGroups(projectId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentGroupsResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getExperimentGroups(projectId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35072,27 +35189,6 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {number} groupId The id of the group.
-         * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentGroupResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchExperimentGroup(projectId, groupId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Update a project.
          * @param {number} id The id of the project.
          * @param {V1PatchProject} body The desired project fields and values to update.
@@ -35101,26 +35197,6 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          */
         patchProject(id: number, body: V1PatchProject, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject(id, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Create an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {V1PostExperimentGroupRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostExperimentGroupResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postExperimentGroup(projectId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35222,17 +35298,6 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Delete an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {number} groupId The id of the group.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        deleteExperimentGroup(projectId: number, groupId: number, options?: any) {
-            return ProjectsApiFp(configuration).deleteExperimentGroup(projectId, groupId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Delete a project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -35240,16 +35305,6 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          */
         deleteProject(id: number, options?: any) {
             return ProjectsApiFp(configuration).deleteProject(id, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get experiment groups within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentGroups(projectId: number, options?: any) {
-            return ProjectsApiFp(configuration).getExperimentGroups(projectId, options)(fetch, basePath);
         },
         /**
          * 
@@ -35274,18 +35329,6 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Update an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {number} groupId The id of the group.
-         * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options?: any) {
-            return ProjectsApiFp(configuration).patchExperimentGroup(projectId, groupId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Update a project.
          * @param {number} id The id of the project.
          * @param {V1PatchProject} body The desired project fields and values to update.
@@ -35294,17 +35337,6 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          */
         patchProject(id: number, body: V1PatchProject, options?: any) {
             return ProjectsApiFp(configuration).patchProject(id, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Create an experiment group within a project (alpha).
-         * @param {number} projectId The id of the project.
-         * @param {V1PostExperimentGroupRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options?: any) {
-            return ProjectsApiFp(configuration).postExperimentGroup(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -35375,19 +35407,6 @@ export class ProjectsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Delete an experiment group within a project (alpha).
-     * @param {number} projectId The id of the project.
-     * @param {number} groupId The id of the group.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ProjectsApi
-     */
-    public deleteExperimentGroup(projectId: number, groupId: number, options?: any) {
-        return ProjectsApiFp(this.configuration).deleteExperimentGroup(projectId, groupId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @summary Delete a project.
      * @param {number} id The id of the project.
      * @param {*} [options] Override http request option.
@@ -35396,18 +35415,6 @@ export class ProjectsApi extends BaseAPI {
      */
     public deleteProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).deleteProject(id, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get experiment groups within a project (alpha).
-     * @param {number} projectId The id of the project.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ProjectsApi
-     */
-    public getExperimentGroups(projectId: number, options?: any) {
-        return ProjectsApiFp(this.configuration).getExperimentGroups(projectId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -35437,20 +35444,6 @@ export class ProjectsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Update an experiment group within a project (alpha).
-     * @param {number} projectId The id of the project.
-     * @param {number} groupId The id of the group.
-     * @param {V1PatchExperimentGroup} body The desired group fields and values to update.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ProjectsApi
-     */
-    public patchExperimentGroup(projectId: number, groupId: number, body: V1PatchExperimentGroup, options?: any) {
-        return ProjectsApiFp(this.configuration).patchExperimentGroup(projectId, groupId, body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @summary Update a project.
      * @param {number} id The id of the project.
      * @param {V1PatchProject} body The desired project fields and values to update.
@@ -35460,19 +35453,6 @@ export class ProjectsApi extends BaseAPI {
      */
     public patchProject(id: number, body: V1PatchProject, options?: any) {
         return ProjectsApiFp(this.configuration).patchProject(id, body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Create an experiment group within a project (alpha).
-     * @param {number} projectId The id of the project.
-     * @param {V1PostExperimentGroupRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ProjectsApi
-     */
-    public postExperimentGroup(projectId: number, body: V1PostExperimentGroupRequest, options?: any) {
-        return ProjectsApiFp(this.configuration).postExperimentGroup(projectId, body, options)(this.fetch, this.basePath);
     }
 
     /**

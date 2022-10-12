@@ -112,6 +112,6 @@ message ExperimentGroup {
 // PatchExperimentGroup is a partial update to a experiment group with all
 // optional fields.
 message PatchExperimentGroup {
-  // The new name for the project.
+  // The new name for the experiment group.
   optional string name = 1;
 }

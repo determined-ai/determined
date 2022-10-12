@@ -464,7 +464,7 @@ service Determined {
       returns (PatchExperimentResponse) {
     option (google.api.http) = {
       patch: "/api/v1/experiments/{experiment.id}"
-      body: "*"
+      body: "experiment"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"

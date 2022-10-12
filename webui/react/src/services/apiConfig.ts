@@ -731,8 +731,8 @@ export const patchExperiment: DetApi<
     return detApi.Experiments.patchExperiment(
       params.experimentId,
       {
-        experiment: { ...params.body, id: params.experimentId },
-        updateMask: params.updateMask,
+        ...params.body,
+        id: params.experimentId,
       },
       options,
     );
@@ -1441,7 +1441,7 @@ export const getExperimentGroups: DetApi<
 > = {
   name: 'getExperimentGroups',
   postProcess: (response) => response.groups,
-  request: (params, options) => detApi.Projects.getExperimentGroups(params.projectId, options),
+  request: (params, options) => detApi.Internal.getExperimentGroups(params.projectId, options),
 };
 
 export const createExperimentGroup: DetApi<
@@ -1452,7 +1452,7 @@ export const createExperimentGroup: DetApi<
   name: 'createExperimentGroup',
   postProcess: (response) => response.group,
   request: (params, options) =>
-    detApi.Projects.postExperimentGroup(
+    detApi.Internal.postExperimentGroup(
       params.projectId,
       { name: params.name, projectId: params.projectId },
       options,
@@ -1467,7 +1467,7 @@ export const patchExperimentGroup: DetApi<
   name: 'patchExperimentGroup',
   postProcess: (response) => response.group,
   request: (params, options) =>
-    detApi.Projects.patchExperimentGroup(
+    detApi.Internal.patchExperimentGroup(
       params.projectId,
       params.groupId,
       { name: params.name },
@@ -1483,7 +1483,7 @@ export const deleteExperimentGroup: DetApi<
   name: 'deleteExperimentGroup',
   postProcess: noOp,
   request: (params, options) =>
-    detApi.Projects.deleteExperimentGroup(params.projectId, params.groupId, options),
+    detApi.Internal.deleteExperimentGroup(params.projectId, params.groupId, options),
 };
 
 /* Tasks */

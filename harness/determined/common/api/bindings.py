@@ -6531,29 +6531,6 @@ class v1PatchExperimentGroupResponse:
             "group": self.group.to_json(),
         }
 
-class v1PatchExperimentRequest:
-    def __init__(
-        self,
-        *,
-        experiment: "typing.Optional[v1PatchExperiment]" = None,
-        updateMask: "typing.Optional[protobufFieldMask]" = None,
-    ):
-        self.experiment = experiment
-        self.updateMask = updateMask
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchExperimentRequest":
-        return cls(
-            experiment=v1PatchExperiment.from_json(obj["experiment"]) if obj.get("experiment", None) is not None else None,
-            updateMask=protobufFieldMask.from_json(obj["updateMask"]) if obj.get("updateMask", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "experiment": self.experiment.to_json() if self.experiment is not None else None,
-            "updateMask": self.updateMask.to_json() if self.updateMask is not None else None,
-        }
-
 class v1PatchExperimentResponse:
     experiment: "typing.Optional[v1Experiment]" = None
 
@@ -14481,7 +14458,7 @@ def post_NotifyContainerRunning(
 def patch_PatchExperiment(
     session: "api.Session",
     *,
-    body: "v1PatchExperimentRequest",
+    body: "v1PatchExperiment",
     experiment_id: int,
 ) -> "v1PatchExperimentResponse":
     _params = None

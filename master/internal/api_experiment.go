@@ -959,6 +959,7 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	var mask []string
+	fmt.Println(req.UpdateMask)
 
 	if req.UpdateMask != nil {
 		req.UpdateMask.Normalize()

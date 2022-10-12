@@ -57,7 +57,7 @@ build/swagger:
 	mkdir -p build/swagger
 
 $(swagger_out): $(source_files) build/swagger $(swagger_patch) $(echo_swagger_patch)
-	protoc -I src $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
+	protoc -I src $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true,proto3_optional_nullable=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
 	python3 scripts/swagger.py $@ $(echo_swagger_patch)
 
