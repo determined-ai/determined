@@ -12306,6 +12306,30 @@ def get_GetCommands(
         return v1GetCommandsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommands", _resp)
 
+def get_GetCurUser(
+    session: "api.Session",
+    *,
+    userId: "typing.Optional[int]" = None,
+    username: "typing.Optional[str]" = None,
+) -> "v1GetUserResponse":
+    _params = {
+        "userId": userId,
+        "username": username,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users/me",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetCurUser", _resp)
+
 def get_GetCurrentTrialSearcherOperation(
     session: "api.Session",
     *,
@@ -13488,8 +13512,11 @@ def get_GetUser(
     session: "api.Session",
     *,
     userId: int,
+    username: "typing.Optional[str]" = None,
 ) -> "v1GetUserResponse":
-    _params = None
+    _params = {
+        "username": username,
+    }
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/users/{userId}",
@@ -13503,6 +13530,29 @@ def get_GetUser(
     if _resp.status_code == 200:
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
+
+def get_GetUserByUsername(
+    session: "api.Session",
+    *,
+    username: str,
+    userId: "typing.Optional[int]" = None,
+) -> "v1GetUserResponse":
+    _params = {
+        "userId": userId,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{username}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserByUsername", _resp)
 
 def get_GetUserSetting(
     session: "api.Session",

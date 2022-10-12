@@ -46,7 +46,9 @@ message GetUsersResponse {
 // Get the requested user.
 message GetUserRequest {
   // The id of the user.
-  int32 user_id = 2;
+  int32 user_id = 1;
+  // The string of the username.
+  string username = 2;
 }
 // Response to GetUserRequest.
 message GetUserResponse {

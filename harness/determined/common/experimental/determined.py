@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, trial
+from determined.common.experimental import checkpoint, experiment, model, trial, user
 
 
 class _CreateExperimentResponse:
@@ -64,35 +64,81 @@ class Determined:
 
         self._session = api.Session(master, user, auth, cert)
 
-    def create_user(username: str, password: str, admin: bool):
-        # call API create_user
-        # create User object
-        # return that object
+    def create_user(self, username: str, password: str, admin: bool) -> user.User:
+        create_user = bindings.v1User(username=username)
+        req = bindings.v1PostUserRequest(password=password, user=create_user)
+        resp = bindings.post_PostUser(self._session, body=req)
+        return user.User(
+            user_id=resp.user.id,
+            username=resp.user.username,
+            admin=resp.user.admin,
+            session=self._session,
+            active=resp.user.active,
+            agent_uid=resp.user.agentUserGroup.agentUid,
+            agent_gid=resp.user.agentUserGroup.agentGid,
+            agent_user=resp.user.agentUserGroup.agentUser,
+            agent_group=resp.user.agentUserGroup.agentGroup,
+        )
 
-        # new API -> bindings.post_PostUser
+    def get_user_by_id(self, user_id: int) -> user.User:
+        resp = bindings.get_GetUser(self._session, user_id).user
+        return user.User(
+            user_id=resp.user.id,
+            username=resp.user.username,
+            admin=resp.user.admin,
+            session=self._session,
+            active=resp.user.active,
+            agent_uid=resp.user.agentUserGroup.agentUid,
+            agent_gid=resp.user.agentUserGroup.agentGid,
+            agent_user=resp.user.agentUserGroup.agentUser,
+            agent_group=resp.user.agentUserGroup.agentGroup,
+        )
 
-        pass
+    def get_user_by_name(self, user_name: str) -> user.User:
+        resp = bindings.get_GetUserByUsername(self._session, user_name)
+        return user.User(
+            user_id=resp.user.id,
+            username=resp.user.username,
+            admin=resp.user.admin,
+            session=self._session,
+            active=resp.user.active,
+            agent_uid=resp.user.agentUserGroup.agentUid,
+            agent_gid=resp.user.agentUserGroup.agentGid,
+            agent_user=resp.user.agentUserGroup.agentUser,
+            agent_group=resp.user.agentUserGroup.agentGroup,
+        )
 
-    def get_user_by_id(user_id: int):
-        # return User object
+    def whoami(self):
+        resp = bindings.get_GetCurUser(self._session)
+        return user.User(
+            user_id=resp.user.id,
+            username=resp.user.username,
+            admin=resp.user.admin,
+            session=self._session,
+            active=resp.user.active,
+            agent_uid=resp.user.agentUserGroup.agentUid,
+            agent_gid=resp.user.agentUserGroup.agentGid,
+            agent_user=resp.user.agentUserGroup.agentUser,
+            agent_group=resp.user.agentUserGroup.agentGroup,
+        )
 
-        # new API -> bindings.get_GetUser(user_id) (in api_user.go) ++ need to do username
-        pass
-
-    def get_user_by_name(user_name: str):
-        # return User object
-        # new API -> need to edit for username: bindings.get_GetUser(user_name) (in api_user.go)
-        pass
-
-    def whoami():
-        # return current user.
-        pass
-
-    def list_users():
-        # return list of users.
-
-        # new API -> bindings.get_GetUsers()
-        pass
+    def list_users(self):
+        users_bindings = bindings.get_GetUsers().users
+        users = []
+        for user_b in users_bindings:
+            user = user.User(
+                user_id=user_b.id,
+                username=user_b.username,
+                admin=user_b.admin,
+                session=self._session,
+                active=user_b.active,
+                agent_uid=user_b.agentUserGroup.agentUid,
+                agent_gid=user_b.agentUserGroup.agentGid,
+                agent_user=user_b.agentUserGroup.agentUser,
+                agent_group=user_b.agentUserGroup.agentGroup,
+            )
+            users.append(user)
+        return users
 
     def create_experiment(
         self,

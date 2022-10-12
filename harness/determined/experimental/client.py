@@ -174,6 +174,66 @@ def get_experiment(experiment_id: int) -> ExperimentReference:
 
 
 @_require_singleton
+def create_user(username: str, password: str, admin: bool):
+    """
+    Creates an user with username and password, admin. The function returns a
+    :class:`~determined.experimental.client.User` of the User.
+
+    Arguments:
+        username (string): username of the user.
+        password (string): password of the user.
+        admin (bool): indicates whether the user is an admin.
+    """
+    assert _determined is not None
+    return _determined.create_user(username, password, admin)
+
+
+@_require_singleton
+def get_user_by_id(user_id: int):
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    User with the provided user id.
+
+    Arguments:
+        user_id (int): The user ID.
+    """
+    assert _determined is not None
+    return _determined.get_user_by_id(user_id)
+
+
+@_require_singleton
+def get_user_by_name(user_name: str):
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    User with the provided user name.
+
+    Arguments:
+        user_name (string): The user name.
+    """
+    assert _determined is not None
+    return _determined.get_user_by_name(user_name)
+
+
+@_require_singleton
+def whoami():
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    current user.
+    """
+    assert _determined is not None
+    return _determined.whoami()
+
+
+@_require_singleton
+def list_users():
+    """
+    Get the list :class:`~determined.experimental.client.User` of all Users.
+    """
+    assert _determined is not None
+    return _determined.list_users()
+
+
+@_require_singleton
 def get_trial(trial_id: int) -> TrialReference:
     """
     Get the :class:`~determined.experimental.client.TrialReference` representing the

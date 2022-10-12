@@ -6,6 +6,7 @@ from requests import Response
 from determined.common import api
 from determined.common.api import authentication, bindings
 
+
 class User:
     def __init__(
         self,
@@ -13,15 +14,20 @@ class User:
         username: str,
         admin: bool,
         session: api.Session,
+        active: Optional[bool] = True,
+        agent_uid: Optional[int] = None,
+        agent_gid: Optional[int] = None,
+        agent_user: Optional[str] = None,
+        agent_group: Optional[str] = None,
     ):
         self.username = username
         self.admin = admin
         self.user_id = user_id
-        self.active = True
-        self.agent_uid = None
-        self.agent_gid = None
-        self.agent_user = None
-        self.agent_group = None
+        self.active = active
+        self.agent_uid = agent_uid
+        self.agent_gid = agent_gid
+        self.agent_user = agent_user
+        self.agent_group = agent_group
         self.session = session
 
     def update(
@@ -70,7 +76,7 @@ class User:
     def change_password(self, new_password: str) -> Response:
         patch_user = bindings.v1PatchUser(password=new_password)
         resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
-        
+
         return resp
 
     def link_with_agent(self, agent_gid, agent_group, agent_uid, agent_user) -> Response:
