@@ -1012,7 +1012,7 @@ func (a *apiServer) PatchExperiment(
 	if exp.GroupId != req.Experiment.GroupId && maskContains(mask, "group_id") {
 		if req.Experiment.GroupId != nil {
 			var destGroup *projectv1.ExperimentGroup
-			destGroup, err = a.GetExperimentGroupByID(*req.Experiment.GroupId)
+			destGroup, err = a.GetExperimentGroupByID(ctx, *req.Experiment.GroupId)
 			if err != nil {
 				return nil, err
 			}

@@ -353,18 +353,32 @@ func (a *apiServer) GetExperimentGroups(
 	error,
 ) {
 	resp := &apiv1.GetExperimentGroupsResponse{}
-	err := a.m.db.QueryProto("get_experiment_groups", &resp.Groups, req.ProjectId)
-	if err != nil {
-		return nil, err
-	}
 
-	return resp, nil
+	err := db.Bun().NewSelect().
+		Model(&resp.Groups).
+		ModelTableExpr("experiment_groups as g").
+		ColumnExpr("g.id AS id, g.project_id AS project_id, g.name AS name").
+		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE group_id = g.id) AS num_experiments").
+		Where("g.project_id = ?", req.ProjectId).
+		Group("g.id").
+		Scan(ctx)
+
+	return resp, errors.Wrapf(err, "error fetching experiment groups from database")
 }
 
-func (a *apiServer) GetExperimentGroupByID(id int32) (*projectv1.ExperimentGroup, error) {
+func (a *apiServer) GetExperimentGroupByID(ctx context.Context, id int32) (*projectv1.ExperimentGroup, error) {
 	notFoundErr := status.Errorf(codes.NotFound, "experiment group (%d) not found", id)
 	g := &projectv1.ExperimentGroup{}
-	if err := a.m.db.QueryProto("get_experiment_group", g, id); errors.Is(err, db.ErrNotFound) {
+
+	err := db.Bun().NewSelect().
+		Model(g).
+		ModelTableExpr("experiment_groups as g").
+		ColumnExpr("g.id AS id, g.project_id AS project_id, g.name AS name").
+		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE group_id = g.id) AS num_experiments").
+		Where("g.id = ?", id).
+		Scan(ctx)
+
+	if errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error fetching experiment group (%d) from database", id)
@@ -424,7 +438,7 @@ func (a *apiServer) PatchExperimentGroup(
 			currProject.Id)
 	}
 
-	currExperimentGroup, err := a.GetExperimentGroupByID(req.GroupId)
+	currExperimentGroup, err := a.GetExperimentGroupByID(ctx, req.GroupId)
 	if err != nil {
 		return nil, err
 	}
