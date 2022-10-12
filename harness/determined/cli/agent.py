@@ -216,7 +216,7 @@ def agent_id_completer(_1: str, parsed_args: argparse.Namespace, _2: Any) -> Lis
 
 args_description = [
     Cmd("a|gent", None, "manage agents", [
-        Cmd("list", list_agents, "list agents", [
+        Cmd("list ls", list_agents, "list agents", [
             Group(
                 Arg("--csv", action="store_true", help="print as CSV"),
                 Arg("--json", action="store_true", help="print as JSON"),
@@ -243,7 +243,7 @@ args_description = [
         ]),
     ]),
     Cmd("s|lot", None, "manage slots", [
-        Cmd("list", list_slots, "list slots in cluster", [
+        Cmd("list ls", list_slots, "list slots in cluster", [
             Group(
                 Arg("--csv", action="store_true", help="print as CSV"),
                 Arg("--json", action="store_true", help="print as JSON"),

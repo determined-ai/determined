@@ -164,7 +164,7 @@ args_description: List[Any] = [
         "manage tasks (commands, experiments, notebooks, shells, tensorboards)",
         [
             Cmd(
-                "list",
+                "list ls",
                 list_tasks,
                 "list tasks in cluster",
                 [

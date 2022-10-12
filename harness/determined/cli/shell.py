@@ -201,7 +201,7 @@ def _open_shell(
 
 args_description = [
     Cmd("shell", None, "manage shells", [
-        Cmd("list", partial(command.list_tasks), "list shells", [
+        Cmd("list ls", partial(command.list_tasks), "list shells", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
