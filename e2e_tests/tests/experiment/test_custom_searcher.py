@@ -307,7 +307,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
     config["name"] = "asha"
     config["description"] = "custom searcher"
 
-    max_length = 3000
+    max_length = 2000
     max_trials = 16
     num_rungs = 3
     divisor = 4
@@ -331,12 +331,12 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
+    # 16 trials in rung 1 (#batches = 125)
+    assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 500)
+    assert sum(t.totalBatchesProcessed >= 500 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2000)
+    assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -401,12 +401,12 @@ def test_run_asha_searcher_exp_core_api(
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
 
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
+    # 16 trials in rung 1 (#batches = 150)
+    assert sum(t.totalBatchesProcessed >= 150 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 600)
+    assert sum(t.totalBatchesProcessed >= 600 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2400)
+    assert sum(t.totalBatchesProcessed == 2400 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -462,7 +462,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     config["name"] = "asha"
     config["description"] = ";".join(exceptions) if exceptions else "custom searcher"
 
-    max_length = 3000
+    max_length = 2000
     max_trials = 16
     num_rungs = 3
     divisor = 4
@@ -517,12 +517,12 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
 
     response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
 
-    # 16 trials in rung 1 (#batches = 187)
-    assert sum(t.totalBatchesProcessed >= 187 for t in response_trials) == 16
-    # at least 4 trials in rung 2 (#batches = 750)
-    assert sum(t.totalBatchesProcessed >= 750 for t in response_trials) >= 4
-    # at least 1 trial in rung 3 (#batches = 3000)
-    assert sum(t.totalBatchesProcessed == 3000 for t in response_trials) >= 1
+    # 16 trials in rung 1 (#batches = 125)
+    assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
+    # at least 4 trials in rung 2 (#batches = 500)
+    assert sum(t.totalBatchesProcessed >= 500 for t in response_trials) >= 4
+    # at least 1 trial in rung 3 (#batches = 2000)
+    assert sum(t.totalBatchesProcessed == 2000 for t in response_trials) >= 1
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
