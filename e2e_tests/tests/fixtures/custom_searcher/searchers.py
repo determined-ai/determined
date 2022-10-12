@@ -43,9 +43,9 @@ class SingleSearchMethod(searcher.SearchMethod):
         return searcher_state.trial_progress[the_trial] / self.max_length
 
     def on_trial_exited_early(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
-        logging.warning(f"Trial {request_id} exited early: {exit_reason}")
+        logging.warning(f"Trial {request_id} exited early: {exited_reason}")
         return [searcher.Shutdown()]
 
     def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
@@ -83,6 +83,7 @@ class RandomSearchMethod(searcher.SearchMethod):
         self.created_trials = 0
         self.pending_trials = 0
         self.closed_trials = 0
+        self.tried = set()
 
     def on_trial_created(
         self, _: searcher.SearcherState, request_id: uuid.UUID
@@ -150,12 +151,12 @@ class RandomSearchMethod(searcher.SearchMethod):
         return progress
 
     def on_trial_exited_early(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
         self.pending_trials -= 1
 
         ops: List[searcher.Operation] = []
-        if exit_reason == searcher.ExitedReason.INVALID_HP:
+        if exited_reason == searcher.ExitedReason.INVALID_HP:
             request_id = uuid.uuid4()
             ops.append(
                 searcher.Create(
@@ -202,7 +203,10 @@ class RandomSearchMethod(searcher.SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self) -> Dict[str, int]:
-        hparams = {"global_batch_size": random.randint(10, 100)}
+        increment = random.randint(1, 20)
+        while increment in self.tried:
+            increment = random.randint(1, 20)
+        hparams = {"increment_by": increment}
         logging.info(f"hparams={hparams}")
         return hparams
 

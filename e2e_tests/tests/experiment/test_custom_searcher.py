@@ -106,23 +106,6 @@ def test_run_random_searcher_exp() -> None:
                 "after_save",
             ],
         ),
-        ("noop.yaml", f"custom-searcher-random-test-noop-{TIMESTAMP}", []),
-        (
-            "noop.yaml",
-            f"custom-searcher-random-test-noop-fail1-{TIMESTAMP}",
-            ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
-        ),
-        (
-            "noop.yaml",
-            f"custom-searcher-random-test-noop-fail2-{TIMESTAMP}",
-            [
-                "on_trial_created",
-                "after_save",
-                "after_save",
-                "on_validation_completed",
-                "after_save",
-            ],
-        ),
     ],
 )
 def test_run_random_searcher_exp_core_api(
@@ -177,7 +160,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
     exp_name = f"random-pause-{TIMESTAMP}"
     config["entrypoint"] += " --exp-name " + exp_name
-    config["entrypoint"] += " --config-name noop.yaml"
+    config["entrypoint"] += " --config-name core_api_model.yaml"
 
     model_def_path = conf.fixtures_path("custom_searcher")
 
@@ -385,16 +368,6 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
                 "after_save",
                 "after_save",
                 "shutdown",
-            ],
-        ),
-        ("noop.yaml", f"custom-searcher-asha-noop-test-{TIMESTAMP}", []),
-        (
-            "noop.yaml",
-            f"custom-searcher-asha-test-noop-fail1-{TIMESTAMP}",
-            [
-                "initial_operations_start",
-                "after_save",
-                "on_validation_completed",
             ],
         ),
     ],

@@ -99,12 +99,12 @@ class RandomSearchMethod(searcher.SearchMethod):
         return progress
 
     def on_trial_exited_early(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, exit_reason: searcher.ExitedReason
+        self, _: searcher.SearcherState, request_id: uuid.UUID, exited_reason: searcher.ExitedReason
     ) -> List[searcher.Operation]:
         self.pending_trials -= 1
 
         ops: List[searcher.Operation] = []
-        if exit_reason == searcher.ExitedReason.INVALID_HP:
+        if exited_reason == searcher.ExitedReason.INVALID_HP:
             request_id = uuid.uuid4()
             ops.append(
                 searcher.Create(
