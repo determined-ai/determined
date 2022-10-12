@@ -1275,6 +1275,8 @@ To verify your search is working as intended before committing to a full run, yo
 
    det preview-search <configuration.yaml>
 
+.. _slurm-config:
+
 ***********************
  Slurm Cluster Details
 ***********************

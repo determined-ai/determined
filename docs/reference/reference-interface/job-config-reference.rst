@@ -163,4 +163,4 @@ The following configuration settings are supported:
       treated as idle, since JupyterLab does not provide activity information for those case.)
 
 -  ``slurm``: Slurm cluster details may optionally be specified as for :ref:`experiments
-   <experiment-config-reference>`.
+   <slurm-config>`.
