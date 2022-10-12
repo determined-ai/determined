@@ -33,15 +33,12 @@ func newCustomSearch(config expconf.CustomConfig) SearchMethod {
 }
 
 func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
-	event := experimentv1.SearcherEvent_InitialOperations{
-		InitialOperations: &experimentv1.InitialOperations{},
-	}
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &event,
-	}
-	// For this method and all the other methods in custom_search
-	// the Id will be set in the Enqueue method of SearcherEvent queue.
-	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	// For this method and all the other methods in customSearch, the ID will be set in Enqueue.
+	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_InitialOperations{
+			InitialOperations: &experimentv1.InitialOperations{},
+		},
+	})
 
 	return nil, nil
 }
@@ -54,34 +51,29 @@ func (s *customSearch) setCustomSearcherProgress(progress float64) {
 	s.customSearchState.CustomSearchProgress = progress
 }
 
-func (s *customSearch) trialProgress(ctx context, requestID model.RequestID,
+func (s *customSearch) trialProgress(
+	ctx context,
+	requestID model.RequestID,
 	progress PartialUnits,
 ) {
-	event := experimentv1.SearcherEvent_TrialProgress{
-		TrialProgress: &experimentv1.TrialProgress{
-			RequestId:    requestID.String(),
-			PartialUnits: float64(progress),
+	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_TrialProgress{
+			TrialProgress: &experimentv1.TrialProgress{
+				RequestId:    requestID.String(),
+				PartialUnits: float64(progress),
+			},
 		},
-	}
-
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &event,
-	}
-
-	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	})
 }
 
 func (s *customSearch) trialCreated(ctx context, requestID model.RequestID) ([]Operation, error) {
-	event := experimentv1.SearcherEvent_TrialCreated{
-		TrialCreated: &experimentv1.TrialCreated{
-			RequestId: requestID.String(),
+	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_TrialCreated{
+			TrialCreated: &experimentv1.TrialCreated{
+				RequestId: requestID.String(),
+			},
 		},
-	}
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &event,
-	}
-
-	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	})
 	return nil, nil
 }
 
@@ -95,49 +87,40 @@ func (s *customSearch) progress(
 func (s *customSearch) validationCompleted(
 	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
-	event := experimentv1.SearcherEvent_ValidationCompleted{
-		ValidationCompleted: &experimentv1.ValidationCompleted{
-			RequestId:           requestID.String(),
-			ValidateAfterLength: op.ToProto().Length,
-			Metric:              metric,
+	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_ValidationCompleted{
+			ValidationCompleted: &experimentv1.ValidationCompleted{
+				RequestId:           requestID.String(),
+				ValidateAfterLength: op.ToProto().Length,
+				Metric:              metric,
+			},
 		},
-	}
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &event,
-	}
-
-	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	})
 	return nil, nil
 }
 
 func (s *customSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
-	event := experimentv1.SearcherEvent_TrialExitedEarly{
-		TrialExitedEarly: &experimentv1.TrialExitedEarly{
-			RequestId:    requestID.String(),
-			ExitedReason: model.ExitedReasonToProto(exitedReason),
+	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_TrialExitedEarly{
+			TrialExitedEarly: &experimentv1.TrialExitedEarly{
+				RequestId:    requestID.String(),
+				ExitedReason: exitedReason.ToProto(),
+			},
 		},
-	}
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &event,
-	}
-
-	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	})
 	return nil, nil
 }
 
 func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
-	event := experimentv1.SearcherEvent_TrialClosed{
-		TrialClosed: &experimentv1.TrialClosed{
-			RequestId: requestID.String(),
+	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
+		Event: &experimentv1.SearcherEvent_TrialClosed{
+			TrialClosed: &experimentv1.TrialClosed{
+				RequestId: requestID.String(),
+			},
 		},
-	}
-	searcherEvent := experimentv1.SearcherEvent{
-		Event: &event,
-	}
-
-	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	})
 	return nil, nil
 }
 
@@ -153,6 +136,6 @@ func (s *customSearch) Restore(state json.RawMessage) error {
 }
 
 func (s *customSearch) Unit() expconf.Unit {
-	// TODO does unit make sense for custom search?
+	// TODO: Does unit make sense for custom search?
 	return expconf.Batches
 }

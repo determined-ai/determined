@@ -17,12 +17,12 @@ Custom SearchMethod:
 Multi-trial experiment:
 * **experiment_files/model_def.py**: The core code for the model. This includes building and compiling the model.
 * **experiment_files/data.py**: The data loading and preparation code for the model.
-* **experiment_files/layers.py**: Defines the convolutional layers that the model uses. 
+* **experiment_files/layers.py**: Defines the convolutional layers that the model uses.
 
 
 ### Configuration Files
 Multi-trial experiment:
-* **experiment_files/config.yaml**: Configuration for running `model_def.py` with a custom SearchMethod. 
+* **experiment_files/config.yaml**: Configuration for running `model_def.py` with a custom SearchMethod.
 Note `searcher.name: custom`.
 
 ## Data
@@ -37,5 +37,5 @@ For instance, `export DET_MASTER=<master_host:port>`.
 2. To run the experiment see:
     * `local_search_runner/README.md` to execute the custom SearchMethod locally,
     * `remote_search_runner/README.md` to execute the custom SearchMethod on a Determined cluster.
-   
+
 

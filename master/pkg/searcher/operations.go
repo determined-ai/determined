@@ -140,22 +140,21 @@ func NewCreateFromCheckpoint(
 	return create
 }
 
-// CreateFromProto initializes a new Create operation from
-// an experimentv1.SearcherOperation_CreateTrial.
+// CreateFromProto initializes a new Create operation from an
+// experimentv1.SearcherOperation_CreateTrial.
 func CreateFromProto(
 	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
 	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial id %s", protoSearcherOp.CreateTrial.RequestId))
+		panic(fmt.Sprintf("Unparseable trial ID %s", protoSearcherOp.CreateTrial.RequestId))
 	}
-	// TODO determine whether trial seed is set on client or on master
+	// TODO: Determine whether trial seed is set on client or on master.
 	trialSeed := uint32(42)
 	var hparams HParamSample
-	err = json.Unmarshal([]byte(protoSearcherOp.CreateTrial.Hyperparams), &hparams)
-	if err != nil {
-		// TODO should we return this err instead?
+	if err = json.Unmarshal([]byte(protoSearcherOp.CreateTrial.Hyperparams), &hparams); err != nil {
+		// TODO: Should we return this err instead?
 		panic(fmt.Sprintf("Unparseable hyperparams %s", protoSearcherOp.CreateTrial.Hyperparams))
 	}
 	return Create{
@@ -206,7 +205,7 @@ func ValidateAfterFromProto(
 ) ValidateAfter {
 	requestID, err := uuid.Parse(op.ValidateAfter.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial id %s", op.ValidateAfter.RequestId))
+		panic(fmt.Sprintf("Unparseable trial ID %s", op.ValidateAfter.RequestId))
 	}
 	return ValidateAfter{
 		RequestID: model.RequestID(requestID),
@@ -236,14 +235,14 @@ func NewSearcherProgress(progress float64) SearcherProgress {
 	return SearcherProgress{progress}
 }
 
-// SearcherProgressFromProto creates the SearcherProgress from protobud representation.
+// SearcherProgressFromProto creates the SearcherProgress from protobuf representation.
 func SearcherProgressFromProto(
 	op *experimentv1.SearcherOperation_SearcherProgress,
 ) SearcherProgress {
 	return SearcherProgress{Progress: op.SearcherProgress.Progress}
 }
 
-// Close the trial with the given trial id.
+// Close the trial with the given trial ID.
 type Close struct {
 	RequestID model.RequestID `json:"request_id"`
 }
@@ -261,7 +260,7 @@ func CloseFromProto(
 ) Close {
 	requestID, err := uuid.Parse(op.CloseTrial.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial id %s", op.CloseTrial.RequestId))
+		panic(fmt.Sprintf("Unparseable trial ID %s", op.CloseTrial.RequestId))
 	}
 	return Close{
 		RequestID: model.RequestID(requestID),

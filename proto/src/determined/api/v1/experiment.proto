@@ -692,28 +692,25 @@ message GetModelDefFileResponse {
   bytes file = 1;
 }
 
-// Request to get the list of Searcher Events.
+// Request to get the list of searcher events.
 message GetSearcherEventsRequest {
-  // The id of the experiment.
+  // The ID of the experiment.
   int32 experiment_id = 1;
 }
 
 // Response to GetSearcherEventsRequest.
 message GetSearcherEventsResponse {
-  // The requested list of searcher events.
-  // str value can be: InitialOperations, TrialCreated, ValidationCreated,
-  // TrialExitedEarly, TrialClosed appended with a counter id to represent
-  // order.
+  // The list of events.b in the queue.
   repeated determined.experiment.v1.SearcherEvent searcher_events = 1;
 }
 
 // Request for sending operations from a custom user search method.
 message PostSearcherOperationsRequest {
-  // The experiment id
+  // The experiment ID.
   int32 experiment_id = 1;
-  // list of operations in the method.
+  // List of operations in the method.
   repeated determined.experiment.v1.SearcherOperation searcher_operations = 2;
-  // The event that triggered client to send the above operations to master.
+  // The event that triggered the client to send these operations to the master.
   determined.experiment.v1.SearcherEvent triggered_by_event = 3;
 }
 
