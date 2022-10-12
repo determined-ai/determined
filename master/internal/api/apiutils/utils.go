@@ -31,7 +31,6 @@ var (
 	// ErrorPassthroughSet is the default set of errors that will be passed through by
 	// MapAndFilterErrors without blocking or mapping.
 	ErrorPassthroughSet = map[error]bool{
-		nil:                          true,
 		ErrBadRequest:                true,
 		ErrInvalidLimit:              true,
 		ErrNotFound:                  true,
