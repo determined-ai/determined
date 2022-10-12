@@ -2,14 +2,17 @@ import React, { useMemo } from 'react';
 
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { useStore } from 'contexts/Store';
 import Message, { MessageType } from 'shared/components/Message';
+import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { Loadable } from 'utils/loadable';
 
 export const ClusterOverallBar: React.FC = () => {
-  const { agents, cluster: overview } = useStore();
+  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
+  // TODO: handle loading state
+  const agents = Loadable.getOrElse([], useAgents());
 
   const cudaSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.CUDA);

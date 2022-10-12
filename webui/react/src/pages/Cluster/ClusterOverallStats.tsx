@@ -4,13 +4,18 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
+import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
-  const { activeExperiments, activeTasks, agents, cluster: overview, resourcePools } = useStore();
+  const { activeExperiments, activeTasks, resourcePools } = useStore();
+  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
+  // TODO: handle loading state
+  const agents = Loadable.getOrElse([], useAgents());
 
   const auxContainers = useMemo(() => {
     const tally = {

@@ -12,7 +12,9 @@ import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
+import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
 import { BrandingType } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import css from './NavigationTabbar.module.scss';
 
@@ -41,8 +43,11 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { agents, auth, cluster: overview, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { auth resourcePools, info, pinnedWorkspaces } = useStore();
   const { ui } = useUI();
+  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
+  // TODO: handle loading state
+  const agents = Loadable.getOrElse([], useAgents());
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =

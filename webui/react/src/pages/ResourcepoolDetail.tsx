@@ -20,10 +20,12 @@ import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { floatToPercent } from 'shared/utils/string';
+import { useAgents } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
@@ -49,7 +51,9 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetail: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const { agents, resourcePools } = useStore();
+  const { resourcePools } = useStore();
+  // TODO: handle loading state
+  const agents = Loadable.getOrElse([], useAgents());
 
   const pool = useMemo(() => {
     return resourcePools.find((pool) => pool.name === poolname);

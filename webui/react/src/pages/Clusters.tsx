@@ -6,6 +6,8 @@ import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
+import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
+import { Loadable } from 'utils/loadable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
@@ -34,7 +36,10 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const { agents, cluster: overview, resourcePools } = useStore();
+  const { resourcePools } = useStore();
+  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
+  // TODO: handle loading state
+  const agents = Loadable.getOrElse([], useAgents());
 
   const cluster = useMemo(() => {
     return clusterStatusText(overview, resourcePools, agents);

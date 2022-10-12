@@ -15,9 +15,11 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { clone } from 'shared/utils/data';
+import { useAgents } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { Loadable } from 'utils/loadable';
 
 import Json from './Json';
 import css from './ResourcePoolCard.module.scss';
@@ -141,7 +143,8 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
   resourcePool: pool,
   size = ShirtSize.Large,
 }: Props) => {
-  const { agents } = useStore();
+  // TODO: handle loading state
+  const agents = Loadable.getOrElse([], useAgents());
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
   }, [pool]);
