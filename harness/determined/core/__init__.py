@@ -26,6 +26,7 @@ from determined.core._preempt import (
 )
 
 from determined.core._profile import (
+    DummyProfilerContext,
     ProfilerContext,
 )
 

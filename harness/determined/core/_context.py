@@ -46,7 +46,7 @@ class Context:
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
-        self.profiler = profiler
+        self.profiler = profiler or core.DummyProfilerContext(self.distributed)
 
     def __enter__(self) -> "Context":
         self.preempt.start()
@@ -104,7 +104,7 @@ def _dummy_init(
 
     train = core.DummyTrainContext()
     searcher = core.DummySearcherContext(distributed)
-
+    profiler = core.DummyProfilerContext(distributed)
     _install_stacktrace_on_sigusr1()
 
     return Context(
@@ -113,6 +113,7 @@ def _dummy_init(
         preempt=preempt,
         train=train,
         searcher=searcher,
+        profiler=profiler
     )
 
 

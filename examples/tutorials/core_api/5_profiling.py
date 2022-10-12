@@ -12,22 +12,12 @@ import time
 import determined as det
 from determined import profiler
 
-def main(core_context, increment_by):
-    for batch in range(100):
-        with core_context.profiler.record_timing("train_batch.backward"):
-            steps_completed = batch + 1
-            time.sleep(1)
-            logging.info(f"batch is now {batch}")
-        core_context.profiler.record_metric("test metric", 1.0)
-        # NEW: report training metrics.
-        if steps_completed % 10 == 0:
-            core_context.train.report_training_metrics(
-                steps_completed=steps_completed, metrics={"x": batch}
-            )
-    # NEW: report a "validation" metric at the end.
-    core_context.train.report_validation_metrics(
-        steps_completed=steps_completed, metrics={"x": 100}
-    )
+def main(core_context):
+    with core_context.profiler.init(enabled, begin_on_batch, end_after_batch) as profiler:
+        for batch in range(100):
+            with profiler.record_timing("batch"):
+                print(batch)
+            profiler.step_batch()
 
 
 if __name__ == "__main__":
@@ -35,4 +25,4 @@ if __name__ == "__main__":
 
     # NEW: create a context, and pass it to the main function.
     with det.core.init() as core_context:
-        main(core_context=core_context, increment_by=1)
+        main(core_context=core_context)

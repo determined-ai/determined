@@ -55,7 +55,23 @@ class ProfilerContext:
 
     def start(self) -> None:
         self.profiler.start()
+
+        # Set training to True to enable record_timing
         self.profiler.set_training(True)
 
     def end(self) -> None:
         self.profiler.end()
+
+
+class DummyProfilerContext(ProfilerContext):
+    def __init__(self, dist: core.DistributedContext) -> None:
+        super().__init__(
+            dist=dist,
+            trial_id="",
+            agent_id="",
+            master_url="",
+            enabled=False,
+            begin_on_batch=0,
+            end_after_batch=None,
+            sync_timings=False,
+        )
