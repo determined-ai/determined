@@ -391,8 +391,22 @@ func (a *apiServer) PostExperimentGroup(
 			"`name` must not be an empty or whitespace string.")
 	}
 
-	g := &projectv1.ExperimentGroup{}
-	err = a.m.db.QueryProto("insert_experiment_group", g, req.Name, req.ProjectId)
+	g := &projectv1.ExperimentGroup{Name: req.Name, ProjectId: req.ProjectId}
+
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err = tx.NewInsert().
+			Model(g).
+			Column("name", "project_id").
+			Returning("id, name, project_id").
+			Exec(ctx, g)
+
+		if err != nil {
+			return err
+		}
+		g.NumExperiments = 0
+
+		return err
+	})
 
 	return &apiv1.PostExperimentGroupResponse{Group: g},
 		errors.Wrapf(err, "error creating experiment group %s in database", req.Name)
@@ -432,31 +446,29 @@ func (a *apiServer) PatchExperimentGroup(
 	}
 
 	finalExperimentGroup := &projectv1.ExperimentGroup{Id: currExperimentGroup.Id}
-	// err = a.m.db.QueryProto("update_experiment_group",
-	// 	finalExperimentGroup, currExperimentGroup.Id, currExperimentGroup.Name)
 
-		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			count, err := tx.NewSelect().
-				Table("experiments").
-				Where("group_id = ?", req.GroupId).
-				Count(ctx)
-			if err != nil {
-				return err
-			}
-	
-			_, err = tx.NewUpdate().
-				Table("experiment_groups").
-				Set("name = ?", currExperimentGroup.Name).
-				Where("id = ?", currExperimentGroup.Id).
-				Returning("id, name, project_id").
-				Exec(ctx, finalExperimentGroup)
-			if err != nil {
-				return err
-			}
-			finalExperimentGroup.NumExperiments = int32(count)
-	
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		count, err := tx.NewSelect().
+			Table("experiments").
+			Where("group_id = ?", req.GroupId).
+			Count(ctx)
+		if err != nil {
 			return err
-		})
+		}
+
+		_, err = tx.NewUpdate().
+			Table("experiment_groups").
+			Set("name = ?", currExperimentGroup.Name).
+			Where("id = ?", currExperimentGroup.Id).
+			Returning("id, name, project_id").
+			Exec(ctx, finalExperimentGroup)
+		if err != nil {
+			return err
+		}
+		finalExperimentGroup.NumExperiments = int32(count)
+
+		return err
+	})
 
 	return &apiv1.PatchExperimentGroupResponse{Group: finalExperimentGroup},
 		errors.Wrapf(err, "error updating experiment group (%d) in database", currExperimentGroup.Id)
