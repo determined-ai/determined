@@ -93,16 +93,6 @@ def wait_for_experiment_by_name_is_active(
                 )
             experiment = response[0]
             experiment_id = experiment.id
-        # Ignore network errors while polling for experiment state to avoid a
-        # single network flake to cause a test suite failure. If the master is
-        # unreachable multiple times, this test will fail after max_wait_secs.
-        except api.errors.MasterNotFoundException:
-            logging.warning(
-                "Network failure ignored when polling for state of "
-                "experiment {}".format(experiment_name)
-            )
-            time.sleep(1)
-            continue
         except api.errors.NotFoundException:
             logging.warning(
                 "Experiment not yet available to check state: "
@@ -157,16 +147,6 @@ def wait_for_experiment_state(
     for seconds_waited in range(max_wait_secs):
         try:
             state = experiment_state(experiment_id)
-        # Ignore network errors while polling for experiment state to avoid a
-        # single network flake to cause a test suite failure. If the master is
-        # unreachable multiple times, this test will fail after max_wait_secs.
-        except api.errors.MasterNotFoundException:
-            logging.warning(
-                "Network failure ignored when polling for state of "
-                "experiment {}".format(experiment_id)
-            )
-            time.sleep(1)
-            continue
         except api.errors.NotFoundException:
             logging.warning(
                 "Experiment not yet available to check state: "
@@ -215,15 +195,6 @@ def wait_for_trial_state(
     for seconds_waited in range(max_wait_secs):
         try:
             state = trial_state(trial_id)
-        # Ignore network errors while polling for experiment state to avoid a
-        # single network flake to cause a test suite failure. If the master is
-        # unreachable multiple times, this test will fail after max_wait_secs.
-        except api.errors.MasterNotFoundException:
-            logging.warning(
-                "Network failure ignored when polling for state of " "trial {}".format(trial_id)
-            )
-            time.sleep(1)
-            continue
         except api.errors.NotFoundException:
             logging.warning("Trial not yet available to check state: " "trial {}".format(trial_id))
             time.sleep(0.25)
