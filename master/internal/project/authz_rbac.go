@@ -3,8 +3,7 @@ package project
 import (
 	"context"
 
-	"github.com/pkg/errors"
-
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -31,7 +30,7 @@ func (a *ProjectAuthZRBAC) CanGetProject(
 ) (canGetProject bool, serverError error) {
 	if err := permCheck(curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT); err != nil {
-		if errors.Is(err, db.ErrNotEnoughPermissions) {
+		if _, ok := err.(authz.PermissionDeniedError); ok {
 			return false, nil
 		}
 		return false, err

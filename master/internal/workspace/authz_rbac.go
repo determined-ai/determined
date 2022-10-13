@@ -3,11 +3,11 @@ package workspace
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/internal/db"
-
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 
+	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -179,7 +179,7 @@ func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	}
 
 	err := db.DoesPermissionMatch(ctx, uid, workspaceID, permID)
-	if errors.Is(err, db.ErrNotEnoughPermissions) {
+	if _, ok := err.(authz.PermissionDeniedError); ok {
 		return false, nil
 	} else if err != nil {
 		return false, errors.Wrap(err, ErrorLookup.Error())
