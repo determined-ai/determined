@@ -333,6 +333,13 @@ describe('Data Utilities', () => {
       it('should support empty path', () => {
         expect(utils.getPath<RawJson>(object, '')).toBe(object);
       });
+
+      it('should return undefined when value is undefined or null', () => {
+        const obj1 = { hash: '', pathname: '/login', search: '', state: undefined };
+        const obj2 = { hash: '', pathname: '/login', search: '', state: null };
+        expect(utils.getPath<Location>(obj1, 'state.loginRedirect')).toBeUndefined();
+        expect(utils.getPath<Location>(obj2, 'state.loginRedirect')).toBeUndefined();
+      });
     });
 
     describe('getPathOrElse', () => {
