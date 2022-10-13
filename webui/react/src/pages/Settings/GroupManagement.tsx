@@ -6,6 +6,7 @@ import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
@@ -13,7 +14,7 @@ import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import useModalGroupRoles from 'hooks/useModal/UserSettings/useModalGroupRoles';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -98,6 +99,8 @@ const GroupManagement: React.FC = () => {
   const { canModifyGroups, canViewGroups } = usePermissions();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
+    if (!settings?.tableLimit || !settings.tableOffset) return;
+
     try {
       const response = await getGroups(
         {
@@ -117,7 +120,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings.tableLimit, settings.tableOffset]);
+  }, [canceler.signal, settings?.tableLimit, settings?.tableOffset]);
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
@@ -146,7 +149,7 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-  }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
+  }, [settings?.tableLimit, settings?.tableOffset, fetchGroups, fetchUsers]);
 
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
@@ -280,28 +283,30 @@ const GroupManagement: React.FC = () => {
   }, [users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
 
   const table = useMemo(() => {
-    return (
-      <InteractiveTable
-        columns={columns}
-        containerRef={pageRef}
-        dataSource={groups}
-        expandable={{ expandedRowRender: expandedUserRender, onExpand, onExpandedRowsChange }}
-        loading={isLoading}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          total,
-        )}
-        rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey={(r) => r.group.groupId || 0}
-        settings={settings as InteractiveTableSettings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      />
-    );
+    return settings
+      ? (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={groups}
+          expandable={{ expandedRowRender: expandedUserRender, onExpand, onExpandedRowsChange }}
+          loading={isLoading}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            total,
+          )}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey={(r) => r.group.groupId || 0}
+          settings={settings as InteractiveTableSettings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+        />
+      )
+      : <SkeletonTable columns={columns.length} />;
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (

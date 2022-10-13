@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
@@ -16,7 +16,7 @@ import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   assignRolesToGroup,
   assignRolesToUser,
@@ -195,8 +195,8 @@ const WorkspaceMembers: React.FC<Props> = ({
   }
 
   useEffect(() => {
-    onFilterUpdate(settings.name);
-  }, [onFilterUpdate, settings.name]);
+    onFilterUpdate(settings?.name);
+  }, [onFilterUpdate, settings?.name]);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -213,12 +213,12 @@ const WorkspaceMembers: React.FC<Props> = ({
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings.name || ''}
+        value={settings?.name || ''}
         onReset={handleNameSearchReset}
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.name],
+    [handleNameSearchApply, handleNameSearchReset, settings?.name],
   );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
@@ -392,23 +392,29 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   return (
     <div className={css.membersContainer}>
-      <InteractiveTable
-        columns={columns}
-        containerRef={pageRef}
-        dataSource={usersAndGroups}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          usersAndGroups.length,
-        )}
-        rowKey={generateTableKey}
-        settings={settings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      />
+      {
+        settings
+        ? (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={usersAndGroups}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              },
+              usersAndGroups.length,
+            )}
+            rowKey={generateTableKey}
+            settings={settings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings}
+          />
+        )
+        : <SkeletonTable columns={columns.length} />
+      }
     </div>
   );
 };

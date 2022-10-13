@@ -1,6 +1,8 @@
+import { array, boolean, number, string } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { DEFAULT_POOL_TAB_KEY } from 'pages/ResourcepoolDetail';
 import { Determinedjobv1State } from 'services/api-ts-sdk';
 
@@ -43,7 +45,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<JobColumnName, number> = {
 };
 
 export interface Settings extends InteractiveTableSettings {
-  sortKey: 'jobsAhead';
+  sortKey: string;
 }
 
 const routeSpaceForState = (jobState: Determinedjobv1State): string => {
@@ -52,53 +54,42 @@ const routeSpaceForState = (jobState: Determinedjobv1State): string => {
   return `/${DEFAULT_POOL_TAB_KEY}`;
 };
 
-const config = (jobState: Determinedjobv1State): SettingsConfig => ({
+const config = (jobState: Determinedjobv1State): SettingsConfig<Settings> => ({
   applicableRoutespace: routeSpaceForState(jobState),
-  settings: [
-    {
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(string),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: JobColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
+    sortDesc: {
       defaultValue: false,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: 'jobsAhead',
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: string,
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: `job-queue-${jobState}`,
 });
 

@@ -3,8 +3,9 @@ import React, { useCallback, useMemo } from 'react';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
+import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
@@ -21,7 +22,7 @@ export interface Props {
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, { storagePath });
+  const { settings, updateSettings } = useSettings<Settings>(Object.assign(settingsConfig, { applicableRoutespace: storagePath }));
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
@@ -49,13 +50,13 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [defaultMetric] : [];
-    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
+    const settingMetrics: Metric[] = (settings?.metric || []).map((metric) => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metrics };
-  }, [experiment?.config?.searcher, metricNames, settings.metric]);
+  }, [experiment?.config?.searcher, metricNames, settings?.metric]);
 
   const handleMetricChange = useCallback(
     (value: Metric[]) => {
@@ -78,15 +79,21 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
             trialTerminated={terminalRunStates.has(trial?.state ?? RunState.Active)}
             onMetricChange={handleMetricChange}
           />
-          <TrialDetailsWorkloads
-            defaultMetrics={defaultMetrics}
-            experiment={experiment}
-            metricNames={metricNames}
-            metrics={metrics}
-            settings={settings}
-            trial={trial}
-            updateSettings={updateSettings}
-          />
+          {
+            settings
+            ? (
+              <TrialDetailsWorkloads
+                defaultMetrics={defaultMetrics}
+                experiment={experiment}
+                metricNames={metricNames}
+                metrics={metrics}
+                settings={settings}
+                trial={trial}
+                updateSettings={updateSettings}
+              />
+            )
+            : <Spinner spinning />
+          }
         </>
       ) : null}
     </div>

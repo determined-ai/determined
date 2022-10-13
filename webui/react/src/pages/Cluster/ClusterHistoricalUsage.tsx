@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import { useStore } from 'contexts/Store';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 
 import css from './ClusterHistoricalUsage.module.scss';
@@ -35,15 +35,15 @@ const ClusterHistoricalUsage: React.FC = () => {
       groupBy: GroupBy.Day,
     };
 
-    if (settings.after) {
+    if (settings?.after) {
       const after = dayjs(settings.after || '');
       if (after.isValid() && after.isBefore(dayjs())) filters.afterDate = after;
     }
-    if (settings.before) {
+    if (settings?.before) {
       const before = dayjs(settings.before || '');
       if (before.isValid() && before.isBefore(dayjs())) filters.beforeDate = before;
     }
-    if (settings.groupBy && Object.values(GroupBy).includes(settings.groupBy as GroupBy)) {
+    if (settings?.groupBy && Object.values(GroupBy).includes(settings?.groupBy as GroupBy)) {
       filters.groupBy = settings.groupBy as GroupBy;
     }
 

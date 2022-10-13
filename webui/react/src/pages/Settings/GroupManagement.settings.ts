@@ -1,6 +1,8 @@
+import { array, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 
 export type UserColumnName = 'id' | 'name' | 'users' | 'action';
 
@@ -13,45 +15,38 @@ export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   users: 40,
 };
 
-export type GroupManagementSettings = InteractiveTableSettings;
+export type GroupManagementSettings = Omit<InteractiveTableSettings, 'sortDesc'>;
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<GroupManagementSettings> = {
+  applicableRoutespace: 'group-management',
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(string),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'row',
-      type: { baseType: BaseType.Integer, isArray: true },
+    row: {
+      defaultValue: undefined,
+      storageKey: 'row',
+      type: union([undefinedType, union([array(string), array(number)])]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: 'group-management',
 };
 

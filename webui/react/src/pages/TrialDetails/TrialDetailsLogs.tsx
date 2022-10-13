@@ -6,7 +6,7 @@ import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/Lo
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
 import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
 import { useStore } from 'contexts/Store';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -35,11 +35,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const filterValues: Filters = useMemo(
     () => ({
-      agentIds: settings.agentId,
-      containerIds: settings.containerId,
-      levels: settings.level,
-      rankIds: settings.rankId,
-      searchText: settings.searchText,
+      agentIds: settings?.agentId,
+      containerIds: settings?.containerId,
+      levels: settings?.level,
+      rankIds: settings?.rankId,
+      searchText: settings?.searchText,
     }),
     [settings],
   );
@@ -132,16 +132,16 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         trial?.id ?? 0,
         options.limit,
         options.follow,
-        settings.agentId,
-        settings.containerId,
-        settings.rankId,
-        settings.level,
+        settings?.agentId,
+        settings?.containerId,
+        settings?.rankId,
+        settings?.level,
         undefined,
         undefined,
         options.timestampBefore ? new Date(options.timestampBefore) : undefined,
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
-        settings.searchText,
+        settings?.searchText,
         { signal: config.canceler.signal },
       );
     },

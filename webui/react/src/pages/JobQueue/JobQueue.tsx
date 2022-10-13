@@ -4,6 +4,7 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { handleTableChange } from 'components/Table/ResponsiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
@@ -12,7 +13,7 @@ import {
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchResourcePools } from 'hooks/useFetch';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
@@ -70,6 +71,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
       const [jobs, stats] = await Promise.all([
@@ -214,6 +217,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             };
             break;
           case SCHEDULING_VAL_KEY: {
+            if (!settings?.columns) break;
+
             const replaceIndex = settings.columns.findIndex((column) =>
               ['priority', 'weight', 'resourcePool'].includes(column),
             );
@@ -272,8 +277,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       })
       .map((column) => {
         column.sortOrder = null;
-        if (column.key === settings.sortKey) {
-          column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
+        if (column.key === settings?.sortKey) {
+          column.sortOrder = settings?.sortDesc ? 'descend' : 'ascend';
         }
         return column;
       });
@@ -282,9 +287,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [
     isJobOrderAvailable,
     dropDownOnTrigger,
-    settings.columns,
-    settings.sortKey,
-    settings.sortDesc,
+    settings?.columns,
+    settings?.sortKey,
+    settings?.sortDesc,
     selectedRp.schedulerType,
     updateSettings,
   ]);
@@ -296,7 +301,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   useEffect(() => {
     setPageState((cur) => ({ ...cur, isLoading: true }));
-  }, [settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset]);
+  }, [settings?.sortDesc, settings?.sortKey, settings?.tableLimit, settings?.tableOffset]);
 
   useEffect(() => {
     if (!managingJob) return;
@@ -329,27 +334,33 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       id="jobs"
       title="Job Queue by Resource Pool">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          dataSource={jobs}
-          loading={pageState.isLoading}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="jobId"
-          scroll={{ x: 1000 }}
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          onChange={handleTableChange(columns, settings, updateSettings)}
-        />
+        {
+          settings
+          ? (
+            <InteractiveTable
+              columns={columns}
+              containerRef={pageRef}
+              dataSource={jobs}
+              loading={pageState.isLoading}
+              pagination={getFullPaginationConfig(
+                {
+                  limit: settings?.tableLimit ?? 0,
+                  offset: settings?.tableOffset ?? 0,
+                },
+                total,
+              )}
+              rowClassName={defaultRowClassName({ clickable: false })}
+              rowKey="jobId"
+              scroll={{ x: 1000 }}
+              settings={settings as InteractiveTableSettings}
+              showSorterTooltip={false}
+              size="small"
+              updateSettings={updateSettings as UpdateSettings}
+              onChange={handleTableChange(columns, settings, updateSettings)}
+            />
+          )
+          : <SkeletonTable columns={columns.length} />
+        }
       </Section>
       {!!managingJob && (
         <ManageJob

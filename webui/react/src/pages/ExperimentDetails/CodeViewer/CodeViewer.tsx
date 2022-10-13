@@ -1,6 +1,7 @@
 import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
+import { string } from 'io-ts';
 import yaml from 'js-yaml';
 import React, {
   lazy,
@@ -16,7 +17,7 @@ import React, {
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
 import useResize from 'hooks/useResize';
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
@@ -145,16 +146,15 @@ const CodeViewer: React.FC<Props> = ({
     () => (_submittedConfig ? Config.Submitted : Config.Runtime),
     [_submittedConfig],
   );
-  const configForExperiment = (experimentId: number): SettingsConfig => ({
+  const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
     applicableRoutespace: '/code',
-    settings: [
-      {
+    settings: {
+      filePath: {
         defaultValue: firstConfig,
-        key: 'filePath',
         storageKey: 'filePath',
-        type: { baseType: BaseType.String },
+        type: string,
       },
-    ],
+    },
     storagePath: `selected-file-${experimentId}`,
   });
 
@@ -389,6 +389,8 @@ const CodeViewer: React.FC<Props> = ({
 
   // Set the selected node based on the active settings
   useEffect(() => {
+    if (!settings?.filePath) return;
+
     if (settings.filePath && activeFile?.key !== settings.filePath) {
       if (isConfig(settings.filePath)) {
         handleSelectConfig(settings.filePath);
@@ -403,7 +405,7 @@ const CodeViewer: React.FC<Props> = ({
     }
   }, [
     treeData,
-    settings.filePath,
+    settings?.filePath,
     activeFile,
     fetchFile,
     handleSelectConfig,
@@ -413,8 +415,8 @@ const CodeViewer: React.FC<Props> = ({
   // Set the code renderer to ipynb if needed
   useEffect(() => {
     const hasActiveFile = activeFile?.text;
-    const isSameFile = activeFile?.key === settings.filePath;
-    const isIpybnFile = settings.filePath.includes('.ipynb');
+    const isSameFile = activeFile?.key === settings?.filePath;
+    const isIpybnFile = settings?.filePath.includes('.ipynb');
 
     if (hasActiveFile && isSameFile && isIpybnFile) {
       setEditorMode('ipynb');
@@ -463,7 +465,7 @@ const CodeViewer: React.FC<Props> = ({
             defaultSelectedKeys={
               viewMode
                 ? // this is to ensure that, at least, the most parent node gets highlighted...
-                  [settings.filePath.split('/')[0] ?? firstConfig]
+                  [settings?.filePath.split('/')[0] ?? firstConfig]
                 : undefined
             }
             treeData={treeData}

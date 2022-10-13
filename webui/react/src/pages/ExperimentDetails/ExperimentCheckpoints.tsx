@@ -4,10 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import Section from 'components/Section';
-import InteractiveTable, {
-  ContextMenuProps,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -18,7 +16,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import {
   Determinedcheckpointv1State,
@@ -26,6 +24,7 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import Spinner from 'shared/components/Spinner';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
@@ -108,16 +107,20 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [updateSettings]);
 
   const stateFilterDropdown = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterDropdown
-        {...filterProps}
-        multiple
-        values={settings.state}
-        onFilter={handleStateFilterApply}
-        onReset={handleStateFilterReset}
-      />
-    ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state],
+    (filterProps: FilterDropdownProps) => {
+      if (!settings?.state) return <Spinner spinning />;
+
+      return (
+        <TableFilterDropdown
+          {...filterProps}
+          multiple
+          values={settings.state}
+          onFilter={handleStateFilterApply}
+          onReset={handleStateFilterReset}
+        />
+      );
+    },
+    [handleStateFilterApply, handleStateFilterReset, settings?.state],
   );
 
   const handleRegisterCheckpoint = useCallback(
@@ -214,17 +217,18 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
+      if (column.key === settings?.sortKey) {
+        column.sortOrder = settings?.sortDesc ? 'descend' : 'ascend';
       }
       return column;
     });
 
     return newColumns;
-  }, [dropDownOnTrigger, experiment, settings.sortDesc, settings.sortKey, stateFilterDropdown]);
+  }, [dropDownOnTrigger, experiment, settings?.sortDesc, settings?.sortKey, stateFilterDropdown]);
 
-  const stateString = settings.state?.join('.');
+  const stateString = settings?.state?.join('.');
   const fetchExperimentCheckpoints = useCallback(async () => {
+    if (!settings) return;
     try {
       const states = stateString
         ?.split('.')
@@ -254,16 +258,13 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [
     experiment.id,
     canceler,
-    settings.sortDesc,
-    settings.sortKey,
+    settings,
     stateString,
-    settings.tableLimit,
-    settings.tableOffset,
   ]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
-      if (!settings.row) return;
+      if (!settings?.row) return;
       try {
         dropDownOnTrigger(settings.row)[action]();
 
@@ -280,7 +281,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         });
       }
     },
-    [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
+    [dropDownOnTrigger, fetchExperimentCheckpoints, settings?.row],
   );
 
   const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
@@ -291,11 +292,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     setIsLoading(true);
   }, [
     fetchExperimentCheckpoints,
-    settings.sortDesc,
-    settings.sortKey,
+    settings?.sortDesc,
+    settings?.sortKey,
     stateString,
-    settings.tableLimit,
-    settings.tableOffset,
+    settings?.tableLimit,
+    settings?.tableOffset,
   ]);
 
   // cleanup
@@ -324,9 +325,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [checkpoints]);
 
   const availableBatchActions = useMemo(() => {
-    const checkpoints = settings.row?.map((uuid) => checkpointMap[uuid]) ?? [];
+    const checkpoints = settings?.row?.map((uuid) => checkpointMap[uuid]) ?? [];
     return getActionsForCheckpointsUnion(checkpoints, batchActions);
-  }, [checkpointMap, settings.row]);
+  }, [checkpointMap, settings?.row]);
 
   return (
     <div className={css.base}>
@@ -337,35 +338,41 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             label: action,
             value: action,
           }))}
-          selectedRowCount={(settings.row ?? []).length}
+          selectedRowCount={(settings?.row ?? []).length}
           onAction={(action) => submitBatchAction(action)}
           onClear={clearSelected}
         />
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          ContextMenu={CheckpointActionDropdown}
-          dataSource={checkpoints}
-          loading={isLoading}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="uuid"
-          rowSelection={{
-            onChange: handleTableRowSelect,
-            preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
-          }}
-          settings={settings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-        />
+        {
+          settings
+          ? (
+            <InteractiveTable
+              columns={columns}
+              containerRef={pageRef}
+              ContextMenu={CheckpointActionDropdown}
+              dataSource={checkpoints}
+              loading={isLoading}
+              pagination={getFullPaginationConfig(
+                {
+                  limit: settings?.tableLimit ?? 0,
+                  offset: settings?.tableOffset ?? 0,
+                },
+                total,
+              )}
+              rowClassName={defaultRowClassName({ clickable: false })}
+              rowKey="uuid"
+              rowSelection={{
+                onChange: handleTableRowSelect,
+                preserveSelectedRowKeys: true,
+                selectedRowKeys: settings?.row ?? [],
+              }}
+              settings={settings}
+              showSorterTooltip={false}
+              size="small"
+              updateSettings={updateSettings as UpdateSettings}
+            />
+          )
+          : <SkeletonTable columns={columns.length} />
+        }
       </Section>
       {modalModelCreateContextHolder}
       {modalCheckpointRegisterContextHolder}

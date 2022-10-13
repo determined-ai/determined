@@ -1,12 +1,9 @@
 import React, { useMemo } from 'react';
 
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName } from 'components/Table/Table';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner';
 import { isObject } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -74,7 +71,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
           />
         ) : (
           <SkeletonTable columns={columns.length} />

@@ -8,7 +8,6 @@ import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
 import {
@@ -22,7 +21,7 @@ import {
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
@@ -68,6 +67,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
 
   const fetchProjects = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const response = await getWorkspaceProjects(
         {
@@ -96,14 +97,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     canceler.signal,
     id,
     workspace,
-    settings.archived,
-    settings.name,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-    settings.user,
-    settings.view,
+    settings,
   ]);
 
   useEffect(() => {
@@ -139,6 +133,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   );
 
   useEffect(() => {
+    if (!settings?.whose) return;
+
     switch (settings.whose) {
       case WhoseProjects.All:
         updateSettings({ user: undefined });
@@ -150,7 +146,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [settings.whose, updateSettings, user, users]);
+  }, [settings?.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription, projectId: number) => {
     try {
@@ -255,6 +251,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
+
       let newColumns: ProjectColumnName[];
       let newColumnWidths: number[];
 
@@ -304,6 +302,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   );
 
   const projectsList = useMemo(() => {
+    if (!settings) return <Spinner spinning />;
+
     switch (settings.view) {
       case GridListView.Grid:
         return (
@@ -337,7 +337,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
           />
         );
     }
@@ -369,7 +369,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         <SelectFilter
           dropdownMatchSelectWidth={140}
           showSearch={false}
-          value={settings.whose}
+          value={settings?.whose}
           onSelect={handleViewSelect}>
           <Option value={WhoseProjects.All}>All Projects</Option>
           <Option value={WhoseProjects.Mine}>My Projects</Option>
@@ -378,7 +378,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         <Space wrap>
           {!workspace.archived && (
             <Toggle
-              checked={settings.archived}
+              checked={settings?.archived}
               prefixLabel="Show Archived"
               onChange={switchShowArchived}
             />
@@ -386,7 +386,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <SelectFilter
             dropdownMatchSelectWidth={150}
             showSearch={false}
-            value={settings.sortKey}
+            value={settings?.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
@@ -396,7 +396,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
               Newest to Oldest
             </Option>
           </SelectFilter>
-          <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
+          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>
       <Spinner spinning={isLoading}>
