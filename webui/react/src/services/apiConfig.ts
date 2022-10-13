@@ -1056,6 +1056,22 @@ export const createWorkspace: DetApi<
     detApi.Workspaces.postWorkspace({ name: params.name.trim() }, options),
 };
 
+export const getWorkspaceMembers: DetApi<
+  Service.GetWorkspaceMembersParams,
+  Api.V1GetGroupsAndUsersAssignedToWorkspaceResponse,
+  Type.WorkspaceMembersResponse
+> = {
+  name: 'getWorkspaceMembers',
+  postProcess: (response) => ({
+    assignments: response.assignments,
+    groups: response.groups,
+    usersAssignedDirectly: response.usersAssignedDirectly.map(decoder.mapV1User),
+  }),
+  request: (params) => {
+    return detApi.RBAC.getGroupsAndUsersAssignedToWorkspace(params.workspaceId, params.nameFilter);
+  },
+};
+
 export const getWorkspaceProjects: DetApi<
   Service.GetWorkspaceProjectsParams,
   Api.V1GetWorkspaceProjectsResponse,
