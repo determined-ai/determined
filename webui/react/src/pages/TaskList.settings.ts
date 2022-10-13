@@ -71,16 +71,18 @@ const config: SettingsConfig<Settings> = {
       defaultValue: DEFAULT_COLUMNS,
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: array(union([
-        literal('action'),
-        literal('id'),
-        literal('startTime'),
-        literal('state'),
-        literal('name'),
-        literal('type'),
-        literal('resourcePool'),
-        literal('user'),
-      ])),
+      type: array(
+        union([
+          literal('action'),
+          literal('id'),
+          literal('startTime'),
+          literal('state'),
+          literal('name'),
+          literal('type'),
+          literal('resourcePool'),
+          literal('user'),
+        ]),
+      ),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: TaskColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
@@ -119,15 +121,20 @@ const config: SettingsConfig<Settings> = {
     state: {
       defaultValue: undefined,
       storageKey: 'state',
-      type: union([undefinedType, array(union([
-        literal(CommandState.Pulling),
-        literal(CommandState.Queued),
-        literal(CommandState.Running),
-        literal(CommandState.Starting),
-        literal(CommandState.Terminated),
-        literal(CommandState.Terminating),
-        literal(CommandState.Waiting),
-      ]))]),
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(CommandState.Pulling),
+            literal(CommandState.Queued),
+            literal(CommandState.Running),
+            literal(CommandState.Starting),
+            literal(CommandState.Terminated),
+            literal(CommandState.Terminating),
+            literal(CommandState.Waiting),
+          ]),
+        ),
+      ]),
     },
     tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
@@ -142,12 +149,17 @@ const config: SettingsConfig<Settings> = {
     type: {
       defaultValue: undefined,
       storageKey: 'type',
-      type: union([undefinedType, array(union([
-        literal(CommandType.Command),
-        literal(CommandType.JupyterLab),
-        literal(CommandType.Shell),
-        literal(CommandType.TensorBoard),
-      ]))]),
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(CommandType.Command),
+            literal(CommandType.JupyterLab),
+            literal(CommandType.Shell),
+            literal(CommandType.TensorBoard),
+          ]),
+        ),
+      ]),
     },
     user: {
       defaultValue: undefined,

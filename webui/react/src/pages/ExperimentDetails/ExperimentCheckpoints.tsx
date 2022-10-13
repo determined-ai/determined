@@ -255,12 +255,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [
-    experiment.id,
-    canceler,
-    settings,
-    stateString,
-  ]);
+  }, [experiment.id, canceler, settings, stateString]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
@@ -342,37 +337,35 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           onAction={(action) => submitBatchAction(action)}
           onClear={clearSelected}
         />
-        {
-          settings
-          ? (
-            <InteractiveTable
-              columns={columns}
-              containerRef={pageRef}
-              ContextMenu={CheckpointActionDropdown}
-              dataSource={checkpoints}
-              loading={isLoading}
-              pagination={getFullPaginationConfig(
-                {
-                  limit: settings?.tableLimit ?? 0,
-                  offset: settings?.tableOffset ?? 0,
-                },
-                total,
-              )}
-              rowClassName={defaultRowClassName({ clickable: false })}
-              rowKey="uuid"
-              rowSelection={{
-                onChange: handleTableRowSelect,
-                preserveSelectedRowKeys: true,
-                selectedRowKeys: settings?.row ?? [],
-              }}
-              settings={settings}
-              showSorterTooltip={false}
-              size="small"
-              updateSettings={updateSettings as UpdateSettings}
-            />
-          )
-          : <SkeletonTable columns={columns.length} />
-        }
+        {settings ? (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            ContextMenu={CheckpointActionDropdown}
+            dataSource={checkpoints}
+            loading={isLoading}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings?.tableLimit ?? 0,
+                offset: settings?.tableOffset ?? 0,
+              },
+              total,
+            )}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="uuid"
+            rowSelection={{
+              onChange: handleTableRowSelect,
+              preserveSelectedRowKeys: true,
+              selectedRowKeys: settings?.row ?? [],
+            }}
+            settings={settings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings}
+          />
+        ) : (
+          <SkeletonTable columns={columns.length} />
+        )}
       </Section>
       {modalModelCreateContextHolder}
       {modalCheckpointRegisterContextHolder}

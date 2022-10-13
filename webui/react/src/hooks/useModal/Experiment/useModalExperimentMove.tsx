@@ -206,7 +206,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             })}
           </SelectFilter>
         </div>
-        {(destSettings?.workspaceId && destSettings.workspaceId !== 1) && (
+        {destSettings?.workspaceId && destSettings.workspaceId !== 1 && (
           <div>
             <label className={css.label} htmlFor="project">
               Project

@@ -93,12 +93,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    canceler.signal,
-    id,
-    workspace,
-    settings,
-  ]);
+  }, [canceler.signal, id, workspace, settings]);
 
   useEffect(() => {
     fetchProjects();

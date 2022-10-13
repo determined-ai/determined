@@ -29,7 +29,9 @@ const columns = new Array(20).fill(null).map(() => {
   };
 });
 
-const config: SettingsConfig<Omit<InteractiveTableSettings, 'sortDesc' | 'sortKey' | 'tableLimit' | 'tableOffset'>> = {
+const config: SettingsConfig<
+  Omit<InteractiveTableSettings, 'sortDesc' | 'sortKey' | 'tableLimit' | 'tableOffset'>
+> = {
   applicableRoutespace: 'storybook',
   settings: {
     columns: {
@@ -59,7 +61,10 @@ export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
   ...args
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { settings, updateSettings } = useSettings<Omit<InteractiveTableSettings, 'sortDesc' | 'sortKey' | 'tableLimit' | 'tableOffset'>>(config);
+  const { settings, updateSettings } =
+    useSettings<
+      Omit<InteractiveTableSettings, 'sortDesc' | 'sortKey' | 'tableLimit' | 'tableOffset'>
+    >(config);
 
   const handleTableRowSelect = useCallback(
     (rowKeys) => {

@@ -283,30 +283,30 @@ const GroupManagement: React.FC = () => {
   }, [users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
 
   const table = useMemo(() => {
-    return settings
-      ? (
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          dataSource={groups}
-          expandable={{ expandedRowRender: expandedUserRender, onExpand, onExpandedRowsChange }}
-          loading={isLoading}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey={(r) => r.group.groupId || 0}
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings}
-        />
-      )
-      : <SkeletonTable columns={columns.length} />;
+    return settings ? (
+      <InteractiveTable
+        columns={columns}
+        containerRef={pageRef}
+        dataSource={groups}
+        expandable={{ expandedRowRender: expandedUserRender, onExpand, onExpandedRowsChange }}
+        loading={isLoading}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          total,
+        )}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey={(r) => r.group.groupId || 0}
+        settings={settings as InteractiveTableSettings}
+        showSorterTooltip={false}
+        size="small"
+        updateSettings={updateSettings as UpdateSettings}
+      />
+    ) : (
+      <SkeletonTable columns={columns.length} />
+    );
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (

@@ -177,7 +177,9 @@ const NavigationSideBar: React.FC = () => {
       appear={true}
       classNames={{
         appear: css.collapsedAppear,
-        appearActive: settings?.navbarCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
+        appearActive: settings?.navbarCollapsed
+          ? css.collapsedEnterActive
+          : css.collapsedExitActive,
         appearDone: settings?.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
         enter: css.collapsedEnter,
         enterActive: css.collapsedEnterActive,

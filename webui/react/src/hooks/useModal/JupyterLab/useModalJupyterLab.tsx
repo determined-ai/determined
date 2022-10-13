@@ -130,23 +130,20 @@ const useModalJupyterLab = (): ModalHooks => {
     setConfigError(undefined);
   }, []);
 
-  const formContent = useMemo(
-    () => {
-      if (!fields) return <Spinner spinning />;
+  const formContent = useMemo(() => {
+    if (!fields) return <Spinner spinning />;
 
-      return showFullConfig ? (
-        <JupyterLabFullConfig
-          config={config}
-          configError={configError}
-          setButtonDisabled={setButtonDisabled}
-          onChange={handleConfigChange}
-        />
-      ) : (
-        <JupyterLabForm fields={fields} updateFields={updateFields} />
-      );
-    },
-    [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
-  );
+    return showFullConfig ? (
+      <JupyterLabFullConfig
+        config={config}
+        configError={configError}
+        setButtonDisabled={setButtonDisabled}
+        onChange={handleConfigChange}
+      />
+    ) : (
+      <JupyterLabForm fields={fields} updateFields={updateFields} />
+    );
+  }, [config, configError, fields, handleConfigChange, showFullConfig, updateFields]);
 
   const content = useMemo(
     () => (

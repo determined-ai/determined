@@ -71,8 +71,13 @@ const ModelRegistry: React.FC = () => {
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
 
-  const { activeSettings, isLoading: isLoadingSettings, settings, updateSettings, resetSettings } =
-    useSettings<Settings>(settingsConfig);
+  const {
+    activeSettings,
+    isLoading: isLoadingSettings,
+    settings,
+    updateSettings,
+    resetSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 

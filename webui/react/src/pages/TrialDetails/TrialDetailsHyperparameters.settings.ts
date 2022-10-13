@@ -23,10 +23,7 @@ const config: SettingsConfig<Settings> = {
       defaultValue: DEFAULT_COLUMNS,
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: array(union([
-        literal('hyperparameter'),
-        literal('value'),
-      ])),
+      type: array(union([literal('hyperparameter'), literal('value')])),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map(
@@ -45,11 +42,7 @@ const config: SettingsConfig<Settings> = {
       defaultValue: 'hyperparameter',
       skipUrlEncoding: true,
       storageKey: 'sortKey',
-      type: union([undefinedType, union([
-        boolean,
-        number,
-        string,
-      ])]),
+      type: union([undefinedType, union([boolean, number, string])]),
     },
   },
   storagePath: 'trial-hyperparameters',

@@ -48,14 +48,16 @@ const config: SettingsConfig<Settings> = {
       defaultValue: DEFAULT_COLUMNS,
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: array(union([
-        literal('action'),
-        literal('uuid'),
-        literal('state'),
-        literal('searcherMetric'),
-        literal('totalBatches'),
-        literal('checkpoint'),
-      ])),
+      type: array(
+        union([
+          literal('action'),
+          literal('uuid'),
+          literal('state'),
+          literal('searcherMetric'),
+          literal('totalBatches'),
+          literal('checkpoint'),
+        ]),
+      ),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: CheckpointColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
@@ -89,13 +91,18 @@ const config: SettingsConfig<Settings> = {
     state: {
       defaultValue: undefined,
       storageKey: 'state',
-      type: union([undefinedType, array(union([
-        literal(CheckpointState.Active),
-        literal(CheckpointState.Completed),
-        literal(CheckpointState.Deleted),
-        literal(CheckpointState.Error),
-        literal(CheckpointState.Unspecified),
-      ]))]),
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(CheckpointState.Active),
+            literal(CheckpointState.Completed),
+            literal(CheckpointState.Deleted),
+            literal(CheckpointState.Error),
+            literal(CheckpointState.Unspecified),
+          ]),
+        ),
+      ]),
     },
     tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,

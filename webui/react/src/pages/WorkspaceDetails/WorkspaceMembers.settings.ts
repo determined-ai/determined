@@ -32,11 +32,7 @@ const config: SettingsConfig<WorkspaceMembersSettings> = {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
       storageKey: 'columns',
-      type: array(union([
-        literal('name'),
-        literal('role'),
-        literal('action'),
-      ])),
+      type: array(union([literal('name'), literal('role'), literal('action')])),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: MembersColumnName) => DEFAULT_COLUMN_WIDTHS[col]),

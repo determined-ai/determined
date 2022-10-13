@@ -292,12 +292,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       });
       setIsLoading(false);
     }
-  }, [
-    experiment.id,
-    canceler,
-    settings,
-    stateString,
-  ]);
+  }, [experiment.id, canceler, settings, stateString]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {

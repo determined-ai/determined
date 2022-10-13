@@ -334,33 +334,31 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       id="jobs"
       title="Job Queue by Resource Pool">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
-        {
-          settings
-          ? (
-            <InteractiveTable
-              columns={columns}
-              containerRef={pageRef}
-              dataSource={jobs}
-              loading={pageState.isLoading}
-              pagination={getFullPaginationConfig(
-                {
-                  limit: settings?.tableLimit ?? 0,
-                  offset: settings?.tableOffset ?? 0,
-                },
-                total,
-              )}
-              rowClassName={defaultRowClassName({ clickable: false })}
-              rowKey="jobId"
-              scroll={{ x: 1000 }}
-              settings={settings as InteractiveTableSettings}
-              showSorterTooltip={false}
-              size="small"
-              updateSettings={updateSettings as UpdateSettings}
-              onChange={handleTableChange(columns, settings, updateSettings)}
-            />
-          )
-          : <SkeletonTable columns={columns.length} />
-        }
+        {settings ? (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={jobs}
+            loading={pageState.isLoading}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings?.tableLimit ?? 0,
+                offset: settings?.tableOffset ?? 0,
+              },
+              total,
+            )}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="jobId"
+            scroll={{ x: 1000 }}
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings}
+            onChange={handleTableChange(columns, settings, updateSettings)}
+          />
+        ) : (
+          <SkeletonTable columns={columns.length} />
+        )}
       </Section>
       {!!managingJob && (
         <ManageJob

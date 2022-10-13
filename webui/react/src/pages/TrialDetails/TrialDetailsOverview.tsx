@@ -22,7 +22,9 @@ export interface Props {
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
-  const { settings, updateSettings } = useSettings<Settings>(Object.assign(settingsConfig, { applicableRoutespace: storagePath }));
+  const { settings, updateSettings } = useSettings<Settings>(
+    Object.assign(settingsConfig, { applicableRoutespace: storagePath }),
+  );
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
@@ -79,21 +81,19 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
             trialTerminated={terminalRunStates.has(trial?.state ?? RunState.Active)}
             onMetricChange={handleMetricChange}
           />
-          {
-            settings
-            ? (
-              <TrialDetailsWorkloads
-                defaultMetrics={defaultMetrics}
-                experiment={experiment}
-                metricNames={metricNames}
-                metrics={metrics}
-                settings={settings}
-                trial={trial}
-                updateSettings={updateSettings}
-              />
-            )
-            : <Spinner spinning />
-          }
+          {settings ? (
+            <TrialDetailsWorkloads
+              defaultMetrics={defaultMetrics}
+              experiment={experiment}
+              metricNames={metricNames}
+              metrics={metrics}
+              settings={settings}
+              trial={trial}
+              updateSettings={updateSettings}
+            />
+          ) : (
+            <Spinner spinning />
+          )}
         </>
       ) : null}
     </div>

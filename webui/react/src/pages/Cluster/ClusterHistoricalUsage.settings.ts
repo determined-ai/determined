@@ -32,10 +32,7 @@ const config: SettingsConfig<Settings> = {
     groupBy: {
       defaultValue: GroupBy.Day,
       storageKey: 'groupBy',
-      type: union([
-        literal(GroupBy.Day),
-        literal(GroupBy.Month),
-      ]),
+      type: union([literal(GroupBy.Day), literal(GroupBy.Month)]),
     },
   },
   storagePath: 'cluster/historical-usage',

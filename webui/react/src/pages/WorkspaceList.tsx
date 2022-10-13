@@ -93,11 +93,7 @@ const WorkspaceList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    canceler.signal,
-    pageError,
-    settings,
-  ]);
+  }, [canceler.signal, pageError, settings]);
 
   usePolling(fetchWorkspaces);
 
@@ -349,9 +345,7 @@ const WorkspaceList: React.FC = () => {
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
           </SelectFilter>
-          {
-            settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
-          }
+          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>
       <Spinner spinning={isLoading}>

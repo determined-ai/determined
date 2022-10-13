@@ -33,15 +33,20 @@ const config: SettingsConfig<Settings> = {
     level: {
       defaultValue: undefined,
       storageKey: 'level',
-      type: union([undefinedType, array(union([
-        literal(LogLevelFromApi.Critical),
-        literal(LogLevelFromApi.Debug),
-        literal(LogLevelFromApi.Error),
-        literal(LogLevelFromApi.Info),
-        literal(LogLevelFromApi.Trace),
-        literal(LogLevelFromApi.Unspecified),
-        literal(LogLevelFromApi.Warning),
-      ]))]),
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(LogLevelFromApi.Critical),
+            literal(LogLevelFromApi.Debug),
+            literal(LogLevelFromApi.Error),
+            literal(LogLevelFromApi.Info),
+            literal(LogLevelFromApi.Trace),
+            literal(LogLevelFromApi.Unspecified),
+            literal(LogLevelFromApi.Warning),
+          ]),
+        ),
+      ]),
     },
     rankId: {
       defaultValue: undefined,
@@ -53,7 +58,6 @@ const config: SettingsConfig<Settings> = {
       storageKey: 'searchText',
       type: union([undefinedType, string]),
     },
-
   },
   storagePath: 'log-viewer-filters',
 };

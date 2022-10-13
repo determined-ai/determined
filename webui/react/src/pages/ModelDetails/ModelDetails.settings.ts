@@ -49,15 +49,17 @@ const config: SettingsConfig<Settings> = {
       defaultValue: DEFAULT_COLUMNS,
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: array(union([
-        literal('action'),
-        literal('description'),
-        literal('lastUpdatedTime'),
-        literal('name'),
-        literal('tags'),
-        literal('version'),
-        literal('user'),
-      ])),
+      type: array(
+        union([
+          literal('action'),
+          literal('description'),
+          literal('lastUpdatedTime'),
+          literal('name'),
+          literal('tags'),
+          literal('version'),
+          literal('user'),
+        ]),
+      ),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map(

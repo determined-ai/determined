@@ -62,7 +62,11 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, isLoading: isLoadingSettings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;

@@ -54,14 +54,16 @@ const config: SettingsConfig<WorkspaceListSettings> = {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
       storageKey: 'columns',
-      type: array(union([
-        literal('action'),
-        literal('archived'),
-        literal('name'),
-        literal('numProjects'),
-        literal('state'),
-        literal('userId'),
-      ])),
+      type: array(
+        union([
+          literal('action'),
+          literal('archived'),
+          literal('name'),
+          literal('numProjects'),
+          literal('state'),
+          literal('userId'),
+        ]),
+      ),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: WorkspaceColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
@@ -107,10 +109,7 @@ const config: SettingsConfig<WorkspaceListSettings> = {
       defaultValue: GridListView.Grid,
       skipUrlEncoding: true,
       storageKey: 'view',
-      type: union([
-        literal(GridListView.Grid),
-        literal(GridListView.List),
-      ]),
+      type: union([literal(GridListView.Grid), literal(GridListView.List)]),
     },
     whose: {
       defaultValue: WhoseWorkspaces.All,

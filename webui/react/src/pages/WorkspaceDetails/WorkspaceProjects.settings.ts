@@ -64,16 +64,18 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
       storageKey: 'columns',
-      type: array(union([
-        literal('action'),
-        literal('archived'),
-        literal('description'),
-        literal('lastUpdated'),
-        literal('name'),
-        literal('numExperiments'),
-        literal('state'),
-        literal('userId'),
-      ])),
+      type: array(
+        union([
+          literal('action'),
+          literal('archived'),
+          literal('description'),
+          literal('lastUpdated'),
+          literal('name'),
+          literal('numExperiments'),
+          literal('state'),
+          literal('userId'),
+        ]),
+      ),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: ProjectColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
@@ -122,10 +124,7 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
       defaultValue: GridListView.Grid,
       skipUrlEncoding: true,
       storageKey: 'view',
-      type: union([
-        literal(GridListView.Grid),
-        literal(GridListView.List),
-      ]),
+      type: union([literal(GridListView.Grid), literal(GridListView.List)]),
     },
     whose: {
       defaultValue: WhoseProjects.All,

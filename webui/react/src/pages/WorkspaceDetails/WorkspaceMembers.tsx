@@ -392,29 +392,27 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   return (
     <div className={css.membersContainer}>
-      {
-        settings
-        ? (
-          <InteractiveTable
-            columns={columns}
-            containerRef={pageRef}
-            dataSource={usersAndGroups}
-            pagination={getFullPaginationConfig(
-              {
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
-              },
-              usersAndGroups.length,
-            )}
-            rowKey={generateTableKey}
-            settings={settings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings}
-          />
-        )
-        : <SkeletonTable columns={columns.length} />
-      }
+      {settings ? (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={usersAndGroups}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            usersAndGroups.length,
+          )}
+          rowKey={generateTableKey}
+          settings={settings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+        />
+      ) : (
+        <SkeletonTable columns={columns.length} />
+      )}
     </div>
   );
 };
