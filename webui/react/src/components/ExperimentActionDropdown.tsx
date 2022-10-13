@@ -33,7 +33,7 @@ interface Props {
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
   settings: ProjectDetailsSettings;
-  updateSettings: UpdateSettings<ProjectDetailsSettings>;
+  updateSettings: UpdateSettings;
   workspaceId?: number;
 }
 
