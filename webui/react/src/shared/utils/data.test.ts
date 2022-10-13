@@ -57,7 +57,18 @@ const asyncFn = async (): Promise<boolean> => {
   }
 };
 
-const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
+const object = {
+  a: true,
+  b: null,
+  c: { x: { y: -1.2e10 }, z: undefined },
+  nested: {
+    x0: 0,
+    xEmptyString: '',
+    xFalse: false,
+    xNull: null,
+    xUndefined: undefined,
+  },
+};
 
 describe('Data Utilities', () => {
   describe('type checking utilities', () => {
@@ -328,6 +339,11 @@ describe('Data Utilities', () => {
         expect(utils.getPath<boolean>(object, 'a')).toBe(true);
         expect(utils.getPath<string>(object, 'x.x')).toBeUndefined();
         expect(utils.getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
+        expect(utils.getPath(object, 'nested.xNull')).toBeNull();
+        expect(utils.getPath(object, 'nested.xUndefined')).toBeUndefined();
+        expect(utils.getPath(object, 'nested.xFalse')).toBe(false);
+        expect(utils.getPath(object, 'nested.x0')).toBe(0);
+        expect(utils.getPath(object, 'nested.xEmptyString')).toBe('');
       });
 
       it('should support empty path', () => {
