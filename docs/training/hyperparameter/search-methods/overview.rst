@@ -51,16 +51,10 @@ Determined also supports other common hyperparameter search algorithms:
 
 -  :ref:`Single <topic-guides_hp-tuning-det_single>` is appropriate for manual hyperparameter
    tuning, as it trains a single hyperparameter configuration.
-
 -  :ref:`Grid <topic-guides_hp-tuning-det_grid>` evaluates all possible hyperparameter
    configurations by brute force and returns the best.
-
--  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a subset of hyperparameter
+-  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter
    configurations chosen at random and returns the best.
-
--  :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>` begins as random search
-   but periodically replaces low-performing hyperparameter configurations with ones *near* the
-   high-performing points in the hyperparameter space.
 
 You can also implement your own :ref:`custom search methods <topic-guides_hp-tuning-det_custom>`.
 
@@ -70,7 +64,6 @@ You can also implement your own :ref:`custom search methods <topic-guides_hp-tun
 
    hp-adaptive-asha
    hp-grid
-   hp-pbt
    hp-random
    hp-single
    hp-custom
