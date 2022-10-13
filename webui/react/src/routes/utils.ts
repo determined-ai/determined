@@ -158,6 +158,9 @@ export const paths = {
   users: (): string => {
     return '/users';
   },
+  webhooks: (): string => {
+    return '/webhooks';
+  },
   workspaceDetails: (workspaceId: number | string): string => {
     return `/workspaces/${workspaceId}`;
   },

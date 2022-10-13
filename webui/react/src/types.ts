@@ -1,5 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
-import { V1Group } from 'services/api-ts-sdk';
+import { V1Group, V1Trigger } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
@@ -846,6 +846,13 @@ export interface WorkspaceMembersResponse {
   assignments: Api.V1RoleWithAssignments[];
   groups: Api.V1Group[];
   usersAssignedDirectly: User[];
+}
+
+export interface Webhook {
+  id: number;
+  triggers: V1Trigger[];
+  url: string;
+  webhookType: string;
 }
 
 export type UserOrGroup = User | V1Group;

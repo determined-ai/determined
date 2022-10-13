@@ -42,6 +42,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
     Users: new Api.UsersApi(config),
+    Webhooks: new Api.WebhooksApi(config),
     Workspaces: new Api.WorkspacesApi(config),
   };
 };
@@ -832,6 +833,34 @@ export const getActiveTasks: DetApi<
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
   request: () => detApi.Tasks.getActiveTasksCount(),
+};
+
+/* Webhooks */
+
+export const createWebhook: DetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook> = {
+  name: 'createWebhook',
+  postProcess: (response) => decoder.mapV1Webhook(response.webhook),
+  request: (params, options) => detApi.Webhooks.postWebhook(params, options),
+};
+
+export const deleteWebhook: DetApi<Service.GetWebhookParams, Api.V1DeleteWebhookResponse, void> = {
+  name: 'deleteWebhook',
+  postProcess: noOp,
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.deleteWebhook(params.id),
+};
+
+export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]> = {
+  name: 'getWebhooks',
+  postProcess: (response) => {
+    return response.webhooks.map((hook) => decoder.mapV1Webhook(hook));
+  },
+  request: () => detApi.Webhooks.getWebhooks(),
+};
+
+export const testWebhook: DetApi<Service.GetWebhookParams, Api.V1TestWebhookResponse, void> = {
+  name: 'testWebhook',
+  postProcess: noOp,
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.testWebhook(params.id),
 };
 
 /* Models */
