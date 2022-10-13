@@ -302,8 +302,17 @@ func (a *apiServer) TaskLogs(
 }
 
 func (a *apiServer) GetActiveTasksCount(
-	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
+	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if config.EnforceStrictNTSC() && !curUser.Admin {
+		return nil, status.Error(codes.PermissionDenied,
+			"with strict tasks enabled you need admin to view task counts")
+	}
+
 	finalResp := &apiv1.GetActiveTasksCountResponse{}
 
 	req1 := &apiv1.GetNotebooksRequest{}

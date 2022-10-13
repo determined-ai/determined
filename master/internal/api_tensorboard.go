@@ -50,6 +50,8 @@ const (
 var tensorboardsAddr = actor.Addr("tensorboard")
 
 func canAccessTensorboard(curUser model.User, tensorboard *tensorboardv1.Tensorboard) bool {
+	fmt.Println("CAN ACCESS TENSORBOARD", curUser, tensorboard.UserId, tensorboard,
+		curUser.Admin || model.UserID(tensorboard.UserId) == curUser.ID)
 	if !config.EnforceStrictNTSC() {
 		return true
 	}
@@ -87,7 +89,7 @@ func (a *apiServer) GetTensorboards(
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 
 	a.filter(&resp.Tensorboards, func(i int) bool {
-		return canAccessTensorboard(*curUser, resp.Tensorboards[0])
+		return canAccessTensorboard(*curUser, resp.Tensorboards[i])
 	})
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
 }

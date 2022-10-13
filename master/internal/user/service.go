@@ -218,20 +218,14 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 	}
 
 	taskID := c.Param("service")
-	if taskID != "" { // TODO do we need this check? I don't understand proxies yet.
-		// TODO when does this get persisted?
-		ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
-		if errors.Is(err, db.ErrNotFound) { // TODO do we need this check?
-			return false, nil
-		}
-		if err != nil {
-			return true, err
-		}
+	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
+	if err != nil {
+		return true, err
+	}
 
-		if ownerID != user.ID {
-			return false, echo.NewHTTPError(http.StatusNotFound,
-				"service not found: "+taskID)
-		}
+	if ownerID != user.ID {
+		return false, echo.NewHTTPError(http.StatusNotFound,
+			"service not found: "+taskID)
 	}
 
 	return false, nil
