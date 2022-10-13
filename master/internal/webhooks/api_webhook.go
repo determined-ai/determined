@@ -1,6 +1,7 @@
 package webhooks
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -97,24 +98,50 @@ func (a *APIServer) TestWebhook(
 	if err != nil {
 		return nil, err
 	}
-	s := "test"
-	t := time.Now().Unix()
-	tp := EventPayload{
-		ID:        uuid.New(),
-		Timestamp: t,
-		Type:      TriggerTypeStateChange,
-		Condition: Condition{
-			State: "COMPLETED",
-		},
-		Data: EventData{
-			TestData: &s,
-		},
+	var tReq *http.Request
+	switch webhook.WebhookType {
+	case WebhookTypeDefault:
+		s := "test"
+		t := time.Now().Unix()
+		tp := EventPayload{
+			ID:        uuid.New(),
+			Timestamp: t,
+			Type:      TriggerTypeStateChange,
+			Condition: Condition{
+				State: "COMPLETED",
+			},
+			Data: EventData{
+				TestData: &s,
+			},
+		}
+		p, err := json.Marshal(tp)
+		if err != nil {
+			return nil, err
+		}
+		tReq, err = generateWebhookRequest(webhook.URL, p, t)
+	case WebhookTypeSlack:
+		testMessageBlock := SlackBlock{
+			Text: Field{
+				Text: "test",
+				Type: "plain_text",
+			},
+			Type: "section",
+		}
+		messageBody := SlackMessageBody{
+			Blocks: []SlackBlock{testMessageBlock},
+		}
+		slackMessage, err := json.Marshal(messageBody)
+		if err != nil {
+			return nil, err
+		}
+		tReq, err = http.NewRequest(
+			http.MethodPost,
+			webhook.URL,
+			bytes.NewBuffer(slackMessage),
+		)
+	default:
+		panic("Unknown webhook type")
 	}
-	p, err := json.Marshal(tp)
-	if err != nil {
-		return nil, err
-	}
-	tReq, err := generateWebhookRequest(webhook.URL, p, t)
 	if err != nil {
 		return nil, err
 	}

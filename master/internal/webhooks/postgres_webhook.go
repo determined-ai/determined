@@ -199,7 +199,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	}
 	messageBody := SlackMessageBody{
 		Blocks:      []SlackBlock{messageBlock},
-		Attachments: []SlackAttachment{attachment},
+		Attachments: &[]SlackAttachment{attachment},
 	}
 
 	message, err := json.Marshal(messageBody)

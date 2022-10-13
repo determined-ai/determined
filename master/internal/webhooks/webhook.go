@@ -236,8 +236,8 @@ type SlackAttachment struct {
 }
 
 type SlackMessageBody struct {
-	Blocks      []SlackBlock      `json:"blocks"`
-	Attachments []SlackAttachment `json:"attachments"`
+	Blocks      []SlackBlock       `json:"blocks"`
+	Attachments *[]SlackAttachment `json:"attachments,omitempty"`
 }
 
 type Condition struct {
