@@ -7759,12 +7759,6 @@ export interface V1Tensorboard {
  * @interface V1TestWebhookResponse
  */
 export interface V1TestWebhookResponse {
-    /**
-     * Status of test.
-     * @type {boolean}
-     * @memberof V1TestWebhookResponse
-     */
-    completed: boolean;
 }
 
 /**

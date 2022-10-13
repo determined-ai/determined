@@ -7,9 +7,10 @@ import (
 	"math"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 )

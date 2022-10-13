@@ -171,16 +171,14 @@ require (
 require (
 	github.com/uptrace/bun v1.1.8
 	github.com/uptrace/bun/dialect/pgdialect v1.1.8
-	github.com/uptrace/bun/driver/pgdriver v1.1.8
 	github.com/uptrace/bun/extra/bundebug v1.1.2
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
+	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
 )
 
 require (
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/jackc/puddle v1.1.3 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
-	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0 // indirect
 )
 
 replace github.com/determined-ai/determined/proto => ../proto

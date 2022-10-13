@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // APIServer is an embedded api server struct.
@@ -99,5 +100,4 @@ func (a *APIServer) TestWebhook(
 	}
 	resp.Body.Close()
 	return &apiv1.TestWebhookResponse{}, nil
-
 }

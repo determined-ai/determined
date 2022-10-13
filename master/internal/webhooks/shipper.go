@@ -11,9 +11,10 @@ import (
 	"sync"
 	"time"
 
-	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+
+	conf "github.com/determined-ai/determined/master/internal/config"
 )
 
 const (
