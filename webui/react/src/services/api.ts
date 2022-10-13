@@ -450,6 +450,12 @@ export const getWorkspaces = generateDetApi<
   Type.WorkspacePagination
 >(Config.getWorkspaces);
 
+export const getWorkspaceMembers = generateDetApi<
+  Service.GetWorkspaceMembersParams,
+  Api.V1GetGroupsAndUsersAssignedToWorkspaceResponse,
+  Type.WorkspaceMembersResponse
+>(Config.getWorkspaceMembers);
+
 export const getWorkspaceProjects = generateDetApi<
   Service.GetWorkspaceProjectsParams,
   Api.V1GetWorkspaceProjectsResponse,

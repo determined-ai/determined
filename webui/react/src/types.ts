@@ -842,4 +842,10 @@ export interface WorkspacePermissionsArgs {
   workspace?: PermissionWorkspace;
 }
 
+export interface WorkspaceMembersResponse {
+  assignments: Api.V1RoleWithAssignments[];
+  groups: Api.V1Group[];
+  usersAssignedDirectly: User[];
+}
+
 export type UserOrGroup = User | V1Group;
