@@ -20,9 +20,10 @@ const BasicAuthZType = "basic"
 
 // AuthZConfig is a authz-related section of master config.
 type AuthZConfig struct {
-	Type          string  `json:"type"`
-	FallbackType  *string `json:"fallback"`
-	RBACUIEnabled *bool   `json:"rbac_ui_enabled"`
+	Type              string  `json:"type"`
+	FallbackType      *string `json:"fallback"`
+	RBACUIEnabled     *bool   `json:"rbac_ui_enabled"`
+	StrictNTSCEnabled bool    `json:"_strict_ntsc_enabled"`
 }
 
 // DefaultAuthZConfig returns default authz config.
@@ -64,7 +65,8 @@ func (c AuthZConfig) IsRBACUIEnabled() bool {
 // EnforceStrictNTSC returns if non-admin users
 // can only see and access their own notebooks, tasks, commands, shells.
 func EnforceStrictNTSC() bool {
-	return GetMasterConfig().Security.AuthZ.Type == "rbac" || true // TODO remove
+	return GetMasterConfig().Security.AuthZ.Type == "rbac" ||
+		GetMasterConfig().Security.AuthZ.StrictNTSCEnabled
 }
 
 func initAuthZTypes() {
