@@ -224,8 +224,8 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 			}
 
 			if ownerID != user.ID {
-				return false, echo.NewHTTPError(http.StatusForbidden,
-					"you do not own this task you need admin privileges to access")
+				return false, echo.NewHTTPError(http.StatusNotFound,
+					"service not found: "+taskID)
 			}
 		}
 

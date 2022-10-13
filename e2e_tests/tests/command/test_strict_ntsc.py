@@ -10,7 +10,7 @@ from typing import Any, List
 from tests import experiment as exp
 from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.api.errors import NotFoundException
+from determined.common.api.errors import NotFoundException, APIException
 from tests.cluster.test_users import ADMIN_CREDENTIALS, create_test_user, logged_in_user
 from tests import config as conf
 
@@ -43,7 +43,6 @@ def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_ac
         req = bindings.v1SetShellPriorityRequest(shellId=shell_id, priority=50)
         bindings.post_SetShellPriority(sess, shellId=shell_id, body=req)        
 
-    # Need secret so need to test proxy.
         
 def assert_notebook_access(creds: authentication.Credentials, notebook_id: str,
                            can_access: bool) -> None:
@@ -64,10 +63,15 @@ def assert_notebook_access(creds: authentication.Credentials, notebook_id: str,
 
         req = bindings.v1SetNotebookPriorityRequest(notebookId=notebook_id, priority=50)
         assert bindings.post_SetNotebookPriority(sess, notebookId=notebook_id, body=req) is not None
+
+        with api.ws(master_url, f"notebooks/{notebook_id}/events") as ws:
+            for msg in ws:
+                if msg["service_ready_event"]:
+                    assert api.get(
+                        master_url, f"/proxy/{notebook_id}/", auth=authentication.cli_auth) is not None
+                    break
         return
 
-    # TODO proxy test.
-    
     with pytest.raises(NotFoundException):
         bindings.get_GetNotebook(sess, notebookId=notebook_id)    
     with pytest.raises(NotFoundException):
@@ -78,7 +82,9 @@ def assert_notebook_access(creds: authentication.Credentials, notebook_id: str,
     with pytest.raises(NotFoundException):        
         req = bindings.v1SetNotebookPriorityRequest(notebookId=notebook_id, priority=50)
         bindings.post_SetNotebookPriority(sess, notebookId=notebook_id, body=req) 
-
+    with pytest.raises(NotFoundException):
+        api.get(master_url, f"/proxy/{notebook_id}/", auth=authentication.cli_auth)
+        
         
 
 def assert_command_access(creds: authentication.Credentials, command_id: str,
@@ -92,8 +98,6 @@ def assert_command_access(creds: authentication.Credentials, command_id: str,
     found = any([True for command in resp.commands if command.id == command_id])
     assert (found and can_access,
             f"checking if command is returned in GetCommands found: {found} expected: {can_access}")
-    
-    # TODO no need to proxy test.
 
     if can_access:
         assert bindings.get_GetCommand(sess, commandId=command_id) is not None
@@ -133,6 +137,14 @@ def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id:
         req = bindings.v1SetTensorboardPriorityRequest(tensorboardId=tensorboard_id, priority=50)
         assert bindings.post_SetTensorboardPriority(
             sess, tensorboardId=tensorboard_id, body=req) is not None
+
+        with api.ws(master_url, f"tensorboard/{tensorboard_id}/events") as ws:
+            for msg in ws:
+                if msg["service_ready_event"]:
+                    assert api.get(
+                        master_url, f"/proxy/{tensorboard_id}/", auth=authentication.cli_auth) is not None
+                    break
+        
         return
 
     with pytest.raises(NotFoundException):
@@ -142,12 +154,14 @@ def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id:
     with pytest.raises(NotFoundException):        
         req = bindings.v1SetTensorboardPriorityRequest(tensorboardId=tensorboard_id, priority=50)
         bindings.post_SetTensorboardPriority(sess, tensorboardId=tensorboard_id, body=req) 
+    with pytest.raises(NotFoundException):
+        api.get(master_url, f"/proxy/{tensorboard_id}/", auth=authentication.cli_auth)
     
         
 def strict_task_test(start_command: List[str], start_message: str, assert_access_func: Any) -> None:
     user_a = create_test_user(ADMIN_CREDENTIALS)
     user_b = create_test_user(ADMIN_CREDENTIALS)    
-
+    
     with logged_in_user(user_a):
         with cmd.interactive_command(*start_command) as task:
             for line in task.stdout:
@@ -155,7 +169,7 @@ def strict_task_test(start_command: List[str], start_message: str, assert_access
                     break
             else:
                 pytest.fail(f"Did not find expected input '{start_message}' in task stdout.")        
-
+                
             assert_access_func(user_a, task.task_id, True)
             assert_access_func(user_b, task.task_id, False)
             assert_access_func(ADMIN_CREDENTIALS, task.task_id, True)
