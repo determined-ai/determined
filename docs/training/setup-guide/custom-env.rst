@@ -65,18 +65,18 @@ are launched or deep learning operations are performed. The startup hook can be 
 the container environment, install additional dependencies, and download data sets among other shell
 script commands.
 
-Startup hooks are not cached and run before the start of every workload so expensive or long-running
-operations in a startup hook can result in poor performance.
+Startup hooks are not cached and run before the start of every workload, so expensive or
+long-running operations in a startup hook can result in poor performance.
 
-Example startup hook that installs the ``wget`` utility and the ``pandas`` Python package:
+This example startup hook installs the ``wget`` utility and the ``pandas`` Python package:
 
 .. code:: bash
 
    apt-get update && apt-get install -y wget
    python3 -m pip install pandas
 
-And, this :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model
-that uses a startup hook to install an additional Python dependency.
+This :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model that
+uses a startup hook to install an additional Python dependency.
 
 .. _container-images:
 
@@ -89,7 +89,7 @@ commands, and other workflows.
 
 All trial runner containers are launched with additional Determined-specific harness code, which
 orchestrates model training and evaluation in the container. Trial runner containers are also loaded
-with the experiment model definition and hyperparameter values for the current trial.
+with the experiment's model definition and hyperparameter values for the current trial.
 
 GPU-specific versions of each library are automatically selected when running on agents with GPUs.
 

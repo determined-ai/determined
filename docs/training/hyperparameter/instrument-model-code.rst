@@ -4,9 +4,9 @@
 
 Determined injects hyperparameters from the experiment configuration into model code via a context
 object in the Trial base class. This :class:`~determined.TrialContext` object exposes a
-:func:`~determined.TrialContext.get_hparam` method that takes the hyperparameter name. At trial
-runtime, Determined injects a value for the hyperparameter. For example, to inject the value of the
-``dropout_probability`` hyperparameter defined above into the constructor of a PyTorch `Dropout
+:func:`~determined.TrialContext.get_hparam` method that takes the hyperparameter name. For example,
+to inject the value of the ``dropout_probability`` hyperparameter defined in the experiment
+configuration into the constructor of a PyTorch `Dropout
 <https://pytorch.org/docs/stable/nn.html#dropout>`_ layer:
 
 .. code:: python
