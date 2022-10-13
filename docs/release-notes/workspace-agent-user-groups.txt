@@ -1,0 +1,11 @@
+:orphan:
+
+**Improvements**
+
+-  Added an ability to set the Unix user and group on the agent that the task runs as on workspace
+   level. When set, it will take precedence over user's own agent user and group setting.
+
+**Breaking Changes**
+
+-  CLI: Workspace rename operation now accepts the new workspace name as an optional ``--name``
+   flag, for example: ``det workspace edit OLD_WORKSPACE_NAME --name NEW_WORKSPACE``.

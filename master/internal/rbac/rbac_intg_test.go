@@ -6,12 +6,12 @@ package rbac
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"sort"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -23,8 +23,7 @@ import (
 )
 
 const (
-	pathToMigrations  = "file://../../static/migrations"
-	testWorkspaceName = "test workspace"
+	pathToMigrations = "file://../../static/migrations"
 )
 
 var (
@@ -78,7 +77,10 @@ var (
 		Name:   "test permission global",
 		Global: true,
 	}
-	testPermissions = []Permission{testPermission, testPermission2, testPermission3, globalTestPermission}
+	testPermissions = []Permission{
+		testPermission, testPermission2, testPermission3,
+		globalTestPermission,
+	}
 
 	testWorkspace = Workspace{
 		ID:   10011,
@@ -144,12 +146,12 @@ func TestRbac(t *testing.T) {
 		},
 	}
 
-	workspaceId := int32(testRoleAssignment.WorkspaceID.Int32)
+	workspaceID := testRoleAssignment.WorkspaceID.Int32
 	userRoleAssignment := rbacv1.UserRoleAssignment{
 		UserId: int32(testUser.ID),
 		RoleAssignment: &rbacv1.RoleAssignment{
 			Role:             rbacRole,
-			ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
+			ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
 		},
 	}
 
@@ -157,7 +159,7 @@ func TestRbac(t *testing.T) {
 		GroupId: int32(testGroupStatic.ID),
 		RoleAssignment: &rbacv1.RoleAssignment{
 			Role:             rbacRole,
-			ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
+			ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
 		},
 	}
 	assignmentScope := RoleAssignmentScope{}
@@ -167,13 +169,14 @@ func TestRbac(t *testing.T) {
 		// TODO: populate the permission assignments table in the future
 		err := AddRoleAssignments(
 			ctx, []*rbacv1.GroupRoleAssignment{}, []*rbacv1.UserRoleAssignment{&userRoleAssignment})
-		require.NoError(t, err, "error adding role assigment")
+		require.NoError(t, err, "error adding role assignment")
 
 		err = db.Bun().NewSelect().Model(&assignmentScope).Where(
 			"scope_workspace_id=?", testRoleAssignment.WorkspaceID.Int32).Scan(ctx)
 		require.NoError(t, err, "error getting created assignment scope")
 
-		err = db.Bun().NewSelect().Model(&assignment).Where("group_id=?", testGroupOwnedByUser.ID).Scan(ctx)
+		err = db.Bun().NewSelect().Model(&assignment).Where("group_id=?", testGroupOwnedByUser.ID).
+			Scan(ctx)
 		require.NoError(t, err, "error getting created role assignment")
 		require.Equal(t, testGroupOwnedByUser.ID, assignment.GroupID, "incorrect group ID was assigned")
 		require.Equal(t, testRole.ID, assignment.RoleID, "incorrect role ID was assigned")
@@ -189,7 +192,8 @@ func TestRbac(t *testing.T) {
 			"scope_workspace_id=?", testRoleAssignment.WorkspaceID.Int32).Scan(ctx)
 		require.NoError(t, err, "assignment scope should still exist after removal")
 
-		err = db.Bun().NewSelect().Model(&assignment).Where("group_id=?", testGroupOwnedByUser.ID).Scan(ctx)
+		err = db.Bun().NewSelect().Model(&assignment).Where("group_id=?", testGroupOwnedByUser.ID).
+			Scan(ctx)
 		require.Errorf(t, err, "assignment should not exist after removal")
 		require.True(t, errors.Is(db.MatchSentinelError(err), db.ErrNotFound), "incorrect error returned")
 	})
@@ -198,7 +202,7 @@ func TestRbac(t *testing.T) {
 		// TODO: populate the permission assignments table in the future
 		err := AddRoleAssignments(
 			ctx, []*rbacv1.GroupRoleAssignment{&groupRoleAssignment}, []*rbacv1.UserRoleAssignment{})
-		require.NoError(t, err, "error adding role assigment")
+		require.NoError(t, err, "error adding role assignment")
 
 		err = db.Bun().NewSelect().Model(&assignmentScope).Where(
 			"scope_workspace_id=?", testRoleAssignment.WorkspaceID.Int32).Scan(ctx)
@@ -228,7 +232,7 @@ func TestRbac(t *testing.T) {
 	t.Run("test add role twice", func(t *testing.T) {
 		err := AddRoleAssignments(
 			ctx, []*rbacv1.GroupRoleAssignment{&groupRoleAssignment}, []*rbacv1.UserRoleAssignment{})
-		require.NoError(t, err, "error adding role assigment")
+		require.NoError(t, err, "error adding role assignment")
 		err = AddRoleAssignments(
 			ctx, []*rbacv1.GroupRoleAssignment{&groupRoleAssignment}, []*rbacv1.UserRoleAssignment{})
 		require.Error(t, err, "adding the same role assignment should error")
@@ -243,7 +247,8 @@ func TestRbac(t *testing.T) {
 		_, err = getOrCreateRoleAssignmentScopeTx(ctx, nil, nilAssignment)
 		require.NoError(t, err, "inserting the same role assignment scope should not fail")
 
-		rows, err := db.Bun().NewSelect().Table("role_assignment_scopes").Where("scope_workspace_id IS NULL").Count(ctx)
+		rows, err := db.Bun().NewSelect().Table("role_assignment_scopes").
+			Where("scope_workspace_id IS NULL").Count(ctx)
 		require.Equal(t, 1, rows, "there should only have been one null scope created")
 	})
 
@@ -260,7 +265,8 @@ func TestRbac(t *testing.T) {
 		}
 
 		for _, p := range permissionsToAdd {
-			_, err := db.Bun().NewInsert().Model(&p).TableExpr("permission_assignments").Exec(ctx)
+			perm := p
+			_, err := db.Bun().NewInsert().Model(&perm).TableExpr("permission_assignments").Exec(ctx)
 			require.NoError(t, err, "failure inserting permission assignments in local setup")
 		}
 
@@ -282,9 +288,12 @@ func TestRbac(t *testing.T) {
 		roles = filterToTestRoles(globalRoles)
 		require.NoError(t, err, "error getting non-global roles")
 		require.Equal(t, 3, len(roles), "incorrect number of non-global roles retrieved")
-		require.True(t, compareRoles(testRole, roles[0]), "test role 1 is not equivalent to the retrieved role")
-		require.True(t, compareRoles(testRole2, roles[1]), "test role 2 is not equivalent to the retrieved role")
-		require.True(t, compareRoles(testRole3, roles[2]), "test role 3 is not equivalent to the retrieved role")
+		require.True(t, compareRoles(testRole, roles[0]),
+			"test role 1 is not equivalent to the retrieved role")
+		require.True(t, compareRoles(testRole2, roles[1]),
+			"test role 2 is not equivalent to the retrieved role")
+		require.True(t, compareRoles(testRole3, roles[2]),
+			"test role 3 is not equivalent to the retrieved role")
 
 		roles, _, err = GetAllRoles(ctx, false, 0, len(allRoles)+1)
 		require.NoError(t, err, "error getting roles with limit")
@@ -323,21 +332,21 @@ func TestRbac(t *testing.T) {
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
 				},
 			},
 			{
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole3,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
 				},
 			},
 		}
 
 		err := AddRoleAssignments(
 			ctx, groupRoleAssignments, []*rbacv1.UserRoleAssignment{})
-		require.NoError(t, err, "error adding role assigments")
+		require.NoError(t, err, "error adding role assignments")
 
 		roles, err := GetRolesAssignedToGroupsTx(ctx, nil, int32(testGroupStatic.ID))
 		require.NoError(t, err, "error getting roles assigned to group")
@@ -367,7 +376,7 @@ func TestRbac(t *testing.T) {
 				GroupId: int32(testGroupOwnedByUser.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceId),
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
 				},
 			},
 		}
@@ -402,7 +411,7 @@ func TestRbac(t *testing.T) {
 		})
 
 		err := AddRoleAssignments(ctx, groupRoleAssignments, nil)
-		require.NoError(t, err, "error adding role assigments")
+		require.NoError(t, err, "error adding role assignments")
 
 		_, err = db.Bun().NewInsert().Model(&permissionAssignments).Exec(ctx)
 		require.NoError(t, err, "error adding permission assignments during setup")
@@ -423,8 +432,8 @@ func TestRbac(t *testing.T) {
 		// Test for globally assigned role
 		permissions, err = UserPermissionsForScope(ctx, testUser.ID, 0)
 		require.Len(t, permissions, 2, "Expected two permissions from %v", permissions)
-		require.True(t, permissionsContainsAll(permissions,
-			globalTestPermission.ID, testPermission.ID), "failed to find expected permissions in %v", permissions)
+		require.True(t, permissionsContainsAll(permissions, globalTestPermission.ID,
+			testPermission.ID), "failed to find expected permissions in %v", permissions)
 		require.False(t, permissionsContainsAll(permissions, testPermission2.ID),
 			"Unexpectedly found permission %v for user in %v", testPermission2.ID, permissions)
 		require.False(t, permissionsContainsAll(permissions, testPermission3.ID),
@@ -443,7 +452,8 @@ func TestRbac(t *testing.T) {
 			},
 		}
 		for _, p := range permissionsToAdd {
-			_, err := db.Bun().NewInsert().Model(&p).TableExpr("permission_assignments").Exec(ctx)
+			perm := p
+			_, err := db.Bun().NewInsert().Model(&perm).TableExpr("permission_assignments").Exec(ctx)
 			require.NoError(t, err, "failure inserting permission assignments in local setup")
 		}
 
@@ -601,7 +611,7 @@ func filterToTestRoles(rolesGotten []Role) []Role {
 }
 
 func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
-	// Don't error if we pass a non-existant workspaceID.
+	// Don't error if we pass a non-existent workspaceID.
 	roles, err := GetRolesWithAssignmentsOnWorkspace(ctx, -999)
 	require.NoError(t, err)
 	require.Len(t, roles, 0)
