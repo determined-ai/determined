@@ -203,38 +203,38 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 		return true, redirectToLogin(c)
 	}
 
-	switch user, _, err := UserByToken(token, s.extConfig); err {
-	case nil:
-		if !user.Active {
-			return true, redirectToLogin(c)
-		}
-
-		if user.Admin {
-			return false, nil
-		}
-		taskID := c.Param("service")
-		if taskID != "" { // TODO do we need this check? I don't understand proxies yet.
-			// TODO when does this get persisted?
-			ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
-			if errors.Is(err, db.ErrNotFound) { // TODO do we need this check?
-				return false, nil
-			}
-			if err != nil {
-				return true, err
-			}
-
-			if ownerID != user.ID {
-				return false, echo.NewHTTPError(http.StatusNotFound,
-					"service not found: "+taskID)
-			}
-		}
-
-		return false, nil
-	case db.ErrNotFound:
+	user, _, err := UserByToken(token, s.extConfig)
+	if errors.Is(err, db.ErrNotFound) {
 		return true, redirectToLogin(c)
-	default:
+	} else if err != nil {
 		return true, err
 	}
+
+	if !user.Active {
+		return true, redirectToLogin(c)
+	}
+	if user.Admin {
+		return false, nil
+	}
+
+	taskID := c.Param("service")
+	if taskID != "" { // TODO do we need this check? I don't understand proxies yet.
+		// TODO when does this get persisted?
+		ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
+		if errors.Is(err, db.ErrNotFound) { // TODO do we need this check?
+			return false, nil
+		}
+		if err != nil {
+			return true, err
+		}
+
+		if ownerID != user.ID {
+			return false, echo.NewHTTPError(http.StatusNotFound,
+				"service not found: "+taskID)
+		}
+	}
+
+	return false, nil
 }
 
 func redirectToLogin(c echo.Context) error {

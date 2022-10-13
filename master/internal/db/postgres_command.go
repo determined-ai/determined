@@ -10,6 +10,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// GetCommandOwnerID gets a command's ownerID from a taskID. Uses persisted command state.
+// Returns db.ErrNotFound if a command with given taskID does not exist.
 func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, error) {
 	ownerIDBun := &struct {
 		bun.BaseModel `bun:"table:command_state"`

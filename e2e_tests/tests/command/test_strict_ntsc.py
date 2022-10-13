@@ -34,6 +34,8 @@ def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_ac
         req = bindings.v1SetShellPriorityRequest(shellId=shell_id, priority=50)
         assert bindings.post_SetShellPriority(sess, shellId=shell_id, body=req) is not None
         return
+
+
     
     with pytest.raises(NotFoundException):
         bindings.get_GetShell(sess, shellId=shell_id)
@@ -127,9 +129,6 @@ def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id:
     assert (found and can_access,
             f"checking if tensorboard is returned in GetTensorboards found: " +
             "{found} expected: {can_access}")
-
-    
-    # TODO proxy test.
     
     if can_access:
         assert bindings.get_GetTensorboard(sess, tensorboardId=tensorboard_id) is not None
@@ -157,6 +156,39 @@ def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id:
     with pytest.raises(NotFoundException):
         api.get(master_url, f"/proxy/{tensorboard_id}/", auth=authentication.cli_auth)
     
+
+def assert_access_task(creds: authentication.Credentials, task_id: str,
+                           can_access: bool) -> None:
+    master_url = conf.make_master_url()
+    authentication.cli_auth = authentication.Authentication(
+        master_url, creds.username, creds.password, try_reauth=True)    
+    sess = api.Session(master_url, None, None, None)
+    
+    resp = api.get(master_url, f"/tasks", auth=authentication.cli_auth).json()
+    task_ids = [resp[alloc]["task_id"] for alloc in resp]
+    if can_access:
+        assert task_id in task_ids
+    else:
+        assert task_id not in task_ids    
+
+    if can_access:
+        assert bindings.get_GetTask(sess, taskId=task_id) is not None
+        assert bindings.get_TaskLogs(sess, taskId=task_id, follow=False) is not None
+        assert bindings.get_TaskLogsFields(sess, taskId=task_id, follow=False) is not None
+        return
+
+    with pytest.raises(NotFoundException):
+        bindings.get_GetTask(sess, taskId=task_id)
+    with pytest.raises(APIException): # TODO make this return 404?
+        for _ in bindings.get_TaskLogs(sess, taskId=task_id, follow=False):
+            pass
+    with pytest.raises(APIException): # TODO make this return 404?
+        for _ in bindings.get_TaskLogsFields(sess, taskId=task_id, follow=False):
+            pass
+    with pytest.raises(NotFoundException):
+        alloc_id = task_id + ".1"
+        req = bindings.v1AllocationReadyRequest(allocationId=alloc_id)
+        bindings.post_AllocationReady(sess, allocationId=alloc_id, body=req)
         
 def strict_task_test(start_command: List[str], start_message: str, assert_access_func: Any) -> None:
     user_a = create_test_user(ADMIN_CREDENTIALS)
@@ -169,7 +201,11 @@ def strict_task_test(start_command: List[str], start_message: str, assert_access
                     break
             else:
                 pytest.fail(f"Did not find expected input '{start_message}' in task stdout.")        
-                
+
+            assert_access_task(user_a, task.task_id, True)
+            assert_access_task(user_b, task.task_id, False)
+            assert_access_task(ADMIN_CREDENTIALS, task.task_id, True)            
+            
             assert_access_func(user_a, task.task_id, True)
             assert_access_func(user_b, task.task_id, False)
             assert_access_func(ADMIN_CREDENTIALS, task.task_id, True)
