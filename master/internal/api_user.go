@@ -213,9 +213,9 @@ func (a *apiServer) GetUser(
 	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
 }
 
-func (a *apiServer) GetCurUser(
-	ctx context.Context, req *apiv1.GetUserRequest,
-) (*apiv1.GetUserResponse, error) {
+func (a *apiServer) GetMe(
+	ctx context.Context, req *apiv1.GetMeRequest,
+) (*apiv1.GetMeResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -224,12 +224,12 @@ func (a *apiServer) GetCurUser(
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*curFullUser)}, err
+	return &apiv1.GetMeResponse{User: toProtoUserFromFullUser(*curFullUser)}, err
 }
 
 func (a *apiServer) GetUserByUsername(
-	ctx context.Context, req *apiv1.GetUserRequest,
-) (*apiv1.GetUserResponse, error) {
+	ctx context.Context, req *apiv1.GetUserByUsernameRequest,
+) (*apiv1.GetUserByUsernameResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -245,7 +245,7 @@ func (a *apiServer) GetUserByUsername(
 	} else if !ok {
 		return nil, errUserNotFound
 	}
-	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
+	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
 }
 
 func (a *apiServer) PostUser(

@@ -3166,6 +3166,20 @@ export interface V1GetMasterResponse {
 }
 
 /**
+ * Response to GetMeRequest.
+ * @export
+ * @interface V1GetMeResponse
+ */
+export interface V1GetMeResponse {
+    /**
+     * The requested user.
+     * @type {V1User}
+     * @memberof V1GetMeResponse
+     */
+    user: V1User;
+}
+
+/**
  * Request to get a file of model definition.
  * @export
  * @interface V1GetModelDefFileRequest
@@ -3839,6 +3853,20 @@ export interface V1GetTrialsCollectionsResponse {
      * @memberof V1GetTrialsCollectionsResponse
      */
     collections?: Array<V1TrialsCollection>;
+}
+
+/**
+ * Response to GetUserByUsernameRequest.
+ * @export
+ * @interface V1GetUserByUsernameResponse
+ */
+export interface V1GetUserByUsernameResponse {
+    /**
+     * The requested user.
+     * @type {V1User}
+     * @memberof V1GetUserByUsernameResponse
+     */
+    user: V1User;
 }
 
 /**
@@ -25133,12 +25161,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get the current user.
-         * @param {number} [userId] The id of the user.
-         * @param {string} [username] The string of the username.
+         * @param {number} [holder] Cannot have an empty message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCurUser(userId?: number, username?: string, options: any = {}): FetchArgs {
+        getMe(holder?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/me`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25153,12 +25180,8 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
-            if (userId !== undefined) {
-                localVarQueryParameter['userId'] = userId;
-            }
-
-            if (username !== undefined) {
-                localVarQueryParameter['username'] = username;
+            if (holder !== undefined) {
+                localVarQueryParameter['holder'] = holder;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -25175,11 +25198,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
-         * @param {string} [username] The string of the username.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, username?: string, options: any = {}): FetchArgs {
+        getUser(userId: number, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
                 throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
@@ -25199,10 +25221,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
-            if (username !== undefined) {
-                localVarQueryParameter['username'] = username;
-            }
-
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -25217,11 +25235,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * 
          * @summary Get the requested user with username.
          * @param {string} username The string of the username.
-         * @param {number} [userId] The id of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserByUsername(username: string, userId?: number, options: any = {}): FetchArgs {
+        getUserByUsername(username: string, options: any = {}): FetchArgs {
             // verify required parameter 'username' is not null or undefined
             if (username === null || username === undefined) {
                 throw new RequiredError('username','Required parameter username was null or undefined when calling getUserByUsername.');
@@ -25239,10 +25256,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (userId !== undefined) {
-                localVarQueryParameter['userId'] = userId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -25552,13 +25565,12 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the current user.
-         * @param {number} [userId] The id of the user.
-         * @param {string} [username] The string of the username.
+         * @param {number} [holder] Cannot have an empty message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCurUser(userId?: number, username?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getCurUser(userId, username, options);
+        getMe(holder?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(holder, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25573,12 +25585,11 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
-         * @param {string} [username] The string of the username.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, username?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, username, options);
+        getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25593,12 +25604,11 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get the requested user with username.
          * @param {string} username The string of the username.
-         * @param {number} [userId] The id of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserByUsername(username: string, userId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, userId, options);
+        getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25757,35 +25767,32 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get the current user.
-         * @param {number} [userId] The id of the user.
-         * @param {string} [username] The string of the username.
+         * @param {number} [holder] Cannot have an empty message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCurUser(userId?: number, username?: string, options?: any) {
-            return UsersApiFp(configuration).getCurUser(userId, username, options)(fetch, basePath);
+        getMe(holder?: number, options?: any) {
+            return UsersApiFp(configuration).getMe(holder, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
-         * @param {string} [username] The string of the username.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, username?: string, options?: any) {
-            return UsersApiFp(configuration).getUser(userId, username, options)(fetch, basePath);
+        getUser(userId: number, options?: any) {
+            return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get the requested user with username.
          * @param {string} username The string of the username.
-         * @param {number} [userId] The id of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserByUsername(username: string, userId?: number, options?: any) {
-            return UsersApiFp(configuration).getUserByUsername(username, userId, options)(fetch, basePath);
+        getUserByUsername(username: string, options?: any) {
+            return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
         },
         /**
          * 
@@ -25873,40 +25880,37 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get the current user.
-     * @param {number} [userId] The id of the user.
-     * @param {string} [username] The string of the username.
+     * @param {number} [holder] Cannot have an empty message.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getCurUser(userId?: number, username?: string, options?: any) {
-        return UsersApiFp(this.configuration).getCurUser(userId, username, options)(this.fetch, this.basePath);
+    public getMe(holder?: number, options?: any) {
+        return UsersApiFp(this.configuration).getMe(holder, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get the requested user.
      * @param {number} userId The id of the user.
-     * @param {string} [username] The string of the username.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUser(userId: number, username?: string, options?: any) {
-        return UsersApiFp(this.configuration).getUser(userId, username, options)(this.fetch, this.basePath);
+    public getUser(userId: number, options?: any) {
+        return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get the requested user with username.
      * @param {string} username The string of the username.
-     * @param {number} [userId] The id of the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUserByUsername(username: string, userId?: number, options?: any) {
-        return UsersApiFp(this.configuration).getUserByUsername(username, userId, options)(this.fetch, this.basePath);
+    public getUserByUsername(username: string, options?: any) {
+        return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath);
     }
 
     /**

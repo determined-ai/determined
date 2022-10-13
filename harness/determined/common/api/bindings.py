@@ -3482,6 +3482,25 @@ class v1GetMasterResponse:
             out["telemetryEnabled"] = self.telemetryEnabled
         return out
 
+class v1GetMeResponse:
+    def __init__(
+        self,
+        *,
+        user: "v1User",
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMeResponse":
+        return cls(
+            user=v1User.from_json(obj["user"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "user": self.user.to_json(),
+        }
+
 class v1GetModelDefFileRequest:
     experimentId: "typing.Optional[int]" = None
     path: "typing.Optional[str]" = None
@@ -4477,6 +4496,25 @@ class v1GetTrialsCollectionsResponse:
         if not omit_unset or "collections" in vars(self):
             out["collections"] = None if self.collections is None else [x.to_json(omit_unset) for x in self.collections]
         return out
+
+class v1GetUserByUsernameResponse:
+    def __init__(
+        self,
+        *,
+        user: "v1User",
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserByUsernameResponse":
+        return cls(
+            user=v1User.from_json(obj["user"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "user": self.user.to_json(),
+        }
 
 class v1GetUserResponse:
 
@@ -12306,30 +12344,6 @@ def get_GetCommands(
         return v1GetCommandsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommands", _resp)
 
-def get_GetCurUser(
-    session: "api.Session",
-    *,
-    userId: "typing.Optional[int]" = None,
-    username: "typing.Optional[str]" = None,
-) -> "v1GetUserResponse":
-    _params = {
-        "userId": userId,
-        "username": username,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/users/me",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetUserResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetCurUser", _resp)
-
 def get_GetCurrentTrialSearcherOperation(
     session: "api.Session",
     *,
@@ -12711,6 +12725,28 @@ def get_GetMasterConfig(
     if _resp.status_code == 200:
         return v1GetMasterConfigResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMasterConfig", _resp)
+
+def get_GetMe(
+    session: "api.Session",
+    *,
+    holder: "typing.Optional[int]" = None,
+) -> "v1GetMeResponse":
+    _params = {
+        "holder": holder,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users/me",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetMeResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMe", _resp)
 
 def get_GetModel(
     session: "api.Session",
@@ -13512,11 +13548,8 @@ def get_GetUser(
     session: "api.Session",
     *,
     userId: int,
-    username: "typing.Optional[str]" = None,
 ) -> "v1GetUserResponse":
-    _params = {
-        "username": username,
-    }
+    _params = None
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/users/{userId}",
@@ -13535,11 +13568,8 @@ def get_GetUserByUsername(
     session: "api.Session",
     *,
     username: str,
-    userId: "typing.Optional[int]" = None,
-) -> "v1GetUserResponse":
-    _params = {
-        "userId": userId,
-    }
+) -> "v1GetUserByUsernameResponse":
+    _params = None
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/users/{username}",
@@ -13551,7 +13581,7 @@ def get_GetUserByUsername(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1GetUserResponse.from_json(_resp.json())
+        return v1GetUserByUsernameResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUserByUsername", _resp)
 
 def get_GetUserSetting(

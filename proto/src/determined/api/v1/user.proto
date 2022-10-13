@@ -43,15 +43,41 @@ message GetUsersResponse {
   Pagination pagination = 2;
 }
 
-// Get the requested user.
+// Get the requested user by user id.
 message GetUserRequest {
   // The id of the user.
   int32 user_id = 1;
-  // The string of the username.
-  string username = 2;
 }
 // Response to GetUserRequest.
 message GetUserResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
+  // The requested user.
+  determined.user.v1.User user = 1;
+}
+
+// Get the requested user by username.
+message GetUserByUsernameRequest {
+  // The string of the username.
+  string username = 1;
+}
+// Response to GetUserByUsernameRequest.
+message GetUserByUsernameResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
+  // The requested user.
+  determined.user.v1.User user = 1;
+}
+
+// Get the requested current user.
+message GetMeRequest {
+  // Cannot have an empty message.
+  int32 holder = 1;
+}
+// Response to GetMeRequest.
+message GetMeResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "user" ] }
   };

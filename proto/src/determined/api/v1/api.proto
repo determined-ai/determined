@@ -157,7 +157,8 @@ service Determined {
   }
 
   // Get the requested user with username.
-  rpc GetUserByUsername(GetUserRequest) returns (GetUserResponse) {
+  rpc GetUserByUsername(GetUserByUsernameRequest)
+      returns (GetUserByUsernameResponse) {
     option (google.api.http) = {
       get: "/api/v1/users/{username}"
     };
@@ -167,7 +168,7 @@ service Determined {
   }
 
   // Get the current user.
-  rpc GetCurUser(GetUserRequest) returns (GetUserResponse) {
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
       get: "/api/v1/users/me"
     };

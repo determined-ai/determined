@@ -146,18 +146,11 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
-    #login = bindings.v1LoginRequest(username=username, password=password)
-    #r = bindings.post_Login(session=self.session, body=login)
+    unauth_session = api.Session(master=master_address, user=username,cert=cert) 
+    login = bindings.v1LoginRequest(username=username, password=password)
+    r = bindings.post_Login(session=unauth_session, body=login)
 
-    r = api.post(
-        master_address,
-        "login",
-        json={"username": username, "password": password},
-        authenticated=False,
-        cert=cert,
-    )
-
-    token = r.json()["token"]
+    token = r.token
     assert isinstance(token, str), "got invalid token response from server"
 
     return token
@@ -168,13 +161,13 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     Find out whether the given token is valid by attempting to use it
     on the "/users/me" endpoint.
     """
-    headers = {"Authorization": "Bearer {}".format(token)}
+    unauth_session = api.Session(master=master_address,cert=cert) 
     try:
-        r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
+       r =  bindings.get_GetMe(session=unauth_session)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         return False
 
-    return r.status_code == 200
+    return r is not None
 
 
 class TokenStore:
