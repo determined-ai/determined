@@ -64,6 +64,7 @@ type DndItem = {
   index?: number;
 };
 export interface ContextMenuProps<RecordType> {
+  children: React.ReactNode;
   onVisibleChange: (visible: boolean) => void;
   record: RecordType;
 }

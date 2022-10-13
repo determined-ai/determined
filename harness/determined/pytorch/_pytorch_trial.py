@@ -688,7 +688,7 @@ class PyTorchTrialController(det.TrialController):
                         logging.debug("Loading non-DDP checkpoint into a DDP model")
                         self._add_prefix_in_state_dict_if_not_present(model_state_dict, "module.")
                     else:
-                        # If the checkpointed model is DDP and we are currently running in
+                        # If the checkpointed model is DDP and if we are currently running in
                         # single-slot mode, remove the module prefix from checkpointed data
                         logging.debug("Loading DDP checkpoint into a non-DDP model")
                         torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
@@ -936,12 +936,12 @@ class PyTorchTrial(det.Trial):
 
         .. warning::
 
-           You might see significantly different metrics for trials which are paused and later
-           continued than trials which are not paused if some of your models, optimizers, and
-           learning rate schedulers are not wrapped. The reason is that the model's state might
-           not be restored accurately or completely from the checkpoint, which is saved to a
-           checkpoint and then later loaded into the trial during resuming training. When using
-           PyTorch, this can sometimes happen if the PyTorch API is not used correctly.
+           You may see metrics for trials that are paused and later continued that are significantly
+           different from trials that are not paused if some of your models, optimizers, and
+           learning rate schedulers are not wrapped. The reason is that the model's state may not be
+           restored accurately or completely from the checkpoint, which is saved to a checkpoint and
+           then later loaded into the trial during resumed training. When using PyTorch, this can
+           sometimes happen if the PyTorch API is not used correctly.
 
         Here is a code example.
 

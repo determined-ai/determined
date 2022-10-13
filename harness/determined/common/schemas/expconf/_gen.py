@@ -1480,7 +1480,7 @@ schemas = {
                 "array",
                 "null"
             ],
-            "default": [],
+            "default": null,
             "items": {
                 "type": "string"
             }
@@ -1513,7 +1513,7 @@ schemas = {
                 "array",
                 "null"
             ],
-            "default": [],
+            "default": null,
             "items": {
                 "type": "string"
             }

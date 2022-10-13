@@ -11,6 +11,7 @@ import (
 // ExperimentAuthZ describes authz methods for experiments.
 type ExperimentAuthZ interface {
 	// GET /api/v1/experiments/:exp_id
+	// GET /tasks
 	CanGetExperiment(curUser model.User, e *model.Experiment) (canGetExp bool, serverError error)
 
 	// GET /api/v1/experiments/:exp_id/file_tree
@@ -74,6 +75,9 @@ type ExperimentAuthZ interface {
 	// POST /api/v1/trials/:trial_id/training_metrics
 	// POST /api/v1/trials/:trial_id/validation_metrics
 	// POST /api/v1/trials/:trial_id/runner/metadata
+	// POST /api/v1/allocations/:allocation_id/all_gather
+	// POST /api/v1/allocations/:allocation_id/proxy_address
+	// POST /api/v1/allocations/:allocation_id/waiting
 	CanEditExperiment(curUser model.User, e *model.Experiment) error
 
 	// POST /api/v1/experiments/:exp_id/archive

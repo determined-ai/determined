@@ -191,7 +191,7 @@ AGENT_USER_GROUP_ARGS = [
 
 args_description = [
     Cmd("u|ser", None, "manage users", [
-        Cmd("list", list_users, "list users", [], is_default=True),
+        Cmd("list ls", list_users, "list users", [], is_default=True),
         Cmd("login", log_in_user, "log in user", [
             Arg("username", nargs="?", default=None, help="name of user to log in as")
         ]),

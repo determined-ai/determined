@@ -207,7 +207,7 @@ args_description = [
                 ],
             ),
             Cmd(
-                "list",
+                "list ls",
                 list_groups,
                 "list user groups",
                 [

@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -9,7 +9,7 @@ import useFeature from 'hooks/useFeature';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getGroups, getWorkspace } from 'services/api';
+import { getGroups, getWorkspace, getWorkspaceMembers } from 'services/api';
 import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -24,12 +24,6 @@ import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
 
-// This will be removed once the generated types for the API call exists
-interface GroupsAndUsersAssignedToWorkspaceResponse {
-  assignments: V1RoleWithAssignments[];
-  groups: V1Group[];
-  usersAssignedDirectly: User[];
-}
 type Params = {
   tab: string;
   workspaceId: string;
@@ -42,6 +36,7 @@ export enum WorkspaceDetailsTab {
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
+  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
   const { users } = useStore();
   const { workspaceId: workspaceID } = useParams<Params>();
@@ -89,15 +84,12 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [canceler.signal]);
 
-  const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async (): Promise<void> => {
-    // The user and group name filter will be applied in this call using the nameFilter
-    // Mock of https://github.com/determined-ai/determined/pull/5085
-    const response: GroupsAndUsersAssignedToWorkspaceResponse = await Promise.resolve({
-      assignments: [],
-      groups: [],
-      usersAssignedDirectly: [],
-    });
+  const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async () => {
+    if (!rbacEnabled || mockWorkspaceMembers) {
+      return;
+    }
 
+    const response = await getWorkspaceMembers({ nameFilter, workspaceId: id });
     const newGroupIds = new Set<number>();
     setUsersAssignedDirectly(response.usersAssignedDirectly);
     setUsersAssignedDirectlyIds(new Set(response.usersAssignedDirectly.map((user) => user.id)));
@@ -109,7 +101,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, []);
+  }, [id, nameFilter, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 

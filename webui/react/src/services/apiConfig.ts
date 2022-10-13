@@ -190,19 +190,38 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
+/**
+ * Returns roles, and workspace/global assignment of those roles,
+ * for a user specified in params.
+ * @param {GetUserParams} params - An object containing userId to look up their roles.
+ */
 export const getUserPermissions: DetApi<
   Service.GetUserParams,
   Api.V1GetPermissionsSummaryResponse,
-  Type.Permission[]
+  Type.PermissionsSummary
 > = {
   name: 'getUserPermissions',
-  postProcess: (response) => {
-    let permissions = new Array<Type.Permission>();
-    response.roles
-      .map(decoder.mapV1Role)
-      .forEach((r) => (permissions = permissions.concat(r.permissions)));
-    return permissions;
-  },
+  postProcess: (response) => ({
+    assignments: response.assignments.map(decoder.mapV1UserAssignment),
+    roles: response.roles.map(decoder.mapV1Role),
+  }),
+  request: (params) => detApi.RBAC.getPermissionsSummary(params.userId),
+};
+
+/**
+ * Returns roles, and workspace/global assignment of the roles,
+ * associated with the active/requesting user.
+ */
+export const getPermissionsSummary: DetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+> = {
+  name: 'getPermissionsSummary',
+  postProcess: (response) => ({
+    assignments: response.assignments.map(decoder.mapV1UserAssignment),
+    roles: response.roles.map(decoder.mapV1Role),
+  }),
   request: () => detApi.RBAC.getPermissionsSummary(),
 };
 
@@ -1035,6 +1054,22 @@ export const createWorkspace: DetApi<
   },
   request: (params, options) =>
     detApi.Workspaces.postWorkspace({ name: params.name.trim() }, options),
+};
+
+export const getWorkspaceMembers: DetApi<
+  Service.GetWorkspaceMembersParams,
+  Api.V1GetGroupsAndUsersAssignedToWorkspaceResponse,
+  Type.WorkspaceMembersResponse
+> = {
+  name: 'getWorkspaceMembers',
+  postProcess: (response) => ({
+    assignments: response.assignments,
+    groups: response.groups,
+    usersAssignedDirectly: response.usersAssignedDirectly.map(decoder.mapV1User),
+  }),
+  request: (params) => {
+    return detApi.RBAC.getGroupsAndUsersAssignedToWorkspace(params.workspaceId, params.nameFilter);
+  },
 };
 
 export const getWorkspaceProjects: DetApi<

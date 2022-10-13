@@ -25,16 +25,20 @@ func TestWebhooks(t *testing.T) {
 		testWebhookFive.Triggers = testWebhookFiveTriggers
 		expectedWebhookIds := []WebhookID{testWebhookFour.ID, testWebhookFive.ID}
 		err := AddWebhook(ctx, &testWebhookFour)
+		require.NoError(t, err)
 		err = AddWebhook(ctx, &testWebhookFive)
 		require.NoError(t, err, "failure creating webhooks")
 		webhooks, err := GetWebhooks(ctx)
-		webhookFourResponse := getWebhookById(webhooks, testWebhookFour.ID)
+		webhookFourResponse := getWebhookByID(webhooks, testWebhookFour.ID)
 		require.NoError(t, err, "unable to get webhooks")
 		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
-		require.Equal(t, getWebhookIds(webhooks), expectedWebhookIds, "get request returned incorrect webhook Ids")
+		require.Equal(t, getWebhookIds(webhooks), expectedWebhookIds,
+			"get request returned incorrect webhook Ids")
 		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
-		require.Equal(t, webhookFourResponse.URL, testWebhookFour.URL, "returned webhook url did not match")
-		require.Equal(t, webhookFourResponse.WebhookType, testWebhookFour.WebhookType, "returned webhook type did not match")
+		require.Equal(t, webhookFourResponse.URL, testWebhookFour.URL,
+			"returned webhook url did not match")
+		require.Equal(t, webhookFourResponse.WebhookType, testWebhookFour.WebhookType,
+			"returned webhook type did not match")
 	})
 
 	t.Run("webhook creation should work", func(t *testing.T) {
@@ -48,8 +52,10 @@ func TestWebhooks(t *testing.T) {
 		err := AddWebhook(ctx, &testWebhookTwo)
 		require.NoError(t, err, "failed to create webhook with multiple triggers")
 		webhooks, err := GetWebhooks(ctx)
-		createdWebhook := getWebhookById(webhooks, testWebhookTwo.ID)
-		require.Equal(t, len(createdWebhook.Triggers), len(testTriggersTwo), "did not retriee correct number of triggers")
+		require.NoError(t, err)
+		createdWebhook := getWebhookByID(webhooks, testWebhookTwo.ID)
+		require.Equal(t, len(createdWebhook.Triggers), len(testTriggersTwo),
+			"did not retriee correct number of triggers")
 	})
 
 	t.Run("Deleting a webhook should work", func(t *testing.T) {
@@ -232,14 +238,11 @@ var (
 )
 
 func cleanUp(ctx context.Context, t *testing.T) {
-	err := DeleteWebhook(ctx, testWebhookOne.ID)
-	err = DeleteWebhook(ctx, testWebhookTwo.ID)
-	err = DeleteWebhook(ctx, testWebhookThree.ID)
-	err = DeleteWebhook(ctx, testWebhookFour.ID)
-	err = DeleteWebhook(ctx, testWebhookFive.ID)
-	if err != nil {
-		t.Logf("error cleaning up webhook: %v", err)
-	}
+	require.NoError(t, DeleteWebhook(ctx, testWebhookOne.ID))
+	require.NoError(t, DeleteWebhook(ctx, testWebhookTwo.ID))
+	require.NoError(t, DeleteWebhook(ctx, testWebhookThree.ID))
+	require.NoError(t, DeleteWebhook(ctx, testWebhookFour.ID))
+	require.NoError(t, DeleteWebhook(ctx, testWebhookFive.ID))
 }
 
 func getWebhookIds(ws Webhooks) []WebhookID {

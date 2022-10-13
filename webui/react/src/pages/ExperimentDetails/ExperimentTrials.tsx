@@ -255,11 +255,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [columns, settings.tableOffset, updateSettings],
   );
 
+  const stateString = useMemo(() => settings.state?.join('.'), [settings.state]);
   const fetchExperimentTrials = useCallback(async () => {
     try {
-      const states = (settings.state || []).map((state) =>
-        encodeExperimentState(state as RunState),
-      );
+      const states = stateString
+        ?.split('.')
+        .map((state) => encodeExperimentState(state as RunState));
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -287,7 +288,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     canceler,
     settings.sortDesc,
     settings.sortKey,
-    settings.state,
+    stateString,
     settings.tableLimit,
     settings.tableOffset,
   ]);
@@ -336,15 +337,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   useEffect(() => {
     fetchExperimentTrials();
     setIsLoading(true);
-  }, [
-    fetchExperimentTrials,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.state,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
-
+  }, [fetchExperimentTrials]);
   useEffect(() => {
     if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
   }, [experiment.state, stopPolling]);

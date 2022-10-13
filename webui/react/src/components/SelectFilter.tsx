@@ -84,7 +84,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
      * - string
      * - string[]
      */
-    let label = null;
+    let label: any = null;
     if (option.children) {
       if (Array.isArray(option.children)) {
         label = option.children.join(' ');

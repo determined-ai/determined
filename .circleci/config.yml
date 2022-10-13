@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.5-dev0
+    default: 0.19.6-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -137,7 +137,8 @@ commands:
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
-            if [ "$DIFF_DIRS" = "shared" ] ; then
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"shared"* ]]; then
               echo "shared code changed, running downstream test"
             else
               echo "shared code not affected, halting job now"
@@ -956,11 +957,18 @@ commands:
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
   pre-package-and-push-system:
+    parameters:
+      check:
+        type: boolean
+        default: true
     steps:
       - go-get-deps
       - run: make -C proto build
-      - run: make -C master check
-      - run: make -C agent check
+      - when:
+          condition: <<parameters.check>>
+          steps:
+            - run: make -C master check
+            - run: make -C agent check
 
   install-devcluster:
     steps:
@@ -1058,7 +1066,8 @@ jobs:
           at: .
       - setup_remote_docker:
           version: 19.03.12
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -1087,7 +1096,8 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev

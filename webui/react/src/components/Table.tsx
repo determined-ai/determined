@@ -217,7 +217,7 @@ export const defaultRowClassName = (options?: {
   clickable?: boolean;
   highlighted?: boolean;
 }): string => {
-  const classes = [];
+  const classes: string[] = [];
   if (options?.clickable) classes.push('clickable');
   if (options?.highlighted) classes.push('highlighted');
   return classes.join(' ');

@@ -26,7 +26,7 @@ import (
 )
 
 func TestPostWorkspace(t *testing.T) {
-	api, curUser, ctx := SetupAPITest(t)
+	api, curUser, ctx := setupAPITest(t)
 
 	// Name min error.
 	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: ""})
@@ -65,26 +65,26 @@ func TestPostWorkspace(t *testing.T) {
 	require.Equal(t, expected, getWorkResp.Workspace)
 }
 
-var workspaceAuthZ *mocks.WorkspaceAuthZ
+var wAuthZ *mocks.WorkspaceAuthZ
 
 func workspaceNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("workspace (%d) not found", id))
 }
 
-func SetupWorkspaceAuthZTest(
+func setupWorkspaceAuthZTest(
 	t *testing.T,
 ) (*apiServer, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, _, curUser, ctx := SetupUserAuthzTest(t)
+	api, _, curUser, ctx := setupUserAuthzTest(t)
 
-	if workspaceAuthZ == nil {
-		workspaceAuthZ = &mocks.WorkspaceAuthZ{}
-		workspace.AuthZProvider.Register("mock", workspaceAuthZ)
+	if wAuthZ == nil {
+		wAuthZ = &mocks.WorkspaceAuthZ{}
+		workspace.AuthZProvider.Register("mock", wAuthZ)
 	}
-	return api, workspaceAuthZ, curUser, ctx
+	return api, wAuthZ, curUser, ctx
 }
 
 func TestAuthzGetWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 	// Deny returns same as 404.
 	_, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: -9999})
 	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
@@ -102,7 +102,7 @@ func TestAuthzGetWorkspace(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaceProjects(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceProjectsError")
@@ -123,7 +123,7 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaces(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceError")
@@ -142,7 +142,7 @@ func TestAuthzGetWorkspaces(t *testing.T) {
 }
 
 func TestAuthzPostWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny returns error wrapped in forbidden.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateWorkspaceDeny")
@@ -165,7 +165,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 }
 
 func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error

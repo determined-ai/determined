@@ -9,8 +9,8 @@ export const clamp = (val: number, min: number, max: number): number => {
 
 export const findFactorOfNumber = (n: number): number[] => {
   const abs = Math.abs(n);
-  const factorsAsc = [];
-  const factorsDesc = [];
+  const factorsAsc: number[] = [];
+  const factorsDesc: number[] = [];
 
   for (let i = 1; i <= Math.floor(Math.sqrt(abs)); i++) {
     if (abs % i !== 0) continue;

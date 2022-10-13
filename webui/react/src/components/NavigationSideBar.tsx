@@ -1,6 +1,6 @@
 import { Button, Menu, Tooltip, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';
@@ -116,8 +116,15 @@ const NavigationSideBar: React.FC = () => {
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
 
-  const menuConfig = useMemo(
-    () => ({
+  const { canCreateWorkspace, canViewWorkspace } = usePermissions();
+
+  const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
+
+  const menuConfig = useMemo(() => {
+    const topNav = canAccessUncategorized
+      ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
+      : [];
+    return {
       bottom: [
         { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
         {
@@ -136,14 +143,13 @@ const NavigationSideBar: React.FC = () => {
         },
       ],
       top: [
-        { icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() },
+        ...topNav,
         { icon: 'model', label: 'Model Registry', path: paths.modelList() },
         { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
         { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
       ],
-    }),
-    [info.branding],
-  );
+    };
+  }, [canAccessUncategorized, info.branding]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
@@ -152,8 +158,6 @@ const NavigationSideBar: React.FC = () => {
   const handleCreateWorkspace = useCallback(() => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
-
-  const { canCreateWorkspace } = usePermissions();
 
   if (!showNavigation) return null;
 

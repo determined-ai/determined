@@ -196,7 +196,7 @@ args_description = [
         "manage projects",
         [
             Cmd(
-                "list",
+                "list ls",
                 list_workspace_projects,
                 "list the projects associated with a workspace",
                 [

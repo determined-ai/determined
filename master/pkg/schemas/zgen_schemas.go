@@ -1395,7 +1395,7 @@ var (
                 "array",
                 "null"
             ],
-            "default": [],
+            "default": null,
             "items": {
                 "type": "string"
             }
@@ -1424,7 +1424,7 @@ var (
                 "array",
                 "null"
             ],
-            "default": [],
+            "default": null,
             "items": {
                 "type": "string"
             }

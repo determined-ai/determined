@@ -1,7 +1,11 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { createRoot } from 'react-dom/client';
+/**
+ * It's considered unstable until `react-router-dom` can detect
+ * history version mismatches when supplying your own history.
+ * https://reactrouter.com/en/v6.3.0/api#unstable_historyrouter
+ */
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import history from 'shared/routes/history';
 
@@ -14,15 +18,21 @@ import * as serviceWorker from './serviceWorker';
 import 'shared/prototypes';
 import 'dev';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <Router history={history}>
-      <CompatRouter>
-        <App />
-      </CompatRouter>
-    </Router>
-  </React.StrictMode>,
-  document.getElementById('root'),
+// redirect to basename if needed
+if (process.env.PUBLIC_URL && history.location.pathname === '/') {
+  history.replace(process.env.PUBLIC_URL);
+}
+
+const container = document.getElementById('root');
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const root = createRoot(container!);
+
+root.render(
+  // <React.StrictMode>
+  <HistoryRouter basename={process.env.PUBLIC_URL} history={history}>
+    <App />
+  </HistoryRouter>,
+  // </React.StrictMode>,
 );
 
 /*

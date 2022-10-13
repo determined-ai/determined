@@ -11,16 +11,35 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // APIServer is an embedded api server struct.
 type APIServer struct{}
 
+// AuthorizeRequest checks if the user has CanEditWebhooks permissions.
+func AuthorizeRequest(ctx context.Context) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+	authErr := AuthZProvider.Get().
+		CanEditWebhooks(curUser)
+	if authErr != nil {
+		return status.Error(codes.PermissionDenied, authErr.Error())
+	}
+	return nil
+}
+
 // GetWebhooks returns all Webhooks.
 func (a *APIServer) GetWebhooks(
 	ctx context.Context, req *apiv1.GetWebhooksRequest,
 ) (*apiv1.GetWebhooksResponse, error) {
+	if err := AuthorizeRequest(ctx); err != nil {
+		return nil, err
+	}
 	webhooks, err := GetWebhooks(ctx)
 	if err != nil {
 		return nil, err
@@ -32,6 +51,9 @@ func (a *APIServer) GetWebhooks(
 func (a *APIServer) PostWebhook(
 	ctx context.Context, req *apiv1.PostWebhookRequest,
 ) (*apiv1.PostWebhookResponse, error) {
+	if err := AuthorizeRequest(ctx); err != nil {
+		return nil, err
+	}
 	if len(req.Webhook.Triggers) == 0 {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -55,6 +77,9 @@ func (a *APIServer) PostWebhook(
 func (a *APIServer) DeleteWebhook(
 	ctx context.Context, req *apiv1.DeleteWebhookRequest,
 ) (*apiv1.DeleteWebhookResponse, error) {
+	if err := AuthorizeRequest(ctx); err != nil {
+		return nil, err
+	}
 	if err := DeleteWebhook(ctx, WebhookID(req.Id)); err != nil {
 		return nil, err
 	}
@@ -65,6 +90,9 @@ func (a *APIServer) DeleteWebhook(
 func (a *APIServer) TestWebhook(
 	ctx context.Context, req *apiv1.TestWebhookRequest,
 ) (*apiv1.TestWebhookResponse, error) {
+	if err := AuthorizeRequest(ctx); err != nil {
+		return nil, err
+	}
 	webhook, err := GetWebhook(ctx, int(req.Id))
 	if err != nil {
 		return nil, err

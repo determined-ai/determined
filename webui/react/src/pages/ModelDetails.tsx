@@ -1,6 +1,6 @@
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
@@ -73,8 +73,9 @@ const ModelDetails: React.FC = () => {
       setModel((prev) => (!isEqual(modelData, prev) ? modelData : prev));
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [modelId, pageError, settings]);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -107,7 +108,6 @@ const ModelDetails: React.FC = () => {
   const saveModelVersionTags = useCallback(
     async (modelName, versionId, tags) => {
       try {
-        setIsLoading(true);
         await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
         await fetchModel();
       } catch (e) {
@@ -116,7 +116,6 @@ const ModelDetails: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModel],
@@ -277,7 +276,6 @@ const ModelDetails: React.FC = () => {
           silent: false,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [model?.model.name],
@@ -343,7 +341,6 @@ const ModelDetails: React.FC = () => {
           silent: true,
           type: ErrorType.Api,
         });
-        setIsLoading(false);
       }
     },
     [fetchModel, model?.model.name],

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -922,6 +923,27 @@ FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON e.owner_id = u.id
 WHERE t.id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentWithoutConfigByTaskID looks up an experiment by a given taskID, returning an error
+// if none exists. It loads the experiment without its configuration, for callers that do not need
+// it, or can't handle backwards incompatible changes.
+func ExperimentWithoutConfigByTaskID(
+	ctx context.Context, taskID model.TaskID,
+) (*model.Experiment, error) {
+	var experiment model.Experiment
+	if err := Bun().NewRaw(`
+SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time, 
+       e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, 
+       e.notes, e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON e.owner_id = u.id
+WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
 		return nil, err
 	}
 

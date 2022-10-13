@@ -807,12 +807,6 @@ export interface ProjectPagination extends WithPagination {
   projects: Project[];
 }
 
-export interface UserAssignment {
-  cluster: boolean;
-  name: string;
-  workspaces?: number[];
-}
-
 export interface Permission {
   id: Api.V1PermissionType;
   isGlobal: boolean;
@@ -822,6 +816,17 @@ export interface UserRole {
   id: number;
   name: string;
   permissions: Permission[];
+}
+
+export interface UserAssignment {
+  isGlobal: boolean;
+  roleId: number;
+  workspaces: number[];
+}
+
+export interface PermissionsSummary {
+  assignments: UserAssignment[];
+  roles: UserRole[];
 }
 
 export interface ExperimentPermissionsArgs {
@@ -835,6 +840,12 @@ export interface PermissionWorkspace {
 
 export interface WorkspacePermissionsArgs {
   workspace?: PermissionWorkspace;
+}
+
+export interface WorkspaceMembersResponse {
+  assignments: Api.V1RoleWithAssignments[];
+  groups: Api.V1Group[];
+  usersAssignedDirectly: User[];
 }
 
 export type UserOrGroup = User | V1Group;

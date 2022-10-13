@@ -15,6 +15,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: '/hyperparameters',
   settings: [
     {
       defaultValue: DEFAULT_COLUMNS,

@@ -6,10 +6,10 @@ Determined supports a :ref:`variety of hyperparameter search algorithms <hyperpa
 Aside from the ``single`` searcher, a searcher runs multiple trials and decides the hyperparameter
 values to use in each trial. Every searcher is configured with the name of the validation metric to
 optimize (via the ``metric`` field), in addition to other searcher-specific options. For example,
-the (`state-of-the-art <https://arxiv.org/pdf/1810.05934.pdf>`_) ``adaptive_asha`` searcher,
-suitable for larger experiments with many trials, is configured with the maximum number of trials to
-run, the maximum training length allowed per trial, and the maximum number of trials that can be
-worked on simultaneously:
+the ``adaptive_asha`` searcher (`arXiv:1810.0593 <https://arxiv.org/pdf/1810.05934.pdf>`_), suitable
+for larger experiments with many trials, is configured with the maximum number of trials to run, the
+maximum training length allowed per trial, and the maximum number of trials that can be worked on
+simultaneously:
 
 .. code:: yaml
 
@@ -52,10 +52,10 @@ Determined also supports other common hyperparameter search algorithms:
 -  :ref:`Single <topic-guides_hp-tuning-det_single>` is appropriate for manual hyperparameter
    tuning, as it trains a single hyperparameter configuration.
 
--  :ref:`Grid <topic-guides_hp-tuning-det_grid>` brute force evaluates all possible hyperparameter
-   configurations and returns the best.
+-  :ref:`Grid <topic-guides_hp-tuning-det_grid>` evaluates all possible hyperparameter
+   configurations by brute force and returns the best.
 
--  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter
+-  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a subset of hyperparameter
    configurations chosen at random and returns the best.
 
 -  :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>` begins as random search

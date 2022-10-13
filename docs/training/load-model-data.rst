@@ -9,22 +9,21 @@ your ML models depends on several factors, including whether you are running on-
 cloud, the size of your data sets, and your security requirements. Accordingly, Determined supports
 a variety of methods for accessing data.
 
-For initial experimentation, **the easiest way to include data in your experiment is to add the data
-to the same directory as your model code**. When you create a new experiment, all files in your
-model code directory will be packaged and uploaded to the Determined cluster, assuming the package
-is ``< 96MB``.
+The easiest way to include data in your experiment is to add the data to the same directory as your
+model code. When you create a new experiment, all files in your model code directory will be
+packaged and uploaded to the Determined cluster, assuming the package is smaller than 96MB.
 
-If your dataset is larger than ``96MB``, you can use a :ref:`Startup Hook <startup-hooks>` shell
-script to download the dataset prior to training.
+If your dataset is larger than 96MB, you can use a :ref:`Startup Hook <startup-hooks>` shell script
+to download the dataset prior to training.
 
 This document also introduces production data source options, such as Object Store ( `Amazon S3
 <https://aws.amazon.com/s3/>`__, `Google Cloud Storage <https://cloud.google.com/storage>`__) or
 Distributed File Systems (`NFS <https://en.wikipedia.org/wiki/Network_File_System>`__, `Ceph
 <https://ceph.io/>`__) if the above approaches do not apply to you.
 
-************************
- Embed in Training Code
-************************
+*******************************
+ Including Data With Your Code
+*******************************
 
 The data set can be uploaded as part of the :ref:`experiment <experiments>` directory, which usually
 include your training API implementation. The size of this directory must not exceed 96MB, so this
@@ -184,7 +183,7 @@ needed. This has several advantages:
    more quickly.
 
 -  If a container doesn't need to access the entire data set, streaming can result in downloading
-   less data. For example, when during hyperparameter search, many trials can often be terminated
+   less data. For example, when doing hyperparameter searches, many trials can often be terminated
    after having been trained for less than a full epoch.
 
 -  If the data set is extremely large, streaming can avoid the need to store the entire data set on

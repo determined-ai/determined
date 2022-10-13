@@ -23,11 +23,19 @@ List values can be specified by comma-separated values.
 """
 
 CONTEXT_DESC = """
-The filepath to a directory that contains the set of files used to
-execute the command. All files under this directory will be packaged,
-maintaining the existing directory structure. The total byte contents
-of the directory must not exceed 96 MB. By default, the context
-directory will be empty.
+A directory whose contents should be copied into the task container.
+Unlike --include, the directory itself will not appear in the task
+container, only its contents.  The total bytes copied into the container
+must not exceed 96 MB.  By default, no files are copied.  See also:
+--include, which preserves the root directory name.
+"""
+
+INCLUDE_DESC = """
+A file or directory to copy into the task container.  May be provided more
+than once.   Unlike --context, --include will preserve the top-level
+directory name during the copy.  The total bytes copied into the
+container must not exceed 96 MB.  By default, no files are copied.  See
+also: --context, when a task should run inside a directory.
 """
 
 VOLUME_DESC = """
@@ -324,13 +332,12 @@ def launch_command(
     config: Dict[str, Any],
     template: str,
     context_path: Optional[Path] = None,
+    includes: Iterable[Path] = (),
     data: Optional[Dict[str, Any]] = None,
     preview: Optional[bool] = False,
     default_body: Optional[Dict[str, Any]] = None,
 ) -> Any:
-    user_files = []  # type: List[Dict[str, Any]]
-    if context_path:
-        user_files = context.read_legacy_context(context_path)
+    user_files = context.read_legacy_context(context_path, includes)
 
     body = {}  # type: Dict[str, Any]
     if default_body:
