@@ -11,7 +11,7 @@ import filelock
 
 import determined as det
 from determined.common import api, constants, util
-from determined.common.api import certs, bindings
+from determined.common.api import bindings, certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
@@ -145,7 +145,7 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
-    unauth_session = api.Session(master=master_address, user=username,cert=cert) 
+    unauth_session = api.Session(master=master_address, user=username, cert=cert)
     login = bindings.v1LoginRequest(username=username, password=password)
     r = bindings.post_Login(session=unauth_session, body=login)
 
@@ -160,9 +160,9 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     Find out whether the given token is valid by attempting to use it
     on the "/users/me" endpoint.
     """
-    unauth_session = api.Session(master=master_address,cert=cert) 
+    unauth_session = api.Session(master=master_address, cert=cert)
     try:
-       r =  bindings.get_GetMe(session=unauth_session)
+        r = bindings.get_GetMe(session=unauth_session)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         return False
 

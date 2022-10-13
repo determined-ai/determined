@@ -20,7 +20,9 @@ FullUser = namedtuple(
     ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
 )
 
-def update_user(user_obj: user.User,
+
+def update_user(
+    user_obj: user.User,
     username: str,
     active: Optional[bool] = None,
     password: Optional[str] = None,
@@ -28,7 +30,7 @@ def update_user(user_obj: user.User,
 ) -> Response:
     if active is None and password is None and agent_user_group is None:
         raise Exception("Internal error (must supply at least one kwarg to update_user).")
-    
+
     return user_obj.update(
         username=username,
         active=active,
@@ -39,15 +41,14 @@ def update_user(user_obj: user.User,
         agent_group=agent_user_group.agent_group,
     )
 
+
 def update_username(user_obj: user.User, new_username: str) -> Response:
     return user_obj.rename(new_username=new_username)
 
 
 @authentication.required
 def list_users(args: Namespace) -> None:
-    render.render_objects(
-        FullUser, [render.unmarshal(FullUser, u) for u in client.list_users()]
-    )
+    render.render_objects(FullUser, [render.unmarshal(FullUser, u) for u in client.list_users()])
 
 
 @authentication.required
@@ -60,6 +61,7 @@ def activate_user(parsed_args: Namespace) -> None:
 def deactivate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
     update_user(user_obj, parsed_args.username, parsed_args.master, active=False)
+
 
 def log_in_user(parsed_args: Namespace) -> None:
     if parsed_args.username is None:
@@ -74,7 +76,7 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     token_store = authentication.TokenStore(parsed_args.master)
 
-    #client.login(master=parsed_args.master, user=username, password=password)
+    # client.login(master=parsed_args.master, user=username, password=password)
     token = authentication.do_login(parsed_args.master, username, password)
     token_store.set_token(username, token)
     token_store.set_active(username)
@@ -162,7 +164,9 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
     }
 
     user_obj = client.get_user_by_name(parsed_args.username)
-    update_user(user_obj, parsed_args.det_username, parsed_args.master, agent_user_group=agent_user_group)
+    update_user(
+        user_obj, parsed_args.det_username, parsed_args.master, agent_user_group=agent_user_group
+    )
 
 
 @authentication.required
