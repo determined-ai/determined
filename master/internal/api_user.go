@@ -327,7 +327,8 @@ func (a *apiServer) PatchUser(
 			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == "admin") {
 				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 			}
-			if targetUser.Username != "determined" && (strings.TrimSpace(strings.ToLower(displayName)) == "determined") {
+			if targetUser.Username != displayName &&
+				(strings.TrimSpace(strings.ToLower(displayName)) == "determined") {
 				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 			}
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
