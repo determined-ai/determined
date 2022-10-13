@@ -6,6 +6,40 @@ This section includes user guides for how to set up notifications for experiment
 
 Determined now supports webhooks for sending notification to monitor experiment state change.
 
+**********
+ Security
+**********
+
+Determined utilizes ``signed_payload`` and ``timestamp`` headers. You will need to configure a
+``webhook_signing_key`` in master configuration.
+
+.. code::
+
+   security:
+       webhook_signing_key: <signing_key>
+
+.. note::
+
+   ``webhook_signing_key`` will be automatically generated if not provided, you can access it
+   through ``api/v1/master/config``
+
+For every webhook request Determined will generate two headers ``X-Determined-AI-Signature``, and
+``X-Determined-AI-Signature-Timestamp`` which you can inspect to verify each request to their
+webhook endpoint.
+
+-  The ``X-Determined-AI-Signature-Timestamp`` will represent the time at which the request was
+   generated and sent. You can choose to inspect this timestamp and decide whether to discard any
+   requests with a timestamp that is too distant from the current time at their discretion.
+
+-  The ``X-Determined-AI-Signature`` will be a representation of a "signed" request payload. The signed request payload will be generated in the following way:
+      -  Combine the timestamp in ``X-Determined-AI-Signature-Timestamp``, the comma character ","
+         and the request body, which will be the entire event payload.
+      -  Create an HMAC using SHA256 hashing, with the ``webhook_signing_key``, and the event
+         payload from previous step.
+
+-  You can then check to make sure the ``X-Determined-AI-Signature`` header value and the generated
+   signed payload match.
+
 ****************
  Create Webhook
 ****************
