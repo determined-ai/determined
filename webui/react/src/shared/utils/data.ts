@@ -118,7 +118,13 @@ export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   if (path === '') return obj as T;
   let value = obj || {};
-  return path.split('.').every((key) => (value = value[key]) !== undefined)
+  return path.split('.').every((key) => {
+    if (!value) return false;
+    else {
+      value = value[key];
+      return value !== undefined;
+    }
+  })
     ? (value as T)
     : undefined;
 };
