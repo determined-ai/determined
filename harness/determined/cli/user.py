@@ -1,6 +1,7 @@
 import getpass
 from argparse import Namespace
 from collections import namedtuple
+from turtle import update
 from typing import Any, Dict, List, Optional
 
 from requests import Response
@@ -9,6 +10,8 @@ from termcolor import colored
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.experimental import user
+from determined.experimental import client
 
 from . import render
 
@@ -17,33 +20,27 @@ FullUser = namedtuple(
     ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
 )
 
-
-def update_user(
+def update_user(user_obj: user.User,
     username: str,
-    master_address: str,
     active: Optional[bool] = None,
     password: Optional[str] = None,
     agent_user_group: Optional[Dict[str, Any]] = None,
 ) -> Response:
     if active is None and password is None and agent_user_group is None:
         raise Exception("Internal error (must supply at least one kwarg to update_user).")
+    
+    return user_obj.update(
+        username=username,
+        active=active,
+        password=password,
+        agent_uid=agent_user_group.agent_uid,
+        agent_gid=agent_user_group.agent_gid,
+        agent_user=agent_user_group.agent_user,
+        agent_group=agent_user_group.agent_group,
+    )
 
-    request = {}  # type: Dict[str, Any]
-    if active is not None:
-        request["active"] = active
-
-    if password is not None:
-        request["password"] = password
-
-    if agent_user_group is not None:
-        request["agent_user_group"] = agent_user_group
-
-    return api.patch(master_address, "users/{}".format(username), json=request)
-
-
-def update_username(current_username: str, master_address: str, new_username: str) -> Response:
-    request = {"username": new_username}
-    return api.patch(master_address, "users/{}/username".format(current_username), json=request)
+def update_username(user_obj: user.User, new_username: str) -> Response:
+    return user_obj.rename(new_username=new_username)
 
 
 @authentication.required
@@ -55,13 +52,14 @@ def list_users(args: Namespace) -> None:
 
 @authentication.required
 def activate_user(parsed_args: Namespace) -> None:
-    update_user(parsed_args.username, parsed_args.master, active=True)
+    user_obj = client.get_user_by_name(parsed_args.username)
+    update_user(user_obj, parsed_args.username, parsed_args.master, active=True)
 
 
 @authentication.required
 def deactivate_user(parsed_args: Namespace) -> None:
-    update_user(parsed_args.username, parsed_args.master, active=False)
-
+    user_obj = client.get_user_by_name(parsed_args.username)
+    update_user(user_obj, parsed_args.username, parsed_args.master, active=False)
 
 def log_in_user(parsed_args: Namespace) -> None:
     if parsed_args.username is None:
@@ -76,6 +74,7 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     token_store = authentication.TokenStore(parsed_args.master)
 
+    #client.login(master=parsed_args.master, user=username, password=password)
     token = authentication.do_login(parsed_args.master, username, password)
     token_store.set_token(username, token)
     token_store.set_active(username)
@@ -104,7 +103,8 @@ def log_out_user(parsed_args: Namespace) -> None:
 
 @authentication.required
 def rename(parsed_args: Namespace) -> None:
-    update_username(parsed_args.target_user, parsed_args.master, parsed_args.new_username)
+    user_obj = client.get_user_by_name(parsed_args.username)
+    update_username(user_obj, parsed_args.target_user, parsed_args.master, parsed_args.new_username)
 
 
 @authentication.required
@@ -131,7 +131,8 @@ def change_password(parsed_args: Namespace) -> None:
     # Hash the password to avoid sending it in cleartext.
     password = api.salt_and_hash(password)
 
-    update_user(username, parsed_args.master, password=password)
+    user_obj = client.get_user_by_name(parsed_args.username)
+    update_user(user_obj, username, parsed_args.master, password=password)
 
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.
@@ -160,24 +161,21 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
         "group": parsed_args.agent_group,
     }
 
-    update_user(parsed_args.det_username, parsed_args.master, agent_user_group=agent_user_group)
+    user_obj = client.get_user_by_name(parsed_args.username)
+    update_user(user_obj, parsed_args.det_username, parsed_args.master, agent_user_group=agent_user_group)
 
 
 @authentication.required
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
-
-    request = {"username": username, "admin": admin, "active": True}
-    api.post(parsed_args.master, "users", json=request)
+    client.create_user(username=username, admin=admin)
 
 
 @authentication.required
 def whoami(parsed_args: Namespace) -> None:
-    response = api.get(parsed_args.master, "users/me")
-    user = response.json()
-
-    print("You are logged in as user '{}'".format(user["username"]))
+    user = client.whoami()
+    print("You are logged in as user '{}'".format(user.username))
 
 
 AGENT_USER_GROUP_ARGS = [

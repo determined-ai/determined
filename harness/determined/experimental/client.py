@@ -46,7 +46,7 @@ See :ref:`use-trained-models` for more ideas on what to do next.
 import functools
 import pathlib
 import warnings
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
@@ -65,6 +65,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialReference,
     TrialSortBy,
 )
+from determined.common.experimental.user import User
 
 _determined = None  # type: Optional[Determined]
 
@@ -78,7 +79,6 @@ def _require_singleton(fn: Callable) -> Callable:
         return fn(*args, **kwargs)
 
     return _fn
-
 
 def login(
     master: Optional[str] = None,
@@ -174,7 +174,7 @@ def get_experiment(experiment_id: int) -> ExperimentReference:
 
 
 @_require_singleton
-def create_user(username: str, password: str, admin: bool):
+def create_user(username: str, admin: bool, password: Optional[str] = None) -> User:
     """
     Creates an user with username and password, admin. The function returns a
     :class:`~determined.experimental.client.User` of the User.
@@ -185,11 +185,11 @@ def create_user(username: str, password: str, admin: bool):
         admin (bool): indicates whether the user is an admin.
     """
     assert _determined is not None
-    return _determined.create_user(username, password, admin)
+    return _determined.create_user(username, admin, password)
 
 
 @_require_singleton
-def get_user_by_id(user_id: int):
+def get_user_by_id(user_id: int) -> User:
     """
     Get the :class:`~determined.experimental.client.User` representing the
     User with the provided user id.
@@ -202,7 +202,7 @@ def get_user_by_id(user_id: int):
 
 
 @_require_singleton
-def get_user_by_name(user_name: str):
+def get_user_by_name(user_name: str) -> User:
     """
     Get the :class:`~determined.experimental.client.User` representing the
     User with the provided user name.
@@ -215,7 +215,7 @@ def get_user_by_name(user_name: str):
 
 
 @_require_singleton
-def whoami():
+def whoami() -> User:
     """
     Get the :class:`~determined.experimental.client.User` representing the
     current user.
@@ -225,7 +225,7 @@ def whoami():
 
 
 @_require_singleton
-def list_users():
+def list_users() -> Sequence[User]:
     """
     Get the list :class:`~determined.experimental.client.User` of all Users.
     """

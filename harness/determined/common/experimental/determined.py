@@ -64,8 +64,8 @@ class Determined:
 
         self._session = api.Session(master, user, auth, cert)
 
-    def create_user(self, username: str, password: str, admin: bool) -> user.User:
-        create_user = bindings.v1User(username=username)
+    def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
+        create_user = bindings.v1User(username=username, admin=admin, active=True)
         req = bindings.v1PostUserRequest(password=password, user=create_user)
         resp = bindings.post_PostUser(self._session, body=req)
         return user.User(

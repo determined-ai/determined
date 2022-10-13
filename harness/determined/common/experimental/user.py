@@ -65,7 +65,6 @@ class User:
     def activate(self) -> Response:
         patch_user = bindings.v1PatchUser(active=True)
         resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
-
         return resp
 
     def deactivate(self) -> Response:
