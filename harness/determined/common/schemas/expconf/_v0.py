@@ -51,24 +51,20 @@ class ResourcesConfigV0(schemas.SchemaBase):
 
 class PbsClusterConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
-    pbsbatch_args: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
         self,
-        pbsbatch_args: Optional[List[str]] = None,
     ) -> None:
         pass
 
 
 class SlurmClusterConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
-    sbatch_args: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
         self,
-        sbatch_args: Optional[List[str]] = None,
     ) -> None:
         pass
 

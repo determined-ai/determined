@@ -92,6 +92,10 @@
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
     perform_initial_validation: false
+    pbs:
+      slots_per_node: 99
+      pbsbatch_args:
+        - --aa bb
     profiling:
       enabled: true
       begin_on_batch: 0
@@ -130,6 +134,10 @@
       container_path: /asdf
       checkpoint_path: /qwer
       tensorboard_path: /zxcv
+    slurm:
+      slots_per_node: 101
+      sbatch_args:
+        - --another
 
 - name: minimal valid experiment
   sane_as:
@@ -189,8 +197,7 @@
       mixed_precision: O0
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
-    pbs:
-      pbsbatch_args: []
+    pbs: {}
     perform_initial_validation: false
     profiling:
       enabled: false
@@ -219,8 +226,7 @@
       smaller_is_better: true
       source_checkpoint_uuid: null
       source_trial_id: null
-    slurm:
-      sbatch_args: []
+    slurm: {}
     workspace: ''
     project: ''
 

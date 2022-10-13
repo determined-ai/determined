@@ -87,8 +87,8 @@ fulfilled and configured, install and configure the Determined master:
    | ``type``                   | The cluster workload manager (``slurm`` or ``pbs``).           |
    +----------------------------+----------------------------------------------------------------+
    | ``master_host``            | The host name of the Determined master. This is the name the   |
-   |                            | compute nodes will utilize to communicate with the the         |
-   |                            | Determined master.                                             |
+   |                            | compute nodes will utilize to communicate with the Determined  |
+   |                            | master.                                                        |
    +----------------------------+----------------------------------------------------------------+
    | ``port``                   | Communication port used by the launcher. Update this value if  |
    |                            | there are conflicts with other services on your cluster.       |

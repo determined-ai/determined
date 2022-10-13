@@ -19,6 +19,7 @@ import TaskList from 'pages/TaskList';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
+import Webhooks from 'pages/WebhookList';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
 import { RouteConfig } from 'shared/types';
@@ -48,6 +49,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   trialDetails: <TrialDetails />,
   uncategorized: <ProjectDetails />,
   wait: <Wait />,
+  webhooks: <Webhooks />,
   workspaceDetails: <WorkspaceDetails />,
   workspaceList: <WorkspaceList />,
 };

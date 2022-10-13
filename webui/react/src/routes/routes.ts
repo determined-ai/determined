@@ -241,6 +241,12 @@ const routes: RouteConfig[] = [
     redirect: '/settings/account',
     title: 'Settings',
   },
+  {
+    id: 'webhooks',
+    needAuth: true,
+    path: '/webhooks',
+    title: 'Webhooks',
+  },
 ];
 
 export default routes;

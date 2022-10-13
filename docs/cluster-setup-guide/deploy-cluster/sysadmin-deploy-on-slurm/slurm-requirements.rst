@@ -75,7 +75,7 @@ recommended to optimize how Determined interacts with Slurm:
 -  Ensure homogeneous Slurm partitions.
 
    Determined maps Slurm partitions to Determined resource pools. It is recommended that the nodes
-   within a partition are homogeneous for Determined to effectively schedule GPU jobs.
+   within a partition be homogeneous for Determined to effectively schedule GPU jobs.
 
    -  A Slurm partition with GPUs is identified as a CUDA/ROCM resource pool. The type is inherited
       from the ``resource_manager.slot_type`` configuration. It can be also be specified-per
@@ -117,10 +117,10 @@ to optimize how Determined interacts with PBS:
 -  Ensure homogeneous PBS queues.
 
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
-   a queue are homogeneous for Determined to effectively schedule GPU jobs.
+   a queue be homogeneous for Determined to effectively schedule GPU jobs.
 
    -  A PBS queue with GPUs is identified as a CUDA/ROCM resource pool. The type is inherited from
-      the ``resource_manager.slot_type`` configuration. It can be also be specified-per partition
+      the ``resource_manager.slot_type`` configuration. It can be also be specified per partition
       using ``resource_manager.partition_overrides``.
 
    -  A PBS queue with no GPUs is identified as an AUX resource pool.
@@ -131,12 +131,12 @@ to optimize how Determined interacts with PBS:
 
    PBS supports a wide variety of criteria to trigger job preemption, and you may use any per your
    system and job requirements. Once a job is identified for preemption, PBS supports four different
-   options for job preemption which are specified via the preemption_order scheduling parameter. The
-   preemption order value is ``'SCR'``. The preemption methods are specified by the following
+   options for job preemption which are specified via the ``preemption_order`` scheduling parameter.
+   The preemption order value is ``'SCR'``. The preemption methods are specified by the following
    letters:
 
       ``S`` - Suspend the job.
-         This is not applicable for GPU jobs, because suspension does not release GPU resources.
+         This is not applicable for GPU jobs.
 
       ``C`` - Checkpoint the job.
          This requires a custom checkpoint script is added to PBS.
@@ -148,9 +148,9 @@ to optimize how Determined interacts with PBS:
       ``D`` - Delete the job.
          Determined jobs support this option without configuration.
 
-      Given those options, the simplest path to enabling Determined job preemption is by including D
-      in the ``preemption_order``. You may include ``R`` in the ``preemption_order``, but it is
-      disabled for Determined jobs. You may include ``C`` to the ``preemption_order`` if you
+      Given those options, the simplest path to enable Determined job preemption is by including
+      ``D`` in the ``preemption_order``. You may include ``R`` in the ``preemption_order``, but it
+      is disabled for Determined jobs. You may include ``C`` to the ``preemption_order`` if you
       additionally configure a checkpoint script. Refer to the PBS documentation for details. If you
       choose to implement a checkpoint script, you may initiate a Determined checkpoint by sending a
       ``SIGTERM`` signal to the Determined job. When a Determined job receives a ``SIGTERM``, it

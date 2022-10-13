@@ -428,6 +428,11 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   users?: string[];
 }
 
+export interface GetWorkspaceMembersParams {
+  nameFilter?: string;
+  workspaceId: number;
+}
+
 export interface DeleteWorkspaceParams {
   id: number;
 }
@@ -461,3 +466,7 @@ export interface PinWorkspaceParams {
 }
 
 export type UnpinWorkspaceParams = ArchiveWorkspaceParams;
+
+export interface GetWebhookParams {
+  id: number;
+}

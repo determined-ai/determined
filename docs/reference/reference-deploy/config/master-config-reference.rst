@@ -286,8 +286,7 @@ The master supports the following configuration settings:
       -  ``job_storage_root``: The shared directory where job-related files will be stored. It is
          where the needed Determined executables are copied to when the experiment is run, as well
          as where the Slurm/PBS scripts and log files are created. This directory must be writable
-         by the launcher and accessible to the compute nodes to enable the logs to be written from
-         the submitted batch jobs.
+         by the launcher and the compute nodes.
 
       -  ``path``: The ``PATH`` for the launcher service so that it is able to find the Slurm, PBS,
          Singularity, Nvidia binaries, etc., in case they are not in a standard location on the

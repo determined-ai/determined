@@ -7895,10 +7895,10 @@ class v1Webhook:
     def __init__(
         self,
         *,
+        url: str,
         webhookType: "v1WebhookType",
         id: "typing.Optional[int]" = None,
         triggers: "typing.Optional[typing.Sequence[v1Trigger]]" = None,
-        url: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.url = url
@@ -7909,7 +7909,7 @@ class v1Webhook:
     def from_json(cls, obj: Json) -> "v1Webhook":
         return cls(
             id=obj.get("id", None),
-            url=obj.get("url", None),
+            url=obj["url"],
             triggers=[v1Trigger.from_json(x) for x in obj["triggers"]] if obj.get("triggers", None) is not None else None,
             webhookType=v1WebhookType(obj["webhookType"]),
         )
@@ -7917,7 +7917,7 @@ class v1Webhook:
     def to_json(self) -> typing.Any:
         return {
             "id": self.id if self.id is not None else None,
-            "url": self.url if self.url is not None else None,
+            "url": self.url,
             "triggers": [x.to_json() for x in self.triggers] if self.triggers is not None else None,
             "webhookType": self.webhookType.value,
         }

@@ -133,7 +133,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
-    model_context = context.read_legacy_context(args.model_def)
+    model_context = context.read_legacy_context(args.model_def, args.include)
 
     additional_body_fields = {}
     if args.git:
@@ -926,6 +926,14 @@ main_cmd = Cmd(
             [
                 Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)"),
                 Arg("model_def", type=Path, help="file or directory containing model definition"),
+                Arg(
+                    "-i",
+                    "--include",
+                    action="append",
+                    default=[],
+                    type=Path,
+                    help="additional files to copy into the task container",
+                ),
                 Arg(
                     "-g",
                     "--git",

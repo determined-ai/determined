@@ -93,12 +93,12 @@ distributed training, we encourage users to be mindful of their model size when 
 Debug Performance Bottlenecks
 =============================
 
-When scaling up distributed training, it's fairly common to see non-linear speed up when scaling
-from one machine to two machines as intra-machine communication (e.g., NVLink) is often
-significantly faster than inter-machine communication. Scaling up beyond two machines often provides
-close to linear speed-up, but it does vary depending on the model characteristics. If observing
-unexpected scaling performance, assuming you have scaled your ``global_batch_size`` proportionally
-with ``slots_per_trial``, it's possible that training performance is being bottlenecked by network
+When scaling up distributed training, it's fairly common to see non-linear speedup when scaling from
+one machine to two machines as intra-machine communication (e.g., NVLink) is often significantly
+faster than inter-machine communication. Scaling up beyond two machines often provides close to
+linear speed-up, but it does vary depending on the model characteristics. If observing unexpected
+scaling performance, assuming you have scaled your ``global_batch_size`` proportionally with
+``slots_per_trial``, it's possible that training performance is being bottlenecked by network
 communication or disk I/O.
 
 To check if your training is bottlenecked by communication, we suggest setting
@@ -108,9 +108,9 @@ Comparing throughput with ``aggregation_frequency`` of 1 vs. ``aggregation_frequ
 demonstrate the communication overhead. If you do observe significant communication overhead, refer
 to :ref:`multi-gpu-training` for guidance on how to optimize communication.
 
-To check if your training is I/O bottlenecked, we encourage users to experiment with using synthetic
-datasets. If you observe that I/O is a significant bottleneck, we suggest optimizing the data input
-pipeline to the model (e.g., copy training data to local SSDs).
+To check if your training is bottlenecked by I/O, we encourage users to experiment with using
+synthetic datasets. If you observe that I/O is a significant bottleneck, we suggest optimizing the
+data input pipeline to the model (e.g., copy training data to local SSDs).
 
 .. _reproducibility:
 
@@ -205,7 +205,7 @@ When optimizing the training speed of a model, the first step is to understand w
 training is slow. Once the bottlenecks have been identified, the next step is to do further
 investigation and experimentation to alleviate those bottlenecks.
 
-To understand the performance profile of a training job, the training code and infrastructure needs
+To understand the performance profile of a training job, the training code and infrastructure need
 to be instrumented. There are many different layers that can be instrumented, from raw throughput
 all the way down to GPU kernels.
 
@@ -218,7 +218,7 @@ Determined provides two tools out-of-the-box for instrumenting training:
 System Metrics are useful to see if the software is taking full advantage of the available hardware,
 particularly around GPU usage, dataloading, and network communication during distributed training.
 Timings are useful for identifying the section of code to focus on for optimizations. Most commonly,
-Timings help answers the question of whether the dataloader is the main bottleneck in training.
+Timings help answer the question of whether the dataloader is the main bottleneck in training.
 
 .. _how-to-profiling:
 
@@ -244,8 +244,8 @@ Specifically, Determined tracks:
 -  Host available memory
 -  CPU utilization averaged across cores
 
-For distributed training, these metrics are collected for every agent. The data is broken down per
-agent. GPU metrics can be further broken down by GPU.
+For distributed training, these metrics are collected for every agent. The data are broken down by
+agent, and GPU metrics can be further broken down by GPU.
 
 .. note::
 
@@ -260,25 +260,24 @@ Timings
 
 The other type of profiling metric that Determined tracks is Timings. Timings are measurements of
 how long specific training events take. Examples of training events include retrieving data from the
-dataloader, moving data betwee host and device, running the forward/backwards pass, and executing
+dataloader, moving data between host and device, running the forward/backward pass, and executing
 callbacks.
-
-These measurements provide a fairly high level picture of where to focus optimization efforts.
 
 .. note::
 
    Timings are currently only supported for ``PyTorchTrial``.
 
-Specifically, Determined tracks:
+These measurements provide a high-level picture of where to focus optimization efforts.
+Specifically, Determined tracks the following Timings:
 
--  ``dataloader_next`` (retrieving the next item from the dataloader)
--  ``to_device`` (transfering input from host to device)
--  ``train_batch`` (how long the user-defined ``train_batch`` function takes to execute\*)
--  ``step_lr_schedulers`` (amount time taken to update the LR schedules)
--  ``from_device`` (amount of time transfering output from device to host)
--  ``reduce_metrics`` (amount of time taken to calculate global metrics in distributed training)
+-  ``dataloader_next``: time to retrieve the next item from the dataloader
+-  ``to_device``: time to transfer input from host to device
+-  ``train_batch``: how long the user-defined ``train_batch`` function takes to execute\*
+-  ``step_lr_schedulers``: amount time taken to update the LR schedules
+-  ``from_device``: time to transfer output from device to host
+-  ``reduce_metrics``: time taken to calculate global metrics in distributed training
 
-\* ``train_batch`` is typically the forward pass and the backwards pass, but it is a user-defined
+\* ``train_batch`` is typically the forward pass and the backward pass, but it is a user-defined
 function so it could include other steps.
 
 ***************************************************
@@ -289,7 +288,7 @@ Connectivity
 ============
 
 Multi-machine training requires that all machines can connect directly. There may be firewall rules
-or network configuration that prevent machines in your cluster from communicating. Please check if
+or network configuration that prevent machines in your cluster from communicating. Please check that
 agent machines can access each other outside of Determined by using ``ping`` or ``netcat`` tools.
 
 More rarely, if agents have multiple network interfaces and some of them are not routable,
@@ -300,8 +299,8 @@ training, as described in :ref:`cluster-configuration`.
 Configuration
 =============
 
-Set Slots Per Trial
--------------------
+Slots Per Trial
+---------------
 
 In the :ref:`experiment-config-reference`, the ``resources.slots_per_trial`` field controls the
 number of GPUs used to train a single trial.
@@ -315,25 +314,23 @@ workloads.
 
 Multi-machine parallelism offers the ability to further parallelize training across more GPUs. To
 use multi-machine parallelism, set ``slots_per_trial`` to be a multiple of the total number of GPUs
-on an agent machine. For example, if your resource pool consists of 8-GPU agent machines, valid
-values for M would be 16, 24, 32, etc. In this configuration, trials use all the resources of
-multiple machines to train a model.
-
-Example configuration with distributed training:
+on an agent machine. For example, if your resource pool consists of multiple 8-GPU agent machines,
+valid values for ``slots_per_trial`` would be 16, 24, 32, etc. In this configuration, trials use all
+the resources of multiple machines to train a model:
 
 .. code:: yaml
 
    resources:
-     slots_per_trial: N
+     slots_per_trial: 16  # Two 8-GPU agent machines will be used in a trial
 
 For distributed multi-machine training, Determined automatically detects a common network interface
 shared by the agent machines. If your cluster has multiple common network interfaces, please specify
 the fastest one in :ref:`cluster-configuration` under
 ``task_container_defaults.dtrain_network_interface``.
 
-When the ``slots_per_trial`` option is changed, the per-slot batch size is set to
-``global_batch_size // slots_per_trial``. The per-slot (per-GPU) and global batch size should be
-accessed via the context using :func:`context.get_per_slot_batch_size()
+When the ``slots_per_trial`` field is set, the per-slot (i.e., per-GPU) batch size is set to
+``global_batch_size // slots_per_trial``. The per-slot and global batch sizes should be accessed via
+the context using :func:`context.get_per_slot_batch_size()
 <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
 <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not
 evenly divisible by ``slots_per_trial``, the remainder is dropped.
@@ -342,28 +339,26 @@ If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than
 on a single agent, Determined schedules it over multiple machines. When scheduling a multi-machine
 distributed training job, Determined requires that the job uses all of the slots (GPUs) on an agent.
 For example, in a cluster that consists of 8-GPU agents, an experiment with :ref:`slots_per_trial
-<exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled and, instead, waits
-indefinitely. The :ref:`distributed training documentation <dtrain-scheduling>` describes this
-scheduling behavior in more detail.
+<exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled and will wait indefinitely.
+The section on :ref:`Scheduling Behavior <dtrain-scheduling>` describes this in more detail.
 
 There might also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
 single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free slots
 in your cluster.
 
-Set Global Batch Size
----------------------
+Global Batch Size
+-----------------
 
 When doing distributed training, the ``global_batch_size`` specified in the
 :ref:`experiment-config-reference` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
-size is set to: ``global_batch_size`` / ``slots_per_trial``. If ``slots_per_trial`` does not divide
-the ``global_batch_size`` evenly, the batch size is rounded down. For convenience, the per-GPU batch
-size can be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
+size is set to: ``global_batch_size // slots_per_trial``. If ``slots_per_trial`` does not divide
+``global_batch_size`` evenly, the remainder is dropped. For convenience, the per-GPU batch size can
+be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
 <determined.TrialContext.get_per_slot_batch_size>`.
 
 For improved performance, *weak-scaling* is recommended. That is, increasing your
 ``global_batch_size`` proportionally with ``slots_per_trial``. For example, change
-``global_batch_size`` of 32 for ``slots_per_trial`` of 1 to ``global_batch_size`` of 128 for
-``slots_per_trial`` of 4).
+``global_batch_size`` and ``slots_per_trial`` from 32 and 1 to 128 and 4.
 
 Adjusting ``global_batch_size`` can affect your model convergence, which can affect your training
 and/or testing accuracy. You may need to adjust model hyperparameters like the learning rate and/or
@@ -511,7 +506,7 @@ that can then be referenced by configurations that require those settings.
 Each configuration template has a unique name and is stored by the Determined master. If a
 configuration specifies a template, the effective configuration of the task will be the result of
 merging the two YAML files (configuration file and template). The semantics of this merge operation
-is described below. Determined stores this expanded configuration so that future changes to a
+is described below. Determined stores this effective configuration so that future changes to a
 template will not affect the reproducibility of experiments that used a previous version of the
 configuration template.
 
@@ -597,8 +592,8 @@ To launch the experiment with the template:
 
    $ det experiment create --template template-tf-gpu mnist_tf_const.yaml <model_code>
 
-Use the CLI to Work with Templates
-----------------------------------
+Using the CLI to Work with Templates
+------------------------------------
 
 The :ref:`Determined command-line interface <install-cli>` can be used to list, create, update, and
 delete configuration templates. This functionality can be accessed through the ``det template``
@@ -648,9 +643,9 @@ however, depends on the value's type:
 
    Note that there are exceptions to this rule for ``bind_mounts`` and ``resources.devices``. It may
    be the case that the both the original config and the template will attempt to mount to the same
-   ``container_path``, which would result in an unsable config. In those situations, the original
-   config is preferred, and the conflicting bind mount or device from the template is omittied in
-   the merged result.
+   ``container_path``, which would result in an unstable config. In those situations, the original
+   config is preferred, and the conflicting bind mount or device from the template is omitted in the
+   merged result.
 
 -  If the field specifies an object value, the resulting value will be the object generated by
    recursively applying this merging algorithm to both objects.
