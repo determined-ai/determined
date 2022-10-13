@@ -36,6 +36,7 @@ export enum WorkspaceDetailsTab {
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
+  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
   const { users } = useStore();
   const { workspaceId: workspaceID } = useParams<Params>();
@@ -84,7 +85,7 @@ const WorkspaceDetails: React.FC = () => {
   }, [canceler.signal]);
 
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async () => {
-    if (!rbacEnabled) {
+    if (!rbacEnabled || mockWorkspaceMembers) {
       return;
     }
 
