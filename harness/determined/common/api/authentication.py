@@ -11,8 +11,7 @@ import filelock
 
 import determined as det
 from determined.common import api, constants, util
-from determined.common.api import certs
-import bindings
+from determined.common.api import certs, bindings
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
