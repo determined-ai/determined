@@ -12,6 +12,7 @@ import filelock
 import determined as det
 from determined.common import api, constants, util
 from determined.common.api import certs
+import bindings
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
@@ -145,6 +146,9 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
+    #login = bindings.v1LoginRequest(username=username, password=password)
+    #r = bindings.post_Login(session=self.session, body=login)
+
     r = api.post(
         master_address,
         "login",

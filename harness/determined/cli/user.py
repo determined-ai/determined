@@ -46,7 +46,7 @@ def update_username(user_obj: user.User, new_username: str) -> Response:
 @authentication.required
 def list_users(args: Namespace) -> None:
     render.render_objects(
-        FullUser, [render.unmarshal(FullUser, u) for u in api.get(args.master, path="users").json()]
+        FullUser, [render.unmarshal(FullUser, u) for u in client.list_users()]
     )
 
 
