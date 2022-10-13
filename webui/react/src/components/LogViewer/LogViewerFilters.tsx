@@ -34,7 +34,7 @@ export const LABELS: Record<keyof Filters, string> = {
   containerIds: 'Containers',
   levels: 'Levels',
   rankIds: 'Ranks',
-  searchText: 'Searchs',
+  searchText: 'Searches',
 };
 
 const LogViewerFilters: React.FC<Props> = ({
