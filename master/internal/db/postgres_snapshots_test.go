@@ -17,19 +17,20 @@ import (
 )
 
 func TestCustomSearcherSnapshot(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	err := etc.SetRootPath(RootFromDB)
+	require.NoError(t, err)
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
 
-	config := expconf.SearcherConfig{
-		RawCustomConfig: &expconf.CustomConfig{},
+	config := expconf.SearcherConfig{ //nolint
+		RawCustomConfig: &expconf.CustomConfig{}, //nolint
 	}
 
 	// Create a searcher and add some operations to it.
 	searcher1 := searcher.NewSearcher(3, searcher.NewSearchMethod(config), nil)
-	_, err := searcher1.InitialOperations()
+	_, err = searcher1.InitialOperations()
 	require.NoError(t, err)
 	_, err = searcher1.TrialExitedEarly(model.RequestID(uuid.New()), model.Errored)
 	require.NoError(t, err)
@@ -54,6 +55,8 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, queue1.GetEvents(), queue2.GetEvents())
 
-	db.DeleteSnapshotsForExperiment(exp.ID)
-	db.DeleteExperiment(exp.ID)
+	err = db.DeleteSnapshotsForExperiment(exp.ID)
+	require.NoError(t, err)
+	err = db.DeleteExperiment(exp.ID)
+	require.NoError(t, err)
 }
