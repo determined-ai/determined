@@ -2,15 +2,12 @@
 import { isColor, rgba2str, rgbaMix, str2rgba } from './utils/color';
 
 const STRONG_WEAK_DELTA = 45;
-export const getCssVar = (name: string): string => {
-  return window.getComputedStyle(document.body)?.getPropertyValue(name);
-};
 
 const generateStrongWeak = (theme: Theme): Theme => {
   const rgbaStrong = str2rgba(theme.strong);
   const rgbaWeak = str2rgba(theme.weak);
 
-  for (const [ key, value ] of Object.entries(theme)) {
+  for (const [key, value] of Object.entries(theme)) {
     const matches = key.match(/^(.+)(Strong|Weak)$/);
     if (matches?.length === 3 && value === undefined) {
       const isStrong = matches[2] === 'Strong';
@@ -28,6 +25,9 @@ const generateStrongWeak = (theme: Theme): Theme => {
 };
 
 const themeBase = {
+  // Color schemes
+  colorScheme: 'normal',
+
   // Font styles.
   fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
   fontFamilyCode: '"Source Code Pro", monospace',
@@ -153,6 +153,9 @@ const themeBase = {
 };
 
 const themeLight = {
+  // Color schemes
+  colorScheme: 'light',
+
   // Palette colors for strong/weak calculations.
   strong: 'rgba(0, 0, 0, 1.0)',
   weak: 'rgba(255, 255, 255, 1.0)',
@@ -192,6 +195,9 @@ const themeLight = {
 };
 
 const themeDark = {
+  // Color schemes
+  colorScheme: 'dark',
+
   // Palette colors for strong/weak calculations.
   strong: 'rgba(255, 255, 255, 1.0)',
   weak: 'rgba(0, 0, 0, 1.0)',
@@ -216,30 +222,34 @@ const themeDark = {
   ixInactive: 'rgba(49, 49, 49, 1.0)',
   ixOn: 'rgba(209, 209, 209, 1.0)',
   ixOnActive: 'rgba(23, 125, 220, 1.0)',
-  ixOnInactive: 'rgba(45, 45, 45, 1.0)',
+  ixOnInactive: 'rgba(80, 80, 80, 1.0)',
   ixBorder: 'rgba(67, 67, 67, 1.0)',
   ixBorderActive: 'rgba(23, 125, 220, 1.0)',
-  ixBorderInactive: 'rgba(45, 45, 45, 1.0)',
+  ixBorderInactive: 'rgba(80, 80, 80, 1.0)',
 
   // Specialized and unique styles.
   overlay: 'rgba(0, 0, 0, 0.75)',
   overlayStrong: 'rgba(0, 0, 0, 1.0)',
   overlayWeak: 'rgba(0, 0, 0, 0.5)',
-  elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
-  elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
-  elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
+  elevation: '0px 6px 12px rgba(255, 255, 255, 0.06)',
+  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.06)',
+  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.12)',
 };
 
-export const themeLightDetermined: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeLight));
-export const themeDarkDetermined: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeDark));
+export const themeLightDetermined: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeLight),
+);
+export const themeDarkDetermined: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeDark),
+);
 const themeHpe = { brand: 'rgba(1, 169, 130, 1.0)' };
 
-export const themeLightHpe: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeLight, themeHpe));
-export const themeDarkHpe: Theme =
-  generateStrongWeak(Object.assign({}, themeBase, themeDark, themeHpe));
+export const themeLightHpe: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeLight, themeHpe),
+);
+export const themeDarkHpe: Theme = generateStrongWeak(
+  Object.assign({}, themeBase, themeDark, themeHpe),
+);
 
 export type Theme = Record<keyof typeof themeBase, string>;
 
@@ -266,7 +276,22 @@ export const globalCssVars = {
   navSideBarWidthMin: '56px',
 };
 
+export enum Mode {
+  System = 'system',
+  Light = 'light',
+  Dark = 'dark',
+}
+
+/**
+ * DarkLight is a resolved form of `Mode` where we figure out
+ * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
+ */
 export enum DarkLight {
   Dark = 'dark',
   Light = 'light',
 }
+
+export const getCssVar = (name: string): string => {
+  const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
+  return window.getComputedStyle(document.body)?.getPropertyValue(varName);
+};

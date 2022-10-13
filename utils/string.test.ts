@@ -1,6 +1,21 @@
 import * as utils from './string';
 
 describe('String Utilities', () => {
+  describe('snakeCaseToTitleCase', () => {
+    it('should convert snake case to title case', () => {
+      expect(utils.snakeCaseToTitleCase('')).toBe('');
+      expect(utils.snakeCaseToTitleCase('hello')).toBe('Hello');
+      expect(utils.snakeCaseToTitleCase('hello_world')).toBe('Hello World');
+      expect(utils.snakeCaseToTitleCase('hello_new_world')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('Hello_New_World')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('hello_New_world')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('hello_NEW_world')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('HELLO_NEW_WORLD')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('hEllO_New_WoRLD')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('hello__New_world')).toBe('Hello  New World');
+    });
+  });
+
   describe('camelCaseToKebab', () => {
     it('should convert camel case to a kebab', () => {
       expect(utils.camelCaseToKebab('hello')).toBe('hello');
@@ -40,7 +55,7 @@ describe('String Utilities', () => {
         { input: '^@hello', output: '^@hello' },
       ];
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.capitalize(test.input)).toBe(test.output);
       });
     });
@@ -54,7 +69,7 @@ describe('String Utilities', () => {
         { input: '^@hello', output: '^@hello' },
       ];
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.capitalizeWord(test.input)).toBe(test.output);
       });
     });
@@ -134,9 +149,9 @@ describe('String Utilities', () => {
 
   describe('versionToString', () => {
     const cases = [
-      { parsed: [ 1, 0, 0 ], str: '1.0.0' },
-      { parsed: [ 0, 1, 0 ], str: '0.1.0' },
-      { parsed: [ 23, 0, 1 ], str: '23.0.1' },
+      { parsed: [1, 0, 0], str: '1.0.0' },
+      { parsed: [0, 1, 0], str: '0.1.0' },
+      { parsed: [23, 0, 1], str: '23.0.1' },
     ].map(({ str, parsed }) => ({
       parsed: {
         major: parsed[0],
@@ -174,12 +189,12 @@ describe('String Utilities', () => {
 
   describe('listToStr', () => {
     it('should glue defined list items together', () => {
-      expect(utils.listToStr([ 'a', 'b', 'c' ])).toBe('a b c');
-      expect(utils.listToStr([ 'a', undefined, 'b', undefined, 'c' ])).toBe('a b c');
+      expect(utils.listToStr(['a', 'b', 'c'])).toBe('a b c');
+      expect(utils.listToStr(['a', undefined, 'b', undefined, 'c'])).toBe('a b c');
     });
 
     it('should glue defined list items together with custom glue', () => {
-      expect(utils.listToStr([ 'a', undefined, 'b', undefined, 'c' ], ', ')).toBe('a, b, c');
+      expect(utils.listToStr(['a', undefined, 'b', undefined, 'c'], ', ')).toBe('a, b, c');
     });
   });
 
@@ -219,14 +234,66 @@ describe('String Utilities', () => {
       const testStr = 'adoptacat';
       const suffix = '...';
       const size = 4;
-      expect(utils.truncate(testStr, size, suffix))
-        .toBe(testStr.substring(0, size - suffix.length) + suffix);
+      expect(utils.truncate(testStr, size, suffix)).toBe(
+        testStr.substring(0, size - suffix.length) + suffix,
+      );
     });
 
     it('should support skipping the suffix', () => {
       const testStr = 'adoptacat';
       const size = 4;
       expect(utils.truncate(testStr, size, '')).toBe(testStr.substring(0, size));
+    });
+  });
+
+  describe('validateLength', () => {
+    const sShort = 'Hello';
+    const s80 = 'jfdjsakljfdsalkjflksadjflksajflkasjflksajflkdsjfkljdsafjsklfdsjkaljfdslasdfsdfdd';
+    const space5 = '     ';
+
+    it('should validate length with default params', () => {
+      expect(utils.validateLength('')).toBeFalsy();
+      expect(utils.validateLength('a')).toBeTruthy();
+      expect(utils.validateLength(sShort)).toBeTruthy();
+      expect(utils.validateLength(s80)).toBeTruthy();
+      expect(utils.validateLength(s80 + 'a')).toBeFalsy();
+      expect(utils.validateLength(s80 + '        ')).toBeTruthy();
+    });
+
+    it('should validate length with custom length', () => {
+      expect(utils.validateLength('', 0)).toBeTruthy();
+      expect(utils.validateLength(s80)).toBeTruthy();
+      expect(utils.validateLength('1234567890', 1, 10)).toBeTruthy();
+      expect(utils.validateLength('12345678901', 1, 10)).toBeFalsy();
+      expect(utils.validateLength('12345678901', 10, 1)).toBeFalsy();
+      expect(utils.validateLength('1', 1, 1)).toBeTruthy();
+      expect(utils.validateLength('12', 1, 1)).toBeFalsy();
+    });
+
+    it('should validate length with custom trim', () => {
+      expect(utils.validateLength(s80 + ' ', 1, 80)).toBeTruthy();
+      expect(utils.validateLength(s80 + ' ', 1, 80, false)).toBeFalsy();
+      expect(utils.validateLength(space5 + ' ', 1, 5, false)).toBeFalsy();
+      expect(utils.validateLength(space5 + '  ', 1, 5, true)).toBeFalsy();
+      expect(utils.validateLength('abcde' + space5, 1, 5)).toBeTruthy();
+      expect(utils.validateLength('abcde' + space5, 1, 5, true)).toBeTruthy();
+      expect(utils.validateLength(space5, 1, 5, false)).toBeTruthy();
+    });
+  });
+  describe('pluralizer', () => {
+    it("shouldn't pluralize if count === 1", () => {
+      expect(utils.pluralizer(1, 'apple')).toBe('apple');
+      expect(utils.pluralizer(1, 'octopus')).toBe('octopus');
+    });
+
+    it('should pluralize if count !== 1', () => {
+      expect(utils.pluralizer(2, 'apple')).toBe('apples');
+      expect(utils.pluralizer(-1, 'apple')).toBe('apples');
+      expect(utils.pluralizer(0.5, 'apple')).toBe('apples');
+    });
+
+    it('should handle non-standard plurals', () => {
+      expect(utils.pluralizer(2, 'octopus', 'octopi')).toBe('octopi');
     });
   });
 });

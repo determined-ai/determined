@@ -4,28 +4,60 @@ import { DetApi, FetchOptions } from '../types';
 import { isObject } from './data';
 import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './error';
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const getResponseStatus = (e: any): number | undefined => {
-  return e?.response?.status || e?.status;
+export const isApiResponse = (u: unknown): u is Response => {
+  return u instanceof Response;
 };
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
-  const status = getResponseStatus(e) ?? 0;
-  const authFailureStatuses = [ 401 ];
+
+export const getResponseStatus = (e: unknown): number | undefined =>
+  isApiResponse(e) ? e.status : undefined;
+
+/**
+ * Determines whether an exception is the result of a nework error
+ * due to the server not being able to authenticate the request/user.
+ * If this is the case, this can lead to the client being logged out and
+ * redirected to the login page.
+ * @param e
+ * @param supportExternalAuth
+ * @returns
+ */
+export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean => {
+  if (u instanceof Promise) {
+    throw new DetError(u, {
+      publicMessage: 'isAuthFailure: unexpected input type',
+      type: ErrorType.Assert,
+    });
+  }
+  if (u instanceof DetError) {
+    if (u.type === ErrorType.Auth) return true;
+    if (u.sourceErr !== undefined) return isAuthFailure(u.sourceErr, supportExternalAuth);
+    return false;
+  }
+  if (!isApiResponse(u)) return false;
+  const authFailureStatuses = [
+    401, // Unauthorized
+  ];
   if (supportExternalAuth) authFailureStatuses.push(500);
-  return authFailureStatuses.includes(status);
+  return authFailureStatuses.includes(u.status);
 };
-const isApiResponse = (o: unknown): o is Response => {
-  return o instanceof Response;
+
+export const isNotFound = (u: Response | Error | DetError): boolean => {
+  const MAGIC_PHRASE = 'not found';
+  if (u instanceof Response) return u.status === 404;
+  let errorStrings: string[] = [];
+  if (u instanceof Error) errorStrings = [u.message];
+  if (u instanceof DetError) {
+    errorStrings = [u.message, u.publicMessage ?? '', u.publicSubject ?? ''];
+    if (errorStrings.join(' ').toLocaleLowerCase().includes(MAGIC_PHRASE)) return true;
+    if (u.sourceErr !== undefined) return isNotFound(u.sourceErr as Response | Error | DetError);
+  }
+  return errorStrings.join(' ').toLocaleLowerCase().includes(MAGIC_PHRASE);
 };
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isNotFound = (e: any): boolean => {
-  return getResponseStatus(e) === 404;
+
+export const isAborted = (e: unknown): boolean => {
+  if (e instanceof DetError && e.sourceErr !== undefined) return isAborted(e.sourceErr);
+  return e instanceof Error && e.name === 'AbortError';
 };
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAborted = (e: any): boolean => {
-  return e?.name === 'AbortError';
-};
+
 /* Fits API errors into a DetError. */
 export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
   const isAuthError = isAuthFailure(e);
@@ -48,7 +80,7 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
   if (isApiResponse(e)) {
     try {
       const response = await e.json();
-      options.publicMessage = response.error?.error || response.message;
+      options.publicMessage = response.error?.error || response.error || response.message;
     } catch (err) {
       options.payload = err;
     }
@@ -60,11 +92,12 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
   return async function (params: Input, options?: FetchOptions): Promise<Output> {
     try {
-      const response = api.stubbedResponse ?
-        api.stubbedResponse : await api.request(params, options);
+      const response = api.stubbedResponse
+        ? api.stubbedResponse
+        : await api.request(params, options);
       return api.postProcess(response);
     } catch (e) {
-      throw (await processApiError(api.name, e));
+      throw await processApiError(api.name, e);
     }
   };
 }
@@ -80,9 +113,7 @@ export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any =>
   if (isObject(enumObject) && value !== undefined) {
     const enumRecord = enumObject as Record<string, string>;
     const stringValue = value as string;
-    const validOptions = Object
-      .values(enumRecord)
-      .filter((_, index) => index % 2 === 0);
+    const validOptions = Object.values(enumRecord).filter((_, index) => index % 2 === 0);
     if (validOptions.includes(stringValue)) return stringValue;
     return enumRecord.UNSPECIFIED;
   }
@@ -99,11 +130,10 @@ export const validateDetApiEnumList = (enumObject: unknown, values?: unknown[]):
   if (!Array.isArray(values)) return undefined;
 
   const enumValues = values
-    .map(value => validateDetApiEnum(enumObject, value))
-    .filter(enumValue => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
+    .map((value) => validateDetApiEnum(enumObject, value))
+    .filter((enumValue) => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
   return enumValues.length !== 0 ? enumValues : undefined;
 };
 /* eslint-disable-next-line */
-export const noOp = (): void => {
-};
+export const noOp = (): void => {};
 export const identity = <T>(a: T): T => a;

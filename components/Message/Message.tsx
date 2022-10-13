@@ -1,8 +1,7 @@
-import { Empty } from 'antd';
 import React from 'react';
 
-import iconAlert from 'shared/assets/images/icon-alert.svg';
-import iconWarning from 'shared/assets/images/icon-warning.svg';
+import { useStore } from 'contexts/Store';
+import * as Images from 'shared/components/Image';
 
 import css from './Message.module.scss';
 
@@ -19,17 +18,18 @@ export interface Props {
   type?: MessageType;
 }
 
-const Message: React.FC<Props> = ({
-  message,
-  style,
-  title,
-  type = MessageType.Alert,
-}: Props) => {
+const IMAGE_MAP = {
+  [MessageType.Alert]: Images.ImageAlert,
+  [MessageType.Empty]: Images.ImageEmpty,
+  [MessageType.Warning]: Images.ImageWarning,
+};
+
+const Message: React.FC<Props> = ({ message, style, title, type = MessageType.Alert }: Props) => {
+  const { ui } = useStore();
+  const ImageComponent = IMAGE_MAP[type];
   return (
     <div className={css.base} style={style}>
-      {type === MessageType.Empty && Empty.PRESENTED_IMAGE_SIMPLE}
-      {type === MessageType.Alert && <img alt={MessageType.Alert} src={iconAlert} />}
-      {type === MessageType.Warning && <img alt={MessageType.Warning} src={iconWarning} />}
+      <ImageComponent darkLight={ui.darkLight} />
       <div className={css.title}>{title}</div>
       {message && <span>{message}</span>}
     </div>

@@ -1,0 +1,84 @@
+.alert {
+  .shadow1 {
+    fill: #f6f6f6;
+  }
+  .shadow2 {
+    fill: #ececec;
+  }
+  .shadow3 {
+    fill: #ddd;
+  }
+  .sign {
+    fill: #fff;
+    stroke: #ddd;
+  }
+  .iDot {
+    fill: #ddd;
+  }
+  .iBar {
+    fill: #ddd;
+  }
+}
+.warning {
+  .shadow1 {
+    fill: #f6f6f6;
+  }
+  .shadow2 {
+    fill: #ececec;
+  }
+  .shadow3 {
+    fill: #ddd;
+  }
+  .sign {
+    fill: #fff;
+    stroke: #ddd;
+  }
+  .exclamationDot {
+    fill: #ddd;
+  }
+  .exclamationBar {
+    fill: #ddd;
+  }
+}
+.alert.dark {
+  .shadow1 {
+    fill: #222;
+  }
+  .shadow2 {
+    fill: #333;
+  }
+  .shadow3 {
+    fill: #444;
+  }
+  .sign {
+    fill: #333;
+    stroke: #666;
+  }
+  .iDot {
+    fill: #999;
+  }
+  .iBar {
+    fill: #999;
+  }
+}
+.warning.dark {
+  .shadow1 {
+    fill: #222;
+  }
+  .shadow2 {
+    fill: #333;
+  }
+  .shadow3 {
+    fill: #444;
+  }
+  .sign {
+    fill: #333;
+    stroke: #666;
+  }
+  .exclamationDot {
+    fill: #999;
+  }
+  .exclamationBar {
+    fill: #999;
+  }
+}
