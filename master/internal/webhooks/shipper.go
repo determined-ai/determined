@@ -148,7 +148,7 @@ func (w *worker) deliverWithRetries(ctx context.Context, e Event) {
 	w.log.Errorf("exhausted tries to deliver %v, giving up", e.ID)
 }
 
-func generateSignedPayload(req *http.Request, t time.Time) string {
+func generateSignedPayload(req *http.Request, t int64) string {
 	config := conf.GetMasterConfig()
 	key := []byte(config.Security.WebhookSigningKey)
 	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
@@ -157,20 +157,28 @@ func generateSignedPayload(req *http.Request, t time.Time) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-func (w *worker) deliver(ctx context.Context, e Event) error {
-	t := time.Now()
+func generateWebhookRequest(url string, payload []byte, t int64) (*http.Request, error) {
 	req, err := http.NewRequest(
 		http.MethodPost,
-		e.URL,
-		bytes.NewBuffer(e.Payload),
+		url,
+		bytes.NewBuffer(payload),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	signedPayload := generateSignedPayload(req, t)
 	req.Header.Add("X-Determined-AI-Signature-Timestamp", fmt.Sprintf("%v", t))
 	req.Header.Add("X-Determined-AI-Signature", signedPayload)
 	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
+	return req, nil
+}
+
+func (w *worker) deliver(ctx context.Context, e Event) error {
+	t := time.Now().Unix()
+	req, err := generateWebhookRequest(e.URL, e.Payload, t)
+	if err != nil {
+		return err
+	}
 	resp, err := w.cl.Do(req)
 	if err != nil {
 		return err

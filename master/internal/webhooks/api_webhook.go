@@ -2,9 +2,13 @@ package webhooks
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -60,5 +64,40 @@ func (a *APIServer) DeleteWebhook(
 func (a *APIServer) TestWebhook(
 	ctx context.Context, req *apiv1.TestWebhookRequest,
 ) (*apiv1.TestWebhookResponse, error) {
-	panic("unimplemented")
+	webhook, err := GetWebhook(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	s := "test"
+	t := time.Now().Unix()
+	tp := EventPayload{
+		ID:        uuid.New(),
+		Timestamp: t,
+		Type:      TriggerTypeStateChange,
+		Condition: Condition{
+			State: "COMPLETED",
+		},
+		Data: EventData{
+			TestData: &s,
+		},
+	}
+	p, err := json.Marshal(tp)
+	if err != nil {
+		return nil, err
+	}
+	tReq, err := generateWebhookRequest(webhook.URL, p, t)
+	if err != nil {
+		return nil, err
+	}
+	c := http.Client{}
+	resp, err := c.Do(tReq)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error sending webhook request: %s", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, status.Errorf(codes.InvalidArgument, "received error from webhook server: %v ", resp.StatusCode)
+	}
+	resp.Body.Close()
+	return &apiv1.TestWebhookResponse{}, nil
+
 }

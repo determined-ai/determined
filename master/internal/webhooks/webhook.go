@@ -3,10 +3,13 @@ package webhooks
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/webhookv1"
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/proto/pkg/webhookv1"
+	"github.com/google/uuid"
 )
 
 // Webhooks is a slice of Webhook objects.
@@ -180,6 +183,27 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 	}
 }
 
+// Proto returns a proto from a TriggerType.
+func experimentToWebhookPayload(e model.Experiment) ExperimentPayload {
+	var slots int
+	s := e.Config.Resources().Slots()
+	if s == nil {
+		slots = 0
+	} else {
+		slots = *s
+	}
+	return ExperimentPayload{
+		ID:            e.ID,
+		State:         e.State,
+		Name:          e.Config.Name(),
+		Duration:      int(e.EndTime.Sub(e.StartTime).Seconds()),
+		ResourcePool:  e.Config.Resources().ResourcePool(),
+		Slots:         slots,
+		WorkspaceName: e.Config.Workspace(),
+		ProjectName:   e.Config.Project(),
+	}
+}
+
 // WebhookEventID is the type for Trigger IDs.
 type WebhookEventID int
 
@@ -198,23 +222,47 @@ type Field struct {
 	Type string `json:"type"`
 	Text string `json:"text"`
 }
-type SlackBlockWithFields struct {
-	Type   string  `json:"type"`
-	Text   Field   `json:"text"`
-	Fields []Field `json:"fields"`
-}
 
 type SlackBlock struct {
-	Type string `json:"type"`
-	Text Field  `json:"text"`
+	Type   string   `json:"type"`
+	Text   Field    `json:"text"`
+	Fields *[]Field `json:"fields,omitempty"`
 }
 
 type SlackAttachment struct {
-	Color  string                 `json:"color"`
-	Blocks []SlackBlockWithFields `json:"blocks"`
+	Color  string       `json:"color"`
+	Blocks []SlackBlock `json:"blocks"`
 }
 
 type SlackMessageBody struct {
 	Blocks      []SlackBlock      `json:"blocks"`
 	Attachments []SlackAttachment `json:"attachments"`
+}
+
+type Condition struct {
+	State model.State `json:"state,omitempty"`
+}
+
+type ExperimentPayload struct {
+	ID            int          `json:"id"`
+	State         model.State  `json:"state"`
+	Name          expconf.Name `json:"name"`
+	Duration      int          `json:"duration"`
+	ResourcePool  string       `json:"resource_pool"`
+	Slots         int          `json:"slots"`
+	WorkspaceName string       `json:"workspace"`
+	ProjectName   string       `json:"project"`
+}
+
+type EventPayload struct {
+	ID        uuid.UUID   `json:"event_id"`
+	Type      TriggerType `json:"event_type"`
+	Timestamp int64       `json:"timestamp"`
+	Condition Condition   `json:"condition"`
+	Data      EventData   `json:"event_data"`
+}
+
+type EventData struct {
+	TestData   *string            `json:"data,omitempty"`
+	Experiment *ExperimentPayload `json:"experiment,omitempty"`
 }

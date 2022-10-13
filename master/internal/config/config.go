@@ -92,7 +92,8 @@ func DefaultConfig() *Config {
 			SSH: SSHConfig{
 				RsaKeySize: 1024,
 			},
-			AuthZ: *DefaultAuthZConfig(),
+			AuthZ:             *DefaultAuthZConfig(),
+			WebhookSigningKey: "",
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port:        0,

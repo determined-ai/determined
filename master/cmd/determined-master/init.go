@@ -116,6 +116,8 @@ func registerConfig() {
 		defaults.Security.TLS.Cert, "TLS cert file")
 	registerString(flags, name("security", "tls", "key"),
 		defaults.Security.TLS.Key, "TLS key file")
+	registerString(flags, name("security", "webhook-signing-key"),
+		defaults.Security.WebhookSigningKey, "Webhook Signing Key")
 
 	registerInt(flags, name("port"),
 		defaults.Port, "server port")

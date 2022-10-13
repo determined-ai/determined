@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/uptrace/bun"
+
+	"github.com/google/uuid"
 )
 
 // AddWebhook adds a Webhook and its Triggers to the DB.
@@ -30,6 +33,19 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 		}
 		return nil
 	})
+}
+
+// GetWebhooks returns all Webhooks from the DB.
+func GetWebhook(ctx context.Context, WebhookId int) (*Webhook, error) {
+	webhook := Webhook{}
+	err := db.Bun().NewSelect().
+		Model(&webhook).
+		Where("id = ?", WebhookId).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &webhook, nil
 }
 
 // GetWebhooks returns all Webhooks from the DB.
@@ -72,7 +88,7 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 
 	var es []Event
 	for _, t := range ts {
-		p, err := generateEventPayload(t.Webhook.WebhookType, e)
+		p, err := generateEventPayload(t.Webhook.WebhookType, e, e.State, TriggerTypeStateChange)
 		if err != nil {
 			return err
 		}
@@ -87,14 +103,26 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 	return nil
 }
 
-func generateEventPayload(wt WebhookType, e model.Experiment) ([]byte, error) {
+func generateEventPayload(wt WebhookType, e model.Experiment, expState model.State, tT TriggerType) ([]byte, error) {
 	switch wt {
 	case WebhookTypeDefault:
-		expJson, err := json.Marshal(e)
+		expPayload := experimentToWebhookPayload(e)
+		p := EventPayload{
+			ID:        uuid.New(),
+			Type:      tT,
+			Timestamp: time.Now().Unix(),
+			Condition: Condition{
+				State: expState,
+			},
+			Data: EventData{
+				Experiment: &expPayload,
+			},
+		}
+		pJson, err := json.Marshal(p)
 		if err != nil {
 			return nil, err
 		}
-		return expJson, nil
+		return pJson, nil
 	case WebhookTypeSlack:
 		slackJson, err := generateSlackPayload(e)
 		if err != nil {
@@ -107,7 +135,6 @@ func generateEventPayload(wt WebhookType, e model.Experiment) ([]byte, error) {
 }
 
 func generateSlackPayload(e model.Experiment) ([]byte, error) {
-	// TODO: get correct project URL
 	var status string
 	var eUrl string
 	var c string
@@ -115,12 +142,12 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	if e.State == model.CompletedState {
 		status = "Your experiment completed successfully 🎉"
 
-		eUrl = fmt.Sprintf("✅ %v (%v)", e.Config.Name(), e.ID)
+		eUrl = fmt.Sprintf("✅ %v (#%v)", e.Config.Name(), e.ID)
 		c = "#13B670"
 		mStatus = "Completed"
 	} else {
 		status = "Your experiment has stopped with errors"
-		eUrl = fmt.Sprintf("❌ %v (%v)", e.Config.Name(), e.ID)
+		eUrl = fmt.Sprintf("❌ %v (#%v)", e.Config.Name(), e.ID)
 		c = "#DD5040"
 		mStatus = "Errored"
 	}
@@ -138,19 +165,25 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 			Text: fmt.Sprintf("*Duration*: %v", duration),
 		},
 	}
+	if e.Config.Workspace() != "" {
+		expBlockFields = append(expBlockFields, Field{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Workspace*: %v", e.Config.Workspace()),
+		})
+	}
 	if e.Config.Project() != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
-			Text: fmt.Sprintf("*Project*: %v>", e.Config.Project()),
+			Text: fmt.Sprintf("*Project*: %v", e.Config.Project()),
 		})
 	}
-	experimentBlock := SlackBlockWithFields{
+	experimentBlock := SlackBlock{
 		Text: Field{
 			Type: "mrkdwn",
 			Text: eUrl,
 		},
 		Type:   "section",
-		Fields: expBlockFields,
+		Fields: &expBlockFields,
 	}
 	messageBlock := SlackBlock{
 		Text: Field{
@@ -161,7 +194,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	}
 	attachment := SlackAttachment{
 		Color:  c,
-		Blocks: []SlackBlockWithFields{experimentBlock},
+		Blocks: []SlackBlock{experimentBlock},
 	}
 	messageBody := SlackMessageBody{
 		Blocks:      []SlackBlock{messageBlock},
