@@ -10,7 +10,7 @@ from typing import Any, List
 from tests import experiment as exp
 from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.api.errors import NotFoundException, APIException
+from determined.common.api.errors import NotFoundException, BadRequestException, APIException
 from tests.cluster.test_users import ADMIN_CREDENTIALS, create_test_user, logged_in_user
 from tests import config as conf
 
@@ -33,8 +33,11 @@ def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_ac
         assert bindings.get_GetShell(sess, shellId=shell_id) is not None
         req = bindings.v1SetShellPriorityRequest(shellId=shell_id, priority=50)
         assert bindings.post_SetShellPriority(sess, shellId=shell_id, body=req) is not None
+        api.get(master_url, f"shells/{shell_id}/events", auth=authentication.cli_auth)        
+        with api.ws(master_url, f"shells/{shell_id}/events") as ws:
+            for msg in ws:
+                break
         return
-
 
     
     with pytest.raises(NotFoundException):
@@ -43,8 +46,15 @@ def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_ac
         bindings.post_KillShell(sess, shellId=shell_id)
     with pytest.raises(NotFoundException):
         req = bindings.v1SetShellPriorityRequest(shellId=shell_id, priority=50)
-        bindings.post_SetShellPriority(sess, shellId=shell_id, body=req)        
+        bindings.post_SetShellPriority(sess, shellId=shell_id, body=req)
+    with pytest.raises(NotFoundException):
+        api.get(master_url, f"shells/{shell_id}/events", auth=authentication.cli_auth)
+    with pytest.raises(BadRequestException):
+        with api.ws(master_url, f"shells/{shell_id}/events") as ws:
+            for msg in ws:
+                break
 
+    
         
 def assert_notebook_access(creds: authentication.Credentials, notebook_id: str,
                            can_access: bool) -> None:
@@ -66,12 +76,10 @@ def assert_notebook_access(creds: authentication.Credentials, notebook_id: str,
         req = bindings.v1SetNotebookPriorityRequest(notebookId=notebook_id, priority=50)
         assert bindings.post_SetNotebookPriority(sess, notebookId=notebook_id, body=req) is not None
 
+        api.get(master_url, f"notebooks/{notebook_id}/events", auth=authentication.cli_auth)        
         with api.ws(master_url, f"notebooks/{notebook_id}/events") as ws:
             for msg in ws:
-                if msg["service_ready_event"]:
-                    assert api.get(
-                        master_url, f"/proxy/{notebook_id}/", auth=authentication.cli_auth) is not None
-                    break
+                break
         return
 
     with pytest.raises(NotFoundException):
@@ -86,6 +94,12 @@ def assert_notebook_access(creds: authentication.Credentials, notebook_id: str,
         bindings.post_SetNotebookPriority(sess, notebookId=notebook_id, body=req) 
     with pytest.raises(NotFoundException):
         api.get(master_url, f"/proxy/{notebook_id}/", auth=authentication.cli_auth)
+    with pytest.raises(NotFoundException):
+        api.get(master_url, f"notebooks/{notebook_id}/events", auth=authentication.cli_auth)
+    with pytest.raises(BadRequestException):
+        with api.ws(master_url, f"notebooks/{notebook_id}/events") as ws:
+            for msg in ws:
+                break
         
         
 
@@ -106,8 +120,13 @@ def assert_command_access(creds: authentication.Credentials, command_id: str,
 
         req = bindings.v1SetCommandPriorityRequest(commandId=command_id, priority=50)
         assert bindings.post_SetCommandPriority(sess, commandId=command_id, body=req) is not None
-        return
 
+        api.get(master_url, f"commands/{command_id}/events", auth=authentication.cli_auth)        
+        with api.ws(master_url, f"commands/{command_id}/events") as ws:
+            for msg in ws:
+                break
+        return
+    
     
     with pytest.raises(NotFoundException):
         bindings.get_GetCommand(sess, commandId=command_id)    
@@ -115,7 +134,14 @@ def assert_command_access(creds: authentication.Credentials, command_id: str,
         bindings.post_KillCommand(sess, commandId=command_id)        
     with pytest.raises(NotFoundException):        
         req = bindings.v1SetCommandPriorityRequest(commandId=command_id, priority=50)
-        bindings.post_SetCommandPriority(sess, commandId=command_id, body=req) 
+        bindings.post_SetCommandPriority(sess, commandId=command_id, body=req)
+    with pytest.raises(NotFoundException):
+        api.get(master_url, f"commands/{command_id}/events", auth=authentication.cli_auth)
+    with pytest.raises(BadRequestException):
+        with api.ws(master_url, f"commands/{command_id}/events") as ws:
+            for msg in ws:
+                break
+        
 
 def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id: str,
                            can_access: bool) -> None:
@@ -137,13 +163,10 @@ def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id:
         assert bindings.post_SetTensorboardPriority(
             sess, tensorboardId=tensorboard_id, body=req) is not None
 
+        api.get(master_url, f"tensorboard/{tensorboard_id}/events", auth=authentication.cli_auth)   
         with api.ws(master_url, f"tensorboard/{tensorboard_id}/events") as ws:
             for msg in ws:
-                if msg["service_ready_event"]:
-                    assert api.get(
-                        master_url, f"/proxy/{tensorboard_id}/", auth=authentication.cli_auth) is not None
-                    break
-        
+                break        
         return
 
     with pytest.raises(NotFoundException):
@@ -155,6 +178,12 @@ def assert_tensorboard_access(creds: authentication.Credentials, tensorboard_id:
         bindings.post_SetTensorboardPriority(sess, tensorboardId=tensorboard_id, body=req) 
     with pytest.raises(NotFoundException):
         api.get(master_url, f"/proxy/{tensorboard_id}/", auth=authentication.cli_auth)
+    with pytest.raises(NotFoundException):
+        api.get(master_url, f"tensorboard/{tensorboard_id}/events", auth=authentication.cli_auth)
+    with pytest.raises(BadRequestException):
+        with api.ws(master_url, f"tensorboard/{tensorboard_id}/events") as ws:
+            for msg in ws:
+                break
     
 
 def assert_access_task(creds: authentication.Credentials, task_id: str,
@@ -174,7 +203,7 @@ def assert_access_task(creds: authentication.Credentials, task_id: str,
     if can_access:
         assert bindings.get_GetTask(sess, taskId=task_id) is not None
         assert bindings.get_TaskLogs(sess, taskId=task_id, follow=False) is not None
-        assert bindings.get_TaskLogsFields(sess, taskId=task_id, follow=False) is not None
+        assert bindings.get_TaskLogsFields(sess, taskId=task_id, follow=False) is not None        
         return
 
     with pytest.raises(NotFoundException):
