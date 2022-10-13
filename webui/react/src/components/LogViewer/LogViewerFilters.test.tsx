@@ -22,6 +22,7 @@ const setup = (filterOptions: Filters, filterValues: Filters) => {
   const view = render(
     <LogViewerFilters
       options={filterOptions}
+      showSearch={true}
       values={filterValues}
       onChange={handleOnChange}
       onReset={handleOnReset}
@@ -59,8 +60,7 @@ describe('LogViewerFilter', () => {
         const key = labelKey as keyof Filters;
         if (!values[key]?.length) return;
 
-        const regex = new RegExp(`${values[key]?.length} ${LABELS[key]}`, 'i');
-        expect(screen.queryByText(regex)).toBeInTheDocument();
+        expect(screen.queryAllByText(new RegExp('\\+ \\d ...')).length).toBeGreaterThan(1);
       });
     });
   });
@@ -93,18 +93,16 @@ describe('LogViewerFilter', () => {
     const agent = screen.getByText(agentRegex);
     await user.click(agent);
 
-    const agentOption1 = screen.getByText(agentOptionText1);
-    const agentOption2 = screen.getByText(agentOptionText2);
-    await user.click(agentOption1);
+    const agentOption1 = await screen.findAllByText(agentOptionText1);
+    const agentOption2 = await screen.findByText(agentOptionText2);
+    await user.click(agentOption1[1]);
     await user.click(agentOption2);
 
     await waitFor(() => {
-      /**
-       * Since value is not getting updated with the selected options,
-       * the results returned by `onChange` do not compound.
-       */
       expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText1] });
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText2] });
+      expect(handleOnChange).toHaveBeenCalledWith({
+        agentIds: [agentOptionText1, agentOptionText2],
+      });
     });
   });
 
