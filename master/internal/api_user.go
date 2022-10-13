@@ -304,7 +304,6 @@ func (a *apiServer) PatchUser(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	// TODO: handle any field name:
 	if req.User.DisplayName != nil {
 		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
@@ -325,11 +324,10 @@ func (a *apiServer) PatchUser(
 			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
 			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
 			// Restrict 'admin' and 'determined' in display names.
-			if !(curUser.Admin && curUser.ID == uid) && strings.Contains(strings.ToLower(displayName),
-				"admin") {
+			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == "admin") {
 				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 			}
-			if curUser.Username != "determined" && strings.Contains(strings.ToLower(displayName),
+			if targetUser.Username != "determined" && strings.Contains(strings.ToLower(displayName),
 				"determined") {
 				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 			}
