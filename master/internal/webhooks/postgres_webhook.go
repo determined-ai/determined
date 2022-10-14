@@ -91,7 +91,7 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 	for _, t := range ts {
 		p, err := generateEventPayload(t.Webhook.WebhookType, e, e.State, TriggerTypeStateChange)
 		if err != nil {
-			return err
+			return fmt.Errorf("error generating event payload: %w", err)
 		}
 		es = append(es, Event{Payload: p, TriggerID: t.ID, URL: t.Webhook.URL})
 	}
@@ -204,7 +204,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 
 	message, err := json.Marshal(messageBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating slack payload: %w", err)
 	}
 	return message, nil
 }

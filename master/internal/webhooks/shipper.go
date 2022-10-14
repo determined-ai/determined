@@ -165,7 +165,7 @@ func generateWebhookRequest(url string, payload []byte, t int64) (*http.Request,
 		bytes.NewBuffer(payload),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed creating webhook request: %w", err)
 	}
 	signedPayload := generateSignedPayload(req, t)
 	req.Header.Add("X-Determined-AI-Signature-Timestamp", fmt.Sprintf("%v", t))
@@ -182,7 +182,10 @@ func (w *worker) deliver(ctx context.Context, e Event) error {
 	}
 	resp, err := w.cl.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create webhook request: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to sending webhook request: %w error received from webhook server : %v", err, resp.StatusCode)
 	}
 	return resp.Body.Close()
 }
