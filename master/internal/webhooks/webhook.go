@@ -188,6 +188,10 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 func experimentToWebhookPayload(e model.Experiment) ExperimentPayload {
 	var slots int
 	s := e.Config.Resources().Slots()
+	d := 0
+	if e.EndTime != nil {
+		d = int(e.EndTime.Sub(e.StartTime).Seconds())
+	}
 	if s == nil {
 		slots = 0
 	} else {
@@ -197,7 +201,7 @@ func experimentToWebhookPayload(e model.Experiment) ExperimentPayload {
 		ID:            e.ID,
 		State:         e.State,
 		Name:          e.Config.Name(),
-		Duration:      int(e.EndTime.Sub(e.StartTime).Seconds()),
+		Duration:      d,
 		ResourcePool:  e.Config.Resources().ResourcePool(),
 		Slots:         slots,
 		WorkspaceName: e.Config.Workspace(),
