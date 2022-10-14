@@ -6,6 +6,7 @@ import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
@@ -141,7 +142,14 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
             <Select
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
-                label: getName(option),
+                label: isUser(option) ? (
+                  getName(option)
+                ) : (
+                  <span>
+                    {getName(option)}&nbsp;&nbsp;
+                    <Icon name="group" />
+                  </span>
+                ),
                 value: getIdFromUserOrGroup(option),
               }))}
               placeholder="Find user or group by display name or username"
