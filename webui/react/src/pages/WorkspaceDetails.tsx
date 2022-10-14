@@ -44,8 +44,12 @@ const WorkspaceDetails: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
   const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
-  const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>();
-  const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>();
+  const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>(
+    new Set<number>(),
+  );
+  const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>(
+    new Set<number>(),
+  );
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [nameFilter, setNameFilter] = useState<string>();
   const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
@@ -73,7 +77,7 @@ const WorkspaceDetails: React.FC = () => {
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({}, { signal: canceler.signal });
+      const response = await getGroups({ limit: 100 }, { signal: canceler.signal });
 
       setGroups((prev) => {
         if (isEqual(prev, response.groups)) return prev;
@@ -101,7 +105,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, [id, nameFilter, rbacEnabled]);
+  }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
@@ -139,13 +143,10 @@ const WorkspaceDetails: React.FC = () => {
   // Users and Groups that are not already a part of the workspace
   const addableGroups: V1Group[] = groups
     ? groups
-        ?.filter((groupDetails) => {
-          groupDetails.group?.groupId &&
-            !groupsAssignedDirectlyIds?.has(groupDetails.group.groupId);
-        })
         .map((groupDetails) => groupDetails.group)
+        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
     : [];
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds?.has(user.id));
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
   const addableUsersAndGroups = [...addableGroups, ...addableUsers];
 
   useEffect(() => {

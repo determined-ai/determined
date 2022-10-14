@@ -37,6 +37,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
       addableUsersAndGroups,
+      workspaceId: workspace.id,
     });
 
   const rbacEnabled = useFeature().isOn('rbac');

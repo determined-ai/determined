@@ -326,7 +326,10 @@ export const assignRolesToGroup: DetApi<
     detApi.RBAC.assignRoles({
       groupRoleAssignments: params.roleIds.map((roleId) => ({
         groupId: params.groupId,
-        roleAssignment: { role: { roleId } },
+        roleAssignment: {
+          role: { roleId },
+          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+        },
       })),
     }),
 };
@@ -359,7 +362,10 @@ export const assignRolesToUser: DetApi<
   request: (params) =>
     detApi.RBAC.assignRoles({
       userRoleAssignments: params.roleIds.map((roleId) => ({
-        roleAssignment: { role: { roleId } },
+        roleAssignment: {
+          role: { roleId },
+          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+        },
         userId: params.userId,
       })),
     }),
