@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/config"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -39,13 +39,6 @@ const (
 
 var shellsAddr = actor.Addr("shells")
 
-func canAccessShell(curUser model.User, shell *shellv1.Shell) bool {
-	if !config.EnforceStrictNTSC() {
-		return true
-	}
-	return curUser.Admin || model.UserID(shell.UserId) == curUser.ID
-}
-
 func (a *apiServer) GetShells(
 	ctx context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
@@ -59,8 +52,19 @@ func (a *apiServer) GetShells(
 	}
 
 	a.filter(&resp.Shells, func(i int) bool {
-		return canAccessShell(*curUser, resp.Shells[i])
+		if err != nil {
+			return false
+		}
+		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+			*curUser, model.UserID(resp.Shells[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	a.sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Shells, req.Offset, req.Limit)
@@ -79,7 +83,10 @@ func (a *apiServer) GetShell(
 		return nil, err
 	}
 
-	if !canAccessShell(*curUser, resp.Shell) {
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		*curUser, model.UserID(resp.Shell.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
 		return nil, errActorNotFound(addr)
 	}
 	return resp, nil

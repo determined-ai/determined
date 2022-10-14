@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/config"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -164,13 +164,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}, nil
 }
 
-func canAccessCommand(curUser model.User, command *commandv1.Command) bool {
-	if !config.EnforceStrictNTSC() {
-		return true
-	}
-	return curUser.Admin || model.UserID(command.UserId) == curUser.ID
-}
-
 func (a *apiServer) GetCommands(
 	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
@@ -184,8 +177,19 @@ func (a *apiServer) GetCommands(
 	}
 
 	a.filter(&resp.Commands, func(i int) bool {
-		return canAccessCommand(*curUser, resp.Commands[i])
+		if err != nil {
+			return false
+		}
+		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+			*curUser, model.UserID(resp.Commands[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
@@ -204,7 +208,10 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if !canAccessCommand(*curUser, resp.Command) {
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		*curUser, model.UserID(resp.Command.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
 		return nil, errActorNotFound(addr)
 	}
 	return resp, nil

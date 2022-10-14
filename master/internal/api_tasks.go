@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -68,9 +67,6 @@ func expFromAllocationID(
 }
 
 func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
-	if !config.EnforceStrictNTSC() {
-		return true, nil
-	}
 	taskOwnerID, err := db.GetCommandOwnerID(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
@@ -79,7 +75,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return curUser.Admin || curUser.ID == taskOwnerID, nil
+	return expauth.AuthZProvider.Get().CanAccessNTSCTask(curUser, taskOwnerID)
 }
 
 func (a *apiServer) canDoActionsOnTask(

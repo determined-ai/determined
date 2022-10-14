@@ -17,6 +17,27 @@ type ExperimentAuthZ struct {
 	mock.Mock
 }
 
+// CanAccessNTSCTask provides a mock function with given fields: curUser, ownerID
+func (_m *ExperimentAuthZ) CanAccessNTSCTask(curUser model.User, ownerID model.UserID) (bool, error) {
+	ret := _m.Called(curUser, ownerID)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(model.User, model.UserID) bool); ok {
+		r0 = rf(curUser, ownerID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.User, model.UserID) error); ok {
+		r1 = rf(curUser, ownerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CanCreateExperiment provides a mock function with given fields: curUser, proj, e
 func (_m *ExperimentAuthZ) CanCreateExperiment(curUser model.User, proj *projectv1.Project, e *model.Experiment) error {
 	ret := _m.Called(curUser, proj, e)

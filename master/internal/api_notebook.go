@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/config"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -42,13 +42,6 @@ const (
 
 var notebooksAddr = actor.Addr("notebooks")
 
-func canAccessNotebook(curUser model.User, notebook *notebookv1.Notebook) bool {
-	if !config.EnforceStrictNTSC() {
-		return true
-	}
-	return curUser.Admin || model.UserID(notebook.UserId) == curUser.ID
-}
-
 func (a *apiServer) GetNotebooks(
 	ctx context.Context, req *apiv1.GetNotebooksRequest,
 ) (resp *apiv1.GetNotebooksResponse, err error) {
@@ -62,8 +55,16 @@ func (a *apiServer) GetNotebooks(
 	}
 
 	a.filter(&resp.Notebooks, func(i int) bool {
-		return canAccessNotebook(*curUser, resp.Notebooks[i])
+		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+			*curUser, model.UserID(resp.Notebooks[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	a.sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Notebooks, req.Offset, req.Limit)
@@ -82,7 +83,10 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if !canAccessNotebook(*curUser, resp.Notebook) {
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		*curUser, model.UserID(resp.Notebook.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
 		return nil, errActorNotFound(addr)
 	}
 	return resp, nil

@@ -11,9 +11,9 @@ import (
 	"github.com/labstack/echo/v4"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -133,17 +133,15 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 }
 
 func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
-	if !config.EnforceStrictNTSC() {
-		return nil
-	}
-
 	curUser := c.(*context.DetContext).MustGetUser()
 	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
 	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), taskID)
 	if err != nil {
 		return err
 	}
-	if !curUser.Admin && curUser.ID != ownerID {
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(curUser, ownerID); err != nil {
+		return err
+	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
 	return nil

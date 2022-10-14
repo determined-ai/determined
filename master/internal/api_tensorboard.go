@@ -22,7 +22,6 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -49,13 +48,6 @@ const (
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
-
-func canAccessTensorboard(curUser model.User, tensorboard *tensorboardv1.Tensorboard) bool {
-	if !config.EnforceStrictNTSC() {
-		return true
-	}
-	return curUser.Admin || model.UserID(tensorboard.UserId) == curUser.ID
-}
 
 func filesToArchive(files []*utilv1.File) archive.Archive {
 	filesArchive := make([]archive.Item, 0, len(files))
@@ -85,11 +77,23 @@ func (a *apiServer) GetTensorboards(
 	if err = a.ask(tensorboardsAddr, req, &resp); err != nil {
 		return nil, err
 	}
-	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 
 	a.filter(&resp.Tensorboards, func(i int) bool {
-		return canAccessTensorboard(*curUser, resp.Tensorboards[i])
+		if err != nil {
+			return false
+		}
+		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+			*curUser, model.UserID(resp.Tensorboards[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
 }
 
@@ -105,7 +109,11 @@ func (a *apiServer) GetTensorboard(
 	if err := a.ask(addr, req, &resp); err != nil {
 		return nil, err
 	}
-	if !canAccessTensorboard(*curUser, resp.Tensorboard) {
+
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		*curUser, model.UserID(resp.Tensorboard.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
 		return nil, errActorNotFound(addr)
 	}
 	return resp, nil

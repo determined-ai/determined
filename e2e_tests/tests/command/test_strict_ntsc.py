@@ -249,12 +249,11 @@ def test_strict_command() -> None:
 
 @pytest.mark.test_strict_ntsc
 def test_strict_tensorboard() -> None:
-    with logged_in_user(ADMIN_CREDENTIALS):
-        exp_id = exp.run_basic_test(
-            conf.fixtures_path("no_op/single-one-short-step.yaml"),
-            conf.fixtures_path("no_op"),
-            1,
-        )
+    exp_id = exp.run_basic_test(
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        1,
+    )
     strict_task_test(
         ["tensorboard", "start", str(exp_id), "--no-browser"],
         "has started",
