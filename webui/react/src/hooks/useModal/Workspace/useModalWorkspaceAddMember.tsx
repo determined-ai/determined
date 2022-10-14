@@ -18,13 +18,18 @@ import css from './useModalWorkspaceAddMember.module.scss';
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
   onClose?: () => void;
+  workspaceId: number;
 }
 interface FormInputs {
   roleId: number;
   userOrGroupId: number;
 }
 
-const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): ModalHooks => {
+const useModalWorkspaceAddMember = ({
+  addableUsersAndGroups,
+  onClose,
+  workspaceId,
+}: Props): ModalHooks => {
   let { knownRoles } = useStore();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
@@ -75,17 +80,14 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
   );
 
   const handleSelect = useCallback(
-    (value, option) => {
+    (value) => {
       const userOrGroup = addableUsersAndGroups.find((u) => {
-        if (isUser(u)) {
+        if (isUser(u) && value.substring(0, 2) === 'u_') {
           const user = u as User;
-          return (
-            (user?.displayName === option.label || user?.username === option.label) &&
-            user.id === value
-          );
-        } else {
+          return user.id === Number(value.substring(2));
+        } else if (!isUser(u) && value.substring(0, 2) === 'g_') {
           const group = u as V1Group;
-          return group.name === option.label && group.groupId === value;
+          return group.groupId === Number(value.substring(2));
         }
       });
       setSelectedOption(userOrGroup);
@@ -100,11 +102,13 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
         isUser(selectedOption)
           ? await assignRolesToUser({
               roleIds: [values.roleId],
+              scopeWorkspaceId: workspaceId,
               userId: values.userOrGroupId,
             })
           : await assignRolesToGroup({
               groupId: values.userOrGroupId,
               roleIds: [values.roleId],
+              scopeWorkspaceId: workspaceId,
             });
         form.resetFields();
         setSelectedOption(undefined);
@@ -129,7 +133,7 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
         });
       }
     }
-  }, [form, selectedOption]);
+  }, [form, selectedOption, workspaceId]);
 
   const modalContent = useMemo(() => {
     return (
@@ -150,7 +154,7 @@ const useModalWorkspaceAddMember = ({ addableUsersAndGroups, onClose }: Props): 
                     <Icon name="group" />
                   </span>
                 ),
-                value: getIdFromUserOrGroup(option),
+                value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
               placeholder="Find user or group by display name or username"
               showSearch

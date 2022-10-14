@@ -105,7 +105,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, [id, nameFilter, rbacEnabled]);
+  }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
