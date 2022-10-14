@@ -116,7 +116,8 @@ func (a *ExperimentAuthZBasic) CanGetActiveTasksCount(curUser model.User) error 
 }
 
 // CanAccessNTSCTask returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns
+// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
+// an admin or if the user owns the task and a nil error.
 func (a *ExperimentAuthZBasic) CanAccessNTSCTask(
 	curUser model.User, ownerID model.UserID,
 ) (bool, error) {
