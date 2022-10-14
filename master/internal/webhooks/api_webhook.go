@@ -102,8 +102,8 @@ func (a *APIServer) TestWebhook(
 		return nil, err
 	}
 	var tReq *http.Request
-	eventId := uuid.New()
-	log.Info(fmt.Sprintf("creating webhook payload for event %v", eventId))
+	eventID := uuid.New()
+	log.Info(fmt.Sprintf("creating webhook payload for event %v", eventID))
 	switch webhook.WebhookType {
 	case WebhookTypeDefault:
 		s := "test"
@@ -119,11 +119,15 @@ func (a *APIServer) TestWebhook(
 				TestData: &s,
 			},
 		}
-		p, err := json.Marshal(tp)
-		if err != nil {
+		p, perr := json.Marshal(tp)
+		if perr != nil {
 			return nil, err
 		}
 		tReq, err = generateWebhookRequest(webhook.URL, p, t)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"failed to create webhook request for event %v error : %v ", eventID, err)
+		}
 	case WebhookTypeSlack:
 		testMessageBlock := SlackBlock{
 			Text: Field{
@@ -135,8 +139,8 @@ func (a *APIServer) TestWebhook(
 		messageBody := SlackMessageBody{
 			Blocks: []SlackBlock{testMessageBlock},
 		}
-		slackMessage, err := json.Marshal(messageBody)
-		if err != nil {
+		slackMessage, serr := json.Marshal(messageBody)
+		if serr != nil {
 			return nil, err
 		}
 		tReq, err = http.NewRequest(
@@ -145,7 +149,8 @@ func (a *APIServer) TestWebhook(
 			bytes.NewBuffer(slackMessage),
 		)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to create webhook request for event %v error : %v ", eventId, err)
+			return nil, status.Errorf(codes.InvalidArgument,
+				"failed to create webhook request for event %v error : %v ", eventID, err)
 		}
 	default:
 		panic("Unknown webhook type")
@@ -153,14 +158,16 @@ func (a *APIServer) TestWebhook(
 	if err != nil {
 		return nil, err
 	}
-	log.Info(fmt.Sprintf("creating webhook request for event %v", eventId))
+	log.Info(fmt.Sprintf("creating webhook request for event %v", eventID))
 	c := http.Client{}
 	resp, err := c.Do(tReq)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error sending webhook request for event %v error: %v", eventId, err)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"error sending webhook request for event %v error: %v", eventID, err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, status.Errorf(codes.InvalidArgument, "received error from webhook server for event %v error: %v ", eventId, resp.StatusCode)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"received error from webhook server for event %v error: %v ", eventID, resp.StatusCode)
 	}
 	if err = resp.Body.Close(); err != nil {
 		log.Error(fmt.Errorf("unable to close response body %v", err))

@@ -37,11 +37,11 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 }
 
 // GetWebhook returns a single Webhooks from the DB.
-func GetWebhook(ctx context.Context, webhookId int) (*Webhook, error) {
+func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	webhook := Webhook{}
 	err := db.Bun().NewSelect().
 		Model(&webhook).
-		Where("id = ?", webhookId).
+		Where("id = ?", webhookID).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	return nil
 }
 
-// CountEents returns the total number of events from the DB.
+// CountEvents returns the total number of events from the DB.
 func CountEvents(ctx context.Context) (int, error) {
 	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
 }

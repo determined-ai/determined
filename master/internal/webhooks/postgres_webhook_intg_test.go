@@ -85,8 +85,8 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	Deinit() // We don't care to send, so just remove the events.
 
 	t.Run("no triggers for event type", func(t *testing.T) {
-		startCount, err := CountEvents(ctx)
-		require.NoError(t, err)
+		startCount, serr := CountEvents(ctx)
+		require.NoError(t, serr)
 
 		require.NoError(t, AddWebhook(ctx, mockWebhook()))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
@@ -99,8 +99,8 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	})
 
 	t.Run("no match triggers for event type", func(t *testing.T) {
-		startCount, err := CountEvents(ctx)
-		require.NoError(t, err)
+		startCount, cerr := CountEvents(ctx)
+		require.NoError(t, cerr)
 
 		w := mockWebhook()
 		w.Triggers = append(w.Triggers, &Trigger{
