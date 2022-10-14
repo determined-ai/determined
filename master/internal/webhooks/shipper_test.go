@@ -17,6 +17,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -97,8 +99,9 @@ func TestShipper(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		actual := model.Experiment{State: model.CompletedState}
+		var config expconf.ExperimentConfig
+		expConf := schemas.WithDefaults(config).(expconf.ExperimentConfigV0)
+		actual := model.Experiment{State: model.CompletedState, Config: expConf}
 		for id, delay := range schedule {
 			time.Sleep(10 * delay * time.Millisecond)
 			actual.ID = id
