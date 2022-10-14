@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -209,12 +210,8 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 	} else if err != nil {
 		return true, err
 	}
-
 	if !user.Active {
 		return true, redirectToLogin(c)
-	}
-	if user.Admin {
-		return false, nil
 	}
 
 	taskID := c.Param("service")
@@ -222,10 +219,10 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 	if err != nil {
 		return true, err
 	}
-
-	if ownerID != user.ID {
-		return false, echo.NewHTTPError(http.StatusNotFound,
-			"service not found: "+taskID)
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(*user, ownerID); err != nil {
+		return true, err
+	} else if !ok {
+		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
 	}
 
 	return false, nil
