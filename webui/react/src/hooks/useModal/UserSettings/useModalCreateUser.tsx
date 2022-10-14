@@ -17,6 +17,7 @@ import {
 } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser, Permission, UserRole } from 'types';
@@ -115,6 +116,10 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     }
     return columns;
   }, [canModifyPermissions, viewOnly]);
+
+  if (user !== undefined && roles === null) {
+    return <Spinner tip="Loading roles..." />;
+  }
 
   return (
     <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
@@ -232,7 +237,6 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       const formData = form.getFieldsValue();
 
       const newRoles: Set<number> = new Set(formData.roles);
-      // TODO user should not be able to set roles before they load.
       const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
 
       const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);

@@ -17,6 +17,7 @@ import useModalCreateUser, {
 const mockCreateUser = jest.fn();
 
 jest.mock('services/api', () => ({
+  getUserRoles: () => Promise.resolve([]),
   postUser: (params: PostUserParams) => {
     mockCreateUser(params);
     return Promise.resolve({ user: { id: 1 } });
@@ -48,6 +49,11 @@ const setup = async () => {
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
   await view.findByRole('heading', { name: MODAL_HEADER_LABEL_CREATE });
+
+  // Check for the modal to finish loading.
+  await waitFor(() => {
+    expect(screen.queryByText('Loading', { exact: false })).not.toBeInTheDocument();
+  });
 
   return view;
 };
