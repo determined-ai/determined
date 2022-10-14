@@ -36,12 +36,12 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 	})
 }
 
-// GetWebhooks returns all Webhooks from the DB.
-func GetWebhook(ctx context.Context, WebhookId int) (*Webhook, error) {
+// GetWebhook returns a single Webhooks from the DB.
+func GetWebhook(ctx context.Context, webhookId int) (*Webhook, error) {
 	webhook := Webhook{}
 	err := db.Bun().NewSelect().
 		Model(&webhook).
-		Where("id = ?", WebhookId).
+		Where("id = ?", webhookId).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -71,10 +71,12 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	return nil
 }
 
+// CountEents returns the total number of events from the DB.
 func CountEvents(ctx context.Context) (int, error) {
 	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
 }
 
+// ReportExperimentStateChanged adds webhook events to the que.
 func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error {
 	var ts []Trigger
 	switch err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
@@ -119,17 +121,17 @@ func generateEventPayload(wt WebhookType, e model.Experiment, expState model.Sta
 				Experiment: &expPayload,
 			},
 		}
-		pJson, err := json.Marshal(p)
+		pJSON, err := json.Marshal(p)
 		if err != nil {
 			return nil, err
 		}
-		return pJson, nil
+		return pJSON, nil
 	case WebhookTypeSlack:
-		slackJson, err := generateSlackPayload(e)
+		slackJSON, err := generateSlackPayload(e)
 		if err != nil {
 			return nil, err
 		}
-		return slackJson, nil
+		return slackJSON, nil
 	default:
 		panic(fmt.Errorf("unknown webhook type: %+v", wt))
 	}
@@ -137,18 +139,18 @@ func generateEventPayload(wt WebhookType, e model.Experiment, expState model.Sta
 
 func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	var status string
-	var eUrl string
+	var eURL string
 	var c string
 	var mStatus string
 	if e.State == model.CompletedState {
 		status = "Your experiment completed successfully 🎉"
 
-		eUrl = fmt.Sprintf("✅ %v (#%v)", e.Config.Name(), e.ID)
+		eURL = fmt.Sprintf("✅ %v (#%v)", e.Config.Name(), e.ID)
 		c = "#13B670"
 		mStatus = "Completed"
 	} else {
 		status = "Your experiment has stopped with errors"
-		eUrl = fmt.Sprintf("❌ %v (#%v)", e.Config.Name(), e.ID)
+		eURL = fmt.Sprintf("❌ %v (#%v)", e.Config.Name(), e.ID)
 		c = "#DD5040"
 		mStatus = "Errored"
 	}

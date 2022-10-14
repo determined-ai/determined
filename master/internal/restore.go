@@ -61,7 +61,9 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		}
 		expModel.State = terminal
 		telemetry.ReportExperimentStateChanged(m.system, m.db, *expModel)
-		webhooks.ReportExperimentStateChanged(context.TODO(), *expModel)
+		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *expModel); err != nil {
+			log.Error(fmt.Errorf("unable to close response body %v", err))
+		}
 		return nil
 	} else if _, ok := model.RunningStates[expModel.State]; !ok {
 		return errors.Errorf(

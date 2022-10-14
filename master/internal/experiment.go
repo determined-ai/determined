@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -365,9 +366,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return errors.New("experiment is already in a terminal state")
 		}
 		telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
-		webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment)
+		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
+			log.Error(fmt.Errorf("unable to close response body %v", err))
+		}
 
-		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
+		if err = e.db.SaveExperimentState(e.Experiment); err != nil {
 			return err
 		}
 		ctx.Log().Infof("experiment state changed to %s", e.State)
@@ -612,7 +615,9 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 		return true
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
-	webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment)
+	if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
+		log.Error(fmt.Errorf("unable to close response body %v", err))
+	}
 
 	ctx.Log().Infof("experiment state changed to %s", state.State)
 	ctx.TellAll(state, ctx.Children()...)

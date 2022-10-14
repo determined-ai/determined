@@ -21,7 +21,6 @@ import (
 
 const (
 	pathToMigrations = "file://../../static/migrations"
-	subtestTimeout   = 10 * time.Second
 )
 
 func TestShipper(t *testing.T) {

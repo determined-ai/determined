@@ -219,31 +219,37 @@ type Event struct {
 	Trigger   *Trigger       `bun:"rel:belongs-to,join:trigger_id=id"`
 }
 
+// Field corresponds to a Field Slack Block element.
 type Field struct {
 	Type string `json:"type"`
 	Text string `json:"text"`
 }
 
+// SlackBlock corresponds to a Slack Block element.
 type SlackBlock struct {
 	Type   string   `json:"type"`
 	Text   Field    `json:"text"`
 	Fields *[]Field `json:"fields,omitempty"`
 }
 
+// SlackAttachment corresponds to an Attachment Slack Block element.
 type SlackAttachment struct {
 	Color  string       `json:"color"`
 	Blocks []SlackBlock `json:"blocks"`
 }
 
+// SlackMessageBody corresponds to an entire message as a Slack Block.
 type SlackMessageBody struct {
 	Blocks      []SlackBlock       `json:"blocks"`
 	Attachments *[]SlackAttachment `json:"attachments,omitempty"`
 }
 
+// Condition represents a trigger condition.
 type Condition struct {
 	State model.State `json:"state,omitempty"`
 }
 
+// ExperimentPayload is the webhook request representation of an experiment.
 type ExperimentPayload struct {
 	ID            int          `json:"id"`
 	State         model.State  `json:"state"`
@@ -255,6 +261,7 @@ type ExperimentPayload struct {
 	ProjectName   string       `json:"project"`
 }
 
+// EventPayload respresents a webhook event.
 type EventPayload struct {
 	ID        uuid.UUID   `json:"event_id"`
 	Type      TriggerType `json:"event_type"`
@@ -263,6 +270,7 @@ type EventPayload struct {
 	Data      EventData   `json:"event_data"`
 }
 
+// EventData represents the event_data for a webhook event.
 type EventData struct {
 	TestData   *string            `json:"data,omitempty"`
 	Experiment *ExperimentPayload `json:"experiment,omitempty"`

@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -139,6 +142,9 @@ func (a *APIServer) TestWebhook(
 			webhook.URL,
 			bytes.NewBuffer(slackMessage),
 		)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to create webhook request: %v ", err)
+		}
 	default:
 		panic("Unknown webhook type")
 	}
@@ -153,6 +159,8 @@ func (a *APIServer) TestWebhook(
 	if resp.StatusCode != http.StatusOK {
 		return nil, status.Errorf(codes.InvalidArgument, "received error from webhook server: %v ", resp.StatusCode)
 	}
-	resp.Body.Close()
+	if err = resp.Body.Close(); err != nil {
+		log.Error(fmt.Errorf("unable to close response body %v", err))
+	}
 	return &apiv1.TestWebhookResponse{}, nil
 }

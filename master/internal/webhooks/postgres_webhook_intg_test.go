@@ -29,7 +29,7 @@ func TestWebhooks(t *testing.T) {
 		err = AddWebhook(ctx, &testWebhookFive)
 		require.NoError(t, err, "failure creating webhooks")
 		webhooks, err := GetWebhooks(ctx)
-		webhookFourResponse := getWebhookById(webhooks, testWebhookFour.ID)
+		webhookFourResponse := getWebhookByID(webhooks, testWebhookFour.ID)
 		require.NoError(t, err, "unable to get webhooks")
 		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
 		require.Equal(t, getWebhookIds(webhooks), expectedWebhookIds,
@@ -53,7 +53,7 @@ func TestWebhooks(t *testing.T) {
 		require.NoError(t, err, "failed to create webhook with multiple triggers")
 		webhooks, err := GetWebhooks(ctx)
 		require.NoError(t, err)
-		createdWebhook := getWebhookById(webhooks, testWebhookTwo.ID)
+		createdWebhook := getWebhookByID(webhooks, testWebhookTwo.ID)
 		require.Equal(t, len(createdWebhook.Triggers), len(testTriggersTwo),
 			"did not retriee correct number of triggers")
 	})
@@ -253,7 +253,7 @@ func getWebhookIds(ws Webhooks) []WebhookID {
 	return ids
 }
 
-func getWebhookById(ws Webhooks, id WebhookID) Webhook {
+func getWebhookByID(ws Webhooks, id WebhookID) Webhook {
 	for _, w := range ws {
 		if w.ID == id {
 			return w

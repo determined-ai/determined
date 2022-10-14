@@ -20,7 +20,6 @@ import (
 const (
 	maxWorkers        = 3
 	maxEventBatchSize = 10
-	maxPendingEvents  = 100
 	maxAttempts       = 2
 	attemptBackoff    = 2 * time.Second
 )
