@@ -184,7 +184,7 @@ func (w *worker) deliver(ctx context.Context, e Event) error {
 		return fmt.Errorf("failed to create webhook request: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to sending webhook request: %w error received from webhook server : %v", err, resp.StatusCode)
+		return fmt.Errorf("failed to sending webhook request: %w received server error : %v", err, resp.StatusCode)
 	}
 	return resp.Body.Close()
 }

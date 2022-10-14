@@ -93,8 +93,8 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CanceledState,
 		}))
 
-		endCount, err := CountEvents(ctx)
-		require.NoError(t, err)
+		endCount, cerr := CountEvents(ctx)
+		require.NoError(t, cerr)
 		require.Equal(t, startCount, endCount)
 	})
 
@@ -112,8 +112,8 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CanceledState,
 		}))
 
-		endCount, err := CountEvents(ctx)
-		require.NoError(t, err)
+		endCount, ecerr := CountEvents(ctx)
+		require.NoError(t, ecerr)
 		require.Equal(t, startCount, endCount)
 	})
 
@@ -121,7 +121,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("one trigger for event type", func(t *testing.T) {
-		startCount, err := CountEvents(ctx)
+		startCount, scerr := CountEvents(ctx)
 		require.NoError(t, err)
 
 		w := mockWebhook()
@@ -134,8 +134,8 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CompletedState,
 		}))
 
-		endCount, err := CountEvents(ctx)
-		require.NoError(t, err)
+		endCount, ecterr := CountEvents(ctx)
+		require.NoError(t, ecterr)
 		require.Equal(t, startCount+1, endCount)
 	})
 

@@ -20,7 +20,7 @@ func WithContext(ctx context.Context) *Group {
 	return &Group{inner: g, ctx: ctx, cancel: cancel}
 }
 
-// SubGroup returns an Group with context.
+// Subgroup returns an Group with context.
 func (g *Group) Subgroup() *Group {
 	return WithContext(g.ctx)
 }
