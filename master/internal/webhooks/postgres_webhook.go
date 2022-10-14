@@ -183,7 +183,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	experimentBlock := SlackBlock{
 		Text: Field{
 			Type: "mrkdwn",
-			Text: eUrl,
+			Text: eURL,
 		},
 		Type:   "section",
 		Fields: &expBlockFields,

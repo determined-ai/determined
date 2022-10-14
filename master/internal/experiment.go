@@ -370,7 +370,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			log.Error(fmt.Errorf("unable to close response body %v", err))
 		}
 
-		if err = e.db.SaveExperimentState(e.Experiment); err != nil {
+		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 			return err
 		}
 		ctx.Log().Infof("experiment state changed to %s", e.State)
