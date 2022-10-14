@@ -1,5 +1,13 @@
 import { Button, notification, Space, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  RefCallback,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ListChildComponentProps,
   ListOnItemsRenderedProps,
@@ -564,6 +572,26 @@ const LogViewer: React.FC<Props> = ({
     [dateTimeWidth],
   );
 
+  const handleKeyboardScrolling = useCallback((e: KeyboardEvent) => {
+    const active = document.activeElement;
+    const next = active?.nextElementSibling;
+    const prev = active?.previousElementSibling;
+    if (e.key === 'ArrowDown' && next instanceof HTMLElement) {
+      e.preventDefault();
+      next.focus();
+    } else if (e.key === 'ArrowUp' && prev instanceof HTMLElement) {
+      e.preventDefault();
+      prev.focus();
+    }
+  }, []);
+
+  const keyboardScrollingRef: RefCallback<HTMLDivElement> = useCallback(
+    (node) => {
+      node?.addEventListener('keydown', handleKeyboardScrolling, { signal: canceler.signal });
+    },
+    [canceler.signal, handleKeyboardScrolling],
+  );
+
   return (
     <Section
       bodyNoPadding
@@ -580,6 +608,7 @@ const LogViewer: React.FC<Props> = ({
               itemCount={logs.length}
               itemData={logs}
               itemSize={getItemHeight}
+              outerRef={keyboardScrollingRef}
               ref={listRef}
               width="100%"
               onItemsRendered={handleItemsRendered}
