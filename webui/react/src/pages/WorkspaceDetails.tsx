@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -39,7 +39,7 @@ const WorkspaceDetails: React.FC = () => {
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
   const { users } = useStore();
-  const { workspaceId: workspaceID } = useParams<Params>();
+  const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
@@ -51,13 +51,13 @@ const WorkspaceDetails: React.FC = () => {
   const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
   const [pageError, setPageError] = useState<Error>();
   const [canceler] = useState(new AbortController());
-  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
+  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(
+    (tab as WorkspaceDetailsTab) || WorkspaceDetailsTab.Projects,
+  );
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = workspaceID ?? '';
   const id = parseInt(workspaceId);
   const navigate = useNavigate();
-  const location = useLocation();
-  const basePath = paths.workspaceDetails(workspaceId);
   const { canViewWorkspace } = usePermissions();
 
   const fetchWorkspace = useCallback(async () => {
@@ -119,22 +119,18 @@ const WorkspaceDetails: React.FC = () => {
   const handleTabChange = useCallback(
     (activeTab) => {
       const tab = activeTab as WorkspaceDetailsTab;
-      navigate(`${basePath}/${tab}`, { replace: true });
+      navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
       setTabKey(tab);
     },
-    [basePath, navigate],
+    [workspaceId, navigate],
   );
 
   useEffect(() => {
     // Set the correct pathname to ensure
     // that user settings will save.
-
-    if (
-      !location.pathname.includes(WorkspaceDetailsTab.Projects) &&
-      !location.pathname.includes(WorkspaceDetailsTab.Members)
-    )
-      navigate(`${basePath}/${tabKey}`, { replace: true });
-  }, [basePath, navigate, location.pathname, tabKey]);
+    navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
+    tab && setTabKey(tab as WorkspaceDetailsTab);
+  }, [workspaceId, navigate, tab]);
 
   // Users and Groups that are not already a part of the workspace
   const addableGroups: V1Group[] = groups
