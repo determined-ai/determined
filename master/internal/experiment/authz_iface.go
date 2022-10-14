@@ -94,6 +94,10 @@ type ExperimentAuthZ interface {
 	CanSetExperimentsWeight(curUser model.User, e *model.Experiment, weight float64) error
 	CanSetExperimentsPriority(curUser model.User, e *model.Experiment, priority int) error
 	CanSetExperimentsCheckpointGCPolicy(curUser model.User, e *model.Experiment) error
+
+	// GET /api/v1/tasks/count
+	// TODO(nick) move this when we add an AuthZ for notebooks.
+	CanGetActiveTasksCount(curUser model.User) error
 }
 
 // AuthZProvider is the authz registry for experiments.

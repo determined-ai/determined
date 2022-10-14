@@ -308,13 +308,11 @@ func (a *apiServer) GetActiveTasksCount(
 	if err != nil {
 		return nil, err
 	}
-	if config.EnforceStrictNTSC() && !curUser.Admin {
-		return nil, status.Error(codes.PermissionDenied,
-			"with strict tasks enabled you need admin to view task counts")
+	if err := expauth.AuthZProvider.Get().CanGetActiveTasksCount(*curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	finalResp := &apiv1.GetActiveTasksCountResponse{}
-
 	req1 := &apiv1.GetNotebooksRequest{}
 	resp1 := &apiv1.GetNotebooksResponse{}
 	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {

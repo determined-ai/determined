@@ -87,6 +87,20 @@ func (_m *ExperimentAuthZ) CanForkFromExperiment(curUser model.User, e *model.Ex
 	return r0
 }
 
+// CanGetActiveTasksCount provides a mock function with given fields: curUser
+func (_m *ExperimentAuthZ) CanGetActiveTasksCount(curUser model.User) error {
+	ret := _m.Called(curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User) error); ok {
+		r0 = rf(curUser)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanGetExperiment provides a mock function with given fields: curUser, e
 func (_m *ExperimentAuthZ) CanGetExperiment(curUser model.User, e *model.Experiment) (bool, error) {
 	ret := _m.Called(curUser, e)

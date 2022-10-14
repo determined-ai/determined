@@ -200,10 +200,10 @@ def assert_access_task(creds: authentication.Credentials, task_id: str, can_acce
     assert task_id not in task_ids
     with pytest.raises(NotFoundException):
         bindings.get_GetTask(sess, taskId=task_id)
-    with pytest.raises(APIException):  # TODO make this return 404?
+    with pytest.raises(APIException):  
         for _ in bindings.get_TaskLogs(sess, taskId=task_id, follow=False):
             pass
-    with pytest.raises(APIException):  # TODO make this return 404?
+    with pytest.raises(APIException):  
         for _ in bindings.get_TaskLogsFields(sess, taskId=task_id, follow=False):
             pass
     with pytest.raises(NotFoundException):
@@ -266,21 +266,3 @@ def test_strict_tensorboard() -> None:
         assert_tensorboard_access,
     )
 
-
-@pytest.mark.test_strict_ntsc
-def test_strict_active_task_count() -> None:
-    master_url = conf.make_master_url()
-
-    authentication.cli_auth = authentication.Authentication(
-        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
-    )
-    sess = api.Session(master_url, None, None, None)
-    bindings.get_GetActiveTasksCount(sess)
-
-    non_admin = create_test_user(ADMIN_CREDENTIALS)
-    authentication.cli_auth = authentication.Authentication(
-        master_url, non_admin.username, non_admin.password, try_reauth=True
-    )
-    sess = api.Session(master_url, None, None, None)
-    with pytest.raises(ForbiddenException):
-        bindings.get_GetActiveTasksCount(sess)
