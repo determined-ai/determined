@@ -121,7 +121,7 @@ commands:
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = "webui" ] ; then
+            if [ "$DIFF_DIRS" = "webui" ] && [ "${CIRCLE_PULL_REQUEST}" != "" ] ; then
               echo "webui-only change detected, halting job now"
               circleci-agent step halt
             else
