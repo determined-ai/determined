@@ -96,8 +96,8 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleOk = useCallback(async () => {
+    const values = await form.validateFields();
     try {
-      const values = await form.validateFields();
       if (values && selectedOption) {
         isUser(selectedOption)
           ? await assignRolesToUser({
@@ -138,7 +138,11 @@ const useModalWorkspaceAddMember = ({
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <Form autoComplete="off" form={form} layout="vertical">
+        <Form
+          autoComplete="off"
+          form={form}
+          layout="vertical"
+          onValuesChange={async () => await form.validateFields()}>
           <Form.Item
             label="User or Group"
             name="userOrGroupId"
