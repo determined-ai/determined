@@ -55,6 +55,9 @@ func (a *apiServer) GetNotebooks(
 	}
 
 	a.filter(&resp.Notebooks, func(i int) bool {
+		if err != nil {
+			return false
+		}
 		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
 			*curUser, model.UserID(resp.Notebooks[i].UserId))
 		if serverError != nil {
