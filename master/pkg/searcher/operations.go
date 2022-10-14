@@ -199,7 +199,7 @@ func NewValidateAfter(requestID model.RequestID, length uint64) ValidateAfter {
 	return ValidateAfter{requestID, length}
 }
 
-// ValidateAfterFromProto returns a ValidateAfter operation from its protobuf representation.
+// ValidateAfterFromProto creates a ValidateAfter operation from its protobuf representation.
 func ValidateAfterFromProto(
 	op *experimentv1.TrialOperation_ValidateAfter,
 ) (*ValidateAfter, error) {

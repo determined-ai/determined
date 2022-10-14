@@ -171,9 +171,9 @@ message SearcherOperation {
   oneof union {
     // TrialOperation is issued to tell an existing trial to do something.
     TrialOperation trial_operation = 1;
-    // CreateTrial is issued to create trial.
+    // CreateTrialOperation is issued to create a trial.
     CreateTrialOperation create_trial = 2;
-    // CloseTrial is issued to close trial.
+    // CloseTrialOperation is issued to close a trial.
     CloseTrialOperation close_trial = 3;
     // ShutDownOperation is issued to shut down the custom search method.
     ShutDownOperation shut_down = 4;

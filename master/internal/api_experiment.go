@@ -242,12 +242,15 @@ func (a *apiServer) GetSearcherEvents(
 	}
 }
 
-func (a *apiServer) PostSearcherOperations(ctx context.Context,
-	req *apiv1.PostSearcherOperationsRequest) (
+func (a *apiServer) PostSearcherOperations(
+	ctx context.Context,
+	req *apiv1.PostSearcherOperationsRequest,
+) (
 	resp *apiv1.PostSearcherOperationsResponse, err error,
 ) {
-	_, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
-		expauth.AuthZProvider.Get().CanRunCustomSearch)
+	_, _, err = a.getExperimentAndCheckCanDoActions(
+		ctx, int(req.ExperimentId), false, expauth.AuthZProvider.Get().CanRunCustomSearch,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching experiment from database")
 	}
@@ -255,7 +258,7 @@ func (a *apiServer) PostSearcherOperations(ctx context.Context,
 	addr := experimentsAddr.Child(req.ExperimentId)
 	switch err = a.ask(addr, req, &resp); {
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to post operations %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
 	default:
 		logrus.Infof("posted operations %v", req.SearcherOperations)
 		return resp, nil

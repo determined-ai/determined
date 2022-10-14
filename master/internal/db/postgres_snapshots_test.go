@@ -24,8 +24,9 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
 
-	config := expconf.SearcherConfig{ //nolint:exhaustivestruct
-		RawCustomConfig: &expconf.CustomConfig{}, //nolint:exhaustivestruct
+	//nolint:exhaustivestruct
+	config := expconf.SearcherConfig{
+		RawCustomConfig: &expconf.CustomConfig{},
 	}
 
 	// Create a searcher and add some operations to it.
