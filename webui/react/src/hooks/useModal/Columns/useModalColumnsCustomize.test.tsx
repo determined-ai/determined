@@ -238,7 +238,7 @@ describe('useModalCustomizeColumns', () => {
     await user.click(await view.findByText('Add All'));
 
     await waitFor(() => {
-      expect(parseInt(lists[0].style.height)).toEqual(0);
+      expect(parseInt(lists[0].style.height)).toBe(0);
       expect(parseInt(lists[1].style.height)).toEqual(
         (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight,
       );

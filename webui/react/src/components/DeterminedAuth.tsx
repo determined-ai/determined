@@ -70,7 +70,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setCanSubmit(true);
       }
     },
-    [canceler, storeDispatch],
+    [canceler.signal, fetchMyRoles, storeDispatch],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

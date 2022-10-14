@@ -6,7 +6,7 @@ import * as utils from './job';
 describe('Job Utilities', () => {
   describe('jobTypeIconName', () => {
     it('should support experiment and command types', () => {
-      expect(utils.jobTypeIconName(JobType.EXPERIMENT)).toEqual('experiment');
+      expect(utils.jobTypeIconName(JobType.EXPERIMENT)).toBe('experiment');
       expect(utils.jobTypeIconName(JobType.NOTEBOOK)).toEqual(CommandType.JupyterLab);
     });
   });

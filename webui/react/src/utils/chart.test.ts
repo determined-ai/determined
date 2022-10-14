@@ -65,7 +65,7 @@ describe('normalizeRange', () => {
 
 describe('distance', () => {
   it('No difference', () => {
-    expect(distance(0, 0, 0, 0)).toStrictEqual(0);
+    expect(distance(0, 0, 0, 0)).toBe(0);
   });
   it('Distance', () => {
     expect(distance(0, 0, 1, 1) ** 2).toBeCloseTo(2);

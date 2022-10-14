@@ -11,13 +11,13 @@ const pools: Record<string, Partial<ResourcePool>> = {
 describe('cluster overview', () => {
   describe('maxPoolSlotCapacity', () => {
     it('should calculate slot capacity for static pools', () => {
-      expect(maxPoolSlotCapacity(pools.onPrem as ResourcePool)).toEqual(1);
+      expect(maxPoolSlotCapacity(pools.onPrem as ResourcePool)).toBe(1);
     });
     it('should calculate slot capacity for dynamic pools', () => {
-      expect(maxPoolSlotCapacity(pools.dynamic as ResourcePool)).toEqual(6);
+      expect(maxPoolSlotCapacity(pools.dynamic as ResourcePool)).toBe(6);
     });
     it('should treat as a static pool with -1 slotsPerAgent', () => {
-      expect(maxPoolSlotCapacity(pools.dynamic2 as ResourcePool)).toEqual(2);
+      expect(maxPoolSlotCapacity(pools.dynamic2 as ResourcePool)).toBe(2);
     });
   });
 });

@@ -51,28 +51,28 @@ describe('Color Utilities', () => {
   describe('isColor', () => {
     it('should match hex color', () => {
       colors.forEach((color) => {
-        expect(utils.isColor(color.hex)).toEqual(true);
+        expect(utils.isColor(color.hex)).toBe(true);
       });
     });
 
     it('should match hsl color', () => {
       colors.forEach((color) => {
-        expect(utils.isColor(color.hslStr)).toEqual(true);
+        expect(utils.isColor(color.hslStr)).toBe(true);
       });
     });
 
     it('should match rgba color', () => {
       colors.forEach((color) => {
-        expect(utils.isColor(color.rgbStr)).toEqual(true);
+        expect(utils.isColor(color.rgbStr)).toBe(true);
       });
     });
 
     it('should not match invalid colors', () => {
-      expect(utils.isColor('')).toEqual(false);
-      expect(utils.isColor('abc')).toEqual(false);
-      expect(utils.isColor('#12345678')).toEqual(false);
-      expect(utils.isColor('rgba()')).toEqual(false);
-      expect(utils.isColor('hsl()')).toEqual(false);
+      expect(utils.isColor('')).toBe(false);
+      expect(utils.isColor('abc')).toBe(false);
+      expect(utils.isColor('#12345678')).toBe(false);
+      expect(utils.isColor('rgba()')).toBe(false);
+      expect(utils.isColor('hsl()')).toBe(false);
     });
   });
 

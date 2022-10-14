@@ -388,7 +388,7 @@ describe('Data Utilities', () => {
 
         it('should return undefined for partial matching bad paths', () => {
           const path = ['searcher', 'step_budget'];
-          expect(utils.getPathList(config, path)).not.toBeUndefined();
+          expect(utils.getPathList(config, path)).toBeDefined();
           const actual = utils.getPathList(config, [...path, 'xyz']);
           expect(actual).toBeUndefined();
         });
@@ -401,7 +401,7 @@ describe('Data Utilities', () => {
         it('should return objects', () => {
           const actual = utils.getPathList(config, ['searcher']);
           expect(actual).toHaveProperty('mode');
-          expect(typeof actual).toEqual('object');
+          expect(typeof actual).toBe('object');
         });
 
         it('should return a reference', () => {
@@ -415,7 +415,7 @@ describe('Data Utilities', () => {
 
       describe('deletePathList', () => {
         it('should remove from input', () => {
-          expect(config.min_validation_period).not.toBeUndefined();
+          expect(config.min_validation_period).toBeDefined();
           utils.deletePathList(config, ['min_validation_period']);
           expect(config.min_validation_period).toBeUndefined();
         });

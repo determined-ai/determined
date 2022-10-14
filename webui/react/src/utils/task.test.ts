@@ -24,26 +24,24 @@ const SampleCommandTask: CommandTask = {
 
 describe('isExperimentTask', () => {
   it('Experiment Task', () => {
-    expect(isExperimentTask(SampleExperimentTask)).toStrictEqual(true);
+    expect(isExperimentTask(SampleExperimentTask)).toBe(true);
   });
   it('Command Task', () => {
-    expect(isExperimentTask(SampleCommandTask)).toStrictEqual(false);
+    expect(isExperimentTask(SampleCommandTask)).toBe(false);
   });
 });
 
 describe('canBeOpened', () => {
   it('Experiment Task', () => {
-    expect(canBeOpened(SampleExperimentTask)).toStrictEqual(true);
+    expect(canBeOpened(SampleExperimentTask)).toBe(true);
   });
   it('Terminated Command Task', () => {
-    expect(
-      canBeOpened({ ...SampleCommandTask, state: 'TERMINATED' as CommandState }),
-    ).toStrictEqual(false);
+    expect(canBeOpened({ ...SampleCommandTask, state: 'TERMINATED' as CommandState })).toBe(false);
   });
   it('Command Task without service address', () => {
-    expect(canBeOpened(SampleCommandTask)).toStrictEqual(false);
+    expect(canBeOpened(SampleCommandTask)).toBe(false);
   });
   it('Command Task with service address', () => {
-    expect(canBeOpened({ ...SampleCommandTask, serviceAddress: 'test' })).toStrictEqual(true);
+    expect(canBeOpened({ ...SampleCommandTask, serviceAddress: 'test' })).toBe(true);
   });
 });

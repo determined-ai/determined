@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Menu } from 'antd';
 import type { MenuProps } from 'antd';
+import { Dropdown, Menu } from 'antd';
 import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 

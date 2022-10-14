@@ -84,6 +84,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
      * - string
      * - string[]
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let label: any = null;
     if (option.children) {
       if (Array.isArray(option.children)) {
