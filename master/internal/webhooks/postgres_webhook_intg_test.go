@@ -122,7 +122,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 
 	t.Run("one trigger for event type", func(t *testing.T) {
 		startCount, scerr := CountEvents(ctx)
-		require.NoError(t, err)
+		require.NoError(t, scerr)
 
 		w := mockWebhook()
 		w.Triggers = append(w.Triggers, &Trigger{
