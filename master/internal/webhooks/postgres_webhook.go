@@ -106,7 +106,10 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 	return nil
 }
 
-func generateEventPayload(wt WebhookType, e model.Experiment, expState model.State, tT TriggerType) ([]byte, error) {
+func generateEventPayload(wt WebhookType,
+	e model.Experiment,
+	expState model.State,
+	tT TriggerType) ([]byte, error) {
 	switch wt {
 	case WebhookTypeDefault:
 		expPayload := experimentToWebhookPayload(e)

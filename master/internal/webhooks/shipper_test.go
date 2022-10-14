@@ -41,8 +41,8 @@ func TestShipper(t *testing.T) {
 	received := make(chan model.Experiment, 100)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var e model.Experiment
-		if json.NewDecoder(r.Body).Decode(&e); err != nil {
-			t.Logf("error reading webhook body: %v", err)
+		if jerr := json.NewDecoder(r.Body).Decode(&e); jerr != nil {
+			t.Logf("error reading webhook body: %v", jerr)
 			t.FailNow()
 			return
 		}
