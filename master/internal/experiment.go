@@ -452,8 +452,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				} else {
 					ops = append(ops, *op)
 				}
-			case *experimentv1.SearcherOperation_SearcherProgress:
-				ops = append(ops, searcher.SearcherProgressFromProto(concreteOperation))
+			case *experimentv1.SearcherOperation_SetSearcherProgress:
+				ops = append(ops, searcher.SetSearcherProgressFromProto(concreteOperation))
 			default:
 				ctx.Log().Errorf("unimplemented op %+v", concreteOperation)
 			}
@@ -624,7 +624,7 @@ func (e *experiment) processOperations(
 			state.Complete = false
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
-		case searcher.SearcherProgress:
+		case searcher.SetSearcherProgress:
 			if err := e.searcher.SetCustomSearcherProgress(op.Progress); err != nil {
 				ctx.Respond(status.Error(codes.Internal, err.Error()))
 			}

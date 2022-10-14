@@ -129,9 +129,9 @@ message ValidateAfterOperation {
   uint64 length = 2;
 }
 
-// SearcherProgressOperation informs the master of the progress of the custom
+// SetSearcherProgressOperation informs the master of the progress of the custom
 // searcher.
-message SearcherProgressOperation {
+message SetSearcherProgressOperation {
   // Experiment progress as a float between 0.0 and 1.0.
   double progress = 1;
 }
@@ -177,9 +177,9 @@ message SearcherOperation {
     CloseTrialOperation close_trial = 3;
     // ShutdownOperation is issued to shutdown the custom search method.
     ShutdownOperation shutdown = 4;
-    // SearcherProgressOperation is issued to get the progress of custom
+    // SetSearcherProgressOperation is issued to set the progress of the custom
     // search method.
-    SearcherProgressOperation searcher_progress = 5;
+    SetSearcherProgressOperation set_searcher_progress = 5;
   }
 }
 

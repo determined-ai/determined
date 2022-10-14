@@ -146,7 +146,7 @@ class Progress(Operation):
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
-            searcherProgress=bindings.v1SearcherProgressOperation(progress=self.progress)
+            setSearcherProgress=bindings.v1SetSearcherProgressOperation(progress=self.progress)
         )
 
 
