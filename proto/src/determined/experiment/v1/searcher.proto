@@ -160,7 +160,7 @@ message CloseTrialOperation {
 }
 
 // Shut down custom searcher method.
-message ShutdownOperation {
+message ShutDownOperation {
   // Cannot have an empty message type.
   int32 placeholder = 1;
 }
@@ -175,8 +175,8 @@ message SearcherOperation {
     CreateTrialOperation create_trial = 2;
     // CloseTrial is issued to close trial.
     CloseTrialOperation close_trial = 3;
-    // ShutdownOperation is issued to shutdown the custom search method.
-    ShutdownOperation shutdown = 4;
+    // ShutDownOperation is issued to shut down the custom search method.
+    ShutDownOperation shut_down = 4;
     // SetSearcherProgressOperation is issued to set the progress of the custom
     // search method.
     SetSearcherProgressOperation set_searcher_progress = 5;

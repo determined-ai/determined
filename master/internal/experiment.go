@@ -433,7 +433,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				} else {
 					ops = append(ops, *op)
 				}
-			case *experimentv1.SearcherOperation_Shutdown:
+			case *experimentv1.SearcherOperation_ShutDown:
 				ops = append(ops, searcher.NewShutdown())
 			case *experimentv1.SearcherOperation_TrialOperation:
 				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
