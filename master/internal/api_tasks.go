@@ -308,7 +308,7 @@ func (a *apiServer) GetActiveTasksCount(
 	if err != nil {
 		return nil, err
 	}
-	if err := expauth.AuthZProvider.Get().CanGetActiveTasksCount(*curUser); err != nil {
+	if err = expauth.AuthZProvider.Get().CanGetActiveTasksCount(*curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

@@ -4,12 +4,7 @@ import pytest
 
 from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.api.errors import (
-    APIException,
-    BadRequestException,
-    ForbiddenException,
-    NotFoundException,
-)
+from determined.common.api.errors import APIException, BadRequestException, NotFoundException
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
@@ -200,10 +195,10 @@ def assert_access_task(creds: authentication.Credentials, task_id: str, can_acce
     assert task_id not in task_ids
     with pytest.raises(NotFoundException):
         bindings.get_GetTask(sess, taskId=task_id)
-    with pytest.raises(APIException):  
+    with pytest.raises(APIException):
         for _ in bindings.get_TaskLogs(sess, taskId=task_id, follow=False):
             pass
-    with pytest.raises(APIException):  
+    with pytest.raises(APIException):
         for _ in bindings.get_TaskLogsFields(sess, taskId=task_id, follow=False):
             pass
     with pytest.raises(NotFoundException):
@@ -265,4 +260,3 @@ def test_strict_tensorboard() -> None:
         "has started",
         assert_tensorboard_access,
     )
-

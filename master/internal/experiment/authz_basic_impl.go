@@ -109,7 +109,7 @@ func (a *ExperimentAuthZBasic) CanSetExperimentsCheckpointGCPolicy(
 	return nil
 }
 
-// CanGetActiveTaskCount always returns a nil error.
+// CanGetActiveTasksCount always returns a nil error.
 func (a *ExperimentAuthZBasic) CanGetActiveTasksCount(curUser model.User) error {
 	return nil
 }

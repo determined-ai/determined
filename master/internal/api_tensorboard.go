@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -50,8 +51,6 @@ const (
 var tensorboardsAddr = actor.Addr("tensorboard")
 
 func canAccessTensorboard(curUser model.User, tensorboard *tensorboardv1.Tensorboard) bool {
-	fmt.Println("CAN ACCESS TENSORBOARD", curUser, tensorboard.UserId, tensorboard,
-		curUser.Admin || model.UserID(tensorboard.UserId) == curUser.ID)
 	if !config.EnforceStrictNTSC() {
 		return true
 	}
@@ -144,9 +143,9 @@ func (a *apiServer) LaunchTensorboard(
 		err = errors.New("must set experiment or trial ids")
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	exps, err := getTensorBoardConfigsFromReq(a.m.db, req)
+	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 	if len(exps) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "no experiments found")
@@ -391,12 +390,17 @@ type tensorboardConfig struct {
 	TrialIDs     []int32
 }
 
-func getTensorBoardConfigsFromReq(
-	db *db.PgDB, req *apiv1.LaunchTensorboardRequest,
+func (a *apiServer) getTensorBoardConfigsFromReq(
+	ctx context.Context, db *db.PgDB, req *apiv1.LaunchTensorboardRequest,
 ) ([]*tensorboardConfig, error) {
 	confByID := map[int32]*tensorboardConfig{}
 
 	for _, expID := range req.ExperimentIds {
+		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID), false,
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return nil, err
+		}
+
 		conf, err := db.LegacyExperimentConfigByID(int(expID))
 		if err != nil {
 			return nil, err
@@ -406,6 +410,11 @@ func getTensorBoardConfigsFromReq(
 	}
 
 	for _, trialID := range req.TrialIds {
+		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return nil, err
+		}
+
 		expID, err := db.ExperimentIDByTrialID(int(trialID))
 		if err != nil {
 			return nil, err
