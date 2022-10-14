@@ -8664,7 +8664,7 @@ export interface V1Webhook {
      * @type {string}
      * @memberof V1Webhook
      */
-    url?: string;
+    url: string;
     /**
      * The triggers of the webhook.
      * @type {Array<V1Trigger>}

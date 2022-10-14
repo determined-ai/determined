@@ -8,7 +8,8 @@ type ValidFeature =
   | 'rbac'
   | 'mock_workspace_members'
   | 'mock_permissions_read'
-  | 'mock_permissions_all';
+  | 'mock_permissions_all'
+  | 'webhooks';
 const queryParams = queryString.parse(window.location.search);
 
 interface FeatureHook {
