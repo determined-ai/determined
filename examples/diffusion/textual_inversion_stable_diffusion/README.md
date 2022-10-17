@@ -179,8 +179,6 @@ file. Examples:
 
 ## Some Tips
 
-Generating results of the desired quality is often a balancing act:
-
 * Training images are resized to 512 x 512 pixels by default. Resize your images accordingly will
   lead to
   the most consistent results.
