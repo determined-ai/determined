@@ -30,19 +30,21 @@ hyperparameters:
         use_fp16: True
         disable_progress_bar: True
     uuids: []
+    local_checkpoint_paths:
+      - learned_embeddings_dict_demo.pt
     call_kwargs:
       prompt:
         type: categorical
         vals:
-          - a Van Gogh painting of a <det-logo> with thick strokes, masterful composition
-          - a watercolor painting of a <det-logo> with soft strokes, masterful composition
-          - a futuristic <det-logo>, cyberpunk art by mike winkelmann, trending on cgsociety, panfuturism, futuristic, sci-fi, retrowave
-          - Lofi <det-logo> portrait, pixar style, by tristan eaton stanley artgerm and tom bagshaw.
+          - a Van Gogh painting of a <det-logo-demo> with thick strokes, masterful composition
+          - a watercolor painting of a <det-logo-demo> with soft strokes, masterful composition
+          - a futuristic <det-logo-demo>, cyberpunk art by mike winkelmann, trending on cgsociety, panfuturism, futuristic, sci-fi, retrowave
+          - Lofi <det-logo-demo> portrait, pixar style, by tristan eaton stanley artgerm and tom bagshaw.
       num_inference_steps: 50
       guidance_scale:
-        type: float
-        minval: 5.0
-        maxval: 15.0
+        type: log
+        base: 2
+        minval: .5
+        maxval: 2
         count: 3
-      num_images_per_prompt: 1
 

@@ -80,15 +80,16 @@ det notebook start --config-file detsd-notebook.yaml -i detsd -i startup-hook.sh
 
 where the `-i` flags are short for `--include` and they ensure that the following files will be
 included the directory where the Jupyter notebook will be launched:
+
 * `detsd-notebook.yaml`: the notebook config file.
-* `detsd`: the python module directory containing the `DetSDTextualInversionPipeline` we will use to generate images.
+* `detsd`: the python module directory containing the `DetSDTextualInversionPipeline` we will use to
+  generate images.
+* `learned_embeddings_dict_demo.pt`: pickle file containing a `<det-logo-demo>` concept, highly
+  trained on Determined AI logo images.
 * `startup-hook.sh`: a startup script which installs necessary dependencies.
 * `textual_inversion.ipynb`: the to-be-launched notebook.
 
-
-New concepts can be loaded into the notebook by specifying the `uuid`s of their
-corresponding Determined checkpoints in the relevant `uuids` list under the _Load Determined
-Checkpoints_ section. Then simply run the notebook from top to bottom. Further instructions may be
+Then, simply run the `textual_inversion.ipynb` notebook from top to bottom. Further instructions may be
 found in the notebook itself.
 
 ### Cluster Generation
@@ -106,11 +107,13 @@ det experiment create generate_grid.yaml .
 where one must again modify the `HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE` line in `generate_grid.yaml`
 as previously.
 
-The provided configuration will perform multi-GPU generation, scanning across
-multiple
-prompts and settings of the `guidance_scale` parameter, logging all images to Tensorboard for easy
-retrieval and
-organization.
+`generate_grid.yaml` can either load in trained checkpoints by `uuid` or from local files. The
+provided config will load in the highly-trained demo `<det-logo-demo>` concept saved
+in `learned_embeddings_dict_demo.pt` by
+default. The configuration performs multi-GPU generation, scanning across
+multiple prompts and settings of the `guidance_scale` parameter, logging all images to Tensorboard
+for easy
+retrieval and organization.
 
 #### Sample Results
 

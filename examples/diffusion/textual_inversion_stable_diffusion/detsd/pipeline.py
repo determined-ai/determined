@@ -99,6 +99,7 @@ class DetSDTextualInversionPipeline:
         save_freq = hparams["save_freq"]
         pipeline_init_kwargs = hparams["pipeline"]
         uuid_list = hparams["uuids"]
+        local_checkpoint_paths_list = hparams["local_checkpoint_paths"]
         call_kwargs = hparams["call_kwargs"]
 
         assert not call_kwargs.get(
@@ -136,6 +137,13 @@ class DetSDTextualInversionPipeline:
                 paths = core_context.distributed.broadcast_local(paths)
                 if not is_local_main_process:
                     pipeline.load_from_checkpoint_paths(paths)
+
+            if local_checkpoint_paths_list:
+                for path_str in local_checkpoint_paths_list:
+                    path = pathlib.Path(path_str)
+                    pipeline.load_from_checkpoint_paths(
+                        checkpoint_paths=path.parent, learned_embeddings_filename=path.name
+                    )
 
             # Create the Tensorboard writer.
             tb_dir = core_context.train.get_tensorboard_path()
