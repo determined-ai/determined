@@ -15,7 +15,8 @@ import (
 )
 
 func TestDispatchPersistence(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	err := etc.SetRootPath(RootFromDB)
+	require.NoError(t, err)
 
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -26,7 +27,7 @@ func TestDispatchPersistence(t *testing.T) {
 
 	// Hack, to avoid circular imports.
 	rID := sproto.ResourcesID(uuid.NewString())
-	_, err := db.sql.Exec(`
+	_, err = db.sql.Exec(`
 INSERT INTO allocation_resources (allocation_id, resource_id)
 VALUES ($1, $2)
 	`, a.AllocationID, rID)
@@ -41,11 +42,11 @@ VALUES ($1, $2)
 	err = InsertDispatch(context.TODO(), &d)
 	require.NoError(t, err)
 
-	ds, err := ListDispatchesByAllocationID(context.TODO(), d.AllocationID)
+	ds, _ := ListDispatchesByAllocationID(context.TODO(), d.AllocationID)
 	require.Len(t, ds, 1)
 	require.Equal(t, &d, ds[0])
 
-	ds, err = ListAllDispatches(context.TODO())
+	ds, _ = ListAllDispatches(context.TODO())
 	require.Len(t, ds, 1)
 	require.Equal(t, &d, ds[0])
 
@@ -57,9 +58,9 @@ VALUES ($1, $2)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), count)
 
-	ds, err = ListDispatchesByAllocationID(context.TODO(), d.AllocationID)
+	ds, _ = ListDispatchesByAllocationID(context.TODO(), d.AllocationID)
 	require.Len(t, ds, 0)
 
-	ds, err = ListAllDispatches(context.TODO())
+	ds, _ = ListAllDispatches(context.TODO())
 	require.Len(t, ds, 0)
 }
