@@ -17,11 +17,34 @@ import sys
 sys.path.append(".")
 
 import logging
+from typing import Dict
+import random
 import determined as det
 from asha import ASHASearchMethod
-from utils import sample_params
-from attrdict import AttrDict
 from determined import searcher
+
+
+############################################################################
+# User-defined function that generates a combination of hyperparameters for each trial.
+# The hyperparameters are passed to a trial in the Create operation.
+# In this example, the model (defined in experiment_files/model_def.py) is expecting
+# the following hyperparameters:
+#   -> global_batch_size,
+#   -> n_filters1
+#   -> n_filters2,
+#   -> learning_rate,
+#   -> dropout,
+#   -> dropout2.
+def sample_params() -> Dict[str, object]:
+    hparams = {
+        "global_batch_size": 64,
+        "n_filters1": random.randint(8, 64),
+        "n_filters2": random.randint(8, 72),
+        "learning_rate": 10 ** random.uniform(-4.0, 0.0),
+        "dropout1": random.uniform(0.2, 0.8),
+        "dropout2": random.uniform(0.2, 0.8),
+    }
+    return hparams
 
 
 if __name__ == "__main__":
@@ -60,15 +83,14 @@ if __name__ == "__main__":
 
         info = det.get_cluster_info()
         assert info is not None
-        args = AttrDict(info.trial.hparams)
 
         # Instantiate your implementation of SearchMethod
         search_method = ASHASearchMethod(
             search_space=sample_params,
-            max_length=args.max_length,
-            max_trials=args.max_trials,
-            num_rungs=args.num_rungs,
-            divisor=args.divisor,
+            max_length=1000,
+            max_trials=16,
+            num_rungs=3,
+            divisor=4,
         )
 
         # Instantiate RemoteSearchRunner

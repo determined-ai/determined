@@ -66,7 +66,7 @@ to achieve fault tolerance, override :meth:`~determined.searcher.SearchMethod.sa
 ***********************************
 
 A script performing hyperparameter tuning using :class:`~determined.searcher.LocalSearchRunner` may
-look like the following:
+look like the following ``run_local_searcher.py``:
 
 .. code:: python
 
@@ -97,11 +97,18 @@ look like the following:
        experiment_id = search_runner.run(model_config, model_dir=model_context_dir)
        logging.info(f"Experiment {experiment_id} has been completed.")
 
+To start the custom search method locally, you can use the following CLI command:
+
+.. code:: python
+
+   python run_local_searcher.py
+
 ****************************************
  Run Hyperparameter Search on a Cluster
 ****************************************
 
-A script to run your custom search method on a Determined cluster may look like this:
+A script to run your custom search method on a Determined cluster may look like the following
+``run_remote_searcher.py``:
 
 .. code:: python
 
@@ -122,3 +129,26 @@ A script to run your custom search method on a Determined cluster may look like 
 
            search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
            search_runner.run(model_config, model_dir=model_context_dir)
+
+To start the custom search method on a cluster, you need to submit it to the master as a
+single-trial experiment. To this end, you can use the following CLI command:
+
+.. code:: python
+
+   det e create searcher_config.yaml context_dir
+
+The custom search method runs on a Determined cluster as a single trial experiment. Configuration
+for the search method experiment is specified in the ``searcher_config.yaml`` and may look like
+this:
+
+.. code:: yaml
+
+   name: remote-searcher
+   entrypoint: python3 run_remote_searcher.py
+   searcher:
+     metric: validation_error
+     smaller_is_better: true
+     name: single
+     max_length:
+       batches: 1000
+   max_restarts: 0
