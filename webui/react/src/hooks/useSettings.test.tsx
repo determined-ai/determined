@@ -145,25 +145,7 @@ describe('useSettings', () => {
   };
   const newExtraSettings = { extra: 'fancy' };
 
-<<<<<<< HEAD
   afterEach(() => jest.clearAllMocks());
-=======
-  beforeEach(() => {
-    const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
-      <StoreProvider>
-        <HistoryRouter history={history}>{children}</HistoryRouter>
-      </StoreProvider>
-    );
-    const hookResult = renderHook(() => hook.useSettings<Settings>(config), {
-      wrapper: RouterWrapper,
-    });
-    const extraHookResult = renderHook(() => hook.useSettings<ExtraSettings>(extraConfig), {
-      wrapper: RouterWrapper,
-    });
-    result = hookResult.result;
-    extraResult = extraHookResult.result;
-  });
->>>>>>> 3c8370671 (choir: ran fmt)
 
   it('should have default settings', async () => {
     const { result } = await setup();
@@ -243,50 +225,5 @@ describe('useSettings', () => {
         newExtraSettings[settingsKey],
       ));
     });
-<<<<<<< HEAD
-=======
-
-    expect(history.location.search).toContain(
-      [
-        'boolean=false',
-        'booleanArray=false&booleanArray=true',
-        'number=3.14e-12',
-        'numberArray=0&numberArray=100&numberArray=-5280',
-        'string=Hello%20World',
-        'stringArray=abc&stringArray=def&stringArray=ghi',
-      ].join('&'),
-    );
-
-    expect(history.location.search).toContain('extra=fancy');
-  });
-
-  it('should pick up query param changes and read new settings', async () => {
-    const newQueryParams = {
-      boolean: true,
-      extra: 'donut',
-      number: 500,
-    };
-    const newQuery = queryString.stringify(newQueryParams);
-
-    await waitFor(() => result.current.resetSettings());
-
-    act(() => history.replace(`${history.location.pathname}?${newQuery}`));
-
-    expect(result.current.settings?.boolean).toBe(newQueryParams.boolean);
-    expect(result.current.settings?.number).toBe(newQueryParams.number);
-    expect(result.current.settings?.string).toBe(
-      Object.values(config.settings).find((setting) => setting.storageKey === 'string')
-        ?.defaultValue,
-    );
-    expect(extraResult.current.settings?.extra).toBe(newQueryParams.extra);
-
-    /**
-     * `renderHook()` doesn't have a way to properly wait for the `useEffect` to be called
-     * within the `useSettings` hook. Jest timers, Jest ticks, `waitFor()`, and `rerender()`
-     * all don't seem to advance the hook to trigger the history changes properly.
-     * `setTimeout` was the only thing that worked ¯\_(ツ)_/¯
-     */
-    setTimeout(() => expect(history.location.search).toBe(`?${newQuery}`), 0);
->>>>>>> 3c8370671 (choir: ran fmt)
   });
 });
