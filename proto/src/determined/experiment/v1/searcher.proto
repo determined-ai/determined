@@ -169,7 +169,7 @@ message ShutdownOperation {
 message SearcherOperation {
   // A searcher operation is one of the following operations.
   oneof union {
-    // TrialOperation is issued for the current trial. .
+    // TrialOperation is issued to tell an existing trial to do something.
     TrialOperation trial_operation = 1;
     // CreateTrial is issued to create trial.
     CreateTrialOperation create_trial = 2;
