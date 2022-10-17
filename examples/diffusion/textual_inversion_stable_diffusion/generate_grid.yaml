@@ -1,4 +1,7 @@
-# A grid search over multiple prompts and pipeline settings
+# A grid search over multiple prompts and pipeline settings.
+
+# Due to tensorboard limitations, one should keep batch_size * max_length <= 10 in order for all
+# generated images to be easily viewable in tensorboard.
 name: detsd_generate
 entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
@@ -15,7 +18,7 @@ environment:
 hyperparameters:
     batch_size: 2
     main_process_generator_seed: 214748367
-    save_freq: 4
+    save_freq: 5
     pipeline: # The `device` arg is handled by the generate_on_cluster method; do not specify.
         learned_embeddings_filename: learned_embeddings_dict.pt
         scheduler_name: pndm
@@ -33,6 +36,8 @@ hyperparameters:
         vals:
           - a Van Gogh painting of a <det-logo> with thick strokes, masterful composition
           - a watercolor painting of a <det-logo> with soft strokes, masterful composition
+          - a futuristic <det-logo>, cyberpunk art by mike winkelmann, trending on cgsociety, panfuturism, futuristic, sci-fi, retrowave
+          - Lofi <det-logo> portrait, pixar style, by tristan eaton stanley artgerm and tom bagshaw.
       num_inference_steps: 50
       guidance_scale:
         type: float

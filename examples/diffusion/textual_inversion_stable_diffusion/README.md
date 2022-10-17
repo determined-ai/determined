@@ -25,10 +25,11 @@ In order to use this repository's implementation of Stable Diffusion, you must:
 ## Walkthrough: Basic Usage
 
 Below we walk through the Textual Inversion workflow, which consists of two stages:
+
 1. Fine-tune Stable Diffusion on a set of
-user-provided training images featuring a new concept
+   user-provided training images featuring a new concept
 2. Incorporate representations of the
-concept into generated art.
+   concept into generated art.
 
 ### Fine-Tuning
 
@@ -44,11 +45,8 @@ environment:
 a ready-to-go fine-tuning experiment can be run by executing the following in the present directory:
 
 ```bash
-det -m MASTER_URL_WITH_PORT e create finetune_const.yaml .
+det experiment create finetune_const.yaml .
 ```
-
-Above, `MASTER_URL_WITH_PORT` should be replaced with the appropriate url for your Determined
-cluster.
 
 This will submit an experiment which introduces a new embedding vector into the world of Stable
 Diffusion which we will fine-tune to correspond to the concept of the Determined AI logo, as
@@ -77,11 +75,16 @@ analogously to the above, and then run the following command in the root of
 this repo:
 
 ```bash
-det -m MASTER_URL_WITH_PORT notebook start --config-file detsd-notebook.yaml --context .
+det notebook start --config-file detsd-notebook.yaml -i detsd -i startup-hook.sh -i learned_embeddings_dict_demo.pt -i textual_inversion.ipynb
 ```
 
-replacing `MASTER_URL_WITH_PORT` as before. A new notebook window will be launched in which
-`textual_inversion.ipynb` can be opened and run.
+where the `-i` flags are short for `--include` and they ensure that the following files will be
+included the directory where the Jupyter notebook will be launched:
+* `detsd-notebook.yaml`: the notebook config file.
+* `detsd`: the python module directory containing the `DetSDTextualInversionPipeline` we will use to generate images.
+* `startup-hook.sh`: a startup script which installs necessary dependencies.
+* `textual_inversion.ipynb`: the to-be-launched notebook.
+
 
 New concepts can be loaded into the notebook by specifying the `uuid`s of their
 corresponding Determined checkpoints in the relevant `uuids` list under the _Load Determined
@@ -97,7 +100,7 @@ by submitting
 an experiment with the `generate_grid.yaml` config file, as in
 
 ```bash
-det -m MASTER_URL_WITH_PORT e create generate_grid.yaml .
+det experiment create generate_grid.yaml .
 ```
 
 where one must again modify the `HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE` line in `generate_grid.yaml`
