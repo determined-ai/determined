@@ -155,7 +155,8 @@ func (a *apiServer) DeleteCheckpoints(
 		}
 	}
 
-	// Get experiments for all checkpoints and validate that the user has permission to view.
+	// Get experiments for all checkpoints and validate
+	// that the user has permission to view and edit.
 	exps := make([]*model.Experiment, len(groupCUUIDsByEIDs))
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
 		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.ExperimentID)

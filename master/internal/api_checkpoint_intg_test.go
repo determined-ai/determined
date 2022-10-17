@@ -23,7 +23,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
-func versionOneCheckpoint(
+func createVersionOneCheckpoint(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
 ) string {
 	trial := createTestTrial(t, api, curUser)
@@ -50,7 +50,7 @@ func versionOneCheckpoint(
 	return checkpointBun.UUID
 }
 
-func versionTwoCheckpoint(
+func createVersionTwoCheckpoint(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
 ) string {
 	trial := createTestTrial(t, api, curUser)
@@ -114,8 +114,8 @@ func TestCheckpointAuthZ(t *testing.T) {
 	}
 
 	for _, checkpointID := range []string{
-		versionOneCheckpoint(ctx, t, api, curUser),
-		versionTwoCheckpoint(ctx, t, api, curUser),
+		createVersionOneCheckpoint(ctx, t, api, curUser),
+		createVersionTwoCheckpoint(ctx, t, api, curUser),
 	} {
 		for _, curCase := range cases {
 			notFoundUUID := uuid.New().String()
