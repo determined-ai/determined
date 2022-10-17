@@ -169,7 +169,7 @@ message ShutdownOperation {
 message SearcherOperation {
   // A searcher operation is one of the following operations.
   oneof union {
-    // TrialOperation is issued for the current trial. .
+    // TrialOperation is issued to tell an existing trial to do something.
     TrialOperation trial_operation = 1;
     // CreateTrial is issued to create trial.
     CreateTrialOperation create_trial = 2;
@@ -183,13 +183,12 @@ message SearcherOperation {
   }
 }
 
-// TrialOperation is issued for the current trial.
+// TrialOperation is any operation that a trial can perform while it is active.
 message TrialOperation {
   // A trial operation is one of the following operations.
   oneof union {
-    // ValidateAfter means a trial is currently training and is issued to tell
-    // the
-    //  trial to train some then validate.
+    // ValidateAfter means a trial is currently training and will later
+    // validate.
     ValidateAfterOperation validate_after = 1;
   }
 }
