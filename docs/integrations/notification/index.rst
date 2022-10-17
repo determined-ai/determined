@@ -1,27 +1,73 @@
-#####################################
- Monitor Experiment Through Webhooks
-#####################################
+########################################
+ Monitoring Experiment Through Webhooks
+########################################
 
-This section includes user guides for how to set up notifications for experiments.
+Monitoring experiment status is a vital part of working with Determined. In order to integrate
+Determined into your existing workflows, you can make use of webhooks to update other systems,
+receive emails, slack messages, and more when an experiment is updated.
 
-Determined now supports webhooks for sending notification to monitor experiment state change.
+*****************************
+ Security and Signed Payload
+*****************************
 
-**********
- Security
-**********
+Each Webhook request will include a signed payload that users can use to verify that webhook calls
+from Determined are genuine. This will require that users define a ``webhook_signing_key`` for
+signing. If a webhook signing key is not provided then one will be generated for the user.
 
-Determined utilizes ``signed_payload`` and ``timestamp`` headers. You will need to configure a
-``webhook_signing_key`` in master configuration.
+Setting the Key
+===============
+
+The signing key can be set in the following ways:
+
+#. In the master yaml configuration file by adding:
 
 .. code::
 
    security:
        webhook_signing_key: <signing_key>
 
-.. note::
+2. By setting a ``DET_WEBHOOK_SIGNING_KEY`` environment variable.
+#. By specifying a ``---security-webhook-signing-key`` flag.
 
-   ``webhook_signing_key`` will be automatically generated if not provided, you can access it
-   through ``api/v1/master/config``
+Retrieving the Key
+==================
+
+The key can be found in the cluster configuration. For example it will be returned in
+``api/v1/master/config``.
+
+Event Payload
+=============
+
+Currently we will support two separate types of Webhooks ``Slack`` and ``Default``. A payload for a
+``Default`` webhook will contain information about the event itself, the trigger for the event, and
+the appropriate entity that triggered the event. Since we only support experiment state changes, all
+payloads will look like:
+
+.. code::
+
+   {
+      "event_id": "4cd26e62-60c6-4a8b-8d03-7629091a4ef5".   // unique event uuid,
+      "event_type": "EXPERIMENT_STATE_CHANGE" // the trigger type for the event,
+      "timestamp": 1665689991 // the timestamp of the event occurence,
+      "condition": {.
+         "state": "COMPLETED". // the condition that triggered the event for now the condition will always be of this format and contain either "COMPLETED" or "ERRORED"
+      },
+      "event_data": {
+         "experiment": {
+            "id": 41,
+            "state": "COMPLETED",
+            "name": "cifar10_pytorch_const",
+            "duration": 41, // this is in seconds
+            "resource_pool": "default",
+            "slots": 0,
+            "workspace": "test workspace", // name of the workspace
+            "project": "test project" // name of the project
+         }
+      }
+   }
+
+Signed Payload
+==============
 
 For every webhook request Determined will generate two headers ``X-Determined-AI-Signature``, and
 ``X-Determined-AI-Signature-Timestamp`` which you can inspect to verify each request to their
@@ -40,12 +86,17 @@ webhook endpoint.
 -  You can then check to make sure the ``X-Determined-AI-Signature`` header value and the generated
    signed payload match.
 
-****************
- Create Webhook
-****************
+Below is an example of handling signed payload in python
 
-To create a webhook, navigate to ``/det/webhooks`` and click on the top right corner button "New
-Webhook"
+.. image:: /assets/images/webhook_security_eg.png
+   :width: 100%
+
+*******************
+ Creating Webhooks
+*******************
+
+To create a webhook, navigate to ``/det/webhooks`` or click on the "Webhooks" item in navigation
+side menu, and click on the top right corner button "New Webhook"
 
 .. image:: /assets/images/webhook.png
    :width: 100%
@@ -55,22 +106,21 @@ Webhook"
    You must have the relevant permission to be able to view this page, consult system admin if you
    are unsure about your permissions.
 
-At the popped-up modal, input:
+At the modal input:
 
 -  URL: webhook URL.
--  Type: choose between ``Default`` or ``Slack``. Type ``Slack`` can automatically format message
-   content for better readability on Slack.
--  Trigger: choose which state change of experiment you want to monitor, and this field only
-   supports ``Completed`` or ``Error`` for now.
+-  Type: ``Default`` or ``Slack``. The ``Slack`` type can automatically format message content for
+   better readability on Slack.
+-  Trigger: the experiment state change you want to monitor, either ``Completed`` or ``Error``.
 
 .. image:: /assets/images/webhook_modal.png
    :width: 100%
 
-Once created, the selected event of all available experiments will trigger the defined webhook URL.
+Once created, your webhook will begin executing for the chosen events.
 
-**************
- Test Webhook
-**************
+*****************
+ Testing Webhook
+*****************
 
 To test a webhook, click on the triple dots on the right of webhook record to expand available
 actions.
@@ -78,45 +128,33 @@ actions.
 .. image:: /assets/images/webhook_action.png
    :width: 100%
 
-Clicking on "Test Webhook" would trigger a test event to be sent to the defined webhook URL, with a
-similar mock payload as stated below:
+Clicking on "Test Webhook" will trigger a test event to be sent to the defined webhook URL with a
+mock payload as stated below:
 
 .. code::
 
    {
-       "event_id":"1ac7d0b2-a4af-458b-a099-2326240088f6",
-       "event_type":"experiment_completed",
-       "timestamp":1662562300,
-       "event_data":{
-           "experiment": {
-               "id":1,
-               "state": "COMPLETED",
-               "name": "cifar10_pytorch_const profiler",
-               "duration": 18400,
-               "resource_pool": "A100 Production",
-               "slots":24,
-               "workspace": {
-                   "name": "Autonomous Vehicles",
-                   "id": 1
-               },
-               "project": {
-                   "name": "Light detection",
-                   "id": 12
-               }
-           }
-       }
+      "event_id": "b8667b8a-e14d-40e5-83ee-a64e31bdc5f4",
+      "event_type": "EXPERIMENT_STATE_CHANGE",
+      "timestamp": 1665695871,
+      "condition": {
+         "state": "COMPLETED"
+      },
+      "event_data": {
+         "data": "test"
+      }
    }
 
-****************
- Delete Webhook
-****************
+******************
+ Deleting Webhook
+******************
 
 To delete a webhook, click on the triple dots on the right of webhook record to expand available
 actions.
 
 .. note::
 
-   Currently we do not support editing webhooks.
+   We do not support editing webhooks. You can delete and recreate webhooks if needed.
 
 .. toctree::
    :caption: Notification
