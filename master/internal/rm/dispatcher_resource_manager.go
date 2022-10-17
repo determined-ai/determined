@@ -421,8 +421,14 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 		}
 		response.Agents = append(response.Agents, &agent)
 		if node.GpuCount == 0 {
-			addSlotToAgent(
-				&agent, devicev1.Type_TYPE_CPU, node, node.CPUCount, node.Allocated) // One CPU slot/device
+			// Adds a slot ID (e.g., 0, 1, 2, ..., N) to the agent for every
+			// CPU being used on the node. This is needed so that the
+			// "Resource Pools" page on the Determined AI User Interface
+			// correctly shows the "N/M CPU Slots Allocated".
+			for i := 0; i < node.CPUCount; i++ {
+				addSlotToAgent(
+					&agent, devicev1.Type_TYPE_CPU, node, i, i < node.CPUInUseCount)
+			}
 		} else {
 			for i := 0; i < node.GpuCount; i++ {
 				slotType := computeSlotType(node, m)

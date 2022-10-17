@@ -97,11 +97,51 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	}
 
 	want0 := map[string]*agentv1.Slot{
-		"/agents/Node 1/slots/8": {
-			Id:        "8",
+		"/agents/Node 1/slots/0": {
+			Id:        "0",
 			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
 			Enabled:   true,
 			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
+		"/agents/Node 1/slots/1": {
+			Id:        "1",
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled:   true,
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
+		"/agents/Node 1/slots/2": {
+			Id:        "2",
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled:   true,
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
+		"/agents/Node 1/slots/3": {
+			Id:        "3",
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled:   true,
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
+		"/agents/Node 1/slots/4": {
+			Id:        "4",
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled:   true,
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
+		"/agents/Node 1/slots/5": {
+			Id:        "5",
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled:   true,
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
+		"/agents/Node 1/slots/6": {
+			Id:      "6",
+			Device:  &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled: true,
+		},
+		"/agents/Node 1/slots/7": {
+			Id:      "7",
+			Device:  &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
+			Enabled: true,
 		},
 	}
 
