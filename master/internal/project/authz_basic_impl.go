@@ -19,6 +19,7 @@ type ProjectAuthZBasic struct{}
 func (a *ProjectAuthZBasic) CanGetProject(
 	curUser model.User, project *projectv1.Project,
 ) (canGetProject bool, serverError error) {
+	return false, nil
 	return true, nil
 }
 

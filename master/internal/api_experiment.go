@@ -1059,22 +1059,17 @@ func (a *apiServer) CreateExperiment(
 		detParams.ProjectID = &projectID
 	}
 
-	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
-	if errors.Is(err, errCantFindProject) {
-		return nil, status.Errorf(codes.NotFound, errCantFindProject.Error())
-	} else if err != nil {
+	dbExp, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
+	if err != nil {
+		if _, ok := err.(ErrProjectNotFound); ok {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
-
-	proj, err := a.GetProjectByID(int32(dbExp.ProjectID), *user)
-	if e, ok := status.FromError(err); ok && e.Code() == codes.NotFound {
-		return nil, status.Errorf(codes.NotFound, errCantFindProject.Error())
-	} else if err != nil {
-		return nil, err
-	}
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(*user, proj, dbExp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(*user, p, dbExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
+
 	if validateOnly {
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
