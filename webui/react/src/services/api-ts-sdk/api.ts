@@ -7360,7 +7360,7 @@ export interface V1SearcherOperation {
      * @type {V1TrialOperation}
      * @memberof V1SearcherOperation
      */
-    trialOp?: V1TrialOperation;
+    trialOperation?: V1TrialOperation;
     /**
      * CreateTrial is issued to create trial.
      * @type {V1CreateTrialOperation}

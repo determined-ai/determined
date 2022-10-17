@@ -435,8 +435,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				}
 			case *experimentv1.SearcherOperation_Shutdown:
 				ops = append(ops, searcher.NewShutdown())
-			case *experimentv1.SearcherOperation_TrialOp:
-				switch sub := concreteOperation.TrialOp.GetUnion().(type) {
+			case *experimentv1.SearcherOperation_TrialOperation:
+				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
 				case *experimentv1.TrialOperation_ValidateAfter:
 					op, err := searcher.ValidateAfterFromProto(sub)
 					if err != nil {
