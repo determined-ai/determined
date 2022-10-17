@@ -889,6 +889,12 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
+		{"CanGetExperimentArtifacts", func(id int) error {
+			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			return err
+		}},
 	}
 
 	for _, curCase := range cases {

@@ -23,6 +23,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -65,30 +67,77 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 }
 
 func (a *apiServer) GetTensorboards(
-	_ context.Context, req *apiv1.GetTensorboardsRequest,
+	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = a.ask(tensorboardsAddr, req, &resp); err != nil {
 		return nil, err
 	}
+
+	a.filter(&resp.Tensorboards, func(i int) bool {
+		if err != nil {
+			return false
+		}
+		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+			*curUser, model.UserID(resp.Tensorboards[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetTensorboard(
-	_ context.Context, req *apiv1.GetTensorboardRequest,
+	ctx context.Context, req *apiv1.GetTensorboardRequest,
 ) (resp *apiv1.GetTensorboardResponse, err error) {
-	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := tensorboardsAddr.Child(req.TensorboardId)
+	if err := a.ask(addr, req, &resp); err != nil {
+		return nil, err
+	}
+
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		*curUser, model.UserID(resp.Tensorboard.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errActorNotFound(addr)
+	}
+	return resp, nil
 }
 
 func (a *apiServer) KillTensorboard(
-	_ context.Context, req *apiv1.KillTensorboardRequest,
+	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
+	if _, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) SetTensorboardPriority(
-	_ context.Context, req *apiv1.SetTensorboardPriorityRequest,
+	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
+	if _, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
@@ -102,9 +151,9 @@ func (a *apiServer) LaunchTensorboard(
 		err = errors.New("must set experiment or trial ids")
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	exps, err := getTensorBoardConfigsFromReq(a.m.db, req)
+	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 	if len(exps) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "no experiments found")
@@ -349,12 +398,17 @@ type tensorboardConfig struct {
 	TrialIDs     []int32
 }
 
-func getTensorBoardConfigsFromReq(
-	db *db.PgDB, req *apiv1.LaunchTensorboardRequest,
+func (a *apiServer) getTensorBoardConfigsFromReq(
+	ctx context.Context, db *db.PgDB, req *apiv1.LaunchTensorboardRequest,
 ) ([]*tensorboardConfig, error) {
 	confByID := map[int32]*tensorboardConfig{}
 
 	for _, expID := range req.ExperimentIds {
+		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID), false,
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return nil, err
+		}
+
 		conf, err := db.LegacyExperimentConfigByID(int(expID))
 		if err != nil {
 			return nil, err
@@ -364,6 +418,11 @@ func getTensorBoardConfigsFromReq(
 	}
 
 	for _, trialID := range req.TrialIds {
+		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return nil, err
+		}
+
 		expID, err := db.ExperimentIDByTrialID(int(trialID))
 		if err != nil {
 			return nil, err
