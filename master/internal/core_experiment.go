@@ -384,8 +384,11 @@ type CreateExperimentParams struct {
 	Workspace     *string         `json:"workspace"`
 }
 
+// ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
+// or when project cannot be viewed due to RBAC restrictions.
 type ErrProjectNotFound string
 
+// Error implements the error interface.
 func (p ErrProjectNotFound) Error() string {
 	return string(p)
 }
