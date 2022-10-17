@@ -7,7 +7,10 @@ search experiment by passing operations from the custom SearchMethod to the mult
 
 We provide two implementations of SearchRunner:
 * LocalSearchRunner: executes the custom SearchMethod locally (see `local_search_runner`),
-* CoreSearchRunner: executes the custom SearchMethod on a Determined cluster (see `remote_search_runner`).
+* RemoteSearchRunner: executes the custom SearchMethod on a Determined cluster (see `remote_search_runner`).
+
+Note that, while SearchRunner and SearchMethod can be executed either on a local machine (LocalSearchRunner)
+or on a cluster (RemoteSearchRunner), the multi-trial experiment is always executed on the cluster.
 
 ## Files
 Custom SearchMethod:
@@ -23,7 +26,8 @@ Multi-trial experiment:
 ### Configuration Files
 Multi-trial experiment:
 * **experiment_files/config.yaml**: Configuration for running `model_def.py` with a custom SearchMethod.
-Note `searcher.name: custom`.
+Note `searcher.name: custom`. Instead of defining hyperparameters in the yaml file, each trial in the experiment 
+receives hyperparameters from the custom SearchMethod.
 
 ## Data
 The current implementation uses MNIST data downloaded from AWS S3.

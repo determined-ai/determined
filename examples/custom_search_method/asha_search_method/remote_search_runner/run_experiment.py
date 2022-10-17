@@ -60,15 +60,14 @@ if __name__ == "__main__":
 
         info = det.get_cluster_info()
         assert info is not None
-        args = AttrDict(info.trial.hparams)
 
         # Instantiate your implementation of SearchMethod
         search_method = ASHASearchMethod(
             search_space=sample_params,
-            max_length=args.max_length,
-            max_trials=args.max_trials,
-            num_rungs=args.num_rungs,
-            divisor=args.divisor,
+            max_length=1000,
+            max_trials=16,
+            num_rungs=3,
+            divisor=4,
         )
 
         # Instantiate RemoteSearchRunner

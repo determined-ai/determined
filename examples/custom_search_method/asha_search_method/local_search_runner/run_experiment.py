@@ -20,12 +20,14 @@ import sys
 sys.path.append(".")
 
 import logging
+import determined as det
 from asha import ASHASearchMethod
 from utils import sample_params
 from pathlib import Path
 from determined import searcher
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
     ########################################################################
     # Multi-trial experiment
