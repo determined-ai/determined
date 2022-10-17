@@ -183,7 +183,7 @@ message SearcherOperation {
   }
 }
 
-// TrialOperation is issued for the current trial.
+// TrialOperation is any operation that a trial can perform while it is active.
 message TrialOperation {
   // A trial operation is one of the following operations.
   oneof union {
