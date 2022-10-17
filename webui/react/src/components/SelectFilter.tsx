@@ -84,7 +84,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
      * - string
      * - string[]
      */
-    let label: any = null;
+    let label: null | string = null;
     if (option.children) {
       if (Array.isArray(option.children)) {
         label = option.children.join(' ');
@@ -94,7 +94,8 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
         label = option.children;
       }
     }
-    return label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+
+    return label?.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   }, []);
 
   return (
