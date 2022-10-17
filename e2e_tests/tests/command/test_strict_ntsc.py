@@ -21,7 +21,7 @@ def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_ac
     resp = bindings.get_GetShells(sess)
     shell_ids = [shell.id for shell in resp.shells or []]
     if can_access:
-        assert shell_id in shell_id
+        assert shell_id in shell_ids
         bindings.get_GetShell(sess, shellId=shell_id)
         req = bindings.v1SetShellPriorityRequest(shellId=shell_id, priority=50)
         bindings.post_SetShellPriority(sess, shellId=shell_id, body=req)
