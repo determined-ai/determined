@@ -7,12 +7,14 @@ This document will walk through setting up a Slack workspace to receive webhook 
 
 The steps for enablong slack notification are:
 
-1. :ref:`Creating a Slack Application<Creating a Slack Application>`
-2. :ref:`Enabling Incoming Webhooks<Enabling Incoming Webhooks>`
-3. :ref:`Setting up the Webhook in Determined<Setting up the Webhook in Determined>`
-4. :ref:`Testing the Webhook<Testing the Webhook>` 
+1. :ref:`Creating a Slack Application<slack-app-creation>`
+2. :ref:`Enabling Incoming Webhooks<enabling_webhooks>`
+3. :ref:`Setting up the Webhook in Determined<setting-up-webhook-in-determined>`
+4. :ref:`Testing the Webhook<testing-webhook>` 
 
-Creating a Slack Application 
+.. _slack-app-creation:
+
+Creating a Slack Application
 ============================
 
 First, we need to create a Slack application and give the application permissions to post to the appropriate 
@@ -25,6 +27,7 @@ In the pop window asking for the app configuration choose the **From scratch** o
 
 In the next window you will choose the "App Name" and select the Workspace for the application. 
 
+.. _enabling_webhooks:
 
 Enabling Incoming Webhooks
 ==========================
@@ -40,12 +43,14 @@ Now that Webhooks are enabled we can set up a new webhook integration. Click the
 On the next page you will be a asked to select a channel for your webhook to post to. Choose a channel and then hit **Allow** and you will be taken 
 back to the Incoming Webhooks page. 
 
+.. _setting-up-webhook-in-determined:
+
 Setting up the Webhook in Determined
 ====================================
 
 Finally, we will need to add a Webhook in Determined using **Webhook URL** provided by Slack. 
 
-In the **Webhook URLs for Your Workspace** section of Incoming Webhooks page you should see a list Webhook URLs for all of the Channels that you have 
+In the **Webhook URLs for Your Workspace** section of Incoming Webhooks page you should see a list Webhook URLs for all of the channels that you have 
 added. Click the **Copy** button for the appropriate Webhook URL and then navigate to the Webhooks page in Determined.
 
 On the Webhooks page in Determined click the **New Webhook** button in the top right corner of the page.
@@ -53,15 +58,17 @@ On the Webhooks page in Determined click the **New Webhook** button in the top r
 .. image:: /assets/images/slack-webhook-creation-in-determined.jpeg
    :width: 100%
 
- In the pop up paste the **Webhook URL** that was copied in Slack in the **URL** field. Choose **Slack** for the Webhook type and then choose the triggers. 
- Finally select **Create Webhook**, and your webhook will finally be created. 
+In the pop up paste the **Webhook URL** that was copied in Slack in the **URL** field. Choose **Slack** for the Webhook type and then choose the triggers. 
+Finally select **Create Webhook**, and your webhook will finally be created. 
 
- Testing the Webhook
- ===================
+.. _testing-webhook:
 
- To test a Slack Webhook in Determined navigate to the Webhooks page and click on the three vertical dots on the right side of any of the listed Webhooks. 
+Testing the Webhook
+===================
 
- .. image:: /assets/images/test-webhook.jpeg
+To test a Slack Webhook in Determined navigate to the Webhooks page and click on the three vertical dots on the right side of any of the listed Webhooks. 
+
+.. image:: /assets/images/test-webhook.png
    :width: 100%
 
 If everything has been configured correctly you should should receive a message from the Slack application you created with the message "test" as shown above. 
