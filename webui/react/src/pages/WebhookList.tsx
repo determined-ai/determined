@@ -5,15 +5,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Badge, { BadgeType } from 'components/Badge';
 import Page from 'components/Page';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -215,26 +213,30 @@ const WebhooksView: React.FC = () => {
           </p>
         </div>
       ) : (
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          dataSource={webhooks}
-          loading={isLoading}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            webhooks.length,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          onChange={handleTableChange}
-        />
+        settings
+        ? (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={webhooks}
+            loading={isLoading}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              },
+              webhooks.length,
+            )}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="id"
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings}
+            onChange={handleTableChange}
+          />
+        )
+        : <SkeletonTable columns={columns.length} />
       )}
       {modalWebhookCreateContextHolder}
       {modalWebhookDeleteContextHolder}

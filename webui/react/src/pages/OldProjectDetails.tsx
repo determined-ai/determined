@@ -44,7 +44,7 @@ import useModalExperimentMove, {
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import NoPermissions from 'pages/NoPermissions';
 import { paths } from 'routes/utils';
 import {
@@ -161,9 +161,9 @@ const ProjectDetails: React.FC = () => {
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
   const availableBatchActions = useMemo(() => {
-    const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
+    const experiments = settings?.row?.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, batchActions, expPermissions);
-  }, [experimentMap, expPermissions, settings.row]);
+  }, [experimentMap, expPermissions, settings?.row]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -178,12 +178,13 @@ const ProjectDetails: React.FC = () => {
     }
   }, [canceler.signal, id, pageError]);
 
-  const statesString = useMemo(() => settings.state?.join('.'), [settings.state]);
-  const pinnedString = useMemo(() => JSON.stringify(settings.pinned), [settings.pinned]);
-  const labelsString = useMemo(() => settings.label?.join('.'), [settings.label]);
-  const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
+  const statesString = useMemo(() => settings?.state?.join('.'), [settings?.state]);
+  const pinnedString = useMemo(() => JSON.stringify(settings?.pinned), [settings?.pinned]);
+  const labelsString = useMemo(() => settings?.label?.join('.'), [settings?.label]);
+  const usersString = useMemo(() => settings?.user?.join('.'), [settings?.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (!settings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -239,15 +240,10 @@ const ProjectDetails: React.FC = () => {
   }, [
     canceler.signal,
     id,
-    settings.archived,
+    settings,
     labelsString,
     pinnedString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
     statesString,
-    settings.tableLimit,
-    settings.tableOffset,
     usersString,
   ]);
 
@@ -290,12 +286,12 @@ const ProjectDetails: React.FC = () => {
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings.search || ''}
+        value={settings?.search || ''}
         onReset={handleNameSearchReset}
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search],
+    [handleNameSearchApply, handleNameSearchReset, settings?.search],
   );
 
   const handleLabelFilterApply = useCallback(
@@ -318,12 +314,12 @@ const ProjectDetails: React.FC = () => {
         {...filterProps}
         multiple
         searchable
-        values={settings.label}
+        values={settings?.label}
         onFilter={handleLabelFilterApply}
         onReset={handleLabelFilterReset}
       />
     ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings.label],
+    [handleLabelFilterApply, handleLabelFilterReset, settings?.label],
   );
 
   const handleStateFilterApply = useCallback(
@@ -345,12 +341,12 @@ const ProjectDetails: React.FC = () => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.state}
+        values={settings?.state}
         onFilter={handleStateFilterApply}
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state],
+    [handleStateFilterApply, handleStateFilterReset, settings?.state],
   );
 
   const handleUserFilterApply = useCallback(
@@ -373,12 +369,12 @@ const ProjectDetails: React.FC = () => {
         {...filterProps}
         multiple
         searchable
-        values={settings.user}
+        values={settings?.user}
         onFilter={handleUserFilterApply}
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user],
+    [handleUserFilterApply, handleUserFilterReset, settings?.user],
   );
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
@@ -413,6 +409,8 @@ const ProjectDetails: React.FC = () => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
+      if (!settings) return <Spinner spinning />;
+
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -561,7 +559,7 @@ const ProjectDetails: React.FC = () => {
           text: <Badge state={value} type={BadgeType.State} />,
           value,
         })),
-        isFiltered: () => !!settings.state,
+        isFiltered: () => !!settings?.state,
         key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,
         sorter: true,
@@ -641,7 +639,7 @@ const ProjectDetails: React.FC = () => {
 
   useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
-    if (!settings.columns?.length || !settings.columnWidths?.length) {
+    if (!settings?.columns?.length || !settings?.columnWidths?.length) {
       updateSettings({
         columns: DEFAULT_COLUMNS,
         columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
@@ -658,7 +656,7 @@ const ProjectDetails: React.FC = () => {
       }
       if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
     }
-  }, [settings.columns, settings.columnWidths, columns, updateSettings]);
+  }, [settings?.columns, settings?.columnWidths, columns, updateSettings]);
 
   const transferColumns = useMemo(() => {
     return columns
@@ -673,7 +671,7 @@ const ProjectDetails: React.FC = () => {
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask> | void => {
-      if (!settings.row) return;
+      if (!settings?.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
@@ -711,7 +709,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
+    [expPermissions, settings?.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(
@@ -811,7 +809,7 @@ const ProjectDetails: React.FC = () => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
+      initialVisibleColumns: settings?.columns?.filter((col) => transferColumns.includes(col)),
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
@@ -821,6 +819,8 @@ const ProjectDetails: React.FC = () => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
+
       let newColumns: ExperimentColumnName[];
       let newColumnWidths: number[];
 
@@ -894,12 +894,14 @@ const ProjectDetails: React.FC = () => {
   );
 
   useEffect(() => {
+    if (!settings?.tableOffset || !settings.tableLimit) return;
+
     if (settings.tableOffset >= total && total) {
       const newTotal = settings.tableOffset > total ? total : total - 1;
       const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
       updateSettings({ tableOffset: offset });
     }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
+  }, [total, settings?.tableOffset, settings?.tableLimit, updateSettings]);
 
   /*
    * Get new experiments based on changes to the
@@ -910,15 +912,15 @@ const ProjectDetails: React.FC = () => {
     fetchExperiments();
   }, [
     fetchExperiments,
-    settings.archived,
+    settings?.archived,
     labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
+    settings?.search,
+    settings?.sortDesc,
+    settings?.sortKey,
     statesString,
     pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
+    settings?.tableLimit,
+    settings?.tableOffset,
     usersString,
   ]);
 
@@ -946,7 +948,7 @@ const ProjectDetails: React.FC = () => {
 
       const funcs = {
         [MenuKey.SwitchArchived]: () => {
-          switchShowArchived(!settings.archived);
+          switchShowArchived(!settings?.archived);
         },
         [MenuKey.Columns]: () => {
           handleCustomizeColumnsClick();
@@ -963,7 +965,7 @@ const ProjectDetails: React.FC = () => {
       const menuItems: MenuProps['items'] = [
         {
           key: MenuKey.SwitchArchived,
-          label: settings.archived ? 'Hide Archived' : 'Show Archived',
+          label: settings?.archived ? 'Hide Archived' : 'Show Archived',
         },
         { key: MenuKey.Columns, label: 'Columns' },
       ];
@@ -977,7 +979,7 @@ const ProjectDetails: React.FC = () => {
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
           <Toggle
-            checked={settings.archived}
+            checked={settings?.archived}
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
@@ -1000,7 +1002,7 @@ const ProjectDetails: React.FC = () => {
     filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
-    settings.archived,
+    settings?.archived,
     switchShowArchived,
   ]);
 
@@ -1015,22 +1017,22 @@ const ProjectDetails: React.FC = () => {
                 label: action,
                 value: action,
               }))}
-              selectedRowCount={(settings.row ?? []).length}
+              selectedRowCount={(settings?.row ?? []).length}
               onAction={handleBatchAction}
               onClear={clearSelected}
             />
             <InteractiveTable
-              areRowsSelected={!!settings.row}
+              areRowsSelected={!!settings?.row}
               columns={columns}
               containerRef={pageRef}
               ContextMenu={ContextMenu}
               dataSource={experiments}
               loading={isLoading}
-              numOfPinned={(settings.pinned?.[id] ?? []).length}
+              numOfPinned={(settings?.pinned?.[id] ?? []).length}
               pagination={getFullPaginationConfig(
                 {
-                  limit: settings.tableLimit,
-                  offset: settings.tableOffset,
+                  limit: settings?.tableLimit || 0,
+                  offset: settings?.tableOffset || 0,
                 },
                 total,
               )}
@@ -1039,7 +1041,7 @@ const ProjectDetails: React.FC = () => {
               rowSelection={{
                 onChange: handleTableRowSelect,
                 preserveSelectedRowKeys: true,
-                selectedRowKeys: settings.row ?? [],
+                selectedRowKeys: settings?.row ?? [],
               }}
               scroll={{
                 y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)`,
@@ -1047,7 +1049,7 @@ const ProjectDetails: React.FC = () => {
               settings={settings as InteractiveTableSettings}
               showSorterTooltip={false}
               size="small"
-              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+              updateSettings={updateSettings as UpdateSettings}
             />
           </div>
         ),
