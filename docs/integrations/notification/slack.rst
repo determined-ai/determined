@@ -2,8 +2,7 @@
  Through Slack
 ###############
 
-It is possible to set up Slack to receive updates from Determined to a specific Slack channel using Slack Webhook Integrations. 
-This document will walk through setting up a Slack workspace to receive webhook updates from Determined. 
+This section will walk through the steps needed to set up Slack to receive updates from Determined in a specific Slack channel using Slack Webhook Integrations. 
 
 The steps for enablong slack notification are:
 
