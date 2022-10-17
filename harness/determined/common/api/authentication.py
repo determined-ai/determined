@@ -145,7 +145,7 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
-    unauth_session = api.Session(user=username,master=master_address, user=username, auth=None, cert=cert)
+    unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
     login = bindings.v1LoginRequest(username=username, password=password)
     r = bindings.post_Login(session=unauth_session, body=login)
 
