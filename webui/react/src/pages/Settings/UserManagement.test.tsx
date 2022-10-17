@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettings';
 import history from 'shared/routes/history';
 import { DetailedUser } from 'types';
 
@@ -31,6 +32,7 @@ jest.mock('services/api', () => ({
     const users: Array<DetailedUser> = [currentUser];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
+  getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
 const Container: React.FC = () => {
@@ -63,7 +65,9 @@ const setup = () =>
       <DndProvider backend={HTML5Backend}>
         <HelmetProvider>
           <HistoryRouter history={history}>
-            <Container />
+            <SettingsProvider>
+              <Container />
+            </SettingsProvider>
           </HistoryRouter>
         </HelmetProvider>
       </DndProvider>
@@ -81,9 +85,11 @@ describe('UserManagement', () => {
   });
 
   it('should render modal for create user when click the button', async () => {
-    await waitFor(() => setup());
-    await user.click(screen.getByLabelText(CREAT_USER_LABEL));
+    await waitFor(() => {
+      setup();
+      user.click(screen.getByLabelText(CREAT_USER_LABEL));
+    });
 
-    expect(screen.getAllByText('Create User')).toHaveLength(2);
+    expect(await screen.getAllByText('Create User')).toHaveLength(2);
   });
 });

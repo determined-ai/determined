@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettings';
 import {
   getExperimentDetails,
   getExpTrials,
@@ -37,6 +38,7 @@ jest.mock('services/api', () => ({
   getExpValidationHistory: jest.fn(),
   getProject: jest.fn(),
   getTrialDetails: jest.fn(),
+  getUserSetting: () => Promise.resolve({ settings: [] }),
   getWorkspace: jest.fn(),
 }));
 
@@ -55,7 +57,9 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <HistoryRouter history={history}>
-          <ExperimentDetails />
+          <SettingsProvider>
+            <ExperimentDetails />
+          </SettingsProvider>
         </HistoryRouter>
       </HelmetProvider>
     </StoreProvider>,

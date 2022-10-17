@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettings';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
@@ -17,6 +18,7 @@ const MonacoEditorMock: React.FC = () => <></>;
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
+  getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
 
@@ -52,7 +54,9 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <StoreProvider>
-        <ModalTrigger />
+        <SettingsProvider>
+          <ModalTrigger />
+        </SettingsProvider>
       </StoreProvider>
     </BrowserRouter>,
   );

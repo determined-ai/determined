@@ -6,8 +6,12 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
+import StoreProvider from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
+import history from 'shared/routes/history';
 
 import CodeViewer, { Props } from './CodeViewer';
 
@@ -68,6 +72,7 @@ jest.mock('services/api', () => {
           path: 'model_def.py',
         },
       ]),
+    getUserSetting: () => Promise.resolve({ settings: [] }),
   };
 });
 
@@ -98,7 +103,15 @@ const user = userEvent.setup();
 const setup = (
   props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
 ) => {
-  render(<CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />);
+  render(
+    <HistoryRouter history={history}>
+      <StoreProvider>
+        <SettingsProvider>
+          <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+        </SettingsProvider>
+      </StoreProvider>
+    </HistoryRouter>,
+  );
 };
 
 const getElements = async () => {
@@ -130,6 +143,6 @@ describe('CodeViewer', () => {
 
     await waitFor(() => user.click(button));
 
-    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'single-in-records.yaml');
+    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py');
   });
 });
