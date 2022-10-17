@@ -3,7 +3,7 @@ import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -140,7 +140,6 @@ const ProjectDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const expPermissions = usePermissions();
-  const navigate = useNavigate();
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
     moveExperimentSettingsConfig,
@@ -1092,8 +1091,6 @@ const ProjectDetails: React.FC = () => {
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (!expPermissions.canViewWorkspaces) {
-    // If user does not have access to the default workspace, then redirect to the workspace list page, as post-login landing page.
-    if (project?.id === 1) navigate(paths.workspaceList(), { replace: true });
     return <NoPermissions />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;

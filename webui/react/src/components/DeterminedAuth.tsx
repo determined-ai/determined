@@ -51,7 +51,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           type: StoreAction.SetAuth,
           value: { isAuthenticated: true, token, user },
         });
-        fetchMyRoles();
+        await fetchMyRoles();
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
       } catch (e) {
         const isBadCredentialsSync = isLoginFailure(e);
