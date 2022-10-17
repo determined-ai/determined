@@ -126,8 +126,8 @@ class SearchRunner:
         try:
             while experiment_is_active:
                 time.sleep(
-                    2
-                )  # we don't want to call long polling API more often than every 2 seconds.
+                    1
+                )  # we don't want to call long polling API more often than every second.
                 events = self.get_events(session, experiment_id)
                 if not events:
                     continue
@@ -167,8 +167,7 @@ class SearchRunner:
                                 experiment_is_active = False
                             break
 
-                        else:
-                            operations = self._get_operations(event)
+                        operations = self._get_operations(event)
 
                         # save state
                         self.state.last_event_id = event.id
@@ -215,23 +214,7 @@ class SearchRunner:
 
     @staticmethod
     def _searcher_event_as_dict(event: bindings.v1SearcherEvent) -> dict:
-        d = {}
-        if event.trialExitedEarly:
-            d["trialExitedEarly"] = event.trialExitedEarly.to_json()
-        if event.validationCompleted:
-            d["validationCompleted"] = event.validationCompleted.to_json()
-        if event.trialProgress:
-            d["trialProgress"] = event.trialProgress.to_json()
-        if event.trialClosed:
-            d["trialClosed"] = event.trialClosed.to_json()
-        if event.trialCreated:
-            d["trialCreated"] = event.trialCreated.to_json()
-        if event.initialOperations:
-            d["initialOperations"] = event.initialOperations.to_json()
-        if event.experimentInactive:
-            d["experimentInactive"] = event.experimentInactive.to_json()
-        d["id"] = event.id
-        return d
+        return {k: v for k, v in event.to_json().items() if v is not None}
 
 
 class LocalSearchRunner(SearchRunner):
