@@ -24,13 +24,15 @@ In order to use this repository's implementation of Stable Diffusion, you must:
 
 ## Walkthrough: Basic Usage
 
-Below we walk through the Textual Inversion workflow, first fine-tuning Stable Diffusion on a set of
-user-provided training images featuring a new concept, and then incorporating representations of the
+Below we walk through the Textual Inversion workflow, which consists of two stages:
+1. Fine-tune Stable Diffusion on a set of
+user-provided training images featuring a new concept
+2. Incorporate representations of the
 concept into generated art.
 
 ### Fine-Tuning
 
-After including your user access token in the `finetune_finetune_const.yaml` config file by
+After including your user access token in the `finetune_const.yaml` config file by
 replacing `YOUR_HF_AUTH_TOKEN_HERE` where it reads
 
 ```yaml
@@ -132,7 +134,7 @@ concepts:
   concept_tokens: # Special tokens representing new concepts. Must not exist in tokenizer.  
     - <det-logo>
   initializer_tokens: # Phrases which are closely related to added concepts.
-    - orange brain logo, connected circles, concept art
+    - brain logo, concept art
   img_dirs:
     - det_logos
 #...

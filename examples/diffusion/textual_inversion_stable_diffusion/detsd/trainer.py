@@ -553,7 +553,6 @@ class DetSDTextualInversionTrainer:
         if self.accelerator.is_main_process:
             checkpoint_metadata_dict = {
                 "steps_completed": self.steps_completed,
-                "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
             }
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 self._write_optimizer_state_dict_to_path(path)
@@ -571,6 +570,7 @@ class DetSDTextualInversionTrainer:
             initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
             learned_embeddings_dict[concept_token] = {
                 "initializer_tokens": initializer_tokens,
+                "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
                 "learned_embeddings": learned_embeddings,
             }
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))
