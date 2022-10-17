@@ -304,6 +304,16 @@ export const getGroupRoles: DetApi<
   request: (params) => detApi.RBAC.getRolesAssignedToGroup(params.groupId),
 };
 
+export const getUserRoles: DetApi<
+  Service.GetUserParams,
+  Api.V1GetRolesAssignedToUserResponse,
+  Type.UserRole[]
+> = {
+  name: 'getRolesAssignedToUser',
+  postProcess: (response) => (response.roles || []).map(decoder.mapV1Role),
+  request: (params) => detApi.RBAC.getRolesAssignedToUser(params.userId),
+};
+
 export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse, Type.UserRole[]> =
   {
     name: 'listRoles',
@@ -371,21 +381,19 @@ export const assignRolesToUser: DetApi<
     }),
 };
 
-export const removeRoleFromUser: DetApi<
+export const removeRolesFromUser: DetApi<
   Service.RemoveRoleFromUserParams,
   Api.V1RemoveAssignmentsResponse,
   Api.V1RemoveAssignmentsResponse
 > = {
-  name: 'removeRoleFromUser',
+  name: 'removeRolesFromUser',
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.removeAssignments({
-      userRoleAssignments: [
-        {
-          roleAssignment: { role: { roleId: params.roleId } },
-          userId: params.userId,
-        },
-      ],
+      userRoleAssignments: params.roleIds.map((roleId) => ({
+        roleAssignment: { role: { roleId } },
+        userId: params.userId,
+      })),
     }),
 };
 

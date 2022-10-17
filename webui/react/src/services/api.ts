@@ -132,6 +132,12 @@ export const getGroupRoles = generateDetApi<
   Type.UserRole[]
 >(Config.getGroupRoles);
 
+export const getUserRoles = generateDetApi<
+  Service.GetUserParams,
+  Api.V1GetRolesAssignedToUserResponse,
+  Type.UserRole[]
+>(Config.getUserRoles);
+
 export const listRoles = generateDetApi<
   Service.ListRolesParams,
   Api.V1ListRolesResponse,
@@ -156,11 +162,11 @@ export const assignRolesToUser = generateDetApi<
   Api.V1AssignRolesResponse
 >(Config.assignRolesToUser);
 
-export const removeRoleFromUser = generateDetApi<
+export const removeRolesFromUser = generateDetApi<
   Service.RemoveRoleFromUserParams,
   Api.V1RemoveAssignmentsResponse,
   Api.V1RemoveAssignmentsResponse
->(Config.removeRoleFromUser);
+>(Config.removeRolesFromUser);
 
 /* Info */
 
