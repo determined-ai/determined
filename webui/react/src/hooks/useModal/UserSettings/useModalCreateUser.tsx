@@ -256,6 +256,9 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
               await updateGroup({ addUsers: [uid], groupId: gid });
             });
           }
+          if (uid && rolesToAdd.size > 0) {
+            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
+          }
 
           message.success(API_SUCCESS_MESSAGE_CREATE);
         }
