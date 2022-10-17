@@ -116,9 +116,10 @@ class ValidateAfter(Operation):
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
-            validateAfter=bindings.v1ValidateAfterOperation(
-                requestId=str(self.request_id),
-                length=str(self.length),
+            trialOp=bindings.v1TrialOperation(
+                validateAfter=bindings.v1ValidateAfterOperation(
+                    requestId=str(self.request_id), length=str(self.length)
+                ),
             )
         )
 

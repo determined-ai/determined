@@ -2161,7 +2161,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
         self,
         *,
         completed: "typing.Optional[bool]" = None,
-        op: "typing.Optional[v1SearcherOperation]" = None,
+        op: "typing.Optional[v1TrialOperation]" = None,
     ):
         self.op = op
         self.completed = completed
@@ -2169,7 +2169,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCurrentTrialSearcherOperationResponse":
         return cls(
-            op=v1SearcherOperation.from_json(obj["op"]) if obj.get("op", None) is not None else None,
+            op=v1TrialOperation.from_json(obj["op"]) if obj.get("op", None) is not None else None,
             completed=obj.get("completed", None),
         )
 
@@ -6655,9 +6655,9 @@ class v1SearcherOperation:
         createTrial: "typing.Optional[v1CreateTrialOperation]" = None,
         searcherProgress: "typing.Optional[v1SearcherProgressOperation]" = None,
         shutdown: "typing.Optional[v1ShutdownOperation]" = None,
-        validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
+        trialOp: "typing.Optional[v1TrialOperation]" = None,
     ):
-        self.validateAfter = validateAfter
+        self.trialOp = trialOp
         self.createTrial = createTrial
         self.closeTrial = closeTrial
         self.shutdown = shutdown
@@ -6666,7 +6666,7 @@ class v1SearcherOperation:
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearcherOperation":
         return cls(
-            validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
+            trialOp=v1TrialOperation.from_json(obj["trialOp"]) if obj.get("trialOp", None) is not None else None,
             createTrial=v1CreateTrialOperation.from_json(obj["createTrial"]) if obj.get("createTrial", None) is not None else None,
             closeTrial=v1CloseTrialOperation.from_json(obj["closeTrial"]) if obj.get("closeTrial", None) is not None else None,
             shutdown=v1ShutdownOperation.from_json(obj["shutdown"]) if obj.get("shutdown", None) is not None else None,
@@ -6675,7 +6675,7 @@ class v1SearcherOperation:
 
     def to_json(self) -> typing.Any:
         return {
-            "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
+            "trialOp": self.trialOp.to_json() if self.trialOp is not None else None,
             "createTrial": self.createTrial.to_json() if self.createTrial is not None else None,
             "closeTrial": self.closeTrial.to_json() if self.closeTrial is not None else None,
             "shutdown": self.shutdown.to_json() if self.shutdown is not None else None,
@@ -7572,6 +7572,25 @@ class v1TrialMetrics:
             "trialRunId": self.trialRunId,
             "stepsCompleted": self.stepsCompleted,
             "metrics": self.metrics.to_json(),
+        }
+
+class v1TrialOperation:
+    def __init__(
+        self,
+        *,
+        validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
+    ):
+        self.validateAfter = validateAfter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialOperation":
+        return cls(
+            validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
         }
 
 class v1TrialPatch:

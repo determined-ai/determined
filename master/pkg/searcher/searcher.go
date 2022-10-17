@@ -119,7 +119,7 @@ func (s *Searcher) TrialExitedEarly(
 	s.Exits[requestID] = true
 	s.Record(operations)
 
-	_, isCustom := s.method.(CustomSearchMethod)
+	_, isCustom := s.method.(*customSearch)
 	// For non-custom-search methods, you can assume that trials will be created immediately.
 	if s.TrialsRequested == len(s.TrialsClosed) && !isCustom {
 		shutdown := Shutdown{Failure: len(s.Failures) >= s.TrialsRequested}
@@ -132,7 +132,7 @@ func (s *Searcher) TrialExitedEarly(
 
 // SetTrialProgress informs the searcher of the progress of a given trial.
 func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialUnits) {
-	if sMethod, ok := s.method.(CustomSearchMethod); ok {
+	if sMethod, ok := s.method.(*customSearch); ok {
 		sMethod.trialProgress(s.context(), requestID, progress)
 	}
 	s.TrialProgress[requestID] = progress
@@ -164,7 +164,7 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	}
 	s.Record(operations)
 
-	_, isCustom := s.method.(CustomSearchMethod)
+	_, isCustom := s.method.(*customSearch)
 	// For non-custom-search methods, you can assume that trials will be created immediately.
 	if s.TrialsRequested == len(s.TrialsClosed) && !isCustom {
 		shutdown := Shutdown{
@@ -190,7 +190,7 @@ func (s *Searcher) Progress() float64 {
 // GetCustomSearcherEventQueue returns the searcher's custom searcher event queue. It returns an
 // error if the search method is not a custom searcher.
 func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
-	if sMethod, ok := s.method.(CustomSearchMethod); ok {
+	if sMethod, ok := s.method.(*customSearch); ok {
 		return sMethod.getSearcherEventQueue(), nil
 	}
 	return nil, unsupportedMethodError(s.method, "GetCustomSearcherEventQueue")
@@ -198,7 +198,7 @@ func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
 
 // SetCustomSearcherProgress sets the custom searcher progress.
 func (s *Searcher) SetCustomSearcherProgress(progress float64) error {
-	if sMethod, ok := s.method.(CustomSearchMethod); ok {
+	if sMethod, ok := s.method.(*customSearch); ok {
 		sMethod.setCustomSearcherProgress(progress)
 		return nil
 	}

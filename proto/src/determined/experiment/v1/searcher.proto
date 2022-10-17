@@ -165,12 +165,12 @@ message ShutdownOperation {
   int32 placeholder = 1;
 }
 
-// SearcherOperation is an operation issued by the searcher.
+// SearcherOperation is an operation issued by the custom searcher.
 message SearcherOperation {
   // A searcher operation is one of the following operations.
   oneof union {
-    // ValidateAfter is issued to tell a trial to train some then validate.
-    ValidateAfterOperation validate_after = 1;
+    // TrialOperation is issued for the current trial. .
+    TrialOperation trial_op = 1;
     // CreateTrial is issued to create trial.
     CreateTrialOperation create_trial = 2;
     // CloseTrial is issued to close trial.
@@ -180,6 +180,17 @@ message SearcherOperation {
     // SearcherProgressOperation is issued to get the progress of custom
     // search method.
     SearcherProgressOperation searcher_progress = 5;
+  }
+}
+
+// TrialOperation is issued for the current trial.
+message TrialOperation {
+  // A trial operation is one of the following operations.
+  oneof union {
+    // ValidateAfter means a trial is currently training and is issued to tell
+    // the
+    //  trial to train some then validate.
+    ValidateAfterOperation validate_after = 1;
   }
 }
 

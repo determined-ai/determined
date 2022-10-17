@@ -2741,10 +2741,10 @@ export interface V1GetCommandsResponse {
 export interface V1GetCurrentTrialSearcherOperationResponse {
     /**
      * The current searcher operation.
-     * @type {V1SearcherOperation}
+     * @type {V1TrialOperation}
      * @memberof V1GetCurrentTrialSearcherOperationResponse
      */
-    op?: V1SearcherOperation;
+    op?: V1TrialOperation;
     /**
      * The status of the searcher operation.
      * @type {boolean}
@@ -7350,17 +7350,17 @@ export interface V1SearcherEvent {
 }
 
 /**
- * SearcherOperation is an operation issued by the searcher.
+ * SearcherOperation is an operation issued by the custom searcher.
  * @export
  * @interface V1SearcherOperation
  */
 export interface V1SearcherOperation {
     /**
-     * ValidateAfter is issued to tell a trial to train some then validate.
-     * @type {V1ValidateAfterOperation}
+     * TrialOperation is issued for the current trial. .
+     * @type {V1TrialOperation}
      * @memberof V1SearcherOperation
      */
-    validateAfter?: V1ValidateAfterOperation;
+    trialOp?: V1TrialOperation;
     /**
      * CreateTrial is issued to create trial.
      * @type {V1CreateTrialOperation}
@@ -8295,6 +8295,20 @@ export interface V1TrialMetrics {
      * @memberof V1TrialMetrics
      */
     metrics: V1Metrics;
+}
+
+/**
+ * TrialOperation is issued for the current trial.
+ * @export
+ * @interface V1TrialOperation
+ */
+export interface V1TrialOperation {
+    /**
+     * ValidateAfter means a trial is currently training and is issued to tell the  trial to train some then validate.
+     * @type {V1ValidateAfterOperation}
+     * @memberof V1TrialOperation
+     */
+    validateAfter?: V1ValidateAfterOperation;
 }
 
 /**
