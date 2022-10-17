@@ -7356,7 +7356,7 @@ export interface V1SearcherEvent {
  */
 export interface V1SearcherOperation {
     /**
-     * TrialOperation is issued for the current trial. .
+     * TrialOperation is issued to tell an existing trial to do something.
      * @type {V1TrialOperation}
      * @memberof V1SearcherOperation
      */
@@ -8298,13 +8298,13 @@ export interface V1TrialMetrics {
 }
 
 /**
- * TrialOperation is issued for the current trial.
+ * TrialOperation is any operation that a trial can perform while it is active.
  * @export
  * @interface V1TrialOperation
  */
 export interface V1TrialOperation {
     /**
-     * ValidateAfter means a trial is currently training and is issued to tell the  trial to train some then validate.
+     * ValidateAfter means a trial is currently training and will later validate.
      * @type {V1ValidateAfterOperation}
      * @memberof V1TrialOperation
      */
