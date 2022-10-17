@@ -27,7 +27,7 @@ func createTestTrial(
 ) *model.Trial {
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
-	task := &model.Task{TaskType: model.TaskTypeTrial}
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, api.m.db.AddTask(task))
 
 	trial := &model.Trial{
