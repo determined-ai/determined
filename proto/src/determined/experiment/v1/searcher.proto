@@ -187,9 +187,8 @@ message SearcherOperation {
 message TrialOperation {
   // A trial operation is one of the following operations.
   oneof union {
-    // ValidateAfter means a trial is currently training and is issued to tell
-    // the
-    //  trial to train some then validate.
+    // ValidateAfter means a trial is currently training and will later
+    // validate.
     ValidateAfterOperation validate_after = 1;
   }
 }
