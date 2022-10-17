@@ -141,8 +141,8 @@ class DetSDTextualInversionPipeline:
             tb_dir = core_context.train.get_tensorboard_path()
             tb_writer = SummaryWriter(log_dir=tb_dir)
             # Include relevant __call__ args in the tensorboard tag.
-            important_generation_params = {"guidance_scale", "num_inference_steps", "prompt"}
-            tb_tag = ", ".join([f"{k}: {call_kwargs[k]}" for k in important_generation_params])
+            important_generation_params = ("prompt", "guidance_scale", "num_inference_steps")
+            tb_tag = "/".join([f"{k}: {call_kwargs[k]}" for k in important_generation_params])
 
             # Use unique seeds, to avoid repeated images, and add the corresponding generator to the
             # call_kwargs.
@@ -150,7 +150,7 @@ class DetSDTextualInversionPipeline:
             generator = torch.Generator(device=device).manual_seed(seed)
             call_kwargs["generator"] = generator
             # Add seed information to the tensorboard tag.
-            tb_tag += f", seed: {seed}"
+            tb_tag += f"/seed: {seed}"
             # Update the call_kwargs with the batch size, if needed.
             if batch_size > 1:
                 call_kwargs["prompt"] = [call_kwargs["prompt"]] * batch_size
@@ -229,16 +229,23 @@ class DetSDTextualInversionPipeline:
                     op.report_completed(0)
 
     def load_from_checkpoint_paths(
-        self, checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]]
+        self,
+        checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]],
+        learned_embeddings_filename: Optional[str] = None,
     ) -> None:
         """Load concepts from one or more checkpoint paths, each of which is expected contain a
-        file with the name matching the `learned_embeddings_filename` init arg. The file is
-        expected to contain a dictionary whose keys are the `concept_token`s and whose values are
-        dictionaries containing an `initializer_token` key and a `learned_embeddings` whose
-        corresponding values are the initializer string and learned embedding tensors, respectively.
+        file with the name matching the provided `learned_embeddings_filename` or else the __init__
+        `learned_embeddings_filename` arg if omitted. The file is expected to contain a dictionary
+        whose keys are the `concept_token`s and whose values are dictionaries containing an
+        `initializer_token` key and a `learned_embeddings` whose corresponding values are the
+        initializer string and learned embedding tensors, respectively.
         """
         if not checkpoint_paths:
             return
+
+        learned_embeddings_filename = (
+            learned_embeddings_filename or self.learned_embeddings_filename
+        )
 
         if isinstance(checkpoint_paths, str):
             checkpoint_paths = [pathlib.Path(checkpoint_paths)]
@@ -249,7 +256,7 @@ class DetSDTextualInversionPipeline:
             if isinstance(path, str):
                 path = pathlib.Path(path)
             # TODO: Check that the same pretrained_model_name_or_path is used for all ckpts.
-            learned_embeddings_dict = torch.load(path.joinpath(self.learned_embeddings_filename))
+            learned_embeddings_dict = torch.load(path.joinpath(learned_embeddings_filename))
             # Update embedding matrix and attrs.
             for concept_token, embedding_dict in learned_embeddings_dict.items():
                 if concept_token in self.learned_embeddings_dict:

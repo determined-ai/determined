@@ -570,7 +570,6 @@ class DetSDTextualInversionTrainer:
             initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
             learned_embeddings_dict[concept_token] = {
                 "initializer_tokens": initializer_tokens,
-                "pretrained_model_name_or_path": self.pretrained_model_name_or_path,
                 "learned_embeddings": learned_embeddings,
             }
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))
