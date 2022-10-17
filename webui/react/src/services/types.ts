@@ -363,6 +363,7 @@ export interface RemoveRoleFromGroupParams {
 
 export interface AssignRolesToUserParams {
   roleIds: number[];
+  scopeWorkspaceId?: number;
   userId: number;
 }
 
@@ -376,6 +377,7 @@ export type GetGroupsParams = PaginationParams;
 export interface AssignRolesToGroupParams {
   groupId: number;
   roleIds: number[];
+  scopeWorkspaceId?: number;
 }
 
 export interface ListRolesParams {

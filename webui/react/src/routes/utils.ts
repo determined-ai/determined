@@ -161,8 +161,8 @@ export const paths = {
   webhooks: (): string => {
     return '/webhooks';
   },
-  workspaceDetails: (workspaceId: number | string): string => {
-    return `/workspaces/${workspaceId}`;
+  workspaceDetails: (workspaceId: number | string, tab = 'projects'): string => {
+    return `/workspaces/${workspaceId}/${tab}`;
   },
   workspaceList: (): string => {
     return '/workspaces';

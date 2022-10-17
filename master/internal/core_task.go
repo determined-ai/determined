@@ -15,13 +15,18 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 	}
 
 	curUser := c.(*context.DetContext).MustGetUser()
+	ctx := c.Request().Context()
 	for allocationID := range summary {
 		isExp, exp, err := expFromAllocationID(m, allocationID)
 		if err != nil {
 			return nil, err
 		}
 		if !isExp {
-			continue // TODO(nick) add other task type auth checking.
+			if ok, err := canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID); err != nil {
+				return nil, err
+			} else if !ok {
+				delete(summary, allocationID)
+			}
 		}
 
 		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
