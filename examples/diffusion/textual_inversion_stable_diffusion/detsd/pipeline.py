@@ -263,7 +263,6 @@ class DetSDTextualInversionPipeline:
         for path in checkpoint_paths:
             if isinstance(path, str):
                 path = pathlib.Path(path)
-            # TODO: Check that the same pretrained_model_name_or_path is used for all ckpts.
             learned_embeddings_dict = torch.load(path.joinpath(learned_embeddings_filename))
             # Update embedding matrix and attrs.
             for concept_token, embedding_dict in learned_embeddings_dict.items():

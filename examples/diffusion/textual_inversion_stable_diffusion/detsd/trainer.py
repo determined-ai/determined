@@ -639,8 +639,7 @@ class DetSDTextualInversionTrainer:
             metric_name: torch.tensor(metric_values, device=self.accelerator.device).mean()
             for metric_name, metric_values in self.metrics_history.items()
         }
-        # reduction='mean' seems to return the sum rather than the mean.
-        # TODO: Verify this apparent problem.
+        # Due to an Accelerate bug, reduction='mean' seems to return the sum rather than the mean.
         reduced_mean_metrics = {
             metric_name: self.accelerator.reduce(mean_metric_value, reduction="sum").item()
             / self.accelerator.num_processes
