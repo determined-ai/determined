@@ -308,7 +308,7 @@ const HeaderCell = ({
       <div
         className={`${className} ${css.columnDraggingDiv}`}
         ref={drag}
-        title={unusedTitleFromAntd as string}
+        title={columnName}
         onClick={(e) => e.stopPropagation()}
         {...props}
       />
