@@ -261,9 +261,9 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
           }
 
           message.success(API_SUCCESS_MESSAGE_CREATE);
+          form.resetFields();
         }
 
-        form.resetFields();
         onClose?.();
       } catch (e) {
         message.error(user ? 'Error updating user' : 'Error creating new user');
