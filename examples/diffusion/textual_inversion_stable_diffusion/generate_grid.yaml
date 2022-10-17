@@ -1,7 +1,8 @@
 # A grid search over multiple prompts and pipeline settings.
 
 # Due to tensorboard limitations, one should keep batch_size * max_length <= 10 in order for all
-# generated images to be easily viewable in tensorboard.
+# generated images to be easily viewable in tensorboard.  Scanning over generator seeds is the
+# easiest way to get more samples while also diversifying the results.
 name: detsd_generate
 entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
@@ -17,7 +18,11 @@ environment:
         - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
 hyperparameters:
     batch_size: 2
-    main_process_generator_seed: 214748367
+    main_process_generator_seed:
+      type: int
+      minval: 14748367
+      maxval: 214748367
+      count: 2
     save_freq: 5
     pipeline: # The `device` arg is handled by the generate_on_cluster method; do not specify.
         learned_embeddings_filename: learned_embeddings_dict.pt
