@@ -2,7 +2,7 @@ import { message } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import { removeRoleFromGroup, removeRolesFromUser } from 'services/api';
+import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroup } from 'types';
@@ -14,6 +14,8 @@ import css from './useModalWorkspaceRemoveMember.module.scss';
 interface Props {
   name: string;
   onClose?: () => void;
+  roleIds: number[];
+  scopeWorkspaceId: number;
   userOrGroup: UserOrGroup;
   userOrGroupId: number;
 }
@@ -22,6 +24,8 @@ const useModalWorkspaceRemoveMember = ({
   onClose,
   userOrGroup,
   name,
+  roleIds,
+  scopeWorkspaceId,
   userOrGroupId,
 }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
@@ -40,8 +44,8 @@ const useModalWorkspaceRemoveMember = ({
   const handleOk = useCallback(async () => {
     try {
       isUser(userOrGroup)
-        ? await removeRolesFromUser({ roleIds: [0], userId: userOrGroupId })
-        : await removeRoleFromGroup({ groupId: userOrGroupId, roleId: 0 });
+        ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
+        : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       message.success(`${name} removed from workspace`);
     } catch (e) {
       if (e instanceof DetError) {
@@ -63,7 +67,7 @@ const useModalWorkspaceRemoveMember = ({
       }
     }
     return;
-  }, [name, userOrGroup, userOrGroupId]);
+  }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
