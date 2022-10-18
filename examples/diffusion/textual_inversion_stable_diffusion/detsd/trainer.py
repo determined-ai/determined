@@ -284,7 +284,7 @@ class DetSDTextualInversionTrainer:
             latents = latents * scale_factor
 
             # Sample noise that we'll add to the latents.
-            noise = torch.randn(latents.shape).to(self.accelerator.device)
+            noise = torch.randn(latents.shape, device=self.accelerator.device)
             # Sample a random timestep for each image in the batch.
             rand_timesteps = torch.randint(
                 0,
