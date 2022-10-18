@@ -149,7 +149,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	var c string
 	var mStatus string
 	var projectID *int
-	var wId int
+	var wID int
 	var w *model.Workspace
 	config := conf.GetMasterConfig()
 	wName := e.Config.Workspace()
@@ -162,15 +162,14 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 		}
 		if w == nil {
 			return nil, fmt.Errorf("unable to find workspace with name: %v", wName)
-		} else {
-			wId = w.ID
 		}
-		projectID, err = workspace.ProjectIDByName(context.TODO(), wId, pName)
+		wID = w.ID
+		projectID, err = workspace.ProjectIDByName(context.TODO(), wID, pName)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		wId = w.ID
+		wID = w.ID
 	}
 
 	if e.State == model.CompletedState {
@@ -208,7 +207,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 			Text: fmt.Sprintf("*Duration*: %v", duration),
 		},
 	}
-	if wId != 0 && wName != "" && webUIBaseURL != "" {
+	if wID != 0 && wName != "" && webUIBaseURL != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>",
