@@ -19,7 +19,7 @@ The steps for enablong slack notification are:
  Creating a Slack Application
 ******************************
 
-First, we need to create a Slack application and give the application permissions to post to the
+First, we need to create a Slack application and give the application permissions to post in the
 appropriate Slack channel. Visit the `Slack App Managment page <https://api.slack.com/apps>`_ and
 click on the **Create New App** button.
 
@@ -28,7 +28,7 @@ In the pop window asking for the app configuration choose the **From scratch** o
 .. image:: /assets/images/slack-app-configuration.jpeg
    :width: 100%
 
-In the next window you will choose the "App Name" and select the Workspace for the application.
+In the next window you will input an "App Name" and select the Workspace for the application.
 
 .. _enabling_webhooks:
 
@@ -59,13 +59,13 @@ you will be taken back to the Incoming Webhooks page.
 Determined has the ability to send links to experiments, projects, and workspaces in Slack messages.
 To enable Determined to send correctly formatted links you must set the **Base URL** in the
 Determined cluster configuration. The **Base URL** is the website address that is used to access the
-Determined cluster user interface. The value should be in the format of `https://yourdomain.com`
+Determined user interface. The value should be in the format of `https://yourdomain.com`
 
 There are three ways to set the **Base URL**.
 
 #. Setting a **DET_WEBHOOK_BASE_URL** environment variable.
 #. Using the flag `--webhook-base-url`
-#. Adding a `base_url` entry to the webhook portion of the master configuration file an example is
+#. Adding a `base_url` entry to the webhook portion of the master configuration file. An example is
    shown below:
 
 .. code::
