@@ -21,7 +21,7 @@ import shutil
 class DetCallback(TrainerCallback):
     def __init__(
         self,
-        args: typing.Dict,
+        args: TrainingArguments,
         filter_metrics: typing.List = None,
         tokenizer: typing.Any = None,
         tokenizer_options: typing.Dict = None,
@@ -268,12 +268,11 @@ def exit_context(context: det.core.Context) -> None:
     context.__exit__(None, None, None)
 
 
-def override_training_args(training_args: typing.Any) -> typing.Any:
+def set_hyperparameters(training_args: TrainingArguments):
     hparams = det.get_cluster_info().trial.hparams
     for k, v in hparams.items():
         if hasattr(training_args, k):
-            training_args.k = v
-    return training_args
+            setattr(training_args, k, v)
 
 
 EVAL = "eval_"

@@ -33,7 +33,7 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
-from det_callback import DetCallback, override_training_args
+from det_callback import DetCallback, set_hyperparameters
 import transformers
 from transformers import (
     MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING,
@@ -210,7 +210,7 @@ def main():
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    training_args = override_training_args(training_args)
+    set_hyperparameters(training_args)
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
