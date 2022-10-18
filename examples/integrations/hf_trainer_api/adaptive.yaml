@@ -7,11 +7,10 @@ environment:
     - NCCL_SOCKET_IFNAME=ens,eth,ib
 resources:
   slots_per_trial: 2
-records_per_epoch: 1000
 searcher:
   name: adaptive_asha
   max_length:
-    epochs: 5
+    batches: 100
   max_trials: 8
   max_rungs: 2
   divisor: 4
@@ -20,13 +19,13 @@ hyperparameters:
   learning_rate:
     type: log
     base: 10
-    minval: -2
-    maxval: -1
+    minval: -5
+    maxval: -2
   adam_epsilon:
     type: log
     base: 10
-    minval: -2
-    maxval: -1
+    minval: -10
+    maxval: -2
 entrypoint: >-
   python -m determined.launch.torch_distributed
   python image_classification.py 
@@ -35,8 +34,7 @@ entrypoint: >-
   --remove_unused_columns False 
   --do_train  
   --do_eval 
-  --learning_rate 2e-5 
-  --num_train_epochs 5 
+  --max_steps 100
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8 
   --logging_strategy steps 
@@ -45,5 +43,5 @@ entrypoint: >-
   --eval_steps 10
   --save_total_limit 3 
   --seed 1337
-  --save_strategy epoch
+  --save_strategy steps
 max_restarts: 0

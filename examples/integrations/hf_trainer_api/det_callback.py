@@ -22,7 +22,7 @@ class DetCallback(TrainerCallback):
     def __init__(
         self,
         args: TrainingArguments,
-        filter_metrics: typing.List = None,
+        filter_metrics: typing.List[str] = None,
         tokenizer: typing.Any = None,
         tokenizer_options: typing.Dict = None,
         checkpoint_metadata: typing.Dict = None,
@@ -49,10 +49,11 @@ class DetCallback(TrainerCallback):
         self.tokenizer_options = tokenizer_options
         self.load_last_checkpoint(args)
 
-        self.last_metrics = {}
-        self.searcher_metric = self._det.get_cluster_info().trial._config["searcher"][
-            "metric"
-        ]
+        self.last_metrics: typing.Dict[str, float] = {}
+
+        searcher_config = self._det.get_cluster_info().trial._config["searcher"]
+        self.searcher_metric = searcher_config["metric"]
+        self.searcher_unit = list(searcher_config["max_length"].keys())[0]
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
 
@@ -181,7 +182,7 @@ class DetCallback(TrainerCallback):
             "Objects passed to the callback via checkpoint_metadata will not be saved."
         )
 
-    def load_last_checkpoint(self, args: typing.Dict) -> None:
+    def load_last_checkpoint(self, args: TrainingArguments) -> None:
         info = self._det.get_cluster_info()
 
         if info is None:
@@ -218,6 +219,14 @@ class DetCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
+        # state.epoch is not None only during training
+        if state.epoch and self.searcher_unit == "batches":
+            if state.is_world_process_zero:
+                self.current_op.report_progress(state.global_step)
+
+                if state.global_step >= self.current_op.length:
+                    self._update_searcher(state, control)
+
         if self.core_context.preempt.should_preempt():
             control.should_save = True
 
@@ -228,36 +237,63 @@ class DetCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        if state.epoch:
+        # state.epoch is not None only during training
+        if state.epoch and self.searcher_unit == "epochs":
             if state.is_world_process_zero:
                 self.current_op.report_progress(state.epoch)
 
             if round(state.epoch) >= self.current_op.length:
-                if state.is_world_process_zero:
-                    if self.last_metrics is None:
-                        logging.warning(
-                            f"No training or evaluation metrics has been recorded. Please check your settings for "
-                            f"training metrics (--logging_strategy steps and --logging_steps) or "
-                            f"evaluation metrics (--evaluation_strategy steps and --eval_steps). "
-                            f"Reporting trainer_state.best_metric to the searcher."
-                        )
-                        self.current_op.report_completed(state.best_metric)
-                    elif self.searcher_metric not in self.last_metrics:
-                        logging.warning(
-                            f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
-                            f"of the recorded metrics in {self.last_metrics}. "
-                            f"Reporting trainer_state.best_metric to the searcher."
-                        )
-                        self.current_op.report_completed(state.best_metric)
-                    else:
-                        self.current_op.report_completed(
-                            self.last_metrics[self.searcher_metric]
-                        )
+                self._update_searcher(state, control)
 
-                try:
-                    self.current_op = next(self.searcher_ops)
-                except StopIteration:
-                    control.should_training_stop = True
+    def _update_searcher(self, state: TrainerState, control: TrainerControl) -> None:
+        if state.is_world_process_zero:
+            if self.last_metrics is None:
+                logging.warning(
+                    f"No training or evaluation metrics has been recorded. Please check your settings for "
+                    f"training metrics (--logging_strategy and --logging_steps) or "
+                    f"evaluation metrics (--evaluation_strategy and --eval_steps). "
+                    f"Reporting trainer_state.best_metric to the searcher."
+                )
+                self.current_op.report_completed(state.best_metric)
+            elif self.searcher_metric not in self.last_metrics:
+                logging.warning(
+                    f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
+                    f"of the recorded metrics in {self.last_metrics}. "
+                    f"Reporting trainer_state.best_metric to the searcher."
+                )
+                self.current_op.report_completed(state.best_metric)
+            else:
+                self.current_op.report_completed(
+                    self.last_metrics[self.searcher_metric]
+                )
+
+        try:
+            self.current_op = next(self.searcher_ops)
+        except StopIteration:
+            control.should_training_stop = True
+
+    def _check_searcher_compatibility(self, args: TrainingArguments) -> None:
+        if hasattr(args, "num_train_epochs") and self.searcher_unit == "batches":
+            self._log_config_mismatch(
+                "epochs", "num_train_epochs", "searcher.max_length.batches"
+            )
+        elif hasattr(args, "max_steps") and self.searcher_unit == "epochs":
+            self._log_config_mismatch(
+                "batches", "max_steps", "searcher.max_length.epochs"
+            )
+
+    def _log_config_mismatch(
+        self, trainer_units: str, trainer_option: str, searcher_option: str
+    ) -> None:
+        logging.warning(
+            f"Searcher configuration does not match HF Trainer configuration. "
+            f"Searcher uses {self.searcher_unit} ({searcher_option}), "
+            f"while HF Trainer uses {trainer_units} (--{trainer_option}). "
+            f"Continuing this run may cause Searcher not to behave correctly. "
+            f"Make sure to match the units between HF Trainer and Searcher:"
+            f"use (--num_train_epochs and searcher.max_length.epochs) OR"
+            f"(--max_steps and searcher.max_length.batches)."
+        )
 
 
 def is_determined_available() -> bool:

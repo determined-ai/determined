@@ -306,7 +306,7 @@ def test_hf_trainer_api_accuracy() -> None:
 
     target_accuracy = 0.90
     assert max(validation_accuracies) > target_accuracy, (
-        "cifar10_byol_pytorch did not reach minimum target accuracy {} in {} steps."
+        "hf_trainer_api did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )

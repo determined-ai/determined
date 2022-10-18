@@ -6,10 +6,11 @@ environment:
     # You may need to modify this to match your network configuration.
     - NCCL_SOCKET_IFNAME=ens,eth,ib
 resources:
-  slots_per_trial: 1
+  slots_per_trial: 4
 searcher:
   name: single
-  max_length: 3
+  max_length:
+    batches: 100
   metric: eval_loss
 entrypoint: >-
   python -m determined.launch.torch_distributed
@@ -20,14 +21,14 @@ entrypoint: >-
   --do_train  
   --do_eval 
   --learning_rate 2e-5 
-  --num_train_epochs 3 
+  --max_steps 100
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8 
   --logging_strategy steps 
-  --logging_steps 10 
+  --logging_steps 10
   --evaluation_strategy steps
   --eval_steps 10
   --save_total_limit 3 
   --seed 1337
-  --save_strategy epoch
+  --save_strategy steps
 max_restarts: 0
