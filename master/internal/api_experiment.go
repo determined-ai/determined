@@ -194,6 +194,77 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return e, *curUser, nil
 }
 
+func (a *apiServer) GetSearcherEvents(
+	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
+) (*apiv1.GetSearcherEventsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+	if !isActiveExperimentState(exp.State) {
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: []*experimentv1.SearcherEvent{{
+				Id: -1,
+				Event: &experimentv1.SearcherEvent_ExperimentInactive{
+					ExperimentInactive: &experimentv1.ExperimentInactive{
+						ExperimentState: exp.State,
+					},
+				},
+			}},
+		}, nil
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+	var w searcher.EventsWatcher
+	if err = a.ask(addr, req, &w); err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to get events from actor: long polling %v", err)
+	}
+
+	defer a.m.system.TellAt(addr, UnwatchEvents{w.ID})
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
+	defer cancel()
+
+	select {
+	case events := <-w.C:
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}, nil
+	case <-ctx.Done():
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: nil,
+		}, nil
+	}
+}
+
+func (a *apiServer) PostSearcherOperations(
+	ctx context.Context,
+	req *apiv1.PostSearcherOperationsRequest,
+) (
+	resp *apiv1.PostSearcherOperationsResponse, err error,
+) {
+	_, _, err = a.getExperimentAndCheckCanDoActions(
+		ctx, int(req.ExperimentId), false, expauth.AuthZProvider.Get().CanRunCustomSearch,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from database")
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
+	default:
+		logrus.Infof("posted operations %v", req.SearcherOperations)
+		return resp, nil
+	}
+}
+
 func (a *apiServer) GetExperiment(
 	ctx context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
@@ -1438,6 +1509,8 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 	case expconf.RandomConfig:
 		ranking = ByMetricOfInterest
 	case expconf.GridConfig:
+		ranking = ByMetricOfInterest
+	case expconf.CustomConfig:
 		ranking = ByMetricOfInterest
 	case expconf.AsyncHalvingConfig:
 		ranking = ByTrainingLength

@@ -148,6 +148,7 @@ func objectForURL(url string) interface{} {
 	case "http://determined.ai/schemas/expconf/v0/searcher.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-async-halving.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-custom.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-grid.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-random.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-single.json":

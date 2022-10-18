@@ -104,7 +104,8 @@ func TestDeleteCheckpoints(t *testing.T) {
 	reqCheckpointUUIDs := []uuid.UUID{checkpoint1.UUID, checkpoint2.UUID, checkpoint3.UUID}
 	checkpointsByUUIDs, err := db.CheckpointByUUIDs(reqCheckpointUUIDs)
 	dbCheckpointsUUIDs := []uuid.UUID{
-		*checkpointsByUUIDs[0].UUID, *checkpointsByUUIDs[1].UUID, *checkpointsByUUIDs[2].UUID}
+		*checkpointsByUUIDs[0].UUID, *checkpointsByUUIDs[1].UUID, *checkpointsByUUIDs[2].UUID,
+	}
 	sortUUIDSlice(reqCheckpointUUIDs)
 	sortUUIDSlice(dbCheckpointsUUIDs)
 	require.NoError(t, err)
