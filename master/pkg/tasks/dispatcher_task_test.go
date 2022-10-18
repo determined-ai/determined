@@ -178,7 +178,6 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				"enableWritableTmpFs": trueValue,
 				"exportAll":           trueValue,
 				"networkMode":         "host",
-				"hostuser":            "ted",
 			},
 		},
 		{
