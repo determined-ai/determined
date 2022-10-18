@@ -65,7 +65,8 @@ There are three ways to set the **Base URL**.
 
 #. Setting a **DET_WEBHOOK_BASE_URL** environment variable.
 #. Using the flag `--webhook-base-url`
-#. Adding a `base_url` entry to the webhook portion of the master configuration file an example is shown below:
+#. Adding a `base_url` entry to the webhook portion of the master configuration file an example is
+   shown below:
 
 .. code::
 
