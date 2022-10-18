@@ -1867,7 +1867,7 @@ export interface V1CreateGroupResponse {
  */
 export interface V1CreateTrialOperation {
     /**
-     * The ID of the trial to close.
+     * The ID of the trial to create.
      * @type {string}
      * @memberof V1CreateTrialOperation
      */
@@ -8022,7 +8022,7 @@ export interface V1TrialClosed {
 }
 
 /**
- * TrialCreated is a searcher event singaling the creation of a trial.
+ * TrialCreated is a searcher event signaling the creation of a trial.
  * @export
  * @interface V1TrialCreated
  */
@@ -8931,7 +8931,7 @@ export interface V1UserWebSetting {
  */
 export interface V1ValidateAfterOperation {
     /**
-     * The ID of the trial to close.
+     * The ID of the trial that should train.
      * @type {string}
      * @memberof V1ValidateAfterOperation
      */

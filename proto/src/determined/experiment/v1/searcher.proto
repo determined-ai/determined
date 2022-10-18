@@ -14,7 +14,7 @@ message InitialOperations {
   int32 placeholder = 1;
 }
 
-// TrialCreated is a searcher event singaling the creation of a trial.
+// TrialCreated is a searcher event signaling the creation of a trial.
 message TrialCreated {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "request_id" ] }
@@ -23,8 +23,8 @@ message TrialCreated {
   string request_id = 1;
 }
 
-// TrialProgress is a searcher event that tells you the
-// number of batches completed in the trial.
+// TrialProgress is a searcher event that tells you the number of batches
+// completed in the trial.
 message TrialProgress {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "request_id", "partial_units" ] }
@@ -123,7 +123,7 @@ message SearcherEvent {
 // ValidateAfterOperation means the trial should train and validate after
 // training the given length.
 message ValidateAfterOperation {
-  // The ID of the trial to close.
+  // The ID of the trial that should train.
   string request_id = 1;
   // The length to train before reporting a validation.
   uint64 length = 2;
@@ -147,7 +147,7 @@ message CompleteValidateAfterOperation {
 
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
-  // The ID of the trial to close.
+  // The ID of the trial to create.
   string request_id = 1;
   // A JSON object representing the hyperparameters.
   string hyperparams = 2;
