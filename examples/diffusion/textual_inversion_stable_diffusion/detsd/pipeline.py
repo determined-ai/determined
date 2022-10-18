@@ -86,6 +86,8 @@ class DetSDTextualInversionPipeline:
         - `pipeline`: containing all __init__ args
         - `uuids`: a (possibly empty) array of any checkpoint UUIDs which are to be loaded into
         the pipeline.
+        - `local_checkpoint_paths`: a (possibly empty) array of any checkpoint paths which are to be
+        loaded into the pipeline.
         - `call_kwargs`: all arguments which are to be passed to the `__call__` method.
         """
         info = det.get_cluster_info()
