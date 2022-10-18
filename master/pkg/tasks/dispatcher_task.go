@@ -301,9 +301,6 @@ func (t *TaskSpec) computeLaunchConfig(
 	}
 	if containerRunType == podman {
 		launchConfig["networkMode"] = "host"
-		if launchingUser != "" {
-			launchConfig["hostuser"] = launchingUser
-		}
 	}
 	// From launcher 3.0.16, disableImageCache & add/dropCapabilities are supported, but
 	// implemented for podman only. For Singularity we control these features using environment

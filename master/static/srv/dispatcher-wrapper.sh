@@ -240,6 +240,21 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     esac
 fi
 
+# When running under podman rootless, the default user on entry is root/uid=0 inside the
+# container, which maps to the launching user outside the container.  In this case,
+# verify that the actual user has read access to the /run/determined/ssh directory 
+# (if it exists).  If sshd is used by this container (shell, distributed), the user needs
+# to be able to read /run/determined/ssh/authorized_keys.   If the user does not have access,
+# we dynamically relax the directory permissions.  This allows ssh into the container as 
+# using the username/id. 
+if [ $(whoami) == "root" ]  && [ -d /run/determined/ssh ]; then
+    log_debug "DEBUG: Running as root inside container, verify $DET_USER can read /run/determined/ssh"
+    if ! su - $DET_USER -c 'test -r /run/determined/ssh'; then
+        log_debug "DEBUG: Relaxing permissions on /run/determined/ssh"
+        chmod a+x /run/determined /run/determined/ssh
+    fi
+fi
+
 
 log "INFO: Setting workdir to $DET_WORKDIR"
 cd $DET_WORKDIR
