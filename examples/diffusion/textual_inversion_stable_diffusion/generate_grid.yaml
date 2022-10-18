@@ -34,8 +34,8 @@ hyperparameters:
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
         use_fp16: True
         disable_progress_bar: True
-    uuids: []
-    local_checkpoint_paths:
+    uuids: [] # Checkpoint UUIDs to load from the Determined Master.
+    local_checkpoint_paths: # Relative paths to concept embedding pickle files.
       - learned_embeddings_dict_demo.pt
     call_kwargs:
       prompt:
