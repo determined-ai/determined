@@ -18,7 +18,7 @@ func TestWebhooks(t *testing.T) {
 	ctx := context.Background()
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
-	clearWebhooksTables(t, ctx)
+	clearWebhooksTables(ctx, t)
 
 	t.Run("webhook retrieval should work", func(t *testing.T) {
 		testWebhookFour.Triggers = testWebhookFourTriggers
@@ -77,7 +77,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
-	clearWebhooksTables(t, ctx)
+	clearWebhooksTables(ctx, t)
 
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
 
@@ -118,7 +118,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		require.Equal(t, startCount, endCount)
 	})
 
-	clearWebhooksTables(t, ctx)
+	clearWebhooksTables(ctx, t)
 
 	t.Run("one trigger for event type", func(t *testing.T) {
 		startCount, scerr := CountEvents(ctx)
@@ -141,7 +141,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		require.Equal(t, startCount+1, endCount)
 	})
 
-	clearWebhooksTables(t, ctx)
+	clearWebhooksTables(ctx, t)
 
 	t.Run("many triggers for event type", func(t *testing.T) {
 		startCount, err := CountEvents(ctx)
@@ -276,7 +276,7 @@ func TestDequeueEvents(t *testing.T) {
 	ctx := context.Background()
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
-	clearWebhooksTables(t, ctx)
+	clearWebhooksTables(ctx, t)
 
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
 
@@ -340,7 +340,7 @@ func TestDequeueEvents(t *testing.T) {
 	})
 }
 
-func clearWebhooksTables(t *testing.T, ctx context.Context) {
+func clearWebhooksTables(ctx context.Context, t *testing.T) {
 	t.Log("clear webhooks db")
 	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1=1").Exec(ctx)
 	require.NoError(t, err)

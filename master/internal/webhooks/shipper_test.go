@@ -32,7 +32,7 @@ func TestShipper(t *testing.T) {
 
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
-	clearWebhooksTables(t, ctx)
+	clearWebhooksTables(ctx, t)
 
 	t.Log("setup test webhook receiver")
 	received := make(chan EventPayload, 100)
@@ -47,7 +47,10 @@ func TestShipper(t *testing.T) {
 		received <- e
 	}))
 	go func() {
-		http.ListenAndServe(testURL, mux)
+		defer cancel()
+		if err := http.ListenAndServe(testURL, mux); err != nil {
+			t.Logf("http receiver failed: %v", err)
+		}
 	}()
 
 	t.Log("setup a few test webhooks")
@@ -109,10 +112,11 @@ func TestShipper(t *testing.T) {
 		for id, delay := range schedule {
 			time.Sleep(scheduledWaitToDuration(delay))
 			expected[id] = 3 // 3 sends, one for each trigger.
+			var conf expconf.ExperimentConfig
 			require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
 				ID:     id,
 				State:  model.CompletedState,
-				Config: schemas.WithDefaults(expconf.ExperimentConfig{}).(expconf.ExperimentConfigV0),
+				Config: schemas.WithDefaults(conf).(expconf.ExperimentConfigV0),
 			}))
 			progress.Store(int64(id))
 		}
@@ -149,7 +153,7 @@ func TestShipper(t *testing.T) {
 	// events make it at least once anyway.
 	totalWait := 0
 	for _, wait := range schedule {
-		totalWait += int(wait)
+		totalWait += wait
 	}
 	time.Sleep(scheduledWaitToDuration(totalWait) / 2)
 	t.Logf("chaosing shipper with %d/%d events sent", progress.Load(), len(schedule))

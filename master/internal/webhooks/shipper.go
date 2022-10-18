@@ -183,7 +183,11 @@ func (w *worker) deliver(ctx context.Context, e Event) error {
 	if err != nil {
 		return fmt.Errorf("sending webhook request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			w.log.WithError(err).Warn("failed to close response body")
+		}
+	}()
 
 	switch {
 	case resp.StatusCode >= 500:
@@ -195,7 +199,12 @@ func (w *worker) deliver(ctx context.Context, e Event) error {
 	}
 }
 
-func generateWebhookRequest(ctx context.Context, url string, payload []byte, t int64) (*http.Request, error) {
+func generateWebhookRequest(
+	ctx context.Context,
+	url string,
+	payload []byte,
+	t int64,
+) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed creating webhook request: %w", err)
