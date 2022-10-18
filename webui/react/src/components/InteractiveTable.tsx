@@ -21,6 +21,7 @@ import {
   DraggableEventHandler,
 } from 'react-draggable';
 
+import SkeletonTable from 'components/Skeleton/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -28,7 +29,6 @@ import { Primitive, UnknownRecord } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 
 import css from './InteractiveTable.module.scss';
-import SkeletonTable from './Skeleton/SkeletonTable';
 
 /*
  * This indicates that the cell contents are rightClickable
@@ -113,6 +113,7 @@ interface HeaderCellProps {
   filterActive: boolean;
   index: number;
   isResizing: boolean;
+  minWidth: number;
   moveColumn: (source: number, destination: number) => void;
   onResize: (e: DraggableEvent, data: DraggableData) => number;
   onResizeStart: DraggableEventHandler;
@@ -241,6 +242,7 @@ const HeaderCell = ({
   className,
   columnName,
   filterActive,
+  minWidth,
   moveColumn,
   index,
   title: unusedTitleFromAntd,
@@ -313,12 +315,15 @@ const HeaderCell = ({
       <DraggableCore
         nodeRef={resizingRef}
         onDrag={(e, data) => {
-          const minWidth = onResize(e, data);
+          onResize(e, data);
           const newWidth = data.x < minWidth ? minWidth : data.x;
 
           if (newWidth !== xValue) setXValue(newWidth);
         }}
         onStart={(e, data) => {
+          setShadowVisibility('block');
+          const newWidth = data.x < minWidth ? minWidth : data.x;
+          if (newWidth !== xValue) setXValue(newWidth);
           onResizeStart(e, data);
           setShadowVisibility('block');
         }}
@@ -475,7 +480,7 @@ const InteractiveTable: InteractiveTable = ({
       return (e: Event, { x }: DraggableData) => {
         if (timeout.current) clearTimeout(timeout.current);
         const column = settings.columns[resizeIndex];
-        const minWidth = columnDefs[column].defaultWidth;
+        const minWidth = columnDefs[column]?.defaultWidth ?? 40;
         const currentWidths = widthData.widths;
 
         if (x === currentWidths[resizeIndex]) return;
@@ -511,8 +516,6 @@ const InteractiveTable: InteractiveTable = ({
         timeout.current = setTimeout(() => {
           setWidthData({ dropLeftStyles, dropRightStyles, widths: targetWidths });
         }, DEFAULT_RESIZE_THROTTLE_TIME);
-
-        return minWidth;
       };
     },
     [settings.columns, widthData.widths, pageWidth, columnDefs],
@@ -526,7 +529,7 @@ const InteractiveTable: InteractiveTable = ({
         setWidthData(({ widths, ...rest }) => {
           const column = settings.columns[index];
           const startWidth = widths[index];
-          const minWidth = columnDefs[column].defaultWidth;
+          const minWidth = columnDefs[column]?.defaultWidth ?? 40;
           const deltaX = startWidth - minWidth;
           const minX = x - deltaX;
           return { minX, widths, ...rest };
@@ -553,6 +556,7 @@ const InteractiveTable: InteractiveTable = ({
           filterActive,
           index,
           isResizing,
+          minWidth: columnDef.defaultWidth,
           moveColumn,
           onResize: handleResize(index),
           onResizeStart: handleResizeStart(index),
