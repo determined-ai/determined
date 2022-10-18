@@ -554,6 +554,7 @@ const LogViewer: React.FC<Props> = ({
         style={{
           ...style,
           left: parseFloat(`${style.left}`) + PADDING,
+          outline: 'none',
           paddingTop: index === 0 ? PADDING : 0,
           width: `calc(100% - ${2 * PADDING}px)`,
         }}
