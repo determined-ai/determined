@@ -161,8 +161,5 @@ actions.
    :caption: Notification
    :hidden:
 
-<<<<<<< HEAD
-=======
    zapier
->>>>>>> master
    slack
