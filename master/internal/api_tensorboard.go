@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -82,7 +83,7 @@ func (a *apiServer) GetTensorboards(
 		if err != nil {
 			return false
 		}
-		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
 			*curUser, model.UserID(resp.Tensorboards[i].UserId))
 		if serverError != nil {
 			err = serverError
@@ -110,7 +111,7 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
 		*curUser, model.UserID(resp.Tensorboard.UserId)); err != nil {
 		return nil, err
 	} else if !ok {

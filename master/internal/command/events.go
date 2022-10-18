@@ -13,7 +13,7 @@ import (
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -139,7 +139,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(curUser, ownerID); err != nil {
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(curUser, ownerID); err != nil {
 		return err
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
