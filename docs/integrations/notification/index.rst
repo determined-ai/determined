@@ -23,11 +23,11 @@ The signing key can be set in the following ways:
 
 .. code::
 
-   security:
-       webhook_signing_key: <signing_key>
+   webhook:
+       signing_key: <signing_key>
 
 2. By setting a ``DET_WEBHOOK_SIGNING_KEY`` environment variable.
-#. By specifying a ``---security-webhook-signing-key`` flag.
+#. By specifying a ``--webhook-signing-key`` flag.
 
 Retrieving the Key
 ==================
