@@ -1090,7 +1090,7 @@ func (m *Master) Run(ctx context.Context) error {
 		return err
 	}
 
-	webhooks.Init(context.TODO())
+	webhooks.Init()
 	defer webhooks.Deinit()
 
 	return m.startServers(ctx, cert)

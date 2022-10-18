@@ -123,7 +123,7 @@ func (a *APIServer) TestWebhook(
 		if perr != nil {
 			return nil, err
 		}
-		tReq, err = generateWebhookRequest(webhook.URL, p, t)
+		tReq, err = generateWebhookRequest(ctx, webhook.URL, p, t)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"failed to create webhook request for event %v error : %v ", eventID, err)
@@ -143,7 +143,8 @@ func (a *APIServer) TestWebhook(
 		if serr != nil {
 			return nil, err
 		}
-		tReq, err = http.NewRequest(
+		tReq, err = http.NewRequestWithContext(
+			ctx,
 			http.MethodPost,
 			webhook.URL,
 			bytes.NewBuffer(slackMessage),

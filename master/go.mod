@@ -86,7 +86,7 @@ require (
 	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb // indirect
 	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
+	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -146,7 +146,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.1 // indirect
 	go.opentelemetry.io/otel/trace v1.6.1 // indirect
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/atomic v1.9.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
