@@ -10,11 +10,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/pkg/checkpoints"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	detContext "github.com/determined-ai/determined/master/internal/context"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -93,7 +97,7 @@ func (m *Master) getCheckpointImpl(
 				id.String(), err.Error()))
 	case storageConfig == nil:
 		return echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("checkpoint %s does not exist", id.String()))
+			fmt.Sprintf("checkpoint not found: %s", id.String()))
 	}
 
 	// DelayWriter delays the first write until we have successfully downloaded
@@ -152,6 +156,23 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest,
 			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
 				args.CheckpointUUID, err))
+	}
+
+	curUser := c.(*detContext.DetContext).MustGetUser()
+	if err := m.canDoActionOnCheckpoint(curUser, args.CheckpointUUID,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		s, ok := status.FromError(err)
+		if !ok {
+			return err
+		}
+		switch s.Code() {
+		case codes.NotFound:
+			return echo.NewHTTPError(http.StatusNotFound, s.Message())
+		case codes.PermissionDenied:
+			return echo.NewHTTPError(http.StatusForbidden, s.Message())
+		default:
+			return fmt.Errorf(s.Message())
+		}
 	}
 
 	c.Response().Header().Set(echo.HeaderContentType, mimeType)

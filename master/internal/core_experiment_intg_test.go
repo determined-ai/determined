@@ -63,20 +63,23 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 		ConfigBytes: minExpConfToYaml(t),
 		ProjectID:   &projectID,
 	})
-	require.Equal(t, echo.NewHTTPError(http.StatusNotFound, errCantFindProject).Error(), err.Error())
+	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
+		fmt.Sprintf("project (%d) not found", projectID)).Error(), err.Error())
 
 	// Can't view project passed in from config.
 	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
-	require.Equal(t, echo.NewHTTPError(http.StatusNotFound, errCantFindProject).Error(), err.Error())
+	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
+		"workspace 'Uncategorized' or project 'Uncategorized' not found").Error(), err.Error())
 
 	// Same as passing in a non existent project.
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
 		ConfigBytes: minExpConfToYaml(t) + "project: doesnotexist\nworkspace: doesnotexist",
 	})
-	require.Equal(t, echo.NewHTTPError(http.StatusNotFound, errCantFindProject).Error(), err.Error())
+	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
+		"workspace 'doesnotexist' or project 'doesnotexist' not found").Error(), err.Error())
 
 	// Can't create experiment deny.
 	expectedErr := echo.NewHTTPError(http.StatusForbidden, "canCreateExperimentError")

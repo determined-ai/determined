@@ -62,6 +62,7 @@ class cloudformation:
     AGENT_REATTACH_ENABLED = "AgentReattachEnabled"
     AGENT_RECONNECT_ATTEMPTS = "AgentReconnectAttempts"
     AGENT_RECONNECT_BACKOFF = "AgentReconnectBackoff"
+    AGENT_CONFIG_FILE_CONTENTS = "AgentConfigFileContents"
 
 
 class misc:

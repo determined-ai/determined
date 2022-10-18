@@ -18,7 +18,6 @@ import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
 import { StoreActionUI } from 'shared/contexts/UIStore';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
-import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { BrandingType } from 'types';
@@ -72,9 +71,8 @@ const SignIn: React.FC = () => {
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
 
       // Reroute the authenticated user to the app.
-      const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       if (!queries.redirect) {
-        routeToReactUrl(locationToPath(loginRedirect) || defaultRoute.path);
+        routeToReactUrl(locationToPath(location.state?.loginRedirect) || defaultRoute.path);
       } else {
         routeAll(queries.redirect);
       }

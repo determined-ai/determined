@@ -368,7 +368,7 @@ export interface AssignRolesToUserParams {
 }
 
 export interface RemoveRoleFromUserParams {
-  roleId: number;
+  roleIds: number[];
   userId: number;
 }
 
