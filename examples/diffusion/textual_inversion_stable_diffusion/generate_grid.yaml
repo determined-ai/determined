@@ -47,9 +47,8 @@ hyperparameters:
           - Lofi <det-logo-demo> portrait, pixar style, by tristan eaton stanley artgerm and tom bagshaw.
       num_inference_steps: 50
       guidance_scale:
-        type: log
-        base: 2
-        minval: .5
-        maxval: 2
+        type: double
+        minval: 2
+        maxval: 6
         count: 3
 
