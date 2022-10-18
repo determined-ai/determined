@@ -21,14 +21,28 @@ rbac_flag_disabled_message = (
     + "and the Master Configuration option security.authz.rbac_ui_enabled."
 )
 
-v1RoleHeaders = namedtuple(
-    "v1RoleHeaders",
-    ["roleId", "name"],
-)
-
 v1PermissionHeaders = namedtuple(
     "v1PermissionHeaders",
     ["id", "name", "isGlobal"],
+)
+
+roleAssignmentHeaders = namedtuple(
+    "roleAssignmentHeaders",
+    [
+        "roleName",
+        "roleID",
+        "assignedDirectlyToUser",
+        "assignedToGroupName",
+        "assignedToGroupID",
+        "isGlobal",
+        "overWorkspaceName",
+        "overWorkspaceID",
+    ],
+)
+
+workspaceAssignedToHeaders = namedtuple(
+    "workspaceAssignedToHeaders",
+    ["workspaceID", "workspaceName"],
 )
 
 groupAssignmentHeaders = namedtuple(
@@ -119,6 +133,31 @@ def list_roles(args: Namespace) -> None:
         print()
 
 
+def role_with_assignment_to_dict(
+    session: session.Session,
+    r: bindings.v1RoleWithAssignments,
+    assignment: bindings.v1RoleAssignment,
+) -> Dict[str, Any]:
+    is_global = assignment.scopeWorkspaceId is None
+    workspace_id = assignment.scopeWorkspaceId
+    workspace_name = None
+    if workspace_id is not None:
+        workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
+
+    if not r.role: # This should not happen.
+        return {}
+    return {
+        "roleName": r.role.name,
+        "roleID": r.role.roleId,
+        "assignedDirectlyToUser": False,
+        "assignedToGroupID": None,
+        "assignedToGroupName": None,
+        "isGlobal": is_global,
+        "overWorkspaceID": workspace_id,
+        "overWorkspaceName": workspace_name,
+    }
+
+
 @authentication.required
 @require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_users_roles(args: Namespace) -> None:
@@ -132,8 +171,26 @@ def list_users_roles(args: Namespace) -> None:
     if resp.roles is None or len(resp.roles) == 0:
         print("user has no role assignments")
         return
+
+    output = []
+    for r in resp.roles:
+        if r.userRoleAssignments is not None:
+            for u in r.userRoleAssignments:
+                o = role_with_assignment_to_dict(session, r, u.roleAssignment)
+                o["assignedDirectlyToUser"] = True
+                output.append(o)
+        if r.groupRoleAssignments is not None:
+            for g in r.groupRoleAssignments:
+                o = role_with_assignment_to_dict(session, r, g.roleAssignment)
+                o["assignedToGroupID"] = g.groupId
+                o["assignedToGroupName"] = bindings.get_GetGroup(
+                    session, groupId=g.groupId
+                ).group.name
+                output.append(o)
+
     render.render_objects(
-        v1RoleHeaders, [render.unmarshal(v1RoleHeaders, r.to_json()) for r in resp.roles]
+        roleAssignmentHeaders,
+        [render.unmarshal(roleAssignmentHeaders, o) for o in output],
     )
 
 
@@ -150,9 +207,24 @@ def list_groups_roles(args: Namespace) -> None:
     if resp.roles is None or len(resp.roles) == 0:
         print("group has no role assignments")
         return
-    render.render_objects(
-        v1RoleHeaders, [render.unmarshal(v1RoleHeaders, r.to_json()) for r in resp.roles]
-    )
+
+    for i, r in enumerate(resp.roles):
+        assigned_globally = ""
+        if resp.assignments[i].isGlobal:
+            assigned_globally = " globally and"
+        print(f"role '{r.name}' with ID {r.roleId} assigned{assigned_globally} to workspaces")
+
+        workspaces = []
+        workspace_ids = resp.assignments[i].scopeWorkspaceIds or []
+        for wid in workspace_ids:
+            workspace_name = bindings.get_GetWorkspace(session, id=wid).workspace.name
+            workspaces.append({"workspaceID": wid, "workspaceName": workspace_name})
+
+        render.render_objects(
+            workspaceAssignedToHeaders,
+            [render.unmarshal(workspaceAssignedToHeaders, w) for w in workspaces],
+        )
+        print()
 
 
 @authentication.required
