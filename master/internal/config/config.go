@@ -95,6 +95,7 @@ func DefaultConfig() *Config {
 			AuthZ:             *DefaultAuthZConfig(),
 			WebhookSigningKey: "",
 		},
+		BaseURL: "",
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port:        0,
 		HarnessPath: "/opt/determined",
@@ -147,6 +148,7 @@ type Config struct {
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
+	BaseURL               string                            `json:"base_url"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.

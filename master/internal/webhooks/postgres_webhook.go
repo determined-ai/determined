@@ -7,10 +7,11 @@ import (
 	"math"
 	"time"
 
-	"github.com/uptrace/bun"
-
+	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 )
@@ -146,15 +147,30 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	var eURL string
 	var c string
 	var mStatus string
+	var projectID *int
+	var w model.Workspace
+	config := conf.GetMasterConfig()
+	wName := e.Config.Workspace()
+	pName := e.Config.Project()
+	webUIBaseUrl := config.BaseURL
+	if webUIBaseUrl != "" && wName != "" && pName != "" {
+		w, err := workspace.WorkspaceByName(context.TODO(), wName)
+		if err != nil {
+			return nil, err
+		}
+		projectID, err = workspace.ProjectIdByName(context.TODO(), w.ID, pName)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if e.State == model.CompletedState {
 		status = "Your experiment completed successfully 🎉"
-
-		eURL = fmt.Sprintf("✅ %v (#%v)", e.Config.Name(), e.ID)
+		eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>", webUIBaseUrl, e.ID, e.Config.Name(), e.ID)
 		c = "#13B670"
 		mStatus = "Completed"
 	} else {
 		status = "Your experiment has stopped with errors"
-		eURL = fmt.Sprintf("❌ %v (#%v)", e.Config.Name(), e.ID)
+		eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>", webUIBaseUrl, e.ID, e.Config.Name(), e.ID)
 		c = "#DD5040"
 		mStatus = "Errored"
 	}
@@ -172,16 +188,26 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 			Text: fmt.Sprintf("*Duration*: %v", duration),
 		},
 	}
-	if e.Config.Workspace() != "" {
+	if wName != "" && webUIBaseUrl != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
-			Text: fmt.Sprintf("*Workspace*: %v", e.Config.Workspace()),
+			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>", webUIBaseUrl, w.ID, wName),
+		})
+	} else if wName != "" {
+		expBlockFields = append(expBlockFields, Field{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Workspace*: %v", wName),
 		})
 	}
-	if e.Config.Project() != "" {
+	if pName != "" && webUIBaseUrl != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
-			Text: fmt.Sprintf("*Project*: %v", e.Config.Project()),
+			Text: fmt.Sprintf("*Project*: <%v/det/projects/%v | %v>", webUIBaseUrl, projectID, pName),
+		})
+	} else if pName != "" {
+		expBlockFields = append(expBlockFields, Field{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Project*: %v", pName),
 		})
 	}
 	experimentBlock := SlackBlock{
