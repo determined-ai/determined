@@ -26,12 +26,9 @@ const config: SettingsConfig<Settings> = {
       defaultValue: DEFAULT_COLUMNS,
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: array(union([
-        literal('action'),
-        literal('triggers'),
-        literal('url'),
-        literal('webhookType'),
-      ])),
+      type: array(
+        union([literal('action'), literal('triggers'), literal('url'), literal('webhookType')]),
+      ),
     },
     columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: WebhookColumnName) => DEFAULT_COLUMN_WIDTHS[col]),

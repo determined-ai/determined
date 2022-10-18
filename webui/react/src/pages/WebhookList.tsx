@@ -212,31 +212,29 @@ const WebhooksView: React.FC = () => {
             Call external services when experiments complete or throw errors.
           </p>
         </div>
+      ) : settings ? (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={webhooks}
+          loading={isLoading}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            webhooks.length,
+          )}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey="id"
+          settings={settings as InteractiveTableSettings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+          onChange={handleTableChange}
+        />
       ) : (
-        settings
-        ? (
-          <InteractiveTable
-            columns={columns}
-            containerRef={pageRef}
-            dataSource={webhooks}
-            loading={isLoading}
-            pagination={getFullPaginationConfig(
-              {
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
-              },
-              webhooks.length,
-            )}
-            rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="id"
-            settings={settings as InteractiveTableSettings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings}
-            onChange={handleTableChange}
-          />
-        )
-        : <SkeletonTable columns={columns.length} />
+        <SkeletonTable columns={columns.length} />
       )}
       {modalWebhookCreateContextHolder}
       {modalWebhookDeleteContextHolder}
