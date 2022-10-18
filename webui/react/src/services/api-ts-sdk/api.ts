@@ -3487,7 +3487,7 @@ export interface V1GetRolesByIDResponse {
  */
 export interface V1GetSearcherEventsResponse {
     /**
-     * The list of events.b in the queue.
+     * The list of events in the queue.
      * @type {Array<V1SearcherEvent>}
      * @memberof V1GetSearcherEventsResponse
      */
@@ -5833,7 +5833,7 @@ export interface V1PostProjectResponse {
 }
 
 /**
- * Request for sending operations from a custom user search method.
+ * Request for sending operations from a custom search method.
  * @export
  * @interface V1PostSearcherOperationsRequest
  */
@@ -5845,7 +5845,7 @@ export interface V1PostSearcherOperationsRequest {
      */
     experimentId?: number;
     /**
-     * List of operations in the method.
+     * List of operations to submit.
      * @type {Array<V1SearcherOperation>}
      * @memberof V1PostSearcherOperationsRequest
      */
@@ -7362,43 +7362,29 @@ export interface V1SearcherOperation {
      */
     trialOperation?: V1TrialOperation;
     /**
-     * CreateTrial is issued to create trial.
+     * CreateTrialOperation is issued to create a trial.
      * @type {V1CreateTrialOperation}
      * @memberof V1SearcherOperation
      */
     createTrial?: V1CreateTrialOperation;
     /**
-     * CloseTrial is issued to close trial.
+     * CloseTrialOperation is issued to close a trial.
      * @type {V1CloseTrialOperation}
      * @memberof V1SearcherOperation
      */
     closeTrial?: V1CloseTrialOperation;
     /**
-     * ShutdownOperation is issued to shutdown the custom search method.
-     * @type {V1ShutdownOperation}
+     * ShutDownOperation is issued to shut down the custom search method.
+     * @type {V1ShutDownOperation}
      * @memberof V1SearcherOperation
      */
-    shutdown?: V1ShutdownOperation;
+    shutDown?: V1ShutDownOperation;
     /**
-     * SearcherProgressOperation is issued to get the progress of custom search method.
-     * @type {V1SearcherProgressOperation}
+     * SetSearcherProgressOperation is issued to set the progress of the custom search method.
+     * @type {V1SetSearcherProgressOperation}
      * @memberof V1SearcherOperation
      */
-    searcherProgress?: V1SearcherProgressOperation;
-}
-
-/**
- * SearcherProgressOperation informs the master of the progress of the custom searcher.
- * @export
- * @interface V1SearcherProgressOperation
- */
-export interface V1SearcherProgressOperation {
-    /**
-     * Experiment progress as a float between 0.0 and 1.0.
-     * @type {number}
-     * @memberof V1SearcherProgressOperation
-     */
-    progress?: number;
+    setSearcherProgress?: V1SetSearcherProgressOperation;
 }
 
 /**
@@ -7467,6 +7453,20 @@ export interface V1SetNotebookPriorityResponse {
      * @memberof V1SetNotebookPriorityResponse
      */
     notebook?: V1Notebook;
+}
+
+/**
+ * SetSearcherProgressOperation informs the master of the progress of the custom searcher.
+ * @export
+ * @interface V1SetSearcherProgressOperation
+ */
+export interface V1SetSearcherProgressOperation {
+    /**
+     * Experiment progress as a float between 0.0 and 1.0.
+     * @type {number}
+     * @memberof V1SetSearcherProgressOperation
+     */
+    progress?: number;
 }
 
 /**
@@ -7652,13 +7652,13 @@ export interface V1Shell {
 /**
  * Shut down custom searcher method.
  * @export
- * @interface V1ShutdownOperation
+ * @interface V1ShutDownOperation
  */
-export interface V1ShutdownOperation {
+export interface V1ShutDownOperation {
     /**
      * Cannot have an empty message type.
      * @type {number}
-     * @memberof V1ShutdownOperation
+     * @memberof V1ShutDownOperation
      */
     placeholder?: number;
 }

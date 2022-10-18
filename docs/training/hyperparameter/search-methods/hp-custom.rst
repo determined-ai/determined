@@ -19,29 +19,29 @@ utilities for executing them.
    hyperparameter space.
 
 To implement a custom hyperparameter tuning algorithm, subclass
-:class:`~determined.searcher.SearchMethod`, overriding its event handler methods. Note that
-overriding :meth:`~determined.searcher.SearchMethod.save_method_state` and
-:meth:`~determined.searcher.SearchMethod.load_method_state` of
-:class:`~determined.searcher.SearchMethod` is not mandatory. However, it is *recommended* as it
-enables fault tolerance.
+:class:`~determined.searcher.SearchMethod`, overriding its event handler methods. If you want to
+achieve fault tolerance and your search method carries any state in addition to the SearcherState
+passed into the event handlers, also override
+:meth:`~determined.searcher.SearchMethod.save_method_state` and
+:meth:`~determined.searcher.SearchMethod.load_method_state`.
 
 To run the custom hyperparameter tuning algorithm, you can use:
 
--  :class:`~determined.searcher.LocalSearchRunner` that executes on your machine,
--  :class:`~determined.searcher.RemoteSearchRunner` that runs on a Determined cluster.
+-  :class:`~determined.searcher.LocalSearchRunner` to run on your machine,
+-  :class:`~determined.searcher.RemoteSearchRunner` to run on a Determined cluster.
 
-Both Search Runners execute the custom hyperparameter tuning algorithm and start a multi-trial
+Both search runners execute the custom hyperparameter tuning algorithm and start a multi-trial
 experiment on a Determined cluster.
 
 The following sections explain the steps to take in order to implement and use a custom
-hyperparameter search algorithm. A detailed example can be found here:
-:download:`asha_search_method.tgz </examples/asha_search_method.tgz>`
+hyperparameter search algorithm. A detailed example can be found in
+:download:`asha_search_method.tgz </examples/asha_search_method.tgz>`.
 
 **********************************************
  Experiment Configuration for Custom Searcher
 **********************************************
 
-You have to specify "custom" searcher type in the experiment configuration:
+Specify the ``custom`` searcher type in the experiment configuration:
 
 .. code:: yaml
 
@@ -50,16 +50,6 @@ You have to specify "custom" searcher type in the experiment configuration:
      metric: validation_loss
      smaller_is_better: true
      unit: batches
-
-******************************
- Search Method Implementation
-******************************
-
-Subclass :class:`~determined.searcher.SearchMethod`. Override its event handlers. If your search
-method carries any state in addition to SearcherState passed into the event handlers and if you want
-to achieve fault tolerance, override :meth:`~determined.searcher.SearchMethod.save_method_state` and
-:meth:`~determined.searcher.SearchMethod.load_method_state` of
-:class:`~determined.searcher.SearchMethod`.
 
 ***********************************
  Run Hyperparameter Search Locally
@@ -89,7 +79,7 @@ look like the following ``run_local_searcher.py``:
        # correct resumption of the SearchMethod.
        searcher_dir = Path("local_search_runner/searcher_dir")
 
-       # instantiate your search method, passing the necessary parameters
+       # Instantiate your search method, passing the necessary parameters.
        search_method = MySearchMethod(...)
 
        search_runner = searcher.LocalSearchRunner(search_method, searcher_dir=searcher_dir)

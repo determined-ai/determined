@@ -146,7 +146,7 @@ class Progress(Operation):
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
-            searcherProgress=bindings.v1SearcherProgressOperation(progress=self.progress)
+            setSearcherProgress=bindings.v1SetSearcherProgressOperation(progress=self.progress)
         )
 
 
@@ -159,7 +159,7 @@ class Shutdown(Operation):
         super().__init__()
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
-        return bindings.v1SearcherOperation(shutdown=bindings.v1ShutdownOperation())
+        return bindings.v1SearcherOperation(shutDown=bindings.v1ShutDownOperation())
 
 
 class Create(Operation):

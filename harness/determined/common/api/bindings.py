@@ -6653,15 +6653,15 @@ class v1SearcherOperation:
         *,
         closeTrial: "typing.Optional[v1CloseTrialOperation]" = None,
         createTrial: "typing.Optional[v1CreateTrialOperation]" = None,
-        searcherProgress: "typing.Optional[v1SearcherProgressOperation]" = None,
-        shutdown: "typing.Optional[v1ShutdownOperation]" = None,
+        setSearcherProgress: "typing.Optional[v1SetSearcherProgressOperation]" = None,
+        shutDown: "typing.Optional[v1ShutDownOperation]" = None,
         trialOperation: "typing.Optional[v1TrialOperation]" = None,
     ):
         self.trialOperation = trialOperation
         self.createTrial = createTrial
         self.closeTrial = closeTrial
-        self.shutdown = shutdown
-        self.searcherProgress = searcherProgress
+        self.shutDown = shutDown
+        self.setSearcherProgress = setSearcherProgress
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearcherOperation":
@@ -6669,8 +6669,8 @@ class v1SearcherOperation:
             trialOperation=v1TrialOperation.from_json(obj["trialOperation"]) if obj.get("trialOperation", None) is not None else None,
             createTrial=v1CreateTrialOperation.from_json(obj["createTrial"]) if obj.get("createTrial", None) is not None else None,
             closeTrial=v1CloseTrialOperation.from_json(obj["closeTrial"]) if obj.get("closeTrial", None) is not None else None,
-            shutdown=v1ShutdownOperation.from_json(obj["shutdown"]) if obj.get("shutdown", None) is not None else None,
-            searcherProgress=v1SearcherProgressOperation.from_json(obj["searcherProgress"]) if obj.get("searcherProgress", None) is not None else None,
+            shutDown=v1ShutDownOperation.from_json(obj["shutDown"]) if obj.get("shutDown", None) is not None else None,
+            setSearcherProgress=v1SetSearcherProgressOperation.from_json(obj["setSearcherProgress"]) if obj.get("setSearcherProgress", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -6678,27 +6678,8 @@ class v1SearcherOperation:
             "trialOperation": self.trialOperation.to_json() if self.trialOperation is not None else None,
             "createTrial": self.createTrial.to_json() if self.createTrial is not None else None,
             "closeTrial": self.closeTrial.to_json() if self.closeTrial is not None else None,
-            "shutdown": self.shutdown.to_json() if self.shutdown is not None else None,
-            "searcherProgress": self.searcherProgress.to_json() if self.searcherProgress is not None else None,
-        }
-
-class v1SearcherProgressOperation:
-    def __init__(
-        self,
-        *,
-        progress: "typing.Optional[float]" = None,
-    ):
-        self.progress = progress
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SearcherProgressOperation":
-        return cls(
-            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "progress": dump_float(self.progress) if self.progress is not None else None,
+            "shutDown": self.shutDown.to_json() if self.shutDown is not None else None,
+            "setSearcherProgress": self.setSearcherProgress.to_json() if self.setSearcherProgress is not None else None,
         }
 
 class v1SetCommandPriorityRequest:
@@ -6783,6 +6764,25 @@ class v1SetNotebookPriorityResponse:
     def to_json(self) -> typing.Any:
         return {
             "notebook": self.notebook.to_json() if self.notebook is not None else None,
+        }
+
+class v1SetSearcherProgressOperation:
+    def __init__(
+        self,
+        *,
+        progress: "typing.Optional[float]" = None,
+    ):
+        self.progress = progress
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetSearcherProgressOperation":
+        return cls(
+            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "progress": dump_float(self.progress) if self.progress is not None else None,
         }
 
 class v1SetShellPriorityRequest:
@@ -6963,7 +6963,7 @@ class v1Shell:
             "jobId": self.jobId,
         }
 
-class v1ShutdownOperation:
+class v1ShutDownOperation:
     def __init__(
         self,
         *,
@@ -6972,7 +6972,7 @@ class v1ShutdownOperation:
         self.placeholder = placeholder
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1ShutdownOperation":
+    def from_json(cls, obj: Json) -> "v1ShutDownOperation":
         return cls(
             placeholder=obj.get("placeholder", None),
         )

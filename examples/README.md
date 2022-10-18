@@ -82,7 +82,7 @@
 |:------------------------------------------------------------------------:|:-------:|:----------:|
 | [hp\_constraints\_mnist\_pytorch](features/hp_constraints_mnist_pytorch) | MNIST   | PyTorch    |
 
-## Custom SearchMethod
+## Custom Search Method
 
 | Example                                                                  | Dataset | Framework  |
 |:------------------------------------------------------------------------:|:-------:|:----------:|

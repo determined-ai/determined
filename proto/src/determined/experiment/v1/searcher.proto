@@ -129,9 +129,9 @@ message ValidateAfterOperation {
   uint64 length = 2;
 }
 
-// SearcherProgressOperation informs the master of the progress of the custom
+// SetSearcherProgressOperation informs the master of the progress of the custom
 // searcher.
-message SearcherProgressOperation {
+message SetSearcherProgressOperation {
   // Experiment progress as a float between 0.0 and 1.0.
   double progress = 1;
 }
@@ -160,7 +160,7 @@ message CloseTrialOperation {
 }
 
 // Shut down custom searcher method.
-message ShutdownOperation {
+message ShutDownOperation {
   // Cannot have an empty message type.
   int32 placeholder = 1;
 }
@@ -171,15 +171,15 @@ message SearcherOperation {
   oneof union {
     // TrialOperation is issued to tell an existing trial to do something.
     TrialOperation trial_operation = 1;
-    // CreateTrial is issued to create trial.
+    // CreateTrialOperation is issued to create a trial.
     CreateTrialOperation create_trial = 2;
-    // CloseTrial is issued to close trial.
+    // CloseTrialOperation is issued to close a trial.
     CloseTrialOperation close_trial = 3;
-    // ShutdownOperation is issued to shutdown the custom search method.
-    ShutdownOperation shutdown = 4;
-    // SearcherProgressOperation is issued to get the progress of custom
+    // ShutDownOperation is issued to shut down the custom search method.
+    ShutDownOperation shut_down = 4;
+    // SetSearcherProgressOperation is issued to set the progress of the custom
     // search method.
-    SearcherProgressOperation searcher_progress = 5;
+    SetSearcherProgressOperation set_searcher_progress = 5;
   }
 }
 

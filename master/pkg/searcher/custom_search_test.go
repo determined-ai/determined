@@ -21,8 +21,7 @@ func (m *idMaker) next() int32 {
 	return m.num
 }
 
-// Testing a few methods (not all because they are similar) from customSearcherMethod to ensure that
-// the methods and the queue are working well.
+// Test a few methods (not all because they are similar) from CustomSearchMethod and the queue.
 func TestCustomSearchMethod(t *testing.T) {
 	config := expconf.SearcherConfig{
 		RawCustomConfig: &expconf.CustomConfig{},

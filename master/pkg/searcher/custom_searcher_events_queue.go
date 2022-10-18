@@ -95,13 +95,13 @@ func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 
 // RemoveUpTo removes all events up to and including the one with the given event ID.
 func (q *SearcherEventQueue) RemoveUpTo(eventID int) error {
-	for i, v := range q.events {
-		if v.Id == int32(eventID) {
-			q.events = q.events[i+1:]
-			return nil
-		}
+	maxID := int(q.eventCount)
+	minID := maxID - (len(q.events) - 1)
+	if !(minID <= eventID && eventID <= maxID) {
+		return fmt.Errorf("event %d not found", eventID)
 	}
-	return fmt.Errorf("event %d not found", eventID)
+	q.events = q.events[eventID-minID+1:]
+	return nil
 }
 
 // MarshalJSON implements the json.Marshaler interface.
