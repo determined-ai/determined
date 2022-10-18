@@ -67,7 +67,7 @@ class DetSDTextualInversionPipeline:
         self.scheduler = defaults.NOISE_SCHEDULER_DICT[self.scheduler_name](**scheduler_kwargs)
 
         # The below attrs are non-trivially instantiated as necessary through appropriate methods.
-        self.all_checkpoint_paths = []
+        self.all_checkpoint_dirs = []
         self.learned_embeddings_dict = {}
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
@@ -136,13 +136,14 @@ class DetSDTextualInversionPipeline:
                     paths = None
                 paths = core_context.distributed.broadcast_local(paths)
                 if not is_local_main_process:
-                    pipeline.load_from_checkpoint_paths(paths)
+                    for path in paths:
+                        pipeline.load_from_checkpoint_dir(path)
 
             if local_checkpoint_paths_list:
                 for path_str in local_checkpoint_paths_list:
                     path = pathlib.Path(path_str)
-                    pipeline.load_from_checkpoint_paths(
-                        checkpoint_paths=path.parent, learned_embeddings_filename=path.name
+                    pipeline.load_from_checkpoint_dir(
+                        checkpoint_dir=path.parent, learned_embeddings_filename=path.name
                     )
 
             # Create the Tensorboard writer.
@@ -236,65 +237,57 @@ class DetSDTextualInversionPipeline:
                     # Report zero upon completion.
                     op.report_completed(0)
 
-    def load_from_checkpoint_paths(
+    def load_from_checkpoint_dir(
         self,
-        checkpoint_paths: Union[Union[str, pathlib.Path], List[Union[str, pathlib.Path]]],
+        checkpoint_dir: Union[str, pathlib.Path],
         learned_embeddings_filename: Optional[str] = None,
     ) -> None:
-        """Load concepts from one or more checkpoint paths, each of which is expected contain a
-        file with the name matching the provided `learned_embeddings_filename` or else the __init__
-        `learned_embeddings_filename` arg if omitted. The file is expected to contain a dictionary
+        """Load concepts from a checkpoint directory which is expected contain a file with the name
+        matching the provided `learned_embeddings_filename` or, if omitted, the __init__
+        `learned_embeddings_filename`. The file is expected to contain a dictionary
         whose keys are the `concept_token`s and whose values are dictionaries containing an
         `initializer_token` key and a `learned_embeddings` whose corresponding values are the
         initializer string and learned embedding tensors, respectively.
         """
-        if not checkpoint_paths:
+        if not checkpoint_dir:
             return
 
         learned_embeddings_filename = (
             learned_embeddings_filename or self.learned_embeddings_filename
         )
+        if isinstance(checkpoint_dir, str):
+            checkpoint_dir = pathlib.Path(checkpoint_dir)
+        learned_embeddings_dict = torch.load(checkpoint_dir.joinpath(learned_embeddings_filename))
 
-        if isinstance(checkpoint_paths, str):
-            checkpoint_paths = [pathlib.Path(checkpoint_paths)]
-        if isinstance(checkpoint_paths, pathlib.Path):
-            checkpoint_paths = [checkpoint_paths]
+        # Update embedding matrix and attrs.
+        for concept_token, embedding_dict in learned_embeddings_dict.items():
+            if concept_token in self.learned_embeddings_dict:
+                raise ValueError(f"Checkpoint concept conflict: {concept_token} already exists.")
+            initializer_tokens = embedding_dict["initializer_tokens"]
+            learned_embeddings = embedding_dict["learned_embeddings"]
+            (
+                initializer_ids,
+                dummy_placeholder_ids,
+                dummy_placeholder_tokens,
+            ) = utils.add_new_tokens_to_tokenizer(
+                concept_token=concept_token,
+                initializer_tokens=initializer_tokens,
+                tokenizer=self.pipeline.tokenizer,
+            )
 
-        for path in checkpoint_paths:
-            if isinstance(path, str):
-                path = pathlib.Path(path)
-            learned_embeddings_dict = torch.load(path.joinpath(learned_embeddings_filename))
-            # Update embedding matrix and attrs.
-            for concept_token, embedding_dict in learned_embeddings_dict.items():
-                if concept_token in self.learned_embeddings_dict:
-                    raise ValueError(
-                        f"Checkpoint concept conflict: {concept_token} already exists."
-                    )
-                initializer_tokens = embedding_dict["initializer_tokens"]
-                learned_embeddings = embedding_dict["learned_embeddings"]
-                (
-                    initializer_ids,
-                    dummy_placeholder_ids,
-                    dummy_placeholder_tokens,
-                ) = utils.add_new_tokens_to_tokenizer(
-                    concept_token=concept_token,
-                    initializer_tokens=initializer_tokens,
-                    tokenizer=self.pipeline.tokenizer,
-                )
-
-                self.pipeline.text_encoder.resize_token_embeddings(len(self.pipeline.tokenizer))
-                token_embeddings = self.pipeline.text_encoder.get_input_embeddings().weight.data
-                # Sanity check on length.
-                # TODO: replace with strict=True in zip after upgrade to py >= 3.10
-                assert len(dummy_placeholder_ids) == len(
-                    learned_embeddings
-                ), "dummy_placeholder_ids and learned_embeddings must have the same length"
-                for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
-                    token_embeddings[d_id] = tensor
-                self.learned_embeddings_dict[concept_token] = embedding_dict
-                self.all_added_concepts.append(concept_token)
-                self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
-            self.all_checkpoint_paths.append(path)
+            self.pipeline.text_encoder.resize_token_embeddings(len(self.pipeline.tokenizer))
+            token_embeddings = self.pipeline.text_encoder.get_input_embeddings().weight.data
+            # Sanity check on length.
+            # TODO: replace with strict=True in zip after upgrade to py >= 3.10
+            assert len(dummy_placeholder_ids) == len(
+                learned_embeddings
+            ), "dummy_placeholder_ids and learned_embeddings must have the same length"
+            for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
+                token_embeddings[d_id] = tensor
+            self.learned_embeddings_dict[concept_token] = embedding_dict
+            self.all_added_concepts.append(concept_token)
+            self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
+        self.all_checkpoint_dirs.append(checkpoint_dir)
 
     def load_from_uuids(
         self,
@@ -310,7 +303,8 @@ class DetSDTextualInversionPipeline:
         for u in uuids:
             checkpoint = client.get_checkpoint(u)
             checkpoint_paths.append(pathlib.Path(checkpoint.download()))
-        self.load_from_checkpoint_paths(checkpoint_paths)
+        for path in checkpoint_paths:
+            self.load_from_checkpoint_dir(path)
         return checkpoint_paths
 
     def _build_pipeline(self, disable_progress_bar: bool = True) -> None:
