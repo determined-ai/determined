@@ -842,7 +842,7 @@ message GetCurrentTrialSearcherOperationRequest {
 // Response to GetCurrentTrialSearcherOperationRequest
 message GetCurrentTrialSearcherOperationResponse {
   // The current searcher operation.
-  determined.experiment.v1.SearcherOperation op = 1;
+  determined.experiment.v1.TrialOperation op = 1;
   // The status of the searcher operation.
   bool completed = 2;
 }

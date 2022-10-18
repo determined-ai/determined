@@ -145,24 +145,24 @@ func NewCreateFromCheckpoint(
 func CreateFromProto(
 	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
 	sequencerType model.WorkloadSequencerType,
-) Create {
+) (*Create, error) {
 	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial ID %s", protoSearcherOp.CreateTrial.RequestId))
+		return nil, fmt.Errorf("unparseable trial ID %s", protoSearcherOp.CreateTrial.RequestId)
 	}
 	// TODO: Determine whether trial seed is set on client or on master.
 	trialSeed := uint32(42)
 	var hparams HParamSample
 	if err = json.Unmarshal([]byte(protoSearcherOp.CreateTrial.Hyperparams), &hparams); err != nil {
 		// TODO: Should we return this err instead?
-		panic(fmt.Sprintf("Unparseable hyperparams %s", protoSearcherOp.CreateTrial.Hyperparams))
+		return nil, fmt.Errorf("unparseable hyperparams %s", protoSearcherOp.CreateTrial.Hyperparams)
 	}
-	return Create{
+	return &Create{
 		RequestID:             model.RequestID(requestID),
 		TrialSeed:             trialSeed,
 		Hparams:               hparams,
 		WorkloadSequencerType: sequencerType,
-	}
+	}, nil
 }
 
 func (create Create) String() string {
@@ -201,16 +201,16 @@ func NewValidateAfter(requestID model.RequestID, length uint64) ValidateAfter {
 
 // ValidateAfterFromProto returns a ValidateAfter operation from its protobuf representation.
 func ValidateAfterFromProto(
-	op *experimentv1.SearcherOperation_ValidateAfter,
-) ValidateAfter {
+	op *experimentv1.TrialOperation_ValidateAfter,
+) (*ValidateAfter, error) {
 	requestID, err := uuid.Parse(op.ValidateAfter.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial ID %s", op.ValidateAfter.RequestId))
+		return nil, fmt.Errorf("unparseable trial ID %s", op.ValidateAfter.RequestId)
 	}
-	return ValidateAfter{
+	return &ValidateAfter{
 		RequestID: model.RequestID(requestID),
 		Length:    op.ValidateAfter.Length,
-	}
+	}, nil
 }
 
 func (t ValidateAfter) String() string {
@@ -257,14 +257,14 @@ func NewClose(requestID model.RequestID) Close {
 // CloseFromProto returns a Close operation from its protobuf representation.
 func CloseFromProto(
 	op *experimentv1.SearcherOperation_CloseTrial,
-) Close {
+) (*Close, error) {
 	requestID, err := uuid.Parse(op.CloseTrial.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial ID %s", op.CloseTrial.RequestId))
+		return nil, fmt.Errorf("unparseable trial ID %s", op.CloseTrial.RequestId)
 	}
-	return Close{
+	return &Close{
 		RequestID: model.RequestID(requestID),
-	}
+	}, nil
 }
 
 func (close Close) String() string {

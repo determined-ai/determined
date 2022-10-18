@@ -427,17 +427,35 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		for _, searcherOp := range msg.SearcherOperations {
 			switch concreteOperation := searcherOp.GetUnion().(type) {
 			case *experimentv1.SearcherOperation_CreateTrial:
-				ops = append(ops, searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType))
+				op, err := searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
+				if err != nil {
+					ctx.Log().Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
 			case *experimentv1.SearcherOperation_Shutdown:
 				ops = append(ops, searcher.NewShutdown())
-			case *experimentv1.SearcherOperation_ValidateAfter:
-				ops = append(ops, searcher.ValidateAfterFromProto(concreteOperation))
+			case *experimentv1.SearcherOperation_TrialOperation:
+				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
+				case *experimentv1.TrialOperation_ValidateAfter:
+					op, err := searcher.ValidateAfterFromProto(sub)
+					if err != nil {
+						ctx.Log().Error(err)
+					} else {
+						ops = append(ops, *op)
+					}
+				}
 			case *experimentv1.SearcherOperation_CloseTrial:
-				ops = append(ops, searcher.CloseFromProto(concreteOperation))
+				op, err := searcher.CloseFromProto(concreteOperation)
+				if err != nil {
+					ctx.Log().Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
 			case *experimentv1.SearcherOperation_SearcherProgress:
 				ops = append(ops, searcher.SearcherProgressFromProto(concreteOperation))
 			default:
-				ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
+				ctx.Log().Errorf("unimplemented op %+v", concreteOperation)
 			}
 		}
 		ctx.Log().Infof("processing searcher operations %+v", ops)

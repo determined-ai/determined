@@ -1045,8 +1045,8 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 	}
 
 	return &apiv1.GetCurrentTrialSearcherOperationResponse{
-		Op: &experimentv1.SearcherOperation{
-			Union: &experimentv1.SearcherOperation_ValidateAfter{
+		Op: &experimentv1.TrialOperation{
+			Union: &experimentv1.TrialOperation_ValidateAfter{
 				ValidateAfter: resp.Op.ToProto(),
 			},
 		},
