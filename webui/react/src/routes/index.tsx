@@ -55,6 +55,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
 };
 
 const defaultRouteId = 'uncategorized';
+const rbacDefaultRouteId = 'workspaceList';
 
 const appRoutes: RouteConfig[] = Routes.map((route) => {
   if (!routeComponentMap[route.id]) {
@@ -64,6 +65,9 @@ const appRoutes: RouteConfig[] = Routes.map((route) => {
 });
 
 export const defaultRoute = appRoutes.find((route) => route.id === defaultRouteId) as RouteConfig;
+export const rbacDefaultRoute = appRoutes.find(
+  (route) => route.id === rbacDefaultRouteId,
+) as RouteConfig;
 
 appRoutes.push({
   id: 'catch-all',

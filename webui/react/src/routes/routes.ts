@@ -47,11 +47,12 @@ const routes: RouteConfig[] = [
     title: 'Uncategorized',
   },
   {
-    id: 'workspaceList',
+    icon: 'experiment',
+    id: 'uncategorized',
     needAuth: true,
     path: '/',
-    redirect: '/workspaces',
-    title: 'Workspace',
+    redirect: '/projects/1',
+    title: 'Uncategorized',
   },
   {
     id: 'trialDetails',

@@ -11,7 +11,8 @@ import PageMessage from 'components/PageMessage';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
-import { defaultRoute } from 'routes';
+import useFeature from 'hooks/useFeature';
+import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
@@ -41,6 +42,7 @@ const SignIn: React.FC = () => {
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
   const [canceler] = useState(new AbortController());
+  const rbacEnabled = useFeature().isOn('rbac');
 
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
@@ -74,14 +76,17 @@ const SignIn: React.FC = () => {
       // Reroute the authenticated user to the app.
       const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       if (!queries.redirect) {
-        routeToReactUrl(locationToPath(loginRedirect) || defaultRoute.path);
+        routeToReactUrl(
+          locationToPath(loginRedirect) ||
+            (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
+        );
       } else {
         routeAll(queries.redirect);
       }
     } else if (auth.checked) {
       storeDispatch({ type: StoreActionUI.HideUISpinner });
     }
-  }, [auth, info, location, queries, storeDispatch]);
+  }, [auth, info, location, queries, storeDispatch, rbacEnabled]);
 
   useEffect(() => {
     storeDispatch({ type: StoreActionUI.HideUIChrome });
