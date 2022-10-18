@@ -74,6 +74,12 @@ type DBConfig struct {
 	SSLRootCert string `json:"ssl_root_cert"`
 }
 
+// WebhookConfig hosts configuration fields for webhook functionality.
+type WebhookConfig struct {
+	BaseURL    string `json:"base_url"`
+	SigningKey string `json:"signing_key"`
+}
+
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{
@@ -92,10 +98,8 @@ func DefaultConfig() *Config {
 			SSH: SSHConfig{
 				RsaKeySize: 1024,
 			},
-			AuthZ:             *DefaultAuthZConfig(),
-			WebhookSigningKey: "",
+			AuthZ: *DefaultAuthZConfig(),
 		},
-		BaseURL: "",
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port:        0,
 		HarnessPath: "/opt/determined",
@@ -115,6 +119,10 @@ func DefaultConfig() *Config {
 		// For developers this should be a writable directory for caching files.
 		Cache: CacheConfig{
 			CacheDir: "/var/cache/determined",
+		},
+		Webhook: WebhookConfig{
+			BaseURL:    "",
+			SigningKey: "",
 		},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
@@ -148,7 +156,7 @@ type Config struct {
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
-	BaseURL               string                            `json:"base_url"`
+	Webhook               WebhookConfig                     `json:"webhook"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
@@ -228,12 +236,12 @@ func (c *Config) Resolve() error {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
-	if c.Security.WebhookSigningKey == "" {
+	if c.Webhook.SigningKey == "" {
 		b := make([]byte, 6)
 		if _, err := rand.Read(b); err != nil {
 			return err
 		}
-		c.Security.WebhookSigningKey = hex.EncodeToString(b)
+		c.Webhook.SigningKey = hex.EncodeToString(b)
 	}
 
 	if err := c.ResolveResource(); err != nil {
@@ -249,11 +257,10 @@ func (c *Config) Resolve() error {
 
 // SecurityConfig is the security configuration for the master.
 type SecurityConfig struct {
-	DefaultTask       model.AgentUserGroup `json:"default_task"`
-	TLS               TLSConfig            `json:"tls"`
-	SSH               SSHConfig            `json:"ssh"`
-	AuthZ             AuthZConfig          `json:"authz"`
-	WebhookSigningKey string               `json:"webhook_signing_key"`
+	DefaultTask model.AgentUserGroup `json:"default_task"`
+	TLS         TLSConfig            `json:"tls"`
+	SSH         SSHConfig            `json:"ssh"`
+	AuthZ       AuthZConfig          `json:"authz"`
 }
 
 // SSHConfig is the configuration setting for SSH.
