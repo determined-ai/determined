@@ -20,9 +20,10 @@ const BasicAuthZType = "basic"
 
 // AuthZConfig is a authz-related section of master config.
 type AuthZConfig struct {
-	Type          string  `json:"type"`
-	FallbackType  *string `json:"fallback"`
-	RBACUIEnabled *bool   `json:"rbac_ui_enabled"`
+	Type              string  `json:"type"`
+	FallbackType      *string `json:"fallback"`
+	RBACUIEnabled     *bool   `json:"rbac_ui_enabled"`
+	StrictNTSCEnabled bool    `json:"_strict_ntsc_enabled"`
 }
 
 // DefaultAuthZConfig returns default authz config.

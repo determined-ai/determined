@@ -83,11 +83,11 @@ func (s *tournamentSearch) trialCreated(
 }
 
 func (s *tournamentSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64,
+	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
 	subSearchID := s.TrialTable[requestID]
 	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.validationCompleted(ctx, requestID, metric)
+	ops, err := subSearch.validationCompleted(ctx, requestID, metric, op)
 	return s.markCreates(subSearchID, ops), err
 }
 

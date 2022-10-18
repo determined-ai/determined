@@ -17,7 +17,7 @@ import {
   assignRolesToGroup,
   assignRolesToUser,
   removeRoleFromGroup,
-  removeRoleFromUser,
+  removeRolesFromUser,
 } from 'services/api';
 import { V1Group, V1GroupDetails, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
@@ -228,8 +228,8 @@ const WorkspaceMembers: React.FC<Props> = ({
             try {
               // Try to remove the old role and then add the new role
               isUser(record)
-                ? await removeRoleFromUser({
-                    roleId: oldRoleId,
+                ? await removeRolesFromUser({
+                    roleIds: [oldRoleId],
                     userId: userOrGroupId,
                   })
                 : await removeRoleFromGroup({

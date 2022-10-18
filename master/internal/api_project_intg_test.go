@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -24,6 +25,10 @@ import (
 )
 
 var pAuthZ *mocks.ProjectAuthZ
+
+func isMockAuthZ() bool {
+	return config.GetMasterConfig().Security.AuthZ.Type == "mock"
+}
 
 func projectNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
@@ -42,16 +47,16 @@ func setupProjectAuthZTest(
 }
 
 func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {
-	if wAuthZ != nil {
+	if isMockAuthZ() {
 		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	}
 	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, werr)
 
-	if wAuthZ != nil {
+	if isMockAuthZ() {
 		wAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	}
-	if pAuthZ != nil {
+	if isMockAuthZ() {
 		pAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
 	}
 	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{

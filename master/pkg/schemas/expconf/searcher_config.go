@@ -17,6 +17,7 @@ type SearcherConfigV0 struct {
 	RawGridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
 	RawAsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
+	RawCustomConfig       *CustomConfigV0       `union:"name,custom" json:"-"`
 
 	// These searchers are allowed only to help parse old experiment configs.
 	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
@@ -61,6 +62,8 @@ func (s SearcherConfigV0) Unit() Unit {
 		return s.RawAsyncHalvingConfig.Unit()
 	case s.RawAdaptiveASHAConfig != nil:
 		return s.RawAdaptiveASHAConfig.Unit()
+	case s.RawCustomConfig != nil:
+		panic("custom searcher config does not provide Unit()")
 	case s.RawSyncHalvingConfig != nil:
 		panic("cannot get unit of EOL searcher class")
 	case s.RawAdaptiveConfig != nil:
@@ -70,6 +73,12 @@ func (s SearcherConfigV0) Unit() Unit {
 	default:
 		panic("no searcher type specified")
 	}
+}
+
+//go:generate ../gen.sh
+// CustomConfigV0 configures a custom search.
+type CustomConfigV0 struct {
+	RawUnit *Unit `json:"unit"`
 }
 
 //go:generate ../gen.sh

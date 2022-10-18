@@ -203,6 +203,10 @@ resource "google_compute_instance" "agent_instance" {
         --network ${var.agent_docker_network} \
         --restart unless-stopped \
         -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /usr/sbin/shutdown:/usr/sbin/shutdown \
+        -v /run/systemd/system:/run/systemd/system \
+        -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
+        -v /sys/fs/cgroup:/sys/fs/cgroup \
         -e DET_MASTER_HOST=${google_compute_instance.master_instance.network_interface.0.network_ip} \
         -e DET_RESOURCE_POOL=compute-pool \
         ${var.image_repo_prefix}/determined-agent:${var.det_version}  run --master-port=${var.port}

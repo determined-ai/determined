@@ -643,7 +643,9 @@ points in the grid for this hyperparameter. Grid points are evenly spaced betwee
 The ``searcher`` section defines how the experiment's hyperparameter space will be explored. To run
 an experiment that trains a single trial with fixed hyperparameters, specify the ``single`` searcher
 and specify constant values for the model's hyperparameters. Otherwise, Determined supports three
-different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``.
+different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``. To define
+your own hyperparameter search algorithm, specify the ``custom`` searcher. For more information
+about custom search algorithms, see :ref:`topic-guides_hp-tuning-det_custom`.
 
 The name of the hyperparameter search algorithm to use is configured via the ``name`` field; the
 remaining fields configure the behavior of the searcher and depend on the searcher being used. For
@@ -1277,9 +1279,9 @@ To verify your search is working as intended before committing to a full run, yo
 
 .. _slurm-config:
 
-***********************
- Slurm Cluster Details
-***********************
+***************
+ Slurm Options
+***************
 
 The ``slurm`` section specifies configuration options applicable when the cluster is configured with
 :ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
@@ -1297,3 +1299,24 @@ The ``slurm`` section specifies configuration options applicable when the cluste
          sbatch_args:
             - --mem-per-cpu=10
             - --exclusive
+
+*************
+ PBS Options
+*************
+
+The ``pbs`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: pbs <cluster-configuration-slurm>`.
+
+**Optional Fields**
+
+``pbsbatch_args``
+   Additional PBS options to be passed when launching trials with ``qsub``. These options enable
+   control of PBS options not otherwise managed by Determined. For example, to specify that the job
+   should have a priority of ``1000`` and a project name of ``MyProjectName``, you could specify:
+
+   .. code:: yaml
+
+      pbs:
+         pbsbatch_args:
+            - -p1000
+            - -PMyProjectName

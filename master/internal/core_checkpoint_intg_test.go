@@ -8,6 +8,7 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +25,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	dets3 "github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -147,7 +150,13 @@ func setupCheckpointTestEcho(t *testing.T) (
 	api, _, _ := setupAPITest(t)
 	e := echo.New()
 	rec := httptest.NewRecorder()
-	return api, e.NewContext(nil, rec), rec
+	ctx := &detContext.DetContext{Context: e.NewContext(nil, rec)}
+
+	admin, err := user.UserByUsername("admin")
+	require.NoError(t, err)
+	ctx.SetUser(*admin)
+
+	return api, ctx, rec
 }
 
 func TestGetCheckpointEcho(t *testing.T) {
@@ -228,7 +237,7 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 		// Checkpoint not found
 		require.Equal(t,
 			echo.NewHTTPError(http.StatusNotFound,
-				"checkpoint 7e0bad2c-b3f6-4988-916c-eb3081b19db0 does not exist"),
+				"checkpoint not found: 7e0bad2c-b3f6-4988-916c-eb3081b19db0"),
 			curCase.IDToReqCall("7e0bad2c-b3f6-4988-916c-eb3081b19db0"))
 
 		// Invalid checkpoint UUID
@@ -238,6 +247,38 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 					"invalid UUID length: 34"),
 			curCase.IDToReqCall("badbad-b3f6-4988-916c-eb5581b19db0"))
 	}
+}
+
+func TestAuthZCheckpointsEcho(t *testing.T) {
+	api, authZExp, _, curUser, ctx := setupExpAuthTestEcho(t)
+
+	checkpointUUID := uuid.New()
+	checkpointID := checkpointUUID.String()
+
+	ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+	ctx.Request().Header.Set("Accept", MIMEApplicationZip)
+	ctx.SetParamNames("checkpoint_uuid")
+	ctx.SetParamValues(checkpointID)
+
+	// Not found same as permission denied.
+	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
+		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
+
+	addMockCheckpointDB(t, api.m.db, checkpointUUID)
+
+	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
+		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
+
+	expectedErr := fmt.Errorf("canGetExperimentError")
+	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
+
+	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
+	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanGetExperimentArtifacts", curUser, mock.Anything).
+		Return(fmt.Errorf("canGetArtifactsError")).Once()
+	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 }
 
 //nolint: exhaustivestruct

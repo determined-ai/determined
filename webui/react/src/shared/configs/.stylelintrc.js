@@ -1,9 +1,27 @@
 module.exports = {
-  extends: [
-    'stylelint-config-standard',
-    'stylelint-config-prettier', // stylelint-config-prettier should be the last
+  overrides: [
+    {
+      customSyntax: 'postcss-scss',
+      extends: [
+        'stylelint-config-standard',
+        'stylelint-config-standard-scss',
+        'stylelint-config-prettier', // stylelint-config-prettier should be the last
+      ],
+      files: ['**/*.scss'],
+    },
+    {
+      customSyntax: 'postcss-less',
+      extends: [
+        'stylelint-config-standard',
+        'stylelint-config-recommended-less',
+        'stylelint-config-prettier', // stylelint-config-prettier should be the last
+      ],
+      files: ['**/*.less'],
+    },
   ],
-  plugins: ['stylelint-order', 'stylelint-scss'],
+  plugins: ['stylelint-order', 'stylelint-scss', 'stylelint-less'],
+  // *-pattern keys are all null since StyleLint v14 sets the value as kabeb case by default
+  // However, we want to use both kabab and camel cases
   rules: {
     'at-rule-no-unknown': null,
     'at-rule-semicolon-space-before': 'never',
@@ -14,6 +32,7 @@ module.exports = {
     'declaration-block-trailing-semicolon': null,
     'declaration-empty-line-before': 'never',
     'function-name-case': 'lower',
+    'keyframes-name-pattern': null,
     'no-eol-whitespace': [true, { ignore: ['empty-lines'] }],
     'no-extra-semicolons': true,
     'order/order': [
@@ -26,6 +45,7 @@ module.exports = {
       'less-mixins',
     ],
     'order/properties-alphabetical-order': true,
+    'property-no-vendor-prefix': null,
     'rule-empty-line-before': [
       'always',
       {
@@ -33,6 +53,9 @@ module.exports = {
       },
     ],
     'scss/at-rule-no-unknown': true,
+    'selector-class-pattern': null,
+    'selector-id-pattern': null,
+    'selector-not-notation': 'simple',
     'selector-pseudo-class-no-unknown': [true, { ignorePseudoClasses: ['global'] }],
     'string-quotes': 'single',
     'value-keyword-case': null,

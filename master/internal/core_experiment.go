@@ -384,26 +384,33 @@ type CreateExperimentParams struct {
 	Workspace     *string         `json:"workspace"`
 }
 
-var errCantFindProject = fmt.Errorf("unable to find parent workspace and project")
+// ErrProjectNotFound is returned in parseCreateExperiment for when project cannot be found
+// or when project cannot be viewed due to RBAC restrictions.
+type ErrProjectNotFound string
+
+// Error implements the error interface.
+func (p ErrProjectNotFound) Error() string {
+	return string(p)
+}
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
-	*model.Experiment, bool, *tasks.TaskSpec, error,
+	*model.Experiment, *projectv1.Project, bool, *tasks.TaskSpec, error,
 ) {
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(params.ConfigBytes))
 	if err != nil {
-		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Apply the template that the user specified.
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, false, nil, terr
+			return nil, nil, false, nil, terr
 		}
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, false, nil, yerr
+			return nil, nil, false, nil, yerr
 		}
 		// Merge the template into the config.
 		config = schemas.Merge(config, tc).(expconf.ExperimentConfig)
@@ -413,7 +420,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
 	if err != nil {
-		return nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
+		return nil, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
 
 	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
@@ -431,12 +438,12 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
-		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
-		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	var modelBytes []byte
@@ -444,21 +451,21 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		var dbErr error
 		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(*params.ParentID)
 		if dbErr != nil {
-			return nil, false, nil, errors.Wrapf(
+			return nil, nil, false, nil, errors.Wrapf(
 				dbErr, "unable to find parent experiment %v", *params.ParentID)
 		}
 	} else {
 		var compressErr error
 		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
 		if compressErr != nil {
-			return nil, false, nil, errors.Wrapf(
+			return nil, nil, false, nil, errors.Wrapf(
 				compressErr, "unable to find compress model definition")
 		}
 	}
 
 	token, createSessionErr := m.db.StartUserSession(user)
 	if createSessionErr != nil {
-		return nil, false, nil, errors.Wrapf(
+		return nil, nil, false, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
 	}
 	taskSpec.UserSessionToken = token
@@ -467,21 +474,40 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
 	// CreateExperimentParams has highest priority.
 	projectID := 1
-	if params.ProjectID == nil {
+	errProjectNotFound := ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	if params.ProjectID != nil {
+		projectID = *params.ProjectID
+		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	} else {
 		if (config.Workspace() == "") != (config.Project() == "") {
-			return nil, false, nil,
+			return nil, nil, false, nil,
 				errors.New("workspace and project must both be included in config if one is provided")
 		}
 		if config.Workspace() != "" && config.Project() != "" {
+			errProjectNotFound = ErrProjectNotFound(fmt.Sprintf(
+				"workspace '%s' or project '%s' not found",
+				config.Workspace(), config.Project()))
+
 			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
 			if errors.Is(err, db.ErrNotFound) {
-				return nil, false, nil, errCantFindProject
+				return nil, nil, false, nil, errProjectNotFound
 			} else if err != nil {
-				return nil, false, nil, errors.Wrapf(err, errCantFindProject.Error())
+				return nil, nil, false, nil, err
 			}
 		}
-	} else {
-		projectID = *params.ProjectID
+	}
+
+	p := &projectv1.Project{}
+	if err = m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
+		return nil, nil, false, nil, errProjectNotFound
+	} else if err != nil {
+		return nil, nil, false, nil, err
+	}
+	var ok bool
+	if ok, err = project.AuthZProvider.Get().CanGetProject(*user, p); err != nil {
+		return nil, nil, false, nil, err
+	} else if !ok {
+		return nil, nil, false, nil, errProjectNotFound
 	}
 
 	dbExp, err := model.NewExperiment(
@@ -494,7 +520,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		dbExp.Username = user.Username
 	}
 
-	return dbExp, params.ValidateOnly, &taskSpec, err
+	return dbExp, p, params.ValidateOnly, &taskSpec, err
 }
 
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
@@ -516,25 +542,12 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		}
 	}
 
-	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, &user)
-	if errors.Is(err, errCantFindProject) {
-		return nil, echo.NewHTTPError(http.StatusNotFound, errCantFindProject.Error())
-	} else if err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, errors.Wrap(err, "invalid experiment"))
-	}
-
-	// Can we view the project that the experiment will be created in?
-	p := &projectv1.Project{}
-	if err = m.db.QueryProto("get_project", p, dbExp.ProjectID); errors.Is(err, db.ErrNotFound) {
-		return nil, echo.NewHTTPError(http.StatusNotFound, errCantFindProject.Error())
-	} else if err != nil {
+	dbExp, p, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, &user)
+	if err != nil {
+		if _, ok := err.(ErrProjectNotFound); ok {
+			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
 		return nil, err
-	}
-	var ok bool
-	if ok, err = project.AuthZProvider.Get().CanGetProject(user, p); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound, errCantFindProject.Error())
 	}
 
 	// Can we create the experiment?

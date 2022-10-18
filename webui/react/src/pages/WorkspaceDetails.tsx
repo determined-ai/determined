@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -39,25 +39,29 @@ const WorkspaceDetails: React.FC = () => {
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
   const { users } = useStore();
-  const { workspaceId: workspaceID } = useParams<Params>();
+  const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
   const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
-  const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>();
-  const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>();
+  const [usersAssignedDirectlyIds, setUsersAssignedDirectlyIds] = useState<Set<number>>(
+    new Set<number>(),
+  );
+  const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>(
+    new Set<number>(),
+  );
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [nameFilter, setNameFilter] = useState<string>();
   const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
   const [pageError, setPageError] = useState<Error>();
   const [canceler] = useState(new AbortController());
-  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(WorkspaceDetailsTab.Projects);
+  const [tabKey, setTabKey] = useState<WorkspaceDetailsTab>(
+    (tab as WorkspaceDetailsTab) || WorkspaceDetailsTab.Projects,
+  );
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = workspaceID ?? '';
   const id = parseInt(workspaceId);
   const navigate = useNavigate();
-  const location = useLocation();
-  const basePath = paths.workspaceDetails(workspaceId);
   const { canViewWorkspace } = usePermissions();
 
   const fetchWorkspace = useCallback(async () => {
@@ -73,7 +77,7 @@ const WorkspaceDetails: React.FC = () => {
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({}, { signal: canceler.signal });
+      const response = await getGroups({ limit: 100 }, { signal: canceler.signal });
 
       setGroups((prev) => {
         if (isEqual(prev, response.groups)) return prev;
@@ -101,7 +105,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, [id, nameFilter, rbacEnabled]);
+  }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
@@ -119,33 +123,26 @@ const WorkspaceDetails: React.FC = () => {
   const handleTabChange = useCallback(
     (activeTab) => {
       const tab = activeTab as WorkspaceDetailsTab;
-      navigate(`${basePath}/${tab}`, { replace: true });
+      navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
       setTabKey(tab);
     },
-    [basePath, navigate],
+    [workspaceId, navigate],
   );
 
   useEffect(() => {
     // Set the correct pathname to ensure
     // that user settings will save.
-
-    if (
-      !location.pathname.includes(WorkspaceDetailsTab.Projects) &&
-      !location.pathname.includes(WorkspaceDetailsTab.Members)
-    )
-      navigate(`${basePath}/${tabKey}`, { replace: true });
-  }, [basePath, navigate, location.pathname, tabKey]);
+    navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
+    tab && setTabKey(tab as WorkspaceDetailsTab);
+  }, [workspaceId, navigate, tab]);
 
   // Users and Groups that are not already a part of the workspace
   const addableGroups: V1Group[] = groups
     ? groups
-        ?.filter((groupDetails) => {
-          groupDetails.group?.groupId &&
-            !groupsAssignedDirectlyIds?.has(groupDetails.group.groupId);
-        })
         .map((groupDetails) => groupDetails.group)
+        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
     : [];
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds?.has(user.id));
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
   const addableUsersAndGroups = [...addableGroups, ...addableUsers];
 
   useEffect(() => {

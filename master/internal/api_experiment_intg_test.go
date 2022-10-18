@@ -657,20 +657,23 @@ func TestAuthZCreateExperiment(t *testing.T) {
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
 	})
-	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
+	require.Equal(t, status.Errorf(codes.NotFound,
+		fmt.Sprintf("project (%d) not found", projectID)), err)
 
 	// Can't view project passed in from config.
 	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
-	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
+	require.Equal(t, status.Errorf(codes.NotFound,
+		"workspace 'Uncategorized' or project 'Uncategorized' not found"), err)
 
 	// Same as passing in a non existent project.
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",
 	})
-	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
+	require.Equal(t, status.Errorf(codes.NotFound,
+		"workspace 'doesntexist123' or project 'doesntexist123' not found"), err)
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
@@ -886,6 +889,12 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetExperimentTrials(ctx, &apiv1.GetExperimentTrialsRequest{
 				ExperimentId: int32(id),
+			})
+			return err
+		}},
+		{"CanGetExperimentArtifacts", func(id int) error {
+			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
+				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},

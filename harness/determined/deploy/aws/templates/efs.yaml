@@ -170,6 +170,11 @@ Parameters:
     Description: Time between reconnect attempts, with the exception of the first.
     Default: 5
 
+  AgentConfigFileContents:
+    Type: String
+    Description: Contents of the agent config file
+    Default: ''
+
 
   CpuEnvImage:
     Type: String
@@ -812,6 +817,7 @@ Resources:
                 tag_value: det-agent-${AWS::StackName}
                 agent_reconnect_attempts: ${AgentReconnectAttempts}
                 agent_reconnect_backoff: ${AgentReconnectBackoff}
+                agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
                   apt-get update
                   apt-get -y install binutils

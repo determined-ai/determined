@@ -305,3 +305,18 @@ For an introduction to using the training API, please see the Training APIs sect
    -  -  PyTorch
       -  MNIST
       -  :download:`hp_constraints_mnist_pytorch.tgz </examples/hp_constraints_mnist_pytorch.tgz>`
+
+********************************
+ Features: Custom Search Method
+********************************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  MNIST
+      -  :download:`asha_search_method.tgz </examples/asha_search_method.tgz>`

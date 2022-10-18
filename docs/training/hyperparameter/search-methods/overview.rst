@@ -62,6 +62,8 @@ Determined also supports other common hyperparameter search algorithms:
    but periodically replaces low-performing hyperparameter configurations with ones *near* the
    high-performing points in the hyperparameter space.
 
+You can also implement your own :ref:`custom search methods <topic-guides_hp-tuning-det_custom>`.
+
 .. toctree::
    :maxdepth: 1
    :hidden:
@@ -71,3 +73,4 @@ Determined also supports other common hyperparameter search algorithms:
    hp-pbt
    hp-random
    hp-single
+   hp-custom

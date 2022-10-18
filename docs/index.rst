@@ -18,6 +18,7 @@
    Training API Guides <training/apis-howto/overview>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Submit Experiment <training/submit-experiment>
+   Monitor Experiment Through Webhooks  <integrations/notification/index>
    How to Debug Models <training/debug-models>
    Model Management <training/model-management/overview>
    Best Practices <training/best-practices/overview>
@@ -46,6 +47,7 @@
    Model Hub Reference <reference/reference-model-hub/index>
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
+   Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
 
 .. toctree::
    :caption: Tools
