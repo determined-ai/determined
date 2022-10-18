@@ -356,7 +356,10 @@ export const removeRoleFromGroup: DetApi<
       groupRoleAssignments: [
         {
           groupId: params.groupId,
-          roleAssignment: { role: { roleId: params.roleId } },
+          roleAssignment: {
+            role: { roleId: params.roleId },
+            scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+          },
         },
       ],
     }),
@@ -392,6 +395,7 @@ export const removeRolesFromUser: DetApi<
     detApi.RBAC.removeAssignments({
       userRoleAssignments: params.roleIds.map((roleId) => ({
         roleAssignment: { role: { roleId } },
+        scopeWorkspaceId: params.scopeWorkspaceId || undefined,
         userId: params.userId,
       })),
     }),

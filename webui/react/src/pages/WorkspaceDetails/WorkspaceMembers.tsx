@@ -230,21 +230,25 @@ const WorkspaceMembers: React.FC<Props> = ({
               isUser(record)
                 ? await removeRolesFromUser({
                     roleIds: [oldRoleId],
+                    scopeWorkspaceId: workspace.id,
                     userId: userOrGroupId,
                   })
                 : await removeRoleFromGroup({
                     groupId: userOrGroupId,
                     roleId: oldRoleId,
+                    scopeWorkspaceId: workspace.id,
                   });
               try {
                 isUser(record)
                   ? await assignRolesToUser({
                       roleIds: [roleIdValue],
+                      scopeWorkspaceId: workspace.id,
                       userId: userOrGroupId,
                     })
                   : await assignRolesToGroup({
                       groupId: userOrGroupId,
                       roleIds: [roleIdValue],
+                      scopeWorkspaceId: workspace.id,
                     });
               } catch (addRoleError) {
                 handleError(addRoleError, {
