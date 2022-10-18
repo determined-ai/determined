@@ -102,6 +102,7 @@ class Authentication:
             password = getpass.getpass("Password for user '{}': ".format(session_user))
 
         if password:
+            print("it has admin password")
             password = api.salt_and_hash(password)
 
         try:

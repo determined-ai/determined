@@ -47,18 +47,14 @@ def update_user(
 def update_username(user_obj: user.User, new_username: str) -> Response:
     return user_obj.rename(new_username=new_username)
 
-
-@authentication.required
 def list_users(args: Namespace) -> None:
     render.render_objects(FullUser,client.list_users())
 
-@authentication.required
 def activate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
     update_user(user_obj, parsed_args.username, parsed_args.master, active=True)
 
 
-@authentication.required
 def deactivate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
     update_user(user_obj, parsed_args.username, parsed_args.master, active=False)
@@ -103,13 +99,10 @@ def log_out_user(parsed_args: Namespace) -> None:
     token_store.drop_user(auth.get_session_user())
 
 
-@authentication.required
 def rename(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
     update_username(user_obj, parsed_args.new_username)
 
-
-@authentication.required
 def change_password(parsed_args: Namespace) -> None:
     if parsed_args.target_user:
         username = parsed_args.target_user
