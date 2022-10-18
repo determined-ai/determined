@@ -44,6 +44,7 @@ class Govcloud(base.DeterminedDeployment):
         constants.cloudformation.AGENT_REATTACH_ENABLED,
         constants.cloudformation.AGENT_RECONNECT_ATTEMPTS,
         constants.cloudformation.AGENT_RECONNECT_BACKOFF,
+        constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS,
     ]
 
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:

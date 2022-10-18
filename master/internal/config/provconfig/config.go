@@ -20,22 +20,23 @@ const defaultMasterPort = "8080"
 
 // Config describes config for provisioner.
 type Config struct {
-	MasterURL              string            `json:"master_url"`
-	MasterCertName         string            `json:"master_cert_name"`
-	StartupScript          string            `json:"startup_script"`
-	ContainerStartupScript string            `json:"container_startup_script"`
-	AgentDockerNetwork     string            `json:"agent_docker_network"`
-	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
-	AgentDockerImage       string            `json:"agent_docker_image"`
-	AgentFluentImage       string            `json:"agent_fluent_image"`
-	AgentReconnectAttempts int               `json:"agent_reconnect_attempts"`
-	AgentReconnectBackoff  int               `json:"agent_reconnect_backoff"`
-	AWS                    *AWSClusterConfig `union:"type,aws" json:"-"`
-	GCP                    *GCPClusterConfig `union:"type,gcp" json:"-"`
-	MaxIdleAgentPeriod     model.Duration    `json:"max_idle_agent_period"`
-	MaxAgentStartingPeriod model.Duration    `json:"max_agent_starting_period"`
-	MinInstances           int               `json:"min_instances"`
-	MaxInstances           int               `json:"max_instances"`
+	MasterURL               string            `json:"master_url"`
+	MasterCertName          string            `json:"master_cert_name"`
+	StartupScript           string            `json:"startup_script"`
+	ContainerStartupScript  string            `json:"container_startup_script"`
+	AgentDockerNetwork      string            `json:"agent_docker_network"`
+	AgentDockerRuntime      string            `json:"agent_docker_runtime"`
+	AgentDockerImage        string            `json:"agent_docker_image"`
+	AgentFluentImage        string            `json:"agent_fluent_image"`
+	AgentReconnectAttempts  int               `json:"agent_reconnect_attempts"`
+	AgentReconnectBackoff   int               `json:"agent_reconnect_backoff"`
+	AgentConfigFileContents json.RawMessage   `json:"agent_config_file_contents"`
+	AWS                     *AWSClusterConfig `union:"type,aws" json:"-"`
+	GCP                     *GCPClusterConfig `union:"type,gcp" json:"-"`
+	MaxIdleAgentPeriod      model.Duration    `json:"max_idle_agent_period"`
+	MaxAgentStartingPeriod  model.Duration    `json:"max_agent_starting_period"`
+	MinInstances            int               `json:"min_instances"`
+	MaxInstances            int               `json:"max_instances"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.

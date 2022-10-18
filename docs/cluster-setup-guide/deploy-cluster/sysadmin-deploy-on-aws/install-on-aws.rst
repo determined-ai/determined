@@ -229,6 +229,11 @@ Spinning up or updating the Cluster
 
       -  Not set
 
+   -  -  ``--shut-down-on-connection-loss``, ``--no-shut-down-on-connection-loss``
+      -  Whether or not agent instances should automatically shut down when they lose connection to
+         the master.
+      -  Shut down automatically
+
 Tearing Down the Cluster
 ------------------------
 
