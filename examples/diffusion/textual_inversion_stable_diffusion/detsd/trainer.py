@@ -240,7 +240,6 @@ class DetSDTextualInversionTrainer:
                         # Use the accumulate method for efficient gradient accumulation.
                         with trainer.accelerator.accumulate(trainer.text_encoder):
                             trainer._train_one_batch(batch)
-                        # An SGD step has been taken when trainer.accelerator.sync_gradients is True.
                         took_sgd_step = trainer.accelerator.sync_gradients
                         if took_sgd_step:
                             trainer.steps_completed += 1
