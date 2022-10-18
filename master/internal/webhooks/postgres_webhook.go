@@ -149,7 +149,8 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	var c string
 	var mStatus string
 	var projectID *int
-	var w model.Workspace
+	var wId int
+	var w *model.Workspace
 	config := conf.GetMasterConfig()
 	wName := e.Config.Workspace()
 	pName := e.Config.Project()
@@ -159,21 +160,37 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		projectID, err = workspace.ProjectIDByName(context.TODO(), w.ID, pName)
+		if w == nil {
+			return nil, fmt.Errorf("unable to find workspace with name: %v", wName)
+		} else {
+			wId = w.ID
+		}
+		projectID, err = workspace.ProjectIDByName(context.TODO(), wId, pName)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		wId = w.ID
 	}
+
 	if e.State == model.CompletedState {
 		status = "Your experiment completed successfully 🎉"
-		eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>",
-			webUIBaseURL, e.ID, e.Config.Name(), e.ID)
+		if webUIBaseURL != "" {
+			eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>",
+				webUIBaseURL, e.ID, e.Config.Name(), e.ID)
+		} else {
+			eURL = fmt.Sprintf("✅ %v (#%v)", e.Config.Name(), e.ID)
+		}
 		c = "#13B670"
 		mStatus = "Completed"
 	} else {
 		status = "Your experiment has stopped with errors"
-		eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
-			webUIBaseURL, e.ID, e.Config.Name(), e.ID)
+		if webUIBaseURL != "" {
+			eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
+				webUIBaseURL, e.ID, e.Config.Name(), e.ID)
+		} else {
+			eURL = fmt.Sprintf("❌ %v (#%v)", e.Config.Name(), e.ID)
+		}
 		c = "#DD5040"
 		mStatus = "Errored"
 	}
@@ -191,11 +208,11 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 			Text: fmt.Sprintf("*Duration*: %v", duration),
 		},
 	}
-	if wName != "" && webUIBaseURL != "" {
+	if wId != 0 && wName != "" && webUIBaseURL != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>",
-				webUIBaseURL, w.ID, wName),
+				webUIBaseURL, wId, wName),
 		})
 	} else if wName != "" {
 		expBlockFields = append(expBlockFields, Field{
@@ -203,11 +220,11 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 			Text: fmt.Sprintf("*Workspace*: %v", wName),
 		})
 	}
-	if pName != "" && webUIBaseURL != "" {
+	if projectID != nil && pName != "" && webUIBaseURL != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Project*: <%v/det/projects/%v | %v>",
-				webUIBaseURL, projectID, pName),
+				webUIBaseURL, *projectID, pName),
 		})
 	} else if pName != "" {
 		expBlockFields = append(expBlockFields, Field{

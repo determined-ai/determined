@@ -21,7 +21,7 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 func ProjectIDByName(ctx context.Context, workspaceID int, projectName string) (*int, error) {
 	var pID int
 	err := db.Bun().NewRaw("SELECT id FROM projects WHERE name = ? AND workspace_id = ?",
-		workspaceID).Scan(ctx, pID)
+		projectName, workspaceID).Scan(ctx, &pID)
 	if err != nil {
 		return nil, err
 	}
