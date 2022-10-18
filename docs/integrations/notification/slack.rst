@@ -8,7 +8,8 @@ in a specific Slack channel using Slack Webhook Integrations.
 The steps for enablong slack notification are:
 
 #. :ref:`Creating a Slack Application <slack-app-creation>`
-#. :ref:`Enabling Incoming Webhooks <enabling_webhooks>`
+#. :ref:`Enabling Incoming Webhooks in Slack <enabling_webhooks>`
+#. :ref:`Configuring Determined for Slack Webhooks <configuring_determined>`
 #. :ref:`Setting up the Webhook in Determined <setting-up-webhook-in-determined>`
 #. :ref:`Testing the Webhook <testing-webhook>`
 
@@ -31,9 +32,9 @@ In the next window you will choose the "App Name" and select the Workspace for t
 
 .. _enabling_webhooks:
 
-****************************
- Enabling Incoming Webhooks
-****************************
+*************************************
+ Enabling Incoming Webhooks in Slack
+*************************************
 
 Next, we need to configure incoming webhooks for our Slack application. In your Slack application's
 management page navigate to the **Incoming Webhooks** section. Enable the toggle for **Activate
@@ -47,13 +48,45 @@ to Workspace** button at the bottom of the page. On the next page you will be as
 channel that will receive webhook updates. Choose a channel and then press the **Allow** button and
 you will be taken back to the Incoming Webhooks page.
 
+.. _configuring_determined:
+
+*******************************************
+ Configuring Determined for Slack Webhooks
+*******************************************
+
+*Note: The following section is optional but encouraged.*
+
+Determined has the ability to send links to experiments, projects, and workspaces in Slack messages.
+To enable Determined to send correctly formatted links you must set the **Base URL** in the
+Determined cluster configuration. The **Base URL** is the website address that is used to access the
+Determined cluster user interface. The value should be in the format of `https://yourdomain.com`
+
+There are three ways to set the **Base URL**.
+
+#. Setting a **DET_BASE_URL** environment variable.
+#. Using the flag `--base-url`
+#. Adding a `base_url` entry to the master configuration file an example is shown below:
+
+.. image:: /assets/images/slack-base-url-config.png
+   :width: 40%
+
+If the **Base URL** is set correctly then Slack messages will include links as shown below.
+
+.. image:: /assets/images/slack-message-with-links.png
+   :width: 40%
+
+If no **Base URL** is set then links will not be present in Slack messages.
+
+.. image:: /assets/images/slack-message-without-links.png
+   :width: 40%
+
 .. _setting-up-webhook-in-determined:
 
 **************************************
  Setting up the Webhook in Determined
 **************************************
 
-Finally, we will need to add a bebhook in Determined using **Webhook URL** provided by Slack.
+Finally, we will need to add a webhook in Determined using **Webhook URL** provided by Slack.
 
 In the **Webhook URLs for Your Workspace** section of Incoming Webhooks page you should see a list
 of Webhook URLs for all of the channels that you have added. Click the **Copy** button for the
