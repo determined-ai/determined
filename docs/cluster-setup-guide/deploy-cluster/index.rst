@@ -16,7 +16,8 @@ environments:
 +------------------------------------------+-----------------------------------------------------+
 | :doc:`sysadmin-deploy-on-k8s/overview`   | How to run Determined on Kubernetes.                |
 +------------------------------------------+-----------------------------------------------------+
-| :doc:`sysadmin-deploy-on-slurm/overview` | How to run Determined on Slurm.                     |
+| :doc:`sysadmin-deploy-on-slurm/overview` | How to run Determined on an HPC cluster             |
+|                                          | (Slurm/PBS).                                        |
 +------------------------------------------+-----------------------------------------------------+
 
 .. toctree::
@@ -26,4 +27,4 @@ environments:
    Deploy on AWS <sysadmin-deploy-on-aws/overview>
    Deploy on GCP <sysadmin-deploy-on-gcp/overview>
    Deploy on Kubernetes <sysadmin-deploy-on-k8s/overview>
-   Deploy on Slurm <sysadmin-deploy-on-slurm/overview>
+   Deploy on Slurm/PBS <sysadmin-deploy-on-slurm/overview>

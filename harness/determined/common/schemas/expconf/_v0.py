@@ -481,6 +481,13 @@ class AdaptiveMode(enum.Enum):
     AGGRESSIVE = "aggressive"
 
 
+@schemas.register_known_type
+class Unit(enum.Enum):
+    BATCHES = "batches"
+    EPOCHS = "epochs"
+    RECORDS = "records"
+
+
 class SearcherConfigV0(schemas.UnionBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher.json"
     _union_key = "name"
@@ -503,6 +510,23 @@ class SingleConfigV0(schemas.SchemaBase):
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
+    ) -> None:
+        pass
+
+
+@SearcherConfigV0.member("custom")
+class CustomConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
+    metric: str
+    smaller_is_better: Optional[bool] = None
+    unit: Optional[Unit] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        metric: str,
+        smaller_is_better: Optional[bool] = None,
+        unit: Optional[Unit] = None,
     ) -> None:
         pass
 
@@ -725,6 +749,7 @@ SearcherConfigV0_Type = Union[
     SyncHalvingConfigV0,
     AdaptiveConfigV0,
     AdaptiveSimpleConfigV0,
+    CustomConfigV0,
 ]
 SearcherConfigV0.finalize(SearcherConfigV0_Type)
 

@@ -1,0 +1,8 @@
+name: custom-searcher-core-api
+entrypoint: python3 model_coreapi.py
+searcher:
+  metric: validation_error
+  smaller_is_better: true
+  name: custom
+  unit: batches
+max_restarts: 0
