@@ -40,8 +40,9 @@ Event Payload
 
 Currently we will support two separate types of Webhooks ``Slack`` and ``Default``. A payload for a
 ``Default`` webhook will contain information about the event itself, the trigger for the event, and
-the appropriate entity that triggered the event. Since we only support experiment state changes, all
-payloads will look like:
+the appropriate entity that triggered the event. The shape of ``event_data`` is determined by
+``event_type``, that this is an example payload for ``EXPERIMENT_STATE_CHANGE``, and that other
+types may be structured differently.
 
 .. code::
 
@@ -70,12 +71,12 @@ Signed Payload
 ==============
 
 For every webhook request Determined will generate two headers ``X-Determined-AI-Signature``, and
-``X-Determined-AI-Signature-Timestamp`` which you can inspect to verify each request to their
-webhook endpoint.
+``X-Determined-AI-Signature-Timestamp`` which can be used to verify each request to a webhook
+endpoint.
 
 -  The ``X-Determined-AI-Signature-Timestamp`` will represent the time at which the request was
    generated and sent. You can choose to inspect this timestamp and decide whether to discard any
-   requests with a timestamp that is too distant from the current time at their discretion.
+   requests with a timestamp that is too distant from the current time.
 
 -  The ``X-Determined-AI-Signature`` will be a representation of a "signed" request payload. The signed request payload will be generated in the following way:
       -  Combine the timestamp in ``X-Determined-AI-Signature-Timestamp``, the comma character ","
@@ -118,9 +119,9 @@ At the modal input:
 
 Once created, your webhook will begin executing for the chosen events.
 
-*****************
- Testing Webhook
-*****************
+******************
+ Testing Webhooks
+******************
 
 To test a webhook, click on the triple dots on the right of webhook record to expand available
 actions.
@@ -145,9 +146,9 @@ mock payload as stated below:
       }
    }
 
-******************
- Deleting Webhook
-******************
+*******************
+ Deleting Webhooks
+*******************
 
 To delete a webhook, click on the triple dots on the right of webhook record to expand available
 actions.
