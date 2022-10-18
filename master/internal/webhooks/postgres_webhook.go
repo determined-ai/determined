@@ -194,7 +194,8 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	if wName != "" && webUIBaseURL != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
-			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>", webUIBaseURL, w.ID, wName),
+			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>",
+				webUIBaseURL, w.ID, wName),
 		})
 	} else if wName != "" {
 		expBlockFields = append(expBlockFields, Field{
@@ -205,7 +206,8 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	if pName != "" && webUIBaseURL != "" {
 		expBlockFields = append(expBlockFields, Field{
 			Type: "mrkdwn",
-			Text: fmt.Sprintf("*Project*: <%v/det/projects/%v | %v>", webUIBaseURL, projectID, pName),
+			Text: fmt.Sprintf("*Project*: <%v/det/projects/%v | %v>",
+				webUIBaseURL, projectID, pName),
 		})
 	} else if pName != "" {
 		expBlockFields = append(expBlockFields, Field{

@@ -18,9 +18,10 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 }
 
 // ProjectIDByName returns a project's ID if it exists in the given workspace.
-func ProjectIDByName(ctx context.Context, workspaceId int, projectName string) (*int, error) {
+func ProjectIDByName(ctx context.Context, workspaceID int, projectName string) (*int, error) {
 	var pID int
-	err := db.Bun().NewRaw("SELECT id FROM projects WHERE name = ? AND workspace_id = ?", workspaceId).Scan(ctx, pID)
+	err := db.Bun().NewRaw("SELECT id FROM projects WHERE name = ? AND workspace_id = ?",
+		workspaceID).Scan(ctx, pID)
 	if err != nil {
 		return nil, err
 	}
