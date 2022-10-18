@@ -34,6 +34,8 @@ get-deps:
 	./get-deps.sh
 
 build/proto.stamp: $(source_files)
+	protoc --version |perl -ne '/.*(\d+)\.(\d+)\.(\d+)/&&(($$1==3&&$$2<15)||$$1<3)&&print("\nERROR: \
+		Detected protoc version: $$1.$$2.$$3. Please upgrade protoc to version 3.15.0 or above\n\n.")&&exit 1;'
 	rm -rf build/proto pkg
 	mkdir -p build/proto
 	# Protobuf generation.

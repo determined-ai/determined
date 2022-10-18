@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -203,17 +204,28 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 		return true, redirectToLogin(c)
 	}
 
-	switch user, _, err := UserByToken(token, s.extConfig); err {
-	case nil:
-		if !user.Active {
-			return true, redirectToLogin(c)
-		}
-		return false, nil
-	case db.ErrNotFound:
+	user, _, err := UserByToken(token, s.extConfig)
+	if errors.Is(err, db.ErrNotFound) {
 		return true, redirectToLogin(c)
-	default:
+	} else if err != nil {
 		return true, err
 	}
+	if !user.Active {
+		return true, redirectToLogin(c)
+	}
+
+	taskID := c.Param("service")
+	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
+	if err != nil {
+		return true, err
+	}
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(*user, ownerID); err != nil {
+		return true, err
+	} else if !ok {
+		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
+	}
+
+	return false, nil
 }
 
 func redirectToLogin(c echo.Context) error {

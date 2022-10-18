@@ -1,17 +1,26 @@
-import { Form, Input, message, Select, Switch, Table } from 'antd';
-import { Button } from 'antd';
+import { Button, Form, Input, message, Select, Switch, Table } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { getUserPermissions, patchUser, postUser, updateGroup } from 'services/api';
+import {
+  assignRolesToUser,
+  getUserPermissions,
+  getUserRoles,
+  patchUser,
+  postUser,
+  removeRolesFromUser,
+  updateGroup,
+} from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { DetailedUser, Permission } from 'types';
+import { DetailedUser, Permission, UserRole } from 'types';
 import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
@@ -33,6 +42,7 @@ export const ROLE_NAME = 'roles';
 interface Props {
   form: FormInstance;
   groups: V1GroupSearchResult[];
+  roles: UserRole[] | null;
   user?: DetailedUser;
   viewOnly?: boolean;
 }
@@ -44,7 +54,7 @@ interface FormValues {
   USER_NAME_NAME: string;
 }
 
-const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
+const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const rbacEnabled = useFeature().isOn('rbac');
@@ -107,6 +117,10 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
     return columns;
   }, [canModifyPermissions, viewOnly]);
 
+  if (user !== undefined && roles === null) {
+    return <Spinner tip="Loading roles..." />;
+  }
+
   return (
     <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
       <Form.Item
@@ -147,8 +161,16 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly }) => {
         </Form.Item>
       )}
       {rbacEnabled && canModifyPermissions && !viewOnly && (
-        <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
-          <Select mode="multiple" optionFilterProp="children" placeholder={'Add Roles'} showSearch>
+        <Form.Item
+          initialValue={roles === null ? [] : roles.map((r) => r.id)}
+          label={ROLE_LABEL}
+          name={ROLE_NAME}>
+          <Select
+            disabled={user !== undefined && roles === null}
+            mode="multiple"
+            optionFilterProp="children"
+            placeholder={'Add Global Roles'}
+            showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
                 {r.name}
@@ -182,6 +204,23 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
+  // Null means the roles have not yet loaded
+  const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
+
+  const fetchUserRoles = useCallback(async () => {
+    if (user !== undefined) {
+      try {
+        const roles = await getUserRoles({ userId: user.id });
+        setUserRoles(roles.filter((r) => r.permissions.find((p) => p.isGlobal)));
+      } catch (e) {
+        handleError(e, { publicSubject: "Unable to fetch this user's roles." });
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchUserRoles();
+  }, []);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
@@ -196,9 +235,18 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       await form.validateFields();
 
       const formData = form.getFieldsValue();
+
+      const newRoles: Set<number> = new Set(formData.roles);
+      const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
+
+      const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
+      const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
+
       try {
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
+          await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
+          await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
           message.success(API_SUCCESS_MESSAGE_EDIT);
         } else {
           const u = await postUser(formData);
@@ -208,11 +256,14 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
               await updateGroup({ addUsers: [uid], groupId: gid });
             });
           }
+          if (uid && rolesToAdd.size > 0) {
+            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
+          }
 
           message.success(API_SUCCESS_MESSAGE_CREATE);
+          form.resetFields();
         }
 
-        form.resetFields();
         onClose?.();
       } catch (e) {
         message.error(user ? 'Error updating user' : 'Error creating new user');
@@ -222,7 +273,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel],
+    [form, onClose, user, handleCancel, userRoles],
   );
 
   const modalOpen = useCallback(
@@ -230,7 +281,15 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       openOrUpdate({
         closable: true,
         // passing a default brandind due to changes on the initial state
-        content: <ModalForm form={form} groups={groups} user={user} viewOnly={viewOnly} />,
+        content: (
+          <ModalForm
+            form={form}
+            groups={groups}
+            roles={userRoles}
+            user={user}
+            viewOnly={viewOnly}
+          />
+        ),
         icon: null,
         okText: viewOnly ? 'Close' : user ? 'Update' : 'Create User',
         onCancel: handleCancel,
@@ -238,7 +297,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
       });
     },
-    [form, handleCancel, handleOk, openOrUpdate, user, groups],
+    [form, handleCancel, handleOk, openOrUpdate, user, groups, userRoles],
   );
 
   return { modalOpen, ...modalHook };

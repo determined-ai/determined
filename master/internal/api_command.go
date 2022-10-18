@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -164,30 +165,75 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 }
 
 func (a *apiServer) GetCommands(
-	_ context.Context, req *apiv1.GetCommandsRequest,
+	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = a.ask(commandsAddr, req, &resp); err != nil {
 		return nil, err
 	}
+
+	a.filter(&resp.Commands, func(i int) bool {
+		if err != nil {
+			return false
+		}
+		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+			*curUser, model.UserID(resp.Commands[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetCommand(
-	_ context.Context, req *apiv1.GetCommandRequest,
+	ctx context.Context, req *apiv1.GetCommandRequest,
 ) (resp *apiv1.GetCommandResponse, err error) {
-	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := commandsAddr.Child(req.CommandId)
+	if err := a.ask(addr, req, &resp); err != nil {
+		return nil, err
+	}
+
+	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		*curUser, model.UserID(resp.Command.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errActorNotFound(addr)
+	}
+	return resp, nil
 }
 
 func (a *apiServer) KillCommand(
-	_ context.Context, req *apiv1.KillCommandRequest,
+	ctx context.Context, req *apiv1.KillCommandRequest,
 ) (resp *apiv1.KillCommandResponse, err error) {
+	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) SetCommandPriority(
-	_ context.Context, req *apiv1.SetCommandPriorityRequest,
+	ctx context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
+	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 

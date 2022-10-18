@@ -2,7 +2,7 @@ import { message } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import { removeRoleFromGroup, removeRoleFromUser } from 'services/api';
+import { removeRoleFromGroup, removeRolesFromUser } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroup } from 'types';
@@ -40,7 +40,7 @@ const useModalWorkspaceRemoveMember = ({
   const handleOk = useCallback(async () => {
     try {
       isUser(userOrGroup)
-        ? await removeRoleFromUser({ roleId: 0, userId: userOrGroupId })
+        ? await removeRolesFromUser({ roleIds: [0], userId: userOrGroupId })
         : await removeRoleFromGroup({ groupId: userOrGroupId, roleId: 0 });
       message.success(`${name} removed from workspace`);
     } catch (e) {

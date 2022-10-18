@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -65,6 +66,18 @@ func expFromAllocationID(
 	return true, exp, nil
 }
 
+func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
+	taskOwnerID, err := db.GetCommandOwnerID(ctx, taskID)
+	if errors.Is(err, db.ErrNotFound) {
+		// Non NTSC case like checkpointGC case or the task just does not exist.
+		// TODO(nick) eventually control access to checkpointGC.
+		return true, nil
+	} else if err != nil {
+		return false, err
+	}
+	return expauth.AuthZProvider.Get().CanAccessNTSCTask(curUser, taskOwnerID)
+}
+
 func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID, actions ...func(model.User, *model.Experiment) error,
 ) error {
@@ -76,6 +89,11 @@ func (a *apiServer) canDoActionsOnTask(
 		return err
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
 	switch t.TaskType {
 	case model.TaskTypeTrial:
 		exp, err := db.ExperimentWithoutConfigByTaskID(ctx, t.TaskID)
@@ -83,10 +101,6 @@ func (a *apiServer) canDoActionsOnTask(
 			return err
 		}
 
-		curUser, _, err := grpcutil.GetUser(ctx)
-		if err != nil {
-			return err
-		}
 		var ok bool
 		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 			return err
@@ -99,31 +113,43 @@ func (a *apiServer) canDoActionsOnTask(
 				return status.Error(codes.PermissionDenied, err.Error())
 			}
 		}
-	default:
-		return nil // TODO(nick) add AuthZ for other task types.
+	default: // NTSC case + checkpointGC.
+		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+			return err
+		} else if !ok {
+			return errTaskNotFound
+		}
 	}
 	return nil
 }
 
 func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
 	isExp, exp, err := expFromAllocationID(a.m, model.AllocationID(allocationID))
 	if err != nil {
 		return err
 	}
 	if !isExp {
-		return nil // TODO(nick) add other task type auth checking.
-	}
-
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return err
+		taskID, _, _ := strings.Cut(allocationID, ".")
+		var ok bool
+		if ok, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
+			return err
+		} else if !ok {
+			return errAllocationNotFound
+		}
+		return nil
 	}
 
 	var ok bool
 	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
 		return err
 	} else if !ok {
-		return status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+		return errAllocationNotFound
 	}
 	if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
@@ -272,10 +298,17 @@ func (a *apiServer) TaskLogs(
 }
 
 func (a *apiServer) GetActiveTasksCount(
-	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
+	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
-	finalResp := &apiv1.GetActiveTasksCountResponse{}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = expauth.AuthZProvider.Get().CanGetActiveTasksCount(*curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
 
+	finalResp := &apiv1.GetActiveTasksCountResponse{}
 	req1 := &apiv1.GetNotebooksRequest{}
 	resp1 := &apiv1.GetNotebooksResponse{}
 	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {
