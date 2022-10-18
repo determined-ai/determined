@@ -218,10 +218,14 @@ func (a *apiServer) GetMe(
 ) (*apiv1.GetMeResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
+		fmt.Println("after getting current User")
+		fmt.Println(err)
 		return nil, err
 	}
 	curFullUser, err := getFullModelUser(curUser.ID)
 	if err != nil {
+		fmt.Println("after getting full model user")
+		fmt.Println(err)
 		return nil, err
 	}
 	return &apiv1.GetMeResponse{User: toProtoUserFromFullUser(*curFullUser)}, err

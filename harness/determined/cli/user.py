@@ -1,4 +1,6 @@
+from enum import auto
 import getpass
+import json
 from argparse import Namespace
 from collections import namedtuple
 from turtle import update
@@ -48,8 +50,7 @@ def update_username(user_obj: user.User, new_username: str) -> Response:
 
 @authentication.required
 def list_users(args: Namespace) -> None:
-    render.render_objects(FullUser, [render.unmarshal(FullUser, u) for u in client.list_users()])
-
+    render.render_objects(FullUser,client.list_users())
 
 @authentication.required
 def activate_user(parsed_args: Namespace) -> None:
@@ -76,7 +77,6 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     token_store = authentication.TokenStore(parsed_args.master)
 
-    # client.login(master=parsed_args.master, user=username, password=password)
     token = authentication.do_login(parsed_args.master, username, password)
     token_store.set_token(username, token)
     token_store.set_active(username)
@@ -105,8 +105,8 @@ def log_out_user(parsed_args: Namespace) -> None:
 
 @authentication.required
 def rename(parsed_args: Namespace) -> None:
-    user_obj = client.get_user_by_name(parsed_args.username)
-    update_username(user_obj, parsed_args.target_user, parsed_args.master, parsed_args.new_username)
+    user_obj = client.get_user_by_name(parsed_args.target_user)
+    update_username(user_obj, parsed_args.new_username)
 
 
 @authentication.required
@@ -133,7 +133,7 @@ def change_password(parsed_args: Namespace) -> None:
     # Hash the password to avoid sending it in cleartext.
     password = api.salt_and_hash(password)
 
-    user_obj = client.get_user_by_name(parsed_args.username)
+    user_obj = client.get_user_by_name(username)
     update_user(user_obj, username, parsed_args.master, password=password)
 
     # If the target user's password isn't being changed by another user, reauthenticate after

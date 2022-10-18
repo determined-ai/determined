@@ -145,13 +145,24 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
-    unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
+    '''unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
     login = bindings.v1LoginRequest(username=username, password=password)
     r = bindings.post_Login(session=unauth_session, body=login)
-
     token = r.token
-    assert isinstance(token, str), "got invalid token response from server"
+    '''
 
+    r = api.post(
+        master_address,
+        "login",
+        json={"username": username, "password": password},
+        authenticated=False,
+        cert=cert,
+    )
+
+    token = r.json()["token"]
+
+    print("old api call do_login")
+    assert isinstance(token, str), "got invalid token response from server"
     return token
 
 

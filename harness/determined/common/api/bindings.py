@@ -12736,7 +12736,7 @@ def get_GetMe(
     }
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/users/me",
+        path="/api/v1/me",
         params=_params,
         json=None,
         data=None,
@@ -13572,7 +13572,7 @@ def get_GetUserByUsername(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/users/{username}",
+        path=f"/api/v1/users/{username}/by-username",
         params=_params,
         json=None,
         data=None,

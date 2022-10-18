@@ -25166,7 +25166,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         getMe(holder?: number, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/users/me`;
+            const localVarPath = `/api/v1/me`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -25243,7 +25243,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             if (username === null || username === undefined) {
                 throw new RequiredError('username','Required parameter username was null or undefined when calling getUserByUsername.');
             }
-            const localVarPath = `/api/v1/users/{username}`
+            const localVarPath = `/api/v1/users/{username}/by-username`
                 .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);

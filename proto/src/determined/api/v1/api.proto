@@ -160,7 +160,7 @@ service Determined {
   rpc GetUserByUsername(GetUserByUsernameRequest)
       returns (GetUserByUsernameResponse) {
     option (google.api.http) = {
-      get: "/api/v1/users/{username}"
+      get: "/api/v1/users/{username}/by-username"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"
@@ -170,7 +170,7 @@ service Determined {
   // Get the current user.
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
-      get: "/api/v1/users/me"
+      get: "/api/v1/me"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"
