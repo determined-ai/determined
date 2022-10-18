@@ -63,12 +63,14 @@ Determined cluster user interface. The value should be in the format of `https:/
 
 There are three ways to set the **Base URL**.
 
-#. Setting a **DET_BASE_URL** environment variable.
-#. Using the flag `--base-url`
-#. Adding a `base_url` entry to the master configuration file an example is shown below:
+#. Setting a **DET_WEBHOOK_BASE_URL** environment variable.
+#. Using the flag `--webhook-base-url`
+#. Adding a `base_url` entry to the webhook portion of the master configuration file an example is shown below:
 
-.. image:: /assets/images/slack-base-url-config.png
-   :width: 40%
+.. code::
+
+   webhook:
+       base_url: https://yourdomain.com
 
 If the **Base URL** is set correctly then Slack messages will include links as shown below.
 
