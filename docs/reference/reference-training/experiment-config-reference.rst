@@ -1277,9 +1277,9 @@ To verify your search is working as intended before committing to a full run, yo
 
 .. _slurm-config:
 
-***********************
- Slurm Cluster Details
-***********************
+***************
+ Slurm Options
+***************
 
 The ``slurm`` section specifies configuration options applicable when the cluster is configured with
 :ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
@@ -1297,3 +1297,24 @@ The ``slurm`` section specifies configuration options applicable when the cluste
          sbatch_args:
             - --mem-per-cpu=10
             - --exclusive
+
+*************
+ PBS Options
+*************
+
+The ``pbs`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: pbs <cluster-configuration-slurm>`.
+
+**Optional Fields**
+
+``pbsbatch_args``
+   Additional PBS options to be passed when launching trials with ``qsub``. These options enable
+   control of PBS options not otherwise managed by Determined. For example, to specify that the job
+   should have a priority of ``1000`` and a project name of ``MyProjectName``, you could specify:
+
+   .. code:: yaml
+
+      pbs:
+         pbsbatch_args:
+            - -p1000
+            - -PMyProjectName
