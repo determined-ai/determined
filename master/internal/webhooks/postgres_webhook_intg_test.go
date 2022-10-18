@@ -18,8 +18,7 @@ func TestWebhooks(t *testing.T) {
 	ctx := context.Background()
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
-	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1=1").Exec(ctx)
-	require.NoError(t, err)
+	clearWebhooksTables(ctx, t)
 
 	t.Run("webhook retrieval should work", func(t *testing.T) {
 		testWebhookFour.Triggers = testWebhookFourTriggers
@@ -78,12 +77,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
+	clearWebhooksTables(ctx, t)
 
-	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1 = 1").Exec(ctx)
-	require.NoError(t, err)
-
-	Init(ctx)
-	Deinit() // We don't care to send, so just remove the events.
+	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
 
 	t.Run("no triggers for event type", func(t *testing.T) {
 		startCount, serr := CountEvents(ctx)
@@ -122,8 +118,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		require.Equal(t, startCount, endCount)
 	})
 
-	_, err = db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1 = 1").Exec(ctx)
-	require.NoError(t, err)
+	clearWebhooksTables(ctx, t)
 
 	t.Run("one trigger for event type", func(t *testing.T) {
 		startCount, scerr := CountEvents(ctx)
@@ -146,8 +141,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		require.Equal(t, startCount+1, endCount)
 	})
 
-	_, err = db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1 = 1").Exec(ctx)
-	require.NoError(t, err)
+	clearWebhooksTables(ctx, t)
 
 	t.Run("many triggers for event type", func(t *testing.T) {
 		startCount, err := CountEvents(ctx)
@@ -282,9 +276,23 @@ func TestDequeueEvents(t *testing.T) {
 	ctx := context.Background()
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
+	clearWebhooksTables(ctx, t)
 
-	_, err := db.Bun().NewDelete().Model((*Event)(nil)).Where("1=1").Exec(ctx)
-	require.NoError(t, err)
+	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
+
+	t.Log("add a test webhook with one trigger")
+	require.NoError(t, AddWebhook(ctx, &Webhook{
+		URL: "localhost:8181",
+		Triggers: []*Trigger{
+			{
+				TriggerType: TriggerTypeStateChange,
+				Condition: map[string]interface{}{
+					"state": model.CompletedState,
+				},
+			},
+		},
+		WebhookType: WebhookTypeDefault,
+	}))
 
 	t.Run("dequeueing and consuming a event should work", func(t *testing.T) {
 		var config expconf.ExperimentConfig
@@ -330,4 +338,12 @@ func TestDequeueEvents(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, len(batch.events))
 	})
+}
+
+func clearWebhooksTables(ctx context.Context, t *testing.T) {
+	t.Log("clear webhooks db")
+	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1=1").Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("1=1").Exec(ctx)
+	require.NoError(t, err)
 }

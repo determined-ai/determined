@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
@@ -19,15 +20,28 @@ import (
 
 const (
 	maxWorkers        = 3
-	maxEventBatchSize = 1
-	maxAttempts       = 2
-	attemptBackoff    = 2 * time.Second
+	maxEventBatchSize = 10
+
+	backoffAttempts = 2
+	backoffInterval = time.Second
+	backoffMax      = time.Minute
 )
+
+var singletonShipper *shipper
+
+// Init creates a shipper singleton.
+func Init() {
+	singletonShipper = newShipper()
+}
+
+// Deinit closes a shipper.
+func Deinit() {
+	singletonShipper.Close()
+}
 
 type shipper struct {
 	// System dependencies.
 	logger *log.Entry
-	cl     *http.Client
 
 	// Internal state.
 	wake   chan<- struct{}
@@ -35,21 +49,20 @@ type shipper struct {
 	cancel context.CancelFunc
 }
 
-func newShipper(ctx context.Context) *shipper {
-	ctx, cancel := context.WithCancel(ctx)
+func newShipper() *shipper {
+	ctx, cancel := context.WithCancel(context.Background()) // Shipper-lifetime scoped context.
+
 	wake := make(chan struct{}, 1)
 	wake <- struct{}{} // Always attempt to process existing events.
 	s := &shipper{
 		logger: log.WithField("component", "webhook-sender"),
-		cl:     &http.Client{},
-
-		cancel: cancel,
 		wake:   wake,
+		cancel: cancel,
 	}
 
 	for i := 0; i < maxWorkers; i++ {
-		s.logger.Infof("creating webhook worker: %d", i)
-		w := worker{log: s.logger.WithField("worker-id", i), cl: &http.Client{}}
+		s.logger.Debugf("creating webhook worker: %d", i)
+		w := newWorker(i)
 		s.wg.Add(1)
 		go func() {
 			defer s.wg.Done()
@@ -77,6 +90,13 @@ func (s *shipper) Close() {
 	s.wg.Wait()
 }
 
+func newWorker(id int) *worker {
+	return &worker{
+		log: log.WithFields(log.Fields{"component": "webhook-shipper-worker", "id": id}),
+		cl:  &http.Client{},
+	}
+}
+
 type worker struct {
 	// System dependencies.
 	log *logrus.Entry
@@ -87,22 +107,23 @@ func (w *worker) work(ctx context.Context, wake <-chan struct{}) {
 	for {
 		select {
 		case <-wake:
-			w.ship(ctx)
+			if err := w.ship(ctx); err != nil {
+				w.log.WithError(err).Error("failed to ship batch")
+			}
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (w *worker) ship(ctx context.Context) {
+func (w *worker) ship(ctx context.Context) error {
 loop:
 	for {
 		switch n, err := w.shipBatch(ctx); {
 		case err != nil:
-			w.log.WithError(err).Warn("error shipping webhook events")
-			return
+			return err
 		case n <= 0:
-			return
+			return nil
 		default:
 			// Continue until events are exhausted.
 			continue loop
@@ -115,57 +136,80 @@ func (w *worker) shipBatch(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("getting events: %w", err)
 	}
-	ids := []int{}
-	for _, ev := range b.events {
-		ids = append(ids, int(ev.ID))
-	}
-	w.log.Infof("dequeued events: %v", ids)
 	defer func() {
 		if err := b.close(); err != nil {
-			w.log.WithError(err).Error("failed to finalize batch")
+			w.log.WithError(err).Warn("failed to finalize batch")
 		}
 	}()
 
+	var wg sync.WaitGroup
 	for _, e := range b.events {
-		w.deliverWithRetries(ctx, e)
+		wg.Add(1)
+		go func(e Event) {
+			defer wg.Done()
+			if err := backoff.Retry(
+				func() error { return w.deliver(ctx, e) },
+				w.backoff(),
+			); err != nil {
+				w.log.WithError(err).Error("failed to deliver webhook")
+			}
+		}(e)
+	}
+	wg.Wait()
+	if err := ctx.Err(); err != nil {
+		return 0, err
 	}
 
 	if err := b.consume(); err != nil {
-		return 0, fmt.Errorf("consuming batch %v: %v", ids, err)
+		return 0, fmt.Errorf("consuming batch: %w", err)
 	}
 	return len(b.events), nil
 }
 
-func (w *worker) deliverWithRetries(ctx context.Context, e Event) {
-	for i := 0; i < maxAttempts; i++ {
-		if err := w.deliver(ctx, e); err != nil {
-			w.log.WithError(err).Warnf("couldn't deliver %v (%d/%d)", e.ID, i, maxAttempts)
-			time.Sleep(attemptBackoff)
-			continue
-		}
-		return
+func (w *worker) backoff() backoff.BackOff {
+	bf := backoff.NewExponentialBackOff()
+	bf.InitialInterval = backoffInterval
+	bf.MaxInterval = backoffMax
+	return backoff.WithMaxRetries(bf, backoffAttempts)
+}
+
+func (w *worker) deliver(ctx context.Context, e Event) error {
+	req, err := generateWebhookRequest(ctx, e.URL, e.Payload, time.Now().Unix())
+	if err != nil {
+		return err
 	}
-	w.log.Errorf("exhausted tries to deliver %v, giving up", e.ID)
+
+	resp, err := w.cl.Do(req)
+	if err != nil {
+		return fmt.Errorf("sending webhook request: %w", err)
+	}
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			w.log.WithError(err).Warn("failed to close response body")
+		}
+	}()
+
+	switch {
+	case resp.StatusCode >= 500:
+		return fmt.Errorf("request returned %v: %w", resp.StatusCode, err)
+	case resp.StatusCode >= 400:
+		return backoff.Permanent(fmt.Errorf("request returned %v: %w", resp.StatusCode, err))
+	default:
+		return nil
+	}
 }
 
-func generateSignedPayload(req *http.Request, t int64) string {
-	config := conf.GetMasterConfig()
-	key := []byte(config.Security.WebhookSigningKey)
-	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
-	mac := hmac.New(sha256.New, key)
-	mac.Write(message)
-	return hex.EncodeToString(mac.Sum(nil))
-}
-
-func generateWebhookRequest(url string, payload []byte, t int64) (*http.Request, error) {
-	req, err := http.NewRequest(
-		http.MethodPost,
-		url,
-		bytes.NewBuffer(payload),
-	)
+func generateWebhookRequest(
+	ctx context.Context,
+	url string,
+	payload []byte,
+	t int64,
+) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, fmt.Errorf("failed creating webhook request: %w", err)
 	}
+
 	signedPayload := generateSignedPayload(req, t)
 	req.Header.Add("X-Determined-AI-Signature-Timestamp", fmt.Sprintf("%v", t))
 	req.Header.Add("X-Determined-AI-Signature", signedPayload)
@@ -173,20 +217,8 @@ func generateWebhookRequest(url string, payload []byte, t int64) (*http.Request,
 	return req, nil
 }
 
-func (w *worker) deliver(ctx context.Context, e Event) error {
-	t := time.Now().Unix()
-	req, err := generateWebhookRequest(e.URL, e.Payload, t)
-	if err != nil {
-		return err
-	}
-	resp, err := w.cl.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to create webhook request: %w", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(
-			"webhook request failed: %w received server error : %v",
-			err, resp.StatusCode)
-	}
-	return resp.Body.Close()
+func generateSignedPayload(req *http.Request, t int64) string {
+	key := []byte(conf.GetMasterConfig().Security.WebhookSigningKey)
+	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
+	return hex.EncodeToString(hmac.New(sha256.New, key).Sum(message))
 }
