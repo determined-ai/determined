@@ -17,12 +17,12 @@ func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspac
 	return &w, nil
 }
 
-// ProjectIdByName returns a project's ID if it exists in the given workspace.
-func ProjectIdByName(ctx context.Context, workspaceId int, projectName string) (*int, error) {
-	var pId int
-	err := db.Bun().NewSelect().Model(&pId).Table("projects").Where("name = ?", projectName).Where("workspaceId = ?", workspaceId).Scan(ctx)
+// ProjectIDByName returns a project's ID if it exists in the given workspace.
+func ProjectIDByName(ctx context.Context, workspaceId int, projectName string) (*int, error) {
+	var pID int
+	err := db.Bun().NewRaw("SELECT id FROM projects WHERE name = ? AND workspace_id = ?", workspaceId).Scan(ctx, pID)
 	if err != nil {
 		return nil, err
 	}
-	return &pId, nil
+	return &pID, nil
 }
