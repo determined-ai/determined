@@ -109,48 +109,45 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [experiment.config.searcher, selectedMetric]);
 
-  const handleFilterChange = useCallback(
-    (hermesFilters: HermesInternalFilters) => {
-      // Skip if there aren't any chart data.
-      if (!chartData) return;
+  const resetFilteredTrials = () => {
+    // Skip if there aren't any chart data.
+    if (!chartData) return;
 
-      if (Object.keys(hermesFilters).length > 0) {
-        setHermesCreatedFeatures(hermesFilters);
-      }
+    // Initialize a new trial id filter map.
+    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
+      acc[trialId] = true;
+      return acc;
+    }, {} as Record<number, boolean>);
 
-      // Initialize a new trial id filter map.
-      const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
-        acc[trialId] = true;
-        return acc;
-      }, {} as Record<number, boolean>);
+    // Figure out which trials are filtered out based on user filters.
 
-      // Figure out which trials are filtered out based on user filters.
+    Object.entries(hermesCreatedFeatures).forEach(([key, list]) => {
+      if (!chartData.data[key] || list.length === 0) return;
 
-      Object.entries(hermesFilters).forEach(([key, list]) => {
-        if (!chartData.data[key] || list.length === 0) return;
+      chartData.data[key].forEach((value, index) => {
+        let isWithinFilter = false;
 
-        chartData.data[key].forEach((value, index) => {
-          let isWithinFilter = false;
-
-          list.forEach((filter: HermesInternalFilter) => {
-            const min = Math.min(Number(filter.value0), Number(filter.value1));
-            const max = Math.max(Number(filter.value0), Number(filter.value1));
-            if (value >= min && value <= max) {
-              isWithinFilter = true;
-            }
-          });
-
-          if (!isWithinFilter) {
-            const trialId = chartData.trialIds[index];
-            newFilteredTrialIdMap[trialId] = false;
+        list.forEach((filter: HermesInternalFilter) => {
+          const min = Math.min(Number(filter.value0), Number(filter.value1));
+          const max = Math.max(Number(filter.value0), Number(filter.value1));
+          if (value >= min && value <= max) {
+            isWithinFilter = true;
           }
         });
-      });
 
-      setFilteredTrialIdMap(newFilteredTrialIdMap);
-    },
-    [chartData],
-  );
+        if (!isWithinFilter) {
+          const trialId = chartData.trialIds[index];
+          newFilteredTrialIdMap[trialId] = false;
+        }
+      });
+    });
+
+    setFilteredTrialIdMap(newFilteredTrialIdMap);
+  };
+
+  useEffect(() => {
+    resetFilteredTrials();
+  }, [chartData, hermesCreatedFeatures, resetFilteredTrials]);
 
   const colorScale = useMemo(() => {
     return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
@@ -160,7 +157,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     () => ({
       filters: hermesCreatedFeatures,
       hooks: {
-        onFilterChange: handleFilterChange,
+        onFilterChange: setHermesCreatedFeatures,
       },
       style: {
         axes: { label: { placement: 'after' } },
@@ -174,7 +171,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorScale, handleFilterChange, hermesCreatedFeatures, selectedMetric],
+    [colorScale, setHermesCreatedFeatures, hermesCreatedFeatures, selectedMetric],
   );
 
   const dimensions = useMemo(() => {
@@ -355,7 +352,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   // Reset filtered trial ids when HP Viz filters changes.
   useEffect(() => {
     setFilteredTrialIdMap(undefined);
-  }, [chartData, selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
+  }, [selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
