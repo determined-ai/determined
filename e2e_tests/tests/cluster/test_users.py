@@ -53,10 +53,10 @@ def login_admin(
     assert child.exitstatus == 0
     # home directory is elsewhere for auth.json
     # read from auth.json and see what you get. 
-    f = open("~/Library/Application Support/determined/auth.json", 'r')
-    content = f. read()
+    #f = open("~/Library/Application Support/determined/auth.json", 'r')
+    #content = f. read()
     print(".json")
-    print(content)
+    #print(content)
     command = ["det", "user", "whoami"]
     output = subprocess.check_output(command).decode()
     print(output)
