@@ -190,8 +190,8 @@ const UPlotChart: React.FC<Props> = ({
 
   useEffect(() => {
     extendedOptions.series.forEach((ser, i) => {
-      if (!chartRef.current) return;
-      if (chartRef.current?.series?.[i]?.show !== ser?.show)
+      const chartSer = chartRef.current?.series?.[i];
+      if (chartSer && chartSer.show !== ser?.show)
         chartRef.current?.setSeries(i, { show: ser.show }, false);
     });
   }, [extendedOptions.series]);
