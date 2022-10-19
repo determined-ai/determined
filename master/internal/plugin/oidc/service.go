@@ -27,9 +27,10 @@ const (
 	cookieTTL           = 5 * 60
 	defaultRedirectPath = "/det/login"
 	// This must match the value at $PROJECT_ROOT/cli/determined_cli/sso.CLI_REDIRECT_PORT.
-	cliRedirectPath = "http://localhost:49176"
-	cliRelayState   = "cli=true"
-	envVarName      = "DETERMINED_OIDC_CLIENT_SECRET"
+	cliRedirectPath         = "http://localhost:49176"
+	deprecatedCliRelayState = "cli=true"
+	cliRelayState           = "cli"
+	envVarName              = "DETERMINED_OIDC_CLIENT_SECRET"
 )
 
 // Service handles OIDC interactions.
@@ -90,7 +91,17 @@ func (s *Service) callback(c echo.Context) error {
 		return errors.New("oidc state did not match")
 	}
 
-	oauth2token, err := s.oauth2Config.Exchange(c.Request().Context(), c.QueryParam("code"))
+	var oauth2token *oauth2.Token
+	relayParam := c.QueryParam("relayState");
+	// Tolerate older CLI versions (<=0.19.5)
+	if relayParam == cliRelayState || relayParam == deprecatedCliRelayState {
+		configCopy := s.oauth2Config
+		configCopy.RedirectURL = fmt.Sprintf("%s?relayState=%s", configCopy.RedirectURL, relayParam)
+		oauth2token, err = configCopy.Exchange(c.Request().Context(), c.QueryParam("code"))
+	} else {
+		oauth2token, err = s.oauth2Config.Exchange(c.Request().Context(), c.QueryParam("code"))
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "failed to exchange oauth2 token")
 	}

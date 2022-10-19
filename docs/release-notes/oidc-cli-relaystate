@@ -1,0 +1,5 @@
+:orphan:
+
+**Bugfixes**
+
+-  CLI: OIDC authentication no longer results in 400s for some IDPs
