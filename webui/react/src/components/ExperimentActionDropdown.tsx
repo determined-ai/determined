@@ -7,7 +7,7 @@ import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperiment
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
-import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
+import { ProjectDetailsSettings } from 'pages/OldProjectDetails.settings';
 import {
   activateExperiment,
   archiveExperiment,

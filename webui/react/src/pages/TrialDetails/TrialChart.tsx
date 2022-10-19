@@ -14,19 +14,19 @@ import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricContainer, MetricName, Scale } from 'types';
+import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
-  defaultMetricNames: MetricName[];
+  defaultMetricNames: Metric[];
   id?: string;
-  metricNames: MetricName[];
-  metrics: MetricName[];
-  onMetricChange: (value: MetricName[]) => void;
+  metricNames: Metric[];
+  metrics: Metric[];
+  onMetricChange: (value: Metric[]) => void;
   trialId?: number;
   trialTerminated: boolean;
 }
 
-const getChartMetricLabel = (metric: MetricName): string => {
+const getChartMetricLabel = (metric: Metric): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
   return metric.name;
@@ -135,8 +135,8 @@ const TrialChart: React.FC<Props> = ({
   const options = (
     <ResponsiveFilters>
       <MetricSelectFilter
-        defaultMetricNames={defaultMetricNames}
-        metricNames={metricNames}
+        defaultMetrics={defaultMetricNames}
+        metrics={metricNames}
         multiple
         value={metrics}
         onChange={onMetricChange}

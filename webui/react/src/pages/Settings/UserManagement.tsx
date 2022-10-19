@@ -2,17 +2,17 @@ import { Button, Dropdown, Menu, message, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Page from 'components/Page';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
-} from 'components/InteractiveTable';
-import Page from 'components/Page';
+} from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   relativeTimeRenderer,
-} from 'components/Table';
+} from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';

@@ -146,7 +146,7 @@ const BreadcrumbBar: React.FC<Props> = ({
   return (
     <div className={css.base}>
       <Breadcrumb separator="">
-        {experiment?.projectId !== 1 && (
+        {experiment?.projectId !== 1 && !project?.immutable && (
           <>
             <Breadcrumb.Item>
               <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>

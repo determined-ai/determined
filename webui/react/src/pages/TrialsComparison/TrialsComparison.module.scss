@@ -1,0 +1,36 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+}
+.chart {
+  height: 30vh;
+  overflow-y: scroll;
+  padding: 16px;
+}
+.table {
+  height: 30vh;
+  padding: 16px;
+}
+.emptyBase {
+  display: grid;
+  height: 100%;
+  padding: 40px;
+  place-content: center;
+  width: 100%;
+
+  .messageContainer {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    & > * {
+      margin: 0;
+    }
+    & > i {
+      color: var(--theme-stage-on);
+    }
+  }
+}

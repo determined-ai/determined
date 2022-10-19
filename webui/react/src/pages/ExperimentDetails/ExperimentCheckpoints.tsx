@@ -3,18 +3,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
+import Section from 'components/Section';
 import InteractiveTable, {
   ContextMenuProps,
   InteractiveTableSettings,
-} from 'components/InteractiveTable';
-import Section from 'components/Section';
+} from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
   HumanReadableNumberRenderer,
-} from 'components/Table';
-import TableBatch from 'components/TableBatch';
-import TableFilterDropdown from 'components/TableFilterDropdown';
+} from 'components/Table/Table';
+import TableBatch from 'components/Table/TableBatch';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';

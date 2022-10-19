@@ -8,7 +8,9 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-import { ExperimentVisualizationType, HpImportance, MetricName, Scale } from 'types';
+import { HpImportance, Metric, Scale } from 'types';
+
+import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
@@ -19,14 +21,14 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: MetricName;
+  metric: Metric;
   scale: Scale;
   view: ViewType;
 }
 
 export enum FilterError {
   MetricBatches,
-  MetricNames,
+  Metrics,
 }
 
 export enum ViewType {
@@ -39,9 +41,9 @@ interface Props {
   filters: VisualizationFilters;
   fullHParams: string[];
   hpImportance?: HpImportance;
-  metrics: MetricName[];
+  metrics: Metric[];
   onChange?: (filters: VisualizationFilters) => void;
-  onMetricChange?: (metric: MetricName) => void;
+  onMetricChange?: (metric: Metric) => void;
   onReset?: () => void;
   type: ExperimentVisualizationType;
 }
@@ -63,7 +65,7 @@ type Action =
   | { type: ActionType.SetBatchMargin; value: number }
   | { type: ActionType.SetHParams; value: string[] }
   | { type: ActionType.SetMaxTrial; value: number }
-  | { type: ActionType.SetMetric; value: MetricName }
+  | { type: ActionType.SetMetric; value: Metric }
   | { type: ActionType.SetView; value: ViewType }
   | { type: ActionType.SetScale; value: Scale };
 
@@ -162,7 +164,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   }, []);
 
   const handleMetricChange = useCallback(
-    (metric: MetricName) => {
+    (metric: Metric) => {
       dispatch({ type: ActionType.SetMetric, value: metric });
       if (onMetricChange) onMetricChange(metric);
     },
@@ -248,9 +250,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       )}
       {showMetrics && (
         <MetricSelectFilter
-          defaultMetricNames={metrics}
+          defaultMetrics={metrics}
           label="Metric"
-          metricNames={metrics}
+          metrics={metrics}
           multiple={false}
           value={localFilters.metric}
           width={'100%'}

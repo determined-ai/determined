@@ -22,13 +22,13 @@ import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/util
 import {
   ExperimentBase,
   HyperparameterType,
-  MetricName,
+  Metric,
   MetricType,
   metricTypeParamMap,
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { metricNameToStr } from 'utils/metric';
+import { metricToStr } from 'utils/metric';
 
 import css from './HpHeatMaps.module.scss';
 
@@ -39,7 +39,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale;
   selectedView: ViewType;
 }
@@ -164,7 +164,7 @@ const HpHeatMaps: React.FC<Props> = ({
             series: [{}, { fill, stroke }],
             title,
           },
-          tooltipLabels: [xLabel, yLabel, null, metricNameToStr(selectedMetric), null, 'trial ID'],
+          tooltipLabels: [xLabel, yLabel, null, metricToStr(selectedMetric), null, 'trial ID'],
         };
       });
     });

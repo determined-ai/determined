@@ -1,4 +1,4 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 export type MembersColumnName = 'name' | 'role' | 'action';

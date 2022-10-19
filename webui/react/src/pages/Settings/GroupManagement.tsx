@@ -1,12 +1,12 @@
 import { Button, Dropdown, Menu, message, Space, Table } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Page from 'components/Page';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
-} from 'components/InteractiveTable';
-import Page from 'components/Page';
-import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+} from 'components/Table/InteractiveTable';
+import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
