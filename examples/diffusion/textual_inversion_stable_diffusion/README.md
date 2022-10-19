@@ -215,12 +215,3 @@ of Textual Inversion, ideas
 drawn from the original [Textual Inversion](https://github.com/rinongal/textual_inversion) repo, and
 from the #community-research channel on the
 official [Stable Diffusion Discord Server](https://www.diffusion.gg).
-
-# TODO
-
-A very incomplete list:
-
-* Write a launch script which uses the `accelerate` launcher?
-* fp16 training
-* lr scheduler
-* Link to blog post, when published.
