@@ -20,6 +20,7 @@ import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
 import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
+import Spinner from 'shared/components/Spinner';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
 import { StateOfUnion } from 'themes';
@@ -558,7 +559,6 @@ const TrialTable: React.FC<Props> = ({
         ContextMenu={ContextMenu}
         dataSource={trials.data.slice(0, settings.tableLimit)}
         interactiveColumns={false}
-        loading={loading}
         pagination={pagination}
         rowClassName={highlights.rowClassName}
         rowKey="trialId"
