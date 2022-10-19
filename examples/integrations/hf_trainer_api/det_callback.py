@@ -54,9 +54,11 @@ class DetCallback(TrainerCallback):
         searcher_config = self._det.get_cluster_info().trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
         self.searcher_unit = list(searcher_config["max_length"].keys())[0]
-        self.searcher_max_length = list(searcher_config["max_length"].items())[0]
+        self.searcher_max_length = list(searcher_config["max_length"].values())[0]
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
+
+        self._check_searcher_compatibility(args)
 
     def on_log(
         self,
@@ -291,35 +293,27 @@ class DetCallback(TrainerCallback):
                 self.searcher_unit == "batches"
                 or args.num_train_epochs != self.searcher_max_length
             ):
-                self._log_config_mismatch(
-                    "epochs",
-                    args.num_train_epochs,
-                    "num_train_epochs",
-                    "searcher.max_length.batches",
-                )
+                self._log_config_mismatch("epochs", args.num_train_epochs)
+
         elif hasattr(args, "max_steps"):
             if (
                 self.searcher_unit == "epochs"
                 or args.max_steps != self.searcher_max_length
             ):
-                self._log_config_mismatch(
-                    "batches", args.max_steps, "max_steps", "searcher.max_length.epochs"
-                )
+                self._log_config_mismatch("batches", args.max_steps)
 
     def _log_config_mismatch(
         self,
         trainer_units: str,
         trainer_len: int,
-        trainer_option: str,
-        searcher_option: str,
     ) -> None:
         logging.warning(
             f"Searcher configuration does not match HF Trainer configuration. "
-            f"Searcher uses {self.searcher_unit}={self.searcher_max_length} ({searcher_option}), "
-            f"while HF Trainer uses {trainer_units}={trainer_len} (--{trainer_option}). "
+            f"Searcher uses {self.searcher_unit}={self.searcher_max_length}, "
+            f"while HF Trainer uses {trainer_units}={trainer_len}. "
             f"Continuing this run may cause Searcher not to behave correctly. "
-            f"Make sure to match the units between HF Trainer and Searcher:"
-            f"use (--num_train_epochs and searcher.max_length.epochs) OR"
+            f"Make sure to match the units between HF Trainer and Searcher: "
+            f"use (--num_train_epochs and searcher.max_length.epochs) OR "
             f"(--max_steps and searcher.max_length.batches)."
         )
 

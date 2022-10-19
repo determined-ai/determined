@@ -15,7 +15,8 @@ The key portion of the code passing the Determined callback to the Transformers 
 ```
 
 ### Configuration Files
-* **const.yaml**: Train the model with constant hyperparameter values.
+* **const.yaml**: Train the model with constant hyperparameter values for a given number of batches (or `max_steps`).
+* **const_epochs.yaml**: Train the model with constant hyperparameter values for a given number of epochs.
 * **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
 * **adaptive.yaml**: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
 * **deepspeed.yaml**: Train the model with DeepSpeed with constant hyperparameter values. Feel free to modify this 
