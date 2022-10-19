@@ -355,7 +355,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   // Reset filtered trial ids when HP Viz filters changes.
   useEffect(() => {
     setFilteredTrialIdMap(undefined);
-  }, [selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
+  }, [chartData, selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
