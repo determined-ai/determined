@@ -33,7 +33,7 @@
     "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_OPTIONS='--max-old-space-size=2048' NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
-    "@determined-ai/hermes-parallel-coordinates": "^0.5.18",
+    "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
     "ansi-to-html": "^0.7.1",
     "antd": "^4.21.4",
     "dayjs": "^1.10.7",
