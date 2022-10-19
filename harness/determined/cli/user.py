@@ -50,20 +50,17 @@ def update_user(
         agent_group=agent_user_group.agent_group,
         )
 
-def update_username(user_obj: user.User, new_username: str) -> Response:
-    return user_obj.rename(new_username=new_username)
-
 def list_users(args: Namespace) -> None:
     render.render_objects(FullUser,client.list_users())
 
 def activate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
-    update_user(user_obj, parsed_args.username, active=True)
+    user_obj.activate()
 
 
 def deactivate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
-    update_user(user_obj, parsed_args.username, active=False)
+    user_obj.deactivate()
 
 
 def log_in_user(parsed_args: Namespace) -> None:
@@ -107,7 +104,7 @@ def log_out_user(parsed_args: Namespace) -> None:
 
 def rename(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
-    update_username(user_obj, parsed_args.new_username)
+    user_obj.rename(new_username=parsed_args.new_username)
 
 def change_password(parsed_args: Namespace) -> None:
     if parsed_args.target_user:
@@ -133,7 +130,7 @@ def change_password(parsed_args: Namespace) -> None:
     password = api.salt_and_hash(password)
 
     user_obj = client.get_user_by_name(username)
-    update_user(user_obj, username, parsed_args.master, password=password)
+    user_obj.change_passsword(new_password=password)
 
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.
@@ -143,8 +140,6 @@ def change_password(parsed_args: Namespace) -> None:
         token_store.set_token(username, token)
         token_store.set_active(username)
 
-
-@authentication.required
 def link_with_agent_user(parsed_args: Namespace) -> None:
     if parsed_args.agent_uid is None:
         raise api.errors.BadRequestException("agent-uid argument required")
@@ -155,20 +150,9 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
     elif parsed_args.agent_group is None:
         raise api.errors.BadRequestException("agent-group argument required")
 
-    agent_user_group = {
-        "uid": parsed_args.agent_uid,
-        "user": parsed_args.agent_user,
-        "gid": parsed_args.agent_gid,
-        "group": parsed_args.agent_group,
-    }
-
     user_obj = client.get_user_by_name(parsed_args.username)
-    update_user(
-        user_obj, parsed_args.det_username, parsed_args.master, agent_user_group=agent_user_group
-    )
+    user_obj.link_with_agent(agent_gid=parsed_args.agent_uid, agent_group= parsed_args.agent_group, agent_uid=parsed_args.agent_uid, agent_user=parsed_args.agent_user)
 
-
-@authentication.required
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
