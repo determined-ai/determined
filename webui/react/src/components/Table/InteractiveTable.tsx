@@ -304,8 +304,9 @@ const HeaderCell = ({
   if (isOver) dropTargetClasses.push(css.dropTargetActive);
   if (filterActive) headerCellClasses.push(css.headerFilterOn);
 
-  if (!columnName || !interactiveColumns)
-    return <th className={headerCellClasses.join(' ')} {...props} />;
+  if (!columnName) return <th className={className} {...props} />;
+
+  if (!interactiveColumns) return <th className={headerCellClasses.join(' ')} {...props} />;
 
   const tableCell = (
     <th className={headerCellClasses.join(' ')}>
