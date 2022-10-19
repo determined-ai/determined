@@ -39,7 +39,7 @@ class User:
         agent_gid: Optional[int] = None,
         agent_user: Optional[str] = None,
         agent_group: Optional[str] = None,
-        admin=Optional[bool],
+        admin: Optional[bool] = None,
     ) -> Response:
         v1agent_user_group = bindings.v1AgentUserGroup(
             agentGid=agent_gid,
@@ -51,9 +51,9 @@ class User:
             username=username,
             password=password,
             active=active,
-            admin=admin,
-            agentUserGroup=v1agent_user_group,
+            agentUserGroup=v1agent_user_group
         )
+
         resp = bindings.patch_PatchUser(self.session, userId=self.user_id, body=patch_user)
         return resp
 

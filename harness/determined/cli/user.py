@@ -32,8 +32,15 @@ def update_user(
 ) -> Response:
     if active is None and password is None and agent_user_group is None:
         raise Exception("Internal error (must supply at least one kwarg to update_user).")
-
-    return user_obj.update(
+    
+    if agent_user_group is None: 
+        user_obj.update(
+        username=username,
+        active=active,
+        password=password,
+        )
+    else: 
+         user_obj.update(
         username=username,
         active=active,
         password=password,
@@ -41,8 +48,7 @@ def update_user(
         agent_gid=agent_user_group.agent_gid,
         agent_user=agent_user_group.agent_user,
         agent_group=agent_user_group.agent_group,
-    )
-
+        )
 
 def update_username(user_obj: user.User, new_username: str) -> Response:
     return user_obj.rename(new_username=new_username)
@@ -52,12 +58,12 @@ def list_users(args: Namespace) -> None:
 
 def activate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
-    update_user(user_obj, parsed_args.username, parsed_args.master, active=True)
+    update_user(user_obj, parsed_args.username, active=True)
 
 
 def deactivate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
-    update_user(user_obj, parsed_args.username, parsed_args.master, active=False)
+    update_user(user_obj, parsed_args.username, active=False)
 
 
 def log_in_user(parsed_args: Namespace) -> None:

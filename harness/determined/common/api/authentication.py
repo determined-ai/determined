@@ -11,7 +11,7 @@ import filelock
 
 import determined as det
 from determined.common import api, constants, util
-from determined.common.api import bindings, certs
+from determined.common.api import certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
@@ -102,7 +102,6 @@ class Authentication:
             password = getpass.getpass("Password for user '{}': ".format(session_user))
 
         if password:
-            print("it has admin password")
             password = api.salt_and_hash(password)
 
         try:
@@ -146,12 +145,6 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
-    '''unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
-    login = bindings.v1LoginRequest(username=username, password=password)
-    r = bindings.post_Login(session=unauth_session, body=login)
-    token = r.token
-    '''
-
     r = api.post(
         master_address,
         "login",
@@ -161,9 +154,8 @@ def do_login(
     )
 
     token = r.json()["token"]
-
-    print("old api call do_login")
     assert isinstance(token, str), "got invalid token response from server"
+
     return token
 
 
@@ -172,13 +164,13 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     Find out whether the given token is valid by attempting to use it
     on the "/users/me" endpoint.
     """
-    unauth_session = api.Session(user=None,master=master_address, auth=None, cert=cert)
+    headers = {"Authorization": "Bearer {}".format(token)}
     try:
-        r = bindings.get_GetMe(session=unauth_session)
+        r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         return False
 
-    return r is not None
+    return r.status_code == 200
 
 
 class TokenStore:
