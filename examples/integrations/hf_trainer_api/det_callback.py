@@ -288,24 +288,21 @@ class DetCallback(TrainerCallback):
             control.should_training_stop = True
 
     def _check_searcher_compatibility(self, args: TrainingArguments) -> None:
-        if hasattr(args, "num_train_epochs"):
-            if (
-                self.searcher_unit == "batches"
-                or args.num_train_epochs != self.searcher_max_length
-            ):
+        if self.searcher_unit == "batches":
+            if args.max_steps == -1:
                 self._log_config_mismatch("epochs", args.num_train_epochs)
-
-        elif hasattr(args, "max_steps"):
-            if (
-                self.searcher_unit == "epochs"
-                or args.max_steps != self.searcher_max_length
-            ):
+            elif args.max_steps != self.searcher_max_length:
                 self._log_config_mismatch("batches", args.max_steps)
+        elif self.searcher_unit == "epochs":
+            if args.max_steps != -1:
+                self._log_config_mismatch("batches", args.max_steps)
+            elif args.num_train_epochs != self.searcher_max_length:
+                self._log_config_mismatch("epochs", args.num_train_epochs)
 
     def _log_config_mismatch(
         self,
         trainer_units: str,
-        trainer_len: int,
+        trainer_len: float,
     ) -> None:
         logging.warning(
             f"Searcher configuration does not match HF Trainer configuration. "
