@@ -89,7 +89,8 @@ included the directory where the Jupyter notebook will be launched:
 * `startup-hook.sh`: a startup script which installs necessary dependencies.
 * `textual_inversion.ipynb`: the to-be-launched notebook.
 
-Then, simply run the `textual_inversion.ipynb` notebook from top to bottom. Further instructions may be
+Then, simply run the `textual_inversion.ipynb` notebook from top to bottom. Further instructions may
+be
 found in the notebook itself.
 
 ### Cluster Generation
@@ -214,4 +215,21 @@ Huggingface's [own implementation](https://github.com/huggingface/diffusers/tree
 of Textual Inversion, ideas
 drawn from the original [Textual Inversion](https://github.com/rinongal/textual_inversion) repo, and
 from the #community-research channel on the
-official [Stable Diffusion Discord Server](https://www.diffusion.gg).
+official [Stable Diffusion Discord Server](https://www.diffusion.gg). The code assumes GPU resources
+are available.
+
+Summary of important files and directories:
+
+- `detsd`: Module containing all code for fine-tuning and generation.
+    - `detsd/trainer.py`: Contains the `DetSDTextualInversionTrainer` class used for fine-tuning
+      on-cluster.
+    - `detsd/pipeline.py`: Contains the `DetSDTextualInversionPipeline` class used for generation in
+      both notebooks and on-cluster.
+- `finetune_const.yaml`: Basic config file for a fine-tuning Experiment.
+- `finetune_const_advanced.yaml`: Advanced config file for a fine-tuning Experiment.
+- `generate_grid.yaml`: Config file for a generation Experiment.
+- `textual_inversion.ipynb`: Notebook for interactive generation.
+- `detsd-notebook.yaml`: Config file for launching the above notebook.
+- `learned_embeddings_dict_demo.pt`: Pre-trained demo concept to be used with the above notebook
+  or `generate_grid.yaml` Experiment.
+- `startup-hook.sh`: Script for installing necessary dependencies for cluster or notebook workflows.
