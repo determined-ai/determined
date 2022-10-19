@@ -1,5 +1,5 @@
+import Hermes, { DimensionType } from '@determined-ai/hermes-parallel-coordinates';
 import { Alert } from 'antd';
-import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
