@@ -1,4 +1,4 @@
-name: vision transformer const
+name: vision transformer const batches
 debug: false
 environment:
   environment_variables:
@@ -6,7 +6,7 @@ environment:
     # You may need to modify this to match your network configuration.
     - NCCL_SOCKET_IFNAME=ens,eth,ib
 resources:
-  slots_per_trial: 4
+  slots_per_trial: 1
 searcher:
   name: single
   max_length:
@@ -20,7 +20,7 @@ entrypoint: >-
   --remove_unused_columns False 
   --do_train  
   --do_eval 
-  --learning_rate 2e-5 
+  --learning_rate 1e-5
   --max_steps 100
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8 
@@ -31,4 +31,5 @@ entrypoint: >-
   --save_total_limit 3 
   --seed 1337
   --save_strategy steps
+  --save_steps 20
 max_restarts: 0

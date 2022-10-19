@@ -44,4 +44,5 @@ entrypoint: >-
   --save_total_limit 3 
   --seed 1337
   --save_strategy steps
+  --save_steps 20
 max_restarts: 0

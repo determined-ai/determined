@@ -54,6 +54,7 @@ class DetCallback(TrainerCallback):
         searcher_config = self._det.get_cluster_info().trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
         self.searcher_unit = list(searcher_config["max_length"].keys())[0]
+        self.searcher_max_length = list(searcher_config["max_length"].items())[0]
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
 
@@ -66,21 +67,33 @@ class DetCallback(TrainerCallback):
         **kwargs,
     ):
         if state.is_world_process_zero:
-            metrics, metric_type = self.get_metrics(logs)
+            metrics, metric_type = self._get_metrics(logs)
             if metric_type == TRAIN:
-                self.core_context.train.report_training_metrics(
-                    steps_completed=state.global_step, metrics=metrics
-                )
+                if (
+                    "train_step" not in self.last_metrics
+                    or self.last_metrics["eval_step"] != state.global_step
+                ):
+                    self.core_context.train.report_training_metrics(
+                        steps_completed=state.global_step, metrics=metrics
+                    )
+                    metrics["train_step"] = state.global_step
+
             elif metric_type == EVAL:
-                self.core_context.train.report_validation_metrics(
-                    steps_completed=state.global_step, metrics=metrics
-                )
+                if (
+                    "eval_step" not in self.last_metrics
+                    or self.last_metrics["eval_step"] != state.global_step
+                ):
+                    self.core_context.train.report_validation_metrics(
+                        steps_completed=state.global_step, metrics=metrics
+                    )
+                    metrics["eval_step"] = state.global_step
+                    self.last_metrics.update(metrics)
             else:
                 logging.warning(f"Metrics not reported: metric type = {metric_type}.")
 
             self.last_metrics.update(metrics)
 
-    def get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
+    def _get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
         metrics = logs
         metric_type = get_metric_type(logs)
         if self.filter_metrics:
@@ -224,8 +237,8 @@ class DetCallback(TrainerCallback):
             if state.is_world_process_zero:
                 self.current_op.report_progress(state.global_step)
 
-                if state.global_step >= self.current_op.length:
-                    self._update_searcher(state, control)
+            if state.global_step >= self.current_op.length:
+                self._update_searcher(state, control)
 
         if self.core_context.preempt.should_preempt():
             control.should_save = True
@@ -273,22 +286,37 @@ class DetCallback(TrainerCallback):
             control.should_training_stop = True
 
     def _check_searcher_compatibility(self, args: TrainingArguments) -> None:
-        if hasattr(args, "num_train_epochs") and self.searcher_unit == "batches":
-            self._log_config_mismatch(
-                "epochs", "num_train_epochs", "searcher.max_length.batches"
-            )
-        elif hasattr(args, "max_steps") and self.searcher_unit == "epochs":
-            self._log_config_mismatch(
-                "batches", "max_steps", "searcher.max_length.epochs"
-            )
+        if hasattr(args, "num_train_epochs"):
+            if (
+                self.searcher_unit == "batches"
+                or args.num_train_epochs != self.searcher_max_length
+            ):
+                self._log_config_mismatch(
+                    "epochs",
+                    args.num_train_epochs,
+                    "num_train_epochs",
+                    "searcher.max_length.batches",
+                )
+        elif hasattr(args, "max_steps"):
+            if (
+                self.searcher_unit == "epochs"
+                or args.max_steps != self.searcher_max_length
+            ):
+                self._log_config_mismatch(
+                    "batches", args.max_steps, "max_steps", "searcher.max_length.epochs"
+                )
 
     def _log_config_mismatch(
-        self, trainer_units: str, trainer_option: str, searcher_option: str
+        self,
+        trainer_units: str,
+        trainer_len: int,
+        trainer_option: str,
+        searcher_option: str,
     ) -> None:
         logging.warning(
             f"Searcher configuration does not match HF Trainer configuration. "
-            f"Searcher uses {self.searcher_unit} ({searcher_option}), "
-            f"while HF Trainer uses {trainer_units} (--{trainer_option}). "
+            f"Searcher uses {self.searcher_unit}={self.searcher_max_length} ({searcher_option}), "
+            f"while HF Trainer uses {trainer_units}={trainer_len} (--{trainer_option}). "
             f"Continuing this run may cause Searcher not to behave correctly. "
             f"Make sure to match the units between HF Trainer and Searcher:"
             f"use (--num_train_epochs and searcher.max_length.epochs) OR"
@@ -313,7 +341,7 @@ def set_hyperparameters(training_args: TrainingArguments):
 
 EVAL = "eval_"
 TEST = "test_"
-TRAIN_AVG = "train_,"
+TRAIN_AVG = "train_"
 TRAIN = "train_progress"
 
 
@@ -323,7 +351,7 @@ def get_metric_type(d):
             return EVAL
         elif k.startswith(TEST):
             return TEST
-        elif k.startswith(TRAIN):
+        elif k.startswith(TRAIN_AVG):
             return TRAIN_AVG
         else:
             return TRAIN
