@@ -394,7 +394,10 @@ html {
   }
   .ant-tabs.no-padding {
     & > .ant-tabs-nav {
-      padding: calc(16px + var(--theme-density) * 1px) calc(16px + var(--theme-density) * 1px) 0;
+      padding-bottom: 0;
+      padding-left: calc(16px + var(--theme-density) * 1px);
+      padding-right: calc(16px + var(--theme-density) * 1px);
+      padding-top: calc(16px + var(--theme-density) * 1px);
     }
   }
 
