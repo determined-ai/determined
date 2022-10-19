@@ -71,9 +71,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       {showExperimentArtifacts ? (
         <>
           <TrialChart
-            defaultMetrics={defaultMetrics}
-            metrics={metricNames}
-            selectedMetrics={metrics}
+            defaultMetricNames={defaultMetrics}
+            metricNames={metricNames}
+            metrics={metrics}
             trialId={trial?.id}
             trialTerminated={terminalRunStates.has(trial?.state ?? RunState.Active)}
             onMetricChange={handleMetricChange}

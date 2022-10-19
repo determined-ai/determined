@@ -17,11 +17,11 @@ import { glasbeyColor } from 'shared/utils/color';
 import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
-  defaultMetrics: Metric[];
+  defaultMetricNames: Metric[];
   id?: string;
+  metricNames: Metric[];
   metrics: Metric[];
   onMetricChange: (value: Metric[]) => void;
-  selectedMetrics: Metric[];
   trialId?: number;
   trialTerminated: boolean;
 }
@@ -33,9 +33,9 @@ const getChartMetricLabel = (metric: Metric): string => {
 };
 
 const TrialChart: React.FC<Props> = ({
-  defaultMetrics,
+  defaultMetricNames,
+  metricNames,
   metrics,
-  selectedMetrics,
   onMetricChange,
   trialId,
   trialTerminated,
@@ -47,14 +47,14 @@ const TrialChart: React.FC<Props> = ({
     if (trialId) {
       const summ = await compareTrials({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-        metricNames: metrics,
+        metricNames: metricNames,
         scale: scale,
         startBatches: 0,
         trialIds: [trialId],
       });
       setTrialSummary(summ[0].metrics);
     }
-  }, [metrics, scale, trialId]);
+  }, [metricNames, scale, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
 
@@ -135,10 +135,10 @@ const TrialChart: React.FC<Props> = ({
   const options = (
     <ResponsiveFilters>
       <MetricSelectFilter
-        defaultMetrics={defaultMetrics}
-        metrics={metrics}
+        defaultMetrics={defaultMetricNames}
+        metrics={metricNames}
         multiple
-        value={selectedMetrics}
+        value={metrics}
         onChange={onMetricChange}
       />
       <ScaleSelectFilter value={scale} onChange={setScale} />
