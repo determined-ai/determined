@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -16,14 +15,17 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-// APIServer is an embedded api server struct.
-type APIServer struct{}
+// WebhooksAPIServer is an embedded api server struct.
+type WebhooksAPIServer struct{}
 
 // AuthorizeRequest checks if the user has CanEditWebhooks permissions.
+// TODO remove this eventually since authz replaces this
+// We can't yet since we use it else where.
 func AuthorizeRequest(ctx context.Context) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -38,7 +40,7 @@ func AuthorizeRequest(ctx context.Context) error {
 }
 
 // GetWebhooks returns all Webhooks.
-func (a *APIServer) GetWebhooks(
+func (a *WebhooksAPIServer) GetWebhooks(
 	ctx context.Context, req *apiv1.GetWebhooksRequest,
 ) (*apiv1.GetWebhooksResponse, error) {
 	if err := AuthorizeRequest(ctx); err != nil {
@@ -52,7 +54,7 @@ func (a *APIServer) GetWebhooks(
 }
 
 // PostWebhook creates a new Webhook.
-func (a *APIServer) PostWebhook(
+func (a *WebhooksAPIServer) PostWebhook(
 	ctx context.Context, req *apiv1.PostWebhookRequest,
 ) (*apiv1.PostWebhookResponse, error) {
 	if err := AuthorizeRequest(ctx); err != nil {
@@ -78,7 +80,7 @@ func (a *APIServer) PostWebhook(
 }
 
 // DeleteWebhook deletes a Webhook.
-func (a *APIServer) DeleteWebhook(
+func (a *WebhooksAPIServer) DeleteWebhook(
 	ctx context.Context, req *apiv1.DeleteWebhookRequest,
 ) (*apiv1.DeleteWebhookResponse, error) {
 	if err := AuthorizeRequest(ctx); err != nil {
@@ -91,24 +93,26 @@ func (a *APIServer) DeleteWebhook(
 }
 
 // TestWebhook sends a test event for a Webhook.
-func (a *APIServer) TestWebhook(
+func (a *WebhooksAPIServer) TestWebhook(
 	ctx context.Context, req *apiv1.TestWebhookRequest,
 ) (*apiv1.TestWebhookResponse, error) {
 	if err := AuthorizeRequest(ctx); err != nil {
 		return nil, err
 	}
+
 	webhook, err := GetWebhook(ctx, int(req.Id))
 	if err != nil {
 		return nil, err
 	}
-	var tReq *http.Request
+
 	eventID := uuid.New()
-	log.Info(fmt.Sprintf("creating webhook payload for event %v", eventID))
+	log.Infof("creating webhook payload for event %v", eventID)
+
+	var tReq *http.Request
 	switch webhook.WebhookType {
 	case WebhookTypeDefault:
-		s := "test"
 		t := time.Now().Unix()
-		tp := EventPayload{
+		p, perr := json.Marshal(EventPayload{
 			ID:        uuid.New(),
 			Timestamp: t,
 			Type:      TriggerTypeStateChange,
@@ -116,62 +120,66 @@ func (a *APIServer) TestWebhook(
 				State: "COMPLETED",
 			},
 			Data: EventData{
-				TestData: &s,
+				TestData: ptrs.Ptr("test"),
 			},
-		}
-		p, perr := json.Marshal(tp)
+		})
 		if perr != nil {
 			return nil, err
 		}
-		tReq, err = generateWebhookRequest(ctx, webhook.URL, p, t)
-		if err != nil {
+
+		tr, rerr := generateWebhookRequest(ctx, webhook.URL, p, t)
+		if rerr != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"failed to create webhook request for event %v error : %v ", eventID, err)
 		}
+		tReq = tr
 	case WebhookTypeSlack:
-		testMessageBlock := SlackBlock{
-			Text: Field{
-				Text: "test",
-				Type: "plain_text",
+		slackMessage, serr := json.Marshal(SlackMessageBody{
+			Blocks: []SlackBlock{
+				{
+					Text: SlackField{
+						Text: "test",
+						Type: "plain_text",
+					},
+					Type: "section",
+				},
 			},
-			Type: "section",
-		}
-		messageBody := SlackMessageBody{
-			Blocks: []SlackBlock{testMessageBlock},
-		}
-		slackMessage, serr := json.Marshal(messageBody)
+		})
 		if serr != nil {
 			return nil, err
 		}
-		tReq, err = http.NewRequestWithContext(
+
+		tr, rerr := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
 			webhook.URL,
 			bytes.NewBuffer(slackMessage),
 		)
-		if err != nil {
+		if rerr != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"failed to create webhook request for event %v error : %v ", eventID, err)
 		}
+		tReq = tr
 	default:
 		panic("Unknown webhook type")
 	}
-	if err != nil {
-		return nil, err
-	}
-	log.Info(fmt.Sprintf("creating webhook request for event %v", eventID))
+
+	log.Infof("creating webhook request for event %v", eventID)
 	c := http.Client{}
 	resp, err := c.Do(tReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"error sending webhook request for event %v error: %v", eventID, err)
 	}
-	if resp.StatusCode != http.StatusOK {
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			log.WithError(err).Error("unable to close response body")
+		}
+	}()
+
+	if resp.StatusCode >= http.StatusBadRequest {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"received error from webhook server for event %v error: %v ", eventID, resp.StatusCode)
-	}
-	if err = resp.Body.Close(); err != nil {
-		log.Error(fmt.Errorf("unable to close response body %v", err))
 	}
 	return &apiv1.TestWebhookResponse{}, nil
 }

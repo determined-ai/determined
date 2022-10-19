@@ -9,7 +9,7 @@ import (
 
 // WorkspaceByName returns a workspace given it's name.
 func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspace, error) {
-	w := model.Workspace{}
+	var w model.Workspace
 	err := db.Bun().NewSelect().Model(&w).Where("name = ?", workspaceName).Scan(ctx)
 	if err != nil {
 		return nil, err

@@ -74,8 +74,8 @@ type DBConfig struct {
 	SSLRootCert string `json:"ssl_root_cert"`
 }
 
-// WebhookConfig hosts configuration fields for webhook functionality.
-type WebhookConfig struct {
+// WebhooksConfig hosts configuration fields for webhook functionality.
+type WebhooksConfig struct {
 	BaseURL    string `json:"base_url"`
 	SigningKey string `json:"signing_key"`
 }
@@ -120,7 +120,7 @@ func DefaultConfig() *Config {
 		Cache: CacheConfig{
 			CacheDir: "/var/cache/determined",
 		},
-		Webhook: WebhookConfig{
+		Webhooks: WebhooksConfig{
 			BaseURL:    "",
 			SigningKey: "",
 		},
@@ -156,7 +156,7 @@ type Config struct {
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
-	Webhook               WebhookConfig                     `json:"webhook"`
+	Webhooks              WebhooksConfig                    `json:"webhooks"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
@@ -236,12 +236,12 @@ func (c *Config) Resolve() error {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
-	if c.Webhook.SigningKey == "" {
+	if c.Webhooks.SigningKey == "" {
 		b := make([]byte, 6)
 		if _, err := rand.Read(b); err != nil {
 			return err
 		}
-		c.Webhook.SigningKey = hex.EncodeToString(b)
+		c.Webhooks.SigningKey = hex.EncodeToString(b)
 	}
 
 	if err := c.ResolveResource(); err != nil {

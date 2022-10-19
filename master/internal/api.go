@@ -29,7 +29,7 @@ type apiServer struct {
 	usergroup.UserGroupAPIServer
 	rbac.RBACAPIServerWrapper
 	trials.TrialsAPIServer
-	webhooks.APIServer
+	webhooks.WebhooksAPIServer
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.

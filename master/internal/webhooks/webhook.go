@@ -185,23 +185,22 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 }
 
 // Proto returns a proto from a TriggerType.
-func experimentToWebhookPayload(e model.Experiment) ExperimentPayload {
-	var slots int
-	s := e.Config.Resources().Slots()
-	d := 0
+func experimentToWebhookPayload(e model.Experiment) *ExperimentPayload {
+	var duration int
 	if e.EndTime != nil {
-		d = int(e.EndTime.Sub(e.StartTime).Seconds())
+		duration = int(e.EndTime.Sub(e.StartTime).Seconds())
 	}
-	if s == nil {
-		slots = 0
-	} else {
+
+	var slots int
+	if s := e.Config.Resources().Slots(); s != nil {
 		slots = *s
 	}
-	return ExperimentPayload{
+
+	return &ExperimentPayload{
 		ID:            e.ID,
 		State:         e.State,
 		Name:          e.Config.Name(),
-		Duration:      d,
+		Duration:      duration,
 		ResourcePool:  e.Config.Resources().ResourcePool(),
 		Slots:         slots,
 		WorkspaceName: e.Config.Workspace(),
@@ -216,41 +215,54 @@ type WebhookEventID int
 type Event struct {
 	bun.BaseModel `bun:"table:webhook_events_que"`
 
-	ID        WebhookEventID `bun:"id,pk,autoincrement"`
-	Payload   []byte         `bun:"payload,notnull"`
-	TriggerID TriggerID      `bun:"trigger_id,notnull"`
-	URL       string         `bun:"url,notnull"`
-	Trigger   *Trigger       `bun:"rel:belongs-to,join:trigger_id=id"`
-}
-
-// Field corresponds to a Field Slack Block element.
-type Field struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
-
-// SlackBlock corresponds to a Slack Block element.
-type SlackBlock struct {
-	Type   string   `json:"type"`
-	Text   Field    `json:"text"`
-	Fields *[]Field `json:"fields,omitempty"`
-}
-
-// SlackAttachment corresponds to an Attachment Slack Block element.
-type SlackAttachment struct {
-	Color  string       `json:"color"`
-	Blocks []SlackBlock `json:"blocks"`
+	ID      WebhookEventID `bun:"id,pk,autoincrement"`
+	URL     string         `bun:"url,notnull"`
+	Payload []byte         `bun:"payload,notnull"`
 }
 
 // SlackMessageBody corresponds to an entire message as a Slack Block.
 type SlackMessageBody struct {
-	Blocks      []SlackBlock       `json:"blocks"`
+	Blocks      []SlackBlock       `json:"blocks,omitempty"`
 	Attachments *[]SlackAttachment `json:"attachments,omitempty"`
+}
+
+// SlackAttachment corresponds to an Attachment Slack Block element.
+type SlackAttachment struct {
+	Color  string       `json:"color,omitempty"`
+	Blocks []SlackBlock `json:"blocks,omitempty"`
+}
+
+// SlackBlock corresponds to a Slack Block element.
+type SlackBlock struct {
+	Type   string        `json:"type,omitempty"`
+	Text   SlackField    `json:"text,omitempty"`
+	Fields *[]SlackField `json:"fields,omitempty"`
+}
+
+// SlackField corresponds to a field in a Slack Block element.
+type SlackField struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// EventPayload respresents a webhook event.
+type EventPayload struct {
+	ID        uuid.UUID   `json:"event_id"`
+	Type      TriggerType `json:"event_type"`
+	Timestamp int64       `json:"timestamp"`
+	Condition Condition   `json:"condition"`
+	Data      EventData   `json:"event_data"`
 }
 
 // Condition represents a trigger condition.
 type Condition struct {
 	State model.State `json:"state,omitempty"`
+}
+
+// EventData represents the event_data for a webhook event.
+type EventData struct {
+	TestData   *string            `json:"data,omitempty"`
+	Experiment *ExperimentPayload `json:"experiment,omitempty"`
 }
 
 // ExperimentPayload is the webhook request representation of an experiment.
@@ -263,19 +275,4 @@ type ExperimentPayload struct {
 	Slots         int          `json:"slots"`
 	WorkspaceName string       `json:"workspace"`
 	ProjectName   string       `json:"project"`
-}
-
-// EventPayload respresents a webhook event.
-type EventPayload struct {
-	ID        uuid.UUID   `json:"event_id"`
-	Type      TriggerType `json:"event_type"`
-	Timestamp int64       `json:"timestamp"`
-	Condition Condition   `json:"condition"`
-	Data      EventData   `json:"event_data"`
-}
-
-// EventData represents the event_data for a webhook event.
-type EventData struct {
-	TestData   *string            `json:"data,omitempty"`
-	Experiment *ExperimentPayload `json:"experiment,omitempty"`
 }

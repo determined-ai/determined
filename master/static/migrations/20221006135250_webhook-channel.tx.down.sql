@@ -1,3 +1,0 @@
-DROP FUNCTION webhook_events_update_trigger;
-
-DROP TRIGGER webhook_events_update_trigger;

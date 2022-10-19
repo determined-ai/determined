@@ -178,6 +178,7 @@ require (
 
 require (
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 )
 

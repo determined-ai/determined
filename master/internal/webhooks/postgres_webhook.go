@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	conf "github.com/determined-ai/determined/master/internal/config"
@@ -43,6 +44,7 @@ func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	webhook := Webhook{}
 	err := db.Bun().NewSelect().
 		Model(&webhook).
+		Relation("Triggers").
 		Where("id = ?", webhookID).
 		Scan(ctx)
 	if err != nil {
@@ -80,6 +82,12 @@ func CountEvents(ctx context.Context) (int, error) {
 
 // ReportExperimentStateChanged adds webhook events to the que.
 func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Errorf("uncaught error in webhook report: %v", rec)
+		}
+	}()
+
 	var ts []Trigger
 	switch err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
 		Where("trigger_type = ?", TriggerTypeStateChange).
@@ -93,13 +101,12 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 
 	var es []Event
 	for _, t := range ts {
-		p, err := generateEventPayload(t.Webhook.WebhookType, e, e.State, TriggerTypeStateChange)
+		p, err := generateEventPayload(ctx, t.Webhook.WebhookType, e, e.State, TriggerTypeStateChange)
 		if err != nil {
 			return fmt.Errorf("error generating event payload: %w", err)
 		}
-		es = append(es, Event{Payload: p, TriggerID: t.ID, URL: t.Webhook.URL})
+		es = append(es, Event{Payload: p, URL: t.Webhook.URL})
 	}
-
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
 		return err
 	}
@@ -108,15 +115,16 @@ func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error
 	return nil
 }
 
-func generateEventPayload(wt WebhookType,
+func generateEventPayload(
+	ctx context.Context,
+	wt WebhookType,
 	e model.Experiment,
 	expState model.State,
 	tT TriggerType,
 ) ([]byte, error) {
 	switch wt {
 	case WebhookTypeDefault:
-		expPayload := experimentToWebhookPayload(e)
-		p := EventPayload{
+		pJSON, err := json.Marshal(EventPayload{
 			ID:        uuid.New(),
 			Type:      tT,
 			Timestamp: time.Now().Unix(),
@@ -124,16 +132,15 @@ func generateEventPayload(wt WebhookType,
 				State: expState,
 			},
 			Data: EventData{
-				Experiment: &expPayload,
+				Experiment: experimentToWebhookPayload(e),
 			},
-		}
-		pJSON, err := json.Marshal(p)
+		})
 		if err != nil {
 			return nil, err
 		}
 		return pJSON, nil
 	case WebhookTypeSlack:
-		slackJSON, err := generateSlackPayload(e)
+		slackJSON, err := generateSlackPayload(ctx, e)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +150,7 @@ func generateEventPayload(wt WebhookType,
 	}
 }
 
-func generateSlackPayload(e model.Experiment) ([]byte, error) {
+func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, error) {
 	var status string
 	var eURL string
 	var c string
@@ -154,9 +161,9 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	config := conf.GetMasterConfig()
 	wName := e.Config.Workspace()
 	pName := e.Config.Project()
-	webUIBaseURL := config.Webhook.BaseURL
+	webUIBaseURL := config.Webhooks.BaseURL
 	if webUIBaseURL != "" && wName != "" && pName != "" {
-		ws, err := workspace.WorkspaceByName(context.TODO(), wName)
+		ws, err := workspace.WorkspaceByName(ctx, wName)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +174,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 		}
 		wID = w.ID
 
-		pID, err := workspace.ProjectIDByName(context.TODO(), wID, pName)
+		pID, err := workspace.ProjectIDByName(ctx, wID, pName)
 		if pID != nil {
 			projectID = *pID
 		}
@@ -201,7 +208,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 	hours, m := math.Modf(hours)
 	minutes := int(m * 60)
 	duration := fmt.Sprintf("%vh %vmin", hours, minutes)
-	expBlockFields := []Field{
+	expBlockFields := []SlackField{
 		{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Status*: %v", mStatus),
@@ -212,31 +219,31 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 		},
 	}
 	if wID != 0 && wName != "" && webUIBaseURL != "" {
-		expBlockFields = append(expBlockFields, Field{
+		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>",
 				webUIBaseURL, wID, wName),
 		})
 	} else if wName != "" {
-		expBlockFields = append(expBlockFields, Field{
+		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Workspace*: %v", wName),
 		})
 	}
 	if projectID != 0 && pName != "" && webUIBaseURL != "" {
-		expBlockFields = append(expBlockFields, Field{
+		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Project*: <%v/det/projects/%v | %v>",
 				webUIBaseURL, projectID, pName),
 		})
 	} else if pName != "" {
-		expBlockFields = append(expBlockFields, Field{
+		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Project*: %v", pName),
 		})
 	}
 	experimentBlock := SlackBlock{
-		Text: Field{
+		Text: SlackField{
 			Type: "mrkdwn",
 			Text: eURL,
 		},
@@ -244,7 +251,7 @@ func generateSlackPayload(e model.Experiment) ([]byte, error) {
 		Fields: &expBlockFields,
 	}
 	messageBlock := SlackBlock{
-		Text: Field{
+		Text: SlackField{
 			Text: status,
 			Type: "plain_text",
 		},
@@ -294,9 +301,9 @@ func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 	}
 	var events []Event
 	if err = tx.NewRaw(`
-	DELETE FROM webhook_events_que
-	USING ( SELECT * FROM webhook_events_que LIMIT ? FOR UPDATE SKIP LOCKED ) q
-	WHERE q.id = webhook_events_que.id RETURNING webhook_events_que.*
+DELETE FROM webhook_events_que
+USING ( SELECT * FROM webhook_events_que LIMIT ? FOR UPDATE SKIP LOCKED ) q
+WHERE q.id = webhook_events_que.id RETURNING webhook_events_que.*
 `, limit).Scan(ctx, &events); err != nil {
 		return nil, fmt.Errorf("scanning events: %w", err)
 	}

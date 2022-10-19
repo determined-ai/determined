@@ -42,11 +42,12 @@ task_container_defaults:
     spec:
       containers:
         - name: determined-container
+webhooks:
+    signing_key: testWebhookSigningKey
 `
 
-	wsk := "testWebhookSigningKey"
 	expected := config.DefaultConfig()
-	expected.Webhook.SigningKey = wsk
+	expected.Webhooks.SigningKey = "testWebhookSigningKey"
 	providerConf := provconfig.DefaultConfig()
 	providerConf.GCP = provconfig.DefaultGCPClusterConfig()
 	providerConf.GCP.BaseConfig = &compute.Instance{
@@ -97,7 +98,6 @@ task_container_defaults:
 	err = mergeConfigBytesIntoViper([]byte(raw))
 	assert.NilError(t, err)
 	config, err := getConfig(v.AllSettings())
-	config.Webhook.SigningKey = wsk
 	assert.NilError(t, err)
 	assert.DeepEqual(t, config, expected)
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
@@ -41,7 +42,7 @@ func Deinit() {
 
 type shipper struct {
 	// System dependencies.
-	logger *log.Entry
+	log *log.Entry
 
 	// Internal state.
 	wake   chan<- struct{}
@@ -55,13 +56,13 @@ func newShipper() *shipper {
 	wake := make(chan struct{}, 1)
 	wake <- struct{}{} // Always attempt to process existing events.
 	s := &shipper{
-		logger: log.WithField("component", "webhook-sender"),
+		log:    log.WithField("component", "webhook-sender"),
 		wake:   wake,
 		cancel: cancel,
 	}
 
 	for i := 0; i < maxWorkers; i++ {
-		s.logger.Debugf("creating webhook worker: %d", i)
+		s.log.Debugf("creating webhook worker: %d", i)
 		w := newWorker(i)
 		s.wg.Add(1)
 		go func() {
@@ -93,7 +94,7 @@ func (s *shipper) Close() {
 func newWorker(id int) *worker {
 	return &worker{
 		log: log.WithFields(log.Fields{"component": "webhook-shipper-worker", "id": id}),
-		cl:  &http.Client{},
+		cl:  cleanhttp.DefaultClient(),
 	}
 }
 
@@ -104,6 +105,12 @@ type worker struct {
 }
 
 func (w *worker) work(ctx context.Context, wake <-chan struct{}) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			w.log.Errorf("uncaught error, webhook worker crashed: %v", rec)
+		}
+	}()
+
 	for {
 		select {
 		case <-wake:
@@ -218,7 +225,7 @@ func generateWebhookRequest(
 }
 
 func generateSignedPayload(req *http.Request, t int64) string {
-	key := []byte(conf.GetMasterConfig().Webhook.SigningKey)
+	key := []byte(conf.GetMasterConfig().Webhooks.SigningKey)
 	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
 	return hex.EncodeToString(hmac.New(sha256.New, key).Sum(message))
 }

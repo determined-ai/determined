@@ -367,7 +367,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
-			log.Error(fmt.Errorf("unable to close response body %v", err))
+			log.WithError(err).Error("failed to send experiment state change webhook")
 		}
 
 		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
@@ -616,7 +616,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 	if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
-		log.Error(fmt.Errorf("unable to close response body %v", err))
+		log.WithError(err).Error("failed to send experiment state change webhook")
 	}
 
 	ctx.Log().Infof("experiment state changed to %s", state.State)
