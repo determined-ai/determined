@@ -16,10 +16,39 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
+
+func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
+	if w.CheckpointStorageConfig == nil {
+		return nil
+	}
+
+	// Convert to expconf.
+	bytes, err := w.CheckpointStorageConfig.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	checkpointStorageConfig := &expconf.CheckpointStorageConfig{}
+	if err = checkpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+		return err
+	}
+
+	// Convert back to proto.Struct with .Printable() called.
+	bytes, err = checkpointStorageConfig.Printable().MarshalJSON()
+	if err != nil {
+		return err
+	}
+	if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+		return err
+	}
+	return nil
+}
 
 func (a *apiServer) GetWorkspaceByID(
 	ctx context.Context, id int32, curUser model.User, rejectImmutable bool,
@@ -37,6 +66,10 @@ func (a *apiServer) GetWorkspaceByID(
 		return nil, err
 	} else if !ok {
 		return nil, notFoundErr
+	}
+
+	if err := maskStorageConfigSecrets(w); err != nil {
+		return nil, err
 	}
 
 	if rejectImmutable && w.Immutable {
@@ -243,6 +276,12 @@ func (a *apiServer) PostWorkspace(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
+	if req.CheckpointStorageConfig != nil {
+		if err = workspace.AuthZProvider.Get().
+			CanCreateWorkspaceWithCheckpointStorageConfig(ctx, *curUser); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
 
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
@@ -261,6 +300,20 @@ func (a *apiServer) PostWorkspace(
 		w.AgentGID = req.AgentUserGroup.AgentGid
 		w.AgentUser = req.AgentUserGroup.AgentUser
 		w.AgentGroup = req.AgentUserGroup.AgentGroup
+	}
+
+	if req.CheckpointStorageConfig != nil {
+		bytes, err := req.CheckpointStorageConfig.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		w.CheckpointStorageConfig = &expconf.CheckpointStorageConfig{}
+		if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+			return nil, err
+		}
+		if err = schemas.IsComplete(w.CheckpointStorageConfig); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 	}
 
 	_, err = tx.NewInsert().Model(w).Exec(ctx)
@@ -282,7 +335,10 @@ func (a *apiServer) PostWorkspace(
 		return nil, errors.Wrap(err, "could not commit create workspace transcation")
 	}
 
-	protoWorkspace := w.ToProto()
+	protoWorkspace, err := w.ToProto()
+	if err != nil {
+		return nil, err
+	}
 	protoWorkspace.Username = curUser.Username
 	protoWorkspace.Pinned = true
 	return &apiv1.PostWorkspaceResponse{Workspace: protoWorkspace}, nil
@@ -325,6 +381,26 @@ func (a *apiServer) PatchWorkspace(
 		updatedWorkspace.AgentGroup = updateAug.AgentGroup
 
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
+	}
+
+	if req.Workspace.CheckpointStorageConfig != nil {
+		if err = workspace.AuthZProvider.Get().
+			CanSetWorkspacesCheckpointStorageConfig(ctx, currUser, currWorkspace); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+		bytes, err := req.Workspace.CheckpointStorageConfig.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		updatedWorkspace.CheckpointStorageConfig = &expconf.CheckpointStorageConfig{}
+		if err = updatedWorkspace.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+			return nil, err
+		}
+		if err = schemas.IsComplete(updatedWorkspace.CheckpointStorageConfig); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
+
+		insertColumns = append(insertColumns, "checkpoint_storage_config")
 	}
 
 	if len(insertColumns) == 0 {

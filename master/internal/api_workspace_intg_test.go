@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -24,6 +25,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
+
+func newProtoStruct(t *testing.T, in map[string]any) *structpb.Struct {
+	s, err := structpb.NewStruct(in)
+	require.NoError(t, err)
+	return s
+}
 
 func TestPostWorkspace(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t)
@@ -36,8 +43,35 @@ func TestPostWorkspace(t *testing.T) {
 	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: string(make([]byte, 81))})
 	require.Error(t, err)
 
+	// Invalid configs.
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type": "s3",
+		}),
+	})
+	require.Error(t, err)
+
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type":   "s3",
+			"bucket": "bucketbucket",
+			"prefix": "./../.",
+		}),
+	})
+	require.Error(t, err)
+
+	// Valid workspace.
 	workspaceName := uuid.New().String()
-	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: workspaceName,
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type":       "s3",
+			"bucket":     "bucketofrain",
+			"secret_key": "thisisasecret",
+		}),
+	})
 	require.NoError(t, err)
 
 	// Workspace returned correctly?
@@ -54,6 +88,17 @@ func TestPostWorkspace(t *testing.T) {
 		State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
 		ErrorMessage:   "",
 		AgentUserGroup: nil,
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type":                 "s3",
+			"bucket":               "bucketofrain",
+			"secret_key":           "********",
+			"access_key":           nil,
+			"endpoint_url":         nil,
+			"prefix":               nil,
+			"save_experiment_best": nil,
+			"save_trial_best":      nil,
+			"save_trial_latest":    nil,
+		}),
 	}
 	proto.Equal(expected, resp.Workspace)
 	require.Equal(t, expected, resp.Workspace)
@@ -63,6 +108,74 @@ func TestPostWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	proto.Equal(expected, getWorkResp.Workspace)
 	require.Equal(t, expected, getWorkResp.Workspace)
+}
+
+func TestPatchWorkspace(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := resp.Workspace.Id
+
+	// Ensure created without checkpoint config.
+	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: workspaceID})
+	require.NoError(t, err)
+	require.Nil(t, getWorkResp.Workspace.CheckpointStorageConfig)
+
+	// Try adding invalid workspace configs.
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type": "shared_fs",
+			}),
+		},
+	})
+	require.Error(t, err)
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type":   "s3",
+				"bucket": "bucketbucket",
+				"prefix": "../../..",
+			}),
+		},
+	})
+	require.Error(t, err)
+
+	// Patch with valid workspace config.
+	patchResp, err := api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: workspaceID,
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type":                 "s3",
+				"bucket":               "bucketofrain",
+				"secret_key":           "keyyyyy",
+				"save_experiment_best": 4,
+				"save_trial_best":      2,
+			}),
+		},
+	})
+	require.NoError(t, err)
+
+	// Correct response returned by patch?
+	expected := newProtoStruct(t, map[string]any{
+		"type":                 "s3",
+		"bucket":               "bucketofrain",
+		"secret_key":           "********",
+		"access_key":           nil,
+		"endpoint_url":         nil,
+		"prefix":               nil,
+		"save_experiment_best": 4,
+		"save_trial_best":      2,
+		"save_trial_latest":    nil,
+	})
+	proto.Equal(expected, patchResp.Workspace.CheckpointStorageConfig)
+	require.Equal(t, expected, patchResp.Workspace.CheckpointStorageConfig)
+
+	// Change persisted?
+	getWorkResp, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: workspaceID})
+	require.NoError(t, err)
+	proto.Equal(expected, getWorkResp.Workspace.CheckpointStorageConfig)
+	require.Equal(t, expected, getWorkResp.Workspace.CheckpointStorageConfig)
 }
 
 var wAuthZ *mocks.WorkspaceAuthZ
@@ -166,6 +279,14 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
+
+	// Tried to create with checkpoint storage config.
+	expectedErr = status.Error(codes.PermissionDenied, "storageConfDeny")
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
+	workspaceAuthZ.On("CanCreateWorkspaceWithCheckpointStorageConfig",
+		mock.Anything, mock.Anything).Return(fmt.Errorf("storageConfDeny"))
+	_, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
+	require.Equal(t, expectedErr, err)
 }
 
 func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
@@ -179,6 +300,18 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 				Id: int32(id),
 				Workspace: &workspacev1.PatchWorkspace{
 					Name: wrapperspb.String(uuid.New().String()),
+				},
+			})
+			return err
+		}},
+		{"CanSetWorkspacesCheckpointStorageConfig", func(id int) error {
+			_, err := api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+				Id: int32(id),
+				Workspace: &workspacev1.PatchWorkspace{
+					CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+						"type":   "s3",
+						"bucket": "bucketbucket",
+					}),
 				},
 			})
 			return err

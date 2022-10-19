@@ -29,12 +29,16 @@ type WorkspaceAuthZ interface {
 	// POST /api/v1/workspaces
 	CanCreateWorkspace(ctx context.Context, curUser model.User) error
 	CanCreateWorkspaceWithAgentUserGroup(ctx context.Context, curUser model.User) error
+	CanCreateWorkspaceWithCheckpointStorageConfig(ctx context.Context, curUser model.User) error
 
 	// PATCH /api/v1/workspaces/:workspace_id
 	CanSetWorkspacesName(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 	) error
 	CanSetWorkspacesAgentUserGroup(
+		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+	) error
+	CanSetWorkspacesCheckpointStorageConfig(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 	) error
 
