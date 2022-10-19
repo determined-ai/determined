@@ -334,7 +334,7 @@ class DetSDTextualInversionPipeline:
         """
         if isinstance(kwargs["prompt"], str):
             kwargs["prompt"] = self._replace_concepts_with_dummies(kwargs["prompt"])
-        elif isinstance(kwargs["prompt"], list):
+        else:
             kwargs["prompt"] = [self._replace_concepts_with_dummies(p) for p in kwargs["prompt"]]
         output = self.pipeline(**kwargs)
         return output
