@@ -88,10 +88,11 @@ func (e *ExperimentConfigV0) Scan(src interface{}) error {
 // AsLegacy converts a current ExperimentConfig to a (limited capacity) LegacyConfig.
 func (e ExperimentConfig) AsLegacy() LegacyConfig {
 	return LegacyConfig{
-		checkpointStorage: schemas.Copy(e.CheckpointStorage()),
-		bindMounts:        schemas.Copy(e.BindMounts()),
-		envvars:           schemas.Copy(e.Environment().EnvironmentVariables()),
-		podSpec:           schemas.Copy(e.Environment().PodSpec()),
+		CheckpointStorage: schemas.Copy(e.CheckpointStorage()),
+		BindMounts:        schemas.Copy(e.BindMounts()),
+		Environment:       schemas.Copy(e.Environment()),
+		Hyperparameters:   schemas.Copy(e.Hyperparameters()),
+		Searcher:          e.Searcher().AsLegacy(),
 	}
 }
 

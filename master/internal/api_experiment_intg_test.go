@@ -31,10 +31,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -282,6 +284,12 @@ func TestGetExperiments(t *testing.T) {
 		endTime, timestamppb.New(endTime).AsTime(), time.Millisecond)
 
 	job0ID := uuid.New().String()
+	activeConfig0 := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("12345"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+		RawLabels:      expconf.Labels{"l0": true, "l1": true},
+	})
+	activeConfig0 = schemas.WithDefaults(activeConfig0)
 	exp0 := &model.Experiment{
 		StartTime:            startTime,
 		EndTime:              &endTime,
@@ -290,15 +298,11 @@ func TestGetExperiments(t *testing.T) {
 		Archived:             false,
 		State:                model.PausedState,
 		Notes:                "notes",
-		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-			RawDescription: ptrs.Ptr("12345"),
-			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-			RawLabels:      expconf.Labels{"l0": true, "l1": true},
-		}),
-		OwnerID:   ptrs.Ptr(model.UserID(1)),
-		ProjectID: int(pid),
+		Config:               activeConfig0.AsLegacy(),
+		OwnerID:              ptrs.Ptr(model.UserID(1)),
+		ProjectID:            int(pid),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp0))
+	require.NoError(t, api.m.db.AddExperiment(exp0, activeConfig0))
 	for i := 0; i < 3; i++ {
 		task := &model.Task{TaskType: model.TaskTypeTrial}
 		require.NoError(t, api.m.db.AddTask(task))
@@ -310,7 +314,7 @@ func TestGetExperiments(t *testing.T) {
 	}
 	exp0Expected := &experimentv1.Experiment{
 		Id:             int32(exp0.ID),
-		Description:    *exp0.Config.RawDescription,
+		Description:    *activeConfig0.RawDescription,
 		Labels:         []string{"l0", "l1"},
 		State:          experimentv1.State_STATE_PAUSED,
 		StartTime:      timestamppb.New(startTime),
@@ -336,6 +340,12 @@ func TestGetExperiments(t *testing.T) {
 
 	secondStartTime := time.Now()
 	job1ID := uuid.New().String()
+	activeConfig1 := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("234"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("longername")},
+		RawLabels:      expconf.Labels{"l0": true},
+	})
+	activeConfig1 = schemas.WithDefaults(activeConfig1)
 	exp1 := &model.Experiment{
 		StartTime:            secondStartTime,
 		ModelDefinitionBytes: []byte{1, 2, 3},
@@ -343,19 +353,15 @@ func TestGetExperiments(t *testing.T) {
 		Archived:             true,
 		State:                model.ErrorState,
 		ParentID:             ptrs.Ptr(exp0.ID),
-		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-			RawDescription: ptrs.Ptr("234"),
-			RawName:        expconf.Name{RawString: ptrs.Ptr("longername")},
-			RawLabels:      expconf.Labels{"l0": true},
-		}),
-		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
-		ProjectID: int(pid),
+		Config:               activeConfig1.AsLegacy(),
+		OwnerID:              ptrs.Ptr(model.UserID(userResp.User.Id)),
+		ProjectID:            int(pid),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp1))
+	require.NoError(t, api.m.db.AddExperiment(exp1, activeConfig1))
 	exp1Expected := &experimentv1.Experiment{
 		StartTime:      timestamppb.New(secondStartTime),
 		Id:             int32(exp1.ID),
-		Description:    *exp1.Config.RawDescription,
+		Description:    *activeConfig1.RawDescription,
 		Labels:         []string{"l0"},
 		State:          experimentv1.State_STATE_ERROR,
 		Archived:       true,
@@ -522,6 +528,55 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 	}
 }
 
+// Test that endpoints don't puke when running against old experiments.
+func TestLegacyExperiments(t *testing.T) {
+	err := etc.SetRootPath("../static/srv")
+	require.NoError(t, err)
+
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+
+	prse := olddata.PreRemoveStepsExperiments()
+	prse.MustMigrate(t, pgDB, "file://../static/migrations")
+
+	api, _, ctx := setupAPITest(t, pgDB)
+
+	t.Run("GetExperimentCheckpoints", func(t *testing.T) {
+		req := &apiv1.GetExperimentCheckpointsRequest{
+			Id:     prse.CompletedPBTExpID,
+			SortBy: apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC,
+		}
+		_, err = api.GetExperimentCheckpoints(ctx, req)
+		require.NoError(t, err)
+	})
+
+	t.Run("MetricNames", func(t *testing.T) {
+		req := &apiv1.MetricNamesRequest{
+			ExperimentId: prse.CompletedPBTExpID,
+		}
+		err = api.MetricNames(req, mockStream[*apiv1.MetricNamesResponse]{ctx})
+		require.NoError(t, err)
+	})
+
+	t.Run("TrialsSample", func(t *testing.T) {
+		req := &apiv1.TrialsSampleRequest{
+			ExperimentId: prse.CompletedAdaptiveSimpleExpID,
+			MetricName:   "loss",
+			MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
+		}
+		err = api.TrialsSample(req, mockStream[*apiv1.TrialsSampleResponse]{ctx})
+		require.NoError(t, err)
+	})
+
+	t.Run("GetBestSearcherValidationMetric", func(t *testing.T) {
+		req := &apiv1.GetBestSearcherValidationMetricRequest{
+			ExperimentId: prse.CompletedPBTExpID,
+		}
+		_, err = api.GetBestSearcherValidationMetric(ctx, req)
+		require.NoError(t, err)
+	})
+}
+
 var res *apiv1.GetExperimentsResponse // Avoid compiler optimizing res out.
 
 //nolint: exhaustivestruct
@@ -560,22 +615,24 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 		}
 	}()
 
+	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	})
+	activeConfig = schemas.WithDefaults(activeConfig)
 	exp := &model.Experiment{
 		ModelDefinitionBytes: []byte{1, 2, 3},
 		State:                model.PausedState,
-		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-			RawDescription: ptrs.Ptr("desc"),
-			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-		}),
-		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
-		ProjectID: 1,
+		Config:               activeConfig.AsLegacy(),
+		OwnerID:              ptrs.Ptr(model.UserID(userResp.User.Id)),
+		ProjectID:            1,
 	}
 	for i := 0; i < n; i++ {
 		jobID := uuid.New().String()
 		exp.ID = 0
 		exp.JobID = model.JobID(jobID)
 
-		if err := api.m.db.AddExperiment(exp); err != nil {
+		if err := api.m.db.AddExperiment(exp, activeConfig); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -610,6 +667,12 @@ func createTestExpWithProjectID(
 		labelMap[l] = true
 	}
 
+	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
+		RawLabels:      labelMap,
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	})
+	activeConfig = schemas.WithDefaults(activeConfig)
 	exp := &model.Experiment{
 		JobID:                model.JobID(uuid.New().String()),
 		State:                model.PausedState,
@@ -617,16 +680,12 @@ func createTestExpWithProjectID(
 		ProjectID:            projectID,
 		StartTime:            time.Now(),
 		ModelDefinitionBytes: []byte{10, 11, 12},
-		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-			RawLabels:      labelMap,
-			RawDescription: ptrs.Ptr("desc"),
-			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-		}),
+		Config:               activeConfig.AsLegacy(),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp))
+	require.NoError(t, api.m.db.AddExperiment(exp, activeConfig))
 
 	// Get experiment as our API mostly will to make it easier to mock.
-	exp, err := api.m.db.ExperimentWithoutConfigByID(exp.ID)
+	exp, err := api.m.db.ExperimentByID(exp.ID)
 	require.NoError(t, err)
 	return exp
 }

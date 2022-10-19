@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -18,7 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/context"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/test/olddata"
 )
 
 func expNotFoundErrEcho(id int) error {
@@ -43,6 +47,34 @@ func echoPostExperiment(
 	ctx.SetRequest(req)
 	_, err = api.m.postExperiment(ctx)
 	return err
+}
+
+func TestLegacyExperimentsEcho(t *testing.T) {
+	err := etc.SetRootPath("../static/srv")
+	require.NoError(t, err)
+
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+
+	prse := olddata.PreRemoveStepsExperiments()
+	prse.MustMigrate(t, pgDB, "file://../static/migrations")
+
+	api, user, _ := setupAPITest(t, pgDB)
+
+	setExperimentIDParam := func(ctx echo.Context, id int32) {
+		ctx.SetParamNames("experiment_id")
+		ctx.SetParamValues(strconv.FormatInt(int64(id), 10))
+	}
+
+	t.Run("GetExperimentCheckpoints", func(t *testing.T) {
+		ctx := newTestEchoContext(user)
+		path := "/?save_experiment_best=0&save_trial_best=0&save_trial_latest=0"
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		ctx.SetRequest(req)
+		setExperimentIDParam(ctx, prse.CompletedPBTExpID)
+		_, err = api.m.getExperimentCheckpointsToGC(ctx)
+		require.NoError(t, err)
+	})
 }
 
 func TestAuthZPostExperimentEcho(t *testing.T) {

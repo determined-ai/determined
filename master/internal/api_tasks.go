@@ -61,7 +61,7 @@ func expFromAllocationID(
 		return false, nil, err
 	}
 
-	exp, err = m.db.ExperimentWithoutConfigByID(expID)
+	exp, err = m.db.ExperimentByID(expID)
 	if err != nil {
 		return false, nil, err
 	}
@@ -99,7 +99,7 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		exp, err := db.ExperimentWithoutConfigByTaskID(ctx, t.TaskID)
+		exp, err := db.ExperimentByTaskID(ctx, t.TaskID)
 		if err != nil {
 			return err
 		}
