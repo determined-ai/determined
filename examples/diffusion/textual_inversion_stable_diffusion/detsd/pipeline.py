@@ -329,9 +329,8 @@ class DetSDTextualInversionPipeline:
         return text
 
     def __call__(self, **kwargs) -> StableDiffusionPipelineOutput:
-        """Return the results of the HF pipeline's StableDiffusionPipeline __call__ method, only
-        which must be passed in a key-word arguments. See the HF docs for information on all
-        available args.
+        """Return the results of the HF pipeline's StableDiffusionPipeline __call__ method. Only
+        accepts keyword arguments. See the HF docs for information on all available args.
         """
         if isinstance(kwargs["prompt"], str):
             kwargs["prompt"] = self._replace_concepts_with_dummies(kwargs["prompt"])
