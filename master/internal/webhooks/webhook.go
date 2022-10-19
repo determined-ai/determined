@@ -213,7 +213,7 @@ type WebhookEventID int
 
 // Event corresponds to a row in the "webhook_events" DB table.
 type Event struct {
-	bun.BaseModel `bun:"table:webhook_events_que"`
+	bun.BaseModel `bun:"table:webhook_events_queue"`
 
 	ID      WebhookEventID `bun:"id,pk,autoincrement"`
 	URL     string         `bun:"url,notnull"`

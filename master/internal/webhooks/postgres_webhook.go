@@ -301,9 +301,9 @@ func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 	}
 	var events []Event
 	if err = tx.NewRaw(`
-DELETE FROM webhook_events_que
-USING ( SELECT * FROM webhook_events_que LIMIT ? FOR UPDATE SKIP LOCKED ) q
-WHERE q.id = webhook_events_que.id RETURNING webhook_events_que.*
+DELETE FROM webhook_events_queue
+USING ( SELECT * FROM webhook_events_queue LIMIT ? FOR UPDATE SKIP LOCKED ) q
+WHERE q.id = webhook_events_queue.id RETURNING webhook_events_queue.*
 `, limit).Scan(ctx, &events); err != nil {
 		return nil, fmt.Errorf("scanning events: %w", err)
 	}
