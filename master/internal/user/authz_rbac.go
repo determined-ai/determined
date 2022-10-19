@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -113,6 +114,29 @@ func (a *UserAuthZRBAC) CanCreateUsersOwnSetting(
 // CanResetUsersOwnSettings always returns nil.
 func (a *UserAuthZRBAC) CanResetUsersOwnSettings(curUser model.User) error {
 	return nil
+}
+
+// CanGetActiveTasksCount returns an error if a user can't administrate users.
+func (a *UserAuthZRBAC) CanGetActiveTasksCount(curUser model.User) error {
+	return db.DoesPermissionMatch(context.TODO(), curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
+}
+
+// CanAccessNTSCTask returns false if a user can't administrate users and it is not their task.
+func (a *UserAuthZRBAC) CanAccessNTSCTask(
+	curUser model.User, ownerID model.UserID,
+) (bool, error) {
+	if curUser.ID == ownerID {
+		return true, nil
+	}
+	if err := db.DoesPermissionMatch(context.TODO(), curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER); err != nil {
+		if _, ok := err.(authz.PermissionDeniedError); ok {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func init() {
