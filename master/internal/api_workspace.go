@@ -34,8 +34,8 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	if err != nil {
 		return err
 	}
-	checkpointStorageConfig := &expconf.CheckpointStorageConfig{}
-	if err = checkpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+	var checkpointStorageConfig expconf.CheckpointStorageConfig
+	if err = (&checkpointStorageConfig).UnmarshalJSON(bytes); err != nil {
 		return err
 	}
 
@@ -303,11 +303,13 @@ func (a *apiServer) PostWorkspace(
 	}
 
 	if req.CheckpointStorageConfig != nil {
-		bytes, err := req.CheckpointStorageConfig.MarshalJSON()
+		var bytes []byte
+		bytes, err = req.CheckpointStorageConfig.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		w.CheckpointStorageConfig = &expconf.CheckpointStorageConfig{}
+		var sc expconf.CheckpointStorageConfig
+		w.CheckpointStorageConfig = &sc
 		if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
 			return nil, err
 		}
@@ -388,11 +390,13 @@ func (a *apiServer) PatchWorkspace(
 			CanSetWorkspacesCheckpointStorageConfig(ctx, currUser, currWorkspace); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
-		bytes, err := req.Workspace.CheckpointStorageConfig.MarshalJSON()
+		var bytes []byte
+		bytes, err = req.Workspace.CheckpointStorageConfig.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
-		updatedWorkspace.CheckpointStorageConfig = &expconf.CheckpointStorageConfig{}
+		var sc expconf.CheckpointStorageConfig
+		updatedWorkspace.CheckpointStorageConfig = &sc
 		if err = updatedWorkspace.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
 			return nil, err
 		}
