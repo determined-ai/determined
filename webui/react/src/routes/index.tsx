@@ -3,13 +3,12 @@ import React from 'react';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Deprecated from 'pages/Deprecated';
-import ExperimentComparison from 'pages/ExperimentComparison';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
-import ProjectDetails from 'pages/ProjectDetails';
+import ProjectDetailsWrapper from 'pages/ProjectDetailsWrapper';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import Settings from 'pages/Settings';
@@ -31,14 +30,13 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,
   clusters: <Clusters />,
-  experimentComparison: <ExperimentComparison />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
   jobs: <Deprecated />,
   modelDetails: <ModelDetails />,
   models: <ModelRegistry />,
   modelVersionDetails: <ModelVersionDetails />,
-  projectDetails: <ProjectDetails />,
+  projectDetails: <ProjectDetailsWrapper />,
   reload: <Reload />,
   resourcepool: <ResourcepoolDetail />,
   settings: <Settings />,
@@ -47,7 +45,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   taskList: <TaskList />,
   taskLogs: <TaskLogsWrapper />,
   trialDetails: <TrialDetails />,
-  uncategorized: <ProjectDetails />,
+  uncategorized: <ProjectDetailsWrapper />,
   wait: <Wait />,
   webhooks: <Webhooks />,
   workspaceDetails: <WorkspaceDetails />,

@@ -4,13 +4,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
+import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell,
-} from 'components/InteractiveTable';
-import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
+} from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
   GenericRenderer,
@@ -18,7 +18,7 @@ import {
   relativeTimeRenderer,
   stateRenderer,
   userRenderer,
-} from 'components/Table';
+} from 'components/Table/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';

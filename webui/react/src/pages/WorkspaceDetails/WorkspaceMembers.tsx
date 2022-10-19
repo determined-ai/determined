@@ -4,9 +4,12 @@ import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
-import { getFullPaginationConfig } from 'components/Table';
-import TableFilterSearch from 'components/TableFilterSearch';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
+import { getFullPaginationConfig } from 'components/Table/Table';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';

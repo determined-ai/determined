@@ -1,6 +1,19 @@
 .experimentTab {
   padding: 16px;
 }
+.base {
+  flex: 1 1 auto;
+  flex-grow: 1;
+  height: 100%;
+}
+.tabPane {
+  display: flex;
+  flex-direction: column;
+}
+:global(.ant-spin-container) {
+  display: flex;
+  flex-direction: column;
+}
 .tabOptions {
   .actionOverflow {
     display: none;
@@ -15,7 +28,6 @@
 :global(.ant-tabs-nav-list) {
   height: min-content;
 }
-
 @media only screen and (max-width: $breakpoint-tablet) {
   .tabOptions {
     .actionList {

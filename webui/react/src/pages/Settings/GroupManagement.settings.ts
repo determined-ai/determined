@@ -1,5 +1,5 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 export type UserColumnName = 'id' | 'name' | 'users' | 'action';

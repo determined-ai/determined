@@ -1,4 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { Determinedtrialv1State } from 'services/api-ts-sdk';
 import {
   DarkLight,
   getCssVar,
@@ -65,6 +66,15 @@ const stateColorMapping = {
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
+  [Determinedtrialv1State.ACTIVE]: 'active',
+  [Determinedtrialv1State.PAUSED]: 'warning',
+  [Determinedtrialv1State.STOPPINGCANCELED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGKILLED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'success',
+  [Determinedtrialv1State.STOPPINGERROR]: 'critical',
+  [Determinedtrialv1State.CANCELED]: 'inactive',
+  [Determinedtrialv1State.COMPLETED]: 'success',
+  [Determinedtrialv1State.ERROR]: 'critical',
 };
 
 export type StateOfUnion =
@@ -74,7 +84,8 @@ export type StateOfUnion =
   | CheckpointState
   | SlotState
   | JobState
-  | WorkspaceState;
+  | WorkspaceState
+  | Determinedtrialv1State;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,

@@ -7,7 +7,6 @@ interface WithPagination {
 }
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
-
 export interface User {
   displayName?: string;
   id: number;
@@ -370,7 +369,7 @@ export const metricTypeParamMap: Record<string, MetricTypeParam> = {
   [MetricType.Validation]: 'METRIC_TYPE_VALIDATION',
 };
 
-export interface MetricName {
+export interface Metric {
   name: string;
   type: MetricType;
 }
@@ -550,13 +549,6 @@ export interface ExperimentOld extends ExperimentItem {
   url: string;
 }
 
-export enum ExperimentVisualizationType {
-  HpParallelCoordinates = 'hp-parallel-coordinates',
-  HpHeatMap = 'hp-heat-map',
-  HpScatterPlots = 'hp-scatter-plots',
-  LearningCurve = 'learning-curve',
-}
-
 interface Allocation {
   isReady: boolean;
   state: CommandState;
@@ -680,7 +672,7 @@ export interface ExperimentFilters {
   users?: string[];
 }
 
-export interface TrialFilters {
+export interface ExperimentTrialFilters {
   states?: string[];
 }
 
