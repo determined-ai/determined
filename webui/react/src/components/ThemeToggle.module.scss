@@ -30,16 +30,22 @@ $transtion-type: ease-in-out 0.6s;
 }
 .system {
   background-color: gold;
-  border-color: black gold gold black;
+  border-bottom-color: gold;
+  border-left-color: black;
   border-radius: 10px;
+  border-right-color: gold;
   border-style: solid;
+  border-top-color: black;
   border-width: 10px;
 }
 .light {
   background-color: gold;
-  border-color: gold;
+  border-bottom-color: gold;
+  border-left-color: gold;
   border-radius: 10px;
+  border-right-color: gold;
   border-style: solid;
+  border-top-color: gold;
   border-width: 10px;
 }
 .dark {

@@ -26,6 +26,8 @@
     cursor: pointer;
   }
   .dropTarget {
+    // for debugging
+    // background-color: var(--theme-status-active);
     border-radius: 4px;
     bottom: 0;
     height: 250px;
@@ -99,7 +101,7 @@
   }
   /* stylelint-disable at-rule-empty-line-before */
   // only for firefox
-  @-moz-document url-prefix('') {
+  @-moz-document url-prefix() {
     .rightClickableCellWrapper {
       display: inline-block; // just override display
     }
