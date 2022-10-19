@@ -4,15 +4,15 @@ import { V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { MetricName, MetricType } from 'types';
+import { Metric, MetricType } from 'types';
 
-export interface UseMetricNamesInterface {
+export interface UseMetricsInterface {
   errorHandler: () => void;
   experimentId: number;
 }
 
-const useMetricNames = (experimentId: number, errorHandler: (e: unknown) => void): MetricName[] => {
-  const [metrics, setMetrics] = useState<MetricName[]>([]);
+const useMetricNames = (experimentId: number, errorHandler: (e: unknown) => void): Metric[] => {
+  const [metrics, setMetrics] = useState<Metric[]>([]);
 
   useEffect(() => {
     const canceler = new AbortController();

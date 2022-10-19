@@ -47,7 +47,7 @@ type TrialsAugmented struct {
 func (t *TrialsAugmented) Proto() *apiv1.AugmentedTrial {
 	return &apiv1.AugmentedTrial{
 		TrialId:               t.TrialID,
-		State:                 trialv1.State(trialv1.State_value[t.State]),
+		State:                 trialv1.State(trialv1.State_value["STATE_"+t.State]),
 		Hparams:               protoutils.ToStruct(t.Hparams),
 		TrainingMetrics:       protoutils.ToStruct(t.TrainingMetrics),
 		ValidationMetrics:     protoutils.ToStruct(t.ValidationMetrics),
@@ -289,7 +289,7 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 	if len(filters.States) > 0 {
 		states := []string{}
 		for _, s := range filters.States {
-			states = append(states, s.String())
+			states = append(states, strings.TrimPrefix(s.String(), "STATE_"))
 		}
 		q.Where("state in (?)", bun.In(states))
 	}

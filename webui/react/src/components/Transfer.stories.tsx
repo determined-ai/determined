@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DEFAULT_COLUMNS } from 'pages/ProjectDetails.settings';
+import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { generateAlphaNumeric } from 'shared/utils/string';
 
 import Transfer from './Transfer';

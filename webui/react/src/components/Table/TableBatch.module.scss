@@ -1,0 +1,122 @@
+$arrow-size: 11px;
+$arrow-left: 22px;
+
+.base {
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: relative;
+  transition: height 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  z-index: 3;
+
+  .container {
+    align-items: center;
+    background-color: var(--theme-float);
+    border: solid var(--theme-stroke-width) var(--theme-float-border);
+    border-radius: var(--theme-border-radius);
+    box-shadow: var(--theme-elevation);
+    display: flex;
+    height: 48px;
+    justify-content: space-between;
+    padding: 8px;
+    position: absolute;
+    width: 100%;
+    z-index: 1;
+  }
+  .container::before {
+    background-color: var(--theme-float);
+    border-color: var(--theme-float-border);
+    border-style: solid;
+    border-width: 0 var(--theme-stroke-width) var(--theme-stroke-width) 0;
+    box-shadow: var(--theme-elevation);
+    content: '';
+    display: block;
+    height: $arrow-size;
+    left: $arrow-left;
+    position: absolute;
+    top: 100%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: $arrow-size;
+    z-index: 0;
+  }
+  .container::after {
+    background-color: var(--theme-float);
+    bottom: 0;
+    content: '';
+    height: calc(8px - 1px);
+    left: 24px;
+    position: absolute;
+    transform: translateX(-50%);
+    width: 30px;
+  }
+  .actions {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    gap: 8px;
+    z-index: 1;
+  }
+  .message {
+    font-size: 14px;
+    overflow: hidden;
+    padding: 0 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .clear {
+    flex-shrink: 1;
+  }
+  .selectMode {
+    margin-right: 8px;
+  }
+  :global(.ant-select-selection-placeholder) {
+    color: var(--theme-float-on-weak);
+  }
+  &.show {
+    height: 48px;
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  @media only screen and (max-width: $breakpoint-mobile) {
+    .container {
+      flex-wrap: wrap;
+      height: 80px;
+      padding: 8px;
+    }
+    .actions {
+      flex-grow: 0;
+      order: 1;
+      overflow: auto;
+    }
+    .message {
+      order: 0;
+      padding: 0 0 8px;
+      width: 100%;
+    }
+    .clear {
+      flex-grow: 1;
+      order: 2;
+      padding-left: 8px;
+    }
+    .clear > button {
+      width: 100%;
+    }
+    &.show {
+      height: 80px;
+    }
+  }
+
+  @media only screen and (max-width: 360px) {
+    .container {
+      height: 120px;
+    }
+    .clear {
+      padding: 8px 0 0;
+      width: 100%;
+    }
+    &.show {
+      height: 120px;
+    }
+  }
+}

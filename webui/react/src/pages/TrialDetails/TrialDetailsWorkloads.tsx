@@ -7,10 +7,10 @@ import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
-import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import ResponsiveTable from 'components/Table/ResponsiveTable';
+import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import { getTrialWorkloads } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
@@ -19,7 +19,7 @@ import { numericSorter } from 'shared/utils/sort';
 import {
   CommandTask,
   ExperimentBase,
-  MetricName,
+  Metric,
   Step,
   TrialDetails,
   TrialWorkloadFilter,
@@ -29,8 +29,8 @@ import handleError from 'utils/error';
 import {
   extractMetricSortValue,
   extractMetricValue,
-  metricNameToValue,
-  valueToMetricName,
+  metricKeyToMetric,
+  metricToKey,
 } from 'utils/metric';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
@@ -40,10 +40,10 @@ import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 const { Option } = Select;
 
 export interface Props {
-  defaultMetrics: MetricName[];
+  defaultMetrics: Metric[];
   experiment: ExperimentBase;
-  metricNames: MetricName[];
-  metrics: MetricName[];
+  metricNames: Metric[];
+  metrics: Metric[];
   settings: Settings;
   trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
@@ -82,7 +82,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: MetricName) => {
+    const metricRenderer = (metricName: Metric) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
         return <HumanReadableNumber num={value} />;
@@ -105,7 +105,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
               ? 'ascend'
               : 'descend'
             : undefined,
-        key: metricNameToValue(metricName),
+        key: metricToKey(metricName),
         render: metricRenderer(metricName),
         sorter: (a, b) => {
           const aVal = extractMetricSortValue(a, metricName),
@@ -140,10 +140,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
-          metricType: valueToMetricName(settings.sortKey)?.type || undefined,
+          metricType: metricKeyToMetric(settings.sortKey)?.type || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: valueToMetricName(settings.sortKey)?.name || undefined,
+          sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
         });
         setWorkloads(wl.workloads);
         setWorkloadCount(wl.pagination.total || 0);

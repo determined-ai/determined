@@ -16,13 +16,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
-import {
-  ExperimentBase,
-  MetricName,
-  MetricsWorkload,
-  TrialDetails,
-  TrialWorkloadFilter,
-} from 'types';
+import { ExperimentBase, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFilter } from 'types';
 import handleError from 'utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -78,7 +72,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
   const [trialsDetails, setTrialsDetails] = useState<Record<string, TrialDetails>>({});
   const [canceler] = useState(new AbortController());
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
-  const [selectedMetrics, setSelectedMetrics] = useState<MetricName[]>([]);
+  const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
   const fetchTrialDetails = useCallback(
     async (trialId) => {
@@ -130,13 +124,13 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
     [experiment.id],
   );
 
-  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
+  const metrics = useMetricNames(experiment.id, handleMetricNamesError);
 
   useEffect(() => {
-    setSelectedMetrics(metricNames);
-  }, [metricNames]);
+    setSelectedMetrics(metrics);
+  }, [metrics]);
 
-  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
+  const onMetricSelect = useCallback((selectedMetrics: Metric[]) => {
     setSelectedMetrics(selectedMetrics);
   }, []);
 
@@ -261,16 +255,16 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
             <div className={[css.cell, css.header, css.spanAll].join(' ')}>
               Metrics
               <MetricSelectFilter
-                defaultMetricNames={metricNames}
+                defaultMetrics={metrics}
                 label=""
-                metricNames={metricNames}
+                metrics={metrics}
                 multiple
                 value={selectedMetrics}
                 onChange={onMetricSelect}
               />
             </div>
           </div>
-          {metricNames
+          {metrics
             .filter((metric) => selectedMetrics.map((m) => m.name).includes(metric.name))
             .map((metric) => (
               <div className={css.row} key={metric.name}>

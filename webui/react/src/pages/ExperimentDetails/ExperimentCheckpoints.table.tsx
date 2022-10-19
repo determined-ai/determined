@@ -1,5 +1,5 @@
-import { ColumnDef } from 'components/InteractiveTable';
-import { stateRenderer } from 'components/Table';
+import { ColumnDef } from 'components/Table/InteractiveTable';
+import { stateRenderer } from 'components/Table/Table';
 import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { CoreApiGenericCheckpoint } from 'types';
 

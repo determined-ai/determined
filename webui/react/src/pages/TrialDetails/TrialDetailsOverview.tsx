@@ -6,7 +6,7 @@ import usePermissions from 'hooks/usePermissions';
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ErrorType } from 'shared/utils/error';
-import { ExperimentBase, MetricName, MetricType, RunState, TrialDetails } from 'types';
+import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 
 import TrialChart from './TrialChart';
@@ -49,7 +49,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [defaultMetric] : [];
-    const settingMetrics: MetricName[] = (settings.metric || []).map((metric) => {
+    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
@@ -58,7 +58,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   }, [experiment?.config?.searcher, metricNames, settings.metric]);
 
   const handleMetricChange = useCallback(
-    (value: MetricName[]) => {
+    (value: Metric[]) => {
       const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
       updateSettings({ metric: newMetrics, tableOffset: 0 });
     },
@@ -71,9 +71,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       {showExperimentArtifacts ? (
         <>
           <TrialChart
-            defaultMetricNames={defaultMetrics}
-            metricNames={metricNames}
-            metrics={metrics}
+            defaultMetrics={defaultMetrics}
+            metrics={metricNames}
+            selectedMetrics={metrics}
             trialId={trial?.id}
             trialTerminated={terminalRunStates.has(trial?.state ?? RunState.Active)}
             onMetricChange={handleMetricChange}

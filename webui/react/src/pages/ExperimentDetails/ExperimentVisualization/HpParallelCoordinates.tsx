@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import TableBatch from 'components/TableBatch';
+import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { openOrCreateTensorBoard } from 'services/api';
@@ -23,14 +23,14 @@ import {
   ExperimentBase,
   Hyperparameter,
   HyperparameterType,
-  MetricName,
+  Metric,
   MetricType,
   metricTypeParamMap,
   Scale,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
-import { metricNameToStr } from 'utils/metric';
+import { metricToStr } from 'utils/metric';
 import { openCommand } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -45,7 +45,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale;
 }
 
@@ -143,7 +143,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         data: {
           colorScale: {
             colors: colorScale.map((scale) => scale.color),
-            dimensionKey: metricNameToStr(selectedMetric),
+            dimensionKey: metricToStr(selectedMetric),
           },
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
@@ -173,7 +173,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
-      const key = metricNameToStr(selectedMetric);
+      const key = metricToStr(selectedMetric);
       newDimensions.push(
         selectedScale === Scale.Log
           ? {
@@ -252,7 +252,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         // Add metric of interest.
-        const metricKey = metricNameToStr(selectedMetric);
+        const metricKey = metricToStr(selectedMetric);
         const metricValues = trialIds.map((id) => trialMetricsMap[id]);
         data[metricKey] = metricValues;
 

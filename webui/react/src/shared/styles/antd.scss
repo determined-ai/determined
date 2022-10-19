@@ -266,7 +266,7 @@ html {
   .ant-table .ant-table-tbody > tr.ant-table-row.highlighted > td {
     background-color: var(--theme-stage);
     border-color: var(--theme-status-active);
-    border-style: solid;
+    border-style: hidden hidden solid hidden;
   }
   .ant-table .ant-table-tbody > tr.ant-table-row.clickable {
     cursor: pointer;
@@ -274,7 +274,7 @@ html {
   .ant-table .ant-table-tbody > tr.ant-table-row.clickable:hover > td {
     background-color: var(--theme-stage);
     border-color: var(--theme-status-active);
-    border-style: solid;
+    border-style: hidden hidden solid hidden;
   }
   .ant-table .ant-table-tbody > tr > td.ant-table-selection-column,
   .ant-table .ant-table-tbody > tr > td.fullCell {

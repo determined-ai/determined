@@ -6,9 +6,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -16,13 +19,13 @@ import {
   stateRenderer,
   taskIdRenderer,
   taskNameRenderer,
+  TaskRenderer,
   taskTypeRenderer,
   userRenderer,
-} from 'components/Table';
-import { TaskRenderer } from 'components/Table';
-import TableBatch from 'components/TableBatch';
-import TableFilterDropdown from 'components/TableFilterDropdown';
-import TableFilterSearch from 'components/TableFilterSearch';
+} from 'components/Table/Table';
+import TableBatch from 'components/Table/TableBatch';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
