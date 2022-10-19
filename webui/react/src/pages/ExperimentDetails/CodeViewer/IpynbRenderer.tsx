@@ -1,4 +1,4 @@
-import NotebookJS from 'notebookjs';
+import NotebookJS from '@determined-ai/notebook-render';
 import React from 'react';
 
 import './onedork.css';
