@@ -249,6 +249,7 @@ func TestRbac(t *testing.T) {
 
 		rows, err := db.Bun().NewSelect().Table("role_assignment_scopes").
 			Where("scope_workspace_id IS NULL").Count(ctx)
+		require.NoError(t, err)
 		require.Equal(t, 1, rows, "there should only have been one null scope created")
 	})
 
@@ -361,6 +362,7 @@ func TestRbac(t *testing.T) {
 		err = RemoveRoleAssignments(ctx, groupRoleAssignments, nil)
 		require.NoError(t, err, "error removing assignments from group")
 		roles, err = GetRolesAssignedToGroupsTx(ctx, nil, int32(testGroupStatic.ID))
+		require.NoError(t, err)
 		require.Equal(t, 1, len(roles), "incorrect number of roles retrieved")
 	})
 
@@ -418,12 +420,14 @@ func TestRbac(t *testing.T) {
 
 		// Test for non-existent users
 		permissions, err := UserPermissionsForScope(ctx, -9999, 0)
+		require.NoError(t, err)
 		require.NoError(t, err,
 			"unexpected error from UserPermissionsForScope when non-existent user")
 		require.Empty(t, permissions, "Expected empty permissions for non-existent user")
 
 		// Test for scope-assigned role
 		permissions, err = UserPermissionsForScope(ctx, testUser.ID, testWorkspace.ID)
+		require.NoError(t, err)
 		require.Len(t, permissions, 4, "Expected four permissions from %v", permissions)
 		require.True(t, permissionsContainsAll(permissions,
 			globalTestPermission.ID, testPermission.ID, testPermission2.ID, testPermission3.ID),
@@ -431,6 +435,7 @@ func TestRbac(t *testing.T) {
 
 		// Test for globally assigned role
 		permissions, err = UserPermissionsForScope(ctx, testUser.ID, 0)
+		require.NoError(t, err)
 		require.Len(t, permissions, 2, "Expected two permissions from %v", permissions)
 		require.True(t, permissionsContainsAll(permissions, globalTestPermission.ID,
 			testPermission.ID), "failed to find expected permissions in %v", permissions)
@@ -641,8 +646,10 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 	// Add users and assignments.
 	user0 := model.User{Username: uuid.New().String()}
 	_, err = pgDB.AddUser(&user0, nil)
+	require.NoError(t, err)
 	user1 := model.User{Username: uuid.New().String()}
 	_, err = pgDB.AddUser(&user1, nil)
+	require.NoError(t, err)
 	user2 := model.User{Username: uuid.New().String()}
 	_, err = pgDB.AddUser(&user2, nil)
 	require.NoError(t, err)
