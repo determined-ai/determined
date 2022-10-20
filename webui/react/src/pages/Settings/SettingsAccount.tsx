@@ -74,7 +74,6 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Username</label>
         <InlineEditor
-          disabled={!auth.user?.isAdmin}
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           value={auth.user?.username || ''}
