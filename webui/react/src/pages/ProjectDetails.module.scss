@@ -43,3 +43,21 @@
     }
   }
 }
+
+.descriptionRenderer {
+  border: hidden !important;
+}
+.descriptionRenderer:focus,
+.descriptionRenderer:hover {
+  border: solid 1px var(--theme-status-active) !important;
+}
+.tagsRenderer {
+  :global([aria-label='new-tag-trigger']) {
+    display: none !important;
+  }
+  &:hover {
+    :global([aria-label='new-tag-trigger']) {
+      display: inherit !important;
+    }
+  }
+}

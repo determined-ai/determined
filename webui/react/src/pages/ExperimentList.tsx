@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+import { Input, MenuProps, Typography } from 'antd';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -31,7 +31,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
-import TextEditorModal from 'components/TextEditorModal';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -401,11 +400,21 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
-      <TagList
-        disabled={record.archived || project?.archived || !canEditExperiment}
-        tags={record.labels}
-        onChange={experimentTags.handleTagListChange(record.id)}
-      />
+      <div className={css.tagsRenderer}>
+        <Typography.Text
+          ellipsis={{
+            tooltip: <TagList disabled tags={record.labels} />,
+          }}>
+          <div>
+            <TagList
+              compact
+              disabled={record.archived || project?.archived || !canEditExperiment}
+              tags={record.labels}
+              onChange={experimentTags.handleTagListChange(record.id)}
+            />
+          </div>
+        </Typography.Text>
+      </div>
     );
 
     const actionRenderer: ExperimentRenderer = (_, record: ExperimentItem) => {
@@ -413,12 +422,17 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     };
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => (
-      <TextEditorModal
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={value}
         disabled={record.archived || !canEditExperiment}
         placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
-        value={value}
-        onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
+        onPressEnter={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveExperimentDescription(newDesc, record.id);
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -462,7 +476,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         filters: labels.map((label) => ({ text: label, value: label })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
-        onCell: onRightClickableCell,
         render: tagsRenderer,
         title: 'Tags',
       },

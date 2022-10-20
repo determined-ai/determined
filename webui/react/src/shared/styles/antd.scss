@@ -451,4 +451,11 @@ html {
   .ant-tooltip {
     pointer-events: none;
   }
+  .ant-tooltip-inner,
+  .ant-tooltip-arrow-content,
+  .ant-tooltip-arrow-content::before {
+    background: var(--theme-float);
+    color: var(--theme-float-on);
+    opacity: 1;
+  }
 }
