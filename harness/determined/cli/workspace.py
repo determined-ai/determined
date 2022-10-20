@@ -34,7 +34,7 @@ def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
             w.agentUserGroup.agentGid if w.agentUserGroup else None,
             w.agentUserGroup.agentUser if w.agentUserGroup else None,
             w.agentUserGroup.agentGroup if w.agentUserGroup else None,
-            w.checkpointStorageConfig if w.checkpointStorageConfig else None,
+            w.checkpointStorageConfig,
         ]
         for w in workspaces
     ]
@@ -125,11 +125,29 @@ def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUs
     return None
 
 
+def _parse_checkpoint_storage_args(args: Namespace) -> Any:
+    if (args.checkpoint_storage_config is not None) and (
+        args.checkpoint_storage_config_file is not None
+    ):
+        raise api.errors.BadRequestException(
+            "can only provide --checkpoint_storage_config or --checkpoint_storage_config_file"
+        )
+    checkpoint_storage = args.checkpoint_storage_config_file
+    if args.checkpoint_storage_config is not None:
+        checkpoint_storage = json.loads(args.checkpoint_storage_config)
+    return checkpoint_storage
+
+
 @authentication.required
 def create_workspace(args: Namespace) -> None:
     agent_user_group = _parse_agent_user_group_args(args)
+    checkpoint_storage = _parse_checkpoint_storage_args(args)
 
-    content = bindings.v1PostWorkspaceRequest(name=args.name, agentUserGroup=agent_user_group)
+    content = bindings.v1PostWorkspaceRequest(
+        name=args.name,
+        agentUserGroup=agent_user_group,
+        checkpointStorageConfig=checkpoint_storage,
+    )
     w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
 
     if args.json:
@@ -200,15 +218,7 @@ def unarchive_workspace(args: Namespace) -> None:
 
 @authentication.required
 def edit_workspace(args: Namespace) -> None:
-    if (args.checkpoint_storage_config is not None) and (
-        args.checkpoint_storage_config_file is not None
-    ):
-        raise api.errors.BadRequestException(
-            "can only provide --checkpoint_storage_config or --checkpoint_storage_config_file"
-        )
-    checkpoint_storage = args.checkpoint_storage_config_file
-    if args.checkpoint_storage_config is not None:
-        checkpoint_storage = json.loads(args.checkpoint_storage_config)
+    checkpoint_storage = _parse_checkpoint_storage_args(args)
 
     sess = cli.setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
@@ -306,6 +316,16 @@ args_description = [
                 [
                     Arg("name", type=str, help="unique name of the workspace"),
                     *AGENT_USER_GROUP_ARGS,
+                    Arg(
+                        "--checkpoint-storage-config",
+                        type=str,
+                        help="Storage config (JSON-formatted string)",
+                    ),
+                    Arg(
+                        "--checkpoint-storage-config-file",
+                        type=json_file_arg,
+                        help="Storage config (JSON-formatted file)",
+                    ),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
