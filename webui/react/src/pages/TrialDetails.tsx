@@ -189,7 +189,7 @@ const TrialDetailsComp: React.FC = () => {
                 ids={experiment.trialIds ?? []}
                 tooltipLabel="Trial"
                 onSelectId={(selectedTrialId) => {
-                  navigate(paths.trialDetails(selectedTrialId, experiment?.id), { replace: true });
+                  navigate(paths.trialDetails(selectedTrialId, experiment?.id));
                 }}
               />
             }
