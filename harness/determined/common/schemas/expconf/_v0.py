@@ -20,6 +20,21 @@ class DeviceV0(schemas.SchemaBase):
     ) -> None:
         pass
 
+    @classmethod
+    def from_dict(cls, d: Union[dict, str], prevalidated: bool = False) -> "DeviceV0":
+        # Accept --device strings and convert them to maps.
+        if isinstance(d, str):
+            fields = d.split(":")
+            if len(fields) not in [2, 3]:
+                raise ValueError("wrong number of fields in device string")
+            d = {
+                "host_path": fields[0],
+                "container_path": fields[1],
+                "mode": None if len(fields) < 3 else fields[2],
+            }
+
+        return super().from_dict(d, prevalidated)
+
 
 class ResourcesConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/resources.json"

@@ -161,3 +161,25 @@ func TestValidateSlurmOptions(t *testing.T) {
 		"slurm option -N is not configurable",
 		"slurm option -D is not configurable")
 }
+
+func TestDeviceConfig(t *testing.T) {
+	// Devices can be strings or maps, and merging device lists is additive.
+	var actual DevicesConfig
+
+	assert.NilError(t, json.Unmarshal([]byte(`[
+    {"host_path": "/not_asdf", "container_path": "/asdf"},
+    {"host_path": "/zxcv", "container_path": "/zxcv"}
+]`), &actual))
+
+	assert.NilError(t, json.Unmarshal([]byte(`[
+    {"host_path": "/asdf", "container_path": "/asdf"},
+    "/qwer:/qwer"
+]`), &actual))
+
+	var expected DevicesConfig
+	expected = append(expected, DeviceConfig{"/asdf", "/asdf", "mrw"})
+	expected = append(expected, DeviceConfig{"/qwer", "/qwer", "mrw"})
+	expected = append(expected, DeviceConfig{"/zxcv", "/zxcv", "mrw"})
+
+	assert.DeepEqual(t, actual, expected)
+}
