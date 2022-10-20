@@ -236,7 +236,7 @@ class DetSDTextualInversionTrainer:
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
                 while trainer.steps_completed < op.length:
-                    for batch_idx, batch in enumerate(trainer.train_dataloader):
+                    for batch in trainer.train_dataloader:
                         # Use the accumulate method for efficient gradient accumulation.
                         with trainer.accelerator.accumulate(trainer.text_encoder):
                             trainer._train_one_batch(batch)
