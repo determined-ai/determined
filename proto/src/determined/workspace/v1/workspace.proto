@@ -66,6 +66,7 @@ message Workspace {
   // Optional agent host uid and gid override.
   optional determined.user.v1.AgentUserGroup agent_user_group = 12;
   // Optional checkpoint storage config.
+  // Expects same format as experiment config's checkpoint storage.
   optional google.protobuf.Struct checkpoint_storage_config = 13;
 }
 
@@ -77,5 +78,6 @@ message PatchWorkspace {
   optional determined.user.v1.AgentUserGroup agent_user_group = 12;
 
   // Optional checkpoint storage config.
+  // Expects same format as experiment config's checkpoint storage.
   optional google.protobuf.Struct checkpoint_storage_config = 13;
 }
