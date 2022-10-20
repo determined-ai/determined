@@ -299,15 +299,11 @@ const canViewExperimentArtifacts = (
 const canGetPermissions = ({
   rbacAllPermission,
   rbacEnabled,
-  user,
   userAssignments,
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return (
-    rbacAllPermission ||
-    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ASSIGNROLES) : user.isAdmin))
-  );
+  return rbacAllPermission || (rbacEnabled && permitted.has(V1PermissionType.ASSIGNROLES));
 };
 
 // Model and ModelVersion actions
