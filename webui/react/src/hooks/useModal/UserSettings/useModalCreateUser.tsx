@@ -81,10 +81,10 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
     });
-    if (user && canModifyPermissions) {
+    if (user && canGetPermissions) {
       updatePermissions();
     }
-  }, [form, canModifyPermissions, updatePermissions, user]);
+  }, [form, canGetPermissions, updatePermissions, user]);
 
   const permissionTableColumn = useMemo(() => {
     const columns = [
@@ -117,7 +117,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     return columns;
   }, [canModifyPermissions, viewOnly]);
 
-  if (user !== undefined && roles === null && canModifyPermissions) {
+  if (user !== undefined && roles === null && canGetPermissions) {
     return <Spinner tip="Loading roles..." />;
   }
 
@@ -206,10 +206,10 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
-  const { canModifyPermissions } = usePermissions();
+  const { canGetPermissions, canModifyPermissions } = usePermissions();
 
   const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined) {
+    if (user !== undefined && canGetPermissions) {
       try {
         const roles = await getUserRoles({ userId: user.id });
         setUserRoles(roles.filter((r) => r.permissions.find((p) => p.isGlobal)));
@@ -217,7 +217,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
     }
-  }, [user]);
+  }, [user, canGetPermissions]);
 
   useEffect(() => {
     fetchUserRoles();
