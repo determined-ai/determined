@@ -24,6 +24,11 @@ import (
 
 var errUserNotFound = status.Error(codes.NotFound, "user not found")
 
+const (
+	adminName      = "admin"
+	determinedName = "determined"
+)
+
 var latinText = regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
 
 func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
@@ -325,11 +330,11 @@ func (a *apiServer) PatchUser(
 			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
 			displayName := latinText.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
 			// Restrict 'admin' and 'determined' in display names.
-			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == "admin") {
+			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == adminName) {
 				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 			}
 			if targetUser.Username != displayName &&
-				(strings.TrimSpace(strings.ToLower(displayName)) == "determined") {
+				(strings.TrimSpace(strings.ToLower(displayName)) == determinedName) {
 				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 			}
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
@@ -355,13 +360,14 @@ func (a *apiServer) PatchUser(
 		username := strings.TrimSpace(latinText.ReplaceAllLiteralString(req.User.Username.Value, ""))
 		// Too short username
 		if len(username) <= 1 {
-			return nil, status.Error(codes.InvalidArgument, "Username must have two or more ASCII characters.")
+			return nil, status.Error(codes.InvalidArgument,
+				"Username must have two or more ASCII characters.")
 		}
 		// Restrict 'admin' and 'determined' in usernames.
-		if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(username)) == "admin") {
+		if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(username)) == adminName) {
 			return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 		}
-		if strings.TrimSpace(strings.ToLower(username)) == "determined" {
+		if strings.TrimSpace(strings.ToLower(username)) == determinedName {
 			return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 		}
 		err = a.m.db.UpdateUsername(&targetUser.ID, username)

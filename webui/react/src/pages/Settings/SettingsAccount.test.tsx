@@ -62,7 +62,6 @@ describe('SettingsAccount', () => {
   it('should render with correct values', () => {
     const { container } = setup();
 
-    expect(screen.getByText(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
 
     // Fetching element by specific attribute is not natively supported.
