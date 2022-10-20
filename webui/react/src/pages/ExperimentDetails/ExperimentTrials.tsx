@@ -26,6 +26,7 @@ import {
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
@@ -58,7 +59,7 @@ const TrialAction = {
   ViewLogs: 'View Logs',
 } as const;
 
-type TrialAction = typeof TrialAction[keyof typeof TrialAction];
+type TrialAction = ValueOf<typeof TrialAction>;
 
 const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [total, setTotal] = useState(0);
@@ -370,31 +371,31 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const TrialActionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => {
       const MenuKey = {
-        HYPERPARAMETER_SEARCH: 'hyperparameter-search',
-        OPEN_TENSORBOARD: 'open-tensorboard',
-        VIEW_LOGS: 'view-logs',
+        HyperparameterSearch: 'hyperparameter-search',
+        OpenTensorboard: 'open-tensorboard',
+        ViewLogs: 'view-logs',
       } as const;
 
       const funcs = {
-        [MenuKey.OPEN_TENSORBOARD]: () => {
+        [MenuKey.OpenTensorboard]: () => {
           handleOpenTensorBoard(record);
         },
-        [MenuKey.HYPERPARAMETER_SEARCH]: () => {
+        [MenuKey.HyperparameterSearch]: () => {
           handleHyperparameterSearch(record);
         },
-        [MenuKey.VIEW_LOGS]: () => {
+        [MenuKey.ViewLogs]: () => {
           handleViewLogs(record);
         },
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+        funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
       const menuItems = [
-        { key: MenuKey.OPEN_TENSORBOARD, label: TrialAction.OpenTensorBoard },
-        { key: MenuKey.HYPERPARAMETER_SEARCH, label: TrialAction.HyperparameterSearch },
-        { key: MenuKey.VIEW_LOGS, label: TrialAction.ViewLogs },
+        { key: MenuKey.OpenTensorboard, label: TrialAction.OpenTensorBoard },
+        { key: MenuKey.HyperparameterSearch, label: TrialAction.HyperparameterSearch },
+        { key: MenuKey.ViewLogs, label: TrialAction.ViewLogs },
       ];
 
       return (

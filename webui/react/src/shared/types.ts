@@ -93,3 +93,5 @@ export interface SemanticVersion {
   minor: number;
   patch: number;
 }
+
+export type ValueOf<T> = T[keyof T];

@@ -4,6 +4,7 @@ import { FormListFieldData } from 'antd/lib/form/FormList';
 import React, { useMemo } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 
 import css from './EditableRow.module.scss';
 
@@ -18,21 +19,21 @@ interface Props {
 const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
   const menu = useMemo(() => {
     const MenuKey = {
-      DELETE_METADATA_ROW: 'delete-metadata-row',
+      DeleteMetadataRow: 'delete-metadata-row',
     } as const;
 
     const funcs = {
-      [MenuKey.DELETE_METADATA_ROW]: () => {
+      [MenuKey.DeleteMetadataRow]: () => {
         if (onDelete) onDelete();
       },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { danger: true, key: MenuKey.DELETE_METADATA_ROW, label: 'Delete Row' },
+      { danger: true, key: MenuKey.DeleteMetadataRow, label: 'Delete Row' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;

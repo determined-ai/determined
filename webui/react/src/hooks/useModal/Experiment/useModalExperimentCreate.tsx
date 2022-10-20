@@ -8,7 +8,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
-import { RawJson } from 'shared/types';
+import { RawJson, ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { DetError, isDetError, isError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -24,7 +24,7 @@ export const CreateExperimentType = {
   Fork: 'Fork',
 } as const;
 
-export type CreateExperimentType = typeof CreateExperimentType[keyof typeof CreateExperimentType];
+export type CreateExperimentType = ValueOf<typeof CreateExperimentType>;
 
 interface Props {
   onClose?: () => void;

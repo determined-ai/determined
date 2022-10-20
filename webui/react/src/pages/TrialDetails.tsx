@@ -18,7 +18,7 @@ import { getExperimentDetails, getTrialDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { ApiState } from 'shared/types';
+import { ApiState, ValueOf } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails } from 'types';
@@ -35,7 +35,7 @@ const TabType = {
   Workloads: 'workloads',
 } as const;
 
-type TabType = typeof TabType[keyof typeof TabType];
+type TabType = ValueOf<typeof TabType>;
 
 type Params = {
   experimentId?: string;

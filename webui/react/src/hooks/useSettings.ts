@@ -15,7 +15,7 @@ import {
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import { Primitive, RecordKey } from '../shared/types';
+import { Primitive, RecordKey, ValueOf } from '../shared/types';
 import { ErrorType } from '../shared/utils/error';
 
 import useStorage from './useStorage';
@@ -28,7 +28,7 @@ export const BaseType = {
   String: 'String',
 } as const;
 
-export type BaseType = typeof BaseType[keyof typeof BaseType];
+export type BaseType = ValueOf<typeof BaseType>;
 
 const PathChangeType = {
   None: 'none',
@@ -36,7 +36,7 @@ const PathChangeType = {
   Replace: 'replace',
 } as const;
 
-type PathChangeType = typeof PathChangeType[keyof typeof PathChangeType];
+type PathChangeType = ValueOf<typeof PathChangeType>;
 
 type GenericSettingsType = Primitive | Primitive[] | Record<number, number[]> | undefined;
 type GenericSettings = Record<string, GenericSettingsType>;

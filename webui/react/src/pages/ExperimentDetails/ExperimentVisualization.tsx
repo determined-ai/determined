@@ -17,6 +17,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ValueOf } from 'shared/types';
 import { hasObjectKeys } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
@@ -51,8 +52,7 @@ export const ExperimentVisualizationType = {
   LearningCurve: 'learning-curve',
 } as const;
 
-export type ExperimentVisualizationType =
-  typeof ExperimentVisualizationType[keyof typeof ExperimentVisualizationType];
+export type ExperimentVisualizationType = ValueOf<typeof ExperimentVisualizationType>;
 
 interface Props {
   basePath: string;
@@ -66,7 +66,7 @@ const PageError = {
   MetricNames: 'MetricNames',
 } as const;
 
-type PageError = typeof PageError[keyof typeof PageError];
+type PageError = ValueOf<typeof PageError>;
 
 const STORAGE_PATH = 'experiment-visualization';
 const STORAGE_FILTERS_KEY = 'filters';

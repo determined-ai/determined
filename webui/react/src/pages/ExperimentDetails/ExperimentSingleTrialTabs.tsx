@@ -13,6 +13,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails, TrialItem } from 'types';
 import handleError from 'utils/error';
@@ -40,7 +41,7 @@ const TabType = {
 } as const;
 
 type Params = {
-  tab?: typeof TabType[keyof typeof TabType];
+  tab?: ValueOf<typeof TabType>;
 };
 
 const NeverTrials: React.FC = () => (

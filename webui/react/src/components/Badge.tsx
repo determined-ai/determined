@@ -4,6 +4,7 @@ import React, { CSSProperties, useMemo } from 'react';
 import { stateToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { DarkLight, getCssVar } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import { hsl2str, str2hsl } from 'shared/utils/color';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
@@ -17,7 +18,7 @@ export const BadgeType = {
   State: 'State',
 } as const;
 
-export type BadgeType = typeof BadgeType[keyof typeof BadgeType];
+export type BadgeType = ValueOf<typeof BadgeType>;
 
 export interface BadgeProps {
   children?: React.ReactNode;

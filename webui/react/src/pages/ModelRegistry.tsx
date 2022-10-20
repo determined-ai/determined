@@ -34,6 +34,7 @@ import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } f
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -299,29 +300,29 @@ const ModelRegistry: React.FC = () => {
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
       const MenuKey = {
-        DELETE_MODEL: 'delete-model',
-        SWITCH_ARCHIVED: 'switch-archived',
+        DeleteModel: 'delete-model',
+        SwitchArchived: 'switch-archived',
       } as const;
 
       const funcs = {
-        [MenuKey.SWITCH_ARCHIVED]: () => {
+        [MenuKey.SwitchArchived]: () => {
           switchArchived(record);
         },
-        [MenuKey.DELETE_MODEL]: () => {
+        [MenuKey.DeleteModel]: () => {
           showConfirmDelete(record);
         },
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+        funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
       const menuItems: MenuProps['items'] = [
-        { key: MenuKey.SWITCH_ARCHIVED, label: record.archived ? 'Unarchive' : 'Archive' },
+        { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
       ];
 
       if (user?.id === record.userId || user?.isAdmin) {
-        menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete Model' });
+        menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return <Menu items={menuItems} onClick={onItemClick} />;

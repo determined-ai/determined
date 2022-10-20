@@ -13,6 +13,7 @@ import { getModelVersion, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
@@ -33,7 +34,7 @@ const TabType = {
 
 type Params = {
   modelId: string;
-  tab?: typeof TabType[keyof typeof TabType];
+  tab?: ValueOf<typeof TabType>;
   versionId: string;
 };
 

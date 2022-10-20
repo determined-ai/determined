@@ -3,6 +3,7 @@ import { Input, InputRef, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
+import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { toHtmlId, truncate } from 'shared/utils/string';
 
@@ -13,7 +14,7 @@ export const TagAction = {
   Remove: 'Remove',
 } as const;
 
-export type TagAction = typeof TagAction[keyof typeof TagAction];
+export type TagAction = ValueOf<typeof TagAction>;
 
 interface Props {
   compact?: boolean;

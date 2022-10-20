@@ -9,6 +9,7 @@ import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
+import { ValueOf } from 'shared/types';
 
 const { TabPane } = Tabs;
 
@@ -18,7 +19,7 @@ export const TabType = {
   UserManagement: 'User Management',
 } as const;
 
-export type TabType = typeof TabType[keyof typeof TabType];
+export type TabType = ValueOf<typeof TabType>;
 
 type Params = {
   tab?: TabType;

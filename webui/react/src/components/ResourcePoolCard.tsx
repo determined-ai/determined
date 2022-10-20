@@ -125,7 +125,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
         </div>
       </div>
       <div className={css.body}>
-        <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.medium} />
+        <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
         <section className={css.details}>
           <Json hideDivider json={shortDetails} />
         </section>
@@ -138,7 +138,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
 export const RenderAllocationBarResourcePool: React.FC<Props> = ({
   poolStats,
   resourcePool: pool,
-  size = ShirtSize.large,
+  size = ShirtSize.Large,
 }: Props) => {
   const { agents } = useStore();
   const isAux = useMemo(() => {

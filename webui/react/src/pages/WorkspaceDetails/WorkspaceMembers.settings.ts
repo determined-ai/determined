@@ -1,5 +1,6 @@
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { ValueOf } from 'shared/types';
 
 export type MembersColumnName = 'name' | 'role' | 'action';
 
@@ -7,7 +8,7 @@ const WorkspaceMembersSortBy = {
   USERNAME: 'username',
 } as const;
 
-type WorkspaceMembersSortBy = typeof WorkspaceMembersSortBy[keyof typeof WorkspaceMembersSortBy];
+type WorkspaceMembersSortBy = ValueOf<typeof WorkspaceMembersSortBy>;
 
 export const DEFAULT_COLUMNS: MembersColumnName[] = ['name', 'role'];
 

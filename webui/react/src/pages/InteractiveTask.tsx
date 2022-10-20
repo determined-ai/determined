@@ -6,6 +6,7 @@ import TaskBar from 'components/TaskBar';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
 import { StoreActionUI } from 'shared/contexts/UIStore';
+import { ValueOf } from 'shared/types';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
 
@@ -25,7 +26,7 @@ const PageView = {
   TASK_LOGS: 'Task Logs',
 } as const;
 
-type PageView = typeof PageView[keyof typeof PageView];
+type PageView = ValueOf<typeof PageView>;
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 

@@ -8,6 +8,7 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import {
   BrandingType,
   CheckpointState,
@@ -24,12 +25,12 @@ import {
  * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
  */
 export const ShirtSize = {
-  small: 'small',
-  medium: 'medium',
-  large: 'large',
+  Small: 'small',
+  Medium: 'medium',
+  Large: 'large',
 } as const;
 
-export type ShirtSize = typeof ShirtSize[keyof typeof ShirtSize];
+export type ShirtSize = ValueOf<typeof ShirtSize>;
 
 const stateColorMapping = {
   [RunState.Active]: 'active',

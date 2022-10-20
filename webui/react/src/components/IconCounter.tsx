@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 
 import css from './IconCounter.module.scss';
 
@@ -9,7 +10,7 @@ const IconCounterType = {
   Disabled: 'disabled',
 } as const;
 
-type IconCounterType = typeof IconCounterType[keyof typeof IconCounterType];
+type IconCounterType = ValueOf<typeof IconCounterType>;
 
 interface Props {
   count: number;

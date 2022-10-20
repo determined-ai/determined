@@ -70,7 +70,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { RecordKey } from 'shared/types';
+import { RecordKey, ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -945,36 +945,36 @@ const ProjectDetails: React.FC = () => {
   const ExperimentTabOptions = useMemo(() => {
     const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
       const MenuKey = {
-        COLUMNS: 'columns',
-        RESULT_FILTER: 'resetFilters',
-        SWITCH_ARCHIVED: 'switchArchive',
+        Columns: 'columns',
+        ResultFilter: 'resetFilters',
+        SwitchArchived: 'switchArchive',
       } as const;
 
       const funcs = {
-        [MenuKey.SWITCH_ARCHIVED]: () => {
+        [MenuKey.SwitchArchived]: () => {
           switchShowArchived(!settings.archived);
         },
-        [MenuKey.COLUMNS]: () => {
+        [MenuKey.Columns]: () => {
           handleCustomizeColumnsClick();
         },
-        [MenuKey.RESULT_FILTER]: () => {
+        [MenuKey.ResultFilter]: () => {
           resetFilters();
         },
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+        funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
       const menuItems: MenuProps['items'] = [
         {
-          key: MenuKey.SWITCH_ARCHIVED,
+          key: MenuKey.SwitchArchived,
           label: settings.archived ? 'Hide Archived' : 'Show Archived',
         },
-        { key: MenuKey.COLUMNS, label: 'Columns' },
+        { key: MenuKey.Columns, label: 'Columns' },
       ];
       if (filterCount > 0) {
-        menuItems.push({ key: MenuKey.RESULT_FILTER, label: `Clear Filters (${filterCount})` });
+        menuItems.push({ key: MenuKey.ResultFilter, label: `Clear Filters (${filterCount})` });
       }
       return { items: menuItems, onClick: onItemClick };
     };

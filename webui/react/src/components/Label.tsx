@@ -1,12 +1,14 @@
 import React from 'react';
 
+import { ValueOf } from 'shared/types';
+
 import css from './Label.module.scss';
 
 export const LabelTypes = {
   TextOnly: 'textOnly',
 } as const;
 
-export type LabelTypes = typeof LabelTypes[keyof typeof LabelTypes];
+export type LabelTypes = ValueOf<typeof LabelTypes>;
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;

@@ -35,6 +35,7 @@ import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
@@ -57,7 +58,7 @@ const TensorBoardSourceType = {
   Trial: 'Trial',
 } as const;
 
-type TensorBoardSourceType = typeof TensorBoardSourceType[keyof typeof TensorBoardSourceType];
+type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface TensorBoardSource {
   id: number;
@@ -574,7 +575,7 @@ const TaskList: React.FC = () => {
         visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
-          <Grid gap={ShirtSize.medium} minItemWidth={120}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={120}>
             {sourcesModal?.sources.map((source) => (
               <Link key={source.id} path={source.path}>
                 {source.type} {source.id}

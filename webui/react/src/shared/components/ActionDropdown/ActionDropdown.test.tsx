@@ -3,6 +3,7 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import { ValueOf } from 'shared/types';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
@@ -14,7 +15,7 @@ const TestAction = {
   ActionTwo: 'Action Two',
 } as const;
 
-type TestAction = typeof TestAction[keyof typeof TestAction];
+type TestAction = ValueOf<typeof TestAction>;
 
 const handleActionOne = jest.fn();
 const handleActionTwo = jest.fn();

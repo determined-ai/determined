@@ -18,6 +18,7 @@ import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -85,26 +86,26 @@ const WebhooksView: React.FC = () => {
   const WebhookActionMenu = useCallback(
     (record: Webhook) => {
       const MenuKey = {
-        DELETE_WEBHOOK: 'delete-webhook',
-        TEST_WEBHOOK: 'test-webhook',
+        DeleteWebhook: 'delete-webhook',
+        TestWebhook: 'test-webhook',
       } as const;
 
       const funcs = {
-        [MenuKey.DELETE_WEBHOOK]: () => {
+        [MenuKey.DeleteWebhook]: () => {
           showConfirmDelete(record);
         },
-        [MenuKey.TEST_WEBHOOK]: () => {
+        [MenuKey.TestWebhook]: () => {
           testWebhook({ id: record.id });
         },
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+        funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
       const menuItems: MenuProps['items'] = [
-        { key: MenuKey.TEST_WEBHOOK, label: 'Test Webhook' },
-        { danger: true, key: MenuKey.DELETE_WEBHOOK, label: 'Delete Webhook' },
+        { key: MenuKey.TestWebhook, label: 'Test Webhook' },
+        { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
       ];
 
       return <Menu items={menuItems} onClick={onItemClick} />;

@@ -258,7 +258,7 @@ const WorkspaceList: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={300} mode={GridMode.AutoFill}>
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}

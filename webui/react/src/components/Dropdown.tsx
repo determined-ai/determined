@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ValueOf } from 'shared/types';
+
 import css from './Dropdown.module.scss';
 
 export const Placement = {
@@ -17,7 +19,7 @@ export const Placement = {
   TopRight: 'topRight',
 } as const;
 
-export type Placement = typeof Placement[keyof typeof Placement];
+export type Placement = ValueOf<typeof Placement>;
 
 interface Props {
   children: React.ReactNode;

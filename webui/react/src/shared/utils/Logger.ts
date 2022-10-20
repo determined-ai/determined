@@ -1,5 +1,7 @@
 import { debug } from 'debug';
 
+import { ValueOf } from 'shared/types';
+
 const LIB_NAME = 'det';
 export const NAMEPACE_SEPARATOR = '/';
 
@@ -16,7 +18,7 @@ export const Level = {
   Warn: 'warn',
 } as const;
 
-export type Level = typeof Level[keyof typeof Level];
+export type Level = ValueOf<typeof Level>;
 
 // enum LogBackend {
 //   Console,

@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
+import { ValueOf } from 'shared/types';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
@@ -19,7 +20,7 @@ const TabType = {
   Overview: 'overview',
 } as const;
 
-type TabType = typeof TabType[keyof typeof TabType];
+type TabType = ValueOf<typeof TabType>;
 
 type Params = {
   tab?: TabType;

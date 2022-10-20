@@ -1,5 +1,6 @@
 import { Action } from 'components/Table/TableBulkActions';
 import { openOrCreateTensorBoard } from 'services/api';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { CommandTask } from 'types';
 import handleError from 'utils/error';
@@ -13,7 +14,7 @@ export const TrialAction = {
   TagAndCollect: 'Tag and Collect',
 } as const;
 
-export type TrialAction = typeof TrialAction[keyof typeof TrialAction];
+export type TrialAction = ValueOf<typeof TrialAction>;
 
 type trials = { trials: TrialsSelectionOrCollection };
 

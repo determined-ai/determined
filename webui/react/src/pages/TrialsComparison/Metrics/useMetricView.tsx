@@ -2,6 +2,7 @@ import React, { ReactNode, useCallback, useEffect, useReducer, useState } from '
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
+import { ValueOf } from 'shared/types';
 import { Metric, MetricType, Scale } from 'types';
 
 export const Layout = {
@@ -9,7 +10,7 @@ export const Layout = {
   List: 'list',
 } as const;
 
-export type Layout = typeof Layout[keyof typeof Layout];
+export type Layout = ValueOf<typeof Layout>;
 
 export interface MetricView {
   layout: Layout;

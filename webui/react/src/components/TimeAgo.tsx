@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { ValueOf } from 'shared/types';
 import { isNumber, isString } from 'shared/utils/data';
 import {
   DURATION_DAY,
@@ -19,7 +20,7 @@ export const TimeAgoCase = {
   Title: 'title',
 } as const;
 
-export type TimeAgoCase = typeof TimeAgoCase[keyof typeof TimeAgoCase];
+export type TimeAgoCase = ValueOf<typeof TimeAgoCase>;
 
 interface Props {
   className?: string;

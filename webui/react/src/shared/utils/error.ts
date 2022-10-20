@@ -1,3 +1,4 @@
+import { ValueOf } from 'shared/types';
 import rootLogger from 'shared/utils/Logger';
 
 import { isObject, isString } from './data';
@@ -25,7 +26,7 @@ export const ErrorLevel = {
   Warn: 'warning',
 } as const;
 
-export type ErrorLevel = typeof ErrorLevel[keyof typeof ErrorLevel];
+export type ErrorLevel = ValueOf<typeof ErrorLevel>;
 
 export const ErrorType = {
   // unexpected response structure.
@@ -45,7 +46,7 @@ export const ErrorType = {
   Unknown: 'unknown', // assertion failure.
 } as const;
 
-export type ErrorType = typeof ErrorType[keyof typeof ErrorType];
+export type ErrorType = ValueOf<typeof ErrorType>;
 
 const defaultErrOptions: DetErrorOptions = {
   isUserTriggered: false,

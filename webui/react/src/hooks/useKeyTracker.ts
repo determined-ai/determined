@@ -2,19 +2,21 @@ import { EventEmitter } from 'events';
 
 import { useCallback, useEffect } from 'react';
 
+import { ValueOf } from 'shared/types';
+
 export const KeyEvent = {
   KeyDown: 'KeyDown',
   KeyUp: 'KeyUp',
 } as const;
 
-export type KeyEvent = typeof KeyEvent[keyof typeof KeyEvent];
+export type KeyEvent = ValueOf<typeof KeyEvent>;
 
 export const KeyCode = {
   Escape: 'Escape',
   Space: 'Space',
 } as const;
 
-export type KeyCode = typeof KeyCode[keyof typeof KeyCode];
+export type KeyCode = ValueOf<typeof KeyCode>;
 
 export const keyEmitter = new EventEmitter();
 

@@ -5,6 +5,7 @@ import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
 } from 'services/api-ts-sdk';
+import { ValueOf } from 'shared/types';
 import { TrialDetails } from 'types';
 
 export const MetricType = {
@@ -13,7 +14,7 @@ export const MetricType = {
   Timing: 'PROFILER_METRIC_TYPE_TIMING',
 } as const;
 
-export type MetricType = typeof MetricType[keyof typeof MetricType];
+export type MetricType = ValueOf<typeof MetricType>;
 
 // {[metric_type]: {[name]: {[agent]: [gpu, ..], ..}, ..}, ..}
 export type AvailableSeriesType = Record<string, Record<string, string[]>>;

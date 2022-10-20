@@ -9,6 +9,7 @@ import usePermissions from 'hooks/usePermissions';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -90,50 +91,50 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
 
   const WorkspaceActionMenu = useMemo(() => {
     const MenuKey = {
-      DELETE: 'delete',
-      EDIT: 'edit',
-      SWITCH_ARCHIVED: 'switchArchive',
-      SWITCH_PIN: 'switchPin',
+      Delete: 'delete',
+      Edit: 'edit',
+      SwitchArchived: 'switchArchive',
+      SwitchPin: 'switchPin',
     } as const;
 
     const funcs = {
-      [MenuKey.SWITCH_PIN]: () => {
+      [MenuKey.SwitchPin]: () => {
         handlePinClick();
       },
-      [MenuKey.EDIT]: () => {
+      [MenuKey.Edit]: () => {
         handleEditClick();
       },
-      [MenuKey.SWITCH_ARCHIVED]: () => {
+      [MenuKey.SwitchArchived]: () => {
         handleArchiveClick();
       },
-      [MenuKey.DELETE]: () => {
+      [MenuKey.Delete]: () => {
         handleDeleteClick();
       },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
       {
-        key: MenuKey.SWITCH_PIN,
+        key: MenuKey.SwitchPin,
         label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
       },
     ];
 
     if (canModifyWorkspace({ workspace })) {
       if (!workspace.archived) {
-        menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
+        menuItems.push({ key: MenuKey.Edit, label: 'Edit...' });
       }
       menuItems.push({
-        key: MenuKey.SWITCH_ARCHIVED,
+        key: MenuKey.SwitchArchived,
         label: workspace.archived ? 'Unarchive' : 'Archive',
       });
     }
     if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });
-      menuItems.push({ key: MenuKey.DELETE, label: 'Delete...' });
+      menuItems.push({ key: MenuKey.Delete, label: 'Delete...' });
     }
     return <Menu items={menuItems} onClick={onItemClick} />;
   }, [

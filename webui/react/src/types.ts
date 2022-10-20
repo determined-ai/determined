@@ -1,6 +1,6 @@
 import * as Api from 'services/api-ts-sdk';
 import { V1Group, V1Trigger } from 'services/api-ts-sdk';
-import { Primitive, RawJson, RecordKey } from 'shared/types';
+import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
 
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
@@ -40,7 +40,7 @@ export const BrandingType = {
   HPE: 'hpe',
 } as const;
 
-export type BrandingType = typeof BrandingType[keyof typeof BrandingType];
+export type BrandingType = ValueOf<typeof BrandingType>;
 
 export interface DeterminedInfo {
   branding?: BrandingType;
@@ -69,7 +69,7 @@ export const ResourceType = {
   UNSPECIFIED: 'UNSPECIFIED',
 } as const;
 
-export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
+export type ResourceType = ValueOf<typeof ResourceType>;
 
 export const isDeviceType = (type: ResourceType): boolean => {
   return ResourceType.CPU === type || ResourceType.CUDA === type || ResourceType.ROCM === type;
@@ -87,7 +87,7 @@ export const ResourceState = {
   Warm: 'WARM',
 } as const;
 
-export type ResourceState = typeof ResourceState[keyof typeof ResourceState];
+export type ResourceState = ValueOf<typeof ResourceState>;
 
 // High level Slot state
 export const SlotState = {
@@ -97,7 +97,7 @@ export const SlotState = {
   Running: 'RUNNING',
 } as const;
 
-export type SlotState = typeof SlotState[keyof typeof SlotState];
+export type SlotState = ValueOf<typeof SlotState>;
 
 export const resourceStates: ResourceState[] = [
   ResourceState.Unspecified,
@@ -161,7 +161,7 @@ export const CommandState = {
   Waiting: 'WAITING',
 } as const;
 
-export type CommandState = typeof CommandState[keyof typeof CommandState];
+export type CommandState = ValueOf<typeof CommandState>;
 
 export type State = CommandState | typeof RunState;
 
@@ -180,7 +180,7 @@ export const CommandType = {
   TensorBoard: 'tensor-board',
 } as const;
 
-export type CommandType = typeof CommandType[keyof typeof CommandType];
+export type CommandType = ValueOf<typeof CommandType>;
 
 export interface CommandMisc {
   experimentIds: number[];
@@ -214,8 +214,7 @@ export const CheckpointStorageType = {
   SharedFS: 'shared_fs',
 } as const;
 
-export type CheckpointStorageType =
-  typeof CheckpointStorageType[keyof typeof CheckpointStorageType];
+export type CheckpointStorageType = ValueOf<typeof CheckpointStorageType>;
 
 interface CheckpointStorage {
   bucket?: string;
@@ -244,7 +243,7 @@ export const HyperparameterType = {
   Log: 'log',
 } as const;
 
-export type HyperparameterType = typeof HyperparameterType[keyof typeof HyperparameterType];
+export type HyperparameterType = ValueOf<typeof HyperparameterType>;
 
 export interface HyperparameterBase {
   base?: number;
@@ -288,8 +287,7 @@ export const ExperimentSearcherName = {
   Single: 'single',
 } as const;
 
-export type ExperimentSearcherName =
-  typeof ExperimentSearcherName[keyof typeof ExperimentSearcherName];
+export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 
 export interface ExperimentConfig {
   checkpointPolicy: string;
@@ -337,7 +335,7 @@ export const ExperimentAction = {
   ViewLogs: 'View Logs',
 } as const;
 
-export type ExperimentAction = typeof ExperimentAction[keyof typeof ExperimentAction];
+export type ExperimentAction = ValueOf<typeof ExperimentAction>;
 
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
@@ -363,7 +361,7 @@ export const RunState = {
   Unspecified: 'UNSPECIFIED',
 } as const;
 
-export type RunState = typeof RunState[keyof typeof RunState];
+export type RunState = ValueOf<typeof RunState>;
 
 export interface ValidationHistory {
   endTime: string;
@@ -379,14 +377,14 @@ export const CheckpointState = {
   Unspecified: 'UNSPECIFIED',
 } as const;
 
-export type CheckpointState = typeof CheckpointState[keyof typeof CheckpointState];
+export type CheckpointState = ValueOf<typeof CheckpointState>;
 
 export const MetricType = {
   Training: 'training',
   Validation: 'validation',
 } as const;
 
-export type MetricType = typeof MetricType[keyof typeof MetricType];
+export type MetricType = ValueOf<typeof MetricType>;
 
 export type MetricTypeParam =
   | 'METRIC_TYPE_UNSPECIFIED'
@@ -434,7 +432,7 @@ export const TrialWorkloadFilter = {
   Validation: 'Has Validation',
 } as const;
 
-export type TrialWorkloadFilter = typeof TrialWorkloadFilter[keyof typeof TrialWorkloadFilter];
+export type TrialWorkloadFilter = ValueOf<typeof TrialWorkloadFilter>;
 
 // This is to support the steps table in trial details and shouldn't be used
 // elsewhere so we can remove it with a redesign.
@@ -482,7 +480,7 @@ export const checkpointAction = {
   Register: 'Register',
 } as const;
 
-export type CheckpointAction = typeof checkpointAction[keyof typeof checkpointAction];
+export type CheckpointAction = ValueOf<typeof checkpointAction>;
 
 export interface TrialPagination extends WithPagination {
   trials: TrialItem[];
@@ -517,7 +515,7 @@ export const Scale = {
   Log: 'log',
 } as const;
 
-export type Scale = typeof Scale[keyof typeof Scale];
+export type Scale = ValueOf<typeof Scale>;
 
 export interface MetricDatapoint {
   batches: number;
@@ -693,14 +691,14 @@ export const TaskType = {
   TensorBoard: 'tensor-board',
 } as const;
 
-export type TaskType = typeof TaskType[keyof typeof TaskType];
+export type TaskType = ValueOf<typeof TaskType>;
 
 export const ArchiveFilter = {
   Archived: 'archived',
   Unarchived: 'unarchived',
 } as const;
 
-export type ArchiveFilter = typeof ArchiveFilter[keyof typeof ArchiveFilter];
+export type ArchiveFilter = ValueOf<typeof ArchiveFilter>;
 
 export interface ExperimentFilters {
   archived?: ArchiveFilter;
@@ -730,7 +728,7 @@ export const LogLevel = {
   Warning: 'warning',
 } as const;
 
-export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+export type LogLevel = ValueOf<typeof LogLevel>;
 
 export const LogLevelFromApi = {
   Critical: 'LOG_LEVEL_CRITICAL',
@@ -742,7 +740,7 @@ export const LogLevelFromApi = {
   Warning: 'LOG_LEVEL_WARNING',
 } as const;
 
-export type LogLevelFromApi = typeof LogLevelFromApi[keyof typeof LogLevelFromApi];
+export type LogLevelFromApi = ValueOf<typeof LogLevelFromApi>;
 
 export interface Log {
   id: number | string;
@@ -788,7 +786,7 @@ export const JobAction = {
   ViewLog: 'View Logs',
 } as const;
 
-export type JobAction = typeof JobAction[keyof typeof JobAction];
+export type JobAction = ValueOf<typeof JobAction>;
 
 /* End of Jobs */
 
@@ -819,7 +817,7 @@ export const WorkspaceState = {
   Unspecified: 'UNSPECIFIED',
 } as const;
 
-export type WorkspaceState = typeof WorkspaceState[keyof typeof WorkspaceState];
+export type WorkspaceState = ValueOf<typeof WorkspaceState>;
 
 export interface Note {
   contents: string;

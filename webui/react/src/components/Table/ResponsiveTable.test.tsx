@@ -5,7 +5,7 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { Pagination, RecordKey, UnknownRecord } from 'shared/types';
+import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'shared/types';
 import { alphaNumericSorter, numericSorter } from 'shared/utils/sort';
 import { generateAlphaNumeric } from 'shared/utils/string';
 
@@ -22,7 +22,7 @@ const ColumnValueType = {
   String: 'string',
 } as const;
 
-type ColumnValueType = typeof ColumnValueType[keyof typeof ColumnValueType];
+type ColumnValueType = ValueOf<typeof ColumnValueType>;
 
 interface ColumnConfig {
   length?: number;

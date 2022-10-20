@@ -2,7 +2,7 @@ import { Tooltip } from 'antd';
 import React from 'react';
 
 import { DarkLight } from 'shared/themes';
-import { ClassNameProp } from 'shared/types';
+import { ClassNameProp, ValueOf } from 'shared/types';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
 
@@ -14,7 +14,7 @@ export const Size = {
   Medium: 'medium',
 } as const;
 
-export type Size = typeof Size[keyof typeof Size];
+export type Size = ValueOf<typeof Size>;
 
 export interface Props extends ClassNameProp {
   darkLight: DarkLight;

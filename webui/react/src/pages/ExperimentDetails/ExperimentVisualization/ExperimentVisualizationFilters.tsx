@@ -8,6 +8,7 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
+import { ValueOf } from 'shared/types';
 import { HpImportance, Metric, Scale } from 'types';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
@@ -31,14 +32,14 @@ export const FilterError = {
   Metrics: 'Metrics',
 } as const;
 
-export type FilterError = typeof FilterError[keyof typeof FilterError];
+export type FilterError = ValueOf<typeof FilterError>;
 
 export const ViewType = {
   Grid: 'grid',
   List: 'list',
 } as const;
 
-export type ViewType = typeof ViewType[keyof typeof ViewType];
+export type ViewType = ValueOf<typeof ViewType>;
 
 interface Props {
   batches: number[];
@@ -63,7 +64,7 @@ const ActionType = {
   SetView: 7,
 } as const;
 
-type ActionType = typeof ActionType[keyof typeof ActionType];
+type ActionType = ValueOf<typeof ActionType>;
 
 type Action =
   | { type: typeof ActionType.Set; value: VisualizationFilters }

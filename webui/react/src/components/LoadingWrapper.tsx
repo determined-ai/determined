@@ -2,6 +2,7 @@ import { Skeleton, SkeletonProps } from 'antd';
 import React, { useMemo } from 'react';
 
 import Message, { Props as MessageProps, MessageType } from 'shared/components/Message';
+import { ValueOf } from 'shared/types';
 import { isObject, validateEnum } from 'shared/utils/data';
 
 import css from './LoadingWrapper.module.scss';
@@ -13,7 +14,7 @@ export const LoadingState = {
   Loading: 'Loading',
 } as const;
 
-export type LoadingState = typeof LoadingState[keyof typeof LoadingState];
+export type LoadingState = ValueOf<typeof LoadingState>;
 
 type LoadingMessageProps = React.ReactNode | MessageProps;
 type LoadingSkeletonProps = React.ReactNode | SkeletonProps;

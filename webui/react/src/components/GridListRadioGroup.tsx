@@ -1,5 +1,7 @@
 import React, { useCallback } from 'react';
 
+import { ValueOf } from 'shared/types';
+
 import RadioGroup from './RadioGroup';
 
 export const GridListView = {
@@ -7,7 +9,7 @@ export const GridListView = {
   List: 'list',
 } as const;
 
-export type GridListView = typeof GridListView[keyof typeof GridListView];
+export type GridListView = ValueOf<typeof GridListView>;
 
 interface Props {
   onChange?: (view: GridListView) => void;

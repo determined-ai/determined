@@ -1,4 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { ValueOf } from './types';
 import { isColor, rgba2str, rgbaMix, str2rgba } from './utils/color';
 
 const STRONG_WEAK_DELTA = 45;
@@ -282,7 +283,7 @@ export const Mode = {
   Dark: 'dark',
 } as const;
 
-export type Mode = typeof Mode[keyof typeof Mode];
+export type Mode = ValueOf<typeof Mode>;
 
 /**
  * DarkLight is a resolved form of `Mode` where we figure out
@@ -293,7 +294,7 @@ export const DarkLight = {
   Light: 'light',
 } as const;
 
-export type DarkLight = typeof DarkLight[keyof typeof DarkLight];
+export type DarkLight = ValueOf<typeof DarkLight>;
 
 export const getCssVar = (name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');

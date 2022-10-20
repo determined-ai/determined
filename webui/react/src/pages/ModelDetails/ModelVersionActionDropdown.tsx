@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
+import { ValueOf } from 'shared/types';
 
 interface Props {
   children?: React.ReactNode;
@@ -32,26 +33,26 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
 
   const ModelVersionActionMenu = useMemo(() => {
     const MenuKey = {
-      DELETE_VERSION: 'delete-version',
-      DOWNLOAD: 'download',
+      DeleteVersion: 'delete-version',
+      Download: 'download',
     } as const;
 
     const funcs = {
-      [MenuKey.DOWNLOAD]: () => {
+      [MenuKey.Download]: () => {
         handleDownloadClick();
       },
-      [MenuKey.DELETE_VERSION]: () => {
+      [MenuKey.DeleteVersion]: () => {
         handleDeleteClick();
       },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.DOWNLOAD, label: 'Download' },
-      { danger: true, key: MenuKey.DELETE_VERSION, label: 'Deregister Version' },
+      { key: MenuKey.Download, label: 'Download' },
+      { danger: true, key: MenuKey.DeleteVersion, label: 'Deregister Version' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;

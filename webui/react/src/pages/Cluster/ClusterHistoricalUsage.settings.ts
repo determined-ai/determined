@@ -1,4 +1,5 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { ValueOf } from 'shared/types';
 
 export interface Settings {
   after?: string;
@@ -11,7 +12,7 @@ export const GroupBy = {
   Month: 'month',
 } as const;
 
-export type GroupBy = typeof GroupBy[keyof typeof GroupBy];
+export type GroupBy = ValueOf<typeof GroupBy>;
 
 const config: SettingsConfig = {
   settings: [

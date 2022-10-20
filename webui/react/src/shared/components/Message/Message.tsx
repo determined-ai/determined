@@ -2,6 +2,7 @@ import React from 'react';
 
 import { useStore } from 'contexts/Store';
 import * as Images from 'shared/components/Image';
+import { ValueOf } from 'shared/types';
 
 import css from './Message.module.scss';
 
@@ -11,7 +12,7 @@ export const MessageType = {
   Warning: 'warning',
 } as const;
 
-export type MessageType = typeof MessageType[keyof typeof MessageType];
+export type MessageType = ValueOf<typeof MessageType>;
 
 export interface Props {
   message?: string;

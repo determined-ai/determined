@@ -19,7 +19,7 @@ import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { RecordKey } from 'shared/types';
+import { RecordKey, ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -60,14 +60,14 @@ export const FetchType = {
   Stream: 'Stream',
 } as const;
 
-export type FetchType = typeof FetchType[keyof typeof FetchType];
+export type FetchType = ValueOf<typeof FetchType>;
 
 export const FetchDirection = {
   Newer: 'Newer',
   Older: 'Older',
 } as const;
 
-export type FetchDirection = typeof FetchDirection[keyof typeof FetchDirection];
+export type FetchDirection = ValueOf<typeof FetchDirection>;
 
 export const ARIA_LABEL_ENABLE_TAILING = 'Enable Tailing';
 export const ARIA_LABEL_SCROLL_TO_OLDEST = 'Scroll to Oldest';

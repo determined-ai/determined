@@ -14,6 +14,7 @@ import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/ap
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import { User, Workspace } from 'types';
@@ -34,7 +35,7 @@ export const WorkspaceDetailsTab = {
   Projects: 'projects',
 } as const;
 
-export type WorkspaceDetailsTab = typeof WorkspaceDetailsTab[keyof typeof WorkspaceDetailsTab];
+export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
