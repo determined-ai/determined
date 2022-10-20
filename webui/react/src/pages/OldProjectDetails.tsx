@@ -112,7 +112,6 @@ type Params = {
 };
 
 const batchActions = [
-  Action.CompareExperiments,
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
