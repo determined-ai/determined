@@ -81,10 +81,10 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
     });
-    if (user) {
+    if (user && canModifyPermissions) {
       updatePermissions();
     }
-  }, [form, updatePermissions, user]);
+  }, [form, canModifyPermissions, updatePermissions, user]);
 
   const permissionTableColumn = useMemo(() => {
     const columns = [
@@ -117,7 +117,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     return columns;
   }, [canModifyPermissions, viewOnly]);
 
-  if (user !== undefined && roles === null) {
+  if (user !== undefined && roles === null && canModifyPermissions) {
     return <Spinner tip="Loading roles..." />;
   }
 
@@ -206,6 +206,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
+  const { canModifyPermissions } = usePermissions();
 
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined) {
@@ -220,7 +221,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
 
   useEffect(() => {
     fetchUserRoles();
-  }, []);
+  }, [fetchUserRoles]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
@@ -245,8 +246,10 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       try {
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
-          await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
-          await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
+          if (canModifyPermissions) {
+            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
+            await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
+          }
           message.success(API_SUCCESS_MESSAGE_EDIT);
         } else {
           const u = await postUser(formData);
@@ -273,7 +276,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel, userRoles],
+    [form, onClose, user, handleCancel, userRoles, canModifyPermissions],
   );
 
   const modalOpen = useCallback(

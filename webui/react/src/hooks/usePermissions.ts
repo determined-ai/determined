@@ -120,7 +120,7 @@ const usePermissions = (): PermissionsHook => {
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
         canModifyExperimentMetadata(rbacOpts, args.workspace),
       canModifyGroups: canModifyGroups(rbacOpts),
-      canModifyPermissions: canAdministrateUsers(rbacOpts),
+      canModifyPermissions: canModifyPermissions(rbacOpts),
       canModifyProjects: (args: ProjectPermissionsArgs) =>
         canModifyWorkspaceProjects(rbacOpts, args.workspace, args.project),
       canModifyUsers: canAdministrateUsers(rbacOpts),
@@ -207,6 +207,16 @@ const canModifyGroups = ({
     rbacAllPermission ||
     (!!user && (rbacEnabled ? permitted.has(V1PermissionType.UPDATEGROUP) : user.isAdmin))
   );
+};
+
+const canModifyPermissions = ({
+  rbacAllPermission,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return rbacAllPermission || (rbacEnabled && permitted.has(V1PermissionType.ADMINISTRATEUSER));
 };
 
 // Experiment actions
