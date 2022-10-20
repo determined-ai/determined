@@ -686,13 +686,6 @@ const ProjectDetails: React.FC = () => {
           sourceWorkspaceId: project?.workspaceId,
         });
       }
-      if (action === Action.CompareExperiments) {
-        if (settings.row?.length)
-          return routeToReactUrl(
-            paths.experimentComparison(settings.row.map((id) => id.toString())),
-          );
-      }
-
       return Promise.all(
         (settings.row || []).map((experimentId) => {
           switch (action) {
