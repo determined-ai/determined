@@ -590,6 +590,8 @@ class DetSDTextualInversionTrainer:
             safety_checker=self.safety_checker,
             feature_extractor=self.feature_extractor,
         ).to(self.accelerator.device)
+        # Disable tqdm progress bar for cleaner logs.
+        self.pipeline.set_progress_bar_config(disable=True)
 
     def _generate_and_write_tb_imgs(self, core_context: det.core.Context) -> None:
         self.logger.info("Generating sample images")
