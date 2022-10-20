@@ -6,6 +6,8 @@ Monitoring experiment status is a vital part of working with Determined. In orde
 Determined into your existing workflows, you can make use of webhooks to update other systems,
 receive emails, slack messages, and more when an experiment is updated.
 
+.. _webhook_security:
+
 *****************************
  Security and Signed Payload
 *****************************
