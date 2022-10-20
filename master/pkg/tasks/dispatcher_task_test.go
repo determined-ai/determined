@@ -7,10 +7,10 @@ import (
 	"sort"
 	"testing"
 
-	"gotest.tools/assert"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
+	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
+	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -20,7 +20,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-const workDir = "/workdir"
+const (
+	workDir           = "/workdir"
+	pbsSlotsPerNode   = 2
+	slurmSlotsPerNode = 3
+)
 
 var aug = &model.AgentUserGroup{
 	ID:     1,
@@ -463,6 +467,8 @@ func Test_encodeArchiveParameters(t *testing.T) {
 }
 
 func Test_ToDispatcherManifest(t *testing.T) {
+	err := etc.SetRootPath("../../static/srv/")
+	assert.NilError(t, err)
 	tests := []struct {
 		name                   string
 		containerRunType       string
@@ -534,10 +540,9 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
 			wantResourcesInstances: &map[string]int32{
 				"nodes": 16,
-				"total": 16,
 			},
 			wantResourcesGpus: &map[string]int32{
-				"total": 16,
+				"per-node": 1,
 			},
 		},
 		{
@@ -548,7 +553,6 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			gresSupported:    false,
 			wantResourcesInstances: &map[string]int32{
 				"nodes": 16,
-				"total": 16,
 			},
 		},
 		{
@@ -599,11 +603,12 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				},
 			}
 			slurmOpts := expconf.SlurmConfig{
-				RawSlotsPerNode: new(int),
+				RawSlotsPerNode: nil,
+				RawGpuType:      nil,
 				RawSbatchArgs:   tt.Slurm,
 			}
 			pbsOpts := expconf.PbsConfig{
-				RawSlotsPerNode: new(int),
+				RawSlotsPerNode: nil,
 				RawSbatchArgs:   tt.Pbs,
 			}
 
@@ -888,6 +893,369 @@ func Test_getPayloadName(t *testing.T) {
 			tr.Description = tt.desc
 			got := getPayloadName(tr)
 			assert.Equal(t, got, tt.want)
+		})
+	}
+}
+
+func TestTaskSpec_slotsPerNode(t *testing.T) {
+	type fields struct {
+		SlurmConfig expconf.SlurmConfig
+		PbsConfig   expconf.PbsConfig
+	}
+	type args struct {
+		isPbsLauncher bool
+	}
+	pbsSlotsPerNode := pbsSlotsPerNode
+	slurmSlotsPerNode := slurmSlotsPerNode
+	pbsConfig := expconf.PbsConfig{
+		RawSlotsPerNode: &pbsSlotsPerNode,
+		RawSbatchArgs:   []string{},
+	}
+	slurmConfig := expconf.SlurmConfig{
+		RawSlotsPerNode: &slurmSlotsPerNode,
+		RawGpuType:      nil,
+		RawSbatchArgs:   []string{},
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   int
+	}{
+		{
+			name:   "Slots not specified, then get unspecified result, PBS case",
+			fields: fields{},
+			args:   args{isPbsLauncher: true},
+			want:   unspecifiedSlotsPerNode,
+		},
+		{
+			name:   "Slots not specified, then get unspecified result, Slurm case",
+			fields: fields{},
+			args:   args{isPbsLauncher: false},
+			want:   unspecifiedSlotsPerNode,
+		},
+		{
+			name: "Slots specified, then get specified value, PBS case",
+			fields: fields{
+				PbsConfig:   pbsConfig,
+				SlurmConfig: slurmConfig,
+			},
+			args: args{isPbsLauncher: true},
+			want: pbsSlotsPerNode,
+		},
+		{
+			name: "Slots specified, then get specified value, Slurm case",
+			fields: fields{
+				PbsConfig:   pbsConfig,
+				SlurmConfig: slurmConfig,
+			},
+			args: args{isPbsLauncher: false},
+			want: slurmSlotsPerNode,
+		},
+		{
+			name: "Slots specified for Slurm, but on PBS",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+			},
+			args: args{isPbsLauncher: true},
+			want: unspecifiedSlotsPerNode,
+		},
+		{
+			name: "Slots specified for PBS, but on Slurm",
+			fields: fields{
+				PbsConfig: pbsConfig,
+			},
+			args: args{isPbsLauncher: false},
+			want: unspecifiedSlotsPerNode,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := &TaskSpec{
+				SlurmConfig: tt.fields.SlurmConfig,
+				PbsConfig:   tt.fields.PbsConfig,
+			}
+			if got := tr.slotsPerNode(tt.args.isPbsLauncher); got != tt.want {
+				t.Errorf("TaskSpec.slotsPerNode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTaskSpec_computeResources(t *testing.T) {
+	type fields struct {
+		SlurmConfig expconf.SlurmConfig
+		PbsConfig   expconf.PbsConfig
+	}
+	type args struct {
+		tresSupported bool
+		numSlots      int
+		slotType      device.Type
+		gresSupported bool
+		isPbsLauncher bool
+	}
+	// Test data -- use different values for Slurm & PBS to detect any 'cross-over' errors
+	slurmSlots := 32
+	pbsSlots := 16
+	slurmConfig := expconf.SlurmConfig{
+		RawSlotsPerNode: &slurmSlots,
+		RawGpuType:      nil,
+		RawSbatchArgs:   []string{},
+	}
+	slurmConfigSlotsUnspecified := expconf.SlurmConfig{
+		RawSlotsPerNode: nil,
+		RawGpuType:      nil,
+		RawSbatchArgs:   []string{},
+	}
+	pbsConfig := expconf.PbsConfig{
+		RawSlotsPerNode: &pbsSlots,
+		RawSbatchArgs:   []string{},
+	}
+	pbsConfigSlotsUnspecified := expconf.PbsConfig{
+		RawSlotsPerNode: nil,
+		RawSbatchArgs:   []string{},
+	}
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantResources *launcher.ResourceRequirements
+		wantOpts      []string
+	}{
+		{
+			name: "Slot type is CPU, Slurm, slots-per-node",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CPU,
+				gresSupported: false,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 4},
+				Cores:     &map[string]float32{"per-node": float32(slurmSlots)},
+			},
+			wantOpts: []string{"--cpus-per-task=32"},
+		},
+		{
+			name: "Slot type is CPU, PBS, slots-per-node",
+			fields: fields{
+				PbsConfig: pbsConfig,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CPU,
+				gresSupported: false,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 7},
+				Cores:     &map[string]float32{"per-node": float32(pbsSlots)},
+			},
+		},
+		{
+			name: "Slot type is CPU, Slurm, no slots_per_node",
+			fields: fields{
+				SlurmConfig: slurmConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CPU,
+				gresSupported: false,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 100},
+				Cores:     &map[string]float32{"per-node": 1},
+			},
+		},
+		{
+			name: "Slot type is CPU, PBS, no slots_per_node",
+			fields: fields{
+				PbsConfig: pbsConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CPU,
+				gresSupported: false,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 100},
+				Cores:     &map[string]float32{"per-node": 1},
+			},
+		},
+		{
+			name: "Slot type GPU, gres & tres supported (Slurm)",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+			},
+			args: args{
+				tresSupported: true,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"per-node": 1},
+				Gpus:      &map[string]int32{"total": int32(100)},
+			},
+			wantOpts: []string{"--gpus-per-task=32"},
+		},
+		{
+			name: "Slot type GPU, gres & tres supported (Slurm), no slots_per_node",
+			fields: fields{
+				SlurmConfig: slurmConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: true,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"per-node": 1},
+				Gpus:      &map[string]int32{"total": int32(100)},
+			},
+		},
+		{
+			name: "Slot type GPU, gres supported, PBS, no slots_per_node",
+			fields: fields{
+				PbsConfig: pbsConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: true,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"per-node": 1},
+				Gpus:      &map[string]int32{"total": int32(100)},
+			},
+		},
+		{
+			name: "Slot type GPU, gres supported, PBS, slots-per-node",
+			fields: fields{
+				PbsConfig: pbsConfig,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 7},
+				Gpus:      &map[string]int32{"per-node": int32(pbsSlots)},
+			},
+		},
+		{
+			name: "Slot type GPU, gres but not tres supported, Slurm",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 4},
+				Gpus:      &map[string]int32{"per-node": int32(32)},
+			},
+		},
+		{
+			name: "Slot type GPU, neither gres nor tres supported, Slurm, slots-per-node",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: false,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 4},
+			},
+		},
+		{
+			name: "Slot type GPU, neither gres nor tres supported, PBS, slots-per-node",
+			fields: fields{
+				PbsConfig: pbsConfig,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: false,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 7},
+			},
+		},
+		{
+			name: "Slot type GPU, neither gres nor tres supported, Slurm, no slots-per-node",
+			fields: fields{
+				SlurmConfig: slurmConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: false,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": int32(100)},
+			},
+		},
+		{
+			name: "Slot type GPU, neither gres nor tres supported, PBS, no slots-per-node",
+			fields: fields{
+				PbsConfig: pbsConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: false,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": int32(100)},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := &TaskSpec{
+				SlurmConfig: tt.fields.SlurmConfig,
+				PbsConfig:   tt.fields.PbsConfig,
+			}
+			got, gotOpts := tr.computeResources(tt.args.tresSupported, tt.args.numSlots, tt.args.slotType,
+				tt.args.gresSupported, tt.args.isPbsLauncher)
+			if !reflect.DeepEqual(got, tt.wantResources) {
+				t.Errorf("TaskSpec.computeResources() = %v, want %v", got, tt.wantResources)
+			}
+			if !reflect.DeepEqual(gotOpts, tt.wantOpts) {
+				t.Errorf("TaskSpec.computeResources() opts = %v, want %v", gotOpts, tt.wantOpts)
+			}
 		})
 	}
 }
