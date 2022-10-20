@@ -155,6 +155,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const statesString = useMemo(() => settings.state?.join('.'), [settings.state]);
   const pinnedString = useMemo(() => JSON.stringify(settings.pinned ?? {}), [settings.pinned]);
+  const labelsString = useMemo(() => settings.label?.join('.'), [settings.label]);
+  const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -208,11 +210,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     canceler.signal,
     id,
     settings.archived,
-    settings.label,
+    labelsString,
     pinnedString,
     settings.search,
     settings.sortDesc,
@@ -220,7 +223,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     statesString,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user,
+    usersString,
   ]);
 
   const fetchLabels = useCallback(async () => {
@@ -849,7 +852,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     fetchExperiments,
     settings.archived,
-    settings.label,
+    labelsString,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
@@ -857,7 +860,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     pinnedString,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user,
+    usersString,
   ]);
 
   // cleanup
