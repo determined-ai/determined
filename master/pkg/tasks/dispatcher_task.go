@@ -36,6 +36,7 @@ const (
 	podmanCarrierSlurm        = "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm"
 	singularityCarrierPbs     = "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs"
 	podmanCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs"
+	unspecifiedSlotsPerNode   = 0
 )
 
 // The "launcher" is very sensitive when it comes to the payload name. There
@@ -165,9 +166,13 @@ func (t *TaskSpec) ToDispatcherManifest(
 		return nil, "", "", err
 	}
 
+	resources, resourceOpts := t.computeResources(tresSupported, numSlots,
+		slotType, gresSupported, isPbsLauncher)
+
 	var slurmArgs []string
 	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm...)
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
+	slurmArgs = append(slurmArgs, resourceOpts...)
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
 	customParams["slurmArgs"] = slurmArgs
 	errList := model.ValidateSlurm(slurmArgs)
@@ -218,29 +223,6 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	payload.SetLaunchParameters(*launchParameters)
 
-	// Create payload resource requirements
-	resources := launcher.NewResourceRequirementsWithDefaults()
-
-	// One task per node.
-	if tresSupported || numSlots == 0 {
-		resources.SetInstances(map[string]int32{"per-node": 1})
-	} else {
-		// When tresSupported==false then we can't use --gpus in slurm, so map the total nodes to
-		// the total GPUs which will cause launcher to map SetGpus below into --gres:gpus.
-		resources.SetInstances(map[string]int32{
-			"nodes": int32(numSlots),
-			"total": int32(numSlots),
-		})
-	}
-
-	if slotType == device.CPU {
-		resources.SetCores(map[string]float32{"total": float32(numSlots)})
-	} else if gresSupported {
-		// Set the required number of GPUs if the device type is CUDA (Nvidia) or ROCM (AMD),
-		// except when gresSupported==false then we can't use --gres:gpus neither.
-		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
-	}
-
 	payload.SetResourceRequirements(*resources)
 
 	clientMetadata := launcher.NewClientMetadataWithDefaults()
@@ -252,6 +234,68 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// manifest.SetManifestVersion("latest") //?
 
 	return &manifest, impersonatedUser, payloadName, err
+}
+
+// computeResources calculates the job resource requirements. It also returns any
+// additional qualifiers required for the desired scheduling behavior (required
+// for Slurm only at the time of writing).
+func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType device.Type,
+	gresSupported bool, isPbsLauncher bool,
+) (*launcher.ResourceRequirements, []string) {
+	slotsPerNode := t.slotsPerNode(isPbsLauncher)
+	haveSlotsPerNode := slotsPerNode != unspecifiedSlotsPerNode
+
+	numNodes := numSlots
+	effectiveSlotsPerNode := 1
+	if haveSlotsPerNode {
+		numNodes = (numSlots + slotsPerNode - 1) / slotsPerNode
+		effectiveSlotsPerNode = slotsPerNode
+	}
+	logrus.Debugf("slotsPerNode: %d, numNodes: %d, eSlotsPerNode: %d",
+		slotsPerNode, numNodes, effectiveSlotsPerNode)
+
+	var customArgs []string
+	resources := launcher.NewResourceRequirementsWithDefaults()
+	switch {
+	case slotType == device.CPU:
+		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
+		resources.SetCores(map[string]float32{"per-node": float32(effectiveSlotsPerNode)})
+		if !isPbsLauncher && haveSlotsPerNode {
+			customArgs = append(customArgs, fmt.Sprintf("--cpus-per-task=%d", effectiveSlotsPerNode))
+		}
+	case gresSupported && (tresSupported || (isPbsLauncher && !haveSlotsPerNode)):
+		/*
+		 * We can tell the Workload Manager how many total GPUs we need
+		 * and that we'd like 1 task per node and the workload manager
+		 * will automatically allocate the nodes, such that the sum of
+		 * the GPUs on each node equals the total GPUs requested.
+		 */
+		resources.SetInstances(map[string]int32{"per-node": 1})
+		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
+		if !isPbsLauncher && haveSlotsPerNode {
+			customArgs = append(customArgs, fmt.Sprintf("--gpus-per-task=%d", effectiveSlotsPerNode))
+		}
+	case gresSupported:
+		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
+		resources.SetGpus(map[string]int32{"per-node": int32(effectiveSlotsPerNode)})
+	default:
+		// GPUs requested, but neither TRES nor GRES supported.
+		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
+	}
+	return resources, customArgs
+}
+
+// slotsPerNode returns the number of slots per node specified in the
+// configuration (if any), else a value indicating that nothing was specified.
+func (t *TaskSpec) slotsPerNode(isPbsLauncher bool) int {
+	switch {
+	case isPbsLauncher && t.PbsConfig.SlotsPerNode() != nil:
+		return *t.PbsConfig.SlotsPerNode()
+	case !isPbsLauncher && t.SlurmConfig.SlotsPerNode() != nil:
+		return *t.SlurmConfig.SlotsPerNode()
+	default:
+		return unspecifiedSlotsPerNode
+	}
 }
 
 // getPortMappings returns all PodMan mappings specified in environment.ports.

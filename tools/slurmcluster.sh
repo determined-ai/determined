@@ -219,7 +219,7 @@ OPT_LAUNCHERPROTOCOL_casablanca_login2=http
 OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determined-cp
 OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
-OPT_TRESSUPPORTED_casablanca_login2=true
+OPT_TRESSUPPORTED_casablanca_login2=false
 
 # Configuration for shuco
 OPT_name_shuco=shuco.us.cray.com
