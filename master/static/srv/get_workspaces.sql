@@ -7,7 +7,7 @@ exp_count_by_project AS (
   SELECT COUNT(*) AS count, project_id FROM experiments
   GROUP BY project_id
 )
-SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id,
+SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id, w.checkpoint_storage_config,
 (pins.id IS NOT NULL) AS pinned,
 'WORKSPACE_STATE_' || w.state AS state, w.error_message,
 (CASE WHEN uid IS NOT NULL OR gid IS NOT NULL OR user_ IS NOT NULL OR group_ IS NOT NULL THEN

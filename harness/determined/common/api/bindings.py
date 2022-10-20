@@ -5037,22 +5037,26 @@ class v1PatchWorkspace:
         self,
         *,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
+        checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.agentUserGroup = agentUserGroup
+        self.checkpointStorageConfig = checkpointStorageConfig
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchWorkspace":
         return cls(
             name=obj.get("name", None),
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
+            checkpointStorageConfig=obj.get("checkpointStorageConfig", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "name": self.name if self.name is not None else None,
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
+            "checkpointStorageConfig": self.checkpointStorageConfig if self.checkpointStorageConfig is not None else None,
         }
 
 class v1PatchWorkspaceResponse:
@@ -5483,21 +5487,25 @@ class v1PostWorkspaceRequest:
         *,
         name: str,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
+        checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.name = name
         self.agentUserGroup = agentUserGroup
+        self.checkpointStorageConfig = checkpointStorageConfig
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostWorkspaceRequest":
         return cls(
             name=obj["name"],
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
+            checkpointStorageConfig=obj.get("checkpointStorageConfig", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "name": self.name,
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
+            "checkpointStorageConfig": self.checkpointStorageConfig if self.checkpointStorageConfig is not None else None,
         }
 
 class v1PostWorkspaceResponse:
@@ -8387,6 +8395,7 @@ class v1Workspace:
         userId: int,
         username: str,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
+        checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.id = id
         self.name = name
@@ -8400,6 +8409,7 @@ class v1Workspace:
         self.state = state
         self.errorMessage = errorMessage
         self.agentUserGroup = agentUserGroup
+        self.checkpointStorageConfig = checkpointStorageConfig
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -8416,6 +8426,7 @@ class v1Workspace:
             state=v1WorkspaceState(obj["state"]),
             errorMessage=obj["errorMessage"],
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
+            checkpointStorageConfig=obj.get("checkpointStorageConfig", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -8432,6 +8443,7 @@ class v1Workspace:
             "state": self.state.value,
             "errorMessage": self.errorMessage,
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
+            "checkpointStorageConfig": self.checkpointStorageConfig if self.checkpointStorageConfig is not None else None,
         }
 
 class v1WorkspaceState(enum.Enum):

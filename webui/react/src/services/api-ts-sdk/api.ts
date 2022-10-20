@@ -5567,6 +5567,12 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     agentUserGroup?: V1AgentUserGroup;
+    /**
+     * Optional checkpoint storage config.
+     * @type {any}
+     * @memberof V1PatchWorkspace
+     */
+    checkpointStorageConfig?: any;
 }
 
 /**
@@ -6024,6 +6030,12 @@ export interface V1PostWorkspaceRequest {
      * @memberof V1PostWorkspaceRequest
      */
     agentUserGroup?: V1AgentUserGroup;
+    /**
+     * Optional checkpoint storage config.
+     * @type {any}
+     * @memberof V1PostWorkspaceRequest
+     */
+    checkpointStorageConfig?: any;
 }
 
 /**
@@ -9209,6 +9221,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     agentUserGroup?: V1AgentUserGroup;
+    /**
+     * Optional checkpoint storage config.
+     * @type {any}
+     * @memberof V1Workspace
+     */
+    checkpointStorageConfig?: any;
 }
 
 /**
