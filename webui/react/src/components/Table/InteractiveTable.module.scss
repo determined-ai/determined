@@ -8,7 +8,7 @@
   height: 60px;
 
   > td {
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
     white-space: nowrap;
   }
@@ -94,17 +94,9 @@
 }
 .cell {
   .rightClickableCellWrapper {
-    display: inline-table;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
     width: 100%;
-  }
-  /* stylelint-disable at-rule-empty-line-before */
-  // only for firefox
-  @-moz-document url-prefix() {
-    .rightClickableCellWrapper {
-      display: inline-block; // just override display
-    }
   }
 }
 .headerFilterOn {
