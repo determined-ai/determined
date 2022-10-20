@@ -6,12 +6,14 @@ import { isObject, validateEnum } from 'shared/utils/data';
 
 import css from './LoadingWrapper.module.scss';
 
-export enum LoadingState {
-  Empty = 'Empty',
-  Error = 'Error',
-  Loaded = 'Loaded',
-  Loading = 'Loading',
-}
+export const LoadingState = {
+  Empty: 'Empty',
+  Error: 'Error',
+  Loaded: 'Loaded',
+  Loading: 'Loading',
+} as const;
+
+export type LoadingState = typeof LoadingState[keyof typeof LoadingState];
 
 type LoadingMessageProps = React.ReactNode | MessageProps;
 type LoadingSkeletonProps = React.ReactNode | SkeletonProps;

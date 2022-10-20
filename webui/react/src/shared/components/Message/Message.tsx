@@ -5,11 +5,13 @@ import * as Images from 'shared/components/Image';
 
 import css from './Message.module.scss';
 
-export enum MessageType {
-  Alert = 'alert',
-  Empty = 'empty',
-  Warning = 'warning',
-}
+export const MessageType = {
+  Alert: 'alert',
+  Empty: 'empty',
+  Warning: 'warning',
+} as const;
+
+export type MessageType = typeof MessageType[keyof typeof MessageType];
 
 export interface Props {
   message?: string;

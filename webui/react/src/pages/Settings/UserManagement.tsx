@@ -55,11 +55,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     fetchUsers();
   };
 
-  enum MenuKey {
-    EDIT = 'edit',
-    STATE = 'state',
-    VIEW = 'view',
-  }
+  const MenuKey = {
+    EDIT: 'edit',
+    STATE: 'state',
+    VIEW: 'view',
+  } as const;
 
   const funcs = {
     [MenuKey.EDIT]: () => {
@@ -74,7 +74,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   };
 
   const onItemClick: MenuProps['onClick'] = (e) => {
-    funcs[e.key as MenuKey]();
+    funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
   };
 
   const menuItems: MenuProps['items'] = canModifyUsers

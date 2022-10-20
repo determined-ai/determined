@@ -13,11 +13,13 @@ import ClustersOverview, { clusterStatusText } from './Clusters/ClustersOverview
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Overview = 'overview',
-  HistoricalUsage = 'historical-usage',
-  Logs = 'logs',
-}
+const TabType = {
+  HistoricalUsage: 'historical-usage',
+  Logs: 'logs',
+  Overview: 'overview',
+} as const;
+
+type TabType = typeof TabType[keyof typeof TabType];
 
 type Params = {
   tab?: TabType;

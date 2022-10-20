@@ -52,11 +52,13 @@ interface Props {
   pageRef: React.RefObject<HTMLElement>;
 }
 
-enum TrialAction {
-  OpenTensorBoard = 'Open Tensorboard',
-  ViewLogs = 'View Logs',
-  HyperparameterSearch = 'Hyperparameter Search',
-}
+const TrialAction = {
+  HyperparameterSearch: 'Hyperparameter Search',
+  OpenTensorBoard: 'Open Tensorboard',
+  ViewLogs: 'View Logs',
+} as const;
+
+type TrialAction = typeof TrialAction[keyof typeof TrialAction];
 
 const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [total, setTotal] = useState(0);
@@ -367,11 +369,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const TrialActionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => {
-      enum MenuKey {
-        OPEN_TENSORBOARD = 'open-tensorboard',
-        HYPERPARAMETER_SEARCH = 'hyperparameter-search',
-        VIEW_LOGS = 'view-logs',
-      }
+      const MenuKey = {
+        HYPERPARAMETER_SEARCH: 'hyperparameter-search',
+        OPEN_TENSORBOARD: 'open-tensorboard',
+        VIEW_LOGS: 'view-logs',
+      } as const;
 
       const funcs = {
         [MenuKey.OPEN_TENSORBOARD]: () => {
@@ -386,7 +388,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
+        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
       };
 
       const menuItems = [

@@ -17,9 +17,9 @@ interface Props {
 
 const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
   const menu = useMemo(() => {
-    enum MenuKey {
-      DELETE_METADATA_ROW = 'delete-metadata-row',
-    }
+    const MenuKey = {
+      DELETE_METADATA_ROW: 'delete-metadata-row',
+    } as const;
 
     const funcs = {
       [MenuKey.DELETE_METADATA_ROW]: () => {
@@ -28,7 +28,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
     };
 
     const menuItems: MenuProps['items'] = [

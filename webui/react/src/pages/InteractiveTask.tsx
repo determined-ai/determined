@@ -20,10 +20,12 @@ type Params = {
   taskUrl: string;
 };
 
-enum PageView {
-  IFRAME = 'Iframe',
-  TASK_LOGS = 'Task Logs',
-}
+const PageView = {
+  IFRAME: 'Iframe',
+  TASK_LOGS: 'Task Logs',
+} as const;
+
+type PageView = typeof PageView[keyof typeof PageView];
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 

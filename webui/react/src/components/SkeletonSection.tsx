@@ -8,17 +8,19 @@ import { isNumber } from 'shared/utils/data';
 
 import css from './SkeletonSection.module.scss';
 
+export const ContentType = {
+  Chart: 'Chart',
+  Logs: 'Logs',
+} as const;
+
+export type ContentType = typeof ContentType[keyof typeof ContentType];
+
 export interface Props {
   children?: React.ReactNode;
   contentType?: ContentType;
   filters?: boolean | number | SkeletonTitleProps | SkeletonTitleProps[];
   size?: 'small' | 'medium' | 'large' | 'max';
   title?: boolean | SkeletonTitleProps;
-}
-
-export enum ContentType {
-  Chart = 'Chart',
-  Logs = 'Logs',
 }
 
 const renderTitle = (title?: boolean | SkeletonTitleProps) => (

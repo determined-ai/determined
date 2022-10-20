@@ -74,12 +74,12 @@ const ProjectActionDropdown: React.FC<Props> = ({
   }, [openProjectDelete]);
 
   const menuProps: { items: MenuProps['items']; onClick: MenuProps['onClick'] } = useMemo(() => {
-    enum MenuKey {
-      EDIT = 'edit',
-      MOVE = 'move',
-      SWITCH_ARCHIVED = 'switchArchive',
-      DELETE = 'delete',
-    }
+    const MenuKey = {
+      DELETE: 'delete',
+      EDIT: 'edit',
+      MOVE: 'move',
+      SWITCH_ARCHIVED: 'switchArchive',
+    } as const;
 
     const funcs = {
       [MenuKey.EDIT]: () => {
@@ -97,7 +97,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
     };
 
     const items: MenuProps['items'] = [];

@@ -10,12 +10,14 @@ import { ResourceState, RunState, SlotState } from 'types';
 
 import css from './Badge.module.scss';
 
-export enum BadgeType {
-  Default = 'Default',
-  Header = 'Header',
-  Id = 'Id',
-  State = 'State',
-}
+export const BadgeType = {
+  Default: 'Default',
+  Header: 'Header',
+  Id: 'Id',
+  State: 'State',
+} as const;
+
+export type BadgeType = typeof BadgeType[keyof typeof BadgeType];
 
 export interface BadgeProps {
   children?: React.ReactNode;

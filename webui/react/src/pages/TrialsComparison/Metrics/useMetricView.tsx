@@ -4,10 +4,12 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { Metric, MetricType, Scale } from 'types';
 
-export enum Layout {
-  Grid = 'grid',
-  List = 'list',
-}
+export const Layout = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+export type Layout = typeof Layout[keyof typeof Layout];
 
 export interface MetricView {
   layout: Layout;
@@ -22,17 +24,18 @@ interface MetricViewSelectProps {
   view: MetricView;
 }
 
-enum ActionType {
-  Set,
-  SetMetric,
-  SetLayout,
-  SetScale,
-}
+const ActionType = {
+  Set: 0,
+  SetLayout: 1,
+  SetMetric: 2,
+  SetScale: 3,
+} as const;
+
 type Action =
-  | { type: ActionType.Set; value: MetricView }
-  | { type: ActionType.SetMetric; value: Metric }
-  | { type: ActionType.SetLayout; value: Layout }
-  | { type: ActionType.SetScale; value: Scale };
+  | { type: typeof ActionType.Set; value: MetricView }
+  | { type: typeof ActionType.SetMetric; value: Metric }
+  | { type: typeof ActionType.SetLayout; value: Layout }
+  | { type: typeof ActionType.SetScale; value: Scale };
 
 const reducer = (state: MetricView, action: Action) => {
   switch (action.type) {

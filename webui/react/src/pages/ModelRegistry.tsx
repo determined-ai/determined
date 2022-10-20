@@ -298,10 +298,10 @@ const ModelRegistry: React.FC = () => {
 
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
-      enum MenuKey {
-        SWITCH_ARCHIVED = 'switch-archived',
-        DELETE_MODEL = 'delete-model',
-      }
+      const MenuKey = {
+        DELETE_MODEL: 'delete-model',
+        SWITCH_ARCHIVED: 'switch-archived',
+      } as const;
 
       const funcs = {
         [MenuKey.SWITCH_ARCHIVED]: () => {
@@ -313,7 +313,7 @@ const ModelRegistry: React.FC = () => {
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
+        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
       };
 
       const menuItems: MenuProps['items'] = [

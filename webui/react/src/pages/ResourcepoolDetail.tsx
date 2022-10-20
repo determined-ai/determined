@@ -35,12 +35,15 @@ type Params = {
 };
 const { TabPane } = Tabs;
 
-enum TabType {
-  Active = 'active',
-  Queued = 'queued',
-  Stats = 'stats',
-  Configuration = 'configuration',
-}
+const TabType = {
+  Active: 'active',
+  Configuration: 'configuration',
+  Queued: 'queued',
+  Stats: 'stats',
+} as const;
+
+type TabType = typeof TabType[keyof typeof TabType];
+
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetail: React.FC = () => {

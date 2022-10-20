@@ -48,10 +48,10 @@ export const TaskBar: React.FC<Props> = ({
   }, []);
 
   const dropdownOverlay = useMemo(() => {
-    enum MenuKey {
-      KILL = 'kill',
-      VIEW_LOGS = 'viewLogs',
-    }
+    const MenuKey = {
+      KILL: 'kill',
+      VIEW_LOGS: 'viewLogs',
+    } as const;
 
     const funcs = {
       [MenuKey.KILL]: () => {
@@ -63,7 +63,7 @@ export const TaskBar: React.FC<Props> = ({
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
     };
 
     const menuItems: MenuProps['items'] = [

@@ -20,20 +20,23 @@ import { ErrorType } from '../shared/utils/error';
 
 import useStorage from './useStorage';
 
-export enum BaseType {
-  Boolean = 'Boolean',
-  Float = 'Float',
-  Integer = 'Integer',
-  Object = 'Object',
+export const BaseType = {
+  Boolean: 'Boolean',
+  Float: 'Float',
+  Integer: 'Integer',
+  Object: 'Object',
+  String: 'String',
+} as const;
 
-  String = 'String',
-}
+export type BaseType = typeof BaseType[keyof typeof BaseType];
 
-enum PathChangeType {
-  None = 'none',
-  Push = 'push',
-  Replace = 'replace',
-}
+const PathChangeType = {
+  None: 'none',
+  Push: 'push',
+  Replace: 'replace',
+} as const;
+
+type PathChangeType = typeof PathChangeType[keyof typeof PathChangeType];
 
 type GenericSettingsType = Primitive | Primitive[] | Record<number, number[]> | undefined;
 type GenericSettings = Record<string, GenericSettingsType>;

@@ -4,10 +4,12 @@ import { ShirtSize } from 'themes';
 
 import css from './Grid.module.scss';
 
-export enum GridMode {
-  AutoFill = 'auto-fill', // will squeeze as many items into a given space and minimum size
-  AutoFit = 'auto-fit', // auto-fill but also stretch to fit the entire available space.
-}
+export const GridMode = {
+  AutoFill: 'auto-fill', // will squeeze as many items into a given space and minimum size
+  AutoFit: 'auto-fit', // auto-fill but also stretch to fit the entire available space.
+} as const;
+
+export type GridMode = typeof GridMode[keyof typeof GridMode];
 
 interface Props {
   border?: boolean;

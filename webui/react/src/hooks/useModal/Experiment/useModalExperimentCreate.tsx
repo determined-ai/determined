@@ -19,10 +19,12 @@ import { upgradeConfig } from 'utils/experiment';
 
 import css from './useModalExperimentCreate.module.scss';
 
-export enum CreateExperimentType {
-  Fork = 'Fork',
-  ContinueTrial = 'Continue Trial',
-}
+export const CreateExperimentType = {
+  ContinueTrial: 'Continue Trial',
+  Fork: 'Fork',
+} as const;
+
+export type CreateExperimentType = typeof CreateExperimentType[keyof typeof CreateExperimentType];
 
 interface Props {
   onClose?: () => void;

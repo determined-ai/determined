@@ -35,10 +35,12 @@ export interface SsoProvider {
   ssoUrl: string;
 }
 
-export enum BrandingType {
-  Determined = 'determined',
-  HPE = 'hpe',
-}
+export const BrandingType = {
+  Determined: 'determined',
+  HPE: 'hpe',
+} as const;
+
+export type BrandingType = typeof BrandingType[keyof typeof BrandingType];
 
 export interface DeterminedInfo {
   branding?: BrandingType;
@@ -59,34 +61,43 @@ export interface Telemetry {
   segmentKey?: string;
 }
 
-export enum ResourceType {
-  CPU = 'CPU',
-  CUDA = 'CUDA',
-  ROCM = 'ROCM',
-  ALL = 'ALL',
-  UNSPECIFIED = 'UNSPECIFIED',
-}
+export const ResourceType = {
+  ALL: 'ALL',
+  CPU: 'CPU',
+  CUDA: 'CUDA',
+  ROCM: 'ROCM',
+  UNSPECIFIED: 'UNSPECIFIED',
+} as const;
 
-export const deviceTypes = new Set([ResourceType.CPU, ResourceType.CUDA, ResourceType.ROCM]);
+export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
 
-export enum ResourceState { // This is almost CommandState
-  Unspecified = 'UNSPECIFIED',
-  Assigned = 'ASSIGNED',
-  Pulling = 'PULLING',
-  Starting = 'STARTING',
-  Running = 'RUNNING',
-  Terminated = 'TERMINATED',
-  Warm = 'WARM',
-  Potential = 'POTENTIAL',
-}
+export const isDeviceType = (type: ResourceType): boolean => {
+  return ResourceType.CPU === type || ResourceType.CUDA === type || ResourceType.ROCM === type;
+};
+
+export const ResourceState = {
+  // This is almost CommandState
+  Assigned: 'ASSIGNED',
+  Potential: 'POTENTIAL',
+  Pulling: 'PULLING',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  Terminated: 'TERMINATED',
+  Unspecified: 'UNSPECIFIED',
+  Warm: 'WARM',
+} as const;
+
+export type ResourceState = typeof ResourceState[keyof typeof ResourceState];
 
 // High level Slot state
-export enum SlotState {
-  Running = 'RUNNING',
-  Free = 'FREE',
-  Pending = 'PENDING',
-  Potential = 'POTENTIAL',
-}
+export const SlotState = {
+  Free: 'FREE',
+  Pending: 'PENDING',
+  Potential: 'POTENTIAL',
+  Running: 'RUNNING',
+} as const;
+
+export type SlotState = typeof SlotState[keyof typeof SlotState];
 
 export const resourceStates: ResourceState[] = [
   ResourceState.Unspecified,
@@ -140,15 +151,17 @@ export interface StartEndTimes extends EndTimes {
 }
 
 /* Command */
-export enum CommandState {
-  Waiting = 'WAITING',
-  Pulling = 'PULLING',
-  Starting = 'STARTING',
-  Running = 'RUNNING',
-  Terminating = 'TERMINATING',
-  Terminated = 'TERMINATED',
-  Queued = 'QUEUED',
-}
+export const CommandState = {
+  Pulling: 'PULLING',
+  Queued: 'QUEUED',
+  Running: 'RUNNING',
+  Starting: 'STARTING',
+  Terminated: 'TERMINATED',
+  Terminating: 'TERMINATING',
+  Waiting: 'WAITING',
+} as const;
+
+export type CommandState = typeof CommandState[keyof typeof CommandState];
 
 export type State = CommandState | typeof RunState;
 
@@ -160,12 +173,14 @@ export interface CommandAddress {
   protocol?: string;
 }
 
-export enum CommandType {
-  Command = 'command',
-  JupyterLab = 'jupyter-lab',
-  Shell = 'shell',
-  TensorBoard = 'tensor-board',
-}
+export const CommandType = {
+  Command: 'command',
+  JupyterLab: 'jupyter-lab',
+  Shell: 'shell',
+  TensorBoard: 'tensor-board',
+} as const;
+
+export type CommandType = typeof CommandType[keyof typeof CommandType];
 
 export interface CommandMisc {
   experimentIds: number[];
@@ -190,14 +205,17 @@ export interface Command {
   user: User;
 }
 
-export enum CheckpointStorageType {
-  AWS = 'aws',
-  GCS = 'gcs',
-  HDFS = 'hdfs',
-  S3 = 's3',
-  AZURE = 'azure',
-  SharedFS = 'shared_fs',
-}
+export const CheckpointStorageType = {
+  AWS: 'aws',
+  AZURE: 'azure',
+  GCS: 'gcs',
+  HDFS: 'hdfs',
+  S3: 's3',
+  SharedFS: 'shared_fs',
+} as const;
+
+export type CheckpointStorageType =
+  typeof CheckpointStorageType[keyof typeof CheckpointStorageType];
 
 interface CheckpointStorage {
   bucket?: string;
@@ -218,13 +236,15 @@ export type HpImportance = Record<string, number>;
 export type HpImportanceMetricMap = Record<string, HpImportance>;
 export type HpImportanceMap = { [key in MetricType]: HpImportanceMetricMap };
 
-export enum HyperparameterType {
-  Categorical = 'categorical',
-  Constant = 'const',
-  Double = 'double',
-  Int = 'int',
-  Log = 'log',
-}
+export const HyperparameterType = {
+  Categorical: 'categorical',
+  Constant: 'const',
+  Double: 'double',
+  Int: 'int',
+  Log: 'log',
+} as const;
+
+export type HyperparameterType = typeof HyperparameterType[keyof typeof HyperparameterType];
 
 export interface HyperparameterBase {
   base?: number;
@@ -256,17 +276,20 @@ export type HyperparametersFlattened = {
   [keys: string]: Hyperparameter;
 };
 
-export enum ExperimentSearcherName {
-  AdaptiveAdvanced = 'adaptive',
-  AdaptiveAsha = 'adaptive_asha',
-  AdaptiveSimple = 'adaptive_simple',
-  AsyncHalving = 'async_halving',
-  Grid = 'grid',
-  Pbt = 'pbt',
-  Random = 'random',
-  Single = 'single',
-  Custom = 'custom',
-}
+export const ExperimentSearcherName = {
+  AdaptiveAdvanced: 'adaptive',
+  AdaptiveAsha: 'adaptive_asha',
+  AdaptiveSimple: 'adaptive_simple',
+  AsyncHalving: 'async_halving',
+  Custom: 'custom',
+  Grid: 'grid',
+  Pbt: 'pbt',
+  Random: 'random',
+  Single: 'single',
+} as const;
+
+export type ExperimentSearcherName =
+  typeof ExperimentSearcherName[keyof typeof ExperimentSearcherName];
 
 export interface ExperimentConfig {
   checkpointPolicy: string;
@@ -294,25 +317,27 @@ export interface ExperimentConfig {
 
 /* Experiment */
 
-export enum ExperimentAction {
-  Activate = 'Activate',
-  Archive = 'Archive',
-  Cancel = 'Cancel',
-  CompareExperiments = 'Compare',
-  CompareTrials = 'Compare Trials',
-  ContinueTrial = 'Continue Trial',
-  Delete = 'Delete',
-  DownloadCode = 'Download Experiment Code',
-  Fork = 'Fork',
-  HyperparameterSearch = 'Hyperparameter Search',
-  Kill = 'Kill',
-  Move = 'Move',
-  Pause = 'Pause',
-  OpenTensorBoard = 'View in TensorBoard',
-  SwitchPin = 'Switch Pin',
-  Unarchive = 'Unarchive',
-  ViewLogs = 'View Logs',
-}
+export const ExperimentAction = {
+  Activate: 'Activate',
+  Archive: 'Archive',
+  Cancel: 'Cancel',
+  CompareExperiments: 'Compare',
+  CompareTrials: 'Compare Trials',
+  ContinueTrial: 'Continue Trial',
+  Delete: 'Delete',
+  DownloadCode: 'Download Experiment Code',
+  Fork: 'Fork',
+  HyperparameterSearch: 'Hyperparameter Search',
+  Kill: 'Kill',
+  Move: 'Move',
+  OpenTensorBoard: 'View in TensorBoard',
+  Pause: 'Pause',
+  SwitchPin: 'Switch Pin',
+  Unarchive: 'Unarchive',
+  ViewLogs: 'View Logs',
+} as const;
+
+export type ExperimentAction = typeof ExperimentAction[keyof typeof ExperimentAction];
 
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
@@ -346,18 +371,22 @@ export interface ValidationHistory {
   validationError?: number;
 }
 
-export enum CheckpointState {
-  Active = 'ACTIVE',
-  Completed = 'COMPLETED',
-  Error = 'ERROR',
-  Deleted = 'DELETED',
-  Unspecified = 'UNSPECIFIED',
-}
+export const CheckpointState = {
+  Active: 'ACTIVE',
+  Completed: 'COMPLETED',
+  Deleted: 'DELETED',
+  Error: 'ERROR',
+  Unspecified: 'UNSPECIFIED',
+} as const;
 
-export enum MetricType {
-  Training = 'training',
-  Validation = 'validation',
-}
+export type CheckpointState = typeof CheckpointState[keyof typeof CheckpointState];
+
+export const MetricType = {
+  Training: 'training',
+  Validation: 'validation',
+} as const;
+
+export type MetricType = typeof MetricType[keyof typeof MetricType];
 
 export type MetricTypeParam =
   | 'METRIC_TYPE_UNSPECIFIED'
@@ -398,12 +427,14 @@ export interface WorkloadGroup {
   validation?: MetricsWorkload;
 }
 
-export enum TrialWorkloadFilter {
-  All = 'All',
-  Checkpoint = 'Has Checkpoint',
-  Validation = 'Has Validation',
-  CheckpointOrValidation = 'Has Checkpoint or Validation',
-}
+export const TrialWorkloadFilter = {
+  All: 'All',
+  Checkpoint: 'Has Checkpoint',
+  CheckpointOrValidation: 'Has Checkpoint or Validation',
+  Validation: 'Has Validation',
+} as const;
+
+export type TrialWorkloadFilter = typeof TrialWorkloadFilter[keyof typeof TrialWorkloadFilter];
 
 // This is to support the steps table in trial details and shouldn't be used
 // elsewhere so we can remove it with a redesign.
@@ -481,10 +512,12 @@ export interface TrialWorkloads extends WithPagination {
   workloads: WorkloadGroup[];
 }
 
-export enum Scale {
-  Linear = 'linear',
-  Log = 'log',
-}
+export const Scale = {
+  Linear: 'linear',
+  Log: 'log',
+} as const;
+
+export type Scale = typeof Scale[keyof typeof Scale];
 
 export interface MetricDatapoint {
   batches: number;
@@ -652,18 +685,22 @@ export type RecentTask = AnyTask & RecentEvent;
 export type RecentCommandTask = CommandTask & RecentEvent;
 export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
-export enum TaskType {
-  Command = 'command',
-  Experiment = 'experiment',
-  JupyterLab = 'jupyter-lab',
-  Shell = 'shell',
-  TensorBoard = 'tensor-board',
-}
+export const TaskType = {
+  Command: 'command',
+  Experiment: 'experiment',
+  JupyterLab: 'jupyter-lab',
+  Shell: 'shell',
+  TensorBoard: 'tensor-board',
+} as const;
 
-export enum ArchiveFilter {
-  Archived = 'archived',
-  Unarchived = 'unarchived',
-}
+export type TaskType = typeof TaskType[keyof typeof TaskType];
+
+export const ArchiveFilter = {
+  Archived: 'archived',
+  Unarchived: 'unarchived',
+} as const;
+
+export type ArchiveFilter = typeof ArchiveFilter[keyof typeof ArchiveFilter];
 
 export interface ExperimentFilters {
   archived?: ArchiveFilter;
@@ -683,25 +720,29 @@ export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   users?: string[];
 }
 
-export enum LogLevel {
-  Critical = 'critical',
-  Debug = 'debug',
-  Error = 'error',
-  Info = 'info',
-  None = 'none',
-  Trace = 'trace',
-  Warning = 'warning',
-}
+export const LogLevel = {
+  Critical: 'critical',
+  Debug: 'debug',
+  Error: 'error',
+  Info: 'info',
+  None: 'none',
+  Trace: 'trace',
+  Warning: 'warning',
+} as const;
 
-export enum LogLevelFromApi {
-  Unspecified = 'LOG_LEVEL_UNSPECIFIED',
-  Trace = 'LOG_LEVEL_TRACE',
-  Debug = 'LOG_LEVEL_DEBUG',
-  Info = 'LOG_LEVEL_INFO',
-  Warning = 'LOG_LEVEL_WARNING',
-  Error = 'LOG_LEVEL_ERROR',
-  Critical = 'LOG_LEVEL_CRITICAL',
-}
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+
+export const LogLevelFromApi = {
+  Critical: 'LOG_LEVEL_CRITICAL',
+  Debug: 'LOG_LEVEL_DEBUG',
+  Error: 'LOG_LEVEL_ERROR',
+  Info: 'LOG_LEVEL_INFO',
+  Trace: 'LOG_LEVEL_TRACE',
+  Unspecified: 'LOG_LEVEL_UNSPECIFIED',
+  Warning: 'LOG_LEVEL_WARNING',
+} as const;
+
+export type LogLevelFromApi = typeof LogLevelFromApi[keyof typeof LogLevelFromApi];
 
 export interface Log {
   id: number | string;
@@ -739,13 +780,15 @@ export type JobState = Api.Determinedjobv1State;
 export type JobSummary = Api.V1JobSummary;
 export type RPStats = Api.V1RPQueueStat;
 
-export enum JobAction {
-  Cancel = 'Cancel',
-  Kill = 'Kill',
-  ManageJob = 'Manage Job',
-  MoveToTop = 'Move To Top',
-  ViewLog = 'View Logs',
-}
+export const JobAction = {
+  Cancel: 'Cancel',
+  Kill: 'Kill',
+  ManageJob: 'Manage Job',
+  MoveToTop: 'Move To Top',
+  ViewLog: 'View Logs',
+} as const;
+
+export type JobAction = typeof JobAction[keyof typeof JobAction];
 
 /* End of Jobs */
 
@@ -769,12 +812,14 @@ export interface DeletionStatus {
   completed: boolean;
 }
 
-export enum WorkspaceState {
-  Deleted = 'DELETED',
-  DeleteFailed = 'DELETE_FAILED',
-  Deleting = 'DELETING',
-  Unspecified = 'UNSPECIFIED',
-}
+export const WorkspaceState = {
+  Deleted: 'DELETED',
+  DeleteFailed: 'DELETE_FAILED',
+  Deleting: 'DELETING',
+  Unspecified: 'UNSPECIFIED',
+} as const;
+
+export type WorkspaceState = typeof WorkspaceState[keyof typeof WorkspaceState];
 
 export interface Note {
   contents: string;

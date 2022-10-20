@@ -53,17 +53,21 @@ export interface FetchConfig {
   offsetLog?: Log;
 }
 
-export enum FetchType {
-  Initial = 'Initial',
-  Newer = 'Newer',
-  Older = 'Older',
-  Stream = 'Stream',
-}
+export const FetchType = {
+  Initial: 'Initial',
+  Newer: 'Newer',
+  Older: 'Older',
+  Stream: 'Stream',
+} as const;
 
-export enum FetchDirection {
-  Newer = 'Newer',
-  Older = 'Older',
-}
+export type FetchType = typeof FetchType[keyof typeof FetchType];
+
+export const FetchDirection = {
+  Newer: 'Newer',
+  Older: 'Older',
+} as const;
+
+export type FetchDirection = typeof FetchDirection[keyof typeof FetchDirection];
 
 export const ARIA_LABEL_ENABLE_TAILING = 'Enable Tailing';
 export const ARIA_LABEL_SCROLL_TO_OLDEST = 'Scroll to Oldest';
@@ -122,9 +126,9 @@ const LogViewer: React.FC<Props> = ({
   const [isFetching, setIsFetching] = useState(false);
   const local = useRef(clone(defaultLocal));
   const [canceler] = useState(new AbortController());
-  const [fetchDirection, setFetchDirection] = useState(FetchDirection.Older);
-  const [isTailing, setIsTailing] = useState(true);
-  const [showButtons, setShowButtons] = useState(false);
+  const [fetchDirection, setFetchDirection] = useState<FetchDirection>(FetchDirection.Older);
+  const [isTailing, setIsTailing] = useState<boolean>(true);
+  const [showButtons, setShowButtons] = useState<boolean>(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);

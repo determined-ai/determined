@@ -8,11 +8,13 @@ import md5 from 'shared/utils/md5';
 
 import css from './Avatar.module.scss';
 
-export enum Size {
-  Medium = 'medium',
-  Large = 'large',
-  ExtraLarge = 'extra-large',
-}
+export const Size = {
+  ExtraLarge: 'extra-large',
+  Large: 'large',
+  Medium: 'medium',
+} as const;
+
+export type Size = typeof Size[keyof typeof Size];
 
 export interface Props extends ClassNameProp {
   darkLight: DarkLight;

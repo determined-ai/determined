@@ -23,11 +23,13 @@ import {
  * Where did we get our sizes from?
  * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
  */
-export enum ShirtSize {
-  small = 'small',
-  medium = 'medium',
-  large = 'large',
-}
+export const ShirtSize = {
+  small: 'small',
+  medium: 'medium',
+  large: 'large',
+} as const;
+
+export type ShirtSize = typeof ShirtSize[keyof typeof ShirtSize];
 
 const stateColorMapping = {
   [RunState.Active]: 'active',

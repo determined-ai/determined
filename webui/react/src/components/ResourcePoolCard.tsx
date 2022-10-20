@@ -15,7 +15,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { DarkLight } from 'shared/themes';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
-import { deviceTypes, ResourcePool } from 'types';
+import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import Json from './Json';
@@ -157,7 +157,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
         resourceStates={getSlotContainerStates(agents || [], pool.slotType, pool.name)}
         size={size}
         slotsPotential={maxPoolSlotCapacity(pool)}
-        title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+        title={isDeviceType(pool.slotType) ? pool.slotType : undefined}
         totalSlots={pool.slotsAvailable}
       />
       {isAux && (
@@ -171,7 +171,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
           poolType={pool.type}
           resourceStates={getSlotContainerStates(agents || [], pool.slotType, pool.name)}
           size={size}
-          title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+          title={isDeviceType(pool.slotType) ? pool.slotType : undefined}
           totalSlots={maxPoolSlotCapacity(pool)}
         />
       )}

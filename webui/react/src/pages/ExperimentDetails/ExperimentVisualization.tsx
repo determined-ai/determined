@@ -44,23 +44,29 @@ import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinat
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
-export enum ExperimentVisualizationType {
-  HpParallelCoordinates = 'hp-parallel-coordinates',
-  HpHeatMap = 'hp-heat-map',
-  HpScatterPlots = 'hp-scatter-plots',
-  LearningCurve = 'learning-curve',
-}
+export const ExperimentVisualizationType = {
+  HpHeatMap: 'hp-heat-map',
+  HpParallelCoordinates: 'hp-parallel-coordinates',
+  HpScatterPlots: 'hp-scatter-plots',
+  LearningCurve: 'learning-curve',
+} as const;
+
+export type ExperimentVisualizationType =
+  typeof ExperimentVisualizationType[keyof typeof ExperimentVisualizationType];
+
 interface Props {
   basePath: string;
   experiment: ExperimentBase;
   type?: ExperimentVisualizationType;
 }
 
-enum PageError {
-  MetricBatches,
-  MetricHpImportance,
-  MetricNames,
-}
+const PageError = {
+  MetricBatches: 'MetricBatches',
+  MetricHpImportance: 'MetricHpImportance',
+  MetricNames: 'MetricNames',
+} as const;
+
+type PageError = typeof PageError[keyof typeof PageError];
 
 const STORAGE_PATH = 'experiment-visualization';
 const STORAGE_FILTERS_KEY = 'filters';
@@ -139,8 +145,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
       hasLoaded: batches && metrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
-      isSupported: ![ExperimentSearcherName.Single, ExperimentSearcherName.Pbt].includes(
-        experiment.config.searcher.name,
+      isSupported: !(
+        ExperimentSearcherName.Single === experiment.config.searcher.name ||
+        ExperimentSearcherName.Pbt === experiment.config.searcher.name
       ),
     };
   }, [batches, experiment, metrics]);

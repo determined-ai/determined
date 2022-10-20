@@ -80,10 +80,10 @@ const ModelHeader: React.FC<Props> = ({
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
   const menu = useMemo(() => {
-    enum MenuKey {
-      SWITCH_ARCHIVED = 'switch-archive',
-      DELETE_MODEL = 'delete-model',
-    }
+    const MenuKey = {
+      DELETE_MODEL: 'delete-model',
+      SWITCH_ARCHIVED: 'switch-archive',
+    } as const;
 
     const funcs = {
       [MenuKey.SWITCH_ARCHIVED]: () => {
@@ -95,7 +95,7 @@ const ModelHeader: React.FC<Props> = ({
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
     };
 
     const menuItems: MenuProps['items'] = [

@@ -32,11 +32,13 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   userId: 85,
 };
 
-export enum WhoseProjects {
-  All = 'ALL_PROJECTS',
-  Mine = 'MY_PROJECTS',
-  Others = 'OTHERS_PROJECTS',
-}
+export const WhoseProjects = {
+  All: 'ALL_PROJECTS',
+  Mine: 'MY_PROJECTS',
+  Others: 'OTHERS_PROJECTS',
+} as const;
+
+export type WhoseProjects = typeof WhoseProjects[keyof typeof WhoseProjects];
 
 export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;

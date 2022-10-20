@@ -89,12 +89,12 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   }, [openWorkspaceDelete]);
 
   const WorkspaceActionMenu = useMemo(() => {
-    enum MenuKey {
-      SWITCH_PIN = 'switchPin',
-      EDIT = 'edit',
-      SWITCH_ARCHIVED = 'switchArchive',
-      DELETE = 'delete',
-    }
+    const MenuKey = {
+      DELETE: 'delete',
+      EDIT: 'edit',
+      SWITCH_ARCHIVED: 'switchArchive',
+      SWITCH_PIN: 'switchPin',
+    } as const;
 
     const funcs = {
       [MenuKey.SWITCH_PIN]: () => {
@@ -112,7 +112,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
     };
 
     const menuItems: MenuProps['items'] = [

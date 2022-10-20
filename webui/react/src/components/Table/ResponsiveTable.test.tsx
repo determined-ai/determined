@@ -16,11 +16,13 @@ import TableFilterDropdown, {
   ARIA_LABEL_INPUT,
 } from './TableFilterDropdown';
 
-enum ColumnValueType {
-  Decimal = 'decimal',
-  Integer = 'integer',
-  String = 'string',
-}
+const ColumnValueType = {
+  Decimal: 'decimal',
+  Integer: 'integer',
+  String: 'string',
+} as const;
+
+type ColumnValueType = typeof ColumnValueType[keyof typeof ColumnValueType];
 
 interface ColumnConfig {
   length?: number;

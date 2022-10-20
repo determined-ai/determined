@@ -104,12 +104,11 @@ const HpTrialTable: React.FC<Props> = ({
       return (_: string, record: TrialHParams) => {
         const value = record.hparams[key];
         const type = hyperparameters[key].type;
-        const isValidType = [
-          HyperparameterType.Constant,
-          HyperparameterType.Double,
-          HyperparameterType.Int,
-          HyperparameterType.Log,
-        ].includes(type);
+        const isValidType =
+          HyperparameterType.Constant === type ||
+          HyperparameterType.Double === type ||
+          HyperparameterType.Int === type ||
+          HyperparameterType.Log === type;
         if (isNumber(value) && isValidType) {
           return <HumanReadableNumber num={value} />;
         }

@@ -23,10 +23,10 @@ interface RenderProps {
   placeholder?: string;
 }
 
-enum TabType {
-  Edit = 'edit',
-  Preview = 'preview',
-}
+const TabType = {
+  Edit: 'edit',
+  Preview: 'preview',
+} as const;
 
 const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick }) => {
   const showPlaceholder = !markdown && placeholder;

@@ -52,10 +52,12 @@ import settingsConfig, {
   Settings,
 } from './TaskList.settings';
 
-enum TensorBoardSourceType {
-  Experiment = 'Experiment',
-  Trial = 'Trial',
-}
+const TensorBoardSourceType = {
+  Experiment: 'Experiment',
+  Trial: 'Trial',
+} as const;
+
+type TensorBoardSourceType = typeof TensorBoardSourceType[keyof typeof TensorBoardSourceType];
 
 interface TensorBoardSource {
   id: number;

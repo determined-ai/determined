@@ -84,10 +84,10 @@ const WebhooksView: React.FC = () => {
 
   const WebhookActionMenu = useCallback(
     (record: Webhook) => {
-      enum MenuKey {
-        DELETE_WEBHOOK = 'delete-webhook',
-        TEST_WEBHOOK = 'test-webhook',
-      }
+      const MenuKey = {
+        DELETE_WEBHOOK: 'delete-webhook',
+        TEST_WEBHOOK: 'test-webhook',
+      } as const;
 
       const funcs = {
         [MenuKey.DELETE_WEBHOOK]: () => {
@@ -99,7 +99,7 @@ const WebhooksView: React.FC = () => {
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
+        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
       };
 
       const menuItems: MenuProps['items'] = [

@@ -95,17 +95,21 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
   title: node.name,
 });
 
-enum PageError {
-  decode = 'Could not decode file.',
-  empty = 'File has no content.',
-  fetch = 'Unable to fetch file.',
-  none = '',
-}
+const PageError = {
+  decode: 'Could not decode file.',
+  empty: 'File has no content.',
+  fetch: 'Unable to fetch file.',
+  none: '',
+} as const;
 
-enum Config {
-  submitted = 'Submitted Configuration',
-  runtime = 'Runtime Configuration',
-}
+type PageError = typeof PageError[keyof typeof PageError];
+
+const Config = {
+  runtime: 'Runtime Configuration',
+  submitted: 'Submitted Configuration',
+} as const;
+
+type Config = typeof Config[keyof typeof Config];
 
 const descForConfig = {
   [Config.submitted]: 'original submitted config',

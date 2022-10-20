@@ -29,10 +29,12 @@ type Params = {
   workspaceId: string;
 };
 
-export enum WorkspaceDetailsTab {
-  Members = 'members',
-  Projects = 'projects',
-}
+export const WorkspaceDetailsTab = {
+  Members: 'members',
+  Projects: 'projects',
+} as const;
+
+export type WorkspaceDetailsTab = typeof WorkspaceDetailsTab[keyof typeof WorkspaceDetailsTab];
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');

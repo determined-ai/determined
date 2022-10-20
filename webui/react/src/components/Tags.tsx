@@ -8,10 +8,12 @@ import { toHtmlId, truncate } from 'shared/utils/string';
 
 import css from './TagList.module.scss';
 
-export enum TagAction {
-  Add = 'Add',
-  Remove = 'Remove',
-}
+export const TagAction = {
+  Add: 'Add',
+  Remove: 'Remove',
+} as const;
+
+export type TagAction = typeof TagAction[keyof typeof TagAction];
 
 interface Props {
   compact?: boolean;

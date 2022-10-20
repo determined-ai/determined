@@ -7,11 +7,13 @@ import { openCommand } from 'utils/wait';
 
 import { TrialsSelectionOrCollection } from '../Collections/collections';
 
-export enum TrialAction {
-  AddTags = 'Add Tags',
-  TagAndCollect = 'Tag and Collect',
-  OpenTensorBoard = 'View in TensorBoard',
-}
+export const TrialAction = {
+  AddTags: 'Add Tags',
+  OpenTensorBoard: 'View in TensorBoard',
+  TagAndCollect: 'Tag and Collect',
+} as const;
+
+export type TrialAction = typeof TrialAction[keyof typeof TrialAction];
 
 type trials = { trials: TrialsSelectionOrCollection };
 

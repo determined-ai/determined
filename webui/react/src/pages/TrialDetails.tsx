@@ -27,13 +27,15 @@ import { isSingleTrialExperiment } from 'utils/experiment';
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Hyperparameters = 'hyperparameters',
-  Logs = 'logs',
-  Overview = 'overview',
-  Profiler = 'profiler',
-  Workloads = 'workloads',
-}
+const TabType = {
+  Hyperparameters: 'hyperparameters',
+  Logs: 'logs',
+  Overview: 'overview',
+  Profiler: 'profiler',
+  Workloads: 'workloads',
+} as const;
+
+type TabType = typeof TabType[keyof typeof TabType];
 
 type Params = {
   experimentId?: string;

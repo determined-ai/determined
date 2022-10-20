@@ -31,10 +31,10 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
   const handleDeleteClick = useCallback(() => onDelete?.(), [onDelete]);
 
   const ModelVersionActionMenu = useMemo(() => {
-    enum MenuKey {
-      DOWNLOAD = 'download',
-      DELETE_VERSION = 'delete-version',
-    }
+    const MenuKey = {
+      DELETE_VERSION: 'delete-version',
+      DOWNLOAD: 'download',
+    } as const;
 
     const funcs = {
       [MenuKey.DOWNLOAD]: () => {
@@ -46,7 +46,7 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
     };
 
     const menuItems: MenuProps['items'] = [

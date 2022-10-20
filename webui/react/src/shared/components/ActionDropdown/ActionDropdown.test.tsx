@@ -9,10 +9,12 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const ACTION_ONE_TEXT = 'Action One';
 const ACTION_TWO_TEXT = 'Action Two';
 
-enum TestAction {
-  ActionOne = 'Action One',
-  ActionTwo = 'Action Two',
-}
+const TestAction = {
+  ActionOne: 'Action One',
+  ActionTwo: 'Action Two',
+} as const;
+
+type TestAction = typeof TestAction[keyof typeof TestAction];
 
 const handleActionOne = jest.fn();
 const handleActionTwo = jest.fn();

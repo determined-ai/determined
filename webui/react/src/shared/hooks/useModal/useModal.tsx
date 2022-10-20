@@ -9,10 +9,12 @@ import { isAsyncFunction } from 'shared/utils/data';
 
 import usePrevious from '../usePrevious';
 
-export enum ModalCloseReason {
-  Cancel = 'Cancel',
-  Ok = 'Ok',
-}
+export const ModalCloseReason = {
+  Cancel: 'Cancel',
+  Ok: 'Ok',
+} as const;
+
+export type ModalCloseReason = typeof ModalCloseReason[keyof typeof ModalCloseReason];
 
 interface ModalProps<T> extends ModalFuncProps {
   /** use to provide context only available at modal open time */

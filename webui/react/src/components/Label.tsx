@@ -2,9 +2,11 @@ import React from 'react';
 
 import css from './Label.module.scss';
 
-export enum LabelTypes {
-  TextOnly = 'textOnly',
-}
+export const LabelTypes = {
+  TextOnly: 'textOnly',
+} as const;
+
+export type LabelTypes = typeof LabelTypes[keyof typeof LabelTypes];
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;

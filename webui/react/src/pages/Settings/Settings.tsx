@@ -12,11 +12,13 @@ import { paths } from 'routes/utils';
 
 const { TabPane } = Tabs;
 
-export enum TabType {
-  Account = 'Account',
-  UserManagement = 'User Management',
-  GroupManagement = 'Group Management',
-}
+export const TabType = {
+  Account: 'Account',
+  GroupManagement: 'Group Management',
+  UserManagement: 'User Management',
+} as const;
+
+export type TabType = typeof TabType[keyof typeof TabType];
 
 type Params = {
   tab?: TabType;

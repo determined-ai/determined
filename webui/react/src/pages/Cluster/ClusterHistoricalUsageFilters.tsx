@@ -16,10 +16,12 @@ import { capitalize } from 'shared/utils/string';
 
 const { Option } = Select;
 
-enum GroupBy {
-  Day = 'day',
-  Month = 'month',
-}
+const GroupBy = {
+  Day: 'day',
+  Month: 'month',
+} as const;
+
+type GroupBy = typeof GroupBy[keyof typeof GroupBy];
 
 export interface ClusterHistoricalUsageFiltersInterface {
   afterDate: Dayjs;

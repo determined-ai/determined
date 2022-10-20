@@ -13,11 +13,13 @@ export type WorkspaceColumnName =
 
 export const DEFAULT_COLUMNS: WorkspaceColumnName[] = ['name', 'numProjects', 'userId'];
 
-export enum WhoseWorkspaces {
-  All = 'ALL_WORKSPACES',
-  Mine = 'MY_WORKSPACES',
-  Others = 'OTHERS_WORKSPACES',
-}
+export const WhoseWorkspaces = {
+  All: 'ALL_WORKSPACES',
+  Mine: 'MY_WORKSPACES',
+  Others: 'OTHERS_WORKSPACES',
+} as const;
+
+export type WhoseWorkspaces = typeof WhoseWorkspaces[keyof typeof WhoseWorkspaces];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<WorkspaceColumnName, number> = {
   action: 46,

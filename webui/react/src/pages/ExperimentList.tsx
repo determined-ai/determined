@@ -888,11 +888,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const tabBarContent = useMemo(() => {
     const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
-      enum MenuKey {
-        SWITCH_ARCHIVED = 'switchArchive',
-        COLUMNS = 'columns',
-        RESULT_FILTER = 'resetFilters',
-      }
+      const MenuKey = {
+        COLUMNS: 'columns',
+        RESULT_FILTER: 'resetFilters',
+        SWITCH_ARCHIVED: 'switchArchive',
+      } as const;
 
       const funcs = {
         [MenuKey.SWITCH_ARCHIVED]: () => {
@@ -907,7 +907,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
+        funcs[e.key as typeof MenuKey[keyof typeof MenuKey]]();
       };
 
       const menuItems: MenuProps['items'] = [

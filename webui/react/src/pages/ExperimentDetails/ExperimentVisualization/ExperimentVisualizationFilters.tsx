@@ -26,15 +26,19 @@ export interface VisualizationFilters {
   view: ViewType;
 }
 
-export enum FilterError {
-  MetricBatches,
-  Metrics,
-}
+export const FilterError = {
+  MetricBatches: 'MetricBatches',
+  Metrics: 'Metrics',
+} as const;
 
-export enum ViewType {
-  Grid = 'grid',
-  List = 'list',
-}
+export type FilterError = typeof FilterError[keyof typeof FilterError];
+
+export const ViewType = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+export type ViewType = typeof ViewType[keyof typeof ViewType];
 
 interface Props {
   batches: number[];
@@ -48,26 +52,28 @@ interface Props {
   type: ExperimentVisualizationType;
 }
 
-enum ActionType {
-  Set,
-  SetBatch,
-  SetBatchMargin,
-  SetHParams,
-  SetMaxTrial,
-  SetMetric,
-  SetView,
-  SetScale,
-}
+const ActionType = {
+  Set: 0,
+  SetBatch: 1,
+  SetBatchMargin: 2,
+  SetHParams: 3,
+  SetMaxTrial: 4,
+  SetMetric: 5,
+  SetScale: 6,
+  SetView: 7,
+} as const;
+
+type ActionType = typeof ActionType[keyof typeof ActionType];
 
 type Action =
-  | { type: ActionType.Set; value: VisualizationFilters }
-  | { type: ActionType.SetBatch; value: number }
-  | { type: ActionType.SetBatchMargin; value: number }
-  | { type: ActionType.SetHParams; value: string[] }
-  | { type: ActionType.SetMaxTrial; value: number }
-  | { type: ActionType.SetMetric; value: Metric }
-  | { type: ActionType.SetView; value: ViewType }
-  | { type: ActionType.SetScale; value: Scale };
+  | { type: typeof ActionType.Set; value: VisualizationFilters }
+  | { type: typeof ActionType.SetBatch; value: number }
+  | { type: typeof ActionType.SetBatchMargin; value: number }
+  | { type: typeof ActionType.SetHParams; value: string[] }
+  | { type: typeof ActionType.SetMaxTrial; value: number }
+  | { type: typeof ActionType.SetMetric; value: Metric }
+  | { type: typeof ActionType.SetView; value: ViewType }
+  | { type: typeof ActionType.SetScale; value: Scale };
 
 const TOP_TRIALS_OPTIONS = [1, 10, 20, 50, 100];
 const BATCH_MARGIN_OPTIONS = [1, 5, 10, 20, 50];
@@ -113,24 +119,20 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   const [showMaxTrials, showBatches, showMetrics, showHParams, showViews, showScales] =
     useMemo(() => {
       return [
-        [ExperimentVisualizationType.LearningCurve].includes(type),
-        [
-          ExperimentVisualizationType.HpHeatMap,
-          ExperimentVisualizationType.HpParallelCoordinates,
-          ExperimentVisualizationType.HpScatterPlots,
-        ].includes(type),
+        ExperimentVisualizationType.LearningCurve === type,
+        ExperimentVisualizationType.HpHeatMap === type ||
+          ExperimentVisualizationType.HpParallelCoordinates === type ||
+          ExperimentVisualizationType.HpScatterPlots === type,
         [
           ExperimentVisualizationType.HpHeatMap,
           ExperimentVisualizationType.HpParallelCoordinates,
           ExperimentVisualizationType.HpScatterPlots,
           ExperimentVisualizationType.LearningCurve,
         ].includes(type),
-        [
-          ExperimentVisualizationType.HpHeatMap,
-          ExperimentVisualizationType.HpParallelCoordinates,
-          ExperimentVisualizationType.HpScatterPlots,
-        ].includes(type),
-        [ExperimentVisualizationType.HpHeatMap].includes(type),
+        ExperimentVisualizationType.HpHeatMap === type ||
+          ExperimentVisualizationType.HpParallelCoordinates === type ||
+          ExperimentVisualizationType.HpScatterPlots === type,
+        ExperimentVisualizationType.HpHeatMap === type,
         [
           ExperimentVisualizationType.HpHeatMap,
           ExperimentVisualizationType.HpScatterPlots,

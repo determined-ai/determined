@@ -56,10 +56,12 @@ interface HpData {
   trialIds: number[];
 }
 
-enum ViewType {
-  Grid = 'grid',
-  List = 'list',
-}
+const ViewType = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+type ViewType = typeof ViewType[keyof typeof ViewType];
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;

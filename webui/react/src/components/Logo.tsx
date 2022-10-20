@@ -14,10 +14,12 @@ import { BrandingType } from 'types';
 
 import css from './Logo.module.scss';
 
-export enum Orientation {
-  Horizontal = 'horizontal',
-  Vertical = 'vertical',
-}
+export const Orientation = {
+  Horizontal: 'horizontal',
+  Vertical: 'vertical',
+} as const;
+
+export type Orientation = typeof Orientation[keyof typeof Orientation];
 
 interface Props {
   branding: BrandingType;

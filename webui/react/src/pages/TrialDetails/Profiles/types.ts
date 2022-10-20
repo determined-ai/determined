@@ -7,11 +7,13 @@ import {
 } from 'services/api-ts-sdk';
 import { TrialDetails } from 'types';
 
-export enum MetricType {
-  System = 'PROFILER_METRIC_TYPE_SYSTEM',
-  Throughput = 'PROFILER_METRIC_TYPE_MISC',
-  Timing = 'PROFILER_METRIC_TYPE_TIMING',
-}
+export const MetricType = {
+  System: 'PROFILER_METRIC_TYPE_SYSTEM',
+  Throughput: 'PROFILER_METRIC_TYPE_MISC',
+  Timing: 'PROFILER_METRIC_TYPE_TIMING',
+} as const;
+
+export type MetricType = typeof MetricType[keyof typeof MetricType];
 
 // {[metric_type]: {[name]: {[agent]: [gpu, ..], ..}, ..}, ..}
 export type AvailableSeriesType = Record<string, Record<string, string[]>>;

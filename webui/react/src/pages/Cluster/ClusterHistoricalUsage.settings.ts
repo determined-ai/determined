@@ -6,10 +6,12 @@ export interface Settings {
   groupBy: string;
 }
 
-export enum GroupBy {
-  Day = 'day',
-  Month = 'month',
-}
+export const GroupBy = {
+  Day: 'day',
+  Month: 'month',
+} as const;
+
+export type GroupBy = typeof GroupBy[keyof typeof GroupBy];
 
 const config: SettingsConfig = {
   settings: [

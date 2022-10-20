@@ -3,9 +3,11 @@ import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 export type MembersColumnName = 'name' | 'role' | 'action';
 
-enum WorkspaceMembersSortBy {
-  USERNAME = 'username',
-}
+const WorkspaceMembersSortBy = {
+  USERNAME: 'username',
+} as const;
+
+type WorkspaceMembersSortBy = typeof WorkspaceMembersSortBy[keyof typeof WorkspaceMembersSortBy];
 
 export const DEFAULT_COLUMNS: MembersColumnName[] = ['name', 'role'];
 

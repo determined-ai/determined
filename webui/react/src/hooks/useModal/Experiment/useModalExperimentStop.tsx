@@ -10,10 +10,12 @@ import handleError from 'utils/error';
 
 import css from './useModalExperimentStop.module.scss';
 
-export enum ActionType {
-  Cancel = 'Cancel',
-  Kill = 'Kill',
-}
+export const ActionType = {
+  Cancel: 'Cancel',
+  Kill: 'Kill',
+} as const;
+
+export type ActionType = typeof ActionType[keyof typeof ActionType];
 
 interface Props {
   experimentId: number;
