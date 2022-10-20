@@ -8,7 +8,7 @@
   height: 60px;
 
   > td {
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
     white-space: nowrap;
   }
@@ -92,8 +92,7 @@
 }
 .cell {
   .rightClickableCellWrapper {
-    display: inline-table;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
     width: 100%;
   }

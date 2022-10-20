@@ -1,4 +1,4 @@
-import { Space, Tooltip } from 'antd';
+import { Space, Tooltip, Typography } from 'antd';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -155,7 +155,9 @@ export const experimentNameRenderer = (
   value: string | number | undefined,
   record: ExperimentItem,
 ): React.ReactNode => (
-  <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+  <Typography.Text ellipsis={{ tooltip: true }}>
+    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+  </Typography.Text>
 );
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {

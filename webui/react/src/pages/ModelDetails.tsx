@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -148,12 +149,21 @@ const ModelDetails: React.FC = () => {
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
-      <TagList
-        compact
-        disabled={record.model.archived}
-        tags={record.labels ?? []}
-        onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
-      />
+      <div className={css.tagsRenderer}>
+        <Typography.Text
+          ellipsis={{
+            tooltip: <TagList disabled tags={record.labels ?? []} />,
+          }}>
+          <div>
+            <TagList
+              compact
+              disabled={record.model.archived}
+              tags={record.labels ?? []}
+              onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
+            />
+          </div>
+        </Typography.Text>
+      </div>
     );
 
     const actionRenderer = (_: string, record: ModelVersion) => (

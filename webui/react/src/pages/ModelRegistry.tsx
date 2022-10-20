@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
+import { Button, Dropdown, Menu, Space, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -331,12 +331,21 @@ const ModelRegistry: React.FC = () => {
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelItem) => (
-      <TagList
-        compact
-        disabled={record.archived}
-        tags={record.labels ?? []}
-        onChange={(tags) => setModelTags(record.name, tags)}
-      />
+      <div className={css.tagsRenderer}>
+        <Typography.Text
+          ellipsis={{
+            tooltip: <TagList disabled tags={record.labels ?? []} />,
+          }}>
+          <div>
+            <TagList
+              compact
+              disabled={record.archived}
+              tags={record.labels ?? []}
+              onChange={(tags) => setModelTags(record.name, tags)}
+            />
+          </div>
+        </Typography.Text>
+      </div>
     );
 
     const actionRenderer = (_: string, record: ModelItem) => (
