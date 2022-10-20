@@ -3,7 +3,7 @@
 ################
 
 This section will walk through the steps needed to set up Zapier webhook to to receive updates from
-Determined
+Determined.
 
 The steps for set up Zapier webhook are:
 
@@ -20,14 +20,15 @@ The steps for set up Zapier webhook are:
 *****************************
 
 First, you need to create a Zap with webhook. Visit the `Zapier Website
-<https://zapier.com/app/zaps>`_ and click on the **Create Zap** button.
+<https://zapier.com/app/zaps>`_, signup if you haven't already, and click on the **Create Zap**
+button.
 
-Select **Webhooks by Zapier** as trigger, and **Catch Raw Hook** as event. Using **Catch Raw Hook**
+Select **Webhooks by Zapier** as trigger **Catch Raw Hook** as event. Using **Catch Raw Hook**
 intead of **Catch Hook** because headers are needed to verify each webhook request.
 
 .. note::
 
-   You need to upgrade to premium account to use **Webhooks by Zapier**
+   You need to upgrade to premium account to access **Webhooks by Zapier**
 
 .. image:: /assets/images/zapier_webhook.png
    :width: 100%
@@ -38,7 +39,7 @@ intead of **Catch Hook** because headers are needed to verify each webhook reque
  Setting up the Webhook in Determined
 **************************************
 
-Then, you need to create a webhook in Determined using the Webhook URL from Zapier.
+Then, you need to create a webhook in Determined using the **Webhook URL** from Zapier.
 
 .. image:: /assets/images/zapier_webhook_url.png
    :width: 100%
@@ -49,8 +50,8 @@ the **New Webhook** button in the top right corner of the page.
 .. image:: /assets/images/zapier_new_webhook.png
    :width: 100%
 
-Paste the **Webhook URL** that was copied from Zapier in the **URL** field. Choose **Default** for
-the webhook type and then choose the triggers that you want to receive notifications for. Finally,
+Paste the **Webhook URL** that was copied from Zapier in the **URL** field. Select **Default** for
+the webhook type and then select the triggers that you want to receive notifications for. Finally,
 select **Create Webhook** and your webhook will be created.
 
 .. _testing-webhook-zapier:
@@ -60,12 +61,12 @@ select **Create Webhook** and your webhook will be created.
 *********************
 
 To send a test payload, click on the triple dots on the right of webhook record and click on **Test
-Webhook**
+Webhook**.
 
 .. image:: /assets/images/zapier_test.png
    :width: 100%
 
-Then navigate back to Zapier and click on **Test Trigger**, and you should be able to see the test
+Then navigate back to Zapier and click on **Test Trigger**, then you should be able to see the test
 request.
 
 .. image:: /assets/images/zapier_request_found.png
@@ -77,11 +78,11 @@ request.
  Verifing the Signature
 ************************
 
-Refer to #. :ref:`Security and Signed Payload <webhook_security>` for the details behind verifing
+Refer to :ref:`Security and Signed Payload <webhook_security>` for the details behind verifing
 signature.
 
 In Zapier, you can use **Code by Zapier** to compute signature based on payload and timestamp, then
-compare it with the signature in the request, to verify each request.
+compare it with the signature in the request to verify each request.
 
 Add a new action and choose **Code by Zapier**, select **Run Python** as an example.
 
@@ -90,9 +91,10 @@ Add a new action and choose **Code by Zapier**, select **Run Python** as an exam
 
 Construct input data as following:
 
--- webhook_signing_key: match the ``webhook_signing_key`` in Determined. -- timestamp: take out
-``X-Determined-AI-Signature-Timestamp`` from request header. -- signature: take out
-``X-Determined-AI-Signature`` from request header. -- payload: raw body of request.
+-  webhook_signing_key: match the ``webhook_signing_key`` in Determined.
+-  timestamp: ``X-Determined-AI-Signature-Timestamp`` from request header.
+-  signature: ``X-Determined-AI-Signature`` from request header.
+-  payload: raw body of request.
 
 .. image:: /assets/images/zapier_code_input.png
    :width: 100%
@@ -121,5 +123,10 @@ Under **Test Action**, test the code above, you should be able to see that verif
 
 .. _configuring_destination:
 
-Finally, you can configure what to under each senerio by adding more actions. For example, send out
-alert when verification fail, send out email with experiment information when verification pass.
+*************************
+ Configuring Destination
+*************************
+
+Finally, you can configure where to proceed under each senerio by adding more actions. For example,
+send out alert when verification fail, or send out email with experiment information when
+verification pass.
