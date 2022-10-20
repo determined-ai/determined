@@ -223,15 +223,15 @@ def describe_role(args: Namespace) -> None:
             if workspace_id is not None:
                 workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
 
-                output.append(
-                    {
-                        "userID": user_assignment.userId,
-                        "username": username,
-                        "workspaceID": workspace_id,
-                        "workspaceName": workspace_name,
-                        "assignedGlobally": workspace_id is None,
-                    }
-                )
+            output.append(
+                {
+                    "userID": user_assignment.userId,
+                    "username": username,
+                    "workspaceID": workspace_id,
+                    "workspaceName": workspace_name,
+                    "assignedGlobally": workspace_id is None,
+                }
+            )
 
         render.render_objects(
             userAssignmentHeaders, [render.unmarshal(userAssignmentHeaders, o) for o in output]
