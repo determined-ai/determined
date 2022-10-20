@@ -37,6 +37,8 @@ message PatchUser {
   google.protobuf.StringValue display_name = 3;
   // The user and group on the agent host machine.
   AgentUserGroup agent_user_group = 4;
+  // The new username.
+  google.protobuf.StringValue username = 5;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

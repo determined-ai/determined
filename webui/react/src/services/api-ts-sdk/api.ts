@@ -5511,6 +5511,12 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     agentUserGroup?: V1AgentUserGroup;
+    /**
+     * The new username.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    username?: string;
 }
 
 /**

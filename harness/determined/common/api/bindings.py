@@ -4978,11 +4978,13 @@ class v1PatchUser:
         admin: "typing.Optional[bool]" = None,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
         displayName: "typing.Optional[str]" = None,
+        username: "typing.Optional[str]" = None,
     ):
         self.admin = admin
         self.active = active
         self.displayName = displayName
         self.agentUserGroup = agentUserGroup
+        self.username = username
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchUser":
@@ -4991,6 +4993,7 @@ class v1PatchUser:
             active=obj.get("active", None),
             displayName=obj.get("displayName", None),
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
+            username=obj.get("username", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4999,6 +5002,7 @@ class v1PatchUser:
             "active": self.active if self.active is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
+            "username": self.username if self.username is not None else None,
         }
 
 class v1PatchUserResponse:
