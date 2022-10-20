@@ -75,7 +75,8 @@ const SettingsAccount: React.FC = () => {
         <label>Username</label>
         <InlineEditor
           maxLength={32}
-          pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
+          pattern={new RegExp('^[a-z][a-z0-9]*$', 'i')}
+          placeholder="Add username"
           value={auth.user?.username || ''}
           onSave={handleSaveUsername}
         />

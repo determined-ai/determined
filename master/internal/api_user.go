@@ -95,6 +95,10 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 	return toProtoUserFromFullUser(*user), nil
 }
 
+func isSSOUser(_ model.User) bool {
+	return false
+}
+
 // TODO remove this eventually since authz replaces this
 // We can't yet since we use it else where.
 func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
@@ -323,18 +327,18 @@ func (a *apiServer) PatchUser(
 		}
 
 		u := &userv1.User{}
-		if req.User.DisplayName.Value == "" {
+		// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
+		displayName := strings.TrimSpace(latinText.ReplaceAllLiteralString(req.User.DisplayName.Value,
+			""))
+		if displayName == "" {
 			// Disallow empty diaplay name for sorting purpose.
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, nil)
 		} else {
-			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
-			displayName := latinText.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
 			// Restrict 'admin' and 'determined' in display names.
-			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == adminName) {
+			if !targetUser.Admin && (strings.ToLower(displayName) == adminName) {
 				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 			}
-			if targetUser.Username != displayName &&
-				(strings.TrimSpace(strings.ToLower(displayName)) == determinedName) {
+			if targetUser.Username != determinedName && (strings.ToLower(displayName) == determinedName) {
 				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 			}
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
@@ -358,16 +362,21 @@ func (a *apiServer) PatchUser(
 
 		// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
 		username := strings.TrimSpace(latinText.ReplaceAllLiteralString(req.User.Username.Value, ""))
+		// Reject SSO and SCIM
+		if isSSOUser(targetUser) {
+			return nil, status.Error(codes.InvalidArgument,
+				"Cannot change username of SSO/SCIM user through this API.")
+		}
 		// Too short username
 		if len(username) <= 1 {
 			return nil, status.Error(codes.InvalidArgument,
 				"Username must have two or more ASCII characters.")
 		}
 		// Restrict 'admin' and 'determined' in usernames.
-		if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(username)) == adminName) {
+		if !targetUser.Admin && (strings.ToLower(username) == adminName) {
 			return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 		}
-		if strings.TrimSpace(strings.ToLower(username)) == determinedName {
+		if strings.ToLower(username) == determinedName {
 			return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 		}
 		err = a.m.db.UpdateUsername(&targetUser.ID, username)
