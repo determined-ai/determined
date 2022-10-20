@@ -1,6 +1,7 @@
 package apiutils
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -72,6 +73,11 @@ func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error
 	// Map
 	if mappedErr := mapping[err]; mappedErr != nil {
 		return mappedErr
+	}
+	for inputErr, outputErr := range mapping {
+		if errors.Is(err, inputErr) {
+			return status.Error(status.Code(outputErr), err.Error())
+		}
 	}
 
 	logrus.WithError(err).Debug("suppressing error at API boundary")
