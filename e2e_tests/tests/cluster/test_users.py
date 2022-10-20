@@ -53,13 +53,14 @@ def login_admin(
     assert child.exitstatus == 0
     # home directory is elsewhere for auth.json
     # read from auth.json and see what you get. 
-    #f = open("~/Library/Application Support/determined/auth.json", 'r')
-    #content = f. read()
+    f = open("/Users/nikitarajaneesh/Library/Application Support/determined/auth.json", 'r')
+    content = f. read()
     print(".json")
-    #print(content)
-    command = ["det", "user", "whoami"]
+    print(content)
+    command = ["det", "-m",
+        conf.make_master_url(), "user", "whoami"]
     output = subprocess.check_output(command).decode()
-    print(output)
+    print(f"output of whoami: {output}")
 
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
@@ -83,6 +84,9 @@ def det_run(args: List[str]) -> str:
 
 def log_in_user(credentials: authentication.Credentials) -> int:
     username, password = credentials
+    print("login")
+    print(username)
+    print(password)
     child = det_spawn(["user", "login", username])
     child.setecho(True)
     expected = f"Password for user '{username}':"
@@ -103,8 +107,7 @@ def create_test_user(add_password: bool = False) -> None:
         "create",
         n_username
     ]
-    output = subprocess.check_output(command).decode()
-    print(output)
+    output = subprocess.check_call(command)
     assert output == 0
     # Now we activate the user.
     child = det_spawn([ "user", "activate", n_username])
@@ -118,22 +121,15 @@ def create_test_user(add_password: bool = False) -> None:
     if add_password:
         password = get_random_string()
         assert change_user_password(n_username, password) == 0
+    
+    return (n_username, password)
 
-
-def change_user_password(
-    target_username: str, target_password: str, admin_credentials: authentication.Credentials
+def change_user_password(target_username: str, target_password: str, 
 ) -> int:
-    a_username, a_password = admin_credentials
-
-    child = det_spawn(["-u", a_username, "user", "change-password", target_username])
-    expected_pword_prompt = f"Password for user '{a_username}':"
+    child = det_spawn(["user", "change-password", target_username])
     expected_new_pword_prompt = f"New password for user '{target_username}':"
     confirm_pword_prompt = "Confirm password:"
-
-    i = child.expect([expected_pword_prompt, expected_new_pword_prompt], timeout=EXPECT_TIMEOUT)
-    if i == 0:
-        child.sendline(a_password)
-        child.expect(expected_new_pword_prompt, timeout=EXPECT_TIMEOUT)
+    child.expect(expected_new_pword_prompt, timeout=EXPECT_TIMEOUT)
 
     child.sendline(target_password)
     child.expect(confirm_pword_prompt, timeout=EXPECT_TIMEOUT)

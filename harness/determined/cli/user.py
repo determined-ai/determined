@@ -3,14 +3,13 @@ import getpass
 import json
 from argparse import Namespace
 from collections import namedtuple
-from turtle import update
 from typing import Any, Dict, List, Optional
 
 from requests import Response
 from termcolor import colored
 
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import user
 from determined.experimental import client
@@ -71,8 +70,11 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     message = "Password for user '{}': ".format(username)
 
+    print("log in user cli")
+    print(username)
     # In order to not send clear-text passwords, we hash the password.
     password = api.salt_and_hash(getpass.getpass(message))
+    print(password)
 
     token_store = authentication.TokenStore(parsed_args.master)
 
@@ -130,7 +132,7 @@ def change_password(parsed_args: Namespace) -> None:
     password = api.salt_and_hash(password)
 
     user_obj = client.get_user_by_name(username)
-    user_obj.change_passsword(new_password=password)
+    user_obj.change_password(new_password=password)
 
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.
@@ -153,13 +155,12 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
     user_obj.link_with_agent(agent_gid=parsed_args.agent_uid, agent_group= parsed_args.agent_group, agent_uid=parsed_args.agent_uid, agent_user=parsed_args.agent_user)
 
+@authentication.required
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)
 
-
-@authentication.required
 def whoami(parsed_args: Namespace) -> None:
     user = client.whoami()
     print("You are logged in as user '{}'".format(user.username))

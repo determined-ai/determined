@@ -11,6 +11,7 @@ import filelock
 
 import determined as det
 from determined.common import api, constants, util
+from determined.common.api import bindings
 from determined.common.api import certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
@@ -145,16 +146,10 @@ def do_login(
     password: str,
     cert: Optional[certs.Cert] = None,
 ) -> str:
-    r = api.post(
-        master_address,
-        "login",
-        json={"username": username, "password": password},
-        authenticated=False,
-        cert=cert,
-    )
-
-    token = r.json()["token"]
-    assert isinstance(token, str), "got invalid token response from server"
+    unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
+    login = bindings.v1LoginRequest(username=username, password=password)
+    r = bindings.post_Login(session=unauth_session, body=login)
+    token = r.token
 
     return token
 
