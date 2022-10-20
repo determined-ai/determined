@@ -329,6 +329,7 @@ export interface PatchUserParams {
     active?: boolean;
     admin?: boolean;
     displayName?: string;
+    username?: string;
   };
 }
 
