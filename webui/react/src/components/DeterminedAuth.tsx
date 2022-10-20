@@ -32,9 +32,9 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const storeDispatch = useStoreDispatch();
   const fetchMyRoles = useFetchMyRoles(canceler);
+  const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState(false);
   const [canSubmit, setCanSubmit] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
-  const rbacEnabled = useFeature().isOn('rbac');
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
@@ -54,7 +54,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           value: { isAuthenticated: true, token, user },
         });
         if (rbacEnabled) {
-          fetchMyRoles();
+          await fetchMyRoles();
         }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
       } catch (e) {
@@ -74,7 +74,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setCanSubmit(true);
       }
     },
-    [canceler, storeDispatch],
+    [canceler, storeDispatch, fetchMyRoles, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

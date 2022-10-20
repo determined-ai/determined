@@ -55,11 +55,10 @@ describe('Settings Page', () => {
     expect(screen.getByText('Password')).toBeInTheDocument();
   });
 
-  it('should enable user management for admins only', () => {
-    // TODO: Change out to set user to be admin and check for user management tab.
+  it('should hide user management when no permission', () => {
     history.push('/?f_rbac=on');
     setup();
 
-    expect(screen.queryByRole('tab', { name: TabType.UserManagement })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: TabType.UserManagement })).not.toBeInTheDocument();
   });
 });

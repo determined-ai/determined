@@ -54,7 +54,7 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      {(rbacEnabled || canViewUsers) && (
+      {rbacEnabled && canViewUsers && (
         <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
           <UserManagement />
         </TabPane>
