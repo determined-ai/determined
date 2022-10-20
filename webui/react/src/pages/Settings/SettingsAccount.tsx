@@ -30,7 +30,7 @@ const SettingsAccount: React.FC = () => {
   }, [openChangePasswordModal]);
 
   const handleSaveDisplayName = useCallback(
-    async (newValue: string) => {
+    async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
           userId: auth.user?.id || 0,
@@ -41,13 +41,14 @@ const SettingsAccount: React.FC = () => {
       } catch (e) {
         message.error(API_DISPLAYNAME_ERROR_MESSAGE);
         handleError(e, { silent: true, type: ErrorType.Input });
+        return e as Error;
       }
     },
     [auth.user, storeDispatch],
   );
 
   const handleSaveUsername = useCallback(
-    async (newValue: string) => {
+    async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
           userId: auth.user?.id || 0,
@@ -58,6 +59,7 @@ const SettingsAccount: React.FC = () => {
       } catch (e) {
         message.error(API_USERNAME_ERROR_MESSAGE);
         handleError(e, { silent: true, type: ErrorType.Input });
+        return e as Error;
       }
     },
     [auth.user, storeDispatch],
@@ -72,6 +74,7 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Username</label>
         <InlineEditor
+          disabled={!auth.user?.isAdmin}
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           value={auth.user?.username || ''}
