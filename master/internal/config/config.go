@@ -112,6 +112,7 @@ func DefaultConfig() *Config {
 		Cache: CacheConfig{
 			CacheDir: "/var/cache/determined",
 		},
+		FeatureSwitch: []string{},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
@@ -144,6 +145,7 @@ type Config struct {
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
+	FeatureSwitch         []string                          `json:"feature_switch"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.

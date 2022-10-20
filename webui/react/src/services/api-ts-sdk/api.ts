@@ -3141,6 +3141,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     rbacEnabled?: boolean;
+    /**
+     * List of features that is on.
+     * @type {Array<string>}
+     * @memberof V1GetMasterResponse
+     */
+    featureSwitch?: Array<string>;
 }
 
 /**

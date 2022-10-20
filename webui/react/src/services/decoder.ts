@@ -76,6 +76,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.Determined
     clusterName: data.clusterName,
     externalLoginUri: data.externalLoginUri,
     externalLogoutUri: data.externalLogoutUri,
+    featureSwitch: data.featureSwitch || [],
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
     rbacEnabled: !!data.rbacEnabled,
