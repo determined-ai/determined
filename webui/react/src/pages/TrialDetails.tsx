@@ -114,7 +114,7 @@ const TrialDetailsComp: React.FC = () => {
       if (window.location.pathname.includes(basePath))
         navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [navigate, tab, tabKey, basePath]);
+  }, [basePath, navigate, tab, tabKey]);
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
