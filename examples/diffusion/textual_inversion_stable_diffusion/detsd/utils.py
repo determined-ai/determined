@@ -48,7 +48,9 @@ def add_new_tokens_to_tokenizer(
             f"Subset of {dummy_placeholder_token_list} tokens already exist in tokenizer."
         )
 
-    dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(dummy_placeholder_token_list)
+    dummy_placeholder_ids = tokenizer.convert_tokens_to_ids(
+        dummy_placeholder_token_list
+    )
     # Sanity check
     assert len(dummy_placeholder_ids) == len(
         non_special_initializer_ids
