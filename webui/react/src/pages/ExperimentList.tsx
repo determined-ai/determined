@@ -63,7 +63,6 @@ import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
