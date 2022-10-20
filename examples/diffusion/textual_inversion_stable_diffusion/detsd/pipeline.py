@@ -104,10 +104,6 @@ class DetSDTextualInversionPipeline:
         local_checkpoint_paths_list = hparams["local_checkpoint_paths"]
         call_kwargs = hparams["call_kwargs"]
 
-        assert not call_kwargs.get(
-            "max_nsfw_retries", 0
-        ), "max_nsfw_retries must be 0 when using generate_on_cluster()."
-
         logger = logging.getLogger(__name__)
 
         # Get the distributed context, as needed.
