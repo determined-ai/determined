@@ -243,7 +243,7 @@ class FSHandler(watchdog.events.FileSystemEventHandler):
             if path.endswith(".html"):
                 self.long_poller.update(path)
                 return
-        elif path.endswith(".rst"):
+        elif path.endswith(".rst") or path.startswith("assets/"):
             self.rebuilder.handle_input_update()
 
 
