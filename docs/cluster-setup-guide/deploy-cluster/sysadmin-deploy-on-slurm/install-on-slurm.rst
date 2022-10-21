@@ -112,8 +112,8 @@ fulfilled and configured, install and configure the Determined master:
    | ``path``                   | If any of the launcher dependencies are not on the default     |
    |                            | path, you can override the default by updating this value.     |
    +----------------------------+----------------------------------------------------------------+
-   | ``gres_supported``         | Indicates that Slurm/PBS is able to identify GPUs. The default |
-   |                            | is ``true``. See :ref:`slurm-config-requirements` or           |
+   | ``gres_supported``         | Indicates that Slurm/PBS identifies available GPUs. The        |
+   |                            | default is ``true``. See :ref:`slurm-config-requirements` or   |
    |                            | :ref:`pbs-config-requirements` for details.                    |
    +----------------------------+----------------------------------------------------------------+
 
@@ -150,10 +150,13 @@ fulfilled and configured, install and configure the Determined master:
    ``/var/log/messages`` or ``journalctl --since=10m -u determined-master``, make the needed changes
    to the ``/etc/determined/master.yaml`` file, and restart the determined-master.
 
-#. If using Singularity and the compute nodes of your cluster do not have internet connectivity to
-   download Docker images, see :ref:`slurm-image-config`.
+#. If the compute nodes of your cluster do not have internet connectivity to download Docker images,
+   see :ref:`slurm-image-config`.
 
-#. Verify the configuration by sanity-checking your Determined Slurm configuration:
+#. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
+   cluster, see :ref:`run-as-user`.
+
+#. Verify the configuration by sanity-checking your Determined configuration:
 
    .. code:: bash
 
