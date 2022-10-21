@@ -355,9 +355,10 @@ export interface DeleteGroupParams {
 export interface GetGroupParams {
   groupId: number;
 }
-export interface RemoveRoleFromGroupParams {
+export interface RemoveRolesFromGroupParams {
   groupId: number;
-  roleId: number;
+  roleIds: number[];
+  scopeWorkspaceId?: number;
 }
 
 export interface AssignRolesToUserParams {
@@ -366,8 +367,9 @@ export interface AssignRolesToUserParams {
   userId: number;
 }
 
-export interface RemoveRoleFromUserParams {
+export interface RemoveRolesFromUserParams {
   roleIds: number[];
+  scopeWorkspaceId?: number;
   userId: number;
 }
 

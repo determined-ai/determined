@@ -61,7 +61,7 @@
     "react-monaco-editor": "^0.44.0",
     "react-router-dom": "^6.4.2",
     "react-transition-group": "^4.4.2",
-    "react-window": "^1.8.6",
+    "react-window": "^1.8.7",
     "screenfull": "^5.1.0",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",

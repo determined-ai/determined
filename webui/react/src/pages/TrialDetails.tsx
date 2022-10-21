@@ -67,14 +67,11 @@ const TrialDetailsComp: React.FC = () => {
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
 
-    setIsFetching(true);
     try {
       const response = await getExperimentDetails(
         { id: trial.experimentId },
         { signal: canceler.signal },
       );
-
-      setIsFetching(false);
 
       setExperiment(response);
 
@@ -83,14 +80,14 @@ const TrialDetailsComp: React.FC = () => {
         navigate(paths.trialDetails(trial.id, trial.experimentId), { replace: true });
       }
     } catch (e) {
-      setIsFetching(false);
-
       handleError(e, {
         publicMessage: 'Failed to load experiment details.',
         publicSubject: 'Unable to fetch Trial Experiment Detail',
         silent: false,
         type: ErrorType.Api,
       });
+    } finally {
+      setIsFetching(false);
     }
   }, [canceler, navigate, experimentId, trial]);
 
@@ -116,7 +113,8 @@ const TrialDetailsComp: React.FC = () => {
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      navigate(`${basePath}/${tabKey}`, { replace: true });
+      if (window.location.pathname.includes(basePath))
+        navigate(`${basePath}/${tabKey}`, { replace: true });
     }
   }, [basePath, navigate, tab, tabKey]);
 
@@ -125,13 +123,14 @@ const TrialDetailsComp: React.FC = () => {
     navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
   }, [basePath, navigate]);
 
-  const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchTrialDetails);
 
   useEffect(() => {
     setTrialId(Number(trialID));
   }, [trialID]);
 
   useEffect(() => {
+    setIsFetching(true);
     fetchTrialDetails();
   }, [fetchTrialDetails, trialId]);
 

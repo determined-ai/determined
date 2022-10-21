@@ -5,14 +5,12 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/grpcutil"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
@@ -31,7 +29,7 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -67,7 +65,7 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 ) (resp *apiv1.GetGroupsResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
 	if req.Limit > apiutils.MaxLimit || req.Limit == 0 {
@@ -117,7 +115,7 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 ) (resp *apiv1.GetGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -160,7 +158,7 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 ) (resp *apiv1.UpdateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -206,7 +204,7 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 ) (resp *apiv1.DeleteGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
 	curUser, _, err := grpcutil.GetUser(ctx)

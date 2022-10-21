@@ -87,7 +87,8 @@ const ModelVersionDetails: React.FC = () => {
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      navigate(`${basePath}/${tabKey}`, { replace: true });
+      if (window.location.pathname.includes(basePath))
+        navigate(`${basePath}/${tabKey}`, { replace: true });
     }
   }, [basePath, navigate, tab, tabKey]);
 
