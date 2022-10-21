@@ -54,6 +54,11 @@ func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error
 	if err == nil {
 		return nil
 	}
+
+	if _, ok := err.(authz.PermissionDeniedError); ok {
+		return status.Error(codes.PermissionDenied, err.Error())
+	}
+
 	if passthrough == nil {
 		passthrough = ErrorPassthroughSet
 	}
@@ -64,10 +69,6 @@ func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error
 	// Filter
 	if allowed := passthrough[err]; allowed {
 		return err
-	}
-
-	if _, ok := err.(authz.PermissionDeniedError); ok {
-		return status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	// Map
