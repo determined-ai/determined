@@ -89,7 +89,7 @@ def test_slack_webhook() -> None:
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": f"✅ "+ exp_config["name"] + f" (#{experiment_id})",
+                            "text": f"✅ " + exp_config["name"] + f" (#{experiment_id})",
                         },
                         "fields": [
                             {"type": "mrkdwn", "text": "*Status*: Completed"},
