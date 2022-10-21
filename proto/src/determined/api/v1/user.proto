@@ -91,6 +91,8 @@ message PostUserRequest {
   determined.user.v1.User user = 1;
   // The password of the user.
   string password = 2;
+  // Indicate whether the provided password is pre-salted & hashed or not.
+  bool is_hashed = 3; 
 }
 // Response to PostUserRequest.
 message PostUserResponse {
@@ -117,6 +119,8 @@ message PatchUserRequest {
   int32 user_id = 3;
   // The updated user.
   determined.user.v1.PatchUser user = 2;
+  // Indicate whether the provided password is pre-salted & hashed or not.
+  bool is_hashed = 1;
 }
 // Response to PatchUserRequest.
 message PatchUserResponse {

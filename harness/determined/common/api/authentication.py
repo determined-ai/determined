@@ -145,9 +145,10 @@ def do_login(
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
+    isHashed: Optional[bool] = False
 ) -> str:
     unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
-    login = bindings.v1LoginRequest(username=username, password=password)
+    login = bindings.v1LoginRequest(username=username, password=password, isHashed=isHashed)
     r = bindings.post_Login(session=unauth_session, body=login)
     token = r.token
 

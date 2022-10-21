@@ -53,9 +53,8 @@ func (a *apiServer) Login(
 		hashedPassword = req.Password
 	} else {
 		hashedPassword = replicateClientSideSaltAndHash(req.Password)
-		fmt.Println("hasedPassword")
-		fmt.Println(hashedPassword)
 	}
+
 	if !userModel.ValidatePassword(hashedPassword) {
 		return nil, grpcutil.ErrInvalidCredentials
 	}

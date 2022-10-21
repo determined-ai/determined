@@ -84,16 +84,15 @@ def det_run(args: List[str]) -> str:
 
 def log_in_user(credentials: authentication.Credentials) -> int:
     username, password = credentials
-    print("login")
-    print(username)
-    print(password)
+   # print("call login cli")
     child = det_spawn(["user", "login", username])
     child.setecho(True)
     expected = f"Password for user '{username}':"
     child.expect(expected, timeout=EXPECT_TIMEOUT)
     child.sendline(password)
-    child.read()
     child.wait()
+    print("end of log in test")
+    child.close()
     return cast(int, child.exitstatus)
 
 
@@ -122,7 +121,7 @@ def create_test_user(add_password: bool = False) -> None:
         password = get_random_string()
         assert change_user_password(n_username, password) == 0
     
-    return (n_username, password)
+    return authentication.Credentials(n_username, password)
 
 def change_user_password(target_username: str, target_password: str, 
 ) -> int:
@@ -135,7 +134,7 @@ def change_user_password(target_username: str, target_password: str,
     child.expect(confirm_pword_prompt, timeout=EXPECT_TIMEOUT)
     child.sendline(target_password)
 
-    child.read()
+    print(child.read())
     child.wait()
     child.close()
     return cast(int, child.exitstatus)
@@ -153,23 +152,14 @@ def log_out_user(username: Optional[str] = None) -> int:
     return cast(int, child.exitstatus)
 
 
-def activate_deactivate_user(
-    active: bool, target_user: str, admin_credentials: Tuple[str, str]
+def activate_deactivate_user(active: bool, target_user: str
 ) -> int:
-    a_username, a_password = admin_credentials
-
-    child = det_spawn(
-        ["-u", a_username, "user", "activate" if active else "deactivate", target_user]
+    command = (
+        [ "det",
+        "-m",
+        conf.make_master_url(),"user", "activate" if active else "deactivate", target_user]
     )
-    expected_password_prompt = f"Password for user '{a_username}':"
-    i = child.expect([expected_password_prompt, pexpect.EOF], timeout=EXPECT_TIMEOUT)
-    if i == 0:
-        child.sendline(a_password)
-
-    child.read()
-    child.wait()
-    child.close()
-    return cast(int, child.exitstatus)
+    return subprocess.call(command)
 
 
 def extract_columns(output: str, column_indices: List[int]) -> List[Tuple[str, ...]]:
@@ -232,7 +222,6 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
     with pytest.raises(errors.APIException):
         bindings.post_PostUser(sess, body=bindings.v1PostUserRequest(user=user))
 
-
 @pytest.mark.e2e_cpu
 def test_logout(clean_auth: None, login_admin: None) -> None:
     # Tests fallback to default determined user
@@ -240,7 +229,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
 
     # Set Determined password to something in order to disable auto-login.
     password = get_random_string()
-    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password, ADMIN_CREDENTIALS) == 0
+    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
 
     # Log in as new user.
     with logged_in_user(creds):
@@ -277,7 +266,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     assert child.status == 0
 
     # Change Determined passwordback to "".
-    change_user_password(constants.DEFAULT_DETERMINED_USER, "", ADMIN_CREDENTIALS)
+    change_user_password(constants.DEFAULT_DETERMINED_USER, "")
     # Clean up.
 
 
@@ -292,14 +281,17 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     # Log out.
     assert log_out_user() == 0
 
-    # Deactivate user.
-    assert activate_deactivate_user(False, creds.username, ("admin", "")) == 0
+    # login admin again. 
+    log_in_user(ADMIN_CREDENTIALS)
 
+    # Deactivate user.
+    assert activate_deactivate_user(False, creds.username) == 0
+ 
     # Attempt to log in again.
     assert log_in_user(creds) != 0
 
     # Activate user.
-    assert activate_deactivate_user(True, creds.username, ("admin", "")) == 0
+    assert activate_deactivate_user(True, creds.username) == 0
 
     # Now log in again.
     assert log_in_user(creds) == 0
@@ -317,8 +309,11 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     # Log out.
     assert log_out_user() == 0
 
+    # login admin
+    log_in_user(ADMIN_CREDENTIALS)
+
     newPassword = get_random_string()
-    assert change_user_password(creds.username, newPassword, ADMIN_CREDENTIALS) == 0
+    assert change_user_password(creds.username, newPassword) == 0
 
     assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
 

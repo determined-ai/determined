@@ -313,7 +313,15 @@ func (a *apiServer) PostUser(
 	); err != nil {
 		return nil, err
 	}
-	if err = userToAdd.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+
+	var hashedPassword string
+	if req.IsHashed {
+		hashedPassword = req.Password
+	} else {
+		hashedPassword = replicateClientSideSaltAndHash(req.Password)
+	}
+
+	if err = userToAdd.UpdatePasswordHash(hashedPassword); err != nil {
 		return nil, err
 	}
 
