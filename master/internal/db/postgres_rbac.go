@@ -2,6 +2,10 @@ package db
 
 import (
 	"context"
+	"database/sql"
+
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -37,9 +41,9 @@ func DoesPermissionMatch(ctx context.Context, curUserID model.UserID, workspaceI
 	return authz.PermissionDeniedError{RequiredPermissions: []rbacv1.PermissionType{permissionID}}
 }
 
-// DoesPermissionExist checks for the existence of a permission in any workspace.
-func DoesPermissionExist(ctx context.Context, curUserID model.UserID,
-	permissionID rbacv1.PermissionType,
+// DoPermissionsExist checks for the existence of a permission in any workspace.
+func DoPermissionsExist(ctx context.Context, curUserID model.UserID,
+	permissionIDs ...rbacv1.PermissionType,
 ) error {
 	exists, err := Bun().NewSelect().
 		Table("permission_assignments").
@@ -47,12 +51,73 @@ func DoesPermissionExist(ctx context.Context, curUserID model.UserID,
 		Join("JOIN user_group_membership ugm ON ra.group_id = ugm.group_id").
 		Join("JOIN role_assignment_scopes ras ON ra.scope_id = ras.id").
 		Where("ugm.user_id = ?", curUserID).
-		Where("permission_assignments.permission_id = ?", permissionID).Exists(ctx)
+		Where("permission_assignments.permission_id = ?", bun.In(permissionIDs)).Exists(ctx)
 	if err != nil {
 		return err
 	}
 	if exists {
 		return nil
 	}
-	return authz.PermissionDeniedError{RequiredPermissions: []rbacv1.PermissionType{permissionID}}
+	if len(permissionIDs) > 1 {
+		return authz.PermissionDeniedError{RequiredPermissions: permissionIDs, OneOf: true}
+	}
+	return authz.PermissionDeniedError{RequiredPermissions: permissionIDs}
+}
+
+// DoesPermissionMatchAll checks for the existence of a permission in all specified workspaces.
+func DoesPermissionMatchAll(ctx context.Context, curUserID model.UserID,
+	permissionID rbacv1.PermissionType, workspaces ...*wrappers.Int32Value,
+) error {
+	type workspaceScope struct {
+		ID          int           `bun:"id,pk,autoincrement" json:"id"`
+		WorkspaceID sql.NullInt32 `bun:"scope_workspace_id"  json:"workspace_id"`
+	}
+	var scopes []workspaceScope
+	var workspaceIds []int32
+	scopesMap := map[int32]bool{}
+
+	for _, v := range workspaces {
+		if v != nil {
+			workspaceIds = append(workspaceIds, v.Value)
+		}
+	}
+
+	err := Bun().NewSelect().
+		TableExpr("role_assignment_scopes as ras").
+		Column("scope_workspace_id").
+		Join("JOIN role_assignments ra ON ra.scope_id = ras.id").
+		Join("JOIN permission_assignments pa ON ra.role_id = pa.role_id").
+		Join("JOIN user_group_membership ugm ON ra.group_id = ugm.group_id").
+		Where("ugm.user_id = ?", curUserID).
+		Where("pa.permission_id = ?", permissionID).
+		Where("ras.scope_workspace_id IS NULL OR ras.scope_workspace_id IN (?)",
+			bun.In(workspaceIds)).
+		Scan(ctx, &scopes)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range scopes {
+		if !v.WorkspaceID.Valid {
+			return nil
+		}
+		scopesMap[v.WorkspaceID.Int32] = true
+	}
+
+	for _, v := range workspaces {
+		if v == nil {
+			return authz.PermissionDeniedError{
+				RequiredPermissions: []rbacv1.PermissionType{permissionID},
+			}
+		}
+	}
+
+	for _, v := range workspaces {
+		if ok := scopesMap[v.Value]; !ok {
+			return authz.PermissionDeniedError{
+				RequiredPermissions: []rbacv1.PermissionType{permissionID},
+			}
+		}
+	}
+	return nil
 }

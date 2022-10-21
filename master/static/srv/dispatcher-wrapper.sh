@@ -22,7 +22,7 @@
 
 # Fail on unexpected non-zero exit statuses, but enable ERR trap.
 set -eE
-trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container initialization.  See error messages above."' ERR 
+trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container initialization.  See error messages above."' ERR
 
 
 # Controls debug logging for this method

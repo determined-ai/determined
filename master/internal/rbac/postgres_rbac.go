@@ -112,7 +112,13 @@ func UserPermissionsForScope(ctx context.Context, uid model.UserID, workspaceID 
 func GetAllRoles(ctx context.Context, excludeGlobalOnly bool, offset, limit int,
 ) ([]Role, int32, error) {
 	var results []Role
-	query := db.Bun().NewSelect().Model(&results).Relation("Permissions")
+	query := GetAllRolesQuery(&results, excludeGlobalOnly)
+	return PaginateAndCountRoles(ctx, &results, query, offset, limit)
+}
+
+// GetAllRolesQuery builds the bun query for summarizing roles.
+func GetAllRolesQuery(results *[]Role, excludeGlobalOnly bool) *bun.SelectQuery {
+	query := db.Bun().NewSelect().Model(results).Relation("Permissions")
 
 	if excludeGlobalOnly {
 		query = query.Where(
@@ -120,6 +126,13 @@ func GetAllRoles(ctx context.Context, excludeGlobalOnly bool, offset, limit int,
 				"AS p ON pa.permission_id = p.id WHERE pa.role_id = roles.id AND p.global_only)")
 	}
 
+	return query
+}
+
+// PaginateAndCountRoles executes the bun query with pagination and with a count of results.
+func PaginateAndCountRoles(ctx context.Context, results *[]Role, query *bun.SelectQuery, offset,
+	limit int,
+) ([]Role, int32, error) {
 	paginatedQuery := db.PaginateBun(query, "role_name", db.SortDirectionAsc, offset, limit)
 	err := paginatedQuery.Scan(ctx)
 	if err != nil {
@@ -135,7 +148,7 @@ func GetAllRoles(ctx context.Context, excludeGlobalOnly bool, offset, limit int,
 			"error retrieving count of roles")
 	}
 
-	return results, int32(count), nil
+	return *results, int32(count), nil
 }
 
 // GetRolesByIDs returns a set of roles and their assignments from the DB.
@@ -505,4 +518,20 @@ func getOrCreateRoleAssignmentScopeTx(ctx context.Context, idb bun.IDB,
 	}
 
 	return r, nil
+}
+
+// GetAssignedRoles returns the roles that a user is currently assigned.
+func GetAssignedRoles(ctx context.Context, curUser model.UserID) ([]int32, error) {
+	var roles []int32
+
+	err := db.Bun().NewSelect().
+		TableExpr("role_assignments AS ra").
+		Column("role_id").
+		Join("JOIN user_group_membership ugm ON ra.group_id = ugm.group_id").
+		Where("ugm.user_id = ?", curUser).
+		Scan(ctx, &roles)
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
 }

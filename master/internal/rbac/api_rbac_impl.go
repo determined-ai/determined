@@ -84,6 +84,16 @@ func (a *RBACAPIServerImpl) GetGroupsAndUsersAssignedToWorkspace(
 		err = mapAndFilterErrors(err)
 	}()
 
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanSearchScope(ctx, *u, &req.WorkspaceId)
+	if err != nil {
+		return resp, nil
+	}
+
 	users, membership, err := GetUsersAndGroupMembershipOnWorkspace(ctx, int(req.WorkspaceId))
 	if err != nil {
 		return nil, err
@@ -151,6 +161,16 @@ func (a *RBACAPIServerImpl) GetRolesByID(ctx context.Context, req *apiv1.GetRole
 		err = mapAndFilterErrors(err)
 	}()
 
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanGetRoles(ctx, *u, req.RoleIds)
+	if err != nil {
+		return nil, err
+	}
+
 	roles, err := GetRolesByIDs(ctx, req.RoleIds...)
 	if err != nil {
 		return nil, err
@@ -179,6 +199,16 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToUser(ctx context.Context,
 
 	if req.UserId == 0 {
 		return nil, errBadRequest
+	}
+
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanGetUserRoles(ctx, *u, req.UserId)
+	if err != nil {
+		return nil, err
 	}
 
 	groups, _, _, err := usergroup.SearchGroups(ctx, "", model.UserID(req.UserId), 0, 0)
@@ -211,6 +241,22 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToGroup(ctx context.Context,
 		err = mapAndFilterErrors(err)
 	}()
 
+	if req.GroupId == 0 {
+		return nil, errBadRequest
+	}
+
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := usergroup.AuthZProvider.Get().CanGetGroup(ctx, *u, int(req.GroupId))
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		return resp, errors.Wrapf(db.ErrNotFound, "Error getting group %d", req.GroupId)
+	}
+
 	roles, err := GetRolesAssignedToGroupsTx(ctx, nil, req.GroupId)
 	if err != nil {
 		return nil, err
@@ -230,6 +276,20 @@ func (a *RBACAPIServerImpl) SearchRolesAssignableToScope(ctx context.Context,
 	defer func() {
 		err = mapAndFilterErrors(err)
 	}()
+
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.WorkspaceId == nil {
+		err = AuthZProvider.Get().CanSearchScope(ctx, *u, nil)
+	} else {
+		err = AuthZProvider.Get().CanSearchScope(ctx, *u, &req.WorkspaceId.Value)
+	}
+	if err != nil {
+		return nil, err
+	}
 
 	if req.Limit == 0 {
 		req.Limit = maxLimit
@@ -264,7 +324,21 @@ func (a *RBACAPIServerImpl) ListRoles(ctx context.Context, req *apiv1.ListRolesR
 		req.Limit = maxLimit
 	}
 
-	roles, tableTotal, err := GetAllRoles(ctx, false, int(req.Offset), int(req.Limit))
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var roles []Role
+	query := GetAllRolesQuery(&roles, false)
+
+	query, err = AuthZProvider.Get().FilterRolesQuery(ctx, *u, query)
+	if err != nil {
+		return nil, err
+	}
+
+	roles, tableTotal, err := PaginateAndCountRoles(ctx, &roles, query, int(req.Offset),
+		int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -288,6 +362,17 @@ func (a *RBACAPIServerImpl) AssignRoles(ctx context.Context, req *apiv1.AssignRo
 		err = mapAndFilterErrors(err)
 	}()
 
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanAssignRoles(ctx, *u, req.GroupRoleAssignments,
+		req.UserRoleAssignments)
+	if err != nil {
+		return nil, err
+	}
+
 	err = ensureGroupsAreNotPersonal(ctx, req.GroupRoleAssignments)
 	if err != nil {
 		return nil, err
@@ -308,6 +393,17 @@ func (a *RBACAPIServerImpl) RemoveAssignments(ctx context.Context,
 	defer func() {
 		err = mapAndFilterErrors(err)
 	}()
+
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanRemoveRoles(ctx, *u, req.GroupRoleAssignments,
+		req.UserRoleAssignments)
+	if err != nil {
+		return nil, err
+	}
 
 	err = ensureGroupsAreNotPersonal(ctx, req.GroupRoleAssignments)
 	if err != nil {
