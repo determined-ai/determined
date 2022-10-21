@@ -303,7 +303,6 @@ const LogViewer: React.FC<Props> = ({
       local.current.isScrollReady = false;
       local.current.isAtOffsetEnd = false;
 
-      setLogs([]);
       setFetchDirection(FetchDirection.Newer);
     }
   }, [fetchDirection]);
