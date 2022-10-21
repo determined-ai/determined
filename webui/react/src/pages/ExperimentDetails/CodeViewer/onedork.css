@@ -1,119 +1,4 @@
-/* onedork base colors */
-/* onedork notebook colors */
-/* jtplot figure style */
-/* selection, hover, prompts, brackets colors */
-/* code, text, markdown, & tooltip colors */
-/* cell border colors */
-/* menus, dividers, prompt-borders, brackets */
-/* panels and form-control styles */
-/* buttons, widgets, kernels colors */
-/* tables and dataframes colors */
-/* btn, scrollbar and shadow colors */
-/* onedork ansi colors */
-/* onedork codemirror colors */
-.ipynb-renderer-root {
-  /*****************************************************************
- Notebook stylization  (toolbars, lists, menus, scroll & buttons)
-*****************************************************************/
-  /*********************************************************/
-  /*** INTRO-PAGE TOOLBAR, LIST CONTAINERS, AND NAV TABS ***/
-  /*********************************************************/
-  /********************************************************/
-  /***************** NOTEBOOK PAGE SETTINGS ***************/
-  /********************************************************/
-  /********************************************************/
-  /************** NOTEBOOK PAGE HEADER AND NA *************/
-  /********************************************************/
-  /****************************************/
-  /********* ICONS and INDICATORS *********/
-  /****************************************/
-  /* COMMENT OUT TO RESTORE START-UP NOTIFICATIONS */
-  /******************************************/
-  /******** KERNEL RUNNING ANIMATION ********/
-  /******************************************/
-  /****************************************/
-  /************ DROPDOWN MENUS ************/
-  /****************************************/
-  /****************************************/
-  /**************** BUTTONS ***************/
-  /****************************************/
-  /**************************************************/
-  /********** MODAL, PANELS, & FORM CONTROL *********/
-  /**************************************************/
-  /* Chrome/Opera/Safari */
-  /* Firefox 19+ */
-  /* IE 10+ */
-  /* Firefox 18- */
-  /****************************************/
-  /************** SCROLL BARS *************/
-  /****************************************/
-  /******* Smooth Fonts ********/
-  /* Clearfix */
-  /***********************************************************************
- Pandas DF, Tables, Widgets, Media, Links, Debugger, Nbext, & Animations
-************************************************************************/
-  /*********** WIDGETS ***********/
-  /************ LINKS  ************/
-  /***********  JUPYTER NBEXT CONFIGURATOR ***********/
-  /********** NBEXT MARKDOWN **********/
-  /********** SIDEBAR NBEXT **********/
-  /********** DEBUGGER PATCH **********/
-  /***********  MEDIA ***********/
-  /**********************************************/
-  /******** COMMAND PROMPT (CMD+SHIFT-P) ********/
-  /**********************************************/
-  /******************************************/
-  /*************** DASHBOARDS ***************/
-  /******************************************/
-  /******************************************/
-  /************** KEY BINDINGS **************/
-  /******************************************/
-  /******************************************/
-  /************** TEXT EDITOR ***************/
-  /******************************************/
-  /*********************************************/
-  /************** XTERM TERMINAL ***************/
-  /*********************************************/
-  /* CELL TOOLBAR */
-  /**************************************************/
-  /************** PAGER DOCUMENTATION ***************/
-  /**************************************************/
-  /**************************************************************
- Cell Input, Output, and Prompt style for Code, Txt, & MD Cells
-**************************************************************/
-  /********** CODE CELL INPUT AREA **********/
-  /*********** JUPYTER CELLS SOFT-SELECTED ************/
-  /*********** CODE CELL INPUT PROMPT ************/
-  /********** CODE CELL OUTPUT AREA **********/
-  /************ CODE CELL OUTPUT PROMPT ************/
-  /******** TXT & MD INPUT AREA ********/
-  /********** TEXT & MD PROMPT **********/
-  /******** MD PRE, CODE, KEYBIND, SAMP **********/
-  /******** TXT & MARKDOWN HEADERS **********/
-  /**** HOVER HIGHLIGHT CELL INPUT PROMPT ******/
-  /**************************************************************
-  CodeMirror syntax highlighting for Code, Txt, & MD Cells
-**************************************************************/
-  /*********************************/
-  /********** ANSI COLORS **********/
-  /*********************************/
-  /************************************/
-  /******** TOOLTIP DIMENSIONS ********/
-  /************************************/
-  /*******************************************/
-  /****** CODE CELLS SYNTAX HIGHLIGHTING *****/
-  /*******************************************/
-  /***********************************************/
-  /**** TXT, HEADER, & MD SYNTAX HIGHLIGHTING ****/
-  /***********************************************/
-  /**********************************
- MathJax Settings and Style Script
-**********************************/
-  /* Prevents MathJax from jittering */
-  /* cell position when cell is selected */
-  /* Prevents MathJax from jittering */
-  /* cell position when cell is selected */
-}
+/* stylelint-disable */
 .ipynb-renderer-root div#notebook {
   font-family: sans-serif;
   font-size: 13pt;
@@ -2715,6 +2600,9 @@
   border-top-left-radius: 0px;
   margin-left: 11.5px;
 }
+.ipynb-renderer-root div.output_area {
+  display: -webkit-box;
+}
 .ipynb-renderer-root div.output_area pre {
   font-family: monospace, monospace;
   font-size: 8.5pt !important;
@@ -2722,9 +2610,6 @@
   color: #b1bed6;
   border-top-right-radius: 0px;
   border-top-left-radius: 0px;
-}
-.ipynb-renderer-root div.output_area {
-  display: -webkit-box;
 }
 .ipynb-renderer-root div.output_html {
   font-family: monospace, monospace;
@@ -3415,5 +3300,5 @@
   display: flex;
 }
 .ipynb-renderer-root div.output_latex {
-  color: #888888;
+  color: #888;
 }
