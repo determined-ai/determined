@@ -55,7 +55,7 @@ func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, er
 // ProjectExperiments returns a list of experiments within a project.
 func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err error) {
 	rows, err := db.sql.Queryx(`
-SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+SELECT e.id, state, config, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
 		 job_id, u.username as username, project_id
 FROM experiments e
@@ -897,7 +897,7 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT e.id, state, model_definition, start_time, end_time, archived,
+SELECT e.id, state, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
 			 job_id, u.username as username, project_id
 FROM experiments e
@@ -916,7 +916,7 @@ func (db *PgDB) ExperimentWithoutConfigByTrialID(id int) (*model.Experiment, err
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT e.id, e.state, e.model_definition, e.start_time, e.end_time, e.archived,
+SELECT e.id, e.state, e.start_time, e.end_time, e.archived,
        e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
 			 e.job_id, u.username as username, e.project_id
 FROM experiments e
@@ -937,7 +937,7 @@ func ExperimentWithoutConfigByTaskID(
 ) (*model.Experiment, error) {
 	var experiment model.Experiment
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time, 
+SELECT e.id, e.state, e.start_time, e.end_time,
        e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, 
        e.notes, e.job_id, u.username as username, e.project_id
 FROM experiments e
