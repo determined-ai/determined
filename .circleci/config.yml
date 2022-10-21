@@ -115,6 +115,12 @@ commands:
 
   skip-if-webui-only:
     steps:
+      - run:
+          name: ensure upstream remote is added
+          command: |
+            if ! git remote | grep -q upstream; then
+              git remote add upstream https://github.com/determined-ai/determined
+            fi
       - run: git fetch upstream
       - run:
           name: check for webui-only changes  # must be run after skip-if-docs-only
