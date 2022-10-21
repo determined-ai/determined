@@ -343,9 +343,9 @@ func (a *apiServer) PatchUser(
 
 		u := &userv1.User{}
 
-		displayName, err := clearUsername(targetUser, *req.User.DisplayName, 0)
-		if err != nil {
-			return nil, err
+		displayName, err2 := clearUsername(targetUser, *req.User.DisplayName, 0)
+		if err2 != nil {
+			return nil, err2
 		}
 
 		if displayName == nil || *displayName == "" {
@@ -377,9 +377,9 @@ func (a *apiServer) PatchUser(
 				"Cannot change username of SSO/SCIM user through this API.")
 		}
 
-		username, err := clearUsername(targetUser, *req.User.Username, 2)
-		if err != nil {
-			return nil, err
+		username, err3 := clearUsername(targetUser, *req.User.Username, 2)
+		if err3 != nil {
+			return nil, err3
 		}
 
 		err = a.m.db.UpdateUsername(&targetUser.ID, *username)
