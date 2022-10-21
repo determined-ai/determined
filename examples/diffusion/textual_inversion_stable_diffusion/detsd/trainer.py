@@ -663,28 +663,3 @@ class DetSDTextualInversionTrainer:
         except AttributeError:
             token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
         return token_embedding_layer
-
-    def _get_all_concept_embeddings(
-        self, dummy_or_initializer: Literal["dummy", "initializer"]
-    ) -> torch.Tensor:
-        """Returns the embedding vectors for all added concepts, either using their initializer
-        representation or their trained dummy representation.
-        """
-        concept_replace_fn_dict = {
-            "dummy": self._replace_concepts_with_dummies,
-            "initializer": self._replace_concepts_with_initializers,
-        }
-        assert (
-            dummy_or_initializer in concept_replace_fn_dict
-        ), 'dummy_or_initializer must be "dummy" or "initializer"'
-        concept_replace_fn = concept_replace_fn_dict[dummy_or_initializer]
-
-        token_embedding_layer = self._get_token_embedding_layer()
-        all_concept_tokens = " ".join(list(self.concept_tokens))
-        all_replaced_concept_tokens = concept_replace_fn(all_concept_tokens)
-        all_replaced_concept_tokens_t = torch.tensor(
-            self.tokenizer.encode(all_replaced_concept_tokens, add_special_tokens=False),
-            device=self.accelerator.device,
-        )
-        all_concept_embeddings = token_embedding_layer(all_replaced_concept_tokens_t)
-        return all_concept_embeddings
