@@ -500,6 +500,41 @@ func TestRbac(t *testing.T) {
 	t.Run("testOnWorkspace", func(t *testing.T) {
 		testOnWorkspace(ctx, t, pgDB)
 	})
+
+	t.Run("test GetAssignedRoles", func(t *testing.T) {
+		roles, err := GetAssignedRoles(ctx, testUser.ID)
+		require.NoError(t, err, "error getting roles for user")
+		require.Equal(t, 1, len(roles), "returned number of roles is incorrect")
+		require.Equal(t, testRole.ID, int(roles[0]), "role IDs do not match")
+
+		groupRoleAssignments := []*rbacv1.GroupRoleAssignment{
+			{
+				GroupId: int32(testGroupStatic.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role:             rbacRole2,
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+				},
+			},
+			{
+				GroupId: int32(testGroupStatic.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
+					Role:             rbacRole3,
+					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+				},
+			},
+		}
+
+		err = AddRoleAssignments(
+			ctx, groupRoleAssignments, []*rbacv1.UserRoleAssignment{})
+		require.NoError(t, err, "error adding role assignments")
+
+		roles, err = GetAssignedRoles(ctx, testUser.ID)
+		require.NoError(t, err, "error getting roles for user")
+		require.Equal(t, 3, len(roles), "returned number of roles is incorrect")
+		require.Equal(t, testRole.ID, int(roles[0]), "incorrect roleID returned")
+		require.Equal(t, testRole2.ID, int(roles[1]), "incorrect roleID returned")
+		require.Equal(t, testRole3.ID, int(roles[2]), "incorrect roleID returned")
+	})
 }
 
 func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {

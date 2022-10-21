@@ -31,7 +31,7 @@ func (a *UserGroupAuthZRBAC) CanGetGroup(ctx context.Context, curUser model.User
 func (a *UserGroupAuthZRBAC) FilterGroupsList(ctx context.Context, curUser model.User,
 	query *bun.SelectQuery,
 ) (*bun.SelectQuery, error) {
-	err := db.DoesPermissionExist(ctx, curUser.ID,
+	err := db.DoPermissionsExist(ctx, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return query, nil
@@ -57,7 +57,7 @@ func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.
 // CanViewGroup checks if a user has the ability to view the group by checking whether
 // user has the assign roles permission or belongs to the group.
 func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) error {
-	err := db.DoesPermissionExist(ctx, userBelongsTo,
+	err := db.DoPermissionsExist(ctx, userBelongsTo,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return nil

@@ -92,7 +92,7 @@ func (s *Service) callback(c echo.Context) error {
 	}
 
 	var oauth2token *oauth2.Token
-	relayParam := c.QueryParam("relayState");
+	relayParam := c.QueryParam("relayState")
 	// Tolerate older CLI versions (<=0.19.5)
 	if relayParam == cliRelayState || relayParam == deprecatedCliRelayState {
 		configCopy := s.oauth2Config
