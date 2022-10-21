@@ -78,4 +78,11 @@ message TestWebhookRequest {
 }
 
 // Response to TestWebhookRequest.
-message TestWebhookResponse {}
+message TestWebhookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "completed" ] }
+  };
+
+  // Status of test.
+  bool completed = 1;
+}
