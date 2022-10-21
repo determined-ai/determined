@@ -164,3 +164,5 @@ The following configuration settings are supported:
 
 -  ``slurm``: Slurm cluster details may optionally be specified as for :ref:`experiments
    <slurm-config>`.
+
+-  ``pbs``: PBS cluster details may optionally be specified as for :ref:`experiments <pbs-config>`.
