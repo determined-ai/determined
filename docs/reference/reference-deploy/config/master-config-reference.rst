@@ -717,9 +717,8 @@ The master supports the following configuration settings:
 
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 
-   - ``signing_key``: The key used to sign outgoing webhooks.
-
-   - ``base_url``: The URL users use to access Determined, for generating hyperlinks.
+   -  ``signing_key``: The key used to sign outgoing webhooks.
+   -  ``base_url``: The URL users use to access Determined, for generating hyperlinks.
 
 -  ``telemetry``: Specifies configuration settings related to telemetry collection and tracing.
 
