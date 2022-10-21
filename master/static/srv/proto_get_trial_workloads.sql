@@ -1,4 +1,20 @@
-WITH validations_vt AS (
+WITH page_info AS (
+  SELECT public.page_info((
+    SELECT COUNT(*) AS count FROM (
+      SELECT 1 FROM validations v WHERE
+        v.trial_id = $1
+      UNION ALL
+      SELECT 1 FROM steps s WHERE
+        s.trial_id = $1 AND
+        $4 = 'FILTER_OPTION_UNSPECIFIED'
+      UNION ALL
+      SELECT 1 FROM checkpoints_view c
+      WHERE c.trial_id = $1
+      AND $4 != 'FILTER_OPTION_VALIDATION'
+    ) AS count
+  ), $2, $3) AS page_info
+),
+validations_vt AS (
   SELECT row_to_json(r1) AS validation, total_batches, end_time, metrics
   FROM (
       SELECT 'STATE_' || v.state as state,
@@ -8,6 +24,8 @@ WITH validations_vt AS (
         jsonb_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics
       FROM validations v
       WHERE v.trial_id = $1
+      ORDER BY %s %s NULLS LAST, total_batches %s, end_time %s
+      LIMIT (SELECT p.page_info->>'end_index' FROM page_info p)::bigint      
     ) AS r1
 ),
 trainings_vt AS (
@@ -26,6 +44,8 @@ trainings_vt AS (
       FROM steps s
       WHERE s.trial_id = $1
       AND $4 = 'FILTER_OPTION_UNSPECIFIED'
+      ORDER BY %s %s NULLS LAST, total_batches %s, end_time %s
+      LIMIT (SELECT p.page_info->>'end_index' FROM page_info p)::bigint
     ) AS r1
 ),
 checkpoints_vt AS (
@@ -70,15 +90,12 @@ workloads AS (
   FROM trainings_vt t
     FULL JOIN checkpoints_vt c ON false
     FULL JOIN validations_vt v ON false
-),
-page_info AS (
-  SELECT public.page_info((SELECT COUNT(*) AS count FROM workloads), $2 :: int, $3 :: int) AS page_info
 )
 SELECT (
   SELECT jsonb_agg(w) FROM (SELECT validation, training, checkpoint FROM workloads
-    ORDER BY (%s)::float %s NULLS LAST, total_batches %s, end_time %s
+    ORDER BY %s %s NULLS LAST, total_batches %s, end_time %s
     OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
     LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
   ) w
 ) AS workloads,
-  (SELECT p.page_info FROM page_info p) as pagination
+  (SELECT p.page_info FROM page_info p) as pagination;

@@ -1,0 +1,1 @@
+DROP INDEX trial_id_total_batches_end_time_raw_steps;
