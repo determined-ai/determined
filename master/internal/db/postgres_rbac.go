@@ -51,7 +51,7 @@ func DoPermissionsExist(ctx context.Context, curUserID model.UserID,
 		Join("JOIN user_group_membership ugm ON ra.group_id = ugm.group_id").
 		Join("JOIN role_assignment_scopes ras ON ra.scope_id = ras.id").
 		Where("ugm.user_id = ?", curUserID).
-		Where("permission_assignments.permission_id = ?", bun.In(permissionIDs)).Exists(ctx)
+		Where("permission_assignments.permission_id IN (?)", bun.In(permissionIDs)).Exists(ctx)
 	if err != nil {
 		return err
 	}
