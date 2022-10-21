@@ -4,7 +4,7 @@ import { useStore } from 'contexts/Store';
 import { DeterminedInfo } from 'types';
 
 // Add new feature switches below using `|`
-type ValidFeature =
+export type ValidFeature =
   | 'rbac'
   | 'mock_workspace_members'
   | 'mock_permissions_read'
@@ -23,12 +23,12 @@ const useFeature = (): FeatureHook => {
 };
 
 const IsOn = (feature: string, info: DeterminedInfo): boolean => {
-  const { rbacEnabled, featureSwitch } = info;
+  const { rbacEnabled, featureSwitches } = info;
   switch (feature) {
     case 'rbac':
       return rbacEnabled || queryParams[`f_${feature}`] === 'on';
     default:
-      return queryParams[`f_${feature}`] === 'on' || featureSwitch.includes(feature);
+      return queryParams[`f_${feature}`] === 'on' || featureSwitches.includes(feature);
   }
 };
 

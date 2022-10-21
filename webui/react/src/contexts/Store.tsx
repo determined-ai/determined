@@ -158,7 +158,7 @@ export const initInfo: DeterminedInfo = {
   checked: false,
   clusterId: '',
   clusterName: '',
-  featureSwitch: [],
+  featureSwitches: [],
   isTelemetryEnabled: false,
   masterId: '',
   rbacEnabled: false,

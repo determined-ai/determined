@@ -34,7 +34,7 @@ func (a *apiServer) GetMaster(
 		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:          "determined",
 		RbacEnabled:       config.GetAuthZConfig().IsRBACUIEnabled(),
-		FeatureSwitch:     a.m.config.FeatureSwitch,
+		FeatureSwitches:   a.m.config.FeatureSwitches,
 	}
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 

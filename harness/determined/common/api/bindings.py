@@ -2540,7 +2540,7 @@ class v1GetMasterResponse:
         branding: "typing.Optional[str]" = None,
         externalLoginUri: "typing.Optional[str]" = None,
         externalLogoutUri: "typing.Optional[str]" = None,
-        featureSwitch: "typing.Optional[typing.Sequence[str]]" = None,
+        featureSwitches: "typing.Optional[typing.Sequence[str]]" = None,
         rbacEnabled: "typing.Optional[bool]" = None,
         ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None,
         telemetryEnabled: "typing.Optional[bool]" = None,
@@ -2555,7 +2555,7 @@ class v1GetMasterResponse:
         self.externalLogoutUri = externalLogoutUri
         self.branding = branding
         self.rbacEnabled = rbacEnabled
-        self.featureSwitch = featureSwitch
+        self.featureSwitches = featureSwitches
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -2570,7 +2570,7 @@ class v1GetMasterResponse:
             externalLogoutUri=obj.get("externalLogoutUri", None),
             branding=obj.get("branding", None),
             rbacEnabled=obj.get("rbacEnabled", None),
-            featureSwitch=obj.get("featureSwitch", None),
+            featureSwitches=obj.get("featureSwitches", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -2585,7 +2585,7 @@ class v1GetMasterResponse:
             "externalLogoutUri": self.externalLogoutUri if self.externalLogoutUri is not None else None,
             "branding": self.branding if self.branding is not None else None,
             "rbacEnabled": self.rbacEnabled if self.rbacEnabled is not None else None,
-            "featureSwitch": self.featureSwitch if self.featureSwitch is not None else None,
+            "featureSwitches": self.featureSwitches if self.featureSwitches is not None else None,
         }
 
 class v1GetModelDefFileRequest:

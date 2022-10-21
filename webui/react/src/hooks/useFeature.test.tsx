@@ -3,20 +3,21 @@ import React, { useEffect, useMemo } from 'react';
 
 import StoreProvider, { initInfo, StoreAction, useStoreDispatch } from 'contexts/Store';
 
-import useFeature from './useFeature';
+import useFeature, { ValidFeature } from './useFeature';
 
 const FeatureTest: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const feature = useFeature();
-  const testInfo = useMemo(() => ({ ...initInfo, featureSwitch: ['webhooks'] }), []);
+  const testInfo = useMemo(() => ({ ...initInfo, featureSwitches: ['webhooks'] }), []);
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetInfo, value: testInfo });
   }, [storeDispatch, testInfo]);
 
   return (
     <ul>
-      <li>{feature.isOn('trials_comparison') && 'trials_comparison'}</li>
-      <li>{feature.isOn('webhooks') && 'webhooks'}</li>
+      <li>{feature.isOn('trials_comparison' as ValidFeature) && 'trials_comparison'}</li>
+      <li>{feature.isOn('unexist_feature' as ValidFeature) && 'unexist_feature'}</li>
+      <li>{feature.isOn('webhooks' as ValidFeature) && 'webhooks'}</li>
     </ul>
   );
 };
@@ -30,11 +31,15 @@ const setup = () => {
 };
 
 describe('useFeature', () => {
-  it('trials_comparison feature is not on', async () => {
+  it('trials_comparison feature is not on', () => {
     setup();
     expect(screen.queryByText('trials_comparison')).not.toBeInTheDocument();
   });
-  it('webhooks feature is on', async () => {
+  it('unexist_feature feature is not on', () => {
+    setup();
+    expect(screen.queryByText('unexist_feature')).not.toBeInTheDocument();
+  });
+  it('webhooks feature is on', () => {
     setup();
     expect(screen.queryByText('webhooks')).toBeInTheDocument();
   });

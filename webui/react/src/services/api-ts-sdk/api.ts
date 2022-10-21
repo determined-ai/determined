@@ -3146,7 +3146,7 @@ export interface V1GetMasterResponse {
      * @type {Array<string>}
      * @memberof V1GetMasterResponse
      */
-    featureSwitch?: Array<string>;
+    featureSwitches?: Array<string>;
 }
 
 /**
