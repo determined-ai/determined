@@ -4,19 +4,32 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
+
+func newProtoStruct(t *testing.T, in map[string]any) *structpb.Struct {
+	s, err := structpb.NewStruct(in)
+	require.NoError(t, err)
+	return s
+}
 
 func errTrialNotFound(id int) error {
 	return status.Errorf(codes.NotFound, "trial %d not found", id)
@@ -42,6 +55,189 @@ func createTestTrial(
 	outTrial, err := api.m.db.TrialByID(trial.ID)
 	require.NoError(t, err)
 	return outTrial
+}
+
+func TestGetTrialWorkloads(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t)
+	trial := createTestTrial(t, api, curUser)
+	alloc := &model.Allocation{
+		AllocationID: model.AllocationID(trial.TaskID + ".1"),
+		TaskID:       trial.TaskID,
+	}
+	require.NoError(t, api.m.db.AddAllocation(alloc))
+
+	// Test data.
+	var expected []*apiv1.WorkloadContainer
+	for i := 0; i < 10; i++ {
+		m := &commonv1.Metrics{
+			AvgMetrics: newProtoStruct(t, map[string]any{"loss": float64(100 - len(expected))}),
+		}
+		_, err := api.ReportTrialTrainingMetrics(ctx, &apiv1.ReportTrialTrainingMetricsRequest{
+			TrainingMetrics: &trialv1.TrialMetrics{
+				TrialId:        int32(trial.ID),
+				TrialRunId:     0,
+				StepsCompleted: int32(i),
+				Metrics:        m,
+			},
+		})
+		require.NoError(t, err)
+		expected = append(expected, &apiv1.WorkloadContainer{
+			Workload: &apiv1.WorkloadContainer_Training{
+				&trialv1.MetricsWorkload{
+					Metrics:      m,
+					TotalBatches: int32(i),
+					State:        experimentv1.State_STATE_COMPLETED,
+				},
+			},
+		})
+
+		if i == 5 || i == 9 {
+			v := &commonv1.Metrics{
+				AvgMetrics: newProtoStruct(t, map[string]any{"loss": float64(100 - len(expected))}),
+			}
+			_, err := api.ReportTrialValidationMetrics(ctx,
+				&apiv1.ReportTrialValidationMetricsRequest{
+					ValidationMetrics: &trialv1.TrialMetrics{
+						TrialId:        int32(trial.ID),
+						TrialRunId:     0,
+						StepsCompleted: int32(i),
+						Metrics:        v,
+					},
+				})
+			require.NoError(t, err)
+			expected = append(expected, &apiv1.WorkloadContainer{
+				Workload: &apiv1.WorkloadContainer_Validation{
+					&trialv1.MetricsWorkload{
+						Metrics:      v,
+						TotalBatches: int32(i),
+						State:        experimentv1.State_STATE_COMPLETED,
+					},
+				},
+			})
+		}
+
+		if i == 9 {
+			checkpointID := uuid.New().String()
+			_, err := api.ReportCheckpoint(ctx, &apiv1.ReportCheckpointRequest{
+				Checkpoint: &checkpointv1.Checkpoint{
+					TaskId:       string(trial.TaskID),
+					AllocationId: string(alloc.AllocationID),
+					Uuid:         checkpointID,
+					Metadata:     newProtoStruct(t, map[string]any{"steps_completed": i}),
+				},
+			})
+			require.NoError(t, err)
+
+			expected = append(expected, &apiv1.WorkloadContainer{
+				Workload: &apiv1.WorkloadContainer_Checkpoint{
+					&trialv1.CheckpointWorkload{
+						Uuid:         checkpointID,
+						TotalBatches: int32(i),
+						State:        checkpointv1.State_STATE_COMPLETED,
+						Metadata:     newProtoStruct(t, map[string]any{"steps_completed": i}),
+					},
+				},
+			})
+		}
+	}
+
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+	}, expected)
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		OrderBy: apiv1.OrderBy_ORDER_BY_ASC,
+	}, expected)
+
+	var reversed []*apiv1.WorkloadContainer
+	for i := len(expected) - 1; i >= 0; i-- {
+		reversed = append(reversed, expected[i])
+	}
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
+	}, reversed)
+
+	// Checkpoint in sortByLast is last.
+	var sortByLoss []*apiv1.WorkloadContainer
+	for i := 1; i < len(reversed); i++ {
+		sortByLoss = append(sortByLoss, reversed[i])
+	}
+	sortByLoss = append(sortByLoss, reversed[0])
+
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		SortKey: "loss",
+	}, sortByLoss)
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
+		SortKey: "loss",
+	}, expected)
+
+	var justCheckpoints, justValidations, validationOrCheckpoints []*apiv1.WorkloadContainer
+	for _, e := range expected {
+		w := e
+		switch w.Workload.(type) {
+		// case *apiv1.WorkloadContainer_Training:
+		case *apiv1.WorkloadContainer_Validation:
+			justValidations = append(justValidations, w)
+			validationOrCheckpoints = append(validationOrCheckpoints, w)
+		case *apiv1.WorkloadContainer_Checkpoint:
+			justCheckpoints = append(justCheckpoints, w)
+			validationOrCheckpoints = append(validationOrCheckpoints, w)
+		}
+	}
+
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		Filter:  apiv1.GetTrialWorkloadsRequest_FILTER_OPTION_CHECKPOINT,
+	}, justCheckpoints)
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		Filter:  apiv1.GetTrialWorkloadsRequest_FILTER_OPTION_VALIDATION,
+	}, justValidations)
+	trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+		TrialId: int32(trial.ID),
+		Filter:  apiv1.GetTrialWorkloadsRequest_FILTER_OPTION_CHECKPOINT_OR_VALIDATION,
+	}, validationOrCheckpoints)
+
+	for offset := 0; offset < len(expected); offset++ {
+		for limit := 1; limit < len(expected); limit++ {
+			end := offset + limit
+			if end > len(expected) {
+				end = len(expected)
+			}
+			trialWorkloadsTestCase(ctx, t, api, &apiv1.GetTrialWorkloadsRequest{
+				TrialId: int32(trial.ID),
+				Offset:  int32(offset),
+				Limit:   int32(limit),
+			}, expected[offset:end])
+		}
+	}
+}
+
+func trialWorkloadsTestCase(ctx context.Context, t *testing.T,
+	api *apiServer, req *apiv1.GetTrialWorkloadsRequest, expected []*apiv1.WorkloadContainer,
+) {
+	resp, err := api.GetTrialWorkloads(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Workloads, len(expected))
+
+	for i := 0; i < len(expected); i++ {
+		// Clear timestamp since that is hard to test.
+		switch w := resp.Workloads[i].Workload.(type) {
+		case *apiv1.WorkloadContainer_Training:
+			w.Training.EndTime = nil
+		case *apiv1.WorkloadContainer_Validation:
+			w.Validation.EndTime = nil
+		case *apiv1.WorkloadContainer_Checkpoint:
+			w.Checkpoint.EndTime = nil
+		}
+
+		proto.Equal(expected[i], resp.Workloads[i])
+		require.Equal(t, expected[i], resp.Workloads[i])
+	}
 }
 
 func TestTrialAuthZ(t *testing.T) {

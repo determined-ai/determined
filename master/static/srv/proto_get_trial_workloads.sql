@@ -3,6 +3,7 @@ WITH page_info AS (
     SELECT COUNT(*) AS count FROM (
       SELECT 1 FROM validations v WHERE
         v.trial_id = $1
+      AND $4 != 'FILTER_OPTION_CHECKPOINT'
       UNION ALL
       SELECT 1 FROM steps s WHERE
         s.trial_id = $1 AND
@@ -24,6 +25,7 @@ validations_vt AS (
         jsonb_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics
       FROM validations v
       WHERE v.trial_id = $1
+      AND $4 != 'FILTER_OPTION_CHECKPOINT'
       ORDER BY %s %s NULLS LAST, total_batches %s, end_time %s
       LIMIT (SELECT p.page_info->>'end_index' FROM page_info p)::bigint      
     ) AS r1
