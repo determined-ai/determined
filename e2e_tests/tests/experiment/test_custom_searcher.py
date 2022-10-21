@@ -185,9 +185,6 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
 
     # activate multi-trial experiment
     exp.activate_experiment(multi_trial_exp_id)
-    exp.wait_for_experiment_state(
-        multi_trial_exp_id, bindings.determinedexperimentv1State.STATE_QUEUED
-    )
 
     # wait for searcher to complete
     exp.wait_for_experiment_state(
