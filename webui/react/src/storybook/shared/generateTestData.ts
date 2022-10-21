@@ -5,6 +5,8 @@ import {
   ExperimentBase,
   ExperimentSearcherName,
   HyperparameterType,
+  ModelItem,
+  ModelVersion,
   Project,
   RunState,
   TrialDetails,
@@ -293,6 +295,47 @@ export const generateTestWorkspaceData = (overrides: Partial<Workspace> = {}): W
     pinned: false,
     state: WorkspaceState.Unspecified,
     userId: 1,
+    ...overrides,
+  };
+};
+
+export const generateTestModel = (overrides: Partial<ModelItem> = {}): ModelItem => {
+  return {
+    archived: false,
+    creationTime: String(new Date(101)),
+    description: '',
+    id: 1,
+    labels: [],
+    lastUpdatedTime: String(new Date()),
+    metadata: {},
+    name: 'Model Name',
+    notes: 'hello world',
+    numVersions: 1,
+    userId: 1,
+    ...overrides,
+  };
+};
+
+export const generateTestModelVersion = (overrides: Partial<ModelVersion> = {}): ModelVersion => {
+  return {
+    checkpoint: {
+      metadata: {},
+      resources: {},
+      state: CheckpointState.Completed,
+      totalBatches: 20,
+      uuid: 'abcdefff',
+    },
+    comment: 'Comment',
+    creationTime: String(new Date(101)),
+    id: 1,
+    labels: [],
+    lastUpdatedTime: String(new Date()),
+    metadata: {},
+    model: generateTestModel(),
+    name: 'V1',
+    notes: 'hello version',
+    userId: 1,
+    version: 1,
     ...overrides,
   };
 };
