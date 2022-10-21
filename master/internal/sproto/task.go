@@ -257,7 +257,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	case ev.TerminateRequestEvent != nil:
 		message = fmt.Sprintf("%s was requested to terminate", description)
 	case ev.ExitedEvent != nil:
-		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
+		message = fmt.Sprintf("%s was terminated", description)
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
 	case ev.ServiceReadyEvent != nil:
