@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -313,6 +314,26 @@ type DeviceV0 struct {
 	RawHostPath      string  `json:"host_path"`
 	RawContainerPath string  `json:"container_path"`
 	RawMode          *string `json:"mode"`
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *DeviceV0) UnmarshalJSON(data []byte) error {
+	var plain string
+	if err := json.Unmarshal(data, &plain); err == nil {
+		fields := strings.Split(plain, ":")
+		if len(fields) < 2 || len(fields) > 3 {
+			return errors.Errorf("invalid device string: %q", plain)
+		}
+		d.RawHostPath = fields[0]
+		d.RawContainerPath = fields[1]
+		if len(fields) > 2 {
+			d.RawMode = &fields[2]
+		}
+		return nil
+	}
+
+	type DefaultParser *DeviceV0
+	return json.Unmarshal(data, DefaultParser(d))
 }
 
 //go:generate ../gen.sh

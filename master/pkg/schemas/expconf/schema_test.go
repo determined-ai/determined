@@ -144,6 +144,8 @@ func objectForURL(url string) interface{} {
 		return &EnvironmentConfigV0{}
 	case "http://determined.ai/schemas/expconf/v0/data-layer.json":
 		return &DataLayerConfigV0{}
+	case "http://determined.ai/schemas/expconf/v0/resources.json":
+		return &ResourcesConfigV0{}
 	// For union member schemas, just return the union type.
 	case "http://determined.ai/schemas/expconf/v0/searcher.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json",
