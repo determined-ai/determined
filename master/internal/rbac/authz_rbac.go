@@ -69,8 +69,11 @@ func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User
 	if err != nil {
 		return query, err
 	}
+	if len(roles) == 0 {
+		return query.Where("false"), nil
+	}
 
-	return query.Where("pa.role_id IN (?)", bun.In(roles)), nil
+	return query.Where("id IN (?)", bun.In(roles)), nil
 }
 
 // CanGetUserRoles checks if the user can access a specific user's roles.
