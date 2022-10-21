@@ -1,11 +1,15 @@
 import React, { useCallback } from 'react';
 
+import { ValueOf } from 'shared/types';
+
 import RadioGroup from './RadioGroup';
 
-export enum GridListView {
-  Grid = 'grid',
-  List = 'list',
-}
+export const GridListView = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+export type GridListView = ValueOf<typeof GridListView>;
 
 interface Props {
   onChange?: (view: GridListView) => void;

@@ -1,5 +1,7 @@
 import { debug } from 'debug';
 
+import { ValueOf } from 'shared/types';
+
 const LIB_NAME = 'det';
 export const NAMEPACE_SEPARATOR = '/';
 
@@ -8,13 +10,15 @@ export const NAMEPACE_SEPARATOR = '/';
  * Modeled after Syslog RFC 5424
  * https://tools.ietf.org/html/rfc5424
  */
-export enum Level {
-  Error = 'error',
-  Warn = 'warn',
-  Info = 'info',
-  Debug = 'debug',
-  Trace = 'trace',
-}
+export const Level = {
+  Debug: 'debug',
+  Error: 'error',
+  Info: 'info',
+  Trace: 'trace',
+  Warn: 'warn',
+} as const;
+
+export type Level = ValueOf<typeof Level>;
 
 // enum LogBackend {
 //   Console,

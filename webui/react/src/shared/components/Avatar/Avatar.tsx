@@ -2,17 +2,19 @@ import { Tooltip } from 'antd';
 import React from 'react';
 
 import { DarkLight } from 'shared/themes';
-import { ClassNameProp } from 'shared/types';
+import { ClassNameProp, ValueOf } from 'shared/types';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
 
 import css from './Avatar.module.scss';
 
-export enum Size {
-  Medium = 'medium',
-  Large = 'large',
-  ExtraLarge = 'extra-large',
-}
+export const Size = {
+  ExtraLarge: 'extra-large',
+  Large: 'large',
+  Medium: 'medium',
+} as const;
+
+export type Size = ValueOf<typeof Size>;
 
 export interface Props extends ClassNameProp {
   darkLight: DarkLight;

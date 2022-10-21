@@ -8,6 +8,7 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import {
   BrandingType,
   CheckpointState,
@@ -23,11 +24,13 @@ import {
  * Where did we get our sizes from?
  * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
  */
-export enum ShirtSize {
-  small = 'small',
-  medium = 'medium',
-  large = 'large',
-}
+export const ShirtSize = {
+  Small: 'small',
+  Medium: 'medium',
+  Large: 'large',
+} as const;
+
+export type ShirtSize = ValueOf<typeof ShirtSize>;
 
 const stateColorMapping = {
   [RunState.Active]: 'active',

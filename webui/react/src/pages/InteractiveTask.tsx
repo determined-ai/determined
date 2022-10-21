@@ -6,6 +6,7 @@ import TaskBar from 'components/TaskBar';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
 import { StoreActionUI } from 'shared/contexts/UIStore';
+import { ValueOf } from 'shared/types';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
 
@@ -20,10 +21,12 @@ type Params = {
   taskUrl: string;
 };
 
-enum PageView {
-  IFRAME = 'Iframe',
-  TASK_LOGS = 'Task Logs',
-}
+const PageView = {
+  IFRAME: 'Iframe',
+  TASK_LOGS: 'Task Logs',
+} as const;
+
+type PageView = ValueOf<typeof PageView>;
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 

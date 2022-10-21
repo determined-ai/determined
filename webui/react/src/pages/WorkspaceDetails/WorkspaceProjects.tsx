@@ -307,7 +307,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.medium} minItemWidth={250} mode={GridMode.AutoFill}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.AutoFill}>
             {projects.map((project) => (
               <ProjectCard
                 curUser={user}

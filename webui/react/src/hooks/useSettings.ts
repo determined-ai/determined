@@ -15,25 +15,28 @@ import {
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import { Primitive, RecordKey } from '../shared/types';
+import { Primitive, RecordKey, ValueOf } from '../shared/types';
 import { ErrorType } from '../shared/utils/error';
 
 import useStorage from './useStorage';
 
-export enum BaseType {
-  Boolean = 'Boolean',
-  Float = 'Float',
-  Integer = 'Integer',
-  Object = 'Object',
+export const BaseType = {
+  Boolean: 'Boolean',
+  Float: 'Float',
+  Integer: 'Integer',
+  Object: 'Object',
+  String: 'String',
+} as const;
 
-  String = 'String',
-}
+export type BaseType = ValueOf<typeof BaseType>;
 
-enum PathChangeType {
-  None = 'none',
-  Push = 'push',
-  Replace = 'replace',
-}
+const PathChangeType = {
+  None: 'none',
+  Push: 'push',
+  Replace: 'replace',
+} as const;
+
+type PathChangeType = ValueOf<typeof PathChangeType>;
 
 type GenericSettingsType = Primitive | Primitive[] | Record<number, number[]> | undefined;
 type GenericSettings = Record<string, GenericSettingsType>;

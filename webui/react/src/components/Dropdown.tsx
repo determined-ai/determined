@@ -1,21 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ValueOf } from 'shared/types';
+
 import css from './Dropdown.module.scss';
 
-export enum Placement {
-  Bottom = 'bottom',
-  BottomLeft = 'bottomLeft',
-  BottomRight = 'bottomRight',
-  Left = 'left',
-  LeftBottom = 'leftBottom',
-  LeftTop = 'leftTop',
-  Right = 'right',
-  RightTop = 'rightTop',
-  RightBottom = 'rightBottom',
-  Top = 'top',
-  TopLeft = 'topLeft',
-  TopRight = 'topRight',
-}
+export const Placement = {
+  Bottom: 'bottom',
+  BottomLeft: 'bottomLeft',
+  BottomRight: 'bottomRight',
+  Left: 'left',
+  LeftBottom: 'leftBottom',
+  LeftTop: 'leftTop',
+  Right: 'right',
+  RightBottom: 'rightBottom',
+  RightTop: 'rightTop',
+  Top: 'top',
+  TopLeft: 'topLeft',
+  TopRight: 'topRight',
+} as const;
+
+export type Placement = ValueOf<typeof Placement>;
 
 interface Props {
   children: React.ReactNode;

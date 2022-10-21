@@ -117,7 +117,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
         };
       }
 
-      let resourceType = types.ResourceType.UNSPECIFIED;
+      let resourceType: types.ResourceType = types.ResourceType.UNSPECIFIED;
       if (slot.device?.type) {
         resourceType = mapV1DeviceType(slot.device.type);
       }

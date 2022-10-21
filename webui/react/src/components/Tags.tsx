@@ -3,15 +3,18 @@ import { Input, InputRef, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
+import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { toHtmlId, truncate } from 'shared/utils/string';
 
 import css from './TagList.module.scss';
 
-export enum TagAction {
-  Add = 'Add',
-  Remove = 'Remove',
-}
+export const TagAction = {
+  Add: 'Add',
+  Remove: 'Remove',
+} as const;
+
+export type TagAction = ValueOf<typeof TagAction>;
 
 interface Props {
   compact?: boolean;

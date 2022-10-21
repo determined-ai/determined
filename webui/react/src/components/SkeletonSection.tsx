@@ -4,9 +4,17 @@ import React, { useMemo } from 'react';
 
 import iconChart from 'shared/assets/images/icon-chart.svg';
 import iconLogs from 'shared/assets/images/icon-logs.svg';
+import { ValueOf } from 'shared/types';
 import { isNumber } from 'shared/utils/data';
 
 import css from './SkeletonSection.module.scss';
+
+export const ContentType = {
+  Chart: 'Chart',
+  Logs: 'Logs',
+} as const;
+
+export type ContentType = ValueOf<typeof ContentType>;
 
 export interface Props {
   children?: React.ReactNode;
@@ -14,11 +22,6 @@ export interface Props {
   filters?: boolean | number | SkeletonTitleProps | SkeletonTitleProps[];
   size?: 'small' | 'medium' | 'large' | 'max';
   title?: boolean | SkeletonTitleProps;
-}
-
-export enum ContentType {
-  Chart = 'Chart',
-  Logs = 'Logs',
 }
 
 const renderTitle = (title?: boolean | SkeletonTitleProps) => (

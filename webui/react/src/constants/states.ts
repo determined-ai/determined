@@ -52,7 +52,7 @@ export const cancellableRunStates: Set<CompoundRunState> = new Set([
   ...jobStates,
 ]);
 
-export const killableCommandStates = [
+export const killableCommandStates: Array<CommandState> = [
   CommandState.Pulling,
   CommandState.Queued,
   CommandState.Running,

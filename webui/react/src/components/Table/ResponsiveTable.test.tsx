@@ -5,7 +5,7 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { Pagination, RecordKey, UnknownRecord } from 'shared/types';
+import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'shared/types';
 import { alphaNumericSorter, numericSorter } from 'shared/utils/sort';
 import { generateAlphaNumeric } from 'shared/utils/string';
 
@@ -16,11 +16,13 @@ import TableFilterDropdown, {
   ARIA_LABEL_INPUT,
 } from './TableFilterDropdown';
 
-enum ColumnValueType {
-  Decimal = 'decimal',
-  Integer = 'integer',
-  String = 'string',
-}
+const ColumnValueType = {
+  Decimal: 'decimal',
+  Integer: 'integer',
+  String: 'string',
+} as const;
+
+type ColumnValueType = ValueOf<typeof ColumnValueType>;
 
 interface ColumnConfig {
   length?: number;

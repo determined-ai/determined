@@ -15,6 +15,7 @@ import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'serv
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence } from 'shared/utils/string';
@@ -35,12 +36,15 @@ type Params = {
 };
 const { TabPane } = Tabs;
 
-enum TabType {
-  Active = 'active',
-  Queued = 'queued',
-  Stats = 'stats',
-  Configuration = 'configuration',
-}
+const TabType = {
+  Active: 'active',
+  Configuration: 'configuration',
+  Queued: 'queued',
+  Stats: 'stats',
+} as const;
+
+type TabType = ValueOf<typeof TabType>;
+
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetail: React.FC = () => {
@@ -155,7 +159,7 @@ const ResourcepoolDetail: React.FC = () => {
         <RenderAllocationBarResourcePool
           poolStats={poolStats}
           resourcePool={pool}
-          size={ShirtSize.large}
+          size={ShirtSize.Large}
         />
       </Section>
       <Section>

@@ -1,5 +1,6 @@
 import { Action } from 'components/Table/TableBulkActions';
 import { openOrCreateTensorBoard } from 'services/api';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { CommandTask } from 'types';
 import handleError from 'utils/error';
@@ -7,11 +8,13 @@ import { openCommand } from 'utils/wait';
 
 import { TrialsSelectionOrCollection } from '../Collections/collections';
 
-export enum TrialAction {
-  AddTags = 'Add Tags',
-  TagAndCollect = 'Tag and Collect',
-  OpenTensorBoard = 'View in TensorBoard',
-}
+export const TrialAction = {
+  AddTags: 'Add Tags',
+  OpenTensorBoard: 'View in TensorBoard',
+  TagAndCollect: 'Tag and Collect',
+} as const;
+
+export type TrialAction = ValueOf<typeof TrialAction>;
 
 type trials = { trials: TrialsSelectionOrCollection };
 

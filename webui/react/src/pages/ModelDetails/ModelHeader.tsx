@@ -14,6 +14,7 @@ import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import { ModelItem } from 'types';
 import { getDisplayName } from 'utils/user';
@@ -80,30 +81,30 @@ const ModelHeader: React.FC<Props> = ({
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
   const menu = useMemo(() => {
-    enum MenuKey {
-      SWITCH_ARCHIVED = 'switch-archive',
-      DELETE_MODEL = 'delete-model',
-    }
+    const MenuKey = {
+      DeleteModel: 'delete-model',
+      SwitchArchived: 'switch-archive',
+    } as const;
 
     const funcs = {
-      [MenuKey.SWITCH_ARCHIVED]: () => {
+      [MenuKey.SwitchArchived]: () => {
         onSwitchArchive();
       },
-      [MenuKey.DELETE_MODEL]: () => {
+      [MenuKey.DeleteModel]: () => {
         handleDelete();
       },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.SWITCH_ARCHIVED, label: model.archived ? 'Unarchive' : 'Archive' },
+      { key: MenuKey.SwitchArchived, label: model.archived ? 'Unarchive' : 'Archive' },
     ];
 
     if (canDeleteModel({ model })) {
-      menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete' });
+      menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
     return <Menu items={menuItems} onClick={onItemClick} />;

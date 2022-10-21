@@ -16,7 +16,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive, Range } from 'shared/types';
+import { Primitive, Range, ValueOf } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
@@ -56,10 +56,12 @@ interface HpData {
   trialIds: number[];
 }
 
-enum ViewType {
-  Grid = 'grid',
-  List = 'list',
-}
+const ViewType = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+type ViewType = ValueOf<typeof ViewType>;
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;

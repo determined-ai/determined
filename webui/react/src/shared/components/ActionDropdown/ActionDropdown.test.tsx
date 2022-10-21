@@ -3,16 +3,19 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import { ValueOf } from 'shared/types';
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const ACTION_ONE_TEXT = 'Action One';
 const ACTION_TWO_TEXT = 'Action Two';
 
-enum TestAction {
-  ActionOne = 'Action One',
-  ActionTwo = 'Action Two',
-}
+const TestAction = {
+  ActionOne: 'Action One',
+  ActionTwo: 'Action Two',
+} as const;
+
+type TestAction = ValueOf<typeof TestAction>;
 
 const handleActionOne = jest.fn();
 const handleActionTwo = jest.fn();
