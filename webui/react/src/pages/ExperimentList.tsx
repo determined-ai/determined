@@ -63,7 +63,6 @@ import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
@@ -659,12 +658,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           sourceWorkspaceId: project?.workspaceId,
         });
       }
-      if (action === Action.CompareExperiments) {
-        if (settings.row?.length)
-          return routeToReactUrl(
-            paths.experimentComparison(settings.row.map((id) => id.toString())),
-          );
-      }
 
       return Promise.all(
         (settings.row || []).map((experimentId) => {
@@ -698,13 +691,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
           openCommand(result as CommandTask);
-        }
-
-        if (action === Action.CompareExperiments) {
-          if (settings.row?.length)
-            return routeToReactUrl(
-              paths.experimentComparison(settings.row.map((id) => id.toString())),
-            );
         }
 
         /*
@@ -750,11 +736,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleBatchAction = useCallback(
     (action?: string) => {
-      if (
-        action === Action.OpenTensorBoard ||
-        action === Action.Move ||
-        action === Action.CompareExperiments
-      ) {
+      if (action === Action.OpenTensorBoard || action === Action.Move) {
         submitBatchAction(action);
       } else {
         showConfirmation(action as Action);
