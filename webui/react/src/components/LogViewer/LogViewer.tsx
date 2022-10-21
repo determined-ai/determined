@@ -1,5 +1,6 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
   ListChildComponentProps,
   ListOnItemsRenderedProps,
@@ -181,8 +182,10 @@ const LogViewer: React.FC<Props> = ({
   const addLogs = useCallback(
     (newLogs: ViewerLog[], prepend = false): void => {
       if (newLogs.length === 0) return;
-      setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
-      resizeLogs();
+      flushSync(() => {
+        setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
+        resizeLogs();
+      });
     },
     [resizeLogs],
   );
@@ -307,7 +310,10 @@ const LogViewer: React.FC<Props> = ({
       local.current.isScrollReady = false;
       local.current.isAtOffsetEnd = false;
 
-      setFetchDirection(FetchDirection.Newer);
+      flushSync(() => {
+        setLogs([]);
+        setFetchDirection(FetchDirection.Newer);
+      });
     }
   }, [fetchDirection]);
 
