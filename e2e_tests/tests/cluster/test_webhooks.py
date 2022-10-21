@@ -43,32 +43,6 @@ def test_slack_webhook() -> None:
     global request_to_webhook_endpoint
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
-    expected_payload = {
-        "blocks": [
-            {
-                "type": "section",
-                "text": {"type": "plain_text", "text": "Your experiment completed successfully 🎉"},
-            }
-        ],
-        "attachments": [
-            {
-                "color": "#13B670",
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "✅ Experiment (secondly-skilled-shiner) (#126)",
-                        },
-                        "fields": [
-                            {"type": "mrkdwn", "text": "*Status*: Completed"},
-                            {"type": "mrkdwn", "text": "*Duration*: 0h 0min"},
-                        ],
-                    }
-                ],
-            }
-        ],
-    }
     master_url = conf.make_master_url()
     admin_auth = authentication.Authentication(
         master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
@@ -99,11 +73,32 @@ def test_slack_webhook() -> None:
         bindings.determinedexperimentv1State.STATE_COMPLETED,
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
+    exp_config = exp.experiment_config_json(experiment_id)
+    expected_payload = {
+        "blocks": [
+            {
+                "type": "section",
+                "text": {"type": "plain_text", "text": "Your experiment completed successfully 🎉"},
+            }
+        ],
+        "attachments": [
+            {
+                "color": "#13B670",
+                "blocks": [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"✅ "+ exp_config["name"] + f" (#{experiment_id})",
+                        },
+                        "fields": [
+                            {"type": "mrkdwn", "text": "*Status*: Completed"},
+                            {"type": "mrkdwn", "text": "*Duration*: 0h 0min"},
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
     server_thread.join()
-    expected_fields = expected_payload["attachments"][0]["blocks"][0]["fields"]
-    assert expected_payload["blocks"] == request_to_webhook_endpoint["blocks"]
-    assert (
-        expected_payload["attachments"][0]["color"]
-        == request_to_webhook_endpoint["attachments"][0]["color"]
-    )
-    assert expected_fields == request_to_webhook_endpoint["attachments"][0]["blocks"][0]["fields"]
+    assert expected_payload == request_to_webhook_endpoint
