@@ -182,7 +182,7 @@ export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTas
 export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
   return (
     killableRunStates.includes(task.state as Type.RunState) ||
-    killableCommandStates.map((state) => state === task.state).some((res) => res)
+    killableCommandStates.includes(task.state as Type.CommandState)
   );
 };
 
