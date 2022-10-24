@@ -11,6 +11,7 @@ type (
 	CategoricalHyperparameter = CategoricalHyperparameterV0
 	CheckpointStorageConfig   = CheckpointStorageConfigV0
 	ConstHyperparameter       = ConstHyperparameterV0
+	CustomConfig              = CustomConfigV0
 	DataLayerConfig           = DataLayerConfigV0
 	DevicesConfig             = DevicesConfigV0
 	Device                    = DeviceV0
@@ -41,6 +42,8 @@ type (
 	SharedFSConfig            = SharedFSConfigV0
 	SharedFSDataLayerConfig   = SharedFSDataLayerConfigV0
 	SingleConfig              = SingleConfigV0
+	SlurmConfig               = SlurmConfigV0
+	PbsConfig                 = PbsConfigV0
 )
 
 // These are EOL searchers, not to be used in new experiments.

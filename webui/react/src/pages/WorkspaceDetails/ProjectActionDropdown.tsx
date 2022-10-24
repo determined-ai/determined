@@ -9,6 +9,7 @@ import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { DetailedUser, Project } from 'types';
 import handleError from 'utils/error';
 
@@ -74,30 +75,30 @@ const ProjectActionDropdown: React.FC<Props> = ({
   }, [openProjectDelete]);
 
   const menuProps: { items: MenuProps['items']; onClick: MenuProps['onClick'] } = useMemo(() => {
-    enum MenuKey {
-      EDIT = 'edit',
-      MOVE = 'move',
-      SWITCH_ARCHIVED = 'switchArchive',
-      DELETE = 'delete',
-    }
+    const MenuKey = {
+      Delete: 'delete',
+      Edit: 'edit',
+      Move: 'move',
+      SwitchArchived: 'switchArchive',
+    } as const;
 
     const funcs = {
-      [MenuKey.EDIT]: () => {
+      [MenuKey.Edit]: () => {
         handleEditClick();
       },
-      [MenuKey.MOVE]: () => {
+      [MenuKey.Move]: () => {
         handleMoveClick();
       },
-      [MenuKey.SWITCH_ARCHIVED]: () => {
+      [MenuKey.SwitchArchived]: () => {
         handleArchiveClick();
       },
-      [MenuKey.DELETE]: () => {
+      [MenuKey.Delete]: () => {
         handleDeleteClick();
       },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const items: MenuProps['items'] = [];
@@ -105,24 +106,24 @@ const ProjectActionDropdown: React.FC<Props> = ({
       canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
       !project.archived
     ) {
-      items.push({ key: MenuKey.EDIT, label: 'Edit...' });
+      items.push({ key: MenuKey.Edit, label: 'Edit...' });
     }
-    if (canMoveProjects({ project, workspace: { id: project.workspaceId } }) && !project.archived) {
-      items.push({ key: MenuKey.MOVE, label: 'Move...' });
+    if (canMoveProjects({ project }) && !project.archived) {
+      items.push({ key: MenuKey.Move, label: 'Move...' });
     }
     if (
       canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
       !workspaceArchived
     ) {
       const label = project.archived ? 'Unarchive' : 'Archive';
-      items.push({ key: MenuKey.SWITCH_ARCHIVED, label: label });
+      items.push({ key: MenuKey.SwitchArchived, label: label });
     }
     if (
       canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
       !project.archived &&
       project.numExperiments === 0
     ) {
-      items.push({ danger: true, key: MenuKey.DELETE, label: 'Delete...' });
+      items.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
     }
     return { items: items, onClick: onItemClick };
   }, [

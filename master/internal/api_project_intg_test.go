@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,36 +24,40 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
-var projectAuthZ *mocks.ProjectAuthZ
+var pAuthZ *mocks.ProjectAuthZ
+
+func isMockAuthZ() bool {
+	return config.GetMasterConfig().Security.AuthZ.Type == "mock"
+}
 
 func projectNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
 }
 
-func SetupProjectAuthZTest(
+func setupProjectAuthZTest(
 	t *testing.T,
 ) (*apiServer, *mocks.ProjectAuthZ, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, workspaceAuthZ, curUser, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, curUser, ctx := setupWorkspaceAuthZTest(t)
 
-	if projectAuthZ == nil {
-		projectAuthZ = &mocks.ProjectAuthZ{}
-		project.AuthZProvider.Register("mock", projectAuthZ)
+	if pAuthZ == nil {
+		pAuthZ = &mocks.ProjectAuthZ{}
+		project.AuthZProvider.Register("mock", pAuthZ)
 	}
-	return api, projectAuthZ, workspaceAuthZ, curUser, ctx
+	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
 
 func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {
-	if workspaceAuthZ != nil {
-		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	if isMockAuthZ() {
+		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	}
 	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, werr)
 
-	if workspaceAuthZ != nil {
-		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	if isMockAuthZ() {
+		wAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	}
-	if projectAuthZ != nil {
-		projectAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
+	if isMockAuthZ() {
+		pAuthZ.On("CanCreateProject", mock.Anything, mock.Anything).Return(nil).Once()
 	}
 	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: uuid.New().String(), WorkspaceId: wresp.Workspace.Id,
@@ -63,7 +68,7 @@ func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer
 }
 
 func TestAuthZCanCreateProject(t *testing.T) {
-	api, projectAuthZ, workspaceAuthZ, _, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
@@ -107,7 +112,7 @@ func TestAuthZCanCreateProject(t *testing.T) {
 }
 
 func TestAuthZGetProject(t *testing.T) {
-	api, projectAuthZ, _, _, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, _, _, ctx := setupProjectAuthZTest(t)
 
 	// Deny returns same as 404,
 	_, err := api.GetProject(ctx, &apiv1.GetProjectRequest{Id: -9999})
@@ -126,7 +131,7 @@ func TestAuthZGetProject(t *testing.T) {
 
 func TestAuthZCanMoveProject(t *testing.T) {
 	// Setup.
-	api, projectAuthZ, workspaceAuthZ, _, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	fromResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
@@ -170,11 +175,11 @@ func TestAuthZCanMoveProject(t *testing.T) {
 
 func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	// Setup.
-	api, authZExp, projectAuthZ, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, projectAuthZ, curUser, ctx := setupExpAuthTest(t)
 
 	_, srcProjectID := createProjectAndWorkspace(ctx, t, api)
 	_, destProjectID := createProjectAndWorkspace(ctx, t, api)
-	exp := createTestExpWithProjectID(t, api, curUser, int(srcProjectID))
+	exp := createTestExpWithProjectID(t, api, curUser, srcProjectID)
 	experimentID := exp.ID
 
 	req := &apiv1.MoveExperimentRequest{
@@ -186,27 +191,27 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything).Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(false, nil).Once()
 	_, err := api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(int(destProjectID)).Error(), err.Error())
+	require.Equal(t, projectNotFoundErr(destProjectID).Error(), err.Error())
 
 	// Can't view source project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything).Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(false, nil).Once()
 	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(int(srcProjectID)).Error(), err.Error())
+	require.Equal(t, projectNotFoundErr(srcProjectID).Error(), err.Error())
 
 	// Can't move experiment.
 	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectExperimentsDeny")
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything).Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(true, nil).Twice()
-	projectAuthZ.On("CanMoveProjectExperiments", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(fmt.Errorf("canMoveProjectExperimentsDeny")).Once()
+	projectAuthZ.On("CanMoveProjectExperiments", mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything).Return(fmt.Errorf("canMoveProjectExperimentsDeny")).Once()
 	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
 func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
-	api, projectAuthZ, _, _, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, _, _, ctx := setupProjectAuthZTest(t)
 
 	cases := []struct {
 		DenyFuncName string

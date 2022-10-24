@@ -8,6 +8,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -116,8 +117,29 @@ const NavigationSideBar: React.FC = () => {
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
 
-  const menuConfig = useMemo(
-    () => ({
+  const { canCreateWorkspace, canViewWorkspace } = usePermissions();
+  const showWebhooks = useFeature().isOn('webhooks');
+
+  const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
+
+  const menuConfig = useMemo(() => {
+    const topNav = canAccessUncategorized
+      ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
+      : [];
+    const topItems = [
+      ...topNav,
+      { icon: 'model', label: 'Model Registry', path: paths.modelList() },
+      { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
+      { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+    ];
+    if (showWebhooks) {
+      topItems.splice(topItems.length - 1, 0, {
+        icon: 'webhooks',
+        label: 'Webhooks',
+        path: paths.webhooks(),
+      });
+    }
+    return {
       bottom: [
         { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
         {
@@ -135,15 +157,9 @@ const NavigationSideBar: React.FC = () => {
           popout: true,
         },
       ],
-      top: [
-        { icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() },
-        { icon: 'model', label: 'Model Registry', path: paths.modelList() },
-        { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-        { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-      ],
-    }),
-    [info.branding],
-  );
+      top: topItems,
+    };
+  }, [canAccessUncategorized, info.branding, showWebhooks]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
@@ -152,8 +168,6 @@ const NavigationSideBar: React.FC = () => {
   const handleCreateWorkspace = useCallback(() => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
-
-  const { canCreateWorkspace } = usePermissions();
 
   if (!showNavigation) return null;
 

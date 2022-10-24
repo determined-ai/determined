@@ -1,10 +1,10 @@
 import { Breadcrumb, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -97,7 +97,7 @@ const BreadcrumbBar: React.FC<Props> = ({
     await Promise.allSettled([fetchProject(), fetchWorkspace(), fetchExperiment(), fetchTrial()]);
   }, [fetchProject, fetchWorkspace, fetchExperiment, fetchTrial]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     fetchWorkspace();
@@ -131,10 +131,22 @@ const BreadcrumbBar: React.FC<Props> = ({
     setWorkspace(workspaceIn);
   }, [workspaceIn]);
 
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setWorkspace(undefined);
+      setProject(undefined);
+      setExperiment(undefined);
+      setTrial(undefined);
+    };
+  }, [stopPolling]);
+
   return (
     <div className={css.base}>
       <Breadcrumb separator="">
-        {experiment?.projectId !== 1 && (
+        {experiment?.projectId !== 1 && !project?.immutable && (
           <>
             <Breadcrumb.Item>
               <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>

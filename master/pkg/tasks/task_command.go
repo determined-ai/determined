@@ -64,6 +64,10 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 
 	res.ResourcesConfig = s.Config.Resources.ToExpconf()
 
+	res.PbsConfig = s.Config.Pbs
+
+	res.SlurmConfig = s.Config.Slurm
+
 	res.WorkDir = DefaultWorkDir
 	if s.Config.WorkDir != nil {
 		res.WorkDir = *s.Config.WorkDir

@@ -17,9 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -27,25 +24,25 @@ import (
 )
 
 func TestExperimentCheckpointsToGCRaw(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
-	tr := requireMockTrial(t, db, exp)
-	a := requireMockAllocation(t, db, tr.TaskID)
+	tr := RequireMockTrial(t, db, exp)
+	a := RequireMockAllocation(t, db, tr.TaskID)
 	var expectedCheckpoints []uuid.UUID
 	for i := 1; i <= 3; i++ {
-		ckptUuid := uuid.New()
-		ckpt := mockModelCheckpoint(ckptUuid, tr, a)
+		ckptUUID := uuid.New()
+		ckpt := MockModelCheckpoint(ckptUUID, tr, a)
 		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
 		require.NoError(t, err)
 		if i == 2 { // add this checkpoint to the model registry
-			err = addCheckpointToModelRegistry(db, ckptUuid, user)
+			err = addCheckpointToModelRegistry(db, ckptUUID, user)
 			require.NoError(t, err)
 		} else {
-			expectedCheckpoints = append(expectedCheckpoints, ckptUuid)
+			expectedCheckpoints = append(expectedCheckpoints, ckptUUID)
 		}
 	}
 
@@ -70,7 +67,7 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
 	}
-	mdlNotes := "some notes"
+	mdlNotes := "some notes1"
 	var pmdl modelv1.Model
 	if err := db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
@@ -102,58 +99,8 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 	return nil
 }
 
-func mockModelCheckpoint(ckptUuid uuid.UUID, tr *model.Trial, a *model.Allocation) model.CheckpointV2 {
-	stepsCompleted := int32(10)
-	ckpt := model.CheckpointV2{
-		UUID:         ckptUuid,
-		TaskID:       tr.TaskID,
-		AllocationID: a.AllocationID,
-		ReportTime:   time.Now().UTC(),
-		State:        model.CompletedState,
-		Resources: map[string]int64{
-			"ok": 1.0,
-		},
-		Metadata: map[string]interface{}{
-			"framework":          "some framework",
-			"determined_version": "1.0.0",
-			"steps_completed":    float64(stepsCompleted),
-		},
-	}
-
-	return ckpt
-}
-
-func mockExpconf() expconf.ExperimentConfig {
-	return schemas.WithDefaults(expconf.ExperimentConfigV0{
-		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
-			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.Ptr("/home/ckpts"),
-			},
-		},
-		RawEntrypoint: &expconf.EntrypointV0{
-			RawEntrypoint: ptrs.Ptr("model.Classifier"),
-		},
-		RawHyperparameters: map[string]expconf.HyperparameterV0{
-			"global_batch_size": {
-				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.Ptr(1),
-				},
-			},
-		},
-		RawSearcher: &expconf.SearcherConfigV0{
-			RawSingleConfig: &expconf.SingleConfigV0{
-				RawMaxLength: &expconf.LengthV0{
-					Unit:  expconf.Batches,
-					Units: 1,
-				},
-			},
-			RawMetric: ptrs.Ptr(defaultSearcherMetric),
-		},
-	}).(expconf.ExperimentConfigV0)
-}
-
 func TestCheckpointMetadata(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -175,13 +122,13 @@ func TestCheckpointMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			user := RequireMockUser(t, db)
 			exp := RequireMockExperiment(t, db, user)
-			tr := requireMockTrial(t, db, exp)
-			a := requireMockAllocation(t, db, tr.TaskID)
+			tr := RequireMockTrial(t, db, exp)
+			a := RequireMockAllocation(t, db, tr.TaskID)
 
-			ckptUuid := uuid.New()
+			ckptUUID := uuid.New()
 			stepsCompleted := int32(10)
 			ckpt := model.CheckpointV2{
-				UUID:         ckptUuid,
+				UUID:         ckptUUID,
 				TaskID:       tr.TaskID,
 				AllocationID: a.AllocationID,
 				ReportTime:   time.Now().UTC(),
@@ -217,7 +164,7 @@ func TestCheckpointMetadata(t *testing.T) {
 						BatchMetrics: []*structpb.Struct{},
 					},
 				}
-				err := db.AddValidationMetrics(context.TODO(), m)
+				err = db.AddValidationMetrics(context.TODO(), m)
 				require.NoError(t, err)
 			}
 
@@ -245,7 +192,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			}
 
 			var retCkpt checkpointv1.Checkpoint
-			err = db.QueryProto("get_checkpoint", &retCkpt, ckptUuid)
+			err = db.QueryProto("get_checkpoint", &retCkpt, ckptUUID)
 			require.NoError(t, err, "failed to get checkpoint")
 			requireCheckpointOk(&ckpt, &retCkpt)
 

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
-import { Router } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -19,6 +19,7 @@ const user = userEvent.setup();
 
 jest.mock('services/api', () => ({
   getGroups: () => Promise.resolve({ groups: [] }),
+  getUserRoles: () => Promise.resolve([]),
   getUsers: () => {
     const currentUser: DetailedUser = {
       displayName: DISPLAY_NAME,
@@ -61,9 +62,9 @@ const setup = () =>
     <StoreProvider>
       <DndProvider backend={HTML5Backend}>
         <HelmetProvider>
-          <Router history={history}>
+          <HistoryRouter history={history}>
             <Container />
-          </Router>
+          </HistoryRouter>
         </HelmetProvider>
       </DndProvider>
     </StoreProvider>,

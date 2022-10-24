@@ -203,14 +203,14 @@ limitations (needing to know the optimizer when calling `scale_loss`).
     the loss by N before each backward pass)
   * set `hvd_optimizer.backward_passes_per_step` to N (aggregation frequency)
   * only synchronize/step optimizer every N batches
-  * always call scaler.scale(loss) with the same scale factor for each batch in
-    a grouping of N batches (only call scaler.update() every N batches); this
+  * always call `scaler.scale(loss)` with the same scale factor for each batch in
+    a grouping of N batches (only call `scaler.update()` every N batches); this
     ensures that the gradient aggregation is valid.
 
 * PyTorch-native AMP:
-  * (repeated from above) always call scaler.step(optimizer) *after*
-    optimzer.synchronize()
-  * (repeated from above) only call scaler.update() after each grouping of N
+  * (repeated from above) always call `scaler.step(optimizer)` *after*
+    `optimizer.synchronize()`
+  * (repeated from above) only call `scaler.update()` after each grouping of N
     batches.
 
 * Nvidia apex AMP:

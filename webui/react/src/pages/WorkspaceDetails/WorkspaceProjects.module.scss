@@ -1,0 +1,43 @@
+.base {
+  height: fit-content;
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    margin-top: 30px;
+  }
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base {
+    .controls {
+      flex-wrap: wrap;
+    }
+  }
+}
+
+.userRowItem {
+  display: inline-block;
+  vertical-align: middle;
+
+  img {
+    margin-right: 10px;
+  }
+}
+.userAvatarRowItem {
+  align-items: center;
+  display: inline-block;
+  height: 100%;
+  line-height: 100%;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.membersContainer {
+  margin-top: 30px;
+}

@@ -7,6 +7,7 @@ from determined.common import experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Determined
+from determined.experimental.client import DownloadMode
 
 from . import render
 
@@ -95,7 +96,7 @@ def list_checkpoints(args: Namespace) -> None:
 def download(args: Namespace) -> None:
     checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
 
-    path = checkpoint.download(path=args.output_dir)
+    path = checkpoint.download(path=args.output_dir, mode=args.mode)
 
     if args.quiet:
         print(path)
@@ -144,6 +145,19 @@ main_cmd = Cmd(
                     "--quiet",
                     action="store_true",
                     help="Only print the path to the checkpoint.",
+                ),
+                Arg(
+                    "--mode",
+                    choices=list(DownloadMode),
+                    default=DownloadMode.AUTO,
+                    type=DownloadMode,
+                    help=(
+                        "Select different download modes: "
+                        f"'{DownloadMode.DIRECT}' to directly download from checkpoint storage; "
+                        f"'{DownloadMode.MASTER}' to download via the master; "
+                        f"'{DownloadMode.AUTO}' to first attempt a direct download and fall "
+                        f"back to '{DownloadMode.MASTER}'."
+                    ),
                 ),
             ],
         ),

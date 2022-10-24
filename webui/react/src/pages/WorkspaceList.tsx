@@ -3,26 +3,25 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import Link from 'components/Link';
+import Page from 'components/Page';
+import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell,
-} from 'components/InteractiveTable';
-import Link from 'components/Link';
-import Page from 'components/Page';
-import SelectFilter from 'components/SelectFilter';
+} from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
   GenericRenderer,
   getFullPaginationConfig,
   stateRenderer,
   userRenderer,
-} from 'components/Table';
+} from 'components/Table/Table';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
@@ -30,6 +29,7 @@ import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
@@ -258,7 +258,7 @@ const WorkspaceList: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={300} mode={GridMode.AutoFill}>
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}

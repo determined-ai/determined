@@ -1,4 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { ValueOf } from './types';
 import { isColor, rgba2str, rgbaMix, str2rgba } from './utils/color';
 
 const STRONG_WEAK_DELTA = 45;
@@ -231,9 +232,9 @@ const themeDark = {
   overlay: 'rgba(0, 0, 0, 0.75)',
   overlayStrong: 'rgba(0, 0, 0, 1.0)',
   overlayWeak: 'rgba(0, 0, 0, 0.5)',
-  elevation: '0px 6px 12px rgba(255, 255, 255, 0.12)',
-  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.12)',
-  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.24)',
+  elevation: '0px 6px 12px rgba(255, 255, 255, 0.06)',
+  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.06)',
+  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.12)',
 };
 
 export const themeLightDetermined: Theme = generateStrongWeak(
@@ -276,20 +277,24 @@ export const globalCssVars = {
   navSideBarWidthMin: '56px',
 };
 
-export enum Mode {
-  System = 'system',
-  Light = 'light',
-  Dark = 'dark',
-}
+export const Mode = {
+  System: 'system',
+  Light: 'light',
+  Dark: 'dark',
+} as const;
+
+export type Mode = ValueOf<typeof Mode>;
 
 /**
  * DarkLight is a resolved form of `Mode` where we figure out
  * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
  */
-export enum DarkLight {
-  Dark = 'dark',
-  Light = 'light',
-}
+export const DarkLight = {
+  Dark: 'dark',
+  Light: 'light',
+} as const;
+
+export type DarkLight = ValueOf<typeof DarkLight>;
 
 export const getCssVar = (name: string): string => {
   const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');

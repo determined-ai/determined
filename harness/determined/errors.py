@@ -85,3 +85,21 @@ class CheckpointNotFound(Exception):
     """
     CheckpointNotFoundException indicates a checkpoint could not be found in checkpoint storage.
     """
+
+
+class NoDirectStorageAccess(Exception):
+    """Direct checkpoint storage access unavailable, e.g., no credentials or permissions."""
+
+    pass
+
+
+class ProxiedDownloadFailed(Exception):
+    """Proxied checkpoint download through master failed"""
+
+    pass
+
+
+class MultipleDownloadsFailed(Exception):
+    """Multiple checkpoint download methods failed"""
+
+    pass

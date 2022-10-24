@@ -6,24 +6,27 @@ import TaskBar from 'components/TaskBar';
 import { useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
 import { StoreActionUI } from 'shared/contexts/UIStore';
+import { ValueOf } from 'shared/types';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
 
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
 
-interface Params {
+type Params = {
   taskId: string;
   taskName: string;
   taskResourcePool: string;
   taskType: CommandType;
   taskUrl: string;
-}
+};
 
-enum PageView {
-  IFRAME = 'Iframe',
-  TASK_LOGS = 'Task Logs',
-}
+const PageView = {
+  IFRAME: 'Iframe',
+  TASK_LOGS: 'Task Logs',
+} as const;
+
+type PageView = ValueOf<typeof PageView>;
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 
@@ -49,10 +52,22 @@ const getTitleState = (commandState?: CommandState, taskName?: string): string =
 
 export const InteractiveTask: React.FC = () => {
   const [pageView, setPageView] = useState<PageView>(PageView.IFRAME);
-  const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
+  const {
+    taskId: tId,
+    taskName: tName,
+    taskResourcePool: tResourcePool,
+    taskType: tType,
+    taskUrl: tUrl,
+  } = useParams<Params>();
   const [taskState, setTaskState] = useState<CommandState>();
   const storeDispatch = useStoreDispatch();
   const { ui } = useStore();
+
+  const taskId = tId ?? '';
+  const taskName = tName ?? '';
+  const taskResourcePool = tResourcePool ?? '';
+  const taskType = tType as CommandType;
+  const taskUrl = tUrl ?? '';
 
   useEffect(() => {
     storeDispatch({ type: StoreActionUI.HideUIChrome });
@@ -71,9 +86,8 @@ export const InteractiveTask: React.FC = () => {
           }
         }
       } catch (e) {
-        handleError({
-          error: e,
-          message: 'failed querying for command state',
+        handleError(e, {
+          publicMessage: 'failed querying for command state',
           silent: true,
         });
         clearInterval(queryTask);

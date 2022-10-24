@@ -9,24 +9,24 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
-import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricContainer, MetricName, Scale } from 'types';
+import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
-  defaultMetricNames: MetricName[];
+  defaultMetricNames: Metric[];
   id?: string;
-  metricNames: MetricName[];
-  metrics: MetricName[];
-  onMetricChange: (value: MetricName[]) => void;
+  metricNames: Metric[];
+  metrics: Metric[];
+  onMetricChange: (value: Metric[]) => void;
   trialId?: number;
   trialTerminated: boolean;
 }
 
-const getChartMetricLabel = (metric: MetricName): string => {
+const getChartMetricLabel = (metric: Metric): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
   return metric.name;
@@ -57,11 +57,23 @@ const TrialChart: React.FC<Props> = ({
   }, [metricNames, scale, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
+
   useEffect(() => {
     if (trialTerminated) {
       stopPolling();
     }
   }, [trialTerminated, stopPolling]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setScale(Scale.Linear);
+      setTrialSummary([]);
+    };
+  }, [stopPolling]);
+
   if (trialTerminated) {
     stopPolling();
   }
@@ -123,8 +135,8 @@ const TrialChart: React.FC<Props> = ({
   const options = (
     <ResponsiveFilters>
       <MetricSelectFilter
-        defaultMetricNames={defaultMetricNames}
-        metricNames={metricNames}
+        defaultMetrics={defaultMetricNames}
+        metrics={metricNames}
         multiple
         value={metrics}
         onChange={onMetricChange}

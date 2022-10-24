@@ -12,9 +12,9 @@ import {
   useFetchAgents,
   useFetchResourcePools,
 } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
@@ -120,7 +120,7 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallStats />
       <ClusterOverallBar />
       <Section title="Resource Pools">
-        <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.Large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>
               <ResourcePoolCard resourcePool={rp} />

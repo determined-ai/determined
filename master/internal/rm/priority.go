@@ -410,6 +410,6 @@ func splitAgentsByLabel(
 
 func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool {
 	return func(request *sproto.AllocateRequest) bool {
-		return request.Label == label && (request.SlotsNeeded == 0) == zeroSlots
+		return request.AgentLabel == label && (request.SlotsNeeded == 0) == zeroSlots
 	}
 }

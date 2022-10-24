@@ -102,7 +102,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.5-dev0
+    Default: 0.19.6-dev0
 
   DBPassword:
     Type: String
@@ -827,6 +827,7 @@ Resources:
                 ssh_key_name: ${Keypair}
                 tag_key: det-${AWS::StackName}
                 tag_value: det-agent-${AWS::StackName}
+                agent_config_file_contents: ${AgentConfigFileContents}
 
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}

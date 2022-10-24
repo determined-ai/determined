@@ -106,7 +106,7 @@ const updateFavicon = (iconPath: string): void => {
   linkEl.href = iconPath;
 };
 
-export const updateFaviconType = (active: boolean, branding = BrandingType.Determined): void => {
+export const updateFaviconType = (active: boolean, branding: BrandingType): void => {
   const suffixDev = process.env.IS_DEV ? '-dev' : '';
   const suffixActive = active ? '-active' : '';
   updateFavicon(`${process.env.PUBLIC_URL}/${branding}/favicon${suffixDev}${suffixActive}.png`);

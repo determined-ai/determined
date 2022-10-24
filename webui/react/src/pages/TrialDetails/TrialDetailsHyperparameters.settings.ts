@@ -1,4 +1,4 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 export type HyperparameterColumnName = 'hyperparameter' | 'value';
@@ -15,6 +15,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: '/hyperparameters',
   settings: [
     {
       defaultValue: DEFAULT_COLUMNS,

@@ -17,20 +17,47 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 var errUserNotFound = status.Error(codes.NotFound, "user not found")
 
+func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
+	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
+		return status.Error(
+			codes.InvalidArgument,
+			"AgentUid, AgentGid, AgentUser and AgentGroup cannot be empty",
+		)
+	}
+	if *aug.AgentUser == "" || *aug.AgentGroup == "" {
+		return status.Error(
+			codes.InvalidArgument,
+			"AgentUser and AgentGroup names cannot be empty",
+		)
+	}
+
+	return nil
+}
+
+// TODO(ilia): We need null.Int32.
+func i64Ptr2i32(v *int64) *int32 {
+	if v == nil {
+		return nil
+	}
+
+	return ptrs.Ptr(int32(*v))
+}
+
 func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	var agentUserGroup *userv1.AgentUserGroup
 	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
 		agentUserGroup = &userv1.AgentUserGroup{
-			AgentUid:   int32(user.AgentUID.ValueOrZero()),
-			AgentGid:   int32(user.AgentGID.ValueOrZero()),
-			AgentUser:  user.AgentUser.ValueOrZero(),
-			AgentGroup: user.AgentGroup.ValueOrZero(),
+			AgentUid:   i64Ptr2i32(user.AgentUID.Ptr()),
+			AgentGid:   i64Ptr2i32(user.AgentGID.Ptr()),
+			AgentUser:  user.AgentUser.Ptr(),
+			AgentGroup: user.AgentGroup.Ptr(),
 		}
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
@@ -167,11 +194,16 @@ func (a *apiServer) PostUser(
 
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
+		aug := req.User.AgentUserGroup
+		if err := validateProtoAgentUserGroup(aug); err != nil {
+			return nil, err
+		}
+
 		agentUserGroup = &model.AgentUserGroup{
-			UID:   int(req.User.AgentUserGroup.AgentUid),
-			GID:   int(req.User.AgentUserGroup.AgentGid),
-			User:  req.User.AgentUserGroup.AgentUser,
-			Group: req.User.AgentUserGroup.AgentGroup,
+			UID:   int(*req.User.AgentUserGroup.AgentUid),
+			GID:   int(*req.User.AgentUserGroup.AgentGid),
+			User:  *req.User.AgentUserGroup.AgentUser,
+			Group: *req.User.AgentUserGroup.AgentGroup,
 		}
 		if agentUserGroup.User == "" || agentUserGroup.Group == "" {
 			return nil, status.Error(
@@ -272,7 +304,6 @@ func (a *apiServer) PatchUser(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	// TODO: handle any field name:
 	if req.User.DisplayName != nil {
 		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
@@ -293,12 +324,11 @@ func (a *apiServer) PatchUser(
 			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
 			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
 			// Restrict 'admin' and 'determined' in display names.
-			if !(curUser.Admin && curUser.ID == uid) && strings.Contains(strings.ToLower(displayName),
-				"admin") {
+			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == "admin") {
 				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 			}
-			if curUser.Username != "determined" && strings.Contains(strings.ToLower(displayName),
-				"determined") {
+			if targetUser.Username != displayName &&
+				(strings.TrimSpace(strings.ToLower(displayName)) == "determined") {
 				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 			}
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
@@ -342,12 +372,15 @@ func (a *apiServer) PatchUser(
 	}
 
 	var ug *model.AgentUserGroup
-	if pug := req.User.AgentUserGroup; pug != nil {
+	if aug := req.User.AgentUserGroup; aug != nil {
+		if err = validateProtoAgentUserGroup(aug); err != nil {
+			return nil, err
+		}
 		ug = &model.AgentUserGroup{
-			UID:   int(req.User.AgentUserGroup.AgentUid),
-			GID:   int(req.User.AgentUserGroup.AgentGid),
-			User:  req.User.AgentUserGroup.AgentUser,
-			Group: req.User.AgentUserGroup.AgentGroup,
+			UID:   int(*req.User.AgentUserGroup.AgentUid),
+			GID:   int(*req.User.AgentUserGroup.AgentGid),
+			User:  *req.User.AgentUserGroup.AgentUser,
+			Group: *req.User.AgentUserGroup.AgentGroup,
 		}
 		if err = user.AuthZProvider.Get().
 			CanSetUsersAgentUserGroup(*curUser, targetUser, *ug); err != nil {
@@ -358,13 +391,6 @@ func (a *apiServer) PatchUser(
 				return nil, errUserNotFound
 			}
 			return nil, status.Error(codes.PermissionDenied, err.Error())
-		}
-
-		if ug.User == "" || ug.Group == "" {
-			return nil, status.Error(
-				codes.InvalidArgument,
-				"AgentUser and AgentGroup names cannot be empty",
-			)
 		}
 	}
 

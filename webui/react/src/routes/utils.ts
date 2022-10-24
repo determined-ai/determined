@@ -121,6 +121,9 @@ export const paths = {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
   projectDetails: (projectId: number | string): string => {
+    return `/projects/${projectId}/experiments`;
+  },
+  projectDetailsBasePath: (projectId: number | string): string => {
     return `/projects/${projectId}`;
   },
   reload: (path: string): string => {
@@ -153,13 +156,16 @@ export const paths = {
     return `/experiments/${experimentId}/trials/${trialId}/logs`;
   },
   uncategorized: (): string => {
-    return '/projects/1';
+    return '/projects/1/experiments';
   },
   users: (): string => {
     return '/users';
   },
-  workspaceDetails: (workspaceId: number | string): string => {
-    return `/workspaces/${workspaceId}`;
+  webhooks: (): string => {
+    return '/webhooks';
+  },
+  workspaceDetails: (workspaceId: number | string, tab = 'projects'): string => {
+    return `/workspaces/${workspaceId}/${tab}`;
   },
   workspaceList: (): string => {
     return '/workspaces';

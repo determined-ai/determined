@@ -18,10 +18,10 @@ import { WaitStatus } from 'utils/wait';
 
 import css from './Wait.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
-}
+};
 
 interface Queries {
   eventUrl?: string;
@@ -34,7 +34,7 @@ const Wait: React.FC = () => {
   const [waitStatus, setWaitStatus] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
-  const capitalizedTaskType = capitalize(taskType);
+  const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;
@@ -55,10 +55,9 @@ const Wait: React.FC = () => {
     return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
   }, [storeDispatch]);
 
-  const handleTaskError = (err: Error) => {
-    handleError({
-      error: err,
-      message: 'failed while waiting for command to be ready',
+  const handleTaskError = (e: Error) => {
+    handleError(e, {
+      publicMessage: 'Failed while waiting for command to be ready',
       silent: false,
       type: ErrorType.Server,
     });
@@ -77,7 +76,7 @@ const Wait: React.FC = () => {
         if (!lastRun) {
           return;
         }
-        if ([CommandState.Terminated].includes(lastRun.state)) {
+        if (CommandState.Terminated === lastRun.state) {
           clearInterval(ival);
         } else if (lastRun.isReady) {
           clearInterval(ival);

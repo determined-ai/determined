@@ -4,15 +4,15 @@ import { AlignedData } from 'uplot';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricName, Scale } from 'types';
-import { metricNameToStr } from 'utils/metric';
+import { Metric, Scale } from 'types';
+import { metricToStr } from 'utils/metric';
 
 interface Props {
   data: (number | null)[][];
   focusedTrialId?: number;
   onTrialClick?: (event: MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale;
   selectedTrialIds: number[];
   trialIds: number[];
@@ -53,7 +53,7 @@ const LearningCurveChart: React.FC<Props> = ({
         },
         {
           grid: { width: 1 },
-          label: metricNameToStr(selectedMetric),
+          label: metricToStr(selectedMetric),
           scale: 'y',
           side: 3,
         },
@@ -81,18 +81,30 @@ const LearningCurveChart: React.FC<Props> = ({
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'batches' },
-        ...trialIds.map((trialId, index) => ({
-          label: `trial ${trialId}`,
-
-          scale: 'y',
-          show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
-          spanGaps: true,
-          stroke: glasbeyColor(index),
-          width: SERIES_WIDTH / window.devicePixelRatio,
-        })),
+        ...trialIds.map((trialId) => {
+          return {
+            label: `trial ${trialId}`,
+            scale: 'y',
+            show:
+              !selectedTrialsIdsSet.size ||
+              selectedTrialsIdsSet.has(trialId) ||
+              focusedTrialId === trialId,
+            spanGaps: true,
+            stroke: glasbeyColor(trialId),
+            width: SERIES_WIDTH / window.devicePixelRatio,
+          };
+        }),
       ],
     };
-  }, [onTrialClick, onTrialFocus, selectedMetric, selectedScale, trialIds, selectedTrialsIdsSet]);
+  }, [
+    onTrialClick,
+    onTrialFocus,
+    selectedMetric,
+    selectedScale,
+    trialIds,
+    selectedTrialsIdsSet,
+    focusedTrialId,
+  ]);
 
   /*
    * Focus on a trial series if provided.

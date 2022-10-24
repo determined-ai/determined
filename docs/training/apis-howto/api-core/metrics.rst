@@ -17,9 +17,8 @@ with only a few new lines of code.
       :start-after: NEW: import determined
       :end-before: def main
 
-#. Enable ``logging``, using the ``det.LOG_FORMAT`` for logs. Enabling ``logging`` enables useful
-   log messages from the ``determined`` library, and det.LOG_FORMAT enables filter-by-level in the
-   WebUI.
+#. Enable ``logging``, using the ``det.LOG_FORMAT`` for logs. This enables useful log messages from
+   the ``determined`` library, and ``det.LOG_FORMAT`` enables filter-by-level in the WebUI.
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/1_metrics.py
       :language: python
@@ -35,9 +34,8 @@ with only a few new lines of code.
       :language: python
       :start-at: with det.core.init
 
-#. Within ``main()``, add two calls. One to report training metrics, which is called periodically
-   during training, and one to report validation metrics, which is called every time a validation
-   runs.
+#. Within ``main()``, add two calls: (1) report training metrics periodically during training and
+   (2) report validation metrics every time a validation runs.
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/1_metrics.py
       :language: python
@@ -47,7 +45,7 @@ with only a few new lines of code.
    actual validation is not demonstrated by this example.
 
 #. Create a ``1_metrics.yaml`` file with an ``entrypoint`` invoking the new ``1_metrics.py`` file.
-   You can copy the ``0_start.yaml`` configuration file and change first couple of lines:
+   You can copy the ``0_start.yaml`` configuration file and change the first couple of lines:
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/1_metrics.yaml
       :language: yaml
@@ -59,8 +57,8 @@ with only a few new lines of code.
 
       det e create 1_metrics.yaml . -f
 
-#. You can now navigate to the new experiment in the WebUI and view the plot populated with training
-   and validation metrics.
+#. You can now navigate to the new experiment in the WebUI and view the plot populated with the
+   training and validation metrics.
 
 The complete ``1_metrics.py`` and ``1_metrics.yaml`` listings used in this example can be found in
 the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository

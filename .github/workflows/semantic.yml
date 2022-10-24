@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: semantic-pull-request
-        uses: amannn/action-semantic-pull-request@v4
+        uses: amannn/action-semantic-pull-request@v5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
         with:
           validateSingleCommit: true

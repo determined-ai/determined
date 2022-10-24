@@ -1,6 +1,8 @@
 import { sha512 } from 'js-sha512';
 
 import { globalStorage } from 'globalStorage';
+import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
+import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
@@ -41,7 +43,9 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Tasks: new Api.TasksApi(config),
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
+    TrialsComparison: new Api.TrialComparisonApi(config),
     Users: new Api.UsersApi(config),
+    Webhooks: new Api.WebhooksApi(config),
     Workspaces: new Api.WorkspacesApi(config),
   };
 };
@@ -190,24 +194,45 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
-export const getUserPermissions: DetApi<Service.GetUserParams, number, Type.Permission[]> = {
+/**
+ * Returns roles, and workspace/global assignment of those roles,
+ * for a user specified in params.
+ * @param {GetUserParams} params - An object containing userId to look up their roles.
+ */
+export const getUserPermissions: DetApi<
+  Service.GetUserParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+> = {
   name: 'getUserPermissions',
-  postProcess: (response) => {
-    const fillerPermission: Type.Permission = {
-      id: response,
-      isGlobal: true,
-      name: 'oss_user',
-    };
-    return [fillerPermission];
-  },
-  request: (params) =>
-    new Promise((resolve) => {
-      resolve(-1 * params.userId);
-    }),
+  postProcess: (response) => ({
+    assignments: response.assignments.map(decoder.mapV1UserAssignment),
+    roles: response.roles.map(decoder.mapV1Role),
+  }),
+  request: (params) => detApi.RBAC.getPermissionsSummary(params.userId),
+};
+
+/**
+ * Returns roles, and workspace/global assignment of the roles,
+ * associated with the active/requesting user.
+ */
+export const getPermissionsSummary: DetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+> = {
+  name: 'getPermissionsSummary',
+  postProcess: (response) => ({
+    assignments: response.assignments.map(decoder.mapV1UserAssignment),
+    roles: response.roles.map(decoder.mapV1Role),
+  }),
+  request: () => detApi.RBAC.getPermissionsSummary(),
 };
 
 export const getUserWebSetting: DetApi<
-  EmptyParams, Api.V1GetUserWebSettingResponse, Api.V1GetUserWebSettingResponse
+  EmptyParams,
+  Api.V1GetUserWebSettingResponse,
+  Api.V1GetUserWebSettingResponse
 > = {
   name: 'getUserWebSetting',
   postProcess: (response) => response,
@@ -215,13 +240,16 @@ export const getUserWebSetting: DetApi<
 };
 
 export const updateUserWebSetting: DetApi<
-  Service.UpdateUserWebSettingParams, Api.V1PostUserWebSettingResponse, Api.V1PostUserWebSettingResponse
+  Service.UpdateUserWebSettingParams,
+  Api.V1PostUserWebSettingResponse,
+  Api.V1PostUserWebSettingResponse
 > = {
   name: 'updateUserWebSetting',
   postProcess: (response) => response,
-  request: (params) => detApi.Users.postUserWebSetting({
-    setting: params.setting
-  }),
+  request: (params) =>
+    detApi.Users.postUserWebSetting({
+      setting: params.setting,
+    }),
 };
 
 /* Group */
@@ -302,16 +330,24 @@ export const getGroupRoles: DetApi<
   request: (params) => detApi.RBAC.getRolesAssignedToGroup(params.groupId),
 };
 
+export const getUserRoles: DetApi<
+  Service.GetUserParams,
+  Api.V1GetRolesAssignedToUserResponse,
+  Type.UserRole[]
+> = {
+  name: 'getRolesAssignedToUser',
+  postProcess: (response) => response.roles.map((rwa) => decoder.mapV1Role(rwa.role!)),
+  request: (params) => detApi.RBAC.getRolesAssignedToUser(params.userId),
+};
+
 export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse, Type.UserRole[]> =
   {
     name: 'listRoles',
     postProcess: (response) => response.roles.map(decoder.mapV1Role),
-    request: () =>
-      new Promise((resolve) => {
-        resolve({
-          pagination: {},
-          roles: new Array<Api.V1Role>(),
-        });
+    request: (params) =>
+      detApi.RBAC.listRoles({
+        limit: params.limit || 0,
+        offset: params.offset || 0,
       }),
   };
 
@@ -326,7 +362,65 @@ export const assignRolesToGroup: DetApi<
     detApi.RBAC.assignRoles({
       groupRoleAssignments: params.roleIds.map((roleId) => ({
         groupId: params.groupId,
+        roleAssignment: {
+          role: { roleId },
+          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+        },
+      })),
+    }),
+};
+
+export const removeRolesFromGroup: DetApi<
+  Service.RemoveRolesFromGroupParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeRolesFromGroup',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.removeAssignments({
+      groupRoleAssignments: params.roleIds.map((roleId) => ({
+        groupId: params.groupId,
+        roleAssignment: {
+          role: { roleId },
+          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+        },
+      })),
+    }),
+};
+
+export const assignRolesToUser: DetApi<
+  Service.AssignRolesToUserParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+> = {
+  name: 'assignRolesToUser',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.assignRoles({
+      userRoleAssignments: params.roleIds.map((roleId) => ({
+        roleAssignment: {
+          role: { roleId },
+          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+        },
+        userId: params.userId,
+      })),
+    }),
+};
+
+export const removeRolesFromUser: DetApi<
+  Service.RemoveRolesFromUserParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+> = {
+  name: 'removeRolesFromUser',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.removeAssignments({
+      userRoleAssignments: params.roleIds.map((roleId) => ({
         roleAssignment: { role: { roleId } },
+        scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+        userId: params.userId,
       })),
     }),
 };
@@ -381,6 +475,90 @@ export const getResourceAllocationAggregated: DetApi<
       params.period,
       options,
     );
+  },
+};
+
+/* Trials */
+export const queryTrials: DetApi<
+  Api.V1QueryTrialsRequest,
+  Api.V1QueryTrialsResponse,
+  Api.V1QueryTrialsResponse
+> = {
+  name: 'queryTrials',
+  postProcess: (response: Api.V1QueryTrialsResponse): Api.V1QueryTrialsResponse => {
+    return response;
+  },
+  request: (params: Api.V1QueryTrialsRequest) => {
+    return detApi.TrialsComparison.queryTrials({
+      ...params,
+      limit: params?.limit ? 3 * params.limit : 30,
+    });
+  },
+};
+
+export const updateTrialTags: DetApi<
+  Api.V1UpdateTrialTagsRequest,
+  Api.V1UpdateTrialTagsResponse,
+  Api.V1UpdateTrialTagsResponse
+> = {
+  name: 'updateTrialTags',
+  postProcess: (response: Api.V1UpdateTrialTagsResponse) => {
+    return { rowsAffected: response.rowsAffected };
+  },
+  request: (params: Api.V1UpdateTrialTagsRequest) => {
+    return detApi.TrialsComparison.updateTrialTags(params);
+  },
+};
+
+export const createTrialCollection: DetApi<
+  Api.V1CreateTrialsCollectionRequest,
+  Api.V1CreateTrialsCollectionResponse,
+  TrialsCollection | undefined
+> = {
+  name: 'createTrialsCollection',
+  postProcess: (response: Api.V1CreateTrialsCollectionResponse) =>
+    response.collection ? decodeTrialsCollection(response.collection) : undefined,
+  request: (params: Api.V1CreateTrialsCollectionRequest) => {
+    return detApi.TrialsComparison.createTrialsCollection(params);
+  },
+};
+
+export const getTrialsCollections: DetApi<
+  number,
+  Api.V1GetTrialsCollectionsResponse,
+  Api.V1GetTrialsCollectionsResponse
+> = {
+  name: 'getTrialsCollection',
+  postProcess: (response: Api.V1GetTrialsCollectionsResponse) => {
+    return { collections: response.collections };
+  },
+  request: (projectId: number) => {
+    return detApi.TrialsComparison.getTrialsCollections(projectId);
+  },
+};
+
+export const patchTrialsCollection: DetApi<
+  Api.V1PatchTrialsCollectionRequest,
+  Api.V1PatchTrialsCollectionResponse,
+  TrialsCollection | undefined
+> = {
+  name: 'patchTrialsCollection',
+  postProcess: (response: Api.V1PatchTrialsCollectionResponse) =>
+    response.collection ? decodeTrialsCollection(response.collection) : undefined,
+  request: (params: Api.V1PatchTrialsCollectionRequest) => {
+    return detApi.TrialsComparison.patchTrialsCollection(params);
+  },
+};
+
+export const deleteTrialsCollection: DetApi<
+  number,
+  Api.V1DeleteTrialsCollectionResponse,
+  Api.V1DeleteTrialsCollectionResponse
+> = {
+  name: 'deleteTrialsCollection',
+  postProcess: (response: Api.V1DeleteTrialsCollectionResponse) => response,
+  request: (id: number) => {
+    return detApi.TrialsComparison.deleteTrialsCollection(id);
   },
 };
 
@@ -750,6 +928,12 @@ export const getTrialWorkloads: DetApi<
       params.sortKey || 'batches',
       WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
+      undefined,
+      params.metricType
+        ? params.metricType === Type.MetricType.Training
+          ? 'METRIC_TYPE_TRAINING'
+          : 'METRIC_TYPE_VALIDATION'
+        : undefined,
     ),
 };
 
@@ -775,6 +959,34 @@ export const getActiveTasks: DetApi<
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
   request: () => detApi.Tasks.getActiveTasksCount(),
+};
+
+/* Webhooks */
+
+export const createWebhook: DetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook> = {
+  name: 'createWebhook',
+  postProcess: (response) => decoder.mapV1Webhook(response.webhook),
+  request: (params, options) => detApi.Webhooks.postWebhook(params, options),
+};
+
+export const deleteWebhook: DetApi<Service.GetWebhookParams, Api.V1DeleteWebhookResponse, void> = {
+  name: 'deleteWebhook',
+  postProcess: noOp,
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.deleteWebhook(params.id),
+};
+
+export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]> = {
+  name: 'getWebhooks',
+  postProcess: (response) => {
+    return response.webhooks.map((hook) => decoder.mapV1Webhook(hook));
+  },
+  request: () => detApi.Webhooks.getWebhooks(),
+};
+
+export const testWebhook: DetApi<Service.GetWebhookParams, Api.V1TestWebhookResponse, void> = {
+  name: 'testWebhook',
+  postProcess: noOp,
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.testWebhook(params.id),
 };
 
 /* Models */
@@ -997,6 +1209,22 @@ export const createWorkspace: DetApi<
   },
   request: (params, options) =>
     detApi.Workspaces.postWorkspace({ name: params.name.trim() }, options),
+};
+
+export const getWorkspaceMembers: DetApi<
+  Service.GetWorkspaceMembersParams,
+  Api.V1GetGroupsAndUsersAssignedToWorkspaceResponse,
+  Type.WorkspaceMembersResponse
+> = {
+  name: 'getWorkspaceMembers',
+  postProcess: (response) => ({
+    assignments: response.assignments,
+    groups: response.groups,
+    usersAssignedDirectly: response.usersAssignedDirectly.map(decoder.mapV1User),
+  }),
+  request: (params) => {
+    return detApi.RBAC.getGroupsAndUsersAssignedToWorkspace(params.workspaceId, params.nameFilter);
+  },
 };
 
 export const getWorkspaceProjects: DetApi<

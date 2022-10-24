@@ -30,7 +30,7 @@ export const ClusterOverallStats: React.FC = () => {
 
   return (
     <Section hideTitle title="Overview Stats">
-      <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
+      <Grid gap={ShirtSize.Medium} minItemWidth={150} mode={GridMode.AutoFill}>
         <OverviewStats title="Connected Agents">{agents ? agents.length : '?'}</OverviewStats>
         {[ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
           maxTotalSlots[resType] > 0 ? (

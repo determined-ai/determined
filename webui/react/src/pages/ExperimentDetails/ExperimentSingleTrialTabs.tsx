@@ -1,16 +1,19 @@
 import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
-import usePolling from 'hooks/usePolling';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
+import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails, TrialItem } from 'types';
 import handleError from 'utils/error';
@@ -26,20 +29,24 @@ const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Code = 'code',
-  Checkpoints = 'checkpoints',
-  Hyperparameters = 'hyperparameters',
-  Logs = 'logs',
-  Overview = 'overview',
-  Profiler = 'profiler',
-  Workloads = 'workloads',
-  Notes = 'notes',
-}
+const TabType = {
+  Checkpoints: 'checkpoints',
+  Code: 'code',
+  Hyperparameters: 'hyperparameters',
+  Logs: 'logs',
+  Notes: 'notes',
+  Overview: 'overview',
+  Profiler: 'profiler',
+  Workloads: 'workloads',
+} as const;
 
-interface Params {
-  tab?: TabType;
-}
+type Params = {
+  tab?: ValueOf<typeof TabType>;
+};
+
+const NeverTrials: React.FC = () => (
+  <Message title="Experiment will not have trials" type={MessageType.Alert} />
+);
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
@@ -57,7 +64,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   onTrialUpdate,
   pageRef,
 }: Props) => {
-  const history = useHistory();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [trialId, setFirstTrialId] = useState<number>();
   const [wontHaveTrials, setWontHaveTrials] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
@@ -69,6 +77,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
   } = useModalHyperparameterSearch({ experiment });
+
+  const waitingForTrials = !trialId && !wontHaveTrials;
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -120,23 +130,27 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
 
   const handleTabChange = useCallback(
     (key) => {
-      setTabKey(key);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
-    history.replace(`${basePath}/${TabType.Logs}?tail`);
-  }, [basePath, history]);
+    navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
+  }, [basePath, navigate]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [location.pathname, tab]);
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
+      if (window.location.pathname.includes(basePath))
+        navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [basePath, navigate, tab, tabKey]);
 
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
@@ -164,6 +178,18 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [fetchTrialDetails, prevTrialId, trialId]);
 
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setFirstTrialId(undefined);
+      setWontHaveTrials(false);
+      setTrialDetails(undefined);
+      setTabKey(DEFAULT_TAB_KEY);
+    };
+  }, [stopPolling]);
+
   const handleNotesUpdate = useCallback(
     async (editedNotes: string) => {
       try {
@@ -186,6 +212,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     openHyperparameterSearchModal({});
   }, [openHyperparameterSearchModal]);
 
+  const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
+    usePermissions();
+  const workspace = { id: experiment.workspaceId };
+  const editableNotes = canModifyExperimentMetadata({ workspace });
+  const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
+  const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -194,7 +227,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       <Tabs
         activeKey={tabKey}
         tabBarExtraContent={
-          tabKey === 'hyperparameters' ? (
+          tabKey === TabType.Hyperparameters && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
               <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
             </div>
@@ -202,37 +235,58 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         }
         tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}>
-        <TabPane key="overview" tab="Overview">
-          <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
+        <TabPane key={TabType.Overview} tab="Overview">
+          {waitingForTrials ? (
+            <Spinner spinning={true} tip="Waiting for trials..." />
+          ) : wontHaveTrials ? (
+            <NeverTrials />
+          ) : (
+            <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
+          )}
         </TabPane>
-        <TabPane key="hyperparameters" tab="Hyperparameters">
-          <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
+        <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
+          {wontHaveTrials ? (
+            <NeverTrials />
+          ) : (
+            <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
+          )}
         </TabPane>
-        <TabPane key="checkpoints" tab="Checkpoints">
-          <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-        </TabPane>
-        <TabPane key="code" tab="Code">
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
-              submittedConfig={experiment.originalConfig}
-            />
-          </React.Suspense>
-        </TabPane>
-        <TabPane key="notes" tab="Notes">
+        {showExperimentArtifacts ? (
+          <>
+            <TabPane key={TabType.Checkpoints} tab="Checkpoints">
+              <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+            </TabPane>
+            <TabPane key={TabType.Code} tab="Code">
+              <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+                <CodeViewer
+                  experimentId={experiment.id}
+                  runtimeConfig={experiment.configRaw}
+                  submittedConfig={experiment.originalConfig}
+                />
+              </React.Suspense>
+            </TabPane>
+          </>
+        ) : null}
+        <TabPane key={TabType.Notes} tab="Notes">
           <NotesCard
+            disabled={!editableNotes}
             notes={experiment.notes ?? ''}
             style={{ border: 0, height: '100%' }}
             onSave={handleNotesUpdate}
           />
         </TabPane>
-        <TabPane key="profiler" tab="Profiler">
+        <TabPane key={TabType.Profiler} tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="logs" tab="Logs">
-          <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
-        </TabPane>
+        {showExperimentArtifacts ? (
+          <TabPane key={TabType.Logs} tab="Logs">
+            {wontHaveTrials ? (
+              <NeverTrials />
+            ) : (
+              <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+            )}
+          </TabPane>
+        ) : null}
       </Tabs>
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>

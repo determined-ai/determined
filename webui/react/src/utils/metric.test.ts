@@ -21,7 +21,7 @@ const workloads: WorkloadGroup[] = [
   },
 ];
 
-const metricNames = [
+const metrics = [
   {
     metric: { name: 'accuracy', type: MetricType.Training },
     str: '[T] accuracy',
@@ -45,7 +45,7 @@ const metricNames = [
 ];
 
 describe('Metric Utilities', () => {
-  describe('extractMetricNames', () => {
+  describe('extractMetrics', () => {
     it('should extract metric names from workloads', () => {
       const result = [
         { name: 'accuracy', type: MetricType.Validation },
@@ -53,13 +53,13 @@ describe('Metric Utilities', () => {
         { name: 'accuracy', type: MetricType.Training },
         { name: 'loss', type: MetricType.Training },
       ];
-      expect(utils.extractMetricNames(workloads)).toStrictEqual(result);
+      expect(utils.extractMetrics(workloads)).toStrictEqual(result);
     });
   });
 
   describe('extractMetricValue', () => {
-    const accuracyTraining = metricNames[0].metric;
-    const lossValidation = metricNames[3].metric;
+    const accuracyTraining = metrics[0].metric;
+    const lossValidation = metrics[3].metric;
 
     it('should extract training metric', () => {
       expect(utils.extractMetricValue(workloads[0], accuracyTraining)).toBe(0.9);
@@ -94,40 +94,40 @@ describe('Metric Utilities', () => {
     });
   });
 
-  describe('metricNameToStr', () => {
+  describe('metricToStr', () => {
     it('should convert metric to string', () => {
-      metricNames.forEach((metricName) => {
-        expect(utils.metricNameToStr(metricName.metric)).toBe(metricName.str);
+      metrics.forEach((metric) => {
+        expect(utils.metricToStr(metric.metric)).toBe(metric.str);
       });
     });
 
     it('should truncate metric string to 30 characters', () => {
-      const metricName = {
+      const metric = {
         name: 'very-very-very-very-very-very-long-metric-name',
         type: MetricType.Training,
       };
-      expect(utils.metricNameToStr(metricName, 20)).toBe('[T] very-very-very-very-...');
+      expect(utils.metricToStr(metric, 20)).toBe('[T] very-very-very-very-...');
     });
   });
 
-  describe('metricNameToValue', () => {
+  describe('metricToKey', () => {
     it('should convert metric to value', () => {
-      metricNames.forEach((metricName) => {
-        expect(utils.metricNameToValue(metricName.metric)).toBe(metricName.value);
+      metrics.forEach((metric) => {
+        expect(utils.metricToKey(metric.metric)).toBe(metric.value);
       });
     });
   });
 
-  describe('valueToMetricName', () => {
+  describe('metricKeyToMetric', () => {
     it('should convert value to metric name', () => {
-      metricNames.forEach((metricName) => {
-        expect(utils.valueToMetricName(metricName.value)).toStrictEqual(metricName.metric);
+      metrics.forEach((metric) => {
+        expect(utils.metricKeyToMetric(metric.value)).toStrictEqual(metric.metric);
       });
     });
 
     it('should handle invalid metric name value', () => {
-      expect(utils.valueToMetricName('invalidMetricValue')).toBeUndefined();
-      expect(utils.valueToMetricName('fauxMetricType|loss')).toBeUndefined();
+      expect(utils.metricKeyToMetric('invalidMetricValue')).toBeUndefined();
+      expect(utils.metricKeyToMetric('fauxMetricType|loss')).toBeUndefined();
     });
   });
 });

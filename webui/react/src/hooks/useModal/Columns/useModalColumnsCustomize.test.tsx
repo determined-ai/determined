@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { DEFAULT_COLUMNS } from 'pages/ProjectDetails.settings';
+import { DEFAULT_COLUMNS } from 'pages/OldProjectDetails.settings';
 import {
   camelCaseToSentence,
   generateAlphaNumeric,
@@ -262,11 +262,14 @@ describe('useModalCustomizeColumns', () => {
 
     await user.click(await view.findByText('Remove All'));
 
+    ///** The reason for the 2 in the line 270 is that the UI never removes all of the options,
+    /* it always returns with the id and name. The line 272 is a reflection of the math done on the line 270.
+     */
     await waitFor(() => {
       expect(parseInt(lists[0].style.height)).toEqual(
-        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight,
+        (NUM_GENERATED_COLUMNS + (DEFAULT_COLUMNS.length - 2)) * lineHeight,
       );
-      expect(parseInt(lists[1].style.height)).toEqual(0);
+      expect(parseInt(lists[1].style.height)).toEqual(2 * lineHeight);
     });
   });
 });

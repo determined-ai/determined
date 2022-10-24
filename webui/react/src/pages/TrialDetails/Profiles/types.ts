@@ -5,13 +5,16 @@ import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
 } from 'services/api-ts-sdk';
+import { ValueOf } from 'shared/types';
 import { TrialDetails } from 'types';
 
-export enum MetricType {
-  System = 'PROFILER_METRIC_TYPE_SYSTEM',
-  Throughput = 'PROFILER_METRIC_TYPE_MISC',
-  Timing = 'PROFILER_METRIC_TYPE_TIMING',
-}
+export const MetricType = {
+  System: 'PROFILER_METRIC_TYPE_SYSTEM',
+  Throughput: 'PROFILER_METRIC_TYPE_MISC',
+  Timing: 'PROFILER_METRIC_TYPE_TIMING',
+} as const;
+
+export type MetricType = ValueOf<typeof MetricType>;
 
 // {[metric_type]: {[name]: {[agent]: [gpu, ..], ..}, ..}, ..}
 export type AvailableSeriesType = Record<string, Record<string, string[]>>;

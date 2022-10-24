@@ -10,6 +10,7 @@ const { TabPane } = Tabs;
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 interface Props {
+  disabled?: boolean;
   editing?: boolean;
   markdown: string;
   onChange?: (editedMarkdown: string) => void;
@@ -22,10 +23,10 @@ interface RenderProps {
   placeholder?: string;
 }
 
-enum TabType {
-  Edit = 'edit',
-  Preview = 'preview',
-}
+const TabType = {
+  Edit: 'edit',
+  Preview: 'preview',
+} as const;
 
 const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick }) => {
   const showPlaceholder = !markdown && placeholder;
@@ -40,10 +41,16 @@ const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick 
   );
 };
 
-const Markdown: React.FC<Props> = ({ editing = false, markdown, onChange, onClick }: Props) => {
+const Markdown: React.FC<Props> = ({
+  disabled = false,
+  editing = false,
+  markdown,
+  onChange,
+  onClick,
+}: Props) => {
   return (
-    <div aria-label="markdown-editor" className={css.base}>
-      {editing ? (
+    <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
+      {editing && !disabled ? (
         <Tabs className="no-padding">
           <TabPane className={css.noOverflow} key={TabType.Edit} tab="Edit">
             <React.Suspense
@@ -75,7 +82,11 @@ const Markdown: React.FC<Props> = ({ editing = false, markdown, onChange, onClic
           </TabPane>
         </Tabs>
       ) : (
-        <MarkdownRender markdown={markdown} placeholder="Add notes..." onClick={onClick} />
+        <MarkdownRender
+          markdown={markdown}
+          placeholder={disabled ? 'No note present.' : 'Add notes...'}
+          onClick={onClick}
+        />
       )}
     </div>
   );

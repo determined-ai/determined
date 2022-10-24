@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useState } from 'react';
-import { useParams } from 'react-router';
-import { useHistory } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
@@ -10,18 +9,21 @@ import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
+import { ValueOf } from 'shared/types';
 
 const { TabPane } = Tabs;
 
-export enum TabType {
-  Account = 'Account',
-  UserManagement = 'User Management',
-  GroupManagement = 'Group Management',
-}
+export const TabType = {
+  Account: 'Account',
+  GroupManagement: 'Group Management',
+  UserManagement: 'User Management',
+} as const;
 
-interface Params {
+export type TabType = ValueOf<typeof TabType>;
+
+type Params = {
   tab?: TabType;
-}
+};
 
 const TAB_KEYS = {
   [TabType.Account]: 'account',
@@ -31,7 +33,7 @@ const TAB_KEYS = {
 const DEFAULT_TAB_KEY = TabType.Account;
 
 const SettingsContent: React.FC = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { tab } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
@@ -41,9 +43,9 @@ const SettingsContent: React.FC = () => {
   const handleTabChange = useCallback(
     (key) => {
       setTabKey(key);
-      history.replace(paths.settings(key));
+      navigate(paths.settings(key), { replace: true });
     },
-    [history],
+    [navigate],
   );
 
   return (
@@ -55,7 +57,7 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      {(rbacEnabled || canViewUsers) && (
+      {rbacEnabled && canViewUsers && (
         <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
           <UserManagement />
         </TabPane>

@@ -35,7 +35,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   return (
     <Section>
-      <Grid gap={ShirtSize.medium} minItemWidth={180} mode={GridMode.AutoFill}>
+      <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
         {trial?.runnerState && (
           <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
         )}

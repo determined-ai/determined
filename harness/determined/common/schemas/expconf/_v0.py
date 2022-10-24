@@ -20,6 +20,21 @@ class DeviceV0(schemas.SchemaBase):
     ) -> None:
         pass
 
+    @classmethod
+    def from_dict(cls, d: Union[dict, str], prevalidated: bool = False) -> "DeviceV0":
+        # Accept --device strings and convert them to maps.
+        if isinstance(d, str):
+            fields = d.split(":")
+            if len(fields) not in [2, 3]:
+                raise ValueError("wrong number of fields in device string")
+            d = {
+                "host_path": fields[0],
+                "container_path": fields[1],
+                "mode": None if len(fields) < 3 else fields[2],
+            }
+
+        return super().from_dict(d, prevalidated)
+
 
 class ResourcesConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/resources.json"
@@ -45,6 +60,26 @@ class ResourcesConfigV0(schemas.SchemaBase):
         shm_size: Optional[int] = None,
         slots_per_trial: Optional[int] = None,
         weight: Optional[float] = None,
+    ) -> None:
+        pass
+
+
+class PbsClusterConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
+
+    @schemas.auto_init
+    def __init__(
+        self,
+    ) -> None:
+        pass
+
+
+class SlurmClusterConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
+
+    @schemas.auto_init
+    def __init__(
+        self,
     ) -> None:
         pass
 
@@ -333,8 +368,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
-    slurm: Optional[List[str]] = None
-    pbs: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
@@ -347,8 +380,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
-        slurm: Optional[List[str]] = None,
-        pbs: Optional[List[str]] = None,
     ) -> None:
         pass
 
@@ -465,6 +496,13 @@ class AdaptiveMode(enum.Enum):
     AGGRESSIVE = "aggressive"
 
 
+@schemas.register_known_type
+class Unit(enum.Enum):
+    BATCHES = "batches"
+    EPOCHS = "epochs"
+    RECORDS = "records"
+
+
 class SearcherConfigV0(schemas.UnionBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher.json"
     _union_key = "name"
@@ -487,6 +525,23 @@ class SingleConfigV0(schemas.SchemaBase):
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
+    ) -> None:
+        pass
+
+
+@SearcherConfigV0.member("custom")
+class CustomConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
+    metric: str
+    smaller_is_better: Optional[bool] = None
+    unit: Optional[Unit] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        metric: str,
+        smaller_is_better: Optional[bool] = None,
+        unit: Optional[Unit] = None,
     ) -> None:
         pass
 
@@ -709,6 +764,7 @@ SearcherConfigV0_Type = Union[
     SyncHalvingConfigV0,
     AdaptiveConfigV0,
     AdaptiveSimpleConfigV0,
+    CustomConfigV0,
 ]
 SearcherConfigV0.finalize(SearcherConfigV0_Type)
 
@@ -882,6 +938,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     min_validation_period: Optional[LengthV0] = None
     name: Optional[str] = None
     optimizations: Optional[OptimizationsConfigV0] = None
+    pbs: Optional[PbsClusterConfigV0] = None
     perform_initial_validation: Optional[bool] = None
     profiling: Optional[ProfilingConfigV0] = None
     project: Optional[str] = None
@@ -890,6 +947,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     resources: Optional[ResourcesConfigV0] = None
     scheduling_unit: Optional[int] = None
     # security: Optional[SecurityConfigV0] = None
+    slurm: Optional[SlurmClusterConfigV0] = None
     # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
     workspace: Optional[str] = None
 
@@ -913,6 +971,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         min_validation_period: Optional[LengthV0] = None,
         name: Optional[str] = None,
         optimizations: Optional[OptimizationsConfigV0] = None,
+        pbs: Optional[PbsClusterConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
         profiling: Optional[ProfilingConfigV0] = None,
         project: Optional[str] = None,
@@ -921,6 +980,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         resources: Optional[ResourcesConfigV0] = None,
         scheduling_unit: Optional[int] = None,
         # security: Optional[SecurityConfigV0] = None,
+        slurm: Optional[SlurmClusterConfigV0] = None,
         # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
         workspace: Optional[str] = None,
     ) -> None:

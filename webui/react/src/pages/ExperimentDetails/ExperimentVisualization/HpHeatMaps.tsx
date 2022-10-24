@@ -16,19 +16,19 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive, Range } from 'shared/types';
+import { Primitive, Range, ValueOf } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
   ExperimentBase,
   HyperparameterType,
-  MetricName,
+  Metric,
   MetricType,
   metricTypeParamMap,
   Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { metricNameToStr } from 'utils/metric';
+import { metricToStr } from 'utils/metric';
 
 import css from './HpHeatMaps.module.scss';
 
@@ -39,7 +39,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale;
   selectedView: ViewType;
 }
@@ -56,10 +56,12 @@ interface HpData {
   trialIds: number[];
 }
 
-enum ViewType {
-  Grid = 'grid',
-  List = 'list',
-}
+const ViewType = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+type ViewType = ValueOf<typeof ViewType>;
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
@@ -164,7 +166,7 @@ const HpHeatMaps: React.FC<Props> = ({
             series: [{}, { fill, stroke }],
             title,
           },
-          tooltipLabels: [xLabel, yLabel, null, metricNameToStr(selectedMetric), null, 'trial ID'],
+          tooltipLabels: [xLabel, yLabel, null, metricToStr(selectedMetric), null, 'trial ID'],
         };
       });
     });
@@ -316,10 +318,11 @@ const HpHeatMaps: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [

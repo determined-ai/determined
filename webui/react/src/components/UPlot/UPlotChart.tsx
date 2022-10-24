@@ -68,10 +68,8 @@ const shouldRecreate = (
     const nextSerie = next.series?.[seriesIdx];
     const prevSerie = prev.series?.[seriesIdx];
     return (
-      (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show) ||
-      (prevSerie?.show != null && prevSerie?.show !== nextSerie?.show) ||
       (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label) ||
-      (nextSerie?.stroke != null && chartSerie?.stroke !== nextSerie?.stroke) ||
+      (prevSerie?.stroke != null && prevSerie?.stroke !== nextSerie?.stroke) ||
       (nextSerie?.paths != null && chartSerie?.paths !== nextSerie?.paths) ||
       (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
     );
@@ -90,6 +88,7 @@ const UPlotChart: React.FC<Props> = ({
   title,
 }: Props) => {
   const chartRef = useRef<uPlot>();
+  const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const classes = [css.base];
@@ -189,6 +188,14 @@ const UPlotChart: React.FC<Props> = ({
     chartRef.current.setSeries(hasFocus ? (focusIndex as number) + 1 : null, { focus: hasFocus });
   }, [focusIndex]);
 
+  useEffect(() => {
+    extendedOptions.series.forEach((ser, i) => {
+      const chartSer = chartRef.current?.series?.[i];
+      if (chartSer && chartSer.show !== ser?.show)
+        chartRef.current?.setSeries(i, { show: ser.show }, false);
+    });
+  }, [extendedOptions.series]);
+
   /*
    * Resize the chart when resize events happen.
    */
@@ -198,6 +205,8 @@ const UPlotChart: React.FC<Props> = ({
     const [width, height] = [resize.width, options?.height || chartRef.current.height];
     if (chartRef.current.width === width && chartRef.current.height === height) return;
     chartRef.current.setSize({ height, width });
+    const container = chartDivRef.current;
+    if (container && height) setDivHeight(height);
   }, [options?.height, resize]);
 
   /*
@@ -224,7 +233,7 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   return (
-    <div className={classes.join(' ')} ref={chartDivRef} style={style}>
+    <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}

@@ -1,9 +1,10 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Prompt, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import Spinner from 'shared/components/Spinner/Spinner';
+import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -50,6 +51,31 @@ const NotesCard: React.FC<Props> = ({
     setIsLoading(false);
     setEditedNotes(existingNotes.current);
   }, [noteChangeSignal]);
+
+  useEffect(() => {
+    // TODO: This is an alternative of Prompt from react-router-dom
+    // As soon as react-router-domv6 supports Prompt, replace this with Promt
+    const unblock = isEditing
+      ? history.block((tx) => {
+          const pathnames = ['notes', 'models', 'projects'];
+          let isAllowedNavigation = true;
+
+          // check pathname if one of these names is included
+          if (pathnames.some((name) => location.pathname.includes(name)) && notes !== editedNotes) {
+            isAllowedNavigation = window.confirm(
+              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
+            );
+          }
+          if (isAllowedNavigation) {
+            unblock();
+            tx.retry();
+          }
+          return isAllowedNavigation;
+        })
+      : () => undefined;
+
+    return () => unblock();
+  }, [editedNotes, isEditing, location.pathname, notes]);
 
   const editNotes = useCallback(() => {
     if (disabled) return;
@@ -139,23 +165,13 @@ const NotesCard: React.FC<Props> = ({
       }>
       <Spinner spinning={isLoading}>
         <Markdown
+          disabled={disabled}
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}
           onClick={handleNotesClick}
         />
       </Spinner>
-      <Prompt
-        message={(newLocation) => {
-          const isSameExperiment =
-            location.pathname.split('/')[0] === 'experiment' &&
-            newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
-          return isSameExperiment
-            ? true
-            : 'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.';
-        }}
-        when={editedNotes !== notes}
-      />
     </Card>
   );
 };

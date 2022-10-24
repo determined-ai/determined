@@ -31,7 +31,6 @@ You may intentionally leave this section blank and remove the title.
 - [ ] Release notes should be added as a separate file under `docs/release-notes/`.
 See [Release Note](https://github.com/determined-ai/determined/blob/master/docs/release-notes/README.md) for details.
 - [ ] Licenses should be included for new code which was copied and/or modified from any external code.
-- [ ] If modifying `/webui/react/src/shared/` verify `make -C webui/react test-shared` passes.
 
 
 <!---

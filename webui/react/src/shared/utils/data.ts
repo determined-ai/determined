@@ -2,15 +2,24 @@
 import { Primitive, RawJson, RecordKey, UnknownRecord } from '../types';
 
 // `bigint` is not support yet for
+
 export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isDate = (data: unknown): data is Date => data instanceof Date;
 export const isMap = (data: unknown): data is Map<unknown, unknown> => data instanceof Map;
 export const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
+export const isFiniteNumber = (data: unknown): data is number => isNumber(data) && isFinite(data);
 export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };
+
+export const finiteElseUndefined = (data: string | undefined): number | undefined => {
+  if (data === undefined) return undefined;
+  const x = parseFloat(data);
+  return isFinite(x) ? x : undefined;
+};
+
 export const isPrimitive = (data: unknown): boolean =>
   isBigInt(data) ||
   isBoolean(data) ||
@@ -118,7 +127,13 @@ export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   if (path === '') return obj as T;
   let value = obj || {};
-  return path.split('.').every((key) => (value = value[key]) !== undefined)
+  return path.split('.').every((key) => {
+    if (!value) return false;
+    else {
+      value = value[key];
+      return value !== undefined;
+    }
+  })
     ? (value as T)
     : undefined;
 };

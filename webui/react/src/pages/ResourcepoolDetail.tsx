@@ -1,6 +1,6 @@
 import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
@@ -9,18 +9,19 @@ import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
+import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
+import Message, { MessageType } from 'shared/components/Message';
+import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { floatToPercent } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import { ResourceState } from 'types';
-import { JobState } from 'types';
+import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
 
@@ -29,18 +30,21 @@ import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 
-interface Params {
+type Params = {
   poolname?: string;
   tab?: TabType;
-}
+};
 const { TabPane } = Tabs;
 
-enum TabType {
-  Active = 'active',
-  Queued = 'queued',
-  Stats = 'stats',
-  Configuration = 'configuration',
-}
+const TabType = {
+  Active: 'active',
+  Configuration: 'configuration',
+  Queued: 'queued',
+  Stats: 'stats',
+} as const;
+
+type TabType = ValueOf<typeof TabType>;
+
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetail: React.FC = () => {
@@ -62,7 +66,7 @@ const ResourcepoolDetail: React.FC = () => {
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
   }, [pool, agents]);
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const [canceler] = useState(new AbortController());
 
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
@@ -91,8 +95,8 @@ const ResourcepoolDetail: React.FC = () => {
   useEffect(() => {
     if (tab || !pool) return;
     const basePath = paths.resourcePool(pool.name);
-    history.replace(`${basePath}/${DEFAULT_POOL_TAB_KEY}`);
-  }, [history, pool, tab]);
+    navigate(`${basePath}/${DEFAULT_POOL_TAB_KEY}`, { replace: true });
+  }, [navigate, pool, tab]);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_POOL_TAB_KEY);
@@ -103,9 +107,9 @@ const ResourcepoolDetail: React.FC = () => {
       if (!pool) return;
       setTabKey(key);
       const basePath = paths.resourcePool(pool.name);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`);
     },
-    [history, pool],
+    [navigate, pool],
   );
 
   const renderPoolConfig = useCallback(() => {
@@ -135,10 +139,11 @@ const ResourcepoolDetail: React.FC = () => {
   }, [pool]);
 
   if (!pool) return <div />;
+
   return (
     <Page className={css.poolDetailPage}>
       <Section>
-        <div className={css.nav} onClick={() => history.replace(paths.cluster())}>
+        <div className={css.nav} onClick={() => navigate(paths.cluster(), { replace: true })}>
           <Icon name="arrow-left" size="tiny" />
           <div className={css.icon}>
             <PoolLogo type={pool.type} />
@@ -154,28 +159,39 @@ const ResourcepoolDetail: React.FC = () => {
         <RenderAllocationBarResourcePool
           poolStats={poolStats}
           resourcePool={pool}
-          size={ShirtSize.large}
+          size={ShirtSize.Large}
         />
       </Section>
       <Section>
-        <Tabs
-          activeKey={tabKey}
-          className="no-padding"
-          destroyInactiveTabPane={true}
-          onChange={handleTabChange}>
-          <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
-            <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
-          </TabPane>
-          <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
-            <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
-          </TabPane>
-          <TabPane key={TabType.Stats} tab="Stats">
-            <ClustersQueuedChart poolStats={poolStats} />
-          </TabPane>
-          <TabPane key={TabType.Configuration} tab="Configuration">
-            {renderPoolConfig()}
-          </TabPane>
-        </Tabs>
+        {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
+          <Page className={css.poolDetailPage}>
+            <Section>
+              <Message
+                title="Resource Pool is unavailable for Round Robin schedulers."
+                type={MessageType.Empty}
+              />
+            </Section>
+          </Page>
+        ) : (
+          <Tabs
+            activeKey={tabKey}
+            className="no-padding"
+            destroyInactiveTabPane={true}
+            onChange={handleTabChange}>
+            <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
+              <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
+            </TabPane>
+            <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
+              <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
+            </TabPane>
+            <TabPane key={TabType.Stats} tab="Stats">
+              <ClustersQueuedChart poolStats={poolStats} />
+            </TabPane>
+            <TabPane key={TabType.Configuration} tab="Configuration">
+              {renderPoolConfig()}
+            </TabPane>
+          </Tabs>
+        )}
       </Section>
     </Page>
   );

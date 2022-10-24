@@ -94,6 +94,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       const treeChildren: DefaultOptionType[] = projects
         .filter((project) => project.name.toLocaleLowerCase().includes(text))
         .map((project) => ({
+          key: `project-${project.id}`,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
               <ProjectOutlined style={{ fontSize: '16px' }} />
@@ -117,6 +118,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
           children: children,
           isWorkspaceIncluded:
             searchText.length > 0 ? isWorkspaceNameIncluded || children.length > 0 : true,
+          key: `workspace-${workspace.id}`,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
               <Icon name="workspaces" />

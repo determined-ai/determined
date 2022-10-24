@@ -46,20 +46,20 @@ const setup = () => render(<InteractiveTaskContainer />);
 
 describe('InteractiveTask', () => {
   it('should render page with task name and resource pool', async () => {
-    await setup();
+    setup();
     expect(await screen.findByText(TASK_NAME)).toBeInTheDocument();
     expect(await screen.findByText(TASK_RESOURCE_POOL)).toBeInTheDocument();
   });
 
   it('should render page with context menu', async () => {
-    await setup();
+    setup();
     userEvent.click(screen.getByTestId('task-action-dropdown-trigger'));
     expect(await screen.findByText('Kill')).toBeInTheDocument();
     expect(await screen.findByText('View Logs')).toBeInTheDocument();
   });
 
-  it('should render page with correct title', async () => {
-    await setup();
+  it('should render page with correct title', () => {
+    setup();
     expect(document.title).toEqual(TASK_NAME);
   });
 });

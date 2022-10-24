@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { Router, useParams } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import {
@@ -54,9 +54,9 @@ const setup = () => {
   const view = render(
     <StoreProvider>
       <HelmetProvider>
-        <Router history={history}>
+        <HistoryRouter history={history}>
           <ExperimentDetails />
-        </Router>
+        </HistoryRouter>
       </HelmetProvider>
     </StoreProvider>,
   );

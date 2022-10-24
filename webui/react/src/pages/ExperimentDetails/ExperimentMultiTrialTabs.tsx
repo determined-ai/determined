@@ -1,34 +1,37 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
+import usePermissions from 'hooks/usePermissions';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, ExperimentVisualizationType } from 'types';
+import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
+import { ExperimentVisualizationType } from './ExperimentVisualization';
 
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Code = 'code',
-  Checkpoints = 'checkpoints',
-  Trials = 'trials',
-  Visualization = 'visualization',
-  Notes = 'notes',
-}
+const TabType = {
+  Checkpoints: 'checkpoints',
+  Code: 'code',
+  Notes: 'notes',
+  Trials: 'trials',
+  Visualization: 'visualization',
+} as const;
 
-interface Params {
-  tab?: TabType;
+type Params = {
+  tab?: ValueOf<typeof TabType>;
   viz?: ExperimentVisualizationType;
-}
+};
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Visualization;
@@ -49,7 +52,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   pageRef,
 }: Props) => {
   const { tab, viz } = useParams<Params>();
-  const history = useHistory();
+  const navigate = useNavigate();
+  const location = useLocation();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [tabKey, setTabKey] = useState(defaultTabKey);
 
@@ -57,18 +61,22 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
 
   const handleTabChange = useCallback(
     (key) => {
-      setTabKey(key);
-      history.replace(`${basePath}/${key}`);
+      navigate(`${basePath}/${key}`, { replace: true });
     },
-    [basePath, history],
+    [basePath, navigate],
   );
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [location.pathname, tab]);
 
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
+      if (window.location.pathname.includes(basePath))
+        navigate(`${basePath}/${tabKey}`, { replace: true });
     }
-  }, [basePath, history, tab, tabKey]);
+  }, [basePath, navigate, tab, tabKey]);
 
   const handleNotesUpdate = useCallback(
     async (editedNotes: string) => {
@@ -88,9 +96,17 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
+  const { canModifyExperimentMetadata, canViewExperimentArtifacts } = usePermissions();
+  const showExperimentArtifacts = canViewExperimentArtifacts({
+    workspace: { id: experiment.workspaceId },
+  });
+  const editableNotes = canModifyExperimentMetadata({
+    workspace: { id: experiment.workspaceId },
+  });
+
   return (
-    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
-      <TabPane key="visualization" tab="Visualization">
+    <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+      <TabPane key={TabType.Visualization} tab="Visualization">
         <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization
             basePath={`${basePath}/${TabType.Visualization}`}
@@ -99,23 +115,28 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
           />
         </React.Suspense>
       </TabPane>
-      <TabPane key="trials" tab="Trials">
+      <TabPane key={TabType.Trials} tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key="checkpoints" tab="Checkpoints">
-        <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-      </TabPane>
-      <TabPane key="code" tab="Code">
-        <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-          <CodeViewer
-            experimentId={experiment.id}
-            runtimeConfig={experiment.configRaw}
-            submittedConfig={experiment.originalConfig}
-          />
-        </React.Suspense>
-      </TabPane>
-      <TabPane key="notes" tab="Notes">
+      {showExperimentArtifacts ? (
+        <>
+          <TabPane key={TabType.Checkpoints} tab="Checkpoints">
+            <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
+          </TabPane>
+          <TabPane key={TabType.Code} tab="Code">
+            <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+              <CodeViewer
+                experimentId={experiment.id}
+                runtimeConfig={experiment.configRaw}
+                submittedConfig={experiment.originalConfig}
+              />
+            </React.Suspense>
+          </TabPane>
+        </>
+      ) : null}
+      <TabPane key={TabType.Notes} tab="Notes">
         <NotesCard
+          disabled={!editableNotes}
           notes={experiment.notes ?? ''}
           style={{ border: 0 }}
           onSave={handleNotesUpdate}

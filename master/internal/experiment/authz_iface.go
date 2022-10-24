@@ -11,6 +11,7 @@ import (
 // ExperimentAuthZ describes authz methods for experiments.
 type ExperimentAuthZ interface {
 	// GET /api/v1/experiments/:exp_id
+	// GET /tasks
 	CanGetExperiment(curUser model.User, e *model.Experiment) (canGetExp bool, serverError error)
 
 	// GET /api/v1/experiments/:exp_id/file_tree
@@ -74,6 +75,9 @@ type ExperimentAuthZ interface {
 	// POST /api/v1/trials/:trial_id/training_metrics
 	// POST /api/v1/trials/:trial_id/validation_metrics
 	// POST /api/v1/trials/:trial_id/runner/metadata
+	// POST /api/v1/allocations/:allocation_id/all_gather
+	// POST /api/v1/allocations/:allocation_id/proxy_address
+	// POST /api/v1/allocations/:allocation_id/waiting
 	CanEditExperiment(curUser model.User, e *model.Experiment) error
 
 	// POST /api/v1/experiments/:exp_id/archive
@@ -90,6 +94,10 @@ type ExperimentAuthZ interface {
 	CanSetExperimentsWeight(curUser model.User, e *model.Experiment, weight float64) error
 	CanSetExperimentsPriority(curUser model.User, e *model.Experiment, priority int) error
 	CanSetExperimentsCheckpointGCPolicy(curUser model.User, e *model.Experiment) error
+
+	// GET /api/v1/experiments/:exp_id/searcher_events
+	// POST /api/v1/experiments/:exp_id/searcher_operations
+	CanRunCustomSearch(curUser model.User, e *model.Experiment) error
 }
 
 // AuthZProvider is the authz registry for experiments.

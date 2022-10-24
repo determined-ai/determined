@@ -6,8 +6,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/determined-ai/determined/master/pkg/check"
-
 	"gotest.tools/assert"
 )
 
@@ -133,17 +131,13 @@ func TestOverrideMasterEnvironmentVariables(t *testing.T) {
 }
 
 // Helper function to setup and verify slurm option test cases.
-func testEnvironmentSlurm(t *testing.T, slurm []string, expected ...string) {
-	env := Environment{
-		Slurm: slurm,
-	}
-	err := check.Validate(env)
-
+func testEnvironmentSlurm(t *testing.T, slurmOptions []string, expected ...string) {
+	err := ValidateSlurm(slurmOptions)
 	if len(expected) == 0 {
-		assert.Equal(t, err, nil)
+		assert.Equal(t, len(err), 0)
 	} else {
-		for _, msg := range expected {
-			assert.ErrorContains(t, err, msg)
+		for i, msg := range expected {
+			assert.ErrorContains(t, err[i], msg)
 		}
 	}
 }
@@ -166,4 +160,26 @@ func TestValidateSlurmOptions(t *testing.T) {
 	testEnvironmentSlurm(t, []string{"--nice=7", " -N2", "-Dmydir", "--partion=pname"},
 		"slurm option -N is not configurable",
 		"slurm option -D is not configurable")
+}
+
+func TestDeviceConfig(t *testing.T) {
+	// Devices can be strings or maps, and merging device lists is additive.
+	var actual DevicesConfig
+
+	assert.NilError(t, json.Unmarshal([]byte(`[
+    {"host_path": "/not_asdf", "container_path": "/asdf"},
+    {"host_path": "/zxcv", "container_path": "/zxcv"}
+]`), &actual))
+
+	assert.NilError(t, json.Unmarshal([]byte(`[
+    {"host_path": "/asdf", "container_path": "/asdf"},
+    "/qwer:/qwer"
+]`), &actual))
+
+	var expected DevicesConfig
+	expected = append(expected, DeviceConfig{"/asdf", "/asdf", "mrw"})
+	expected = append(expected, DeviceConfig{"/qwer", "/qwer", "mrw"})
+	expected = append(expected, DeviceConfig{"/zxcv", "/zxcv", "mrw"})
+
+	assert.DeepEqual(t, actual, expected)
 }

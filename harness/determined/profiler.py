@@ -252,7 +252,7 @@ class ProfilerAgent:
     are collected and the record_timing function is a no-op.
 
     Profiling is automatically disabled if profiling metrics already exist in the API. This would
-    indicates that the harness restarted due to job failure or being descheduled. Picking up
+    indicate that the harness restarted due to job failure or being descheduled. Picking up
     profiling in that case introduces issues around multiple data points for the same batch_idx,
     difficult-to-render graphs due to large time gaps, and misleading data due to GPU warmup.
 

@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -24,26 +25,66 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-var workspaceAuthZ *mocks.WorkspaceAuthZ
+func TestPostWorkspace(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t)
+
+	// Name min error.
+	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: ""})
+	require.Error(t, err)
+
+	// Name max error.
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: string(make([]byte, 81))})
+	require.Error(t, err)
+
+	workspaceName := uuid.New().String()
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	require.NoError(t, err)
+
+	// Workspace returned correctly?
+	expected := &workspacev1.Workspace{
+		Id:             resp.Workspace.Id,
+		Name:           workspaceName,
+		Archived:       false,
+		Username:       curUser.Username,
+		Immutable:      false,
+		NumProjects:    0,
+		Pinned:         true,
+		UserId:         int32(curUser.ID),
+		NumExperiments: 0,
+		State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
+		ErrorMessage:   "",
+		AgentUserGroup: nil,
+	}
+	proto.Equal(expected, resp.Workspace)
+	require.Equal(t, expected, resp.Workspace)
+
+	// Workspace persisted correctly?
+	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
+	require.NoError(t, err)
+	proto.Equal(expected, getWorkResp.Workspace)
+	require.Equal(t, expected, getWorkResp.Workspace)
+}
+
+var wAuthZ *mocks.WorkspaceAuthZ
 
 func workspaceNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("workspace (%d) not found", id))
 }
 
-func SetupWorkspaceAuthZTest(
+func setupWorkspaceAuthZTest(
 	t *testing.T,
 ) (*apiServer, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, _, curUser, ctx := SetupUserAuthzTest(t)
+	api, _, curUser, ctx := setupUserAuthzTest(t)
 
-	if workspaceAuthZ == nil {
-		workspaceAuthZ = &mocks.WorkspaceAuthZ{}
-		workspace.AuthZProvider.Register("mock", workspaceAuthZ)
+	if wAuthZ == nil {
+		wAuthZ = &mocks.WorkspaceAuthZ{}
+		workspace.AuthZProvider.Register("mock", wAuthZ)
 	}
-	return api, workspaceAuthZ, curUser, ctx
+	return api, wAuthZ, curUser, ctx
 }
 
 func TestAuthzGetWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 	// Deny returns same as 404.
 	_, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: -9999})
 	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
@@ -61,7 +102,7 @@ func TestAuthzGetWorkspace(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaceProjects(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceProjectsError")
@@ -82,7 +123,7 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaces(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceError")
@@ -101,7 +142,7 @@ func TestAuthzGetWorkspaces(t *testing.T) {
 }
 
 func TestAuthzPostWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny returns error wrapped in forbidden.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateWorkspaceDeny")
@@ -119,11 +160,12 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
 }
 
 func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error

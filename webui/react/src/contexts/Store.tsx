@@ -57,68 +57,75 @@ interface State {
   users: DetailedUser[];
 }
 
-export enum StoreAction {
-  Reset = 'Reset',
+export const StoreAction = {
+  // Omnibar
+  HideOmnibar: 'HideOmnibar',
 
-  // Agents
-  SetAgents = 'SetAgents',
+  Reset: 'Reset',
 
   // Auth
-  ResetAuth = 'ResetAuth',
-  ResetAuthCheck = 'ResetAuthCheck',
-  SetAuth = 'SetAuth',
-  SetAuthCheck = 'SetAuthCheck',
+  ResetAuth: 'ResetAuth',
 
-  // Info
-  SetInfo = 'SetInfo',
-  SetInfoCheck = 'SetInfoCheck',
-
-  // Users
-  SetUsers = 'SetUsers',
-  SetCurrentUser = 'SetCurrentUser',
-
-  // User Settings
-  SetUserSettings = 'SetUserSettings',
-
-  // Omnibar
-  HideOmnibar = 'HideOmnibar',
-  ShowOmnibar = 'ShowOmnibar',
-
-  // ResourcePools
-  SetResourcePools = 'SetResourcePools',
-
-  // PinnedWorkspaces
-  SetPinnedWorkspaces = 'SetPinnedWorkspaces',
-
-  // Tasks
-  SetActiveTasks = 'SetActiveTasks',
+  ResetAuthCheck: 'ResetAuthCheck',
 
   // Active Experiments
-  SetActiveExperiments = 'SetActiveExperiments',
+  SetActiveExperiments: 'SetActiveExperiments',
+
+  // Tasks
+  SetActiveTasks: 'SetActiveTasks',
+
+  // Agents
+  SetAgents: 'SetAgents',
+
+  SetAuth: 'SetAuth',
+
+  SetAuthCheck: 'SetAuthCheck',
+
+  SetCurrentUser: 'SetCurrentUser',
+
+  // Info
+  SetInfo: 'SetInfo',
+
+  SetInfoCheck: 'SetInfoCheck',
 
   // User assignments, roles, and derived permissions
-  SetKnownRoles = 'SetKnownRoles',
-  SetUserAssignments = 'SetUserAssignments',
-  SetUserRoles = 'SetUserRoles',
-}
+  SetKnownRoles: 'SetKnownRoles',
+
+  // PinnedWorkspaces
+  SetPinnedWorkspaces: 'SetPinnedWorkspaces',
+
+  // ResourcePools
+  SetResourcePools: 'SetResourcePools',
+
+  SetUserAssignments: 'SetUserAssignments',
+
+  SetUserRoles: 'SetUserRoles',
+
+  // Users
+  SetUsers: 'SetUsers',
+  // User Settings
+  SetUserSettings: 'SetUserSettings',
+  ShowOmnibar: 'ShowOmnibar',
+} as const;
+
 type Action =
-  | { type: StoreAction.Reset }
-  | { type: StoreAction.SetAgents; value: Agent[] }
-  | { type: StoreAction.ResetAuth }
-  | { type: StoreAction.ResetAuthCheck }
-  | { type: StoreAction.SetAuth; value: Auth }
-  | { type: StoreAction.SetAuthCheck }
-  | { type: StoreAction.SetInfo; value: DeterminedInfo }
-  | { type: StoreAction.SetInfoCheck }
-  | { type: StoreAction.SetUsers; value: DetailedUser[] }
-  | { type: StoreAction.SetCurrentUser; value: DetailedUser }
-  | { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
-  | { type: StoreAction.SetResourcePools; value: ResourcePool[] }
-  | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
-  | { type: StoreAction.HideOmnibar }
-  | { type: StoreAction.ShowOmnibar }
+  | { type: typeof StoreAction.Reset }
+  | { type: typeof StoreAction.SetAgents; value: Agent[] }
+  | { type: typeof StoreAction.ResetAuth }
+  | { type: typeof StoreAction.ResetAuthCheck }
+  | { type: typeof StoreAction.SetAuth; value: Auth }
+  | { type: typeof StoreAction.SetAuthCheck }
+  | { type: typeof StoreAction.SetInfo; value: DeterminedInfo }
+  | { type: typeof StoreAction.SetInfoCheck }
+  | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
+  | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
+  | { type: typeof StoreAction.SetUserSettings; value: V1UserWebSetting[] }
+  | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
+  | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
+  | { type: typeof StoreAction.HideOmnibar }
+  | { type: typeof StoreAction.ShowOmnibar }
   | {
-      type: StoreAction.SetActiveTasks;
+      type: typeof StoreAction.SetActiveTasks;
       value: {
         commands: number;
         notebooks: number;
@@ -126,10 +133,10 @@ type Action =
         tensorboards: number;
       };
     }
-  | { type: StoreAction.SetActiveExperiments; value: number }
-  | { type: StoreAction.SetKnownRoles; value: UserRole[] }
-  | { type: StoreAction.SetUserRoles; value: UserRole[] }
-  | { type: StoreAction.SetUserAssignments; value: UserAssignment[] }
+  | { type: typeof StoreAction.SetActiveExperiments; value: number }
+  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
+  | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
+  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] }
   | ActionUI;
 
 export const AUTH_COOKIE_KEY = 'auth';
@@ -146,11 +153,12 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
-const initInfo: DeterminedInfo = {
+export const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
   clusterName: '',
+  featureSwitches: [],
   isTelemetryEnabled: false,
   masterId: '',
   rbacEnabled: false,
@@ -174,23 +182,12 @@ const initState: State = {
   pool: {},
   resourcePools: [],
   ui: { ...initUI, omnibar: { isShowing: false } },
-  userAssignments: [
-    {
-      cluster: true,
-      name: 'OSS User',
-    },
-  ],
+  userAssignments: [],
   userRoles: [
     {
-      id: -1,
-      name: 'OSS User',
-      permissions: [
-        {
-          id: -1,
-          isGlobal: true,
-          name: 'oss_user',
-        },
-      ],
+      id: -10,
+      name: 'INITIALIZATION',
+      permissions: [],
     },
   ],
   users: [],

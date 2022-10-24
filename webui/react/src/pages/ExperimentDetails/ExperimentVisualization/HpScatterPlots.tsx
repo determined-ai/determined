@@ -16,8 +16,8 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive } from 'shared/types';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
-import { ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Scale } from 'types';
-import { metricNameToStr } from 'utils/metric';
+import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
+import { metricToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
 
@@ -28,7 +28,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale;
 }
 
@@ -68,7 +68,7 @@ const ScatterPlots: React.FC<Props> = ({
 
     return selectedHParams.reduce((acc, hParam) => {
       const xLabel = hParam;
-      const yLabel = metricNameToStr(selectedMetric);
+      const yLabel = metricToStr(selectedMetric);
       const title = `${yLabel} (y) vs ${xLabel} (x)`;
       const hpLabels = chartData?.hpLabels[hParam];
       const isLogarithmic = chartData?.hpLogScales[hParam];
@@ -215,10 +215,11 @@ const ScatterPlots: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [

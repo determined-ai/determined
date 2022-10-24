@@ -4,22 +4,22 @@ import { RawJson, UnknownRecord } from '../types';
 
 import * as utils from './data';
 
-enum Type {
-  AsyncFn = 'async-function',
-  BigInt = 'bigint',
-  Boolean = 'boolean',
-  Date = 'date',
-  Fn = 'function',
-  Map = 'map',
-  NullOrUndefined = 'null-or-undefined',
-  Number = 'number',
-  Object = 'object',
-  Primitive = 'primitive',
-  Promise = 'promise',
-  Set = 'set',
-  String = 'string',
-  SyncFn = 'sync-function',
-}
+const Type = {
+  AsyncFn: 'async-function',
+  BigInt: 'bigint',
+  Boolean: 'boolean',
+  Date: 'date',
+  Fn: 'function',
+  Map: 'map',
+  NullOrUndefined: 'null-or-undefined',
+  Number: 'number',
+  Object: 'object',
+  Primitive: 'primitive',
+  Promise: 'promise',
+  Set: 'set',
+  String: 'string',
+  SyncFn: 'sync-function',
+} as const;
 
 const testGroups = [
   { fn: utils.isAsyncFunction, type: Type.AsyncFn },
@@ -57,7 +57,18 @@ const asyncFn = async (): Promise<boolean> => {
   }
 };
 
-const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
+const object = {
+  a: true,
+  b: null,
+  c: { x: { y: -1.2e10 }, z: undefined },
+  nested: {
+    x0: 0,
+    xEmptyString: '',
+    xFalse: false,
+    xNull: null,
+    xUndefined: undefined,
+  },
+};
 
 describe('Data Utilities', () => {
   describe('type checking utilities', () => {
@@ -111,7 +122,7 @@ describe('Data Utilities', () => {
         tests.forEach((test) => {
           it(`should test value "${test.value}" correctly as ${JSON.stringify(test.type)}`, () => {
             const result = Array.isArray(test.type)
-              ? test.type.includes(group.type)
+              ? test.type.map((type) => type === group.type).some((res) => res)
               : test.type === group.type;
             expect(group.fn(test.value)).toBe(result);
           });
@@ -328,10 +339,22 @@ describe('Data Utilities', () => {
         expect(utils.getPath<boolean>(object, 'a')).toBe(true);
         expect(utils.getPath<string>(object, 'x.x')).toBeUndefined();
         expect(utils.getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
+        expect(utils.getPath(object, 'nested.xNull')).toBeNull();
+        expect(utils.getPath(object, 'nested.xUndefined')).toBeUndefined();
+        expect(utils.getPath(object, 'nested.xFalse')).toBe(false);
+        expect(utils.getPath(object, 'nested.x0')).toBe(0);
+        expect(utils.getPath(object, 'nested.xEmptyString')).toBe('');
       });
 
       it('should support empty path', () => {
         expect(utils.getPath<RawJson>(object, '')).toBe(object);
+      });
+
+      it('should return undefined when value is undefined or null', () => {
+        const obj1 = { hash: '', pathname: '/login', search: '', state: undefined };
+        const obj2 = { hash: '', pathname: '/login', search: '', state: null };
+        expect(utils.getPath<Location>(obj1, 'state.loginRedirect')).toBeUndefined();
+        expect(utils.getPath<Location>(obj2, 'state.loginRedirect')).toBeUndefined();
       });
     });
 
@@ -410,17 +433,17 @@ describe('Data Utilities', () => {
   });
 
   describe('enum utilities', () => {
-    enum CarType {
-      Convertible = 'Convertible',
-      Coupe = 'Coupe',
-      Hatchback = 'Hatchback',
-      Minivan = 'Minivan',
-      PickupTruck = 'Pickup Truck',
-      Sedan = 'Sedan',
-      SportsCar = 'Sports Car',
-      StationWagon = 'Station Wagon',
-      SUV = 'SUV',
-    }
+    const CarType = {
+      Convertible: 'Convertible',
+      Coupe: 'Coupe',
+      Hatchback: 'Hatchback',
+      Minivan: 'Minivan',
+      PickupTruck: 'Pickup Truck',
+      Sedan: 'Sedan',
+      SportsCar: 'Sports Car',
+      StationWagon: 'Station Wagon',
+      SUV: 'SUV',
+    } as const;
     const INVALID_CAR_TYPE = 'Not a CarType';
 
     describe('validateEnum', () => {

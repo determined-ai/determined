@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -193,6 +194,77 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return e, *curUser, nil
 }
 
+func (a *apiServer) GetSearcherEvents(
+	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
+) (*apiv1.GetSearcherEventsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+	if !isActiveExperimentState(exp.State) {
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: []*experimentv1.SearcherEvent{{
+				Id: -1,
+				Event: &experimentv1.SearcherEvent_ExperimentInactive{
+					ExperimentInactive: &experimentv1.ExperimentInactive{
+						ExperimentState: exp.State,
+					},
+				},
+			}},
+		}, nil
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+	var w searcher.EventsWatcher
+	if err = a.ask(addr, req, &w); err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to get events from actor: long polling %v", err)
+	}
+
+	defer a.m.system.TellAt(addr, UnwatchEvents{w.ID})
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
+	defer cancel()
+
+	select {
+	case events := <-w.C:
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}, nil
+	case <-ctx.Done():
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: nil,
+		}, nil
+	}
+}
+
+func (a *apiServer) PostSearcherOperations(
+	ctx context.Context,
+	req *apiv1.PostSearcherOperationsRequest,
+) (
+	resp *apiv1.PostSearcherOperationsResponse, err error,
+) {
+	_, _, err = a.getExperimentAndCheckCanDoActions(
+		ctx, int(req.ExperimentId), false, expauth.AuthZProvider.Get().CanRunCustomSearch,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from database")
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
+	default:
+		logrus.Infof("posted operations %v", req.SearcherOperations)
+		return resp, nil
+	}
+}
+
 func (a *apiServer) GetExperiment(
 	ctx context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
@@ -282,18 +354,15 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) error {
+func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to read config for experiment: %w", err)
 	}
 
-	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
-	switch {
-	case err != nil:
-		return errors.Errorf("cannot find user and group for experiment")
-	case agentUserGroup == nil:
-		agentUserGroup = &a.m.config.Security.DefaultTask
+	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+	if err != nil {
+		return err
 	}
 
 	taskSpec := *a.m.taskSpec
@@ -311,7 +380,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	taskID := model.NewTaskID()
 	ckptGCTask := newCheckpointGCTask(
 		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-		conf, checkpoints, true, agentUserGroup, user, nil,
+		conf, checkpoints, true, agentUserGroup, userModel, nil,
 	)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
@@ -1061,22 +1130,17 @@ func (a *apiServer) CreateExperiment(
 		detParams.ProjectID = &projectID
 	}
 
-	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
-	if errors.Is(err, errCantFindProject) {
-		return nil, status.Errorf(codes.NotFound, errCantFindProject.Error())
-	} else if err != nil {
+	dbExp, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
+	if err != nil {
+		if _, ok := err.(ErrProjectNotFound); ok {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
-
-	proj, err := a.GetProjectByID(int32(dbExp.ProjectID), *user)
-	if e, ok := status.FromError(err); ok && e.Code() == codes.NotFound {
-		return nil, status.Errorf(codes.NotFound, errCantFindProject.Error())
-	} else if err != nil {
-		return nil, err
-	}
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(*user, proj, dbExp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(*user, p, dbExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
+
 	if validateOnly {
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
@@ -1198,6 +1262,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
@@ -1233,7 +1298,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
-			return nil
+			return err
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -1445,6 +1510,8 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		ranking = ByMetricOfInterest
 	case expconf.GridConfig:
 		ranking = ByMetricOfInterest
+	case expconf.CustomConfig:
+		ranking = ByMetricOfInterest
 	case expconf.AsyncHalvingConfig:
 		ranking = ByTrainingLength
 	case expconf.AdaptiveASHAConfig:
@@ -1526,6 +1593,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
 	currentTrials map[int32]bool,

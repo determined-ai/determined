@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package determined.webhook.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/webhookv1";
+import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/struct.proto";
+
+// Enum values for expected webhook types.
+enum WebhookType {
+  // Default value
+  WEBHOOK_TYPE_UNSPECIFIED = 0;
+  // For a default webhook
+  WEBHOOK_TYPE_DEFAULT = 1;
+  // For a slack webhook.
+  WEBHOOK_TYPE_SLACK = 2;
+}
+
+// Enum values for expected trigger types.
+enum TriggerType {
+  // Default value
+  TRIGGER_TYPE_UNSPECIFIED = 0;
+  // For an experiment changing state
+  TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = 1;
+  // For metrics emitted during training.
+  TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = 2;
+}
+
+// Representation of a Webhook
+message Webhook {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "url", "webhook_type" ] }
+  };
+  // The id of the webhook.
+  int32 id = 1;
+  // The url of the webhook.
+  string url = 2;
+  // The triggers of the webhook.
+  repeated Trigger triggers = 3;
+  // The type of the webhook.
+  WebhookType webhook_type = 4;
+}
+
+// Representation for a Trigger for a Webhook
+message Trigger {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trigger_type"
+                  "condition" ]
+    }
+  };
+  // The id of the trigger.
+  int32 id = 1;
+  // The type of the trigger.
+  TriggerType trigger_type = 2;
+  // The trigger condition.
+  google.protobuf.Struct condition = 3;
+  // The parent webhook of the trigger.
+  int32 webhook_id = 4;
+}

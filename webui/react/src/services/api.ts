@@ -80,16 +80,28 @@ export const resetUserSetting = generateDetApi<EmptyParams, Api.V1ResetUserSetti
   Config.resetUserSetting,
 );
 
-export const getUserPermissions = generateDetApi<Service.GetUserParams, number, Type.Permission[]>(
-  Config.getUserPermissions,
-);
+export const getUserPermissions = generateDetApi<
+  Service.GetUserParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+>(Config.getUserPermissions);
+
+export const getPermissionsSummary = generateDetApi<
+  EmptyParams,
+  Api.V1GetPermissionsSummaryResponse,
+  Type.PermissionsSummary
+>(Config.getPermissionsSummary);
 
 export const getUserWebSetting = generateDetApi<
-EmptyParams, Api.V1GetUserWebSettingResponse, Api.V1GetUserWebSettingResponse
+  EmptyParams,
+  Api.V1GetUserWebSettingResponse,
+  Api.V1GetUserWebSettingResponse
 >(Config.getUserWebSetting);
 
 export const updateUserWebSetting = generateDetApi<
-Service.UpdateUserWebSettingParams, Api.V1PostUserWebSettingResponse, Api.V1PostUserWebSettingResponse
+  Service.UpdateUserWebSettingParams,
+  Api.V1PostUserWebSettingResponse,
+  Api.V1PostUserWebSettingResponse
 >(Config.updateUserWebSetting);
 
 /* Groups */
@@ -132,6 +144,12 @@ export const getGroupRoles = generateDetApi<
   Type.UserRole[]
 >(Config.getGroupRoles);
 
+export const getUserRoles = generateDetApi<
+  Service.GetUserParams,
+  Api.V1GetRolesAssignedToUserResponse,
+  Type.UserRole[]
+>(Config.getUserRoles);
+
 export const listRoles = generateDetApi<
   Service.ListRolesParams,
   Api.V1ListRolesResponse,
@@ -143,6 +161,24 @@ export const assignRolesToGroup = generateDetApi<
   Api.V1AssignRolesResponse,
   Api.V1AssignRolesResponse
 >(Config.assignRolesToGroup);
+
+export const removeRolesFromGroup = generateDetApi<
+  Service.RemoveRolesFromGroupParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeRolesFromGroup);
+
+export const assignRolesToUser = generateDetApi<
+  Service.AssignRolesToUserParams,
+  Api.V1AssignRolesResponse,
+  Api.V1AssignRolesResponse
+>(Config.assignRolesToUser);
+
+export const removeRolesFromUser = generateDetApi<
+  Service.RemoveRolesFromUserParams,
+  Api.V1RemoveAssignmentsResponse,
+  Api.V1RemoveAssignmentsResponse
+>(Config.removeRolesFromUser);
 
 /* Info */
 
@@ -191,6 +227,19 @@ export const updateJobQueue = generateDetApi<
   Api.V1UpdateJobQueueResponse,
   Api.V1UpdateJobQueueResponse
 >(Config.updateJobQueue);
+
+/* Trials */
+export const queryTrials = generateDetApi(Config.queryTrials);
+
+export const updateTrialTags = generateDetApi(Config.updateTrialTags);
+
+export const createTrialsCollection = generateDetApi(Config.createTrialCollection);
+
+export const getTrialsCollections = generateDetApi(Config.getTrialsCollections);
+
+export const patchTrialsCollection = generateDetApi(Config.patchTrialsCollection);
+
+export const deleteTrialsCollection = generateDetApi(Config.deleteTrialsCollection);
 
 /* Experiments */
 
@@ -340,6 +389,28 @@ export const getActiveTasks = generateDetApi<
   Type.TaskCounts
 >(Config.getActiveTasks);
 
+/* Webhooks */
+
+export const createWebhook = generateDetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook>(
+  Config.createWebhook,
+);
+
+export const deleteWebhook = generateDetApi<
+  Service.GetWebhookParams,
+  Api.V1DeleteWebhookResponse,
+  void
+>(Config.deleteWebhook);
+
+export const getWebhooks = generateDetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]>(
+  Config.getWebhooks,
+);
+
+export const testWebhook = generateDetApi<
+  Service.GetWebhookParams,
+  Api.V1TestWebhookResponse,
+  void
+>(Config.testWebhook);
+
 /* Models */
 
 export const getModels = generateDetApi<
@@ -431,6 +502,12 @@ export const getWorkspaces = generateDetApi<
   Api.V1GetWorkspacesResponse,
   Type.WorkspacePagination
 >(Config.getWorkspaces);
+
+export const getWorkspaceMembers = generateDetApi<
+  Service.GetWorkspaceMembersParams,
+  Api.V1GetGroupsAndUsersAssignedToWorkspaceResponse,
+  Type.WorkspaceMembersResponse
+>(Config.getWorkspaceMembers);
 
 export const getWorkspaceProjects = generateDetApi<
   Service.GetWorkspaceProjectsParams,

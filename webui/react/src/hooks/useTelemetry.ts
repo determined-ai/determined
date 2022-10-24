@@ -60,7 +60,7 @@ class Telemetry {
         this.isLoaded = true;
       }
     } catch (e) {
-      handleError({
+      handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Failed to load telemetry.',
         silent: true,
@@ -92,7 +92,7 @@ class Telemetry {
         this.isIdentified = false;
       }
     } catch (e) {
-      handleError({
+      handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Failed to set telemetry identity.',
         silent: true,

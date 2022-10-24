@@ -40,19 +40,19 @@ export const Default: Story<GridProps & { gridElements: number }> = ({ gridEleme
 );
 
 export const SmallCells = (): React.ReactNode => (
-  <Grid gap={ShirtSize.large} minItemWidth={100}>
+  <Grid gap={ShirtSize.Large} minItemWidth={100}>
     {GridElements}
   </Grid>
 );
 
 export const BigCells = (): React.ReactNode => (
-  <Grid gap={ShirtSize.large} minItemWidth={300}>
+  <Grid gap={ShirtSize.Large} minItemWidth={300}>
     {GridElements}
   </Grid>
 );
 
 Default.args = {
-  gap: ShirtSize.large,
+  gap: ShirtSize.Large,
   gridElements: 27,
   minItemWidth: 240,
   mode: GridMode.AutoFit,

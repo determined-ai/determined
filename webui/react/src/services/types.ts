@@ -5,7 +5,7 @@ import {
   DetailedUser,
   Job,
   Metadata,
-  MetricName,
+  Metric,
   MetricType,
   Note,
   RunState,
@@ -14,7 +14,6 @@ import {
 } from 'types';
 
 import * as Api from './api-ts-sdk/api';
-
 export interface LoginResponse {
   token: string;
   user: DetailedUser;
@@ -31,7 +30,7 @@ export type TrialDetailsParams = SingleEntityParams;
 export interface TrialSummaryBaseParams {
   endBatches?: number;
   maxDatapoints: number;
-  metricNames: MetricName[];
+  metricNames: Metric[];
   metricType?: MetricType;
   scale?: Scale;
   startBatches?: number;
@@ -47,6 +46,7 @@ export interface CompareTrialsParams extends TrialSummaryBaseParams {
 
 export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
   filter: TrialWorkloadFilter;
+  metricType?: MetricType | undefined;
   sortKey?: string;
 }
 
@@ -359,12 +359,30 @@ export interface DeleteGroupParams {
 export interface GetGroupParams {
   groupId: number;
 }
+export interface RemoveRolesFromGroupParams {
+  groupId: number;
+  roleIds: number[];
+  scopeWorkspaceId?: number;
+}
+
+export interface AssignRolesToUserParams {
+  roleIds: number[];
+  scopeWorkspaceId?: number;
+  userId: number;
+}
+
+export interface RemoveRolesFromUserParams {
+  roleIds: number[];
+  scopeWorkspaceId?: number;
+  userId: number;
+}
 
 export type GetGroupsParams = PaginationParams;
 
 export interface AssignRolesToGroupParams {
   groupId: number;
   roleIds: number[];
+  scopeWorkspaceId?: number;
 }
 
 export interface ListRolesParams {
@@ -417,6 +435,11 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   users?: string[];
 }
 
+export interface GetWorkspaceMembersParams {
+  nameFilter?: string;
+  workspaceId: number;
+}
+
 export interface DeleteWorkspaceParams {
   id: number;
 }
@@ -450,3 +473,7 @@ export interface PinWorkspaceParams {
 }
 
 export type UnpinWorkspaceParams = ArchiveWorkspaceParams;
+
+export interface GetWebhookParams {
+  id: number;
+}

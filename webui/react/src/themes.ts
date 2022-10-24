@@ -1,4 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { Determinedtrialv1State } from 'services/api-ts-sdk';
 import {
   DarkLight,
   getCssVar,
@@ -7,6 +8,7 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import {
   BrandingType,
   CheckpointState,
@@ -22,11 +24,13 @@ import {
  * Where did we get our sizes from?
  * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
  */
-export enum ShirtSize {
-  small = 'small',
-  medium = 'medium',
-  large = 'large',
-}
+export const ShirtSize = {
+  Small: 'small',
+  Medium: 'medium',
+  Large: 'large',
+} as const;
+
+export type ShirtSize = ValueOf<typeof ShirtSize>;
 
 const stateColorMapping = {
   [RunState.Active]: 'active',
@@ -65,6 +69,15 @@ const stateColorMapping = {
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
+  [Determinedtrialv1State.ACTIVE]: 'active',
+  [Determinedtrialv1State.PAUSED]: 'warning',
+  [Determinedtrialv1State.STOPPINGCANCELED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGKILLED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'success',
+  [Determinedtrialv1State.STOPPINGERROR]: 'critical',
+  [Determinedtrialv1State.CANCELED]: 'inactive',
+  [Determinedtrialv1State.COMPLETED]: 'success',
+  [Determinedtrialv1State.ERROR]: 'critical',
 };
 
 export type StateOfUnion =
@@ -74,7 +87,8 @@ export type StateOfUnion =
   | CheckpointState
   | SlotState
   | JobState
-  | WorkspaceState;
+  | WorkspaceState
+  | Determinedtrialv1State;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,

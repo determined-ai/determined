@@ -46,10 +46,14 @@ See :ref:`use-trained-models` for more ideas on what to do next.
 import functools
 import pathlib
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 from determined.common.api import Session  # noqa: F401
-from determined.common.experimental.checkpoint import Checkpoint, CheckpointState  # noqa: F401
+from determined.common.experimental.checkpoint import (  # noqa: F401
+    Checkpoint,
+    CheckpointState,
+    DownloadMode,
+)
 from determined.common.experimental.determined import Determined
 from determined.common.experimental.experiment import (  # noqa: F401
     ExperimentReference,
@@ -139,18 +143,21 @@ def login(
 def create_experiment(
     config: Union[str, pathlib.Path, Dict],
     model_dir: str,
+    includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
 ) -> ExperimentReference:
     """
     Creates an experiment with config parameters and model directory. The function
     returns an :class:`~determined.experimental.client.ExperimentReference` of the experiment.
 
     Arguments:
-        config (string, pathlib.Path, dictionary): Experiment config filename (.yaml)
+        config (str, pathlib.Path, dictionary): Experiment config filename (.yaml)
             or a dict.
-        model_dir (string): Directory containing model definition.
+        model_dir (str): Directory containing model definition.
+        iterables (Iterable[Union[str, pathlib.Path]], optional): Additional files or directories to
+            include in the model definition.  (default: ``None``)
     """
     assert _determined is not None
-    return _determined.create_experiment(config, model_dir)
+    return _determined.create_experiment(config, model_dir, includes)
 
 
 @_require_singleton

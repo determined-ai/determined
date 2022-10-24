@@ -73,7 +73,7 @@ def sso(parsed_args: Namespace) -> None:
             return
         matched_provider = matching_providers[0]
 
-    sso_url = matched_provider["sso_url"] + "?relayState=cli%3Dtrue"
+    sso_url = matched_provider["sso_url"] + "?relayState=cli"
     webbrowser.open(sso_url)
     print(
         "Your browser should open and prompt you to sign on;"

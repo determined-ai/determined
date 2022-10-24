@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +29,41 @@ var (
 var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
+
+const (
+	// authNone indicates a request needs no authentication.
+	authNone int = 0
+	// authStandard indicates a request needs authentication.
+	authStandard = 1
+	// authAdmin indicates a request needs admin authentication.
+	authAdmin = 2
+)
+
+// unauthenticatedPointsList contains URIs and paths that are exempted from authentication.
+var unauthenticatedPointsList = []string{
+	"/",
+	"/info",
+	"/task-logs",
+	"/ws/data-layer/.*",
+	"/agents",
+	"/det/.*",
+	"/login",
+	"/api/v1/.*",
+	"/proxy/:service/.*",
+	"/agents\\?id=.*",
+}
+
+// adminAuthPointsList contains the paths that require admin authentication.
+var adminAuthPointsList = []string{
+	"/config",
+	"/agents/.*/slots/.*",
+}
+
+var unauthenticatedPointsPattern = regexp.MustCompile("^" +
+	strings.Join(unauthenticatedPointsList, "$|^") + "$")
+
+var adminAuthPointsPattern = regexp.MustCompile("^" +
+	strings.Join(adminAuthPointsList, "$|^") + "$")
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
@@ -108,20 +144,34 @@ func (s *Service) UserAndSessionFromRequest(
 	return UserByToken(token, s.extConfig)
 }
 
+// getAuthLevel returns what level of authentication a request needs.
+func (s *Service) getAuthLevel(c echo.Context) int {
+	switch {
+	case adminAuthPointsPattern.MatchString(c.Request().RequestURI):
+		return authAdmin
+	case unauthenticatedPointsPattern.MatchString(c.Path()):
+		return authNone
+	case unauthenticatedPointsPattern.MatchString(c.Request().RequestURI):
+		return authNone
+	default:
+		return authStandard
+	}
+}
+
 // ProcessAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return s.processAuthentication(next, false)
-}
-
-// ProcessAdminAuthentication is a middleware processing function that authenticates requests much
-// like ProcessAuthentication but requires the user to be an admin.
-func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return s.processAuthentication(next, true)
-}
-
-func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		var adminOnly bool
+		switch s.getAuthLevel(c) {
+		case authNone:
+			return next(c)
+		case authStandard:
+			adminOnly = false
+		case authAdmin:
+			adminOnly = true
+		}
+
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
@@ -153,17 +203,28 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 		return true, redirectToLogin(c)
 	}
 
-	switch user, _, err := UserByToken(token, s.extConfig); err {
-	case nil:
-		if !user.Active {
-			return true, redirectToLogin(c)
-		}
-		return false, nil
-	case db.ErrNotFound:
+	user, _, err := UserByToken(token, s.extConfig)
+	if errors.Is(err, db.ErrNotFound) {
 		return true, redirectToLogin(c)
-	default:
+	} else if err != nil {
 		return true, err
 	}
+	if !user.Active {
+		return true, redirectToLogin(c)
+	}
+
+	taskID := c.Param("service")
+	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
+	if err != nil {
+		return true, err
+	}
+	if ok, err := AuthZProvider.Get().CanAccessNTSCTask(*user, ownerID); err != nil {
+		return true, err
+	} else if !ok {
+		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
+	}
+
+	return false, nil
 }
 
 func redirectToLogin(c echo.Context) error {

@@ -7,6 +7,7 @@ import React, { useCallback, useMemo } from 'react';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 
@@ -48,27 +49,27 @@ export const TaskBar: React.FC<Props> = ({
   }, []);
 
   const dropdownOverlay = useMemo(() => {
-    enum MenuKey {
-      KILL = 'kill',
-      VIEW_LOGS = 'viewLogs',
-    }
+    const MenuKey = {
+      Kill: 'kill',
+      ViewLogs: 'viewLogs',
+    } as const;
 
     const funcs = {
-      [MenuKey.KILL]: () => {
+      [MenuKey.Kill]: () => {
         deleteTask(task);
       },
-      [MenuKey.VIEW_LOGS]: () => {
+      [MenuKey.ViewLogs]: () => {
         handleViewLogsClick();
       },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.KILL, label: 'Kill' },
-      { key: MenuKey.VIEW_LOGS, label: 'View Logs' },
+      { key: MenuKey.Kill, label: 'Kill' },
+      { key: MenuKey.ViewLogs, label: 'View Logs' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;

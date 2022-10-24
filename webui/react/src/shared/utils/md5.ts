@@ -178,7 +178,7 @@ const md51 = (s: string): number[] => {
  */
 const md5blk = (s: string): number[] => {
   /* I figured global was faster.   */
-  let md5blks = [],
+  let md5blks: number[] = [],
     i; /* Andy King said do it this way. */
   for (i = 0; i < 64; i += 4) {
     md5blks[i >> 2] =

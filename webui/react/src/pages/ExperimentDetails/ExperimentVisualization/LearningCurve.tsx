@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
-import TableBatch from 'components/TableBatch';
+import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
@@ -21,7 +21,7 @@ import {
   CommandTask,
   ExperimentBase,
   Hyperparameter,
-  MetricName,
+  Metric,
   metricTypeParamMap,
   RunState,
   Scale,
@@ -39,7 +39,7 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: MetricName;
+  selectedMetric: Metric;
   selectedScale: Scale;
 }
 
@@ -181,10 +181,11 @@ const LearningCurve: React.FC<Props> = ({
         // One successful event as come through.
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden]);
