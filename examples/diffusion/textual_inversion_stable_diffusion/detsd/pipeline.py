@@ -19,7 +19,7 @@ from detsd import utils, defaults
 
 class DetSDTextualInversionPipeline:
     """Class for generating images from a Stable Diffusion checkpoint trained using Determined
-    AI. Initialize with no arguments in order to run plan Stable Diffusion without any trained
+    AI. Initialize with no arguments in order to run plain Stable Diffusion without any trained
     textual inversion embeddings. Can optionally be run on a Determined cluster through the
     .generate_on_cluster() method for large-scale generation. Only intended for use with a GPU.
     """

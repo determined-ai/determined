@@ -201,7 +201,7 @@ class DetSDTextualInversionTrainer:
         - `inference`: optionally generate images during training using parameters specified here.
         """
         info = det.get_cluster_info()
-        assert info is not None, "init_on_cluster() must be called on a Determined cluster."
+        assert info is not None, "train_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
         latest_checkpoint = info.latest_checkpoint
 
