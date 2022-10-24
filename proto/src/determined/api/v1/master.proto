@@ -50,6 +50,8 @@ message GetMasterResponse {
   string branding = 9;
   // Feature flag for RBAC and user groups.
   bool rbac_enabled = 10;
+  // List of features that is on.
+  repeated string feature_switches = 12;
 }
 
 // Get telemetry information.

@@ -49,6 +49,7 @@ export interface DeterminedInfo {
   clusterName: string;
   externalLoginUri?: string;
   externalLogoutUri?: string;
+  featureSwitches: string[];
   isTelemetryEnabled: boolean;
   masterId: string;
   rbacEnabled: boolean;
