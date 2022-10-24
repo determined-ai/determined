@@ -2540,6 +2540,7 @@ class v1GetMasterResponse:
         branding: "typing.Optional[str]" = None,
         externalLoginUri: "typing.Optional[str]" = None,
         externalLogoutUri: "typing.Optional[str]" = None,
+        featureSwitches: "typing.Optional[typing.Sequence[str]]" = None,
         rbacEnabled: "typing.Optional[bool]" = None,
         ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None,
         telemetryEnabled: "typing.Optional[bool]" = None,
@@ -2554,6 +2555,7 @@ class v1GetMasterResponse:
         self.externalLogoutUri = externalLogoutUri
         self.branding = branding
         self.rbacEnabled = rbacEnabled
+        self.featureSwitches = featureSwitches
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -2568,6 +2570,7 @@ class v1GetMasterResponse:
             externalLogoutUri=obj.get("externalLogoutUri", None),
             branding=obj.get("branding", None),
             rbacEnabled=obj.get("rbacEnabled", None),
+            featureSwitches=obj.get("featureSwitches", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -2582,6 +2585,7 @@ class v1GetMasterResponse:
             "externalLogoutUri": self.externalLogoutUri if self.externalLogoutUri is not None else None,
             "branding": self.branding if self.branding is not None else None,
             "rbacEnabled": self.rbacEnabled if self.rbacEnabled is not None else None,
+            "featureSwitches": self.featureSwitches if self.featureSwitches is not None else None,
         }
 
 class v1GetModelDefFileRequest:
@@ -2905,38 +2909,42 @@ class v1GetRolesAssignedToGroupResponse:
     def __init__(
         self,
         *,
-        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+        assignments: "typing.Sequence[v1RoleAssignmentSummary]",
+        roles: "typing.Sequence[v1Role]",
     ):
         self.roles = roles
+        self.assignments = assignments
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetRolesAssignedToGroupResponse":
         return cls(
-            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+            roles=[v1Role.from_json(x) for x in obj["roles"]],
+            assignments=[v1RoleAssignmentSummary.from_json(x) for x in obj["assignments"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+            "roles": [x.to_json() for x in self.roles],
+            "assignments": [x.to_json() for x in self.assignments],
         }
 
 class v1GetRolesAssignedToUserResponse:
     def __init__(
         self,
         *,
-        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+        roles: "typing.Sequence[v1RoleWithAssignments]",
     ):
         self.roles = roles
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetRolesAssignedToUserResponse":
         return cls(
-            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+            roles=[v1RoleWithAssignments.from_json(x) for x in obj["roles"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+            "roles": [x.to_json() for x in self.roles],
         }
 
 class v1GetRolesByIDRequest:

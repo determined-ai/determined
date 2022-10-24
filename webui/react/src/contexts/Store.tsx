@@ -153,11 +153,12 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
-const initInfo: DeterminedInfo = {
+export const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
   clusterName: '',
+  featureSwitches: [],
   isTelemetryEnabled: false,
   masterId: '',
   rbacEnabled: false,

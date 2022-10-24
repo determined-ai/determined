@@ -124,6 +124,7 @@ func DefaultConfig() *Config {
 			BaseURL:    "",
 			SigningKey: "",
 		},
+		FeatureSwitches: []string{},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
@@ -157,6 +158,7 @@ type Config struct {
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
 	Webhooks              WebhooksConfig                    `json:"webhooks"`
+	FeatureSwitches       []string                          `json:"feature_switches"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.

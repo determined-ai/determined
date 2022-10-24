@@ -6,6 +6,8 @@ Monitoring experiment status is a vital part of working with Determined. In orde
 Determined into your existing workflows, you can make use of webhooks to update other systems,
 receive emails, slack messages, and more when an experiment is updated.
 
+.. _webhook_security:
+
 *****************************
  Security and Signed Payload
 *****************************
@@ -24,10 +26,10 @@ The signing key can be set in the following ways:
 .. code::
 
    webhooks:
-       signing_key: <signing_key>
+      signing_key: <signing_key>
 
 2. By setting a ``DET_WEBHOOKS_SIGNING_KEY`` environment variable.
-#. By specifying a ``--webhooks-signing-key`` flag.
+#. By specifying a ``---security-webhooks-signing-key`` flag.
 
 Retrieving the Key
 ==================
