@@ -211,7 +211,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     if (user !== undefined) {
       try {
         const roles = await getUserRoles({ userId: user.id });
-        setUserRoles(roles.filter((r) => r.permissions.find((p) => p.isGlobal)));
+        setUserRoles(roles);
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
@@ -220,7 +220,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
 
   useEffect(() => {
     fetchUserRoles();
-  }, []);
+  }, [fetchUserRoles]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
