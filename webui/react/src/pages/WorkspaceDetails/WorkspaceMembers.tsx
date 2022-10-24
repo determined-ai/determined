@@ -23,7 +23,12 @@ import {
   removeRolesFromGroup,
   removeRolesFromUser,
 } from 'services/api';
-import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import {
+  V1Group,
+  V1GroupDetails,
+  V1RoleAssignment,
+  V1RoleWithAssignments,
+} from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -261,41 +266,41 @@ const WorkspaceMembers: React.FC<Props> = ({
       );
     };
 
-    const getAssignedRole = (record: UserOrGroup): V1Role | null => {
-      const currentAssignment = assignments.find((role) =>
+    const getAssignedRole = (record: UserOrGroup): V1RoleAssignment | null => {
+      const currentAssignment = assignments.find((aGroup) =>
         isUser(record)
-          ? !!role?.userRoleAssignments &&
-            !!role.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
-          : !!role?.groupRoleAssignments &&
-            !!role.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
+          ? !!aGroup?.userRoleAssignments &&
+            !!aGroup.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
+          : !!aGroup?.groupRoleAssignments &&
+            !!aGroup.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
       );
       if (isUser(record) && !!record) {
         if (currentAssignment?.userRoleAssignments) {
           const myAssignment = currentAssignment.userRoleAssignments.find(
             (a) => a.userId === getIdFromUserOrGroup(record),
           );
-          return myAssignment?.roleAssignment.role || null;
+          return myAssignment?.roleAssignment || null;
         }
       } else if (currentAssignment?.groupRoleAssignments) {
         const myAssignment = currentAssignment.groupRoleAssignments.find(
           (a) => a.groupId === getIdFromUserOrGroup(record),
         );
-        return myAssignment?.roleAssignment.role || null;
+        return myAssignment?.roleAssignment || null;
       }
       return null;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => {
-      const assignedRole = getAssignedRole(record);
+      const roleAssignment = getAssignedRole(record);
       return (
         <Select
           className={css.selectContainer}
-          disabled={!userCanAssignRoles}
-          value={assignedRole?.roleId}
+          disabled={!userCanAssignRoles || !roleAssignment?.scopeWorkspaceId}
+          value={roleAssignment?.role?.roleId}
           onSelect={async (value: RawValueType | LabelInValueType) => {
             const roleIdValue = value as number;
             const userOrGroupId = getIdFromUserOrGroup(record);
-            const oldRoleIds = assignedRole?.roleId ? [assignedRole.roleId] : [];
+            const oldRoleIds = roleAssignment?.role?.roleId ? [roleAssignment?.role?.roleId] : [];
 
             try {
               // Try to remove the old role and then add the new role
@@ -346,10 +351,10 @@ const WorkspaceMembers: React.FC<Props> = ({
     const actionRenderer = (value: string, record: UserOrGroup) => {
       const assignedRole = getAssignedRole(record);
 
-      return userCanAssignRoles && assignedRole?.roleId ? (
+      return userCanAssignRoles && assignedRole?.role.roleId ? (
         <GroupOrMemberActionDropdown
           name={getName(record)}
-          roleId={assignedRole.roleId}
+          roleId={assignedRole.role.roleId}
           userOrGroup={record}
           workspace={workspace}
         />
