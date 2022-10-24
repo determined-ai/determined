@@ -1,7 +1,7 @@
 # Textual Inversion with Stable Diffusion
 
 This example demonstrates how to incorporate your own images into AI-generated art via
-[Textual Inversion](https://textual-inversion.github.io).
+[Textual Inversion](https://textual-inversion.github.io). See the accompanying [blog post here.](https://www.determined.ai/blog/stable-diffusion-core-api) 
 
 The development of [Latent Diffusive Models](https://arxiv.org/abs/2112.10752) has made
 it possible to run (and fine-tune) diffusion-based models on consumer-grade GPUs. Such tasks are
