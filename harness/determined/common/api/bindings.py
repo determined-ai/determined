@@ -2909,38 +2909,42 @@ class v1GetRolesAssignedToGroupResponse:
     def __init__(
         self,
         *,
-        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+        assignments: "typing.Sequence[v1RoleAssignmentSummary]",
+        roles: "typing.Sequence[v1Role]",
     ):
         self.roles = roles
+        self.assignments = assignments
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetRolesAssignedToGroupResponse":
         return cls(
-            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+            roles=[v1Role.from_json(x) for x in obj["roles"]],
+            assignments=[v1RoleAssignmentSummary.from_json(x) for x in obj["assignments"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+            "roles": [x.to_json() for x in self.roles],
+            "assignments": [x.to_json() for x in self.assignments],
         }
 
 class v1GetRolesAssignedToUserResponse:
     def __init__(
         self,
         *,
-        roles: "typing.Optional[typing.Sequence[v1Role]]" = None,
+        roles: "typing.Sequence[v1RoleWithAssignments]",
     ):
         self.roles = roles
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetRolesAssignedToUserResponse":
         return cls(
-            roles=[v1Role.from_json(x) for x in obj["roles"]] if obj.get("roles", None) is not None else None,
+            roles=[v1RoleWithAssignments.from_json(x) for x in obj["roles"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
+            "roles": [x.to_json() for x in self.roles],
         }
 
 class v1GetRolesByIDRequest:

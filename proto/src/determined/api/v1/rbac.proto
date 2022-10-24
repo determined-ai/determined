@@ -73,8 +73,12 @@ message GetRolesAssignedToUserRequest {
 
 // Response object for GetRolesAssignedToUser
 message GetRolesAssignedToUserResponse {
-  // The roles assigned to the requested user
-  repeated determined.rbac.v1.Role roles = 1;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "roles" ] }
+  };
+
+  // The roles assigned to the requested user with assignment information.
+  repeated determined.rbac.v1.RoleWithAssignments roles = 1;
 }
 
 // Request object for GetRolesAssignedToGroup
@@ -85,8 +89,15 @@ message GetRolesAssignedToGroupRequest {
 
 // Response object for GetRolesAssignedToGroup
 message GetRolesAssignedToGroupResponse {
-  // The roles assigned to the requested groups
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "roles", "assignments" ] }
+  };
+
+  // The roles assigned to the requested groups.
   repeated determined.rbac.v1.Role roles = 1;
+
+  // What scope each role is assigned to.
+  repeated determined.rbac.v1.RoleAssignmentSummary assignments = 2;
 }
 
 // Request object for SearchRolesAssignableToScope

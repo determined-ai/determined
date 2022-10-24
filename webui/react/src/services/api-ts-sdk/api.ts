@@ -3437,11 +3437,17 @@ export interface V1GetResourcePoolsResponse {
  */
 export interface V1GetRolesAssignedToGroupResponse {
     /**
-     * 
+     * The roles assigned to the requested groups.
      * @type {Array<V1Role>}
      * @memberof V1GetRolesAssignedToGroupResponse
      */
-    roles?: Array<V1Role>;
+    roles: Array<V1Role>;
+    /**
+     * What scope each role is assigned to.
+     * @type {Array<V1RoleAssignmentSummary>}
+     * @memberof V1GetRolesAssignedToGroupResponse
+     */
+    assignments: Array<V1RoleAssignmentSummary>;
 }
 
 /**
@@ -3451,11 +3457,11 @@ export interface V1GetRolesAssignedToGroupResponse {
  */
 export interface V1GetRolesAssignedToUserResponse {
     /**
-     * 
-     * @type {Array<V1Role>}
+     * The roles assigned to the requested user with assignment information.
+     * @type {Array<V1RoleWithAssignments>}
      * @memberof V1GetRolesAssignedToUserResponse
      */
-    roles?: Array<V1Role>;
+    roles: Array<V1RoleWithAssignments>;
 }
 
 /**

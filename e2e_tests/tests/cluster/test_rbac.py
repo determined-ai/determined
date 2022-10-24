@@ -382,15 +382,36 @@ def test_rbac_list_roles() -> None:
         det_cmd(list_user_roles, check=True)
         json_out = det_cmd_json(list_user_roles + ["--json"])
         assert len(json_out["roles"]) == 2
-        json_out["roles"].sort(key=lambda x: -1 if x["name"] == "Viewer" else 1)
-        assert json_out["roles"][0]["name"] == "Viewer"
-        assert json_out["roles"][1]["name"] == "Editor"
+        json_out["roles"].sort(key=lambda x: -1 if x["role"]["name"] == "Viewer" else 1)
+        assert json_out["roles"][0]["role"]["name"] == "Viewer"
+
+        assert len(json_out["roles"][0]["groupRoleAssignments"]) == 0
+        workspace_ids = [
+            a["roleAssignment"]["scopeWorkspaceId"]
+            for a in json_out["roles"][0]["userRoleAssignments"]
+        ]
+        assert len(workspace_ids) == 2
+        assert 1 in workspace_ids
+        assert None in workspace_ids
+
+        assert json_out["roles"][1]["role"]["name"] == "Editor"
+        assert len(json_out["roles"][1]["groupRoleAssignments"]) == 2
+        workspace_ids = [
+            a["roleAssignment"]["scopeWorkspaceId"]
+            for a in json_out["roles"][1]["groupRoleAssignments"]
+        ]
+        assert len(workspace_ids) == 2
+        assert len(json_out["roles"][1]["userRoleAssignments"]) == 0
 
         # Test list-groups-roles.
         det_cmd(list_group_roles, check=True)
         json_out = det_cmd_json(list_group_roles + ["--json"])
         assert len(json_out["roles"]) == 1
+        assert len(json_out["assignments"]) == 1
         assert json_out["roles"][0]["name"] == "Editor"
+        assert json_out["assignments"][0]["roleId"] == json_out["roles"][0]["roleId"]
+        assert json_out["assignments"][0]["scopeWorkspaceIds"] == [1]
+        assert json_out["assignments"][0]["isGlobal"]
 
 
 @pytest.mark.e2e_cpu
