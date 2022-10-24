@@ -58,11 +58,11 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const rbacEnabled = useFeature().isOn('rbac');
-  const { canModifyPermissions } = usePermissions();
+  const { canGetPermissions, canModifyPermissions } = usePermissions();
   const { knownRoles } = useStore();
 
   const updatePermissions = useCallback(async () => {
-    if (user) {
+    if (user && canGetPermissions) {
       const { roles } = await getUserPermissions({ userId: user.id });
       const viewPermissions: Permission[] = [];
       roles.forEach((r) => {
@@ -74,7 +74,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       });
       setPermissions(viewPermissions);
     }
-  }, [user]);
+  }, [canGetPermissions, user]);
 
   useEffect(() => {
     form.setFieldsValue({
@@ -179,7 +179,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
           </Select>
         </Form.Item>
       )}
-      {!!user && rbacEnabled && (
+      {!!user && rbacEnabled && canGetPermissions && (
         <Table
           columns={permissionTableColumn}
           dataSource={permissions}

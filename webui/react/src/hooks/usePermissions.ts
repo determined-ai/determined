@@ -54,6 +54,7 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canEditWebhooks: boolean;
+  canGetPermissions: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
@@ -113,6 +114,7 @@ const usePermissions = (): PermissionsHook => {
       canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
         canDeleteWorkspace(rbacOpts, args.workspace),
       canEditWebhooks: canEditWebhooks(rbacOpts),
+      canGetPermissions: canGetPermissions(rbacOpts),
       canModifyExperiment: (args: WorkspacePermissionsArgs) =>
         canModifyExperiment(rbacOpts, args.workspace),
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
@@ -290,6 +292,21 @@ const canViewExperimentArtifacts = (
   return (
     !!workspace &&
     (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS))
+  );
+};
+
+// User actions
+const canGetPermissions = ({
+  rbacAllPermission,
+  rbacEnabled,
+  user,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return (
+    rbacAllPermission ||
+    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ASSIGNROLES) : user.isAdmin))
   );
 };
 
