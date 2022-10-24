@@ -169,7 +169,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
             disabled={user !== undefined && roles === null}
             mode="multiple"
             optionFilterProp="children"
-            placeholder={'Add Global Roles'}
+            placeholder={'Add Roles'}
             showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
