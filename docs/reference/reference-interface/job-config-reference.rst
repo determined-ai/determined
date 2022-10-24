@@ -162,7 +162,8 @@ The following configuration settings are supported:
       terminal that is running a command but not being viewed or running a command with no output is
       treated as idle, since JupyterLab does not provide activity information for those case.)
 
--  ``slurm``: Slurm cluster details may optionally be specified as for :ref:`experiments
-   <slurm-config>`.
+-  ``slurm``: Slurm cluster details may optionally be specified in the same fashion as for
+   :ref:`experiments <slurm-config>`.
 
--  ``pbs``: PBS cluster details may optionally be specified as for :ref:`experiments <pbs-config>`.
+-  ``pbs``: PBS cluster details may optionally be specified in the same fashion as for
+   :ref:`experiments <pbs-config>`.
