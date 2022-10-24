@@ -5,7 +5,7 @@
 This section will walk through the steps needed to set up Slack to receive updates from Determined
 in a specific Slack channel using Slack Webhook Integrations.
 
-The steps for enabling slack notification are:
+The steps for enabling slack notifications are:
 
 #. :ref:`Creating a Slack Application <slack-app-creation>`
 #. :ref:`Enabling Incoming Webhooks in Slack <enabling_webhooks>`

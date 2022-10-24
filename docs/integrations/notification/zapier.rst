@@ -5,7 +5,7 @@
 This section will walk through the steps needed to set up Zapier webhook to to receive updates from
 Determined.
 
-The steps for set up Zapier webhook are:
+The steps to set up Zapier webhook are:
 
 #. :ref:`Creating a Zap with Webhook <zap-creation>`
 #. :ref:`Setting up the Webhook in Determined <webhook-in-determined>`
@@ -127,6 +127,6 @@ Under **Test Action**, test the code above, you should be able to see that verif
  Configuring Destination
 *************************
 
-Finally, you can configure where to proceed under each senerio by adding more actions. For example,
-send out alert when verification fail, or send out email with experiment information when
+Finally, you can configure where to proceed under each scenario by adding more actions. For example,
+send out an alert when verification fails, or send out an email with experiment information when
 verification pass.

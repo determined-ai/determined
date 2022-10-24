@@ -18,7 +18,6 @@
    Training API Guides <training/apis-howto/overview>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Submit Experiment <training/submit-experiment>
-   Monitor Experiment Through Webhooks  <integrations/notification/index>
    How to Debug Models <training/debug-models>
    Model Management <training/model-management/overview>
    Best Practices <training/best-practices/overview>
@@ -34,6 +33,7 @@
    Workspaces and Projects <cluster-setup-guide/workspaces>
    Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
    Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   Monitor Experiment Through Webhooks  <integrations/notification/index>
    Upgrade <cluster-setup-guide/upgrade>
    Troubleshooting <cluster-setup-guide/troubleshooting>
 
