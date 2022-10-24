@@ -13,14 +13,13 @@ import determined as det
 import logging
 import torch
 import uuid
-import weakref
-import importlib.util
 import shutil
 
 
 class DetCallback(TrainerCallback):
     def __init__(
         self,
+        core_context: det.core.Context,
         args: TrainingArguments,
         filter_metrics: typing.List[str] = None,
         tokenizer: typing.Any = None,
@@ -29,19 +28,7 @@ class DetCallback(TrainerCallback):
     ) -> None:
         super().__init__()
 
-        assert (
-            is_determined_available()
-        ), "DetCallback requires determined to be installed. Run `pip install determined`."
-        import determined
-
-        self._det = determined
-        if args.deepspeed:
-            distributed = self._det.core.DistributedContext.from_deepspeed()
-        else:
-            distributed = self._det.core.DistributedContext.from_torch_distributed()
-        self.core_context = self._det.core.init(distributed=distributed)
-        self.core_context.__enter__()
-        weakref.finalize(self, exit_context, self.core_context)
+        self.core_context = core_context
 
         self.filter_metrics = filter_metrics
         self.user_checkpoint_metadata = checkpoint_metadata
@@ -51,7 +38,7 @@ class DetCallback(TrainerCallback):
 
         self.last_metrics: typing.Dict[str, float] = {}
 
-        searcher_config = self._det.get_cluster_info().trial._config["searcher"]
+        searcher_config = det.get_cluster_info().trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
         self.searcher_unit = list(searcher_config["max_length"].keys())[0]
         self.searcher_max_length = list(searcher_config["max_length"].values())[0]
@@ -113,7 +100,7 @@ class DetCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        info = self._det.get_cluster_info()
+        info = det.get_cluster_info()
         if info is None:
             # TODO: modify to support local mode
             logging.warning("ClusterInfo is None: not running in a task. Skip saving.")
@@ -137,7 +124,7 @@ class DetCallback(TrainerCallback):
                 self.core_context.distributed.broadcast((storage_id, path))
                 self._save(path, local_path)
 
-                storage = self._det.common.storage
+                storage = det.common.storage
                 resources = storage.StorageManager._list_directory(path)
                 if isinstance(storage_manager, storage.SharedFSStorageManager):
                     all_resources = [resources]
@@ -155,7 +142,7 @@ class DetCallback(TrainerCallback):
             storage_id, path = self.core_context.distributed.broadcast(None)
             self._save(path, local_path)
 
-            storage = self._det.common.storage
+            storage = det.common.storage
             if not isinstance(storage_manager, storage.SharedFSStorageManager):
                 # Gather resources across nodes.
                 if self.core_context.distributed.local_rank == 0:
@@ -198,7 +185,7 @@ class DetCallback(TrainerCallback):
         )
 
     def load_last_checkpoint(self, args: TrainingArguments) -> None:
-        info = self._det.get_cluster_info()
+        info = det.get_cluster_info()
 
         if info is None:
             # TODO: modify to support local mode
@@ -313,14 +300,6 @@ class DetCallback(TrainerCallback):
             f"use (--num_train_epochs and searcher.max_length.epochs) OR "
             f"(--max_steps and searcher.max_length.batches)."
         )
-
-
-def is_determined_available() -> bool:
-    return importlib.util.find_spec("determined") is not None
-
-
-def exit_context(context: det.core.Context) -> None:
-    context.__exit__(None, None, None)
 
 
 def set_hyperparameters(training_args: TrainingArguments):

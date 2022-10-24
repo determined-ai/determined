@@ -193,7 +193,7 @@ def collate_fn(examples):
     return {"pixel_values": pixel_values, "labels": labels}
 
 
-def main():
+def parse_arguments():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -209,9 +209,9 @@ def main():
         )
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+    return model_args, data_args, training_args
 
-    set_hyperparameters(training_args)
-
+def main(core_context, model_args, data_args, training_args):
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
     # send_example_telemetry("run_image_classification", model_args, data_args)
@@ -449,4 +449,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    model_args, data_args, training_args = parse_arguments()
+    set_hyperparameters(training_args)
+
+    if training_args.deepspeed:
+        distributed = det.core.DistributedContext.from_deepspeed()
+    else:
+        distributed = det.core.DistributedContext.from_torch_distributed()
+
+    with det.core.init(distributed=distributed) as core_context:
+        main(core_context, model_args, data_args, training_args )
