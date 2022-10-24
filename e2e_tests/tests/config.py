@@ -51,6 +51,10 @@ def meta_learning_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/meta_learning", path)
 
 
+def diffusion_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/diffusion", path)
+
+
 def gan_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/gan", path)
 
