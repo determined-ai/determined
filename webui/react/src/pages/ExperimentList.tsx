@@ -41,7 +41,7 @@ import useModalExperimentMove, {
   settingsConfig as moveExperimentSettingsConfig,
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -60,6 +60,7 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey, ValueOf } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
@@ -147,16 +148,17 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
   const availableBatchActions = useMemo(() => {
-    const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
+    const experiments = settings?.row?.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, batchActions, permissions);
-  }, [experimentMap, settings.row, permissions]);
+  }, [experimentMap, settings?.row, permissions]);
 
-  const statesString = useMemo(() => settings.state?.join('.'), [settings.state]);
-  const pinnedString = useMemo(() => JSON.stringify(settings.pinned ?? {}), [settings.pinned]);
-  const labelsString = useMemo(() => settings.label?.join('.'), [settings.label]);
-  const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
+  const statesString = useMemo(() => settings?.state?.join('.'), [settings?.state]);
+  const pinnedString = useMemo(() => JSON.stringify(settings?.pinned ?? {}), [settings?.pinned]);
+  const labelsString = useMemo(() => settings?.label?.join('.'), [settings?.label]);
+  const usersString = useMemo(() => settings?.user?.join('.'), [settings?.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (!settings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -212,15 +214,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     canceler.signal,
     id,
-    settings.archived,
+    settings,
     labelsString,
     pinnedString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
     statesString,
-    settings.tableLimit,
-    settings.tableOffset,
     usersString,
   ]);
 
@@ -263,12 +260,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings.search || ''}
+        value={settings?.search || ''}
         onReset={handleNameSearchReset}
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search],
+    [handleNameSearchApply, handleNameSearchReset, settings?.search],
   );
 
   const handleLabelFilterApply = useCallback(
@@ -291,12 +288,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         {...filterProps}
         multiple
         searchable
-        values={settings.label}
+        values={settings?.label}
         onFilter={handleLabelFilterApply}
         onReset={handleLabelFilterReset}
       />
     ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings.label],
+    [handleLabelFilterApply, handleLabelFilterReset, settings?.label],
   );
 
   const handleStateFilterApply = useCallback(
@@ -318,12 +315,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.state}
+        values={settings?.state}
         onFilter={handleStateFilterApply}
         onReset={handleStateFilterReset}
       />
     ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state],
+    [handleStateFilterApply, handleStateFilterReset, settings?.state],
   );
 
   const handleUserFilterApply = useCallback(
@@ -346,12 +343,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         {...filterProps}
         multiple
         searchable
-        values={settings.user}
+        values={settings?.user}
         onFilter={handleUserFilterApply}
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user],
+    [handleUserFilterApply, handleUserFilterReset, settings?.user],
   );
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
@@ -386,6 +383,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
+      if (!settings) return <Spinner spinning />;
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -534,7 +532,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           text: <Badge state={value} type={BadgeType.State} />,
           value,
         })),
-        isFiltered: () => !!settings.state,
+        isFiltered: () => !!settings?.state,
         key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,
         sorter: true,
@@ -614,7 +612,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
-    if (!settings.columns?.length || !settings.columnWidths?.length) {
+    if (!settings?.columns?.length || !settings?.columnWidths?.length) {
       updateSettings({
         columns: DEFAULT_COLUMNS,
         columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
@@ -631,7 +629,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }
       if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
     }
-  }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
+  }, [settings?.columns, settings?.columnWidths, columns, resetSettings, updateSettings]);
 
   const transferColumns = useMemo(() => {
     return columns
@@ -646,7 +644,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask> | void => {
-      if (!settings.row) return;
+      if (!settings?.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
@@ -685,7 +683,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         }),
       );
     },
-    [settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, permissions],
+    [settings?.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, permissions],
   );
 
   const submitBatchAction = useCallback(
@@ -718,7 +716,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         });
       }
     },
-    [fetchExperiments, sendBatchActions, updateSettings, settings.row],
+    [fetchExperiments, sendBatchActions, updateSettings],
   );
 
   const showConfirmation = useCallback(
@@ -785,7 +783,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
+      initialVisibleColumns: settings?.columns?.filter((col) => transferColumns.includes(col)),
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
@@ -795,6 +793,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
       let newColumns: ExperimentColumnName[];
       let newColumnWidths: number[];
 
@@ -830,12 +829,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   useEffect(() => {
+    if (!settings) return;
     if (settings.tableOffset > total) {
       const newTotal = settings.tableOffset > total ? total : total - 1;
       const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
       updateSettings({ tableOffset: offset });
     }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
+  }, [total, settings, updateSettings]);
 
   /*
    * Get new experiments based on changes to the
@@ -846,15 +846,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     fetchExperiments();
   }, [
     fetchExperiments,
-    settings.archived,
+    settings?.archived,
     labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
+    settings?.search,
+    settings?.sortDesc,
+    settings?.sortKey,
     statesString,
     pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
+    settings?.tableLimit,
+    settings?.tableOffset,
     usersString,
   ]);
 
@@ -881,7 +881,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
       const funcs = {
         [MenuKey.SwitchArchived]: () => {
-          switchShowArchived(!settings.archived);
+          switchShowArchived(!settings?.archived);
         },
         [MenuKey.Columns]: () => {
           handleCustomizeColumnsClick();
@@ -898,7 +898,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       const menuItems: MenuProps['items'] = [
         {
           key: MenuKey.SwitchArchived,
-          label: settings.archived ? 'Hide Archived' : 'Show Archived',
+          label: settings?.archived ? 'Hide Archived' : 'Show Archived',
         },
         { key: MenuKey.Columns, label: 'Columns' },
       ];
@@ -911,7 +911,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
           <Toggle
-            checked={settings.archived}
+            checked={settings?.archived}
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
@@ -931,7 +931,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     filterCount,
     handleCustomizeColumnsClick,
     resetFilters,
-    settings.archived,
+    settings?.archived,
     switchShowArchived,
   ]);
 
@@ -950,22 +950,22 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             label: action,
             value: action,
           }))}
-          selectedRowCount={(settings.row ?? []).length}
+          selectedRowCount={(settings?.row ?? []).length}
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
         <InteractiveTable
-          areRowsSelected={!!settings.row}
+          areRowsSelected={!!settings?.row}
           columns={columns}
           containerRef={pageRef}
           ContextMenu={ContextMenu}
           dataSource={experiments}
           loading={isLoading}
-          numOfPinned={(settings.pinned?.[id] ?? []).length}
+          numOfPinned={(settings?.pinned?.[id] ?? []).length}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
+              limit: settings?.tableLimit || 0,
+              offset: settings?.tableOffset || 0,
             },
             total,
           )}
@@ -974,13 +974,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
+            selectedRowKeys: settings?.row ?? [],
           }}
           scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
         />
       </div>
       {modalColumnsCustomizeContextHolder}

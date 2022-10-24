@@ -9,7 +9,7 @@ import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import projectDetailConfigSettings, { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
+import projectDetailConfigSettings, { ProjectDetailsSettings } from 'pages/OldProjectDetails.settings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
