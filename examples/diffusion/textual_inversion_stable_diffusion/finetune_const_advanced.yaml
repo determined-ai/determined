@@ -3,9 +3,9 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 finetune.py
 searcher:
   name: single
   metric: loss
-  max_length: 500 # Number of SGD steps.
+  max_length: 1000 # Number of SGD steps.
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 4
 max_restarts: 1
 environment:
     environment_variables:
@@ -45,6 +45,7 @@ hyperparameters:
         beta_schedule: scaled_linear # One of "linear", "scaled_linear", or "squaredcos_cap_v2".
         num_train_timesteps: 1000
         train_seed: 2147483647
+        norm_reg_weight: 1e-2
         hidden_reg_weight: 1e-5
     inference:
         generate_training_images: True
@@ -52,9 +53,9 @@ hyperparameters:
         num_pipeline_calls: 2
         inference_scheduler_name: pndm # One of "ddim", "lms-discrete", or "pndm".
         inference_prompts:
-          - a watercolor painting of a det-logo
+          - a watercolor painting on textured paper of a det-logo using soft strokes, pastel colors, incredible composition, masterpiece
           - a Van Gogh painting of a det-logo with vibrant colors, thick strokes, masterpiece, incredible composition
-          - a charcoal sketch of a det-logo
+          - Beautiful tarot illustration of a det-logo, in the style of james jean and victo ngai, mystical colors, trending on artstation
         num_inference_steps: 50
         guidance_scale: 7.5
         main_process_generator_seed: 2147483647

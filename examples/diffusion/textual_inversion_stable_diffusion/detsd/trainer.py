@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+from collections import defaultdict
 from typing import List, Literal, Optional, Sequence, Union
 
 import accelerate
@@ -47,6 +48,7 @@ class DetSDTextualInversionTrainer:
         beta_schedule: Literal["linear", "scaled_linear", "squaredcos_cap_v2"] = "scaled_linear",
         num_train_timesteps: int = 1000,
         train_seed: int = 2147483647,
+        norm_reg_weight: Optional[float] = None,
         hidden_reg_weight: Optional[float] = None,
         img_size: int = 512,
         interpolation: Literal["nearest", "bilinear", "bicubic"] = "bicubic",
@@ -119,6 +121,7 @@ class DetSDTextualInversionTrainer:
             img_dirs = [img_dirs]
         self.img_dirs = img_dirs
         self.train_seed = train_seed
+        self.norm_reg_weight = norm_reg_weight
         self.hidden_reg_weight = hidden_reg_weight
 
         self.accelerator = accelerate.Accelerator(
@@ -148,9 +151,7 @@ class DetSDTextualInversionTrainer:
         self.other_inference_scheduler_kwargs = other_inference_scheduler_kwargs
 
         self.steps_completed = 0
-        self.metrics_history = {"noise_pred_loss": []}
-        if self.hidden_reg_weight:
-            self.metrics_history["hidden_reg_loss"] = []
+        self.metrics_history = defaultdict(list)
         self.last_mean_loss = None
 
         self.effective_global_batch_size = (
@@ -176,6 +177,7 @@ class DetSDTextualInversionTrainer:
         self.train_scheduler = None
         self.inference_scheduler_kwargs = None
         self.pipeline = None
+        self.init_embedding_norm_mean = None
 
         self.concept_to_initializer_strs_map = {}
         self.concept_to_initializer_ids_map = {}
@@ -305,10 +307,18 @@ class DetSDTextualInversionTrainer:
         self.metrics_history["noise_pred_loss"].append(noise_pred_loss.item())
         self.accelerator.backward(noise_pred_loss)
 
+        # Optional regularization penalty for large learned embedding vectors.
+        if self.norm_reg_weight:
+            new_embedding = self._get_token_embedding_layer().new_embedding.weight
+            new_embedding_norm = torch.linalg.norm(new_embedding, dim=1)
+            new_embedding_norm_diff = self.init_embedding_norm_mean - new_embedding_norm
+            norm_reg_loss = self.norm_reg_weight * new_embedding_norm_diff.pow(2).sum()
+            self.metrics_history["norm_reg_loss"].append(norm_reg_loss.item())
+            self.accelerator.backward(norm_reg_loss)
+
         # Optional regularization penalty for changing the encoder hidden states too much.
         # Inspired by similar ideas in the original Textual Inversion repo and discussions on
-        # the Stable Diffusion #community-research channel.  Implemented as a separate forward and
-        # backward pass for GPU memory conservation.
+        # the Stable Diffusion #community-research channel.
         if self.hidden_reg_weight:
             dummy_hidden_states = self._get_encoder_hidden_states(text=dummy_prompts)
             with torch.no_grad():
@@ -374,6 +384,11 @@ class DetSDTextualInversionTrainer:
             self.feature_extractor = CLIPFeatureExtractor.from_pretrained(
                 pretrained_model_name_or_path="openai/clip-vit-base-patch32"
             )
+            if self.norm_reg_weight:
+                with torch.no_grad():
+                    embedding = self._get_token_embedding_layer().weight.data
+                    embedding_norms = torch.linalg.norm(embedding, dim=1)
+                    self.init_embedding_norm_mean = embedding_norms.mean().item()
 
     def _add_new_tokens_and_update_embeddings(self) -> None:
         """Add new concept tokens to the tokenizer and update the corresponding embedding layers in
