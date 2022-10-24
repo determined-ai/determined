@@ -50,6 +50,7 @@ const useModalWorkspaceRemoveMember = ({
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       message.success(`${name} removed from workspace`);
     } catch (e) {
+      setIsDeleting(false);
       if (e instanceof DetError) {
         handleError(e, {
           level: e.level,
