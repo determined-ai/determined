@@ -42,7 +42,7 @@ roleAssignmentHeaders = namedtuple(
 
 workspaceAssignedToHeaders = namedtuple(
     "workspaceAssignedToHeaders",
-    ["workspaceID", "workspaceName"],
+    ["assignedGlobally", "workspaceID", "workspaceName"],
 )
 
 groupAssignmentHeaders = namedtuple(
@@ -144,7 +144,7 @@ def role_with_assignment_to_dict(
     if workspace_id is not None:
         workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
 
-    if not r.role: # This should not happen.
+    if not r.role:  # This should not happen.
         return {}
     return {
         "roleName": r.role.name,
@@ -209,17 +209,24 @@ def list_groups_roles(args: Namespace) -> None:
         return
 
     for i, r in enumerate(resp.roles):
-        assigned_globally = ""
+        workspaces = []  # type: List[Dict[str, Any]]
         if resp.assignments[i].isGlobal:
-            assigned_globally = " globally and"
-        print(f"role '{r.name}' with ID {r.roleId} assigned{assigned_globally} to workspaces")
+            workspaces.append(
+                {"workspaceID": None, "workspaceName": None, "assignedGlobally": True}
+            )
 
-        workspaces = []
         workspace_ids = resp.assignments[i].scopeWorkspaceIds or []
         for wid in workspace_ids:
             workspace_name = bindings.get_GetWorkspace(session, id=wid).workspace.name
-            workspaces.append({"workspaceID": wid, "workspaceName": workspace_name})
+            workspaces.append(
+                {
+                    "workspaceID": wid,
+                    "workspaceName": workspace_name,
+                    "assignedGlobally": False,
+                }
+            )
 
+        print(f"role '{r.name}' with ID {r.roleId} assigned")
         render.render_objects(
             workspaceAssignedToHeaders,
             [render.unmarshal(workspaceAssignedToHeaders, w) for w in workspaces],
