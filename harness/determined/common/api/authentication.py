@@ -11,8 +11,7 @@ import filelock
 
 import determined as det
 from determined.common import api, constants, util
-from determined.common.api import bindings
-from determined.common.api import certs
+from determined.common.api import bindings, certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
@@ -71,8 +70,11 @@ class Authentication:
             and util.get_det_username_from_env() is not None
             and util.get_det_password_from_env() is not None
         ):
+            print("get from environment")
             session_user = util.get_det_username_from_env()  # type: ignore
             password = util.get_det_password_from_env()
+            print(session_user)
+            print(password)
 
         token = self.token_store.get_token(session_user)
         if token is not None and not _is_token_valid(self.master_address, token, cert):
@@ -145,9 +147,9 @@ def do_login(
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
-    isHashed: Optional[bool] = False
+    isHashed: Optional[bool] = False,
 ) -> str:
-    unauth_session = api.Session(user=username,master=master_address, auth=None, cert=cert)
+    unauth_session = api.Session(user=username, master=master_address, auth=None, cert=cert)
     login = bindings.v1LoginRequest(username=username, password=password, isHashed=isHashed)
     r = bindings.post_Login(session=unauth_session, body=login)
     token = r.token

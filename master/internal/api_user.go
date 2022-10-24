@@ -385,11 +385,22 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
+=======
+	fmt.Println("Cur user")
+	fmt.Println(curUser.Username)
+	fmt.Println("display name")
+	fmt.Println(req.User.DisplayName)
+
+	uid := model.UserID(req.UserId)
+	targetFullUser, err := getFullModelUser(uid)
+>>>>>>> 85169c208 (fix e2e tests)
 	if err != nil {
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
+<<<<<<< HEAD
 	if ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
 		return nil, err
 	} else if !ok {
@@ -401,6 +412,19 @@ func (a *apiServer) PatchUser(
 	if req.User.Admin != nil {
 		if err = user.AuthZProvider.Get().
 			CanSetUsersAdmin(ctx, *curUser, targetUser, req.User.Admin.Value); err != nil {
+=======
+
+	if req.User.DisplayName != nil {
+		fmt.Println(req.User.DisplayName)
+		fmt.Println("in display name")
+		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+>>>>>>> 85169c208 (fix e2e tests)
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -503,7 +527,12 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+=======
+	fmt.Println("end of Patch User")
+	fullUser, err := getUser(a.m.db, uid)
+>>>>>>> 85169c208 (fix e2e tests)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
 

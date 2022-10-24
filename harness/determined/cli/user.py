@@ -1,8 +1,8 @@
-from enum import auto
 import getpass
 import json
 from argparse import Namespace
 from collections import namedtuple
+from enum import auto
 from typing import Any, Dict, List, Optional
 
 from requests import Response
@@ -31,26 +31,28 @@ def update_user(
 ) -> Response:
     if active is None and password is None and agent_user_group is None:
         raise Exception("Internal error (must supply at least one kwarg to update_user).")
-    
-    if agent_user_group is None: 
+
+    if agent_user_group is None:
         user_obj.update(
-        username=username,
-        active=active,
-        password=password,
+            username=username,
+            active=active,
+            password=password,
         )
-    else: 
-         user_obj.update(
-        username=username,
-        active=active,
-        password=password,
-        agent_uid=agent_user_group.agent_uid,
-        agent_gid=agent_user_group.agent_gid,
-        agent_user=agent_user_group.agent_user,
-        agent_group=agent_user_group.agent_group,
+    else:
+        user_obj.update(
+            username=username,
+            active=active,
+            password=password,
+            agent_uid=agent_user_group.agent_uid,
+            agent_gid=agent_user_group.agent_gid,
+            agent_user=agent_user_group.agent_user,
+            agent_group=agent_user_group.agent_group,
         )
 
+
 def list_users(args: Namespace) -> None:
-    render.render_objects(FullUser,client.list_users())
+    render.render_objects(FullUser, client.list_users())
+
 
 def activate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
@@ -58,8 +60,11 @@ def activate_user(parsed_args: Namespace) -> None:
 
 
 def deactivate_user(parsed_args: Namespace) -> None:
+    print("in deactivate")
     user_obj = client.get_user_by_name(parsed_args.username)
     user_obj.deactivate()
+    user_obj = client.get_user_by_name(parsed_args.username)
+    print(user_obj.active)
 
 
 def log_in_user(parsed_args: Namespace) -> None:
@@ -74,7 +79,6 @@ def log_in_user(parsed_args: Namespace) -> None:
     password = api.salt_and_hash(getpass.getpass(message))
 
     token_store = authentication.TokenStore(parsed_args.master)
-
     token = authentication.do_login(parsed_args.master, username, password, isHashed=True)
     token_store.set_token(username, token)
     token_store.set_active(username)
@@ -105,6 +109,7 @@ def rename(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
     user_obj.rename(new_username=parsed_args.new_username)
 
+
 def change_password(parsed_args: Namespace) -> None:
     if parsed_args.target_user:
         username = parsed_args.target_user
@@ -127,8 +132,6 @@ def change_password(parsed_args: Namespace) -> None:
 
     # Hash the password to avoid sending it in cleartext.
     password = api.salt_and_hash(password)
-    print("hashed password")
-    print(password)
     user_obj = client.get_user_by_name(username)
     user_obj.change_password(new_password=password, is_hashed=True)
 
@@ -140,6 +143,7 @@ def change_password(parsed_args: Namespace) -> None:
         token_store.set_token(username, token)
         token_store.set_active(username)
 
+
 def link_with_agent_user(parsed_args: Namespace) -> None:
     if parsed_args.agent_uid is None:
         raise api.errors.BadRequestException("agent-uid argument required")
@@ -150,14 +154,21 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
     elif parsed_args.agent_group is None:
         raise api.errors.BadRequestException("agent-group argument required")
 
-    user_obj = client.get_user_by_name(parsed_args.username)
-    user_obj.link_with_agent(agent_gid=parsed_args.agent_uid, agent_group= parsed_args.agent_group, agent_uid=parsed_args.agent_uid, agent_user=parsed_args.agent_user)
+    user_obj = client.get_user_by_name(parsed_args.det_username)
+    user_obj.link_with_agent(
+        agent_gid=parsed_args.agent_gid,
+        agent_group=parsed_args.agent_group,
+        agent_uid=parsed_args.agent_uid,
+        agent_user=parsed_args.agent_user,
+    )
+
 
 @authentication.required
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)
+
 
 def whoami(parsed_args: Namespace) -> None:
     user = client.whoami()

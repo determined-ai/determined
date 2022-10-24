@@ -47,6 +47,7 @@ def create_experiment(
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr
     )
+    print("assertion completed creating experiment")
     m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
     assert m is not None
     return int(m.group(1))
@@ -676,8 +677,10 @@ def run_basic_test(
     expect_checkpoints: bool = True,
     priority: int = -1,
 ) -> int:
+    print("in run basic test")
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
+    print(f"created exp{experiment_id}")
     if priority != -1:
         set_priority(experiment_id=experiment_id, priority=priority)
 
@@ -687,11 +690,10 @@ def run_basic_test(
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(experiment_id) == 0
-
     verify_completed_experiment_metadata(
         experiment_id, expected_trials, expect_workloads, expect_checkpoints
     )
-
+    print("end of run basic test")
     return experiment_id
 
 
