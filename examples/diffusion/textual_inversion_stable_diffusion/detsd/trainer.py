@@ -30,8 +30,8 @@ class DetSDTextualInversionTrainer:
     def __init__(
         self,
         img_dirs: Union[str, Sequence[str]],
-        concept_tokens: Union[str, Sequence[str]],
-        initializer_tokens: Union[str, Sequence[str]],
+        concept_strs: Union[str, Sequence[str]],
+        initializer_strs: Union[str, Sequence[str]],
         learnable_properties: Sequence[Literal["object", "style"]],
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
         train_batch_size: int = 1,
@@ -81,12 +81,12 @@ class DetSDTextualInversionTrainer:
         if isinstance(learnable_properties, str):
             learnable_properties = [learnable_properties]
         self.learnable_properties = learnable_properties
-        if isinstance(concept_tokens, str):
-            concept_tokens = [concept_tokens]
-        self.concept_tokens = concept_tokens
-        if isinstance(initializer_tokens, str):
-            initializer_tokens = [initializer_tokens]
-        self.initializer_tokens = initializer_tokens
+        if isinstance(concept_strs, str):
+            concept_strs = [concept_strs]
+        self.concept_strs = concept_strs
+        if isinstance(initializer_strs, str):
+            initializer_strs = [initializer_strs]
+        self.initializer_strs = initializer_strs
         self.img_size = img_size
         self.interpolation = interpolation
         self.flip_p = flip_p
@@ -177,9 +177,9 @@ class DetSDTextualInversionTrainer:
         self.inference_scheduler_kwargs = None
         self.pipeline = None
 
-        self.concept_to_initializer_tokens_map = {}
+        self.concept_to_initializer_strs_map = {}
         self.concept_to_non_special_initializer_ids_map = {}
-        self.concept_to_dummy_tokens_map = {}
+        self.concept_to_dummy_strs_map = {}
         self.concept_to_dummy_ids_map = {}
 
         self._build_models()
@@ -379,31 +379,31 @@ class DetSDTextualInversionTrainer:
         """Add new concept tokens to the tokenizer and update the corresponding embedding layers in
         the text encoder.
         """
-        for concept_token, initializer_tokens in zip(self.concept_tokens, self.initializer_tokens):
+        for concept_str, initializer_strs in zip(self.concept_strs, self.initializer_strs):
             (
                 non_special_initializer_ids,
                 dummy_placeholder_ids,
-                dummy_placeholder_tokens,
+                dummy_placeholder_strs,
             ) = utils.add_new_tokens_to_tokenizer(
-                concept_token=concept_token,
-                initializer_tokens=initializer_tokens,
+                concept_str=concept_str,
+                initializer_strs=initializer_strs,
                 tokenizer=self.tokenizer,
             )
-            self.concept_to_initializer_tokens_map[concept_token] = initializer_tokens
+            self.concept_to_initializer_strs_map[concept_str] = initializer_strs
             self.concept_to_non_special_initializer_ids_map[
-                concept_token
+                concept_str
             ] = non_special_initializer_ids
-            self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
-            self.concept_to_dummy_ids_map[concept_token] = dummy_placeholder_ids
-            self.logger.info(f"Added {len(dummy_placeholder_ids)} new tokens for {concept_token}.")
+            self.concept_to_dummy_strs_map[concept_str] = dummy_placeholder_strs
+            self.concept_to_dummy_ids_map[concept_str] = dummy_placeholder_ids
+            self.logger.info(f"Added {len(dummy_placeholder_ids)} new tokens for {concept_str}.")
 
         # Create the dummy-to-initializer idx mapping and use the sorted values to generate the
         # updated embedding layer.
         dummy_id_to_initializer_id_map = {}
-        for concept_token in self.concept_tokens:
+        for concept_str in self.concept_strs:
             for dummy_id, initializer_id in zip(
-                self.concept_to_dummy_ids_map[concept_token],
-                self.concept_to_non_special_initializer_ids_map[concept_token],
+                self.concept_to_dummy_ids_map[concept_str],
+                self.concept_to_non_special_initializer_ids_map[concept_str],
             ):
                 dummy_id_to_initializer_id_map[dummy_id] = initializer_id
         sorted_dummy_initializer_id_list = sorted(
@@ -443,21 +443,21 @@ class DetSDTextualInversionTrainer:
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         """Helper function for replacing concepts with dummy placeholders."""
-        for concept_token, dummy_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(concept_token, dummy_tokens)
+        for concept_str, dummy_tokens in self.concept_to_dummy_strs_map.items():
+            text = text.replace(concept_str, dummy_tokens)
         return text
 
     def _replace_concepts_with_initializers(self, text: str) -> str:
         """Helper function for replacing concepts with their initializer tokens."""
-        for concept_token, init_tokens in self.concept_to_initializer_tokens_map.items():
-            text = text.replace(concept_token, init_tokens)
+        for concept_str, init_tokens in self.concept_to_initializer_strs_map.items():
+            text = text.replace(concept_str, init_tokens)
         return text
 
     def _build_dataset_and_dataloader(self) -> None:
         """Build the dataset and dataloader."""
         self.train_dataset = data.TextualInversionDataset(
             img_dirs=self.img_dirs,
-            concept_tokens=self.concept_tokens,
+            concept_strs=self.concept_strs,
             learnable_properties=self.learnable_properties,
             img_size=self.img_size,
             interpolation=self.interpolation,
@@ -524,10 +524,8 @@ class DetSDTextualInversionTrainer:
                 )
 
                 token_embedding_layer = self._get_token_embedding_layer()
-                for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
-                    learned_embeddings = learned_embeddings_dict[concept_token][
-                        "learned_embeddings"
-                    ]
+                for concept_str, dummy_ids in self.concept_to_dummy_ids_map.items():
+                    learned_embeddings = learned_embeddings_dict[concept_str]["learned_embeddings"]
                     # Sanity check on length.
                     # TODO: replace with strict=True in zip after upgrade to py >= 3.10.
                     assert len(dummy_ids) == len(
@@ -563,12 +561,12 @@ class DetSDTextualInversionTrainer:
 
     def _write_learned_embeddings_to_path(self, path: pathlib.Path) -> None:
         learned_embeddings_dict = {}
-        for concept_token, dummy_ids in self.concept_to_dummy_ids_map.items():
+        for concept_str, dummy_ids in self.concept_to_dummy_ids_map.items():
             token_embedding_layer = self._get_token_embedding_layer()
             learned_embeddings = token_embedding_layer.new_embedding.weight.data.detach().cpu()
-            initializer_tokens = self.concept_to_initializer_tokens_map[concept_token]
-            learned_embeddings_dict[concept_token] = {
-                "initializer_tokens": initializer_tokens,
+            initializer_strs = self.concept_to_initializer_strs_map[concept_str]
+            learned_embeddings_dict[concept_str] = {
+                "initializer_strs": initializer_strs,
                 "learned_embeddings": learned_embeddings,
             }
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))

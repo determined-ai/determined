@@ -18,7 +18,7 @@ class TextualInversionDataset(Dataset):
     def __init__(
         self,
         img_dirs: Sequence[str],
-        concept_tokens: Sequence[str],
+        concept_strs: Sequence[str],
         learnable_properties: Sequence[str],
         img_size: int = 512,
         interpolation: str = "bicubic",
@@ -30,8 +30,8 @@ class TextualInversionDataset(Dataset):
         num_a_prompts: int = 100,
     ):
         assert (
-            len(img_dirs) == len(concept_tokens) == len(learnable_properties)
-        ), "img_dirs, concept_tokens, and learnable_properties must have equal lens."
+            len(img_dirs) == len(concept_strs) == len(learnable_properties)
+        ), "img_dirs, concept_strs, and learnable_properties must have equal lens."
 
         assert (
             interpolation in defaults.INTERPOLATION_DICT
@@ -45,7 +45,7 @@ class TextualInversionDataset(Dataset):
         self.img_dirs = img_dirs
         self.learnable_properties = learnable_properties
         self.img_size = img_size
-        self.concept_tokens = concept_tokens
+        self.concept_strs = concept_strs
         self.center_crop = center_crop
         self.flip_p = flip_p
         self.append_file_name_to_text = append_file_name_to_text
@@ -62,8 +62,8 @@ class TextualInversionDataset(Dataset):
         self.logger = logging.getLogger(__name__)
 
         self.records = []
-        for dir_path, concept_token, prop in zip(
-            self.img_dirs, concept_tokens, self.learnable_properties
+        for dir_path, concept_str, prop in zip(
+            self.img_dirs, concept_strs, self.learnable_properties
         ):
             templates = defaults.TEMPLATE_DICT[prop]
             templates.extend(["{}"] * num_blank_prompts)
@@ -72,7 +72,7 @@ class TextualInversionDataset(Dataset):
             for img, path in imgs_and_paths:
                 img_tensor = self._convert_img_to_tensor(img)
                 for text in templates:
-                    prompt = text.format(concept_token)
+                    prompt = text.format(concept_str)
                     if append_file_name_to_text:
                         file_name_without_extension = path.stem
                         split_file_name = file_name_without_extension.split(

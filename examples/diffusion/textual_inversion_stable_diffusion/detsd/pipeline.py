@@ -243,7 +243,7 @@ class DetSDTextualInversionPipeline:
         """Load concepts from a checkpoint directory which is expected contain a file with the name
         matching the provided `learned_embeddings_filename` or, if omitted, the __init__
         `learned_embeddings_filename`. The file is expected to contain a dictionary
-        whose keys are the `concept_token`s and whose values are dictionaries containing an
+        whose keys are the `concept_str`s and whose values are dictionaries containing an
         `initializer_token` key and a `learned_embeddings` whose corresponding values are the
         initializer string and learned embedding tensors, respectively.
         """
@@ -258,18 +258,18 @@ class DetSDTextualInversionPipeline:
         learned_embeddings_dict = torch.load(checkpoint_dir.joinpath(learned_embeddings_filename))
 
         # Update embedding matrix and attrs.
-        for concept_token, embedding_dict in learned_embeddings_dict.items():
-            if concept_token in self.learned_embeddings_dict:
-                raise ValueError(f"Checkpoint concept conflict: {concept_token} already exists.")
-            initializer_tokens = embedding_dict["initializer_tokens"]
+        for concept_str, embedding_dict in learned_embeddings_dict.items():
+            if concept_str in self.learned_embeddings_dict:
+                raise ValueError(f"Checkpoint concept conflict: {concept_str} already exists.")
+            initializer_strs = embedding_dict["initializer_strs"]
             learned_embeddings = embedding_dict["learned_embeddings"]
             (
                 initializer_ids,
                 dummy_placeholder_ids,
-                dummy_placeholder_tokens,
+                dummy_placeholder_strs,
             ) = utils.add_new_tokens_to_tokenizer(
-                concept_token=concept_token,
-                initializer_tokens=initializer_tokens,
+                concept_str=concept_str,
+                initializer_strs=initializer_strs,
                 tokenizer=self.pipeline.tokenizer,
             )
 
@@ -282,9 +282,9 @@ class DetSDTextualInversionPipeline:
             ), "dummy_placeholder_ids and learned_embeddings must have the same length"
             for d_id, tensor in zip(dummy_placeholder_ids, learned_embeddings):
                 token_embeddings[d_id] = tensor
-            self.learned_embeddings_dict[concept_token] = embedding_dict
-            self.all_added_concepts.append(concept_token)
-            self.concept_to_dummy_tokens_map[concept_token] = dummy_placeholder_tokens
+            self.learned_embeddings_dict[concept_str] = embedding_dict
+            self.all_added_concepts.append(concept_str)
+            self.concept_to_dummy_tokens_map[concept_str] = dummy_placeholder_strs
         self.all_checkpoint_dirs.append(checkpoint_dir)
 
     def load_from_uuids(
@@ -320,8 +320,8 @@ class DetSDTextualInversionPipeline:
             self.pipeline.set_progress_bar_config(disable=True)
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
-        for concept_token, dummy_tokens in self.concept_to_dummy_tokens_map.items():
-            text = text.replace(concept_token, dummy_tokens)
+        for concept_str, dummy_tokens in self.concept_to_dummy_tokens_map.items():
+            text = text.replace(concept_str, dummy_tokens)
         return text
 
     def __call__(self, **kwargs) -> StableDiffusionPipelineOutput:
