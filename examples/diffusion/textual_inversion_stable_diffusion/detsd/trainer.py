@@ -178,7 +178,7 @@ class DetSDTextualInversionTrainer:
         self.pipeline = None
 
         self.concept_to_initializer_strs_map = {}
-        self.concept_to_non_special_initializer_ids_map = {}
+        self.concept_to_initializer_ids_map = {}
         self.concept_to_dummy_strs_map = {}
         self.concept_to_dummy_ids_map = {}
 
@@ -381,7 +381,7 @@ class DetSDTextualInversionTrainer:
         """
         for concept_str, initializer_strs in zip(self.concept_strs, self.initializer_strs):
             (
-                non_special_initializer_ids,
+                initializer_ids,
                 dummy_placeholder_ids,
                 dummy_placeholder_strs,
             ) = utils.add_new_tokens_to_tokenizer(
@@ -390,9 +390,7 @@ class DetSDTextualInversionTrainer:
                 tokenizer=self.tokenizer,
             )
             self.concept_to_initializer_strs_map[concept_str] = initializer_strs
-            self.concept_to_non_special_initializer_ids_map[
-                concept_str
-            ] = non_special_initializer_ids
+            self.concept_to_initializer_ids_map[concept_str] = initializer_ids
             self.concept_to_dummy_strs_map[concept_str] = dummy_placeholder_strs
             self.concept_to_dummy_ids_map[concept_str] = dummy_placeholder_ids
             self.logger.info(f"Added {len(dummy_placeholder_ids)} new tokens for {concept_str}.")
@@ -403,15 +401,14 @@ class DetSDTextualInversionTrainer:
         for concept_str in self.concept_strs:
             for dummy_id, initializer_id in zip(
                 self.concept_to_dummy_ids_map[concept_str],
-                self.concept_to_non_special_initializer_ids_map[concept_str],
+                self.concept_to_initializer_ids_map[concept_str],
             ):
                 dummy_id_to_initializer_id_map[dummy_id] = initializer_id
         sorted_dummy_initializer_id_list = sorted(
             [(dummy_id, init_id) for dummy_id, init_id in dummy_id_to_initializer_id_map.items()]
         )
-        idxs_to_copy = torch.tensor(
-            [init_id for _, init_id in sorted_dummy_initializer_id_list],
-            device=self.accelerator.device,
+        idxs_to_copy = torch.cat([init_id for _, init_id in sorted_dummy_initializer_id_list]).to(
+            self.accelerator.device
         )
         token_embedding_layer_weight_data = self._get_token_embedding_layer().weight.data
         copied_embedding_weights = (
@@ -545,7 +542,7 @@ class DetSDTextualInversionTrainer:
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
         if self.generate_training_images:
-            self._build_pipeline()
+            self._build_hf_pipeline()
             self._generate_and_write_tb_imgs(core_context)
         if self.accelerator.is_main_process:
             checkpoint_metadata_dict = {
@@ -571,7 +568,7 @@ class DetSDTextualInversionTrainer:
             }
         self.accelerator.save(learned_embeddings_dict, path.joinpath("learned_embeddings_dict.pt"))
 
-    def _build_pipeline(self) -> None:
+    def _build_hf_pipeline(self) -> None:
         inference_scheduler = defaults.NOISE_SCHEDULER_DICT[self.inference_scheduler_name]
         self.inference_scheduler_kwargs = {
             "beta_start": self.beta_start,

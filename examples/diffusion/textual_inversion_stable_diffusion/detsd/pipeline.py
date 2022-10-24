@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import pathlib
-from typing import Any, Dict, List, Literal, Optional, Sequence, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import determined as det
 import torch
@@ -72,7 +72,11 @@ class DetSDTextualInversionPipeline:
         self.concept_to_dummy_tokens_map = {}
         self.all_added_concepts = []
 
-        self._build_pipeline(disable_progress_bar=self.disable_progress_bar)
+        self.steps_completed = None
+        self.num_generated_imgs = None
+        self.image_history = []
+
+        self._build_hf_pipeline(disable_progress_bar=self.disable_progress_bar)
 
     @classmethod
     def generate_on_cluster(cls) -> None:
@@ -154,7 +158,7 @@ class DetSDTextualInversionPipeline:
             # Use unique seeds, to avoid repeated images, and add the corresponding generator to the
             # call_kwargs.
             seed = main_process_generator_seed + process_index
-            generator = torch.Generator(device=device).manual_seed(seed)
+            generator = torch.Generator(device=pipeline.device).manual_seed(seed)
             call_kwargs["generator"] = generator
             # Add seed information to the tensorboard tag.
             tb_tag += f"/seed: {seed}"
@@ -162,71 +166,51 @@ class DetSDTextualInversionPipeline:
             if batch_size > 1:
                 call_kwargs["prompt"] = [call_kwargs["prompt"]] * batch_size
 
-            steps_completed = 0
-            num_generated_imgs = 0
-            img_history = []
+            pipeline.steps_completed = 0
+            pipeline.num_generated_imgs = 0
+            pipeline.image_history = []
 
             # Restore from a checkpoint, if necessary.
             if latest_checkpoint is not None:
-                with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-                    with open(path.joinpath("metadata.json"), "r") as f:
-                        metadata_dict = json.load(f)
-                        generator_state_dict = torch.load(
-                            path.joinpath("generator_state_dict.pt"),
-                        )
-                        steps_completed = metadata_dict["steps_completed"]
-                        num_generated_imgs = metadata_dict["num_generated_imgs"]
-                        generator.set_state(generator_state_dict[device])
+                pipeline._restore_latest_checkpoint(
+                    core_context=core_context,
+                    latest_checkpoint=latest_checkpoint,
+                    generator=generator,
+                )
                 if is_main_process:
-                    logger.info(f"Resumed from checkpoint at step {steps_completed}")
+                    logger.info(f"Resumed from checkpoint at step {pipeline.steps_completed}")
 
             if is_main_process:
                 logger.info("--------------- Generating Images ---------------")
 
             # There will be a single op of len max_length, as defined in the searcher config.
             for op in core_context.searcher.operations():
-                while steps_completed < op.length:
-                    img_history.extend(pipeline(**call_kwargs).images)
-                    steps_completed += 1
+                while pipeline.steps_completed < op.length:
+                    pipeline.image_history.extend(pipeline(**call_kwargs).images)
+                    pipeline.steps_completed += 1
 
                     # Write to tensorboard and checkpoint at the specified frequency.
-                    if steps_completed % save_freq == 0 or steps_completed == op.length:
-                        # Tensorboard
-                        for idx, img in enumerate(img_history):
-                            img_t = pil_to_tensor(img)
-                            global_step = num_generated_imgs + idx
-                            tb_writer.add_image(
-                                tb_tag,
-                                img_tensor=img_t,
-                                global_step=global_step,
-                            )
-                        tb_writer.flush()
-                        core_context.train.upload_tensorboard_files()
-                        num_generated_imgs += len(img_history)
-                        img_history = []
+                    if (
+                        pipeline.steps_completed % save_freq == 0
+                        or pipeline.steps_completed == op.length
+                    ):
+                        pipeline._write_tb_imgs(
+                            core_context=core_context, tb_writer=tb_writer, tb_tag=tb_tag
+                        )
 
                         # Checkpointing.
                         devices_and_generators = core_context.distributed.gather(
                             (device, generator.get_state())
                         )
                         if is_main_process:
-                            logger.info(f"Saving at step {steps_completed}")
+                            logger.info(f"Saving at step {pipeline.steps_completed}")
                             # Save the state of the generators as the checkpoint.
-                            checkpoint_metadata_dict = {
-                                "steps_completed": steps_completed,
-                                "num_generated_imgs": num_generated_imgs,
-                            }
-                            with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
-                                path,
-                                storage_id,
-                            ):
-                                generator_state_dict = {
-                                    device: state for device, state in devices_and_generators
-                                }
-                                torch.save(
-                                    generator_state_dict, path.joinpath("generator_state_dict.pt")
-                                )
-                            op.report_progress(steps_completed)
+                            pipeline._save(
+                                core_context=core_context,
+                                devices_and_generators=devices_and_generators,
+                            )
+                            op.report_progress(pipeline.steps_completed)
+
                         # Only preempt after a checkpoint has been saved.
                         if core_context.preempt.should_preempt():
                             return
@@ -263,18 +247,14 @@ class DetSDTextualInversionPipeline:
                 raise ValueError(f"Checkpoint concept conflict: {concept_str} already exists.")
             initializer_strs = embedding_dict["initializer_strs"]
             learned_embeddings = embedding_dict["learned_embeddings"]
-            (
-                initializer_ids,
-                dummy_placeholder_ids,
-                dummy_placeholder_strs,
-            ) = utils.add_new_tokens_to_tokenizer(
+            (_, dummy_placeholder_ids, dummy_placeholder_strs,) = utils.add_new_tokens_to_tokenizer(
                 concept_str=concept_str,
                 initializer_strs=initializer_strs,
-                tokenizer=self.pipeline.tokenizer,
+                tokenizer=self.hf_pipeline.tokenizer,
             )
 
-            self.pipeline.text_encoder.resize_token_embeddings(len(self.pipeline.tokenizer))
-            token_embeddings = self.pipeline.text_encoder.get_input_embeddings().weight.data
+            self.hf_pipeline.text_encoder.resize_token_embeddings(len(self.hf_pipeline.tokenizer))
+            token_embeddings = self.hf_pipeline.text_encoder.get_input_embeddings().weight.data
             # Sanity check on length.
             # TODO: replace with strict=True in zip after upgrade to py >= 3.10
             assert len(dummy_placeholder_ids) == len(
@@ -305,10 +285,10 @@ class DetSDTextualInversionPipeline:
             self.load_from_checkpoint_dir(path)
         return checkpoint_paths
 
-    def _build_pipeline(self, disable_progress_bar: bool = True) -> None:
+    def _build_hf_pipeline(self, disable_progress_bar: bool = True) -> None:
         revision = "fp16" if self.use_fp16 else "main"
         torch_dtype = torch.float16 if self.use_fp16 else None
-        self.pipeline = StableDiffusionPipeline.from_pretrained(
+        self.hf_pipeline = StableDiffusionPipeline.from_pretrained(
             pretrained_model_name_or_path=self.pretrained_model_name_or_path,
             scheduler=self.scheduler,
             use_auth_token=self.use_auth_token,
@@ -317,7 +297,7 @@ class DetSDTextualInversionPipeline:
         ).to(self.device)
         # Disable the progress bar.
         if disable_progress_bar:
-            self.pipeline.set_progress_bar_config(disable=True)
+            self.hf_pipeline.set_progress_bar_config(disable=True)
 
     def _replace_concepts_with_dummies(self, text: str) -> str:
         for concept_str, dummy_tokens in self.concept_to_dummy_tokens_map.items():
@@ -332,7 +312,7 @@ class DetSDTextualInversionPipeline:
             kwargs["prompt"] = self._replace_concepts_with_dummies(kwargs["prompt"])
         else:
             kwargs["prompt"] = [self._replace_concepts_with_dummies(p) for p in kwargs["prompt"]]
-        output = self.pipeline(**kwargs)
+        output = self.hf_pipeline(**kwargs)
         return output
 
     def __repr__(self) -> str:
@@ -349,3 +329,53 @@ class DetSDTextualInversionPipeline:
         }
         attr_dict_str = ", ".join([f"{key}={value}" for key, value in attr_dict.items()])
         return f"{self.__class__.__name__}({attr_dict_str})"
+
+    def _write_tb_imgs(
+        self, core_context: det.core.Context, tb_writer: SummaryWriter, tb_tag: str
+    ) -> None:
+        for idx, img in enumerate(self.image_history):
+            img_t = pil_to_tensor(img)
+            global_step = self.num_generated_imgs + idx
+            tb_writer.add_image(
+                tb_tag,
+                img_tensor=img_t,
+                global_step=global_step,
+            )
+        tb_writer.flush()
+        core_context.train.upload_tensorboard_files()
+        self.num_generated_imgs += len(self.image_history)
+        self.image_history = []
+
+    def _restore_latest_checkpoint(
+        self, core_context: det.core.Context, latest_checkpoint: str, generator: torch.Generator
+    ) -> None:
+        with core_context.checkpoint.restore_path(latest_checkpoint) as path:
+            with open(path.joinpath("metadata.json"), "r") as f:
+                metadata_dict = json.load(f)
+                generator_state_dict = torch.load(
+                    path.joinpath("generator_state_dict.pt"),
+                )
+                self.steps_completed = metadata_dict["steps_completed"]
+                self.num_generated_imgs = metadata_dict["num_generated_imgs"]
+                generator.set_state(generator_state_dict[self.device])
+                self.image_history = torch.load(path.joinpath("self.image_history.pt"))
+
+    def _save(
+        self,
+        core_context: det.core.Context,
+        devices_and_generators: List[Tuple[str, torch.ByteTensor]],
+    ) -> None:
+        checkpoint_metadata_dict = {
+            "steps_completed": self.steps_completed,
+            "num_generated_imgs": self.num_generated_imgs,
+        }
+        with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
+            path,
+            storage_id,
+        ):
+            generator_state_dict = {device: state for device, state in devices_and_generators}
+            torch.save(generator_state_dict, path.joinpath("generator_state_dict.pt"))
+            torch.save(
+                self.image_history,
+                path.joinpath("self.image_history.pt"),
+            )
