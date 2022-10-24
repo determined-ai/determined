@@ -9,9 +9,12 @@ export type ChartTooltip = string | null;
 interface Props {
   getXTooltipHeader?: (xIndex: number) => ChartTooltip;
   getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
+  isShownEmptyVal: boolean;
 }
 
-export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props = {}): Plugin => {
+export const tooltipsPlugin = (
+  { getXTooltipHeader, getXTooltipYLabels, isShownEmptyVal }: Props = { isShownEmptyVal: true },
+): Plugin => {
   let barEl: HTMLDivElement | null = null;
   let displayedIdx: number | null = null;
   let tooltipEl: HTMLDivElement | null = null;
@@ -19,25 +22,22 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
   const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
     let html = '';
 
-    let header: ChartTooltip = null;
-    if (typeof getXTooltipHeader === 'function') {
-      header = getXTooltipHeader(idx);
-    }
-    let yLabels: ChartTooltip[] = [];
-    if (typeof getXTooltipYLabels === 'function') {
-      yLabels = getXTooltipYLabels(idx);
-    }
+    const header: ChartTooltip =
+      typeof getXTooltipHeader === 'function' ? getXTooltipHeader(idx) : null;
+
+    const yLabels: ChartTooltip[] =
+      typeof getXTooltipYLabels === 'function' ? getXTooltipYLabels(idx) : [];
 
     const xSerie = uPlot.series[0];
     const xValue =
       typeof xSerie.value === 'function'
         ? xSerie.value(uPlot, uPlot.data[0][idx], 0, idx)
         : uPlot.data[0][idx];
-    html +=
-      `<div class="${css.valueX}">` +
-      (header ? header + '<br />' : '') +
-      `${xSerie.label}: ${xValue}` +
-      '</div>';
+    html += `
+      <div class="${css.valueX}">
+        ${header ? header + '<br />' : ''}
+        ${xSerie.label}: ${xValue}
+      </div>`;
 
     uPlot.series.forEach((serie, i) => {
       if (serie.scale === 'x' || !serie.show) return;
@@ -45,19 +45,21 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
       const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
 
-      const cssClass = valueRaw != null ? css.valueY : css.valueYEmpty;
-      html +=
-        `<div class="${cssClass}">` +
-        `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>` +
-        (label ? label + '<br />' : '') +
-        `${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}` +
-        '</div>';
+      const cssClass = valueRaw !== null ? css.valueY : css.valueYEmpty;
+      if (isShownEmptyVal || valueRaw)
+        html += `
+          <div class="${cssClass}">
+            <span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>
+            ${label ? label + '<br />' : ''}
+            ${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}
+          </div>`;
     });
 
     return html;
   };
 
   const _getTooltipLeftPx = (uPlot: uPlot, idx: number): number => {
+    const margin = 40;
     const idxLeft = uPlot.valToPos(uPlot.data[0][idx], 'x');
     if (!tooltipEl) return idxLeft;
 
@@ -66,11 +68,11 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
 
     // right
     if (chartWidth && idxLeft + tooltipWidth >= chartWidth) {
-      return idxLeft - tooltipWidth;
+      return idxLeft - tooltipWidth - margin;
     }
 
     // left
-    return idxLeft;
+    return idxLeft + margin;
   };
 
   const _updateTooltipVerticalPosition = (uPlot: uPlot, cursorTop: number) => {
