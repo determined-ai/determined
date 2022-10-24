@@ -2,17 +2,19 @@ import { Tooltip } from 'antd';
 import React from 'react';
 
 import { DarkLight } from 'shared/themes';
-import { ClassNameProp } from 'shared/types';
+import { ClassNameProp, ValueOf } from 'shared/types';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
 
 import css from './Avatar.module.scss';
 
-export enum Size {
-  Medium = 'medium',
-  Large = 'large',
-  ExtraLarge = 'extra-large',
-}
+export const Size = {
+  ExtraLarge: 'extra-large',
+  Large: 'large',
+  Medium: 'medium',
+} as const;
+
+export type Size = ValueOf<typeof Size>;
 
 export interface Props extends ClassNameProp {
   darkLight: DarkLight;
@@ -57,6 +59,7 @@ const Avatar: React.FC<Props> = ({
   const style = {
     backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, darkLight),
     borderRadius: square ? '10%' : '100%',
+    color: noColor ? 'var(--theme-stage-on-strong)' : 'white',
   };
   const classes = [css.base, css[size]];
 

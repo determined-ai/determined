@@ -2,14 +2,17 @@ import React from 'react';
 
 import { useStore } from 'contexts/Store';
 import * as Images from 'shared/components/Image';
+import { ValueOf } from 'shared/types';
 
 import css from './Message.module.scss';
 
-export enum MessageType {
-  Alert = 'alert',
-  Empty = 'empty',
-  Warning = 'warning',
-}
+export const MessageType = {
+  Alert: 'alert',
+  Empty: 'empty',
+  Warning: 'warning',
+} as const;
+
+export type MessageType = ValueOf<typeof MessageType>;
 
 export interface Props {
   message?: string;

@@ -8,7 +8,10 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-import { ExperimentVisualizationType, HpImportance, MetricName, Scale } from 'types';
+import { ValueOf } from 'shared/types';
+import { HpImportance, Metric, Scale } from 'types';
+
+import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
@@ -19,53 +22,59 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: MetricName;
+  metric: Metric;
   scale: Scale;
   view: ViewType;
 }
 
-export enum FilterError {
-  MetricBatches,
-  MetricNames,
-}
+export const FilterError = {
+  MetricBatches: 'MetricBatches',
+  Metrics: 'Metrics',
+} as const;
 
-export enum ViewType {
-  Grid = 'grid',
-  List = 'list',
-}
+export type FilterError = ValueOf<typeof FilterError>;
+
+export const ViewType = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+export type ViewType = ValueOf<typeof ViewType>;
 
 interface Props {
   batches: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
   hpImportance?: HpImportance;
-  metrics: MetricName[];
+  metrics: Metric[];
   onChange?: (filters: VisualizationFilters) => void;
-  onMetricChange?: (metric: MetricName) => void;
+  onMetricChange?: (metric: Metric) => void;
   onReset?: () => void;
   type: ExperimentVisualizationType;
 }
 
-enum ActionType {
-  Set,
-  SetBatch,
-  SetBatchMargin,
-  SetHParams,
-  SetMaxTrial,
-  SetMetric,
-  SetView,
-  SetScale,
-}
+const ActionType = {
+  Set: 0,
+  SetBatch: 1,
+  SetBatchMargin: 2,
+  SetHParams: 3,
+  SetMaxTrial: 4,
+  SetMetric: 5,
+  SetScale: 6,
+  SetView: 7,
+} as const;
+
+type ActionType = ValueOf<typeof ActionType>;
 
 type Action =
-  | { type: ActionType.Set; value: VisualizationFilters }
-  | { type: ActionType.SetBatch; value: number }
-  | { type: ActionType.SetBatchMargin; value: number }
-  | { type: ActionType.SetHParams; value: string[] }
-  | { type: ActionType.SetMaxTrial; value: number }
-  | { type: ActionType.SetMetric; value: MetricName }
-  | { type: ActionType.SetView; value: ViewType }
-  | { type: ActionType.SetScale; value: Scale };
+  | { type: typeof ActionType.Set; value: VisualizationFilters }
+  | { type: typeof ActionType.SetBatch; value: number }
+  | { type: typeof ActionType.SetBatchMargin; value: number }
+  | { type: typeof ActionType.SetHParams; value: string[] }
+  | { type: typeof ActionType.SetMaxTrial; value: number }
+  | { type: typeof ActionType.SetMetric; value: Metric }
+  | { type: typeof ActionType.SetView; value: ViewType }
+  | { type: typeof ActionType.SetScale; value: Scale };
 
 const TOP_TRIALS_OPTIONS = [1, 10, 20, 50, 100];
 const BATCH_MARGIN_OPTIONS = [1, 5, 10, 20, 50];
@@ -111,24 +120,20 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   const [showMaxTrials, showBatches, showMetrics, showHParams, showViews, showScales] =
     useMemo(() => {
       return [
-        [ExperimentVisualizationType.LearningCurve].includes(type),
-        [
-          ExperimentVisualizationType.HpHeatMap,
-          ExperimentVisualizationType.HpParallelCoordinates,
-          ExperimentVisualizationType.HpScatterPlots,
-        ].includes(type),
+        ExperimentVisualizationType.LearningCurve === type,
+        ExperimentVisualizationType.HpHeatMap === type ||
+          ExperimentVisualizationType.HpParallelCoordinates === type ||
+          ExperimentVisualizationType.HpScatterPlots === type,
         [
           ExperimentVisualizationType.HpHeatMap,
           ExperimentVisualizationType.HpParallelCoordinates,
           ExperimentVisualizationType.HpScatterPlots,
           ExperimentVisualizationType.LearningCurve,
         ].includes(type),
-        [
-          ExperimentVisualizationType.HpHeatMap,
-          ExperimentVisualizationType.HpParallelCoordinates,
-          ExperimentVisualizationType.HpScatterPlots,
-        ].includes(type),
-        [ExperimentVisualizationType.HpHeatMap].includes(type),
+        ExperimentVisualizationType.HpHeatMap === type ||
+          ExperimentVisualizationType.HpParallelCoordinates === type ||
+          ExperimentVisualizationType.HpScatterPlots === type,
+        ExperimentVisualizationType.HpHeatMap === type,
         [
           ExperimentVisualizationType.HpHeatMap,
           ExperimentVisualizationType.HpScatterPlots,
@@ -162,7 +167,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   }, []);
 
   const handleMetricChange = useCallback(
-    (metric: MetricName) => {
+    (metric: Metric) => {
       dispatch({ type: ActionType.SetMetric, value: metric });
       if (onMetricChange) onMetricChange(metric);
     },
@@ -248,9 +253,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       )}
       {showMetrics && (
         <MetricSelectFilter
-          defaultMetricNames={metrics}
+          defaultMetrics={metrics}
           label="Metric"
-          metricNames={metrics}
+          metrics={metrics}
           multiple={false}
           value={localFilters.metric}
           width={'100%'}

@@ -18,7 +18,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -180,7 +179,7 @@ func (a *apiServer) GetCommands(
 		if err != nil {
 			return false
 		}
-		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
 			*curUser, model.UserID(resp.Commands[i].UserId))
 		if serverError != nil {
 			err = serverError
@@ -208,7 +207,7 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
 		*curUser, model.UserID(resp.Command.UserId)); err != nil {
 		return nil, err
 	} else if !ok {

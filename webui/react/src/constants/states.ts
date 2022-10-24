@@ -1,4 +1,4 @@
-import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { Determinedtrialv1State, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { StateOfUnion } from 'themes';
 import {
   CheckpointState,
@@ -52,7 +52,7 @@ export const cancellableRunStates: Set<CompoundRunState> = new Set([
   ...jobStates,
 ]);
 
-export const killableCommandStates = [
+export const killableCommandStates: Array<CommandState> = [
   CommandState.Pulling,
   CommandState.Queued,
   CommandState.Running,
@@ -167,6 +167,17 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
   [SlotState.Potential]: 'Potential',
 };
 
+export const trialStateTolabel: { [key in Determinedtrialv1State]: string } = {
+  [Determinedtrialv1State.ACTIVE]: 'Active',
+  [Determinedtrialv1State.PAUSED]: 'Paused',
+  [Determinedtrialv1State.STOPPINGCANCELED]: 'Stopping',
+  [Determinedtrialv1State.STOPPINGKILLED]: 'Stopping',
+  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'Stopping',
+  [Determinedtrialv1State.STOPPINGERROR]: 'Error',
+  [Determinedtrialv1State.CANCELED]: 'Canceled',
+  [Determinedtrialv1State.COMPLETED]: 'Completed',
+  [Determinedtrialv1State.ERROR]: 'Error',
+};
 export function stateToLabel(state: StateOfUnion): string {
   return (
     runStateToLabel[state as RunState] ||
@@ -175,6 +186,7 @@ export function stateToLabel(state: StateOfUnion): string {
     checkpointStateToLabel[state as CheckpointState] ||
     jobStateToLabel[state as JobState] ||
     slotStateToLabel[state as SlotState] ||
+    trialStateTolabel[state as Determinedtrialv1State] ||
     (state as string)
   );
 }

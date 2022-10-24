@@ -1,4 +1,4 @@
-import { Agent, deviceTypes, ResourceState, ResourceType } from 'types';
+import { Agent, isDeviceType, ResourceState, ResourceType } from 'types';
 
 export const getSlotContainerStates = (
   agents: Agent[],
@@ -14,7 +14,7 @@ export const getSlotContainerStates = (
         : true,
     )
     .map((agent) => {
-      return deviceTypes.has(resourceType)
+      return isDeviceType(resourceType)
         ? agent.resources.filter((res) => res.type === resourceType)
         : agent.resources;
     })

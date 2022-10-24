@@ -55,6 +55,11 @@ type UserAuthZ interface {
 	CanCreateUsersOwnSetting(curUser model.User, setting model.UserWebSetting) error
 	// POST /api/v1/users/setting
 	CanResetUsersOwnSettings(curUser model.User) error
+
+	// GET /api/v1/tasks/count
+	// TODO(nick) move this when we add an AuthZ for notebooks.
+	CanGetActiveTasksCount(curUser model.User) error
+	CanAccessNTSCTask(curUser model.User, ownerID model.UserID) (canView bool, serverError error)
 }
 
 // AuthZProvider is the authz registry for `user` package.

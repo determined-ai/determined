@@ -2,10 +2,10 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { clone } from 'shared/utils/data';
 
-enum ActionType {
-  Reset,
-  Set,
-}
+const ActionType = {
+  Reset: 0,
+  Set: 1,
+} as const;
 
 interface Options<T, A> {
   initialState: T;
@@ -13,7 +13,9 @@ interface Options<T, A> {
   reducer?: (state: T, action: A) => T;
 }
 
-type Action<T> = { type: ActionType.Reset; value: T } | { type: ActionType.Set; value: T };
+type Action<T> =
+  | { type: typeof ActionType.Reset; value: T }
+  | { type: typeof ActionType.Set; value: T };
 
 type Export<T, A> = {
   ActionType: typeof ActionType;

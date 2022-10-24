@@ -23,10 +23,10 @@ interface RenderProps {
   placeholder?: string;
 }
 
-enum TabType {
-  Edit = 'edit',
-  Preview = 'preview',
-}
+const TabType = {
+  Edit: 'edit',
+  Preview: 'preview',
+} as const;
 
 const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick }) => {
   const showPlaceholder = !markdown && placeholder;
@@ -49,7 +49,7 @@ const Markdown: React.FC<Props> = ({
   onClick,
 }: Props) => {
   return (
-    <div aria-label="markdown-editor" className={css.base}>
+    <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
       {editing && !disabled ? (
         <Tabs className="no-padding">
           <TabPane className={css.noOverflow} key={TabType.Edit} tab="Edit">

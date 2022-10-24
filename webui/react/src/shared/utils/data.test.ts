@@ -4,22 +4,22 @@ import { RawJson, UnknownRecord } from '../types';
 
 import * as utils from './data';
 
-enum Type {
-  AsyncFn = 'async-function',
-  BigInt = 'bigint',
-  Boolean = 'boolean',
-  Date = 'date',
-  Fn = 'function',
-  Map = 'map',
-  NullOrUndefined = 'null-or-undefined',
-  Number = 'number',
-  Object = 'object',
-  Primitive = 'primitive',
-  Promise = 'promise',
-  Set = 'set',
-  String = 'string',
-  SyncFn = 'sync-function',
-}
+const Type = {
+  AsyncFn: 'async-function',
+  BigInt: 'bigint',
+  Boolean: 'boolean',
+  Date: 'date',
+  Fn: 'function',
+  Map: 'map',
+  NullOrUndefined: 'null-or-undefined',
+  Number: 'number',
+  Object: 'object',
+  Primitive: 'primitive',
+  Promise: 'promise',
+  Set: 'set',
+  String: 'string',
+  SyncFn: 'sync-function',
+} as const;
 
 const testGroups = [
   { fn: utils.isAsyncFunction, type: Type.AsyncFn },
@@ -122,7 +122,7 @@ describe('Data Utilities', () => {
         tests.forEach((test) => {
           it(`should test value "${test.value}" correctly as ${JSON.stringify(test.type)}`, () => {
             const result = Array.isArray(test.type)
-              ? test.type.includes(group.type)
+              ? test.type.map((type) => type === group.type).some((res) => res)
               : test.type === group.type;
             expect(group.fn(test.value)).toBe(result);
           });
@@ -433,17 +433,17 @@ describe('Data Utilities', () => {
   });
 
   describe('enum utilities', () => {
-    enum CarType {
-      Convertible = 'Convertible',
-      Coupe = 'Coupe',
-      Hatchback = 'Hatchback',
-      Minivan = 'Minivan',
-      PickupTruck = 'Pickup Truck',
-      Sedan = 'Sedan',
-      SportsCar = 'Sports Car',
-      StationWagon = 'Station Wagon',
-      SUV = 'SUV',
-    }
+    const CarType = {
+      Convertible: 'Convertible',
+      Coupe: 'Coupe',
+      Hatchback: 'Hatchback',
+      Minivan: 'Minivan',
+      PickupTruck: 'Pickup Truck',
+      Sedan: 'Sedan',
+      SportsCar: 'Sports Car',
+      StationWagon: 'Station Wagon',
+      SUV: 'SUV',
+    } as const;
     const INVALID_CAR_TYPE = 'Not a CarType';
 
     describe('validateEnum', () => {

@@ -37,12 +37,12 @@ const partStyle = (part: BarPart) => {
 };
 
 const sizeMap = {
-  [ShirtSize.small]: '4px',
-  [ShirtSize.medium]: '12px',
-  [ShirtSize.large]: '24px',
+  [ShirtSize.Small]: '4px',
+  [ShirtSize.Medium]: '12px',
+  [ShirtSize.Large]: '24px',
 };
 
-const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.small }: Props) => {
+const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.Small }: Props) => {
   const classes: string[] = [css.base];
 
   if (barOnly) classes.push(css.barOnly);

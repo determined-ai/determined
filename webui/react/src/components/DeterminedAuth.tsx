@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import { useFetchMyRoles } from 'hooks/useFetch';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
@@ -31,6 +32,7 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const storeDispatch = useStoreDispatch();
   const fetchMyRoles = useFetchMyRoles(canceler);
+  const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState(false);
   const [canSubmit, setCanSubmit] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
@@ -51,7 +53,9 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           type: StoreAction.SetAuth,
           value: { isAuthenticated: true, token, user },
         });
-        fetchMyRoles();
+        if (rbacEnabled) {
+          await fetchMyRoles();
+        }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
       } catch (e) {
         const isBadCredentialsSync = isLoginFailure(e);
@@ -70,7 +74,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setCanSubmit(true);
       }
     },
-    [canceler, storeDispatch],
+    [canceler, storeDispatch, fetchMyRoles, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

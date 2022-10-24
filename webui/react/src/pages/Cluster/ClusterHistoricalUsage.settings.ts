@@ -1,4 +1,5 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { ValueOf } from 'shared/types';
 
 export interface Settings {
   after?: string;
@@ -6,10 +7,12 @@ export interface Settings {
   groupBy: string;
 }
 
-export enum GroupBy {
-  Day = 'day',
-  Month = 'month',
-}
+export const GroupBy = {
+  Day: 'day',
+  Month: 'month',
+} as const;
+
+export type GroupBy = ValueOf<typeof GroupBy>;
 
 const config: SettingsConfig = {
   settings: [

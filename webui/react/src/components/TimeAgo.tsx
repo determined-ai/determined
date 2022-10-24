@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { ValueOf } from 'shared/types';
 import { isNumber, isString } from 'shared/utils/data';
 import {
   DURATION_DAY,
@@ -13,6 +14,14 @@ import {
 } from 'shared/utils/datetime';
 import { capitalize, capitalizeWord } from 'shared/utils/string';
 
+export const TimeAgoCase = {
+  Lower: 'lower',
+  Sentence: 'sentence',
+  Title: 'title',
+} as const;
+
+export type TimeAgoCase = ValueOf<typeof TimeAgoCase>;
+
 interface Props {
   className?: string;
   dateFormat?: string;
@@ -22,12 +31,6 @@ interface Props {
   stringCase?: TimeAgoCase;
   tooltipFormat?: string;
   units?: number;
-}
-
-export enum TimeAgoCase {
-  Lower = 'lower',
-  Sentence = 'sentence',
-  Title = 'title',
 }
 
 export const JUST_NOW = 'Just Now';

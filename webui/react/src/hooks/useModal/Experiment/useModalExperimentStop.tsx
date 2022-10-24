@@ -5,15 +5,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { cancelExperiment, killExperiment } from 'services/api';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
 import css from './useModalExperimentStop.module.scss';
 
-export enum ActionType {
-  Cancel = 'Cancel',
-  Kill = 'Kill',
-}
+export const ActionType = {
+  Cancel: 'Cancel',
+  Kill: 'Kill',
+} as const;
+
+export type ActionType = ValueOf<typeof ActionType>;
 
 interface Props {
   experimentId: number;

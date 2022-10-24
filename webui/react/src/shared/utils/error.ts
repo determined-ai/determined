@@ -1,3 +1,4 @@
+import { ValueOf } from 'shared/types';
 import rootLogger from 'shared/utils/Logger';
 
 import { isObject, isString } from './data';
@@ -19,22 +20,33 @@ export interface DetErrorOptions {
   type?: ErrorType;
 }
 
-export enum ErrorLevel {
-  Fatal = 'fatal',
-  Error = 'error',
-  Warn = 'warning',
-}
+export const ErrorLevel = {
+  Error: 'error',
+  Fatal: 'fatal',
+  Warn: 'warning',
+} as const;
 
-export enum ErrorType {
-  Server = 'server', // internal apis and server errors.
-  Auth = 'auth',
-  Unknown = 'unknown',
-  Ui = 'ui',
-  Input = 'input', // the issue is caused by unexpected/invalid user input.
-  ApiBadResponse = 'apiBadResponse', // unexpected response structure.
-  Api = 'api', // third-party api
-  Assert = 'assert', // assertion failure.
-}
+export type ErrorLevel = ValueOf<typeof ErrorLevel>;
+
+export const ErrorType = {
+  // unexpected response structure.
+  Api: 'api',
+
+  // the issue is caused by unexpected/invalid user input.
+  ApiBadResponse: 'apiBadResponse',
+
+  // third-party api
+  Assert: 'assert',
+
+  // internal apis and server errors.
+  Auth: 'auth',
+  Input: 'input',
+  Server: 'server',
+  Ui: 'ui',
+  Unknown: 'unknown', // assertion failure.
+} as const;
+
+export type ErrorType = ValueOf<typeof ErrorType>;
 
 const defaultErrOptions: DetErrorOptions = {
   isUserTriggered: false,

@@ -1,5 +1,6 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
   ListChildComponentProps,
   ListOnItemsRenderedProps,
@@ -19,7 +20,7 @@ import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { RecordKey } from 'shared/types';
+import { RecordKey, ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -53,17 +54,21 @@ export interface FetchConfig {
   offsetLog?: Log;
 }
 
-export enum FetchType {
-  Initial = 'Initial',
-  Newer = 'Newer',
-  Older = 'Older',
-  Stream = 'Stream',
-}
+export const FetchType = {
+  Initial: 'Initial',
+  Newer: 'Newer',
+  Older: 'Older',
+  Stream: 'Stream',
+} as const;
 
-export enum FetchDirection {
-  Newer = 'Newer',
-  Older = 'Older',
-}
+export type FetchType = ValueOf<typeof FetchType>;
+
+export const FetchDirection = {
+  Newer: 'Newer',
+  Older: 'Older',
+} as const;
+
+export type FetchDirection = ValueOf<typeof FetchDirection>;
 
 export const ARIA_LABEL_ENABLE_TAILING = 'Enable Tailing';
 export const ARIA_LABEL_SCROLL_TO_OLDEST = 'Scroll to Oldest';
@@ -122,9 +127,9 @@ const LogViewer: React.FC<Props> = ({
   const [isFetching, setIsFetching] = useState(false);
   const local = useRef(clone(defaultLocal));
   const [canceler] = useState(new AbortController());
-  const [fetchDirection, setFetchDirection] = useState(FetchDirection.Older);
-  const [isTailing, setIsTailing] = useState(true);
-  const [showButtons, setShowButtons] = useState(false);
+  const [fetchDirection, setFetchDirection] = useState<FetchDirection>(FetchDirection.Older);
+  const [isTailing, setIsTailing] = useState<boolean>(true);
+  const [showButtons, setShowButtons] = useState<boolean>(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
@@ -177,8 +182,10 @@ const LogViewer: React.FC<Props> = ({
   const addLogs = useCallback(
     (newLogs: ViewerLog[], prepend = false): void => {
       if (newLogs.length === 0) return;
-      setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
-      resizeLogs();
+      flushSync(() => {
+        setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
+        resizeLogs();
+      });
     },
     [resizeLogs],
   );
@@ -303,8 +310,10 @@ const LogViewer: React.FC<Props> = ({
       local.current.isScrollReady = false;
       local.current.isAtOffsetEnd = false;
 
-      setLogs([]);
-      setFetchDirection(FetchDirection.Newer);
+      flushSync(() => {
+        setLogs([]);
+        setFetchDirection(FetchDirection.Newer);
+      });
     }
   }, [fetchDirection]);
 
@@ -554,6 +563,7 @@ const LogViewer: React.FC<Props> = ({
         style={{
           ...style,
           left: parseFloat(`${style.left}`) + PADDING,
+          outline: 'none',
           paddingTop: index === 0 ? PADDING : 0,
           width: `calc(100% - ${2 * PADDING}px)`,
         }}

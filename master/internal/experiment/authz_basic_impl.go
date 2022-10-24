@@ -5,7 +5,6 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
@@ -110,21 +109,11 @@ func (a *ExperimentAuthZBasic) CanSetExperimentsCheckpointGCPolicy(
 	return nil
 }
 
-// CanGetActiveTasksCount always returns a nil error.
-func (a *ExperimentAuthZBasic) CanGetActiveTasksCount(curUser model.User) error {
+// CanRunCustomSearch always returns a nil error.
+func (a *ExperimentAuthZBasic) CanRunCustomSearch(
+	curUser model.User, e *model.Experiment,
+) error {
 	return nil
-}
-
-// CanAccessNTSCTask returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the task and a nil error.
-func (a *ExperimentAuthZBasic) CanAccessNTSCTask(
-	curUser model.User, ownerID model.UserID,
-) (bool, error) {
-	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
-		return true, nil
-	}
-	return curUser.Admin || curUser.ID == ownerID, nil
 }
 
 func init() {

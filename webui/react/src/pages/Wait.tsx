@@ -76,7 +76,7 @@ const Wait: React.FC = () => {
         if (!lastRun) {
           return;
         }
-        if ([CommandState.Terminated].includes(lastRun.state)) {
+        if (CommandState.Terminated === lastRun.state) {
           clearInterval(ival);
         } else if (lastRun.isReady) {
           clearInterval(ival);

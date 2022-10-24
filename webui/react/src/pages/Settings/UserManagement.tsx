@@ -2,17 +2,17 @@ import { Button, Dropdown, Menu, message, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Page from 'components/Page';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
-} from 'components/InteractiveTable';
-import Page from 'components/Page';
+} from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
   relativeTimeRenderer,
-} from 'components/Table';
+} from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
@@ -22,6 +22,7 @@ import { getGroups, getUsers, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { DetailedUser } from 'types';
@@ -55,35 +56,35 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     fetchUsers();
   };
 
-  enum MenuKey {
-    EDIT = 'edit',
-    STATE = 'state',
-    VIEW = 'view',
-  }
+  const MenuKey = {
+    Edit: 'edit',
+    State: 'state',
+    View: 'view',
+  } as const;
 
   const funcs = {
-    [MenuKey.EDIT]: () => {
+    [MenuKey.Edit]: () => {
       openEditUserModal();
     },
-    [MenuKey.STATE]: () => {
+    [MenuKey.State]: () => {
       onToggleActive();
     },
-    [MenuKey.VIEW]: () => {
+    [MenuKey.View]: () => {
       openEditUserModal(true);
     },
   };
 
   const onItemClick: MenuProps['onClick'] = (e) => {
-    funcs[e.key as MenuKey]();
+    funcs[e.key as ValueOf<typeof MenuKey>]();
   };
 
   const menuItems: MenuProps['items'] = canModifyUsers
     ? [
-        { key: MenuKey.VIEW, label: 'View Profile' },
-        { key: MenuKey.EDIT, label: 'Edit' },
-        { key: MenuKey.STATE, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        { key: MenuKey.View, label: 'View Profile' },
+        { key: MenuKey.Edit, label: 'Edit' },
+        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
       ]
-    : [{ key: MenuKey.VIEW, label: 'View Profile' }];
+    : [{ key: MenuKey.View, label: 'View Profile' }];
 
   return (
     <div className={dropdownCss.base}>

@@ -4,18 +4,21 @@ import React, { CSSProperties, useMemo } from 'react';
 import { stateToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { DarkLight, getCssVar } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import { hsl2str, str2hsl } from 'shared/utils/color';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
 
 import css from './Badge.module.scss';
 
-export enum BadgeType {
-  Default = 'Default',
-  Header = 'Header',
-  Id = 'Id',
-  State = 'State',
-}
+export const BadgeType = {
+  Default: 'Default',
+  Header: 'Header',
+  Id: 'Id',
+  State: 'State',
+} as const;
+
+export type BadgeType = ValueOf<typeof BadgeType>;
 
 export interface BadgeProps {
   children?: React.ReactNode;

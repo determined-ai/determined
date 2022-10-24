@@ -24,6 +24,6 @@ export const Default: ComponentStory<typeof SlotAllocationBar> = (args) => (
 Default.args = {
   resourceStates: [ResourceState.Pulling, ResourceState.Running],
   showLegends: true,
-  size: ShirtSize.large,
+  size: ShirtSize.Large,
   totalSlots: 4,
 };

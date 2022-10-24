@@ -130,11 +130,6 @@ class GetTrialWorkloadsRequestFilterOption(enum.Enum):
     FILTER_OPTION_VALIDATION = "FILTER_OPTION_VALIDATION"
     FILTER_OPTION_CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
-class TrialEarlyExitExitedReason(enum.Enum):
-    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
-    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
-    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
-
 class TrialFiltersRankWithinExp:
     def __init__(
         self,
@@ -1046,6 +1041,25 @@ class v1CheckpointWorkload:
             "metadata": self.metadata if self.metadata is not None else None,
         }
 
+class v1CloseTrialOperation:
+    def __init__(
+        self,
+        *,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.requestId = requestId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CloseTrialOperation":
+        return cls(
+            requestId=obj.get("requestId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId if self.requestId is not None else None,
+        }
+
 class v1ColumnFilter:
     def __init__(
         self,
@@ -1326,6 +1340,29 @@ class v1CreateGroupResponse:
     def to_json(self) -> typing.Any:
         return {
             "group": self.group.to_json(),
+        }
+
+class v1CreateTrialOperation:
+    def __init__(
+        self,
+        *,
+        hyperparams: "typing.Optional[str]" = None,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.requestId = requestId
+        self.hyperparams = hyperparams
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateTrialOperation":
+        return cls(
+            requestId=obj.get("requestId", None),
+            hyperparams=obj.get("hyperparams", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId if self.requestId is not None else None,
+            "hyperparams": self.hyperparams if self.hyperparams is not None else None,
         }
 
 class v1CreateTrialsCollectionRequest:
@@ -1811,6 +1848,25 @@ class v1Experiment:
             "projectOwnerId": self.projectOwnerId,
         }
 
+class v1ExperimentInactive:
+    def __init__(
+        self,
+        *,
+        experimentState: "determinedexperimentv1State",
+    ):
+        self.experimentState = experimentState
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentInactive":
+        return cls(
+            experimentState=determinedexperimentv1State(obj["experimentState"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentState": self.experimentState.value,
+        }
+
 class v1ExperimentSimulation:
     def __init__(
         self,
@@ -2105,7 +2161,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
         self,
         *,
         completed: "typing.Optional[bool]" = None,
-        op: "typing.Optional[v1SearcherOperation]" = None,
+        op: "typing.Optional[v1TrialOperation]" = None,
     ):
         self.op = op
         self.completed = completed
@@ -2113,7 +2169,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCurrentTrialSearcherOperationResponse":
         return cls(
-            op=v1SearcherOperation.from_json(obj["op"]) if obj.get("op", None) is not None else None,
+            op=v1TrialOperation.from_json(obj["op"]) if obj.get("op", None) is not None else None,
             completed=obj.get("completed", None),
         )
 
@@ -2921,6 +2977,25 @@ class v1GetRolesByIDResponse:
             "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
         }
 
+class v1GetSearcherEventsResponse:
+    def __init__(
+        self,
+        *,
+        searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None,
+    ):
+        self.searcherEvents = searcherEvents
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
+        return cls(
+            searcherEvents=[v1SearcherEvent.from_json(x) for x in obj["searcherEvents"]] if obj.get("searcherEvents", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "searcherEvents": [x.to_json() for x in self.searcherEvents] if self.searcherEvents is not None else None,
+        }
+
 class v1GetShellResponse:
     def __init__(
         self,
@@ -3563,6 +3638,25 @@ class v1IdleNotebookRequest:
         return {
             "notebookId": self.notebookId if self.notebookId is not None else None,
             "idle": self.idle if self.idle is not None else None,
+        }
+
+class v1InitialOperations:
+    def __init__(
+        self,
+        *,
+        placeholder: "typing.Optional[int]" = None,
+    ):
+        self.placeholder = placeholder
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1InitialOperations":
+        return cls(
+            placeholder=obj.get("placeholder", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "placeholder": self.placeholder if self.placeholder is not None else None,
         }
 
 class v1Int32FieldFilter:
@@ -5233,6 +5327,33 @@ class v1PostProjectResponse:
             "project": self.project.to_json(),
         }
 
+class v1PostSearcherOperationsRequest:
+    def __init__(
+        self,
+        *,
+        experimentId: "typing.Optional[int]" = None,
+        searcherOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None,
+        triggeredByEvent: "typing.Optional[v1SearcherEvent]" = None,
+    ):
+        self.experimentId = experimentId
+        self.searcherOperations = searcherOperations
+        self.triggeredByEvent = triggeredByEvent
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostSearcherOperationsRequest":
+        return cls(
+            experimentId=obj.get("experimentId", None),
+            searcherOperations=[v1SearcherOperation.from_json(x) for x in obj["searcherOperations"]] if obj.get("searcherOperations", None) is not None else None,
+            triggeredByEvent=v1SearcherEvent.from_json(obj["triggeredByEvent"]) if obj.get("triggeredByEvent", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentId": self.experimentId if self.experimentId is not None else None,
+            "searcherOperations": [x.to_json() for x in self.searcherOperations] if self.searcherOperations is not None else None,
+            "triggeredByEvent": self.triggeredByEvent.to_json() if self.triggeredByEvent is not None else None,
+        }
+
 class v1PostTrialProfilerMetricsBatchRequest:
     def __init__(
         self,
@@ -6479,23 +6600,86 @@ class v1SearchRolesAssignableToScopeResponse:
             "roles": [x.to_json() for x in self.roles] if self.roles is not None else None,
         }
 
-class v1SearcherOperation:
+class v1SearcherEvent:
     def __init__(
         self,
         *,
-        validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
+        id: int,
+        experimentInactive: "typing.Optional[v1ExperimentInactive]" = None,
+        initialOperations: "typing.Optional[v1InitialOperations]" = None,
+        trialClosed: "typing.Optional[v1TrialClosed]" = None,
+        trialCreated: "typing.Optional[v1TrialCreated]" = None,
+        trialExitedEarly: "typing.Optional[v1TrialExitedEarly]" = None,
+        trialProgress: "typing.Optional[v1TrialProgress]" = None,
+        validationCompleted: "typing.Optional[v1ValidationCompleted]" = None,
     ):
-        self.validateAfter = validateAfter
+        self.id = id
+        self.initialOperations = initialOperations
+        self.trialCreated = trialCreated
+        self.validationCompleted = validationCompleted
+        self.trialClosed = trialClosed
+        self.trialExitedEarly = trialExitedEarly
+        self.trialProgress = trialProgress
+        self.experimentInactive = experimentInactive
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1SearcherOperation":
+    def from_json(cls, obj: Json) -> "v1SearcherEvent":
         return cls(
-            validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
+            id=obj["id"],
+            initialOperations=v1InitialOperations.from_json(obj["initialOperations"]) if obj.get("initialOperations", None) is not None else None,
+            trialCreated=v1TrialCreated.from_json(obj["trialCreated"]) if obj.get("trialCreated", None) is not None else None,
+            validationCompleted=v1ValidationCompleted.from_json(obj["validationCompleted"]) if obj.get("validationCompleted", None) is not None else None,
+            trialClosed=v1TrialClosed.from_json(obj["trialClosed"]) if obj.get("trialClosed", None) is not None else None,
+            trialExitedEarly=v1TrialExitedEarly.from_json(obj["trialExitedEarly"]) if obj.get("trialExitedEarly", None) is not None else None,
+            trialProgress=v1TrialProgress.from_json(obj["trialProgress"]) if obj.get("trialProgress", None) is not None else None,
+            experimentInactive=v1ExperimentInactive.from_json(obj["experimentInactive"]) if obj.get("experimentInactive", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
+            "id": self.id,
+            "initialOperations": self.initialOperations.to_json() if self.initialOperations is not None else None,
+            "trialCreated": self.trialCreated.to_json() if self.trialCreated is not None else None,
+            "validationCompleted": self.validationCompleted.to_json() if self.validationCompleted is not None else None,
+            "trialClosed": self.trialClosed.to_json() if self.trialClosed is not None else None,
+            "trialExitedEarly": self.trialExitedEarly.to_json() if self.trialExitedEarly is not None else None,
+            "trialProgress": self.trialProgress.to_json() if self.trialProgress is not None else None,
+            "experimentInactive": self.experimentInactive.to_json() if self.experimentInactive is not None else None,
+        }
+
+class v1SearcherOperation:
+    def __init__(
+        self,
+        *,
+        closeTrial: "typing.Optional[v1CloseTrialOperation]" = None,
+        createTrial: "typing.Optional[v1CreateTrialOperation]" = None,
+        setSearcherProgress: "typing.Optional[v1SetSearcherProgressOperation]" = None,
+        shutDown: "typing.Optional[v1ShutDownOperation]" = None,
+        trialOperation: "typing.Optional[v1TrialOperation]" = None,
+    ):
+        self.trialOperation = trialOperation
+        self.createTrial = createTrial
+        self.closeTrial = closeTrial
+        self.shutDown = shutDown
+        self.setSearcherProgress = setSearcherProgress
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearcherOperation":
+        return cls(
+            trialOperation=v1TrialOperation.from_json(obj["trialOperation"]) if obj.get("trialOperation", None) is not None else None,
+            createTrial=v1CreateTrialOperation.from_json(obj["createTrial"]) if obj.get("createTrial", None) is not None else None,
+            closeTrial=v1CloseTrialOperation.from_json(obj["closeTrial"]) if obj.get("closeTrial", None) is not None else None,
+            shutDown=v1ShutDownOperation.from_json(obj["shutDown"]) if obj.get("shutDown", None) is not None else None,
+            setSearcherProgress=v1SetSearcherProgressOperation.from_json(obj["setSearcherProgress"]) if obj.get("setSearcherProgress", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialOperation": self.trialOperation.to_json() if self.trialOperation is not None else None,
+            "createTrial": self.createTrial.to_json() if self.createTrial is not None else None,
+            "closeTrial": self.closeTrial.to_json() if self.closeTrial is not None else None,
+            "shutDown": self.shutDown.to_json() if self.shutDown is not None else None,
+            "setSearcherProgress": self.setSearcherProgress.to_json() if self.setSearcherProgress is not None else None,
         }
 
 class v1SetCommandPriorityRequest:
@@ -6580,6 +6764,25 @@ class v1SetNotebookPriorityResponse:
     def to_json(self) -> typing.Any:
         return {
             "notebook": self.notebook.to_json() if self.notebook is not None else None,
+        }
+
+class v1SetSearcherProgressOperation:
+    def __init__(
+        self,
+        *,
+        progress: "typing.Optional[float]" = None,
+    ):
+        self.progress = progress
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetSearcherProgressOperation":
+        return cls(
+            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "progress": dump_float(self.progress) if self.progress is not None else None,
         }
 
 class v1SetShellPriorityRequest:
@@ -6758,6 +6961,25 @@ class v1Shell:
             "addresses": self.addresses if self.addresses is not None else None,
             "agentUserGroup": self.agentUserGroup if self.agentUserGroup is not None else None,
             "jobId": self.jobId,
+        }
+
+class v1ShutDownOperation:
+    def __init__(
+        self,
+        *,
+        placeholder: "typing.Optional[int]" = None,
+    ):
+        self.placeholder = placeholder
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ShutDownOperation":
+        return cls(
+            placeholder=obj.get("placeholder", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "placeholder": self.placeholder if self.placeholder is not None else None,
         }
 
 class v1Slot:
@@ -7067,24 +7289,95 @@ class v1TimestampFieldFilter:
             "gte": self.gte if self.gte is not None else None,
         }
 
+class v1TrialClosed:
+    def __init__(
+        self,
+        *,
+        requestId: str,
+    ):
+        self.requestId = requestId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialClosed":
+        return cls(
+            requestId=obj["requestId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId,
+        }
+
+class v1TrialCreated:
+    def __init__(
+        self,
+        *,
+        requestId: str,
+    ):
+        self.requestId = requestId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialCreated":
+        return cls(
+            requestId=obj["requestId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId,
+        }
+
 class v1TrialEarlyExit:
     def __init__(
         self,
         *,
-        reason: "TrialEarlyExitExitedReason",
+        reason: "v1TrialEarlyExitExitedReason",
     ):
         self.reason = reason
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialEarlyExit":
         return cls(
-            reason=TrialEarlyExitExitedReason(obj["reason"]),
+            reason=v1TrialEarlyExitExitedReason(obj["reason"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "reason": self.reason.value,
         }
+
+class v1TrialEarlyExitExitedReason(enum.Enum):
+    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
+    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
+    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
+
+class v1TrialExitedEarly:
+    def __init__(
+        self,
+        *,
+        exitedReason: "v1TrialExitedEarlyExitedReason",
+        requestId: str,
+    ):
+        self.requestId = requestId
+        self.exitedReason = exitedReason
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialExitedEarly":
+        return cls(
+            requestId=obj["requestId"],
+            exitedReason=v1TrialExitedEarlyExitedReason(obj["exitedReason"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId,
+            "exitedReason": self.exitedReason.value,
+        }
+
+class v1TrialExitedEarlyExitedReason(enum.Enum):
+    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
+    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
+    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
 
 class v1TrialFilters:
     def __init__(
@@ -7262,6 +7555,25 @@ class v1TrialMetrics:
             "metrics": self.metrics.to_json(),
         }
 
+class v1TrialOperation:
+    def __init__(
+        self,
+        *,
+        validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
+    ):
+        self.validateAfter = validateAfter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialOperation":
+        return cls(
+            validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
+        }
+
 class v1TrialPatch:
     def __init__(
         self,
@@ -7349,6 +7661,29 @@ class v1TrialProfilerMetricsBatch:
             "batches": self.batches,
             "timestamps": self.timestamps,
             "labels": self.labels.to_json(),
+        }
+
+class v1TrialProgress:
+    def __init__(
+        self,
+        *,
+        partialUnits: float,
+        requestId: str,
+    ):
+        self.requestId = requestId
+        self.partialUnits = partialUnits
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialProgress":
+        return cls(
+            requestId=obj["requestId"],
+            partialUnits=float(obj["partialUnits"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId,
+            "partialUnits": dump_float(self.partialUnits),
         }
 
 class v1TrialRunnerMetadata:
@@ -7831,18 +8166,49 @@ class v1ValidateAfterOperation:
         self,
         *,
         length: "typing.Optional[str]" = None,
+        requestId: "typing.Optional[str]" = None,
     ):
+        self.requestId = requestId
         self.length = length
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidateAfterOperation":
         return cls(
+            requestId=obj.get("requestId", None),
             length=obj.get("length", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
+            "requestId": self.requestId if self.requestId is not None else None,
             "length": self.length if self.length is not None else None,
+        }
+
+class v1ValidationCompleted:
+    def __init__(
+        self,
+        *,
+        metric: float,
+        requestId: str,
+        validateAfterLength: str,
+    ):
+        self.requestId = requestId
+        self.metric = metric
+        self.validateAfterLength = validateAfterLength
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ValidationCompleted":
+        return cls(
+            requestId=obj["requestId"],
+            metric=float(obj["metric"]),
+            validateAfterLength=obj["validateAfterLength"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId,
+            "metric": dump_float(self.metric),
+            "validateAfterLength": self.validateAfterLength,
         }
 
 class v1ValidationHistoryEntry:
@@ -9736,6 +10102,26 @@ def post_GetRolesByID(
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
 
+def get_GetSearcherEvents(
+    session: "api.Session",
+    *,
+    experimentId: int,
+) -> "v1GetSearcherEventsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/searcher_events",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetSearcherEventsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetSearcherEvents", _resp)
+
 def get_GetShell(
     session: "api.Session",
     *,
@@ -11055,6 +11441,27 @@ def post_PostProject(
     if _resp.status_code == 200:
         return v1PostProjectResponse.from_json(_resp.json())
     raise APIHttpError("post_PostProject", _resp)
+
+def post_PostSearcherOperations(
+    session: "api.Session",
+    *,
+    body: "v1PostSearcherOperationsRequest",
+    experimentId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/searcher_operations",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostSearcherOperations", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
     session: "api.Session",

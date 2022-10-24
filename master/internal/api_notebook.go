@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -58,7 +58,7 @@ func (a *apiServer) GetNotebooks(
 		if err != nil {
 			return false
 		}
-		ok, serverError := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
 			*curUser, model.UserID(resp.Notebooks[i].UserId))
 		if serverError != nil {
 			err = serverError
@@ -86,7 +86,7 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := expauth.AuthZProvider.Get().CanAccessNTSCTask(
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
 		*curUser, model.UserID(resp.Notebook.UserId)); err != nil {
 		return nil, err
 	} else if !ok {

@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
+import { ValueOf } from 'shared/types';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
@@ -13,11 +14,13 @@ import ClustersOverview, { clusterStatusText } from './Clusters/ClustersOverview
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Overview = 'overview',
-  HistoricalUsage = 'historical-usage',
-  Logs = 'logs',
-}
+const TabType = {
+  HistoricalUsage: 'historical-usage',
+  Logs: 'logs',
+  Overview: 'overview',
+} as const;
+
+type TabType = ValueOf<typeof TabType>;
 
 type Params = {
   tab?: TabType;

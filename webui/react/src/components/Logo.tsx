@@ -9,15 +9,18 @@ import logoDeterminedOnLightVertical from 'shared/assets/images/logo-determined-
 import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
 import { DarkLight } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import { reactHostAddress } from 'shared/utils/routes';
 import { BrandingType } from 'types';
 
 import css from './Logo.module.scss';
 
-export enum Orientation {
-  Horizontal = 'horizontal',
-  Vertical = 'vertical',
-}
+export const Orientation = {
+  Horizontal: 'horizontal',
+  Vertical: 'vertical',
+} as const;
+
+export type Orientation = ValueOf<typeof Orientation>;
 
 interface Props {
   branding: BrandingType;

@@ -32,6 +32,14 @@ describe('String Utilities', () => {
     });
   });
 
+  describe('camelCaseToSnake', () => {
+    it('should convert camel case to a snake', () => {
+      expect(utils.camelCaseToSnake('hello')).toBe('hello');
+      expect(utils.camelCaseToSnake('camelCase')).toBe('camel_case');
+      expect(utils.camelCaseToSnake(' carJumpStart ')).toBe('car_jump_start');
+    });
+  });
+
   describe('kebabToCamelCase', () => {
     it('should convert kebab to camel case', () => {
       expect(utils.kebabToCamelCase('Hello')).toBe('hello');

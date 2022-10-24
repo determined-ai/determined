@@ -110,6 +110,7 @@
         - host_path: "/dev/infiniband"
           container_path: "/dev/infiniband"
           mode: "rmw"
+        - "/host/dev1:/container/dev1"
       slots_per_trial: 15
       weight: 1000
       max_slots: 900

@@ -22,7 +22,7 @@ export const ARIA_LABEL_TRIGGER = 'new-tag-trigger';
 export const ARIA_LABEL_INPUT = 'new-tag-input';
 
 const TAG_MAX_LENGTH = 50;
-const COMPACT_MAX_THRESHOLD = 4;
+const COMPACT_MAX_THRESHOLD = 6;
 
 const EditableTagList: React.FC<Props> = ({
   compact,
@@ -88,8 +88,29 @@ const EditableTagList: React.FC<Props> = ({
   const classes = [css.base];
   if (ghost) classes.push(css.ghost);
 
+  const addTagControls = inputVisible ? (
+    <Input
+      aria-label={ARIA_LABEL_INPUT}
+      className={css.tagInput}
+      defaultValue=""
+      ref={inputRef}
+      size="small"
+      style={{ width: inputWidth }}
+      type="text"
+      onBlur={handleInputConfirm}
+      onPressEnter={handleInputConfirm}
+    />
+  ) : (
+    !disabled && (
+      <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
+        <PlusOutlined /> Add Tag
+      </Tag>
+    )
+  );
+
   return (
     <div aria-label={ARIA_LABEL_CONTAINER} className={classes.join(' ')} onClick={stopPropagation}>
+      {compact && addTagControls}
       {tags
         .sort((a, b) => alphaNumericSorter(a, b))
         .map((tag, index) => {
@@ -135,11 +156,11 @@ const EditableTagList: React.FC<Props> = ({
                     inputWidth: rect?.width ?? state.inputWidth,
                   }));
                 }}>
-                {isLongTag ? truncate(tag, TAG_MAX_LENGTH) : tag}
+                {isLongTag && !disabled ? truncate(tag, TAG_MAX_LENGTH) : tag}
               </span>
             </Tag>
           );
-          return isLongTag ? (
+          return isLongTag && !compact ? (
             <Tooltip key={tag} title={tag}>
               {tagElement}
             </Tooltip>
@@ -147,25 +168,7 @@ const EditableTagList: React.FC<Props> = ({
             tagElement
           );
         })}
-      {inputVisible ? (
-        <Input
-          aria-label={ARIA_LABEL_INPUT}
-          className={css.tagInput}
-          defaultValue=""
-          ref={inputRef}
-          size="small"
-          style={{ width: inputWidth }}
-          type="text"
-          onBlur={handleInputConfirm}
-          onPressEnter={handleInputConfirm}
-        />
-      ) : (
-        !disabled && (
-          <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
-            <PlusOutlined /> New Tag
-          </Tag>
-        )
-      )}
+      {!compact && addTagControls}
     </div>
   );
 };

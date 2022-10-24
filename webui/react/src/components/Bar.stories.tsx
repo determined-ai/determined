@@ -27,5 +27,5 @@ export const Default: ComponentStory<typeof Bar> = (args) => (
 Default.args = {
   barOnly: false,
   inline: false,
-  size: ShirtSize.small,
+  size: ShirtSize.Small,
 };

@@ -9,14 +9,17 @@ import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
+import { ValueOf } from 'shared/types';
 
 const { TabPane } = Tabs;
 
-export enum TabType {
-  Account = 'Account',
-  UserManagement = 'User Management',
-  GroupManagement = 'Group Management',
-}
+export const TabType = {
+  Account: 'Account',
+  GroupManagement: 'Group Management',
+  UserManagement: 'User Management',
+} as const;
+
+export type TabType = ValueOf<typeof TabType>;
 
 type Params = {
   tab?: TabType;
@@ -54,7 +57,7 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      {(rbacEnabled || canViewUsers) && (
+      {rbacEnabled && canViewUsers && (
         <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
           <UserManagement />
         </TabPane>

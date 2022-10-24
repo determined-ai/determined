@@ -96,6 +96,22 @@ Some constraints are due to differences in behavior between Docker and Singulari
  PodMan Known Issues
 *********************
 
+   -  Determined uses PodMan in `rootless mode
+      <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are several
+      configuration errors that may be encountered:
+
+      -  ``stat /run/user/NNN: no such file or directory`` likely indicates that the environment
+         variable ``XDG_RUNTIME_DIR`` is referencing a directory that does not exist.
+
+      -  ``stat /run/user/NNN: permission denied`` may indicate a problem with default the
+         ``runroot`` configuration.
+
+      -  ``Error: A network file system with user namespaces is not supported. Please use a
+         mount_program: backing file system is unsupported for this graph driver`` indicates that
+         the ``graphroot`` references a distributed file system.
+
+      Refer to :ref:`podman-config-requirements` for recommendations.
+
    -  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` (instead of DNS) to resolve the
       addresses of the login node and other compute nodes in the cluster. If jobs are unable to
       resolve the address of the Determined master or other compute nodes in the job and you are
@@ -227,9 +243,9 @@ the GPUs used for the experiment to be evenly distributed among the compute node
 
       .. code:: yaml
 
-         passwd: files
-         shadow: files
-         group: files
+         passwd: files determined
+         shadow: files determined
+         group: files determined
          hosts: files dns
 
    #. Update the Determined cluster configuration to supply a default bind mount to override the

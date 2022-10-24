@@ -8,11 +8,13 @@ import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, ExperimentVisualizationType } from 'types';
+import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
+import { ExperimentVisualizationType } from './ExperimentVisualization';
 
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 
@@ -27,7 +29,7 @@ const TabType = {
 } as const;
 
 type Params = {
-  tab?: typeof TabType[keyof typeof TabType];
+  tab?: ValueOf<typeof TabType>;
   viz?: ExperimentVisualizationType;
 };
 
@@ -71,7 +73,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   // Sets the default sub route.
   useEffect(() => {
     if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      navigate(`${basePath}/${tabKey}`, { replace: true });
+      if (window.location.pathname.includes(basePath))
+        navigate(`${basePath}/${tabKey}`, { replace: true });
     }
   }, [basePath, navigate, tab, tabKey]);
 

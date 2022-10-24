@@ -1,7 +1,8 @@
 import { GridListView } from 'components/GridListRadioGroup';
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { ValueOf } from 'shared/types';
 
 export type ProjectColumnName =
   | 'action'
@@ -32,11 +33,13 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   userId: 85,
 };
 
-export enum WhoseProjects {
-  All = 'ALL_PROJECTS',
-  Mine = 'MY_PROJECTS',
-  Others = 'OTHERS_PROJECTS',
-}
+export const WhoseProjects = {
+  All: 'ALL_PROJECTS',
+  Mine: 'MY_PROJECTS',
+  Others: 'OTHERS_PROJECTS',
+} as const;
+
+export type WhoseProjects = ValueOf<typeof WhoseProjects>;
 
 export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;

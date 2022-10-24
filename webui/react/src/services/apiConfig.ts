@@ -1,6 +1,8 @@
 import { sha512 } from 'js-sha512';
 
 import { globalStorage } from 'globalStorage';
+import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
+import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
@@ -41,6 +43,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Tasks: new Api.TasksApi(config),
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
+    TrialsComparison: new Api.TrialComparisonApi(config),
     Users: new Api.UsersApi(config),
     Webhooks: new Api.WebhooksApi(config),
     Workspaces: new Api.WorkspacesApi(config),
@@ -344,21 +347,22 @@ export const assignRolesToGroup: DetApi<
     }),
 };
 
-export const removeRoleFromGroup: DetApi<
-  Service.RemoveRoleFromGroupParams,
+export const removeRolesFromGroup: DetApi<
+  Service.RemoveRolesFromGroupParams,
   Api.V1RemoveAssignmentsResponse,
   Api.V1RemoveAssignmentsResponse
 > = {
-  name: 'removeRoleFromGroup',
+  name: 'removeRolesFromGroup',
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.removeAssignments({
-      groupRoleAssignments: [
-        {
-          groupId: params.groupId,
-          roleAssignment: { role: { roleId: params.roleId } },
+      groupRoleAssignments: params.roleIds.map((roleId) => ({
+        groupId: params.groupId,
+        roleAssignment: {
+          role: { roleId },
+          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
         },
-      ],
+      })),
     }),
 };
 
@@ -382,7 +386,7 @@ export const assignRolesToUser: DetApi<
 };
 
 export const removeRolesFromUser: DetApi<
-  Service.RemoveRoleFromUserParams,
+  Service.RemoveRolesFromUserParams,
   Api.V1RemoveAssignmentsResponse,
   Api.V1RemoveAssignmentsResponse
 > = {
@@ -392,6 +396,7 @@ export const removeRolesFromUser: DetApi<
     detApi.RBAC.removeAssignments({
       userRoleAssignments: params.roleIds.map((roleId) => ({
         roleAssignment: { role: { roleId } },
+        scopeWorkspaceId: params.scopeWorkspaceId || undefined,
         userId: params.userId,
       })),
     }),
@@ -447,6 +452,90 @@ export const getResourceAllocationAggregated: DetApi<
       params.period,
       options,
     );
+  },
+};
+
+/* Trials */
+export const queryTrials: DetApi<
+  Api.V1QueryTrialsRequest,
+  Api.V1QueryTrialsResponse,
+  Api.V1QueryTrialsResponse
+> = {
+  name: 'queryTrials',
+  postProcess: (response: Api.V1QueryTrialsResponse): Api.V1QueryTrialsResponse => {
+    return response;
+  },
+  request: (params: Api.V1QueryTrialsRequest) => {
+    return detApi.TrialsComparison.queryTrials({
+      ...params,
+      limit: params?.limit ? 3 * params.limit : 30,
+    });
+  },
+};
+
+export const updateTrialTags: DetApi<
+  Api.V1UpdateTrialTagsRequest,
+  Api.V1UpdateTrialTagsResponse,
+  Api.V1UpdateTrialTagsResponse
+> = {
+  name: 'updateTrialTags',
+  postProcess: (response: Api.V1UpdateTrialTagsResponse) => {
+    return { rowsAffected: response.rowsAffected };
+  },
+  request: (params: Api.V1UpdateTrialTagsRequest) => {
+    return detApi.TrialsComparison.updateTrialTags(params);
+  },
+};
+
+export const createTrialCollection: DetApi<
+  Api.V1CreateTrialsCollectionRequest,
+  Api.V1CreateTrialsCollectionResponse,
+  TrialsCollection | undefined
+> = {
+  name: 'createTrialsCollection',
+  postProcess: (response: Api.V1CreateTrialsCollectionResponse) =>
+    response.collection ? decodeTrialsCollection(response.collection) : undefined,
+  request: (params: Api.V1CreateTrialsCollectionRequest) => {
+    return detApi.TrialsComparison.createTrialsCollection(params);
+  },
+};
+
+export const getTrialsCollections: DetApi<
+  number,
+  Api.V1GetTrialsCollectionsResponse,
+  Api.V1GetTrialsCollectionsResponse
+> = {
+  name: 'getTrialsCollection',
+  postProcess: (response: Api.V1GetTrialsCollectionsResponse) => {
+    return { collections: response.collections };
+  },
+  request: (projectId: number) => {
+    return detApi.TrialsComparison.getTrialsCollections(projectId);
+  },
+};
+
+export const patchTrialsCollection: DetApi<
+  Api.V1PatchTrialsCollectionRequest,
+  Api.V1PatchTrialsCollectionResponse,
+  TrialsCollection | undefined
+> = {
+  name: 'patchTrialsCollection',
+  postProcess: (response: Api.V1PatchTrialsCollectionResponse) =>
+    response.collection ? decodeTrialsCollection(response.collection) : undefined,
+  request: (params: Api.V1PatchTrialsCollectionRequest) => {
+    return detApi.TrialsComparison.patchTrialsCollection(params);
+  },
+};
+
+export const deleteTrialsCollection: DetApi<
+  number,
+  Api.V1DeleteTrialsCollectionResponse,
+  Api.V1DeleteTrialsCollectionResponse
+> = {
+  name: 'deleteTrialsCollection',
+  postProcess: (response: Api.V1DeleteTrialsCollectionResponse) => response,
+  request: (id: number) => {
+    return detApi.TrialsComparison.deleteTrialsCollection(id);
   },
 };
 

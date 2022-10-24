@@ -4,12 +4,136 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/struct.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "determined/experiment/v1/experiment.proto";
+
+// InitialOperations is a searcher event signaling the creation of an
+// experiment.
+message InitialOperations {
+  // Cannot have an empty message type.
+  int32 placeholder = 1;
+}
+
+// TrialCreated is a searcher event signaling the creation of a trial.
+message TrialCreated {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id" ] }
+  };
+  // UUID identifying the trial to the searcher.
+  string request_id = 1;
+}
+
+// TrialProgress is a searcher event that tells you the number of batches
+// completed in the trial.
+message TrialProgress {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id", "partial_units" ] }
+  };
+  // UUID identifying the trial to the searcher.
+  string request_id = 1;
+  // partial_units represent partial epochs, batches or records where the Unit
+  // is implied.
+  double partial_units = 2;
+}
+
+// ValidationCompleted is a searcher event triggered when a validation has been
+// completed.
+message ValidationCompleted {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "request_id", "metric", "validate_after_length" ]
+    }
+  };
+  // UUID identifying the trial to the searcher.
+  string request_id = 1;
+  // Value of the validation metric used to direct the search.
+  double metric = 2;
+  // Length from ValidateAfterOperation.
+  uint64 validate_after_length = 3;
+}
+
+// TrialClosed is a searcher event triggered when a trial has successfully
+// finished.
+message TrialClosed {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id" ] }
+  };
+  // UUID identifying the trial to the searcher.
+  string request_id = 1;
+}
+
+// TrialExitedEarly is a searcher event triggered when a trial exited
+// prematurely.
+message TrialExitedEarly {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id", "exited_reason" ] }
+  };
+  // UUID identifying the trial to the searcher.
+  string request_id = 1;
+  // The reason for an early exit.
+  enum ExitedReason {
+    // Zero-value (not allowed).
+    EXITED_REASON_UNSPECIFIED = 0;
+    // Indicates the trial exited due to an invalid hyperparameter.
+    EXITED_REASON_INVALID_HP = 1;
+    // Indicates the trial exited due to a user requested stop.
+    EXITED_REASON_USER_REQUESTED_STOP = 2;
+  }
+  // The reason for the exit.
+  ExitedReason exited_reason = 2;
+}
+
+// ExperimentInactive is a searcher event triggered when an experiment
+// is no longer active.
+message ExperimentInactive {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_state" ] }
+  };
+  // Current state of the experiment.
+  State experiment_state = 1;
+}
+
+// SearcherEvent is a message from master to a client-driven custom searcher
+// informing it of relevant changes in the state of an experiment.
+message SearcherEvent {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // Incremental ID of the event.
+  int32 id = 1;
+  // The concrete event.
+  oneof event {
+    // An experiment has just been created.
+    InitialOperations initial_operations = 3;
+    // A trial has been created.
+    TrialCreated trial_created = 4;
+    // Validation has completed.
+    ValidationCompleted validation_completed = 5;
+    // Trial has finished.
+    TrialClosed trial_closed = 6;
+    // Trial exited early.
+    TrialExitedEarly trial_exited_early = 7;
+    // Trial progress.
+    TrialProgress trial_progress = 8;
+    // Experiment is inactive.
+    ExperimentInactive experiment_inactive = 9;
+  }
+}
 
 // ValidateAfterOperation means the trial should train and validate after
 // training the given length.
 message ValidateAfterOperation {
+  // The ID of the trial that should train.
+  string request_id = 1;
   // The length to train before reporting a validation.
-  uint64 length = 1;
+  uint64 length = 2;
+}
+
+// SetSearcherProgressOperation informs the master of the progress of the custom
+// searcher.
+message SetSearcherProgressOperation {
+  // Experiment progress as a float between 0.0 and 1.0.
+  double progress = 1;
 }
 
 // Used to complete a ValidateAfterOperation.
@@ -21,11 +145,50 @@ message CompleteValidateAfterOperation {
   double searcher_metric = 2;
 }
 
-// SearcherOperation is an operation issued by the searcher.
+// Create a trial with given hyperparameters.
+message CreateTrialOperation {
+  // The ID of the trial to create.
+  string request_id = 1;
+  // A JSON object representing the hyperparameters.
+  string hyperparams = 2;
+}
+
+// Close a trial with given ID.
+message CloseTrialOperation {
+  // The ID of the trial to close.
+  string request_id = 1;
+}
+
+// Shut down custom searcher method.
+message ShutDownOperation {
+  // Cannot have an empty message type.
+  int32 placeholder = 1;
+}
+
+// SearcherOperation is an operation issued by the custom searcher.
 message SearcherOperation {
   // A searcher operation is one of the following operations.
   oneof union {
-    // ValidateAfter is issued to tell a trial to train some then validate.
+    // TrialOperation is issued to tell an existing trial to do something.
+    TrialOperation trial_operation = 1;
+    // CreateTrialOperation is issued to create a trial.
+    CreateTrialOperation create_trial = 2;
+    // CloseTrialOperation is issued to close a trial.
+    CloseTrialOperation close_trial = 3;
+    // ShutDownOperation is issued to shut down the custom search method.
+    ShutDownOperation shut_down = 4;
+    // SetSearcherProgressOperation is issued to set the progress of the custom
+    // search method.
+    SetSearcherProgressOperation set_searcher_progress = 5;
+  }
+}
+
+// TrialOperation is any operation that a trial can perform while it is active.
+message TrialOperation {
+  // A trial operation is one of the following operations.
+  oneof union {
+    // ValidateAfter means a trial is currently training and will later
+    // validate.
     ValidateAfterOperation validate_after = 1;
   }
 }

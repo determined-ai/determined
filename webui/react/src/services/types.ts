@@ -5,7 +5,7 @@ import {
   DetailedUser,
   Job,
   Metadata,
-  MetricName,
+  Metric,
   MetricType,
   Note,
   RunState,
@@ -14,7 +14,6 @@ import {
 } from 'types';
 
 import * as Api from './api-ts-sdk/api';
-
 export interface LoginResponse {
   token: string;
   user: DetailedUser;
@@ -31,7 +30,7 @@ export type TrialDetailsParams = SingleEntityParams;
 export interface TrialSummaryBaseParams {
   endBatches?: number;
   maxDatapoints: number;
-  metricNames: MetricName[];
+  metricNames: Metric[];
   metricType?: MetricType;
   scale?: Scale;
   startBatches?: number;
@@ -356,9 +355,10 @@ export interface DeleteGroupParams {
 export interface GetGroupParams {
   groupId: number;
 }
-export interface RemoveRoleFromGroupParams {
+export interface RemoveRolesFromGroupParams {
   groupId: number;
-  roleId: number;
+  roleIds: number[];
+  scopeWorkspaceId?: number;
 }
 
 export interface AssignRolesToUserParams {
@@ -367,8 +367,9 @@ export interface AssignRolesToUserParams {
   userId: number;
 }
 
-export interface RemoveRoleFromUserParams {
+export interface RemoveRolesFromUserParams {
   roleIds: number[];
+  scopeWorkspaceId?: number;
   userId: number;
 }
 

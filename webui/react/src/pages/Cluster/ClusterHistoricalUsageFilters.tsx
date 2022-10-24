@@ -12,14 +12,17 @@ import {
   MAX_RANGE_DAY,
   MAX_RANGE_MONTH,
 } from 'pages/Cluster/ClusterHistoricalUsage';
+import { ValueOf } from 'shared/types';
 import { capitalize } from 'shared/utils/string';
 
 const { Option } = Select;
 
-enum GroupBy {
-  Day = 'day',
-  Month = 'month',
-}
+const GroupBy = {
+  Day: 'day',
+  Month: 'month',
+} as const;
+
+type GroupBy = ValueOf<typeof GroupBy>;
 
 export interface ClusterHistoricalUsageFiltersInterface {
   afterDate: Dayjs;

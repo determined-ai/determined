@@ -23,7 +23,7 @@ import { V1FileNode } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { RawJson } from 'shared/types';
+import { RawJson, ValueOf } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -95,27 +95,31 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
   title: node.name,
 });
 
-enum PageError {
-  decode = 'Could not decode file.',
-  empty = 'File has no content.',
-  fetch = 'Unable to fetch file.',
-  none = '',
-}
+const PageError = {
+  Decode: 'Could not decode file.',
+  Empty: 'File has no content.',
+  Fetch: 'Unable to fetch file.',
+  None: '',
+} as const;
 
-enum Config {
-  submitted = 'Submitted Configuration',
-  runtime = 'Runtime Configuration',
-}
+type PageError = ValueOf<typeof PageError>;
+
+const Config = {
+  Runtime: 'Runtime Configuration',
+  Submitted: 'Submitted Configuration',
+} as const;
+
+type Config = ValueOf<typeof Config>;
 
 const descForConfig = {
-  [Config.submitted]: 'original submitted config',
-  [Config.runtime]: 'after merge with defaults and templates',
+  [Config.Submitted]: 'original submitted config',
+  [Config.Runtime]: 'after merge with defaults and templates',
 };
 
 const configIcon = <Icon name="settings" />;
 
 const isConfig = (key: unknown): key is Config =>
-  key === Config.submitted || key === Config.runtime;
+  key === Config.Submitted || key === Config.Runtime;
 
 /**
  * A component responsible to enable the user to view the code for a experiment.
@@ -138,7 +142,7 @@ const CodeViewer: React.FC<Props> = ({
 }) => {
   const resize = useResize();
   const firstConfig = useMemo(
-    () => (_submittedConfig ? Config.submitted : Config.runtime),
+    () => (_submittedConfig ? Config.Submitted : Config.Runtime),
     [_submittedConfig],
   );
   const configForExperiment = (experimentId: number): SettingsConfig => ({
@@ -185,7 +189,7 @@ const CodeViewer: React.FC<Props> = ({
     return '';
   }, [_runtimeConfig]);
 
-  const [pageError, setPageError] = useState<PageError>(PageError.none);
+  const [pageError, setPageError] = useState<PageError>(PageError.None);
 
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [activeFile, setActiveFile] = useState<TreeNode>();
@@ -214,11 +218,11 @@ const CodeViewer: React.FC<Props> = ({
 
   const handleSelectConfig = useCallback(
     (c: Config) => {
-      const configText = c === Config.submitted ? submittedConfig : runtimeConfig;
+      const configText = c === Config.Submitted ? submittedConfig : runtimeConfig;
 
       if (configText) {
-        setPageError(PageError.none);
-      } else setPageError(PageError.fetch);
+        setPageError(PageError.None);
+      } else setPageError(PageError.Fetch);
 
       setActiveFile({
         icon: configIcon,
@@ -251,16 +255,16 @@ const CodeViewer: React.FC<Props> = ({
         tree.unshift({
           icon: configIcon,
           isLeaf: true,
-          key: Config.runtime,
-          title: Config.runtime,
+          key: Config.Runtime,
+          title: Config.Runtime,
         });
 
       if (submittedConfig)
         tree.unshift({
           icon: configIcon,
           isLeaf: true,
-          key: Config.submitted,
-          title: Config.submitted,
+          key: Config.Submitted,
+          title: Config.Submitted,
         });
 
       setTreeData(tree);
@@ -277,7 +281,7 @@ const CodeViewer: React.FC<Props> = ({
 
   const fetchFile = useCallback(
     async (path, title) => {
-      setPageError(PageError.none);
+      setPageError(PageError.None);
 
       let file = '';
       try {
@@ -289,7 +293,7 @@ const CodeViewer: React.FC<Props> = ({
           silent: false,
           type: ErrorType.Api,
         });
-        setPageError(PageError.fetch);
+        setPageError(PageError.Fetch);
       } finally {
         setIsFetchingFile(false);
       }
@@ -298,9 +302,9 @@ const CodeViewer: React.FC<Props> = ({
       try {
         text = decodeURIComponent(escape(window.atob(file)));
 
-        if (!text) setPageError(PageError.empty); // Emmits a "Empty file" error message
+        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
       } catch {
-        setPageError(PageError.decode);
+        setPageError(PageError.Decode);
       }
       setActiveFile({
         key: path,
@@ -332,7 +336,7 @@ const CodeViewer: React.FC<Props> = ({
         targetNode = targetNode?.children?.find((file) => file.title === dir);
 
       if (!targetNode) {
-        setPageError(PageError.fetch);
+        setPageError(PageError.Fetch);
         return;
       }
 
@@ -357,7 +361,7 @@ const CodeViewer: React.FC<Props> = ({
 
       const filePath = String(activeFile?.key);
       if (isConfig(filePath)) {
-        const isRuntimeConf = filePath === Config.runtime;
+        const isRuntimeConf = filePath === Config.Runtime;
         const url = isRuntimeConf
           ? URL.createObjectURL(new Blob([runtimeConfig]))
           : URL.createObjectURL(new Blob([submittedConfig as string]));
@@ -437,7 +441,7 @@ const CodeViewer: React.FC<Props> = ({
   useEffect(() => {
     return () => {
       if (timeout.current) clearTimeout(timeout.current);
-      setPageError(PageError.none);
+      setPageError(PageError.None);
       setTreeData([]);
       setActiveFile(undefined);
       setIsFetchingFile(false);

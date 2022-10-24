@@ -1,17 +1,17 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
+import { Button, Dropdown, Menu, Space, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
+import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell,
-} from 'components/InteractiveTable';
-import Link from 'components/Link';
-import Page from 'components/Page';
+} from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
@@ -19,9 +19,9 @@ import {
   modelNameRenderer,
   relativeTimeRenderer,
   userRenderer,
-} from 'components/Table';
-import TableFilterDropdown from 'components/TableFilterDropdown';
-import TableFilterSearch from 'components/TableFilterSearch';
+} from 'components/Table/Table';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
@@ -34,6 +34,7 @@ import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } f
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -298,30 +299,30 @@ const ModelRegistry: React.FC = () => {
 
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
-      enum MenuKey {
-        SWITCH_ARCHIVED = 'switch-archived',
-        DELETE_MODEL = 'delete-model',
-      }
+      const MenuKey = {
+        DeleteModel: 'delete-model',
+        SwitchArchived: 'switch-archived',
+      } as const;
 
       const funcs = {
-        [MenuKey.SWITCH_ARCHIVED]: () => {
+        [MenuKey.SwitchArchived]: () => {
           switchArchived(record);
         },
-        [MenuKey.DELETE_MODEL]: () => {
+        [MenuKey.DeleteModel]: () => {
           showConfirmDelete(record);
         },
       };
 
       const onItemClick: MenuProps['onClick'] = (e) => {
-        funcs[e.key as MenuKey]();
+        funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
       const menuItems: MenuProps['items'] = [
-        { key: MenuKey.SWITCH_ARCHIVED, label: record.archived ? 'Unarchive' : 'Archive' },
+        { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
       ];
 
       if (user?.id === record.userId || user?.isAdmin) {
-        menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete Model' });
+        menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return <Menu items={menuItems} onClick={onItemClick} />;
@@ -331,12 +332,21 @@ const ModelRegistry: React.FC = () => {
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelItem) => (
-      <TagList
-        compact
-        disabled={record.archived}
-        tags={record.labels ?? []}
-        onChange={(tags) => setModelTags(record.name, tags)}
-      />
+      <div className={css.tagsRenderer}>
+        <Typography.Text
+          ellipsis={{
+            tooltip: <TagList disabled tags={record.labels ?? []} />,
+          }}>
+          <div>
+            <TagList
+              compact
+              disabled={record.archived}
+              tags={record.labels ?? []}
+              onChange={(tags) => setModelTags(record.name, tags)}
+            />
+          </div>
+        </Typography.Text>
+      </div>
     );
 
     const actionRenderer = (_: string, record: ModelItem) => (
