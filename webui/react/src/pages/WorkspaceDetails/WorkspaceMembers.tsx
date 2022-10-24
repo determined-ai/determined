@@ -4,9 +4,7 @@ import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import InteractiveTable, {
-  ColumnDef,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';

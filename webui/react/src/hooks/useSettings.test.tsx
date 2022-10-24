@@ -165,9 +165,11 @@ describe('useSettings', () => {
 
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
-      waitFor(() => expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
-        newSettings[settingsKey],
-      ));
+      waitFor(() =>
+        expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
+          newSettings[settingsKey],
+        ),
+      );
     });
 
     waitFor(() => {
@@ -188,7 +190,9 @@ describe('useSettings', () => {
     const { result } = await setup();
     await act(() => result.container.current.updateSettings(newSettings));
 
-    waitFor(() => expect(result.container.current.activeSettings()).toStrictEqual(Object.keys(newSettings)));
+    waitFor(() =>
+      expect(result.container.current.activeSettings()).toStrictEqual(Object.keys(newSettings)),
+    );
   });
 
   it('should have default settings after reset', async () => {
@@ -214,16 +218,20 @@ describe('useSettings', () => {
 
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
-      waitFor(() => expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
-        newSettings[settingsKey],
-      ));
+      waitFor(() =>
+        expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
+          newSettings[settingsKey],
+        ),
+      );
     });
 
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof ExtraSettings;
-      waitFor(() => expect(extraResult.container.current.settings?.[settingsKey]).toStrictEqual(
-        newExtraSettings[settingsKey],
-      ));
+      waitFor(() =>
+        expect(extraResult.container.current.settings?.[settingsKey]).toStrictEqual(
+          newExtraSettings[settingsKey],
+        ),
+      );
     });
   });
 });

@@ -5,7 +5,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Badge, { BadgeType } from 'components/Badge';
 import Page from 'components/Page';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';

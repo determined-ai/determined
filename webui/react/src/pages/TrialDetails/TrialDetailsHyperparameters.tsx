@@ -1,6 +1,9 @@
 import React, { useMemo } from 'react';
 
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName } from 'components/Table/Table';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';

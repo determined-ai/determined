@@ -42,7 +42,6 @@ export const trialsTableSettingsConfig: SettingsConfig<InteractiveTableSettings>
       storageKey: 'tableOffset',
       type: number,
     },
-
   },
   storagePath: 'trial-table',
 };

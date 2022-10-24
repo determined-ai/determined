@@ -211,15 +211,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    id,
-    settings,
-    labelsString,
-    pinnedString,
-    statesString,
-    usersString,
-  ]);
+  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {

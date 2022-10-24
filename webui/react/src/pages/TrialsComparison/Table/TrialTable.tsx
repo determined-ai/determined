@@ -552,34 +552,32 @@ const TrialTable: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      {
-        settings
-        ? (
-          <InteractiveTable<V1AugmentedTrial>
-            columns={columns}
-            containerRef={containerRef}
-            ContextMenu={ContextMenu}
-            dataSource={trials.data.slice(0, settings?.tableLimit)}
-            interactiveColumns={false}
-            pagination={pagination}
-            rowClassName={highlights.rowClassName}
-            rowKey="trialId"
-            rowSelection={{
-              getCheckboxProps: () => ({ disabled: selectAllMatching }),
-              onChange: selectTrials,
-              preserveSelectedRowKeys: true,
-              selectedRowKeys: (selectAllMatching ? trials.ids : selectedTrials) as number[],
-            }}
-            scroll={{ x: 'max-content', y: '40vh' }}
-            settings={settings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings}
-            onRow={highlights.onRow}
-          />
-        )
-        : <SkeletonTable columns={columns.length} />
-      }
+      {settings ? (
+        <InteractiveTable<V1AugmentedTrial>
+          columns={columns}
+          containerRef={containerRef}
+          ContextMenu={ContextMenu}
+          dataSource={trials.data.slice(0, settings?.tableLimit)}
+          interactiveColumns={false}
+          pagination={pagination}
+          rowClassName={highlights.rowClassName}
+          rowKey="trialId"
+          rowSelection={{
+            getCheckboxProps: () => ({ disabled: selectAllMatching }),
+            onChange: selectTrials,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys: (selectAllMatching ? trials.ids : selectedTrials) as number[],
+          }}
+          scroll={{ x: 'max-content', y: '40vh' }}
+          settings={settings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+          onRow={highlights.onRow}
+        />
+      ) : (
+        <SkeletonTable columns={columns.length} />
+      )}
     </div>
   );
 };

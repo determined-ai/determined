@@ -237,15 +237,7 @@ const ProjectDetails: React.FC = () => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    id,
-    settings,
-    labelsString,
-    pinnedString,
-    statesString,
-    usersString,
-  ]);
+  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -709,7 +701,14 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [expPermissions, settings?.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
+    [
+      expPermissions,
+      settings?.row,
+      openMoveModal,
+      project?.workspaceId,
+      project?.id,
+      experimentMap,
+    ],
   );
 
   const submitBatchAction = useCallback(
