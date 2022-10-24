@@ -45,5 +45,5 @@ def add_new_tokens_to_tokenizer(
 
 
 def token_exists_in_tokenizer(token: str, tokenizer: nn.Module) -> bool:
-    exists = tokenizer.convert_tokens_to_ids([token]) != tokenizer.unk_token_id
+    exists = tokenizer.convert_tokens_to_ids([token]) != [tokenizer.unk_token_id]
     return exists
