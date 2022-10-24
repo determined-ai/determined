@@ -10,15 +10,19 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import ADMIN_CREDENTIALS
 
+
+# global variable to store the webhook request
 request_to_webhook_endpoint = {}
-running = True
+
+# global state to handle server termination
+keep_server_running = True
+
 SERVER_PORT = 5005
 
-
-class RequestHandler(SimpleHTTPRequestHandler):
+class WebhookRequestHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         global request_to_webhook_endpoint
-        global running
+        global keep_server_running 
         content_length = int(self.headers.get("content-length"))
         request_body = self.rfile.read(content_length)
         request_to_webhook_endpoint = json.loads(request_body)
@@ -26,15 +30,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write("".encode("utf-8"))
 
-        # Terminate Server
-        running = False
+        # rerminate Server
+        keep_server_running  = False
 
 
-def run_server(server_class=HTTPServer, handler_class=RequestHandler):
-    global running
+def run_server(server_class=HTTPServer, handler_class=WebhookRequestHandler):
+    global keep_server_running 
     server_address = ("", SERVER_PORT)
     http_server = server_class(server_address, handler_class)
-    while running:
+    while keep_server_running:
         http_server.handle_request()
 
 
@@ -74,6 +78,7 @@ def test_slack_webhook() -> None:
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
     exp_config = exp.experiment_config_json(experiment_id)
+    
     expected_payload = {
         "blocks": [
             {
