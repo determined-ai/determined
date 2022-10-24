@@ -721,6 +721,11 @@ The master supports the following configuration settings:
       -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
          size is 16384.
 
+-  ``webhooks``: Specifies configuration settings related to webhooks.
+
+   -  ``signing_key``: The key used to sign outgoing webhooks.
+   -  ``base_url``: The URL users use to access Determined, for generating hyperlinks.
+
 -  ``telemetry``: Specifies configuration settings related to telemetry collection and tracing.
 
    -  ``enabled``: Whether to collect and report anonymous information about the usage of this
