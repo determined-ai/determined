@@ -4,7 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettings';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import {
   getExperimentDetails,
   getExpTrials,

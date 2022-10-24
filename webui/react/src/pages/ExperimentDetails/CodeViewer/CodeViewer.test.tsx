@@ -9,7 +9,7 @@ import { act } from 'react-dom/test-utils';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettings';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import history from 'shared/routes/history';
 
@@ -87,7 +87,7 @@ jest.mock('hooks/useSettings', () => {
     const settings = { filePath: 'single-in-records.yaml' };
     const updateSettings = jest.fn();
 
-    return { settings, updateSettings };
+    return { isLoading: false, settings, updateSettings };
   });
 
   return {
@@ -97,6 +97,7 @@ jest.mock('hooks/useSettings', () => {
   };
 });
 
+global.URL.createObjectURL = jest.fn();
 const experimentIdMock = 123;
 const user = userEvent.setup();
 
@@ -137,12 +138,12 @@ describe('CodeViewer', () => {
 
     const { treeNodes } = await getElements();
 
-    await waitFor(() => act(() => user.click(treeNodes[1])));
+    await act(() => user.click(treeNodes[1]));
 
     const button = await screen.findByLabelText('download');
 
-    await waitFor(() => user.click(button));
+    await act(() => user.click(button));
 
-    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py');
+    waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
   });
 });

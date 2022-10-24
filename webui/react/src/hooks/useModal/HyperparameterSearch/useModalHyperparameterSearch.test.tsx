@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettings';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { CreateExperimentParams } from 'services/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';

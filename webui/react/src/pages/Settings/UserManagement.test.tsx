@@ -7,7 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettings';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
 import { DetailedUser } from 'types';
 

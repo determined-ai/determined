@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettings';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
