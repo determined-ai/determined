@@ -22,7 +22,7 @@ interface Props {
 }
 interface FormInputs {
   roleId: number;
-  userOrGroupId: number;
+  userOrGroupId: string;
 }
 
 const useModalWorkspaceAddMember = ({
@@ -103,10 +103,10 @@ const useModalWorkspaceAddMember = ({
           ? await assignRolesToUser({
               roleIds: [values.roleId],
               scopeWorkspaceId: workspaceId,
-              userId: values.userOrGroupId,
+              userId: Number(values.userOrGroupId.substring(2)),
             })
           : await assignRolesToGroup({
-              groupId: values.userOrGroupId,
+              groupId: Number(values.userOrGroupId.substring(2)),
               roleIds: [values.roleId],
               scopeWorkspaceId: workspaceId,
             });

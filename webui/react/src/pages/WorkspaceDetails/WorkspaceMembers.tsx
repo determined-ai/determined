@@ -2,7 +2,7 @@ import { Button, Dropdown, Menu, Select } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import InteractiveTable, {
   ColumnDef,
@@ -13,6 +13,7 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
+import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -22,7 +23,12 @@ import {
   removeRolesFromGroup,
   removeRolesFromUser,
 } from 'services/api';
-import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import {
+  V1Group,
+  V1GroupDetails,
+  V1RoleAssignment,
+  V1RoleWithAssignments,
+} from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -98,8 +104,15 @@ const WorkspaceMembers: React.FC<Props> = ({
   workspace,
 }: Props) => {
   let { knownRoles } = useStore();
-
+  const rbacEnabled = useFeature().isOn('rbac');
   const { canUpdateRoles } = usePermissions();
+  const [canceler] = useState(new AbortController());
+  const fetchKnownRoles = useFetchKnownRoles(canceler);
+  useEffect(() => {
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+  }, [fetchKnownRoles, rbacEnabled]);
 
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
@@ -253,41 +266,41 @@ const WorkspaceMembers: React.FC<Props> = ({
       );
     };
 
-    const getAssignedRole = (record: UserOrGroup): V1Role | null => {
-      const currentAssignment = assignments.find((role) =>
+    const getAssignedRole = (record: UserOrGroup): V1RoleAssignment | null => {
+      const currentAssignment = assignments.find((aGroup) =>
         isUser(record)
-          ? !!role?.userRoleAssignments &&
-            !!role.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
-          : !!role?.groupRoleAssignments &&
-            !!role.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
+          ? !!aGroup?.userRoleAssignments &&
+            !!aGroup.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
+          : !!aGroup?.groupRoleAssignments &&
+            !!aGroup.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
       );
       if (isUser(record) && !!record) {
         if (currentAssignment?.userRoleAssignments) {
           const myAssignment = currentAssignment.userRoleAssignments.find(
             (a) => a.userId === getIdFromUserOrGroup(record),
           );
-          return myAssignment?.roleAssignment.role || null;
+          return myAssignment?.roleAssignment || null;
         }
       } else if (currentAssignment?.groupRoleAssignments) {
         const myAssignment = currentAssignment.groupRoleAssignments.find(
           (a) => a.groupId === getIdFromUserOrGroup(record),
         );
-        return myAssignment?.roleAssignment.role || null;
+        return myAssignment?.roleAssignment || null;
       }
       return null;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => {
-      const assignedRole = getAssignedRole(record);
+      const roleAssignment = getAssignedRole(record);
       return (
         <Select
           className={css.selectContainer}
-          disabled={!userCanAssignRoles}
-          value={assignedRole?.roleId}
+          disabled={!userCanAssignRoles || !roleAssignment?.scopeWorkspaceId}
+          value={roleAssignment?.role?.roleId}
           onSelect={async (value: RawValueType | LabelInValueType) => {
             const roleIdValue = value as number;
             const userOrGroupId = getIdFromUserOrGroup(record);
-            const oldRoleIds = assignedRole?.roleId ? [assignedRole.roleId] : [];
+            const oldRoleIds = roleAssignment?.role?.roleId ? [roleAssignment?.role?.roleId] : [];
 
             try {
               // Try to remove the old role and then add the new role
@@ -338,10 +351,10 @@ const WorkspaceMembers: React.FC<Props> = ({
     const actionRenderer = (value: string, record: UserOrGroup) => {
       const assignedRole = getAssignedRole(record);
 
-      return userCanAssignRoles && assignedRole?.roleId ? (
+      return userCanAssignRoles && assignedRole?.role.roleId ? (
         <GroupOrMemberActionDropdown
           name={getName(record)}
-          roleId={assignedRole.roleId}
+          roleId={assignedRole.role.roleId}
           userOrGroup={record}
           workspace={workspace}
         />
