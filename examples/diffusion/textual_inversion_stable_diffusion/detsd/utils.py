@@ -22,7 +22,7 @@ def add_new_tokens_to_tokenizer(
         initializer_strs,
         return_tensors="pt",
         add_special_tokens=False,
-    ).input_ids
+    ).input_ids[0]
 
     # Add a dummy placeholder token for every token in the initializer.
     dummy_placeholder_str_list = [f"<{concept_str}>_{n}" for n in range(len(initializer_ids))]

@@ -1,4 +1,4 @@
-name: detsd_finetune
+name: detsd_finetune_advanced
 entrypoint: python3 -m determined.launch.torch_distributed python3 finetune.py
 searcher:
   name: single

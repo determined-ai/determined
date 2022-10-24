@@ -397,18 +397,22 @@ class DetSDTextualInversionTrainer:
 
         # Create the dummy-to-initializer idx mapping and use the sorted values to generate the
         # updated embedding layer.
-        dummy_id_to_initializer_id_map = {}
+        dummy_ids_to_initializer_ids_map = {}
         for concept_str in self.concept_strs:
-            for dummy_id, initializer_id in zip(
+            for dummy_ids, initializer_ids in zip(
                 self.concept_to_dummy_ids_map[concept_str],
                 self.concept_to_initializer_ids_map[concept_str],
             ):
-                dummy_id_to_initializer_id_map[dummy_id] = initializer_id
-        sorted_dummy_initializer_id_list = sorted(
-            [(dummy_id, init_id) for dummy_id, init_id in dummy_id_to_initializer_id_map.items()]
+                dummy_ids_to_initializer_ids_map[dummy_ids] = initializer_ids
+        sorted_dummy_initializer_ids_list = sorted(
+            [
+                (dummy_ids, init_ids)
+                for dummy_ids, init_ids in dummy_ids_to_initializer_ids_map.items()
+            ]
         )
-        idxs_to_copy = torch.cat([init_id for _, init_id in sorted_dummy_initializer_id_list]).to(
-            self.accelerator.device
+        idxs_to_copy = torch.tensor(
+            [init_id for _, init_id in sorted_dummy_initializer_ids_list],
+            device=self.accelerator.device,
         )
         token_embedding_layer_weight_data = self._get_token_embedding_layer().weight.data
         copied_embedding_weights = (
@@ -524,7 +528,6 @@ class DetSDTextualInversionTrainer:
                 for concept_str, dummy_ids in self.concept_to_dummy_ids_map.items():
                     learned_embeddings = learned_embeddings_dict[concept_str]["learned_embeddings"]
                     # Sanity check on length.
-                    # TODO: replace with strict=True in zip after upgrade to py >= 3.10.
                     assert len(dummy_ids) == len(
                         learned_embeddings
                     ), 'Length of "dummy_ids" and "learned_embeddings" must be equal.'

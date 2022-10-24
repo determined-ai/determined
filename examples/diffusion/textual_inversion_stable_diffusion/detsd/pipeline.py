@@ -256,7 +256,6 @@ class DetSDTextualInversionPipeline:
             self.hf_pipeline.text_encoder.resize_token_embeddings(len(self.hf_pipeline.tokenizer))
             token_embeddings = self.hf_pipeline.text_encoder.get_input_embeddings().weight.data
             # Sanity check on length.
-            # TODO: replace with strict=True in zip after upgrade to py >= 3.10
             assert len(dummy_placeholder_ids) == len(
                 learned_embeddings
             ), "dummy_placeholder_ids and learned_embeddings must have the same length"

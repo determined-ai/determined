@@ -84,7 +84,7 @@ included the directory where the Jupyter notebook will be launched:
 * `detsd-notebook.yaml`: the notebook config file.
 * `detsd`: the python module directory containing the `DetSDTextualInversionPipeline` we will use to
   generate images.
-* `learned_embeddings_dict_demo.pt`: pickle file containing a `<det-logo-demo>` concept, highly
+* `learned_embeddings_dict_demo.pt`: pickle file containing a `det-logo-demo` concept, highly
   trained on Determined AI logo images.
 * `startup-hook.sh`: a startup script which installs necessary dependencies.
 * `textual_inversion.ipynb`: the to-be-launched notebook.
@@ -109,7 +109,7 @@ where one must again modify the `HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE` line in 
 as previously.
 
 `generate_grid.yaml` can either load in trained checkpoints by `uuid` or from local files. The
-provided config will load in the highly-trained demo `<det-logo-demo>` concept saved
+provided config will load in the highly-trained demo `det-logo-demo` concept saved
 in `learned_embeddings_dict_demo.pt` by
 default. The configuration performs multi-GPU generation, scanning across
 multiple prompts and settings of the `guidance_scale` parameter, logging all images to Tensorboard
