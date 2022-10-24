@@ -2,10 +2,19 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Input, Menu, Modal, Space, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
+import ErrorBoundary from 'components/ErrorBoundary';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import Link from 'components/Link';
@@ -103,6 +112,8 @@ import settingsConfig, {
 } from './OldProjectDetails.settings';
 import css from './ProjectDetails.module.scss';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
+import Test from './Test';
+import Test2 from './Test2';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = ['label', 'search', 'state', 'user'];
 
@@ -1009,6 +1020,16 @@ const ProjectDetails: React.FC = () => {
       {
         body: (
           <div className={css.experimentTab}>
+            <Suspense fallback={<div>loading</div>}>
+              <ErrorBoundary>
+                <Test />
+              </ErrorBoundary>
+            </Suspense>
+            <Suspense fallback={<div>loading</div>}>
+              <ErrorBoundary>
+                <Test2 />
+              </ErrorBoundary>
+            </Suspense>
             <TableBatch
               actions={batchActions.map((action) => ({
                 disabled: !availableBatchActions.includes(action),
