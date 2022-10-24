@@ -1052,7 +1052,7 @@ workloads for this experiment. For more information on customizing the trial env
       -  A full path to a local Singulary image (beginning with a / character).
 
       -  Any of the other supported Singularity container formats identified by prefix (e.g.
-         ``instance://``, ``library://``, ``shub://``, ``oci://``, or ``docker://``). See the
+         ``instance://``, ``library://``, ``shub://``, ``oras://``, or ``docker://``). See the
          `Singularity run <https://docs.sylabs.io/guides/3.7/user-guide/cli/singularity_run.html>`__
          command documentation for a full description of the capabilities.
 
@@ -1061,9 +1061,17 @@ workloads for this experiment. For more information on customizing the trial env
 
       -  If none of the above applies, Determined will apply the ``docker://`` prefix to the image.
 
+   When the cluster is configured with :ref:`resource_manager.type: slurm
+   <cluster-configuration-slurm>` and ``container_run_type: podman``, images are executed using the
+   PodMan container runtime. The image can be any of the supported PodMan container formats
+   identified by transport (e.g. ``docker:`` (the default), ``docker-archive:``, ``docker-daemon:``,
+   or ``oci-archive:``). See the `PodMan run
+   <https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ command documentation for a full
+   description of the capabilities.
+
 ``force_pull_image``
-   Forcibly pull the image from the Docker registry, bypassing the Docker or Singularity cache.
-   Defaults to ``false``.
+   Forcibly pull the image from the Docker registry, bypassing the Docker or Singularity built-in
+   cache. Defaults to ``false``.
 
 ``registry_auth``
    The `Docker registry credentials

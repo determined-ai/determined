@@ -158,3 +158,56 @@ to optimize how Determined interacts with PBS:
       recommended that you wait for at least one Determined ``scheduling_unit`` for the job to
       complete after sending the ``SIGTERM``. If after that period of time the job has not
       terminated, then send a ``SIGKILL`` to forcibly release all resources.
+
+.. _podman-config-requirements:
+
+*********************
+ PodMan Requirements
+*********************
+
+When Determined is configured to use PodMan, the containers are launched in `rootless mode
+<https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. Your HPC cluster
+administrator should have completed most of the configuration for you, but there may be additional
+per-user configuration that is required. Before attempting to launch Determined jobs, verify that
+you can run simple PodMan containers on a compute node. For example:
+
+   .. code:: bash
+
+      podman run hello-world
+
+If you are unable to do that successfully, then one or more of the following configuration changes
+may be required in your ``$HOME/.config/containers/storage.conf`` file:
+
+#. PodMan does not support rootless container storage on distributed file systems (e.g. NFS, Lustre,
+   GPSF). On a typical HPC cluster, user directories are on a distributed file system and the
+   default container storage location of ``$HOME/.local/share/containers/storage`` is therefore not
+   supported. If this is the case on your HPC cluster, configure the ``graphroot`` option in your
+   ``storage.conf`` to specify a local file system available on compute nodes. Alternatively, you
+   can request that your system administrator configure the ``rootless_storage_path`` in
+   ``/etc/containers/storage.conf`` on all compute nodes.
+
+#. PodMan utilizes the directory specified by the environment variable ``XDG_RUNTIME_DIR``.
+   Normally, this is provided by the login process. Slurm and PBS, however, do not provide this
+   variable when launching jobs on compute nodes. When ``XDG_RUNTIME_DIR`` is not defined, PodMan
+   attempts to create the directory ``/run/user/$UID`` for this purpose. If ``/run/user`` is not
+   writable by a non-root user, then PodMan commands will fail with a permission error. To avoid
+   this problem, configure the ``runroot`` option in your ``storage.conf`` to a writeable local
+   directory available on all compute nodes. Alternatively, you can request your system
+   administrator to configure the ``/run/user`` to be user-writable on all compute nodes.
+
+Create or update ``$HOME/.config/containers/storage.conf`` as required to resolve the issues above.
+The example ``storage.conf`` file below uses the file system ``/tmp``, but there may be a more
+appropriate file system on your HPC cluster that you should specify for this purpose.
+
+   .. code:: docker
+
+      [storage]
+      driver = "overlay"
+      graphroot = "/tmp/$USER/storage"
+      runroot = "/tmp/$USER/run"
+
+Any changes to your ``storage.conf`` should be applied using the command:
+
+   .. code:: bash
+
+      podman system migrate
