@@ -1308,6 +1308,16 @@ The ``slurm`` section specifies configuration options applicable when the cluste
             - --mem-per-cpu=10
             - --exclusive
 
+``slots_per_node``
+   The minimum number of slots required for a node to be scheduled during a trial. If
+   :ref:`gres_supported <cluster-configuration-slurm>` is false, specify ``slots_per_node`` in order
+   to utilize more than one GPU per node. It is the user’s responsibility to ensure that
+   ``slots_per_node`` GPUs will be available on nodes selected for the job using other
+   configurations such as targeting a specific resource pool with only GPU nodes or specifying a
+   Slurm constraint in the experiment configuration.
+
+.. _pbs-config:
+
 *************
  PBS Options
 *************
@@ -1328,3 +1338,11 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
          pbsbatch_args:
             - -p1000
             - -PMyProjectName
+
+``slots_per_node``
+   The minimum number of slots required for a node to be scheduled during a trial. If
+   :ref:`gres_supported <cluster-configuration-slurm>` is false, specify ``slots_per_node`` in order
+   to utilize more than one GPU per node. It is the user’s responsibility to ensure that
+   ``slots_per_node`` GPUs will be available on the nodes selected for the job using other
+   configurations such as targeting a specific resource pool with only ``slots_per_node`` GPU nodes
+   or specifying a PBS constraint in the experiment configuration.
