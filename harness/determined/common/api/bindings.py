@@ -7258,6 +7258,25 @@ class v1Tensorboard:
             "jobId": self.jobId,
         }
 
+class v1TestWebhookResponse:
+    def __init__(
+        self,
+        *,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TestWebhookResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
 class v1TimestampFieldFilter:
     def __init__(
         self,
@@ -12106,7 +12125,7 @@ def post_TestWebhook(
     session: "api.Session",
     *,
     id: int,
-) -> None:
+) -> "v1TestWebhookResponse":
     _params = None
     _resp = session._do_request(
         method="POST",
@@ -12119,7 +12138,7 @@ def post_TestWebhook(
         stream=False,
     )
     if _resp.status_code == 200:
-        return
+        return v1TestWebhookResponse.from_json(_resp.json())
     raise APIHttpError("post_TestWebhook", _resp)
 
 def get_TrialLogs(
