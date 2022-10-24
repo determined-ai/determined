@@ -2,7 +2,7 @@ import { Button, Dropdown, Menu, Select } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import InteractiveTable, {
   ColumnDef,
@@ -13,6 +13,7 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
+import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -98,8 +99,15 @@ const WorkspaceMembers: React.FC<Props> = ({
   workspace,
 }: Props) => {
   let { knownRoles } = useStore();
-
+  const rbacEnabled = useFeature().isOn('rbac');
   const { canUpdateRoles } = usePermissions();
+  const [canceler] = useState(new AbortController());
+  const fetchKnownRoles = useFetchKnownRoles(canceler);
+  useEffect(() => {
+    if (rbacEnabled) {
+      fetchKnownRoles();
+    }
+  }, [fetchKnownRoles, rbacEnabled]);
 
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
