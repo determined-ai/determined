@@ -31,11 +31,22 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
         exp = client.create_experiment(config, emptydir, includes=[model_def])
     finally:
         os.rmdir(emptydir)
+    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+
+    # Await first trial is safe to call before a trial has started.
+    trial = exp.await_first_trial()
+
+    # .logs(follow=True) block until the trial completes.
+    all_logs = list(trial.logs(follow=True))
+
     assert exp.wait() == _client.ExperimentState.COMPLETED
+
+    assert all_logs == list(trial.logs())
+    assert list(trial.logs(head=10)) == all_logs[:10]
+    assert list(trial.logs(tail=10)) == all_logs[-10:]
 
     trials = exp.get_trials()
     assert len(trials) == 1, trials
-    trial = trials[0]
     assert client.get_trial(trial.id).id == trial.id
 
     ckpt = trial.top_checkpoint()
