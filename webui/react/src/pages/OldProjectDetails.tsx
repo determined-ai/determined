@@ -12,6 +12,7 @@ import React, {
   useState,
 } from 'react';
 import { useParams } from 'react-router-dom';
+import { RecoilURLSyncJSON } from 'recoil-sync';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ErrorBoundary from 'components/ErrorBoundary';
@@ -1020,16 +1021,18 @@ const ProjectDetails: React.FC = () => {
       {
         body: (
           <div className={css.experimentTab}>
-            <Suspense fallback={<div>loading</div>}>
-              <ErrorBoundary>
-                <Test />
-              </ErrorBoundary>
-            </Suspense>
-            <Suspense fallback={<div>loading</div>}>
-              <ErrorBoundary>
-                <Test2 />
-              </ErrorBoundary>
-            </Suspense>
+            <RecoilURLSyncJSON location={{ part: 'queryParams' }} storeKey="projectDetail">
+              <Suspense fallback={<div>loading</div>}>
+                <ErrorBoundary>
+                  <Test />
+                </ErrorBoundary>
+              </Suspense>
+              <Suspense fallback={<div>loading</div>}>
+                <ErrorBoundary>
+                  <Test2 />
+                </ErrorBoundary>
+              </Suspense>
+            </RecoilURLSyncJSON>
             <TableBatch
               actions={batchActions.map((action) => ({
                 disabled: !availableBatchActions.includes(action),

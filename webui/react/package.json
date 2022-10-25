@@ -33,6 +33,7 @@
     "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_OPTIONS='--max-old-space-size=2048' NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
+    "@recoiljs/refine": "^0.1.1",
     "ansi-to-html": "^0.7.1",
     "antd": "^4.21.4",
     "dayjs": "^1.10.7",
@@ -63,6 +64,7 @@
     "react-transition-group": "^4.4.2",
     "react-window": "^1.8.7",
     "recoil": "^0.7.6",
+    "recoil-sync": "^0.2.0",
     "screenfull": "^5.1.0",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
