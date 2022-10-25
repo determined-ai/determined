@@ -2,11 +2,11 @@
 # Usage:
 # dispather-entrypoint.sh: {realEntryPointArgs}...
 #
-# This is the wrapper script added around the intended determined 
-# entrypoint script to provide dispatcher-specific initialization 
+# This is the wrapper script added around the intended determined
+# entrypoint script to provide dispatcher-specific initialization
 # for singularity.  In particular, it processes the /determined_local_fs volume
 # and clones it under /determined_local_fs/procs/# for this particular process ($SLURM_PROCID).
-# It then adds softlinks for each subdirectory to re-direct it 
+# It then adds softlinks for each subdirectory to re-direct it
 # (via $LOCALTMP/determined/xx) -> /determined_local_fs/procs/#/run/determined/xx
 #
 # The links from /run/determined are provided by the DAI master dispatcher RM
@@ -30,7 +30,7 @@ DEBUG=0
 
 # Clear all exported functions.  They are inherited into singularity containers
 # since they are passed by environment variables.  One specific breaking example
-# is the function that injects arguments into the which command.   These Redhat
+# is the function that injects arguments into the which command.  These Red Hat
 # options are not supported on Ubuntu which breaks the which use in the entrypoints.
 unset -f $(declare -Ffx | cut -f 3 -d ' ')
 
@@ -39,7 +39,7 @@ unset -f $(declare -Ffx | cut -f 3 -d ' ')
 log_debug() {
     if [ $DEBUG == 1 ]; then
        echo -e "$*" >&2
-    fi 
+    fi
 }
 
 
@@ -49,20 +49,20 @@ log() {
     echo -e "$*" >&2
 }
 
-# CUDA_VISIBLE_DEVICES is set by both SLURM and PBS. However, there can be differences in the 
-# format used by each of them. SLURM is guaranteed to set the value using simple number like 
-# "0,1,2" whereas PBS can sometimes set the value using GPU UUID like 
+# CUDA_VISIBLE_DEVICES is set by both SLURM and PBS. However, there can be differences in the
+# format used by each of them. SLURM is guaranteed to set the value using simple number like
+# "0,1,2" whereas PBS can sometimes set the value using GPU UUID like
 # "GPU-UUID1,GPU-UUID2,GPU-UUID3".
-# We follow the format used by SLURM. So, before using the value of CUDA_VISIBLE_DEVICES we have to 
-# make sure it is made of simple numbers instead of UUIDs. If it is not, then we update it to match 
+# We follow the format used by SLURM. So, before using the value of CUDA_VISIBLE_DEVICES we have to
+# make sure it is made of simple numbers instead of UUIDs. If it is not, then we update it to match
 # that format.
-# convert_to_gpu_numbers will inspect the value of CUDA_VISIBLE_DEVICES and convert it to gpu 
+# convert_to_gpu_numbers will inspect the value of CUDA_VISIBLE_DEVICES and convert it to gpu
 # numbers format. If the input is already in the simple number format the same value is returned.
-# If the input based on GPU UUID format, it it converted to simple number format and returned as a 
-# string. If there is an error during the conversion, the error is logged and the function returns 
+# If the input based on GPU UUID format, it it converted to simple number format and returned as a
+# string. If there is an error during the conversion, the error is logged and the function returns
 # the existing CUDA_VISIBLE_DEVICES value.
 # TODO: Need to handle Multi Instance GPU (MIG) Format.
-# Refer: https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf Section 9.6.1 for 
+# Refer: https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf Section 9.6.1 for
 # further information on MIG format
 convert_to_gpu_numbers(){
     # Process the value of CUDA_VISIBLE_DEVICES and store the values in an array.
@@ -134,10 +134,10 @@ if [ -d $ROOT/run ] ; then
         log_debug "DEBUG: ln -sfnT $PROCDIR/run/determined/${dirname} $LOCALTMP/determined/${dirname}"
         if [ ! -w $PROCDIR/run/determined ]; then
             log "ERROR: User$(id) does not have write access to $PROCDIR/run/determined/${dirname}.  You may have may not have properly configured your determined agent user/group."
-        fi 
+        fi
         if [ ! -w $LOCALTMP/determined ]; then
             log "ERROR: User $(id) does not have write access to $LOCALTMP/determined/${dirname}. You may have may not have properly configured your determined agent user/group."
-        fi 
+        fi
         ln -sfnT $PROCDIR/run/determined/${dirname} $LOCALTMP/determined/${dirname} >&2
     done
 fi
@@ -146,7 +146,7 @@ fi
 if  [ "$DET_CONTAINER_LOCAL_TMP" == "1" ]; then
     # Create a per-container tmp
     mkdir -p $PROCDIR/tmp
-    # Replace /tmp with a link to our private 
+    # Replace /tmp with a link to our private
     if rmdir /tmp; then
         ln -fs $PROCDIR/tmp /
         log_debug "DEBUG: Replaced tmp $(ls -l /tmp)"
@@ -177,7 +177,7 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                     # newline characters with commas and enclose in square brackets.
                     # But only include GPUS that are in the CUDA_VISIBLE_DEVICES=0,1,...
                     VISIBLE_SLOTS="$(nvidia-smi --query-gpu=index --format=csv,noheader | sed -z 's/\n/,/g;s/,$/\n/')"
-                    for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do 
+                    for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do
                         if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
                             log "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
                         fi
@@ -242,19 +242,21 @@ fi
 
 # When running under podman rootless, the default user on entry is root/uid=0 inside the
 # container, which maps to the launching user outside the container.  In this case,
-# verify that the actual user has read access to the /run/determined/ssh directory 
-# (if it exists).  If sshd is used by this container (shell, distributed), the user needs
-# to be able to read /run/determined/ssh/authorized_keys.   If the user does not have access,
-# we dynamically relax the directory permissions.  This allows ssh into the container as 
-# using the username/id. 
-if [ $(whoami) == "root" ]  && [ -d /run/determined/ssh ]; then
-    log_debug "DEBUG: Running as root inside container, verify $DET_USER can read /run/determined/ssh"
-    if ! su - $DET_USER -c 'test -r /run/determined/ssh'; then
-        log_debug "DEBUG: Relaxing permissions on /run/determined/ssh"
-        chmod a+x /run/determined /run/determined/ssh
-    fi
+# rewrite the determined agent user uid/gid in /run/determined/etc/passwd to be
+# 0:0 to match.
+#
+# cat  /run/determined/etc/passwd
+#     username:x:1001:39::/run/determined/workdir:/bin/bash
+#
+# This maps the launching user into the same account when entering vis SSH
+# as the user what is executing the entry-point script here, and will
+# result in:
+# cat  /run/determined/etc/passwd
+#     username:x:0:0::/run/determined/workdir:/bin/bash
+if [ $(whoami) == "root" ]  && [ -r /run/determined/etc/passwd ]; then
+    log_debug "DEBUG: Running as root inside container, changing agent user passwd entry to uid/gid 0/0."
+    sed -i "s/\([a-zA-Z0-9]\+\):x:[0-9]\+:[0-9]\+:/\1:x:0:0:/" /run/determined/etc/passwd
 fi
-
 
 log "INFO: Setting workdir to $DET_WORKDIR"
 cd $DET_WORKDIR
