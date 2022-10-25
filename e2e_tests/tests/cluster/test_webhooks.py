@@ -20,7 +20,7 @@ SERVER_PORT = 5005
 
 
 class WebhookRequestHandler(SimpleHTTPRequestHandler):
-    def do_POST(self):
+    def do_POST(self) -> None:
         global request_to_webhook_endpoint
         global keep_server_running
         content_length = int(self.headers.get("content-length"))
@@ -30,11 +30,11 @@ class WebhookRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write("".encode("utf-8"))
 
-        # rerminate Server
+        # terminate Server
         keep_server_running = False
 
 
-def run_server(server_class=HTTPServer, handler_class=WebhookRequestHandler):
+def run_server(server_class=HTTPServer, handler_class=WebhookRequestHandler) -> None:
     global keep_server_running
     server_address = ("", SERVER_PORT)
     http_server = server_class(server_address, handler_class)
@@ -53,20 +53,18 @@ def test_slack_webhook() -> None:
     )
     sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
 
-    webhook_trigger_data = {
-        "triggerType": bindings.v1TriggerType.TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE,
-        "condition": {"state": "COMPLETED"},
-    }
-    webhook_trigger = bindings.v1Trigger(**webhook_trigger_data)
-    webhook = {
-        "url": f"http://localhost:{SERVER_PORT}",
-        "webhookType": bindings.v1WebhookType.WEBHOOK_TYPE_SLACK,
-        "triggers": [webhook_trigger],
-    }
-    webhook_request = bindings.v1Webhook(**webhook)
+    webhook_trigger = bindings.v1Trigger(
+        triggerType=bindings.v1TriggerType.TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE,
+        condition= {"state": "COMPLETED"})
+
+    webhook_request = bindings.v1Webhook(
+        url=f"http://localhost:{SERVER_PORT}",
+        webhookType=bindings.v1WebhookType.WEBHOOK_TYPE_SLACK,
+        triggers=[webhook_trigger]
+    )
 
     result = bindings.post_PostWebhook(sess, body=webhook_request)
-    assert result.webhook.url == webhook["url"]
+    assert result.webhook.url == webhook_request.url
 
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
