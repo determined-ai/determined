@@ -1,6 +1,6 @@
 import React, { CSSProperties, useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
 
   const nameAcronym = useMemo(() => {
     if (!name) return '-';

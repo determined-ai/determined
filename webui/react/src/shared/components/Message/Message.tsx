@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { useStore } from 'contexts/Store';
 import * as Images from 'shared/components/Image';
+import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 
 import css from './Message.module.scss';
@@ -28,7 +28,7 @@ const IMAGE_MAP = {
 };
 
 const Message: React.FC<Props> = ({ message, style, title, type = MessageType.Alert }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const ImageComponent = IMAGE_MAP[type];
   return (
     <div className={css.base} style={style}>

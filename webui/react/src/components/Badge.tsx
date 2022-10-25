@@ -2,7 +2,7 @@ import { Tooltip } from 'antd';
 import React, { CSSProperties, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, getCssVar } from 'shared/themes';
 import { ValueOf } from 'shared/types';
 import { hsl2str, str2hsl } from 'shared/utils/color';
@@ -33,7 +33,7 @@ const Badge: React.FC<BadgeProps> = ({
   type = BadgeType.Default,
   ...props
 }: BadgeProps) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
 
   const { classes, style } = useMemo(() => {
     const isDark = ui.darkLight === DarkLight.Dark;
