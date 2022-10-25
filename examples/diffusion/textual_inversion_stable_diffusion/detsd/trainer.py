@@ -205,6 +205,7 @@ class DetSDTextualInversionTrainer:
         info = det.get_cluster_info()
         assert info is not None, "train_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
+        trial_id = info.trial.trial_id
         latest_checkpoint = info.latest_checkpoint
 
         # Instantiate the trainer and train.
@@ -232,7 +233,9 @@ class DetSDTextualInversionTrainer:
         ) as core_context:
             if latest_checkpoint is not None:
                 trainer._restore_latest_checkpoint(
-                    core_context=core_context, latest_checkpoint=latest_checkpoint
+                    core_context=core_context,
+                    latest_checkpoint=latest_checkpoint,
+                    trial_id=trial_id,
                 )
 
             # There will be a single op of len max_length, as defined in the searcher config.
@@ -260,7 +263,7 @@ class DetSDTextualInversionTrainer:
                                 if trainer.accelerator.is_main_process:
                                     op.report_progress(trainer.steps_completed)
                             if is_end_of_training or time_to_ckpt:
-                                trainer._save(core_context)
+                                trainer._save(core_context, trial_id)
                                 if core_context.preempt.should_preempt():
                                     return
                             if is_end_of_training:
@@ -519,14 +522,19 @@ class DetSDTextualInversionTrainer:
         self.unet.eval()
 
     def _restore_latest_checkpoint(
-        self, core_context: det.core.Context, latest_checkpoint: str
+        self, core_context: det.core.Context, latest_checkpoint: str, trial_id: int
     ) -> None:
         """Restores the experiment state to the latest saved checkpoint, if it exists."""
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             with self.accelerator.local_main_process_first():
+                # Restore the state per the docs:
+                # https://docs.determined.ai/latest/training/apis-howto/api-core/checkpoints.html
                 with open(path.joinpath("metadata.json"), "r") as f:
                     checkpoint_metadata_dict = json.load(f)
-                    self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+                    if trial_id == checkpoint_metadata_dict["trial_id"]:
+                        self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+                    else:
+                        self.steps_completed = 0
 
                 optimizer_state_dict = torch.load(
                     path.joinpath("optimizer_state_dict.pt"),
@@ -555,7 +563,7 @@ class DetSDTextualInversionTrainer:
 
                         new_embedding_layer.weight.data[dummy_id - id_offset] = tensor
 
-    def _save(self, core_context: det.core.Context) -> None:
+    def _save(self, core_context: det.core.Context, trial_id: int) -> None:
         """Save the training state, metadata, and any generated images."""
         self.logger.info(f"Saving checkpoint at step {self.steps_completed}.")
         self.accelerator.wait_for_everyone()
@@ -565,6 +573,7 @@ class DetSDTextualInversionTrainer:
         if self.accelerator.is_main_process:
             checkpoint_metadata_dict = {
                 "steps_completed": self.steps_completed,
+                "trial_id": trial_id,
             }
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 self._write_optimizer_state_dict_to_path(path)

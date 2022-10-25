@@ -97,6 +97,7 @@ class DetSDTextualInversionPipeline:
         info = det.get_cluster_info()
         assert info is not None, "generate_on_cluster() must be called on a Determined cluster."
         hparams = info.trial.hparams
+        trial_id = info.trial.trial_id
         latest_checkpoint = info.latest_checkpoint
 
         # Extract relevant groups from hparams.
@@ -176,6 +177,7 @@ class DetSDTextualInversionPipeline:
                     core_context=core_context,
                     latest_checkpoint=latest_checkpoint,
                     generator=generator,
+                    trial_id=trial_id,
                 )
                 if is_main_process:
                     logger.info(f"Resumed from checkpoint at step {pipeline.steps_completed}")
@@ -208,6 +210,7 @@ class DetSDTextualInversionPipeline:
                             pipeline._save(
                                 core_context=core_context,
                                 devices_and_generators=devices_and_generators,
+                                trial_id=trial_id,
                             )
                             op.report_progress(pipeline.steps_completed)
 
@@ -346,16 +349,25 @@ class DetSDTextualInversionPipeline:
         self.image_history = []
 
     def _restore_latest_checkpoint(
-        self, core_context: det.core.Context, latest_checkpoint: str, generator: torch.Generator
+        self,
+        core_context: det.core.Context,
+        latest_checkpoint: str,
+        generator: torch.Generator,
+        trial_id: int,
     ) -> None:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
+            # Restore the state per the docs:
+            # https://docs.determined.ai/latest/training/apis-howto/api-core/checkpoints.html
             with open(path.joinpath("metadata.json"), "r") as f:
-                metadata_dict = json.load(f)
+                checkpoint_metadata_dict = json.load(f)
+                if trial_id == checkpoint_metadata_dict["trial_id"]:
+                    self.steps_completed = checkpoint_metadata_dict["steps_completed"]
+                else:
+                    self.steps_completed = 0
                 generator_state_dict = torch.load(
                     path.joinpath("generator_state_dict.pt"),
                 )
-                self.steps_completed = metadata_dict["steps_completed"]
-                self.num_generated_imgs = metadata_dict["num_generated_imgs"]
+                self.num_generated_imgs = checkpoint_metadata_dict["num_generated_imgs"]
                 generator.set_state(generator_state_dict[self.device])
                 self.image_history = torch.load(path.joinpath("self.image_history.pt"))
 
@@ -363,10 +375,12 @@ class DetSDTextualInversionPipeline:
         self,
         core_context: det.core.Context,
         devices_and_generators: List[Tuple[str, torch.ByteTensor]],
+        trial_id: int,
     ) -> None:
         checkpoint_metadata_dict = {
             "steps_completed": self.steps_completed,
             "num_generated_imgs": self.num_generated_imgs,
+            "trial_id": trial_id,
         }
         with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
             path,
