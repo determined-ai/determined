@@ -115,7 +115,7 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'experiment-checkpoints-list',
+  storagePath: '/checkpoints',
 };
 
 export default config;
