@@ -1,4 +1,4 @@
-import { Type } from 'io-ts';
+import * as t from 'io-ts';
 import queryString from 'query-string';
 import { useCallback, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,19 +13,11 @@ import handleError from 'utils/error';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
-export enum BaseType {
-  Boolean = 'Boolean',
-  Float = 'Float',
-  Integer = 'Integer',
-  Object = 'Object',
-  String = 'String',
-}
-
 export interface SettingsConfigProp<A> {
   defaultValue: A;
   skipUrlEncoding?: boolean;
   storageKey: string;
-  type: Type<A>;
+  type: t.Type<A>;
 }
 
 export interface SettingsConfig<T> {
@@ -66,15 +58,15 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   return queryString.stringify(fullSettings);
 };
 
-const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
+const queryParamToType = <T>(type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>, param: string | null): Primitive | undefined => {
   if (param === null || param === undefined) return undefined;
-  if (type === BaseType.Boolean) return param === 'true';
-  if (type === BaseType.Float || type === BaseType.Integer) {
+  if (type.is(false)) return param === 'true';
+  if (type.is(0)) {
     const value = Number(param);
     return !isNaN(value) ? value : undefined;
   }
-  if (type === BaseType.Object) return JSON.parse(param);
-  if (type === BaseType.String) return param;
+  if (type.is({})) return JSON.parse(param);
+  if (type.is('')) return param;
   return undefined;
 };
 
@@ -90,10 +82,10 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
       try {
         const paramValue = params[setting.storageKey];
         const baseType = setting.type;
-        const expectingArray = baseType.is([]);
+        const isArray = baseType.is([]);
 
         if (paramValue !== null) {
-          let queryValue: Primitive | Primitive[] | undefined;
+          let queryValue: Primitive | Primitive[] | undefined = undefined;
           /*
            * Convert the string-based query params to primitives.
            * `undefined` values can happen if the query param values are invalid.
@@ -102,14 +94,14 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
            */
           if (Array.isArray(paramValue)) {
             queryValue = paramValue.reduce<Primitive[]>((acc, value) => {
-              const parsedValue = queryParamToType(baseType.name as BaseType, value);
+              const parsedValue = queryParamToType<T>(baseType, value);
 
               if (parsedValue !== undefined) acc.push(parsedValue);
 
               return acc;
             }, []);
           } else {
-            queryValue = queryParamToType(baseType.name as BaseType, paramValue);
+            queryValue = queryParamToType<T>(baseType, paramValue);
           }
 
           if (queryValue !== undefined) {
@@ -118,7 +110,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
              * Example - 'PULLING' => [ 'PULLING' ]
              */
             const normalizedValue = (() => {
-              if (expectingArray && !Array.isArray(queryValue)) {
+              if (isArray && !Array.isArray(queryValue)) {
                 return [queryValue];
               }
               return queryValue;
@@ -166,12 +158,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    let stateSettings = state.get(config.applicableRoutespace) ?? {};
+    const stateSettings = state.get(config.applicableRoutespace) ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
     Object.keys(settings).forEach((setting) => {
-      stateSettings = Object.assign(stateSettings, { [setting]: settings[setting] });
+      stateSettings[setting] = settings[setting];
     });
 
     update(config.applicableRoutespace, stateSettings, true);

@@ -31,6 +31,7 @@ const config: SettingsConfig<WorkspaceMembersSettings> = {
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: array(union([literal('name'), literal('role'), literal('action')])),
     },

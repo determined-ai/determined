@@ -40,6 +40,7 @@ const config: SettingsConfig<UserManagementSettings> = {
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: array(string),
     },

@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, Suspense, useEffect, useRef, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { getUserSetting } from 'services/api';
@@ -26,8 +26,7 @@ export const UserSettings = createContext<UserSettingsContext>({
   isLoading: false,
   querySettings: '',
   state: new Map(),
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  update: () => {},
+  update: () => undefined,
 });
 
 // TODO: check navigation and settings and changing map to state
