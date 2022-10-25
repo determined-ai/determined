@@ -51,12 +51,6 @@ def login_admin() -> None:
     child.close()
     print("login admin")
     assert child.exitstatus == 0
-    # home directory is elsewhere for auth.json
-    # read from auth.json and see what you get.
-    f = open("/Users/nikitarajaneesh/Library/Application Support/determined/auth.json", "r")
-    content = f.read()
-    print(".json")
-    print(content)
     command = ["det", "-m", conf.make_master_url(), "user", "whoami"]
     output = subprocess.check_output(command).decode()
     print(f"output of whoami: {output}")
@@ -420,7 +414,7 @@ def test_login_with_environment_variables(clean_auth: None, login_admin) -> None
 
 
 @pytest.mark.e2e_cpu
-def test_auth_inside_shell() -> None:
+def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user(True)
 
     with logged_in_user(creds):
@@ -750,9 +744,14 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
     return user_creds
 
 
+def create_linked_user_sdk(): 
+    # call the SDK method here
+    pass 
+
 @pytest.mark.e2e_cpu
 def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
     user = create_linked_user(200, "someuser", 300, "somegroup")
+    # user2 = create_linked_user_sdk(...)
 
     expected_output = "someuser:200:somegroup:300"
     with logged_in_user(user), command.interactive_command(
@@ -824,7 +823,7 @@ def non_tmp_shared_fs_path() -> Generator:
 
 
 @pytest.mark.e2e_cpu
-def test_non_root_experiment(clean_auth: None, tmp_path: pathlib.Path) -> None:
+def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     with logged_in_user(user):
@@ -872,7 +871,7 @@ def test_link_without_agent_user(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_non_root_shell(clean_auth: None, tmp_path: pathlib.Path) -> None:
+def test_non_root_shell(clean_auth: None, login_admin: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(1234, "someuser", 1234, "somegroup")
 
     expected_output = "someuser:1234:somegroup:1234"
@@ -949,8 +948,13 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     assert current_user is not None and current_user.id
 
     # Rename user using display name
-    patch_user = bindings.v1PatchUser(displayName="renamed display-name")
-    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+    patch_user = bindings.v1PatchUser(displayName="renamed")
+    patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
+    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    assert modded_user is not None
+    print("curr user id in e2e test")
+    print(current_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
@@ -959,11 +963,13 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     # Avoid display name of 'admin'
     patch_user.displayName = "Admin"
     with pytest.raises(errors.APIException):
-        bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+        patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
+        bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
 
     # Clear display name (UI will show username)
     patch_user.displayName = ""
-    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+    patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
+    bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
@@ -984,7 +990,8 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     )
     test_user = _fetch_user_by_username(sess, test_username)
     assert test_user.id
-    bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
+    patch_user_req = bindings.v1PatchUserRequest(userId=test_user.id, user=patch_user)
+    bindings.patch_PatchUser(sess, body=patch_user_req, userId=test_user.id)
     patched_user = bindings.get_GetUser(sess, userId=test_user.id).user
     assert patched_user is not None and patched_user.agentUserGroup is not None
     assert patched_user.agentUserGroup.agentUser == "username"
@@ -994,7 +1001,9 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     patch_user = bindings.v1PatchUser(
         agentUserGroup=bindings.v1AgentUserGroup(agentGid=1000, agentUid=1000)
     )
+    patch_user_req = bindings.v1PatchUserRequest(userId=test_user.id, user=patch_user)
+
     test_user = _fetch_user_by_username(sess, test_username)
     assert test_user.id
     with pytest.raises(errors.APIException):
-        bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
+        bindings.patch_PatchUser(sess, body=patch_user_req, userId=test_user.id)

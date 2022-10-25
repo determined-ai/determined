@@ -57,6 +57,8 @@ func UserByUsername(username string) (*model.User, error) {
 	return &user, nil
 }
 
+//Set DisplayName in User.
+
 // AddUserExec execs an INSERT to create a new user.
 func AddUserExec(user *model.User) error {
 	ctx := context.TODO()
