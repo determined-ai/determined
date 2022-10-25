@@ -138,11 +138,7 @@ const useModalWorkspaceAddMember = ({
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <Form
-          autoComplete="off"
-          form={form}
-          layout="vertical"
-          onValuesChange={async () => await form.validateFields()}>
+        <Form autoComplete="off" form={form} layout="vertical">
           <Form.Item
             label="User or Group"
             name="userOrGroupId"
