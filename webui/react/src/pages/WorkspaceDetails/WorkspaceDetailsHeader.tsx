@@ -10,6 +10,7 @@ import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspa
 import usePermissions from 'hooks/usePermissions';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
+import { V1Role } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroup, Workspace } from 'types';
@@ -20,11 +21,13 @@ import css from './WorkspaceDetailsHeader.module.scss';
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
   fetchWorkspace: () => void;
+  rolesAssignableToScope: V1Role[];
   workspace: Workspace;
 }
 
 const WorkspaceDetailsHeader: React.FC<Props> = ({
   addableUsersAndGroups,
+  rolesAssignableToScope,
   workspace,
   fetchWorkspace,
 }: Props) => {
@@ -37,6 +40,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
       addableUsersAndGroups,
+      rolesAssignableToScope,
       workspaceId: workspace.id,
     });
 

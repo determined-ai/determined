@@ -5,18 +5,19 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
-import { V1Group } from 'services/api-ts-sdk';
+import { V1Group, V1Role } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import handleError from 'utils/error';
-import { getAssignableWorkspaceRoles, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
+  rolesAssignableToScope: V1Role[];
   onClose?: () => void;
   workspaceId: number;
 }
@@ -27,10 +28,11 @@ interface FormInputs {
 
 const useModalWorkspaceAddMember = ({
   addableUsersAndGroups,
+  rolesAssignableToScope,
   onClose,
   workspaceId,
 }: Props): ModalHooks => {
-  let { knownRoles } = useStore();
+  let knownRoles = rolesAssignableToScope;
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
@@ -41,12 +43,12 @@ const useModalWorkspaceAddMember = ({
       mockWorkspaceMembers
         ? [
             {
-              id: 1,
+              roleId: 1,
               name: 'Editor',
               permissions: [],
             },
             {
-              id: 2,
+              roleId: 2,
               name: 'Viewer',
               permissions: [],
             },
@@ -166,8 +168,8 @@ const useModalWorkspaceAddMember = ({
             name="roleId"
             rules={[{ message: 'Role is required ', required: true }]}>
             <Select placeholder="Role">
-              {getAssignableWorkspaceRoles(knownRoles).map((role) => (
-                <Select.Option key={role.id} value={role.id}>
+              {rolesAssignableToScope.map((role) => (
+                <Select.Option key={role.roleId} value={role.roleId}>
                   {role.name}
                 </Select.Option>
               ))}

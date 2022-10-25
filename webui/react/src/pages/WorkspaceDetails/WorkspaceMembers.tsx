@@ -14,7 +14,7 @@ import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { V1Group, V1GroupDetails, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -33,6 +33,7 @@ interface Props {
   groupsAssignedDirectly: V1Group[];
   onFilterUpdate: (name: string | undefined) => void;
   pageRef: React.RefObject<HTMLElement>;
+  rolesAssignableToScope: V1Role[];
   usersAssignedDirectly: User[];
   workspace: Workspace;
 }
@@ -87,6 +88,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   usersAssignedDirectly,
   groupsAssignedDirectly,
   pageRef,
+  rolesAssignableToScope,
   workspace,
 }: Props) => {
   const rbacEnabled = useFeature().isOn('rbac');
@@ -98,7 +100,6 @@ const WorkspaceMembers: React.FC<Props> = ({
       fetchKnownRoles();
     }
   }, [fetchKnownRoles, rbacEnabled]);
-
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
 
@@ -239,6 +240,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     const roleRenderer = (value: string, record: UserOrGroup) => (
       <RoleRenderer
         assignments={assignments}
+        rolesAssignableToScope={rolesAssignableToScope}
         userCanAssignRoles={userCanAssignRoles}
         userOrGroup={record}
         workspaceId={workspace.id}

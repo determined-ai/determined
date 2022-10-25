@@ -3,7 +3,6 @@ import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import {
   assignRolesToGroup,
@@ -11,20 +10,16 @@ import {
   removeRolesFromGroup,
   removeRolesFromUser,
 } from 'services/api';
-import { V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { UserOrGroup } from 'types';
 import handleError from 'utils/error';
-import {
-  getAssignableWorkspaceRoles,
-  getAssignedRole,
-  getIdFromUserOrGroup,
-  isUser,
-} from 'utils/user';
+import { getAssignedRole, getIdFromUserOrGroup, isUser } from 'utils/user';
 
 import css from './RoleRenderer.module.scss';
 
 interface Props {
   assignments: V1RoleWithAssignments[];
+  rolesAssignableToScope: V1Role[];
   userCanAssignRoles: boolean;
   userOrGroup: UserOrGroup;
   workspaceId: number;
@@ -32,27 +27,28 @@ interface Props {
 
 const RoleRenderer: React.FC<Props> = ({
   assignments,
+  rolesAssignableToScope,
   userOrGroup,
   userCanAssignRoles,
   workspaceId,
 }) => {
   const roleAssignment = getAssignedRole(userOrGroup, assignments);
   const [memberRoleId, setMemberRole] = useState(roleAssignment?.role?.roleId);
-  let { knownRoles } = useStore();
+  let knownRoles = rolesAssignableToScope;
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
   knownRoles = mockWorkspaceMembers
     ? [
         {
-          id: 1,
           name: 'Editor',
           permissions: [],
+          roleId: 1,
         },
         {
-          id: 2,
           name: 'Viewer',
           permissions: [],
+          roleId: 2,
         },
       ]
     : knownRoles;
@@ -106,8 +102,8 @@ const RoleRenderer: React.FC<Props> = ({
           });
         }
       }}>
-      {getAssignableWorkspaceRoles(knownRoles).map((role) => (
-        <Select.Option key={role.id} value={role.id}>
+      {knownRoles.map((role) => (
+        <Select.Option key={role.roleId} value={role.roleId}>
           {role.name}
         </Select.Option>
       ))}
