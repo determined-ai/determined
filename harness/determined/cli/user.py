@@ -60,12 +60,8 @@ def activate_user(parsed_args: Namespace) -> None:
 
 
 def deactivate_user(parsed_args: Namespace) -> None:
-    print("in deactivate")
     user_obj = client.get_user_by_name(parsed_args.username)
     user_obj.deactivate()
-    user_obj = client.get_user_by_name(parsed_args.username)
-    print(user_obj.active)
-
 
 def log_in_user(parsed_args: Namespace) -> None:
     if parsed_args.username is None:
@@ -162,8 +158,6 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
         agent_user=parsed_args.agent_user,
     )
 
-
-@authentication.required
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)

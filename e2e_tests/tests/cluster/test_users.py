@@ -16,6 +16,7 @@ from pexpect import spawn
 
 from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
+from determined.experimental import client
 from tests import command
 from tests import config as conf
 from tests import experiment as exp
@@ -49,11 +50,7 @@ def login_admin() -> None:
     child.read()
     child.wait()
     child.close()
-    print("login admin")
     assert child.exitstatus == 0
-    command = ["det", "-m", conf.make_master_url(), "user", "whoami"]
-    output = subprocess.check_output(command).decode()
-    print(f"output of whoami: {output}")
 
 
 @contextlib.contextmanager
@@ -215,6 +212,13 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_create_user_sdk(clean_auth: None, login_admin: None): 
+    username =  get_random_string()
+    password = get_random_string()
+    user = client.create_user(username=username, admin= False, password=password)
+    assert user.user_id is not None and user.username == username
+
+@pytest.mark.e2e_cpu
 def test_logout(clean_auth: None, login_admin: None) -> None:
     # Tests fallback to default determined user
     creds = create_test_user(True)
@@ -288,6 +292,15 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     # Now log in again.
     assert log_in_user(creds) == 0
 
+    # SDK testing for activating and deactivating. 
+    log_in_user(ADMIN_CREDENTIALS)
+    user = client.get_user_by_name(user_name=creds.username)
+    assert user.deactivate().user == False
+    assert user.deactivate().user == True
+    
+    # Now log in again.
+    assert log_in_user(creds) == 0
+
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
@@ -306,8 +319,12 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
 
     newPassword = get_random_string()
     assert change_user_password(creds.username, newPassword) == 0
-
     assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
+    
+    newPasswordSdk = get_random_string()
+    user = client.get_user_by_name(user_name=creds.username)
+    assert user.change_password(new_password=newPasswordSdk, is_hashed=False)
+    assert log_in_user(authentication.Credentials(creds.username, newPasswordSdk)) == 0
 
 
 @pytest.mark.e2e_cpu
@@ -744,55 +761,46 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
     return user_creds
 
 
-def create_linked_user_sdk(): 
-    # call the SDK method here
-    pass 
+def create_linked_user_sdk(uid: int, agent_user: str, gid: int, group: str): 
+    creds = create_test_user(False)
+    user = client.get_user_by_name(user_name=creds.username)
+    resp = user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
+    return creds
 
-@pytest.mark.e2e_cpu
-def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
-    user = create_linked_user(200, "someuser", 300, "somegroup")
-    # user2 = create_linked_user_sdk(...)
-
-    expected_output = "someuser:200:somegroup:300"
-    with logged_in_user(user), command.interactive_command(
+def check_link_with_agent_output(user, expected_output):
+     with logged_in_user(user), command.interactive_command(
         "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
     ) as cmd:
         for line in cmd.stdout:
-            print(line)
             if expected_output in line:
                 break
         else:
             raise AssertionError(f"Did not find {expected_output} in output")
 
+@pytest.mark.e2e_cpu
+def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
+    user = create_linked_user(200, "someuser", 300, "somegroup")
+    expected_output = "someuser:200:somegroup:300"
+    check_link_with_agent_output(user, expected_output) 
+
+    log_in_user(ADMIN_CREDENTIALS)
+    user_sdk = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
+    expected_output="anyuser:210:anygroup:310"
+    check_link_with_agent_output(user_sdk, expected_output)
 
 @pytest.mark.e2e_cpu
 def test_link_with_large_uid(clean_auth: None, login_admin: None) -> None:
     user = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
 
     expected_output = "someuser:2000000000:somegroup:2000000000"
-    with logged_in_user(user), command.interactive_command(
-        "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
-    ) as cmd:
-        for line in cmd.stdout:
-            if expected_output in line:
-                break
-        else:
-            raise AssertionError(f"Did not find {expected_output} in output")
-
+    check_link_with_agent_output(user, expected_output)
 
 @pytest.mark.e2e_cpu
 def test_link_with_existing_agent_user(clean_auth: None, login_admin: None) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     expected_output = "nobody:65534:nogroup:65534"
-    with logged_in_user(user), command.interactive_command(
-        "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
-    ) as cmd:
-        for line in cmd.stdout:
-            if expected_output in line:
-                break
-        else:
-            raise AssertionError(f"Did not find {expected_output} in output")
+    check_link_with_agent_output(user, expected_output)
 
 
 @contextlib.contextmanager
