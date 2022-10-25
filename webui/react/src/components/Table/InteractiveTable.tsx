@@ -86,7 +86,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   containerRef: MutableRefObject<HTMLElement | null>;
   interactiveColumns?: boolean;
   numOfPinned?: number;
-  settings: InteractiveTableSettings;
+  settings?: InteractiveTableSettings;
   updateSettings: UpdateSettings;
 }
 
@@ -453,12 +453,12 @@ const InteractiveTable: InteractiveTable = ({
       };
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (columnKey && settings.columns.find((col) => columnDefs[col]?.key === columnKey)) {
+      if (columnKey && settings?.columns.find((col) => columnDefs[col]?.key === columnKey)) {
         newSettings.sortDesc = order === 'descend';
         newSettings.sortKey = columnKey;
       }
 
-      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+      const shouldPush = settings?.tableOffset !== newSettings.tableOffset;
 
       if (isEqual(newSettings, settings)) return;
 
@@ -469,6 +469,8 @@ const InteractiveTable: InteractiveTable = ({
 
   const moveColumn = useCallback(
     (fromIndex, toIndex) => {
+      if (!settings?.columnWidths || !settings.columns) return;
+
       const reorderedColumns = [...settings.columns];
       const reorderedWidths = [...settings.columnWidths];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
@@ -478,12 +480,14 @@ const InteractiveTable: InteractiveTable = ({
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
-    [settings.columns, settings.columnWidths, widthData, updateSettings],
+    [settings?.columns, settings?.columnWidths, widthData, updateSettings],
   );
 
   const handleResize = useCallback(
     (resizeIndex) => {
       return (e: Event, { x }: DraggableData) => {
+        if (!settings?.columns) return;
+
         if (timeout.current) clearTimeout(timeout.current);
         const column = settings.columns[resizeIndex];
         const minWidth = columnDefs[column]?.defaultWidth ?? 40;
@@ -524,12 +528,14 @@ const InteractiveTable: InteractiveTable = ({
         }, DEFAULT_RESIZE_THROTTLE_TIME);
       };
     },
-    [settings.columns, widthData.widths, pageWidth, columnDefs],
+    [settings?.columns, widthData.widths, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
     (index) =>
       (e: Event, { x }: DraggableData) => {
+        if (!settings?.columns) return;
+
         setIsResizing(true);
 
         setWidthData(({ widths, ...rest }) => {
@@ -541,7 +547,7 @@ const InteractiveTable: InteractiveTable = ({
           return { minX, widths, ...rest };
         });
       },
-    [settings.columns, columnDefs],
+    [settings?.columns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -586,6 +592,8 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const renderColumns = useMemo(() => {
+    if (!settings) return;
+
     const columns = settings.columns.reduce<ColumnsType<UnknownRecord>>(
       (acc, columnName, index) => {
         if (!columnDefs[columnName]) return acc;
@@ -613,7 +621,7 @@ const InteractiveTable: InteractiveTable = ({
     }
 
     return columns;
-  }, [settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell]);
+  }, [settings, widthData, columnDefs, onHeaderCell]);
 
   const components = {
     body: {
@@ -631,7 +639,7 @@ const InteractiveTable: InteractiveTable = ({
 
   useEffect(() => {
     // this should run only when getting new number of cols
-    if (settings.columnWidths.length === widthData.widths.length) return;
+    if (settings?.columnWidths.length === widthData.widths.length || !settings?.columnWidths) return;
 
     const widths = getUpscaledWidths(settings.columnWidths);
     const dropRightStyles = widths.map((width, idx) => ({
@@ -644,13 +652,13 @@ const InteractiveTable: InteractiveTable = ({
     }));
 
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  }, [settings.columnWidths, widthData, getUpscaledWidths]);
+  }, [settings?.columnWidths, widthData, getUpscaledWidths]);
 
   return (
     <div className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={spinning}>
-        {spinning ? (
-          <SkeletonTable columns={renderColumns.length} />
+        {spinning || !settings ? (
+          <SkeletonTable columns={renderColumns?.length} />
         ) : (
           <Table
             bordered
