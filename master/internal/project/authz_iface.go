@@ -11,8 +11,8 @@ import (
 // ProjectAuthZ is the interface for project authorization.
 type ProjectAuthZ interface {
 	// GET /api/v1/projects/:project_id
-	CanGetProject(curUser model.User, project *projectv1.Project) (
-		ctx context.Context, canGetProject bool, serverError error,
+	CanGetProject(ctx context.Context, curUser model.User, project *projectv1.Project) (
+		canGetProject bool, serverError error,
 	)
 
 	// POST /api/v1/workspaces/:workspace_id/projects
@@ -36,7 +36,7 @@ type ProjectAuthZ interface {
 	) error
 
 	// POST /api/v1/projects/:project_id/move
-	CanMoveProject( ctx context.Context, curUser model.User, project *projectv1.Project, from,
+	CanMoveProject(ctx context.Context, curUser model.User, project *projectv1.Project, from,
 		to *workspacev1.Workspace) error
 
 	// POST /api/v1/experiments/:experiment_id/move

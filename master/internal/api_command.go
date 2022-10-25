@@ -180,7 +180,7 @@ func (a *apiServer) GetCommands(
 			return false
 		}
 		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			*curUser, model.UserID(resp.Commands[i].UserId))
+			ctx, *curUser, model.UserID(resp.Commands[i].UserId))
 		if serverError != nil {
 			err = serverError
 		}
@@ -208,7 +208,7 @@ func (a *apiServer) GetCommand(
 	}
 
 	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		*curUser, model.UserID(resp.Command.UserId)); err != nil {
+		ctx, *curUser, model.UserID(resp.Command.UserId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

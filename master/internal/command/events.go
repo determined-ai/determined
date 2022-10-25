@@ -2,6 +2,7 @@ package command
 
 import (
 	"container/ring"
+	goCtx "context"
 	"net/http"
 	"strconv"
 
@@ -139,7 +140,9 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(curUser, ownerID); err != nil {
+
+	ctxTodo := goCtx.TODO()
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(ctxTodo, curUser, ownerID); err != nil {
 		return err
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")

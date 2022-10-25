@@ -54,7 +54,7 @@ var (
 )
 
 func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
-	trialID int, actionFunc func(model.User, *model.Experiment) error,
+	trialID int, actionFunc func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -69,13 +69,13 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 		return err
 	}
 	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
 		return err
 	} else if !ok {
 		return trialNotFound
 	}
 
-	if err = actionFunc(*curUser, exp); err != nil {
+	if err = actionFunc(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil

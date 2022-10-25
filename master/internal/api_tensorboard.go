@@ -84,7 +84,7 @@ func (a *apiServer) GetTensorboards(
 			return false
 		}
 		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			*curUser, model.UserID(resp.Tensorboards[i].UserId))
+			ctx, *curUser, model.UserID(resp.Tensorboards[i].UserId))
 		if serverError != nil {
 			err = serverError
 		}
@@ -112,7 +112,7 @@ func (a *apiServer) GetTensorboard(
 	}
 
 	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		*curUser, model.UserID(resp.Tensorboard.UserId)); err != nil {
+		ctx, *curUser, model.UserID(resp.Tensorboard.UserId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
