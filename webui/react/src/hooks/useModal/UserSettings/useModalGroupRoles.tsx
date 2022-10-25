@@ -62,16 +62,11 @@ const ModalForm: React.FC<Props> = ({ form, group }) => {
           optionFilterProp="children"
           placeholder={`Add Roles to: ${group.group.name}`}
           showSearch>
-          {knownRoles
-            .filter(
-              (r) =>
-                r.permissions.find((p) => p.isGlobal) && !groupRoles.find((gr) => gr.id === r.id),
-            )
-            .map((r) => (
-              <Select.Option key={r.id} value={r.id}>
-                {r.name}
-              </Select.Option>
-            ))}
+          {knownRoles.map((r) => (
+            <Select.Option key={r.id} value={r.id}>
+              {r.name}
+            </Select.Option>
+          ))}
         </Select>
       </Form.Item>
     </Form>

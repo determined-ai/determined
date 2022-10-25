@@ -169,7 +169,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
             disabled={user !== undefined && roles === null}
             mode="multiple"
             optionFilterProp="children"
-            placeholder={'Add Global Roles'}
+            placeholder={'Add Roles'}
             showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
@@ -212,7 +212,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     if (user !== undefined && canGetPermissions) {
       try {
         const roles = await getUserRoles({ userId: user.id });
-        setUserRoles(roles.filter((r) => r.permissions.find((p) => p.isGlobal)));
+        setUserRoles(roles);
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
