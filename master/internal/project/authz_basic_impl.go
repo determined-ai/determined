@@ -37,7 +37,7 @@ func (a *ProjectAuthZBasic) CanSetProjectNotes(
 }
 
 func shouldBeAdminOrOwnWorkspaceOrProject(
-	ctx context.Context, curUser model.User, project *projectv1.Project,
+	curUser model.User, project *projectv1.Project,
 ) error {
 	// Is admin or owner of the project?
 	if curUser.Admin || curUser.ID == model.UserID(project.UserId) {
