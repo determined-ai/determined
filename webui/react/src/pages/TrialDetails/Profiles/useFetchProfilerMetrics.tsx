@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import useUI from 'shared/contexts/stores/UI';
 import { clone } from 'shared/utils/data';
 import { RunState } from 'types';
 
@@ -36,7 +36,7 @@ export const useFetchProfilerMetrics = (
   labelsAgentId: string | undefined = undefined,
   labelsGpuUuid: string | undefined = undefined,
 ): MetricsAggregateInterface => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const [data, setData] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
 
   useEffect(() => {

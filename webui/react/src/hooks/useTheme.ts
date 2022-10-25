@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
-import { useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
@@ -61,8 +61,8 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): void => {
-  const { info, ui } = useStore();
-  const storeDispatch = useStoreDispatch();
+  const { info } = useStore();
+  const { ui, actions: uiActions } = useUI();
   const [systemMode, setSystemMode] = useState<Mode>(getSystemMode());
   const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(config);
@@ -101,11 +101,8 @@ export const useTheme = (): void => {
     if (!info.branding) return;
 
     const darkLight = getDarkLight(ui.mode, systemMode);
-    storeDispatch({
-      type: StoreActionUI.SetTheme,
-      value: { darkLight, theme: themes[info.branding][darkLight] },
-    });
-  }, [info.branding, storeDispatch, systemMode, ui.mode]);
+    uiActions.setTheme(darkLight, themes[info.branding][darkLight]);
+  }, [info.branding, uiActions, systemMode, ui.mode]);
 
   // Update Ant Design theme when darkLight changes.
   useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ui.darkLight]);
@@ -117,10 +114,10 @@ export const useTheme = (): void => {
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
     } else {
       // Initially set the mode from settings.
-      storeDispatch({ type: StoreActionUI.SetMode, value: settings.mode });
+      uiActions.setMode(settings.mode);
       setIsSettingsReady(true);
     }
-  }, [isSettingsReady, settings, storeDispatch, ui.mode, updateSettings]);
+  }, [isSettingsReady, settings, uiActions, ui.mode, updateSettings]);
 };
 
 export default useTheme;

@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import AvatarCard from 'shared/components/AvatarCard';
+import useUI from 'shared/contexts/stores/UI';
 
 import Dropdown, { Placement } from './Dropdown';
 
@@ -26,9 +27,9 @@ export const Default: ComponentStory<typeof Dropdown> = (args) => (
 
 export const Settings: ComponentStory<typeof Dropdown> = (args) => {
   const {
-    ui,
     auth: { user },
   } = useStore();
+  const { ui } = useUI();
   const menuItems = useMemo(() => {
     return (
       <Menu

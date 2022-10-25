@@ -12,6 +12,7 @@ import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import Icon from 'shared/components/Icon/Icon';
+import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
@@ -58,7 +59,7 @@ type SafeRawJson = Record<string, unknown>;
 
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
 
   let iconSrc = '';
   switch (type) {
