@@ -594,7 +594,8 @@ const InteractiveTable: InteractiveTable = ({
   const renderColumns = useMemo(() => {
     if (!settings) return;
 
-    const columns = settings.columns.reduce<ColumnsType<UnknownRecord>>(
+    const columns = settings.columns ?? [];
+    const newColumns = columns.reduce<ColumnsType<UnknownRecord>>(
       (acc, columnName, index) => {
         if (!columnDefs[columnName]) return acc;
 
@@ -617,10 +618,10 @@ const InteractiveTable: InteractiveTable = ({
     );
 
     if (columnDefs.action) {
-      columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
+      newColumns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
     }
 
-    return columns;
+    return newColumns;
   }, [settings, widthData, columnDefs, onHeaderCell]);
 
   const components = {
