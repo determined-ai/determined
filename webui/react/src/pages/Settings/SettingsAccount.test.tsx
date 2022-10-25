@@ -30,7 +30,7 @@ jest.mock('services/api', () => ({
       id: 1,
       isActive: true,
       isAdmin: false,
-      username: USERNAME,
+      username: params.userParams.username,
     });
   },
 }));
@@ -62,7 +62,7 @@ describe('SettingsAccount', () => {
   it('should render with correct values', () => {
     const { container } = setup();
 
-    expect(screen.getByText(USERNAME)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
 
     // Fetching element by specific attribute is not natively supported.
