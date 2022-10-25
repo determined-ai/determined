@@ -4,6 +4,7 @@ import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useState } from 'react';
 
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import {
   assignRolesToGroup,
   assignRolesToUser,
@@ -32,7 +33,25 @@ const RoleRenderer: React.FC<Props> = ({
 }) => {
   const roleAssignment = getAssignedRole(userOrGroup, assignments);
   const [memberRoleId, setMemberRole] = useState(roleAssignment?.role?.roleId);
-  const { knownRoles } = useStore();
+  let { knownRoles } = useStore();
+
+  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
+
+  knownRoles = mockWorkspaceMembers
+    ? [
+        {
+          id: 1,
+          name: 'Editor',
+          permissions: [],
+        },
+        {
+          id: 2,
+          name: 'Viewer',
+          permissions: [],
+        },
+      ]
+    : knownRoles;
+
   return (
     <Select
       className={css.base}

@@ -104,21 +104,6 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  knownRoles = mockWorkspaceMembers
-    ? [
-        {
-          id: 1,
-          name: 'Editor',
-          permissions: [],
-        },
-        {
-          id: 2,
-          name: 'Viewer',
-          permissions: [],
-        },
-      ]
-    : knownRoles;
-
   const usersAndGroups: UserOrGroup[] = useMemo(
     () =>
       mockWorkspaceMembers
