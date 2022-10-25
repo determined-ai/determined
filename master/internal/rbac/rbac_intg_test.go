@@ -31,6 +31,10 @@ var (
 		ID:   10001,
 		Name: "testGroupStatic",
 	}
+	testGroupStatic2 = usergroup.Group{
+		ID:   10002,
+		Name: "testGroupStatic2",
+	}
 	testGroupOwnedByUser = usergroup.Group{} // Auto created upon user creation.
 	testUser             = model.User{
 		ID:       1217651234,
@@ -339,6 +343,12 @@ func TestRbac(t *testing.T) {
 			{
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
+					Role: rbacRole3,
+				},
+			},
+			{
+				GroupId: int32(testGroupStatic2.ID),
+				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole3,
 					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
 				},
@@ -358,6 +368,18 @@ func TestRbac(t *testing.T) {
 			"testRole2 is not the second role retrieved by group id")
 		require.True(t, compareRoles(testRole3, roles[2]),
 			"testRole3 is not the first role retrieved by group id")
+
+		require.Len(t, roles[0].RoleAssignments, 1, "incorrect number of assignments for testRole")
+		require.Equal(t, testWorkspace.ID, int(roles[0].RoleAssignments[0].Scope.WorkspaceID.Int32),
+			"testRole has incorrect workspace ID in assignmnets")
+
+		require.Len(t, roles[1].RoleAssignments, 1, "incorrect number of assignments for testRole2")
+		require.Equal(t, roles[1].RoleAssignments[0].Scope.WorkspaceID.Int32, workspaceID,
+			"testRole2 has incorrect workspace ID in assignmnets")
+
+		require.Len(t, roles[2].RoleAssignments, 1, "incorrect number of assignments for testRole3")
+		require.False(t, roles[2].RoleAssignments[0].Scope.WorkspaceID.Valid,
+			"testRole3 should have a global assigned workspaceID")
 
 		err = RemoveRoleAssignments(ctx, groupRoleAssignments, nil)
 		require.NoError(t, err, "error removing assignments from group")
@@ -544,6 +566,9 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	_, _, err = usergroup.AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
 	require.NoError(t, err, "failure creating static test group")
 
+	_, _, err = usergroup.AddGroupWithMembers(ctx, testGroupStatic2)
+	require.NoError(t, err, "failure creating static test group 2")
+
 	err = db.Bun().NewSelect().Model(&testGroupOwnedByUser).
 		Where("user_id = ?", testUser.ID).Scan(ctx)
 	require.NoError(t, err, "failure getting test user personal group")
@@ -597,6 +622,11 @@ func cleanUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	err = usergroup.DeleteGroup(ctx, testGroupStatic.ID)
 	if err != nil {
 		t.Logf("Error cleaning up static group: %v", err)
+	}
+
+	err = usergroup.DeleteGroup(ctx, testGroupStatic2.ID)
+	if err != nil {
+		t.Logf("Error cleaning up static group2: %v", err)
 	}
 
 	_, err = db.Bun().NewDelete().Table("users").Where("id = ?", testUser.ID).Exec(ctx)

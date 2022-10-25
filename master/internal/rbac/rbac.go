@@ -143,10 +143,13 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 	)
 
 	for _, a := range ra {
-		protoRole := &rbacv1.Role{
-			RoleId:      int32(a.RoleID),
-			Name:        a.Role.Name,
-			Permissions: Permissions(a.Role.Permissions).Proto(),
+		protoRole := &rbacv1.Role{RoleId: int32(a.RoleID)}
+		if a.Role != nil {
+			protoRole = &rbacv1.Role{
+				RoleId:      int32(a.RoleID),
+				Name:        a.Role.Name,
+				Permissions: Permissions(a.Role.Permissions).Proto(),
+			}
 		}
 
 		var scopeWorkspaceID *wrappers.Int32Value

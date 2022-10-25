@@ -198,6 +198,25 @@ func GetRolesAssignedToGroupsTx(ctx context.Context, idb bun.IDB, ids ...int32) 
 			db.MatchSentinelError(err), "error looking up roles assigned to groups")
 	}
 
+	var roleAssignments []*RoleAssignment
+	if err = idb.NewSelect().Model(&roleAssignments).
+		Relation("Scope").
+		Relation("Group").
+		Relation("Role").
+		Where("group_id IN (?)", bun.In(ids)).
+		Scan(ctx); err != nil {
+		return nil, errors.Wrap(
+			db.MatchSentinelError(err), "error looking up roles assigned to group's scopes")
+	}
+	roleIDToAssignments := make(map[int][]*RoleAssignment)
+	for _, assignment := range roleAssignments {
+		roleIDToAssignments[assignment.RoleID] = append(
+			roleIDToAssignments[assignment.RoleID], assignment)
+	}
+	for i, r := range roles {
+		r.RoleAssignments = roleIDToAssignments[r.ID]
+		roles[i] = r
+	}
 	return roles, nil
 }
 
