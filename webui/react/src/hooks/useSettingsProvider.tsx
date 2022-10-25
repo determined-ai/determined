@@ -1,4 +1,4 @@
-import React, { createContext, Suspense, useEffect, useRef, useState } from 'react';
+import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { getUserSetting } from 'services/api';
