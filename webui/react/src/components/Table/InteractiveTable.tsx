@@ -595,27 +595,24 @@ const InteractiveTable: InteractiveTable = ({
     if (!settings) return;
 
     const columns = settings.columns ?? [];
-    const newColumns = columns.reduce<ColumnsType<UnknownRecord>>(
-      (acc, columnName, index) => {
-        if (!columnDefs[columnName]) return acc;
+    const newColumns = columns.reduce<ColumnsType<UnknownRecord>>((acc, columnName, index) => {
+      if (!columnDefs[columnName]) return acc;
 
-        const column = columnDefs[columnName];
-        const currentWidth = widthData.widths[index];
-        const columnWidth = currentWidth < column.defaultWidth ? column.defaultWidth : currentWidth; // avoid rendering a column with less width than the default
-        const sortOrder =
-          column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
+      const column = columnDefs[columnName];
+      const currentWidth = widthData.widths[index];
+      const columnWidth = currentWidth < column.defaultWidth ? column.defaultWidth : currentWidth; // avoid rendering a column with less width than the default
+      const sortOrder =
+        column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-        acc.push({
-          onHeaderCell: onHeaderCell(index, column),
-          sortOrder,
-          width: columnWidth,
-          ...column,
-        });
+      acc.push({
+        onHeaderCell: onHeaderCell(index, column),
+        sortOrder,
+        width: columnWidth,
+        ...column,
+      });
 
-        return acc;
-      },
-      [],
-    );
+      return acc;
+    }, []);
 
     if (columnDefs.action) {
       newColumns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
@@ -640,7 +637,7 @@ const InteractiveTable: InteractiveTable = ({
 
   useEffect(() => {
     // this should run only when getting new number of cols
-    if (settings?.columnWidths.length === widthData.widths.length || !settings?.columnWidths)
+    if (!settings?.columnWidths || settings?.columnWidths.length === widthData.widths.length)
       return;
 
     const widths = getUpscaledWidths(settings.columnWidths);

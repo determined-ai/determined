@@ -195,45 +195,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     [config.settings, settings],
   );
 
-  const resetSettings = useCallback(
-    (settings?: string[]) => {
-      const array = settings ?? Object.keys(config.settings);
-
-      array.forEach((setting) => {
-        let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined = undefined;
-
-        for (const key in config.settings) {
-          const conf = config.settings[key];
-
-          if (conf.storageKey === setting) {
-            defaultSetting = conf;
-            break;
-          }
-        }
-
-        if (!defaultSetting) return;
-
-        state.set(config.applicableRoutespace, { [setting]: defaultSetting.defaultValue });
-      });
-    },
-    [config, state],
-  );
-
-  const updateSettings = useCallback(
-    async (updates: Settings, shouldPush = false) => {
+  const updateDB = useCallback(
+    async (newSettings: Settings) => {
       if (!settings) return;
-
-      if (
-        config.applicableRoutespace.includes('/') &&
-        !window.location.pathname.includes(config.applicableRoutespace)
-      )
-        return;
-
-      const newSettings = { ...settings, ...updates };
-
-      if (isEqual(newSettings, settings)) return;
-
-      update(config.applicableRoutespace, newSettings);
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
@@ -272,6 +236,58 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
           });
         }
       }
+    },
+    [user?.id, config.applicableRoutespace, settings],
+  );
+
+  const resetSettings = useCallback(
+    (settingsArray?: string[]) => {
+      if (!settings) return;
+
+      const array = settingsArray ?? Object.keys(config.settings);
+      const newSettings = { ...settings };
+
+      array.forEach((setting) => {
+        let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined = undefined;
+
+        for (const key in config.settings) {
+          const conf = config.settings[key];
+
+          if (conf.storageKey === setting) {
+            defaultSetting = conf;
+            break;
+          }
+        }
+
+        if (!defaultSetting) return;
+
+        newSettings[setting] = defaultSetting.defaultValue;
+      });
+
+      update(config.applicableRoutespace, newSettings);
+
+      updateDB(newSettings);
+    },
+    [config, update, updateDB, settings],
+  );
+
+  const updateSettings = useCallback(
+    async (updates: Settings, shouldPush = false) => {
+      if (!settings) return;
+
+      if (
+        config.applicableRoutespace.includes('/') &&
+        !window.location.pathname.includes(config.applicableRoutespace)
+      )
+        return;
+
+      const newSettings = { ...settings, ...updates };
+
+      if (isEqual(newSettings, settings)) return;
+
+      update(config.applicableRoutespace, newSettings);
+
+      await updateDB(newSettings);
 
       const queries = window.location.search;
       const querySettings = queries.substr(/^\?/.test(location.search) ? 1 : 0);
@@ -285,7 +301,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       shouldPush ? navigate(url) : navigate(url, { replace: true });
     },
-    [config, settings, navigate, update, user?.id],
+    [config, settings, navigate, update, updateDB],
   );
 
   return { activeSettings, isLoading, resetSettings, settings, updateSettings };

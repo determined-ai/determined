@@ -186,6 +186,7 @@ const ProjectDetails: React.FC = () => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (!settings) return;
     try {
+      console.log(settings);
       const states = statesString
         ?.split('.')
         .map((state) => encodeExperimentState(state as RunState));
