@@ -51,7 +51,10 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
 
         response.settings.forEach((setting) => {
           const value = setting.value ? JSON.parse(setting.value) : undefined;
-          const key = setting.storagePath || setting.key; // falls back to the setting key due to storagePath being optional.
+          let key = setting.storagePath || setting.key; // falls back to the setting key due to storagePath being optional.
+
+          if (key.includes('u:2/')) key = key.replace(/u:2\//g, '');
+
           const entry = settingsState.current.get(key);
 
           if (!entry) {

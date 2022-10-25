@@ -141,7 +141,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   // creates an entry at the global state
   useEffect(() => {
-    const settings = state.get(config.applicableRoutespace);
+    const settings = state.get(config.storagePath);
 
     if (settings) return;
 
@@ -153,7 +153,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       newSettings[setting.storageKey] = setting.defaultValue;
     }
 
-    update(config.applicableRoutespace, newSettings);
+    update(config.storagePath, newSettings);
   }, [config, state, update]);
 
   // parse navigation url to state
@@ -161,7 +161,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.applicableRoutespace) ?? {};
+    const stateSettings = state.get(config.storagePath) ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
@@ -169,10 +169,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       stateSettings[setting] = settings[setting];
     });
 
-    update(config.applicableRoutespace, stateSettings, true);
+    update(config.storagePath, stateSettings, true);
   }, [config, querySettings, state, update]);
 
-  const settings: T | null = (state.get(config.applicableRoutespace) as T) ?? null;
+  const settings: T | null = (state.get(config.storagePath) as T) ?? null;
 
   /*
    * A setting is considered active if it is set to a value and the
@@ -264,7 +264,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting] = defaultSetting.defaultValue;
       });
 
-      update(config.applicableRoutespace, newSettings);
+      update(config.storagePath, newSettings);
 
       updateDB(newSettings);
     },
@@ -285,7 +285,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (isEqual(newSettings, settings)) return;
 
-      update(config.applicableRoutespace, newSettings);
+      update(config.storagePath, newSettings);
 
       await updateDB(newSettings);
 
