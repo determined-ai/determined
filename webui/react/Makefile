@@ -76,15 +76,20 @@ check: check-eslint check-stylelint check-prettier check-package-lock
 
 .PHONY: fmt-js-eslint
 fmt-js-eslint:
-	npm run eslint -- --fix
+	npm run lint:eslint -- --fix
 .PHONY: fmt-js-prettier
 fmt-js-prettier:
 	npm run format:js > /dev/null
 .PHONY: fmt-js
 fmt-js: fmt-js-eslint fmt-js-prettier
+.PHONY: fmt-css-stylelint
+fmt-css-stylelint:
+	npm run lint:style -- --fix
+.PHONY: fmt-css-prettier
+fmt-css-prettier:
+	npm run format:css > /dev/null
 .PHONY: fmt-css
-fmt-css:
-	npm run  format:css > /dev/null
+fmt-css: fmt-css-stylelint fmt-css-prettier
 .PHONY: fmt-misc
 fmt-misc:
 	npm run  format:misc > /dev/null
