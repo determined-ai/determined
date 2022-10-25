@@ -227,7 +227,7 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToUser(ctx context.Context,
 	}
 
 	return &apiv1.GetRolesAssignedToUserResponse{
-		Roles: dbRolesToAPISummary(roles),
+		Roles: Roles(roles).Proto(),
 	}, nil
 }
 
@@ -262,9 +262,28 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToGroup(ctx context.Context,
 		return nil, err
 	}
 
-	return &apiv1.GetRolesAssignedToGroupResponse{
+	resp = &apiv1.GetRolesAssignedToGroupResponse{
 		Roles: dbRolesToAPISummary(roles),
-	}, nil
+	}
+
+	for _, r := range roles {
+		var workspaceIDs []int32
+		isGlobal := false
+		for _, a := range r.RoleAssignments {
+			if a.Scope.WorkspaceID.Valid {
+				workspaceIDs = append(workspaceIDs, a.Scope.WorkspaceID.Int32)
+			} else {
+				isGlobal = true
+			}
+		}
+		resp.Assignments = append(resp.Assignments, &rbacv1.RoleAssignmentSummary{
+			RoleId:            int32(r.ID),
+			ScopeWorkspaceIds: workspaceIDs,
+			IsGlobal:          isGlobal,
+		})
+	}
+
+	return resp, nil
 }
 
 // SearchRolesAssignableToScope looks for roles we can add to the scope.
