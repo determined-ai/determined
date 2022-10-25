@@ -109,7 +109,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [experiment.config.searcher, selectedMetric]);
 
-  const resetFilteredTrials = () => {
+  const resetFilteredTrials = useCallback(() => {
     // Skip if there aren't any chart data.
     if (!chartData) return;
 
@@ -143,11 +143,11 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     setFilteredTrialIdMap(newFilteredTrialIdMap);
-  };
+  }, [chartData, hermesCreatedFeatures]);
 
   useEffect(() => {
     resetFilteredTrials();
-  }, [chartData, hermesCreatedFeatures, resetFilteredTrials]);
+  }, [resetFilteredTrials]);
 
   const colorScale = useMemo(() => {
     return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
