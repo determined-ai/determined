@@ -1,5 +1,5 @@
 import { V1Group, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { DetailedUser, User, UserOrGroup } from 'types';
+import { DetailedUser, User, UserOrGroup, UserRole } from 'types';
 
 interface UserNameFields {
   displayName?: string;
@@ -57,4 +57,10 @@ export const getAssignedRole = (
     return myAssignment?.roleAssignment || null;
   }
   return null;
+};
+
+export const getAssignableWorkspaceRoles = (roles: UserRole[]): UserRole[] => {
+  // Global roles are not assignable in a Workspace
+  const globalOnlyRoleNames = ['ClusterAdmin', 'WorkspaceCreator'];
+  return roles.filter((role) => role.name && !globalOnlyRoleNames.includes(role?.name));
 };

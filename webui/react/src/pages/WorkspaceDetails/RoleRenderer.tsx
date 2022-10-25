@@ -14,7 +14,12 @@ import {
 import { V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { UserOrGroup } from 'types';
 import handleError from 'utils/error';
-import { getAssignedRole, getIdFromUserOrGroup, isUser } from 'utils/user';
+import {
+  getAssignableWorkspaceRoles,
+  getAssignedRole,
+  getIdFromUserOrGroup,
+  isUser,
+} from 'utils/user';
 
 import css from './RoleRenderer.module.scss';
 
@@ -101,7 +106,7 @@ const RoleRenderer: React.FC<Props> = ({
           });
         }
       }}>
-      {knownRoles.map((role) => (
+      {getAssignableWorkspaceRoles(knownRoles).map((role) => (
         <Select.Option key={role.id} value={role.id}>
           {role.name}
         </Select.Option>

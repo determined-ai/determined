@@ -11,7 +11,7 @@ import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import handleError from 'utils/error';
-import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+import { getAssignableWorkspaceRoles, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
@@ -166,7 +166,7 @@ const useModalWorkspaceAddMember = ({
             name="roleId"
             rules={[{ message: 'Role is required ', required: true }]}>
             <Select placeholder="Role">
-              {knownRoles.map((role) => (
+              {getAssignableWorkspaceRoles(knownRoles).map((role) => (
                 <Select.Option key={role.id} value={role.id}>
                   {role.name}
                 </Select.Option>
