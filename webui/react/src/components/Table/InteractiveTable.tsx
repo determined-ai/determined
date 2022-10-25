@@ -639,7 +639,8 @@ const InteractiveTable: InteractiveTable = ({
 
   useEffect(() => {
     // this should run only when getting new number of cols
-    if (settings?.columnWidths.length === widthData.widths.length || !settings?.columnWidths) return;
+    if (settings?.columnWidths.length === widthData.widths.length || !settings?.columnWidths)
+      return;
 
     const widths = getUpscaledWidths(settings.columnWidths);
     const dropRightStyles = widths.map((width, idx) => ({

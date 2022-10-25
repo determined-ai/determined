@@ -58,7 +58,10 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   return queryString.stringify(fullSettings);
 };
 
-const queryParamToType = <T>(type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>, param: string | null): Primitive | undefined => {
+const queryParamToType = <T>(
+  type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
+  param: string | null,
+): Primitive | undefined => {
   if (param === null || param === undefined) return undefined;
   if (type.is(false)) return param === 'true';
   if (type.is(0)) {
