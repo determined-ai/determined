@@ -36,7 +36,7 @@ hyperparameters:
         train_batch_size: 1
         gradient_accumulation_steps: 4
         optimizer_name: adam
-        learning_rate: 5e-4
+        learning_rate: 3.1e-4
         scale_lr: True
         checkpoint_freq: 100
         metric_report_freq: 100
@@ -45,8 +45,8 @@ hyperparameters:
         beta_schedule: scaled_linear # One of "linear", "scaled_linear", or "squaredcos_cap_v2".
         num_train_timesteps: 1000
         train_seed: 2147483647
-        norm_reg_weight: 1e-2
-        hidden_reg_weight: 1e-5
+        norm_reg_weight: 8.8e-7
+        hidden_reg_weight: 7.8e-7
     inference:
         generate_training_images: True
         inference_batch_size: 2
