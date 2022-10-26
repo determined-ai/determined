@@ -187,9 +187,10 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
           if (canModifyPermissions) {
-            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
-            await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
+            rolesToAdd.size > 0 && await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
+            rolesToRemove.size > 0 && await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
           }
+          fetchUserRoles();
           message.success(API_SUCCESS_MESSAGE_EDIT);
         } else {
           const u = await postUser(formData);
@@ -206,7 +207,6 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
           message.success(API_SUCCESS_MESSAGE_CREATE);
           form.resetFields();
         }
-        fetchUserRoles();
         onClose?.();
       } catch (e) {
         message.error(user ? 'Error updating user' : 'Error creating new user');

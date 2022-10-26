@@ -25,6 +25,8 @@ export const MODAL_HEADER_LABEL_CREATE = 'Create Group';
 export const MODAL_HEADER_LABEL_EDIT = 'Edit Group';
 export const GROUP_NAME_NAME = 'name';
 export const GROUP_NAME_LABEL = 'Group Name';
+export const GROUP_ROLE_NAME = 'roles';
+export const GROUP_ROLE_LABEL = 'Roles';
 export const USER_ADD_NAME = 'addUsers';
 export const USER_ADD_LABEL = 'Add Users';
 export const USER_REMOVE_LABEL = 'Remove Users';
@@ -56,7 +58,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
         setGroupDetail(response.group);
         form.setFieldsValue({
           [GROUP_NAME_NAME]: group.group.name,
-          ['roles']: groupRoles?.map((r) => r.id),
+          [GROUP_ROLE_NAME]: groupRoles?.map((r) => r.id),
         });
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch groups.' });
@@ -118,8 +120,8 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
       {rbacEnabled && canModifyPermissions && group && (
         <Form.Item
           initialValue={!groupRoles || groupRoles === null ? [] : groupRoles.map((r) => r.id)}
-          label="Roles"
-          name="roles">
+          label={GROUP_ROLE_LABEL}
+          name={GROUP_ROLE_NAME}>
           <Select mode="multiple" optionFilterProp="children" placeholder={'Add Roles'} showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
@@ -179,11 +181,11 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
           const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
           const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
-          await assignRolesToGroup({
+          rolesToAdd.size > 0 && await assignRolesToGroup({
             groupId: group.group.groupId,
             roleIds: Array.from(rolesToAdd),
           });
-          await removeRolesFromGroup({
+          rolesToRemove.size > 0 && await removeRolesFromGroup({
             groupId: group.group.groupId,
             roleIds: Array.from(rolesToRemove),
           });
