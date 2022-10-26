@@ -52,11 +52,11 @@ def login_admin() -> None:
     child.wait()
     child.close()
     assert child.exitstatus == 0
-    dir_path = appdirs.user_data_dir("determined")
+    '''dir_path = appdirs.user_data_dir("determined")
     f = open(f"{dir_path}/auth.json")
     content = f.read()
     print(content)
-    print(".json")
+    print(".json")'''
 
 
 @contextlib.contextmanager

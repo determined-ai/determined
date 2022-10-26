@@ -61,9 +61,6 @@ class Determined:
         # where the default credentials are available from the master and could be discovered by
         # a REST API call against the master.
         auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
-        print("in authentication")
-        print(user)
-
         self._session = api.Session(master, user, auth, cert)
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
