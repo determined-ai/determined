@@ -228,6 +228,7 @@ type Event struct {
 	IsReady     bool      `json:"is_ready"`
 	State       string    `json:"state"`
 	ContainerID string    `json:"container_id"`
+	Level       *string   `json:"level"`
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
@@ -278,8 +279,12 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 		message = ""
 	}
 
+	level := ptrs.Ptr(model.LogLevelInfo)
+	if ev.Level != nil {
+		level = ev.Level
+	}
 	return model.TaskLog{
-		Level:       ptrs.Ptr(model.LogLevelInfo),
+		Level:       level,
 		ContainerID: &ev.ContainerID,
 		Timestamp:   &ev.Time,
 		Log:         message,
