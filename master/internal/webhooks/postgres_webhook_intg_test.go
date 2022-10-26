@@ -76,7 +76,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	defer cancel()
 
 	pgDB := db.MustResolveTestPostgres(t)
-	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB))
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
@@ -275,7 +275,7 @@ func mockWebhook() *Webhook {
 func TestDequeueEvents(t *testing.T) {
 	ctx := context.Background()
 	pgDB := db.MustResolveTestPostgres(t)
-	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB))
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
