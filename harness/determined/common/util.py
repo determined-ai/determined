@@ -51,7 +51,7 @@ def sizeof_fmt(val: Union[int, float]) -> str:
 
 
 def get_default_master_address() -> str:
-    return os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR", "localhost:8080"))
+    return os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR", "http://localhost:8080/"))
 
 
 def get_det_username_from_env() -> Optional[str]:

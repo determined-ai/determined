@@ -60,15 +60,21 @@ class Determined:
         # TODO: This should probably be try_reauth=False, but it appears that would break the case
         # where the default credentials are available from the master and could be discovered by
         # a REST API call against the master.
-        auth = authentication.Authentication(master, user, password, try_reauth=False, cert=cert)
+        auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
+        print("in authentication")
+        print(user)
 
         self._session = api.Session(master, user, auth, cert)
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
+        print("in create sdk")
+        print(self._session._master)
+        cur_user = bindings.get_CurrentUser(session=self._session)
+        print(cur_user.user.username)
         create_user = bindings.v1User(username=username, admin=admin, active=True)
         req = bindings.v1PostUserRequest(password=password, user=create_user)
         resp = bindings.post_PostUser(self._session, body=req)
-        if resp.user.agentUserGroup is not None:
+        if resp.user.agentUserGroup is not None: 
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -80,18 +86,17 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else:
-            return user.User(
+        else: 
+             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
                 admin=resp.user.admin,
                 session=self._session,
-                active=resp.user.active,
-            )
+                active=resp.user.active)
 
     def get_user_by_id(self, user_id: int) -> user.User:
         resp = bindings.get_GetUser(self._session, user_id).user
-        if resp.user.agentUserGroup is not None:
+        if resp.user.agentUserGroup is not None: 
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -103,18 +108,17 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else:
-            return user.User(
+        else: 
+             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
                 admin=resp.user.admin,
                 session=self._session,
-                active=resp.user.active,
-            )
+                active=resp.user.active)
 
     def get_user_by_name(self, user_name: str) -> user.User:
         resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
-        if resp.user.agentUserGroup is not None:
+        if resp.user.agentUserGroup is not None: 
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -126,21 +130,20 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else:
+        else: 
             return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-            )
+            user_id=resp.user.id,
+            username=resp.user.username,
+            admin=resp.user.admin,
+            session=self._session,
+        active=resp.user.active)
 
     def whoami(self):
         print("in whoami")
         resp = bindings.get_GetMe(self._session)
         print("after api call")
         print(resp)
-        if resp.user.agentUserGroup is not None:
+        if resp.user.agentUserGroup is not None: 
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -152,20 +155,20 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else:
-            return user.User(
+        else: 
+             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
                 admin=resp.user.admin,
                 session=self._session,
-                active=resp.user.active,
-            )
+                active=resp.user.active)
+
 
     def list_users(self):
         users_bindings = bindings.get_GetUsers(session=self._session).users
         users = []
         for user_b in users_bindings:
-            if user_b.agentUserGroup is not None:
+            if user_b.agentUserGroup is not None: 
                 user_obj = user.User(
                     user_id=user_b.id,
                     username=user_b.username,
@@ -177,14 +180,13 @@ class Determined:
                     agent_user=user_b.agentUserGroup.agentUser,
                     agent_group=user_b.agentUserGroup.agentGroup,
                 )
-            else:
-                user_obj = user.User(
+            else: 
+                user_obj =  user.User(
                     user_id=user_b.id,
                     username=user_b.username,
                     admin=user_b.admin,
                     session=self._session,
-                    active=user_b.active,
-                )
+                    active=user_b.active)
             users.append(user_obj)
         return users
 

@@ -159,10 +159,10 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
     )
 
 def create_user(parsed_args: Namespace) -> None:
+    print("in create user cli")
     username = parsed_args.username
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)
-
 
 def whoami(parsed_args: Namespace) -> None:
     user = client.whoami()
