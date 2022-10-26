@@ -252,3 +252,57 @@ def test_remote_search_runner() -> None:
     )
 
     exp.run_basic_test(config, conf.custom_search_method_examples_path("asha_search_method"), 1)
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+def test_textual_inversion_stable_diffusion_finetune() -> None:
+    """Requires a Hugging Face User Access Token which is expected to be stored as the environment
+    variable HF_USER_ACCESS_TOKEN.
+
+    Note that we pass these variables as part of CircleCI's "examples" context.
+
+    The CircleCI credentials belong to the "storage-unit-tests" user.  The contents of the key are
+    at github.com/determined-ai/secrets/aws/access-keys/storage-unit-tests.csv.
+
+    The user only has premissions to read/write the "storage-unit-tests" bucket.
+    """
+    config = conf.load_config(
+        conf.diffusion_examples_path("textual_inversion_stable_diffusion/finetune_const.yaml")
+    )
+    config = conf.set_max_length(config, 10)
+    try:
+        HF_AUTH_TOKEN = os.environ["HF_AUTH_TOKEN"]
+        config = conf.set_environment_variables(config, [f"HF_AUTH_TOKEN={HF_AUTH_TOKEN}"])
+    except KeyError:
+        pytest.skip("HF_AUTH_TOKEN environment variable missing, skipping test")
+    exp.run_basic_test_with_temp_config(
+        config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
+    )
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+def test_textual_inversion_stable_diffusion_generate() -> None:
+    """Requires a Hugging Face User Access Token which is expected to be stored as the environment
+    variable HF_USER_ACCESS_TOKEN.
+
+    Note that we pass these variables as part of CircleCI's "examples" context.
+
+    The CircleCI credentials belong to the "storage-unit-tests" user.  The contents of the key are
+    at github.com/determined-ai/secrets/aws/access-keys/storage-unit-tests.csv.
+
+    The user only has premissions to read/write the "storage-unit-tests" bucket.
+    """
+    config = conf.load_config(
+        conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
+    )
+    config = conf.set_max_length(config, 2)
+    try:
+        HF_AUTH_TOKEN = os.environ["HF_AUTH_TOKEN"]
+        config = conf.set_environment_variables(config, [f"HF_AUTH_TOKEN={HF_AUTH_TOKEN}"])
+    except KeyError:
+        pytest.skip("HF_AUTH_TOKEN environment variable missing, skipping test")
+    exp.run_basic_test_with_temp_config(
+        config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
+    )
