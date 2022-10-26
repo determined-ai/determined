@@ -258,14 +258,13 @@ def test_remote_search_runner() -> None:
 @pytest.mark.gpu_required
 def test_textual_inversion_stable_diffusion_finetune() -> None:
     """Requires a Hugging Face User Access Token which is expected to be stored as the environment
-    variable HF_USER_ACCESS_TOKEN.
+    variable HF_AUTH_TOKEN.
 
-    Note that we pass these variables as part of CircleCI's "examples" context.
+    Note that we pass these variables as part of CircleCI's "hugging-face" context, which passes in
+    a read-only token.
 
-    The CircleCI credentials belong to the "storage-unit-tests" user.  The contents of the key are
-    at github.com/determined-ai/secrets/aws/access-keys/storage-unit-tests.csv.
-
-    The user only has premissions to read/write the "storage-unit-tests" bucket.
+    The Hugging Face account is associated with the email address listed at
+    github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
     """
     config = conf.load_config(
         conf.diffusion_examples_path(
@@ -288,14 +287,13 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
 @pytest.mark.gpu_required
 def test_textual_inversion_stable_diffusion_generate() -> None:
     """Requires a Hugging Face User Access Token which is expected to be stored as the environment
-    variable HF_USER_ACCESS_TOKEN.
+    variable HF_AUTH_TOKEN.
 
-    Note that we pass these variables as part of CircleCI's "examples" context.
+    Note that we pass these variables as part of CircleCI's "hugging-face" context, which passes in
+    a read-only token.
 
-    The CircleCI credentials belong to the "storage-unit-tests" user.  The contents of the key are
-    at github.com/determined-ai/secrets/aws/access-keys/storage-unit-tests.csv.
-
-    The user only has premissions to read/write the "storage-unit-tests" bucket.
+    The Hugging Face account is associated with the email address listed at
+    github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
     """
     config = conf.load_config(
         conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
