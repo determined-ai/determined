@@ -15,7 +15,7 @@ Deploying Determined with Slurm/PBS has the following requirements.
 
 -  Slurm 19.05 or greater or PBS 2021.1.2 or greater.
 
--  Singularity 3.7 or greater or PodMan 3.3.1 or greater.
+-  Apptainer 1.0 or greater, Singularity 3.7 or greater or PodMan 3.3.1 or greater.
 
 -  A cluster-wide shared filesystem.
 
@@ -158,6 +158,22 @@ to optimize how Determined interacts with PBS:
       recommended that you wait for at least one Determined ``scheduling_unit`` for the job to
       complete after sending the ``SIGTERM``. If after that period of time the job has not
       terminated, then send a ``SIGKILL`` to forcibly release all resources.
+
+.. _singularity-config-requirements:
+
+************************************
+ Singularity/Apptainer Requirements
+************************************
+
+Singularity/Apptainer is the recommended container runtime for Determined on HPC clusters. Apptainer
+is a fork of Singularity 3.8 and provides both the ``apptainer`` and ``singularity`` commands. For
+purposes of this documentation, you can consider all references to Singularity to also apply to
+Apptainer. The Determined launcher interacts with Singularity/Apptainer using the ``singularity``
+command.
+
+Singularity has numerous options that may be customized in the ``singularity.conf`` file. Determined
+has been verified using the default values and therefore does not require any special configuration
+on the compute nodes of the cluster.
 
 .. _podman-config-requirements:
 
