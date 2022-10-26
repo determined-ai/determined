@@ -320,9 +320,9 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        canCreateWorkspace ? (
-          <Button onClick={handleWorkspaceCreateClick}>New Workspace</Button>
-        ) : null
+        <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
+          New Workspace
+        </Button>
       }
       title="Workspaces">
       <div className={css.controls}>
