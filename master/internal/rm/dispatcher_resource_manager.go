@@ -648,7 +648,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		ctx.Tell(task.AllocationRef, sproto.ResourcesStateChanged{
 			ResourcesID:      rID,
 			ResourcesState:   resourcesStateFromDispatchState(msg.State),
-			ResourcesStarted: &sproto.ResourcesStarted{},
+			ResourcesStarted: &sproto.ResourcesStarted{HPCJobID: msg.HPCJobID},
 		})
 
 	case DispatchExited:
@@ -1518,6 +1518,7 @@ type (
 	DispatchStateChange struct {
 		DispatchID string
 		State      launcher.DispatchState
+		HPCJobID   string
 	}
 
 	// DispatchExited notifies the dispatcher that the give dispatch exited.
