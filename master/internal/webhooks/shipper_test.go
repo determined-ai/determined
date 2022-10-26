@@ -30,7 +30,6 @@ func TestShipper(t *testing.T) {
 	defer cancel()
 
 	pgDB := db.MustResolveTestPostgres(t)
-	db.MustMigrateTestPostgres(t, dbIns, db.MigrationsFromDB)
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 

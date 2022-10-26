@@ -225,7 +225,7 @@ func generateWebhookRequest(
 }
 
 func generateSignedPayload(req *http.Request, t int64) string {
-	key := []byte(*conf.GetMasterConfig().Webhooks.SigningKey)
+	key := []byte(conf.GetMasterConfig().Webhooks.SigningKey)
 	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
 	return hex.EncodeToString(hmac.New(sha256.New, key).Sum(message))
 }
