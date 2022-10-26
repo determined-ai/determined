@@ -268,17 +268,20 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
     The user only has premissions to read/write the "storage-unit-tests" bucket.
     """
     config = conf.load_config(
-        conf.diffusion_examples_path("textual_inversion_stable_diffusion/finetune_const.yaml")
+        conf.diffusion_examples_path(
+            "textual_inversion_stable_diffusion/finetune_const_advanced.yaml"
+        )
     )
     config = conf.set_max_length(config, 10)
     try:
-        HF_AUTH_TOKEN = os.environ["HF_AUTH_TOKEN"]
-        config = conf.set_environment_variables(config, [f"HF_AUTH_TOKEN={HF_AUTH_TOKEN}"])
+        config = conf.set_environment_variables(
+            config, [f'HF_AUTH_TOKEN={os.environ["HF_AUTH_TOKEN"]}']
+        )
+        exp.run_basic_test_with_temp_config(
+            config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
+        )
     except KeyError:
         pytest.skip("HF_AUTH_TOKEN environment variable missing, skipping test")
-    exp.run_basic_test_with_temp_config(
-        config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
-    )
 
 
 @pytest.mark.distributed
@@ -297,12 +300,19 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
     config = conf.load_config(
         conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
     )
+    # Shorten the Experiment and reduce to two Trials.
     config = conf.set_max_length(config, 2)
+    prompt_vals = config["hyperparameters"]["call_kwargs"]["prompt"]["vals"]
+    config["hyperparameters"]["call_kwargs"]["guidance_scale"] = 7.5
+    while len(prompt_vals) > 1:
+        prompt_vals.pop()
+
     try:
-        HF_AUTH_TOKEN = os.environ["HF_AUTH_TOKEN"]
-        config = conf.set_environment_variables(config, [f"HF_AUTH_TOKEN={HF_AUTH_TOKEN}"])
+        config = conf.set_environment_variables(
+            config, [f'HF_AUTH_TOKEN={os.environ["HF_AUTH_TOKEN"]}']
+        )
+        exp.run_basic_test_with_temp_config(
+            config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 2
+        )
     except KeyError:
         pytest.skip("HF_AUTH_TOKEN environment variable missing, skipping test")
-    exp.run_basic_test_with_temp_config(
-        config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
-    )
