@@ -37,6 +37,16 @@ export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
   };
 };
 
+export const mapV1UserRole = (res: Sdk.V1RoleWithAssignments): types.UserRole => {
+  const { role, groupRoleAssignments } = res;
+  return {
+    fromGroup: groupRoleAssignments?.map((g) => g.groupId),
+    id: role?.roleId || 0,
+    name: role?.name || '',
+    permissions: (role?.permissions || []).map(mapV1Permission),
+  };
+};
+
 export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
   return {
     id: permission.id,

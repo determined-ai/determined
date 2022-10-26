@@ -62,8 +62,9 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
+      [ROLE_NAME]: roles?.map((r) => r.id),
     });
-  }, [form, canGetPermissions, user]);
+  }, [form, canGetPermissions, user, roles]);
 
   if (user !== undefined && roles === null && canGetPermissions) {
     return <Spinner tip="Loading roles..." />;
@@ -109,26 +110,28 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
         </Form.Item>
       )}
       {rbacEnabled && canModifyPermissions && (
-        <Form.Item
-          initialValue={roles === null ? [] : roles.map((r) => r.id)}
-          label={ROLE_LABEL}
-          name={ROLE_NAME}>
-          <Select
-            disabled={(user !== undefined && roles === null) || viewOnly}
-            mode="multiple"
-            optionFilterProp="children"
-            placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
-            showSearch>
-            {knownRoles.map((r) => (
-              <Select.Option key={r.id} value={r.id}>
-                {r.name}
-              </Select.Option>
-            ))}
-          </Select>
+        <>
+          <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+            <Select
+              disabled={(user !== undefined && roles === null) || viewOnly}
+              mode="multiple"
+              optionFilterProp="children"
+              placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+              showSearch>
+              {knownRoles.map((r) => (
+                <Select.Option
+                  disabled={roles?.find((ro) => ro.id === r.id)?.fromGroup?.length}
+                  key={r.id}
+                  value={r.id}>
+                  {r.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
           <Typography.Text type="secondary">
             Note that roles inherited from user groups cannot be removed here.
           </Typography.Text>
-        </Form.Item>
+        </>
       )}
     </Form>
   );
@@ -182,7 +185,6 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
 
       const newRoles: Set<number> = new Set(formData.roles);
       const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
-
       const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
       const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 

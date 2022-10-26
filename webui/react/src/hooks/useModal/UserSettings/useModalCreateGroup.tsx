@@ -118,10 +118,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
         </Form.Item>
       )}
       {rbacEnabled && canModifyPermissions && group && (
-        <Form.Item
-          initialValue={!groupRoles || groupRoles === null ? [] : groupRoles.map((r) => r.id)}
-          label={GROUP_ROLE_LABEL}
-          name={GROUP_ROLE_NAME}>
+        <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
           <Select mode="multiple" optionFilterProp="children" placeholder={'Add Roles'} showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>

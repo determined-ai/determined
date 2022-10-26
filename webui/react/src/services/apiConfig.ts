@@ -313,7 +313,7 @@ export const getUserRoles: DetApi<
   Type.UserRole[]
 > = {
   name: 'getRolesAssignedToUser',
-  postProcess: (response) => response.roles.map((rwa) => decoder.mapV1Role(rwa.role!)),
+  postProcess: (response) => response.roles.map((rwa) => decoder.mapV1UserRole(rwa)),
   request: (params) => detApi.RBAC.getRolesAssignedToUser(params.userId),
 };
 

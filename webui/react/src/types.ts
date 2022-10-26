@@ -849,6 +849,7 @@ export interface Permission {
 }
 
 export interface UserRole {
+  fromGroup?: number[];
   id: number;
   name: string;
   permissions: Permission[];
