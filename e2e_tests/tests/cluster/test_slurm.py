@@ -59,7 +59,7 @@ def test_docker_image() -> None:
 # TEST DISABLED (FOUNDENG-304) -- we are not getting the expected error message
 # and instead the job is going to PartitionNodeLimit state waiting for 100 nodes
 # to become available.
-def test_node_not_available() -> None:
+def DISABLED_node_not_available() -> None:
     # Creates an experiment with a configuration that cannot be satisfied.
     # Verifies that the error message includes the SBATCH options of the failed submission.
     # Only casablanca displays the SBATCH options. Horizon does not upon failure
