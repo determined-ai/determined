@@ -1,6 +1,6 @@
 import * as t from 'io-ts';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
@@ -136,8 +136,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const {
     auth: { user },
   } = useStore();
-  const { isLoading, querySettings, state, update } = useContext(UserSettings);
+  const { isLoading: initialLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   // creates an entry at the global state
   useEffect(() => {
@@ -235,6 +236,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       }, []);
 
       if (dbUpdates.length !== 0) {
+        setIsLoading(true);
+
         try {
           // Persist storage to backend.
           await Promise.allSettled(
@@ -250,6 +253,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
             silent: true,
             type: ErrorType.Api,
           });
+        } finally {
+          setIsLoading(false);
         }
       }
     },
@@ -313,7 +318,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     [config, settings, navigate, update, updateDB],
   );
 
-  return { activeSettings, isLoading, resetSettings, settings, updateSettings };
+  return {
+    activeSettings,
+    isLoading: isLoading || initialLoading,
+    resetSettings,
+    settings,
+    updateSettings,
+  };
 };
 
 export { SettingsProvider, useSettings };
