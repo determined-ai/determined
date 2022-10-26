@@ -1,14 +1,13 @@
-import { Button, Form, Input, message, Select, Switch, Table } from 'antd';
+import { Form, Input, message, Select, Switch } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import {
   assignRolesToUser,
-  getUserPermissions,
   getUserRoles,
   patchUser,
   postUser,
@@ -16,11 +15,10 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { DetailedUser, Permission, UserRole } from 'types';
+import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
@@ -32,6 +30,7 @@ export const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
 export const MODAL_HEADER_LABEL_CREATE = 'Create User';
 export const MODAL_HEADER_LABEL_EDIT = 'Edit User';
+export const MODAL_HEADER_LABEL_VIEW = 'View User';
 export const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 export const GROUP_LABEL = 'Add to Groups';
@@ -55,67 +54,16 @@ interface FormValues {
 }
 
 const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => {
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-
   const rbacEnabled = useFeature().isOn('rbac');
   const { canGetPermissions, canModifyPermissions } = usePermissions();
   const { knownRoles } = useStore();
-
-  const updatePermissions = useCallback(async () => {
-    if (user && canGetPermissions) {
-      const { roles } = await getUserPermissions({ userId: user.id });
-      const viewPermissions: Permission[] = [];
-      roles.forEach((r) => {
-        r.permissions.forEach((p) => {
-          if (!viewPermissions.includes(p)) {
-            viewPermissions.push(p);
-          }
-        });
-      });
-      setPermissions(viewPermissions);
-    }
-  }, [canGetPermissions, user]);
 
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
     });
-    if (user && canGetPermissions) {
-      updatePermissions();
-    }
-  }, [form, canGetPermissions, updatePermissions, user]);
-
-  const permissionTableColumn = useMemo(() => {
-    const columns = [
-      {
-        dataIndex: 'name',
-        key: 'name',
-        title: 'Name',
-      },
-      {
-        dataIndex: 'isGlobal',
-        key: 'isGlobal',
-        render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
-        title: 'Global?',
-      },
-      {
-        dataIndex: 'workspaceOnly',
-        key: 'workspaceOnly',
-        render: (val: boolean) => (val ? <Icon name="checkmark" /> : ''),
-        title: 'Workspaces?',
-      },
-    ];
-    if (canModifyPermissions && !viewOnly) {
-      columns.push({
-        dataIndex: 'action',
-        key: 'name',
-        render: () => <Button danger>Delete</Button>,
-        title: '',
-      });
-    }
-    return columns;
-  }, [canModifyPermissions, viewOnly]);
+  }, [form, canGetPermissions, user]);
 
   if (user !== undefined && roles === null && canGetPermissions) {
     return <Spinner tip="Loading roles..." />;
@@ -160,16 +108,16 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
           </Select>
         </Form.Item>
       )}
-      {rbacEnabled && canModifyPermissions && !viewOnly && (
+      {rbacEnabled && canModifyPermissions && (
         <Form.Item
           initialValue={roles === null ? [] : roles.map((r) => r.id)}
           label={ROLE_LABEL}
           name={ROLE_NAME}>
           <Select
-            disabled={user !== undefined && roles === null}
+            disabled={(user !== undefined && roles === null) || viewOnly}
             mode="multiple"
             optionFilterProp="children"
-            placeholder={'Add Roles'}
+            placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
             showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
@@ -178,14 +126,6 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
             ))}
           </Select>
         </Form.Item>
-      )}
-      {!!user && rbacEnabled && canGetPermissions && (
-        <Table
-          columns={permissionTableColumn}
-          dataSource={permissions}
-          pagination={{ hideOnSinglePage: true, size: 'small' }}
-          rowKey="name"
-        />
       )}
     </Form>
   );
@@ -266,7 +206,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
           message.success(API_SUCCESS_MESSAGE_CREATE);
           form.resetFields();
         }
-
+        fetchUserRoles();
         onClose?.();
       } catch (e) {
         message.error(user ? 'Error updating user' : 'Error creating new user');
@@ -276,7 +216,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel, userRoles, canModifyPermissions],
+    [form, onClose, user, handleCancel, userRoles, canModifyPermissions, fetchUserRoles],
   );
 
   const modalOpen = useCallback(
@@ -297,7 +237,15 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         okText: viewOnly ? 'Close' : user ? 'Update' : 'Create User',
         onCancel: handleCancel,
         onOk: () => handleOk(viewOnly),
-        title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
+        title: (
+          <h5>
+            {user
+              ? viewOnly
+                ? MODAL_HEADER_LABEL_VIEW
+                : MODAL_HEADER_LABEL_EDIT
+              : MODAL_HEADER_LABEL_CREATE}
+          </h5>
+        ),
       });
     },
     [form, handleCancel, handleOk, openOrUpdate, user, groups, userRoles],

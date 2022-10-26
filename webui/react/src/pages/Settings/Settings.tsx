@@ -50,6 +50,7 @@ const SettingsContent: React.FC = () => {
 
   return (
     <Tabs
+      activeKey={tab}
       className="no-padding"
       defaultActiveKey={tabKey}
       destroyInactiveTabPane

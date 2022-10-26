@@ -1,12 +1,23 @@
 import { Form, Input, message, Select } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { createGroup, getGroup, updateGroup } from 'services/api';
+import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
+import {
+  assignRolesToGroup,
+  createGroup,
+  getGroup,
+  getGroupRoles,
+  removeRolesFromGroup,
+  updateGroup,
+} from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { DetailedUser } from 'types';
+import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
 import { getDisplayName } from 'utils/user';
 
@@ -25,18 +36,28 @@ export const API_SUCCESS_MESSAGE_EDIT = 'Group has been updated.';
 interface Props {
   form: FormInstance;
   group?: V1GroupSearchResult;
+  groupRoles?: UserRole[];
   users: DetailedUser[];
 }
 
-const ModalForm: React.FC<Props> = ({ form, users, group }) => {
-  const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
+const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
+  const rbacEnabled = useFeature().isOn('rbac');
+  const { canModifyPermissions } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
+
+  const { knownRoles } = useStore();
+
+  const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
+
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
       try {
         const response = await getGroup({ groupId: group?.group.groupId });
         setGroupDetail(response.group);
-        form.setFieldsValue({ [GROUP_NAME_NAME]: group.group.name });
+        form.setFieldsValue({
+          [GROUP_NAME_NAME]: group.group.name,
+          ['roles']: groupRoles?.map((r) => r.id),
+        });
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch groups.' });
       } finally {
@@ -45,7 +66,8 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
     } else {
       setIsLoading(false);
     }
-  }, [group, form]);
+  }, [group, form, groupRoles]);
+
   useEffect(() => {
     fetchGroup();
   }, [fetchGroup]);
@@ -93,6 +115,20 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
           </Select>
         </Form.Item>
       )}
+      {rbacEnabled && canModifyPermissions && group && (
+        <Form.Item
+          initialValue={!groupRoles || groupRoles === null ? [] : groupRoles.map((r) => r.id)}
+          label="Roles"
+          name="roles">
+          <Select mode="multiple" optionFilterProp="children" placeholder={'Add Roles'} showSearch>
+            {knownRoles.map((r) => (
+              <Select.Option key={r.id} value={r.id}>
+                {r.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+      )}
     </Form>
   );
 };
@@ -105,12 +141,29 @@ interface ModalProps {
 
 const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
-
+  const rbacEnabled = useFeature().isOn('rbac');
+  const { canModifyPermissions } = usePermissions();
+  const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => {
     form.resetFields();
   }, [form]);
+
+  const fetchGroupRoles = useCallback(async () => {
+    if (group?.group.groupId && rbacEnabled) {
+      try {
+        const roles = await getGroupRoles({ groupId: group.group.groupId });
+        setGroupRoles(roles);
+      } catch (e) {
+        handleError(e, { publicSubject: "Unable to fetch this group's roles." });
+      }
+    }
+  }, [group, rbacEnabled]);
+
+  useEffect(() => {
+    fetchGroupRoles();
+  }, [fetchGroupRoles]);
 
   const onOk = useCallback(async () => {
     await form.validateFields();
@@ -119,6 +172,23 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       const formData = form.getFieldsValue();
       if (group) {
         await updateGroup({ groupId: group.group.groupId, ...formData });
+        if (canModifyPermissions && group.group.groupId) {
+          const newRoles: Set<number> = new Set(formData.roles);
+          const oldRoles = new Set((groupRoles ?? []).map((r) => r.id));
+
+          const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
+          const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
+
+          await assignRolesToGroup({
+            groupId: group.group.groupId,
+            roleIds: Array.from(rolesToAdd),
+          });
+          await removeRolesFromGroup({
+            groupId: group.group.groupId,
+            roleIds: Array.from(rolesToRemove),
+          });
+          await fetchGroupRoles();
+        }
         message.success(API_SUCCESS_MESSAGE_EDIT);
       } else {
         await createGroup(formData);
@@ -133,19 +203,19 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [form, onClose, group]);
+  }, [form, onClose, group, canModifyPermissions, fetchGroupRoles, groupRoles]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       closable: true,
-      content: <ModalForm form={form} group={group} users={users} />,
+      content: <ModalForm form={form} group={group} groupRoles={groupRoles} users={users} />,
       icon: null,
       okText: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       onCancel: handleCancel,
       onOk: onOk,
       title: <h5>{group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
-  }, [form, handleCancel, onOk, openOrUpdate, users, group]);
+  }, [form, handleCancel, onOk, openOrUpdate, users, group, groupRoles]);
 
   return { modalOpen, ...modalHook };
 };

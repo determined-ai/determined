@@ -157,7 +157,6 @@ const relevantPermissions = (
   workspaceId?: number,
 ): Set<V1PermissionType> => {
   if (!userAssignments || !userRoles) {
-    // console.error('missing UserAssignment or UserRole');
     return new Set<V1PermissionType>();
   }
   const relevantAssigned = userAssignments
@@ -171,7 +170,7 @@ const relevantPermissions = (
     .forEach((r) => {
       // TODO: is it possible a role is assigned to this workspace,
       // but not all of its permissions?
-      permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
+      permissions = permissions.concat(r.permissions);
     });
   return new Set<V1PermissionType>(permissions.map((p) => p.id));
 };
