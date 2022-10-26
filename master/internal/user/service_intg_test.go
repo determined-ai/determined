@@ -79,9 +79,21 @@ func TestAuthzPatchUser(t *testing.T) {
 		args         []any
 		body         string
 	}{
-		{"CanSetUsersPassword", []any{mock.Anything, model.User{}, mock.Anything}, `{"password":"new"}`},
-		{"CanSetUsersActive", []any{mock.Anything, model.User{}, mock.Anything, false}, `{"active":false}`},
-		{"CanSetUsersAdmin", []any{mock.Anything, model.User{}, mock.Anything, true}, `{"admin":true}`},
+		{
+			"CanSetUsersPassword",
+			[]any{mock.Anything, model.User{}, mock.Anything},
+			`{"password":"new"}`,
+		},
+		{
+			"CanSetUsersActive",
+			[]any{mock.Anything, model.User{}, mock.Anything, false},
+			`{"active":false}`,
+		},
+		{
+			"CanSetUsersAdmin",
+			[]any{mock.Anything, model.User{}, mock.Anything, true},
+			`{"admin":true}`,
+		},
 		{
 			"CanSetUsersAgentUserGroup",
 			[]any{

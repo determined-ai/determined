@@ -115,7 +115,8 @@ func TestGetExperimentLabels(t *testing.T) {
 	// Labels returned in sorted order by frequency.
 	createTestExpWithProjectID(t, api, curUser, p0, labels[0], labels[1])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[0])
-	resp, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
+	resp, err := api.GetExperimentLabels(ctx,
+		&apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
 	require.NoError(t, err)
 	require.Equal(t, labels[:2], resp.Labels)
 
@@ -125,13 +126,15 @@ func TestGetExperimentLabels(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
-	resp, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
+	resp, err = api.GetExperimentLabels(ctx,
+		&apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
 	require.NoError(t, err)
 	require.Equal(t, labels[0], resp.Labels[0])
 
 	// Second project.
 	createTestExpWithProjectID(t, api, curUser, p1, labels[3])
-	resp, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{ProjectId: int32(p1)})
+	resp, err = api.GetExperimentLabels(ctx,
+		&apiv1.GetExperimentLabelsRequest{ProjectId: int32(p1)})
 	require.NoError(t, err)
 	require.Equal(t, []string{labels[3]}, resp.Labels)
 
