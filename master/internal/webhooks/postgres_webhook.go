@@ -157,7 +157,7 @@ func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, erro
 	wName := e.Config.Workspace()
 	pName := e.Config.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
-	baseUrlIsSet := webUIBaseURL != nil
+	baseUrlIsSet := webUIBaseURL != ""
 	if baseUrlIsSet && wName != "" && pName != "" {
 		ws, err := workspace.WorkspaceByName(ctx, wName)
 		if err != nil {
