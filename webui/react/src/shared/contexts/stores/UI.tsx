@@ -122,7 +122,7 @@ const reducer = (state: StateUI, action: ActionUI): StateUI => {
 const useUI = (): { actions: UIActions; ui: StateUI } => {
   const context = useContext(StateContext);
   if (context === undefined) {
-    throw new Error('useStore must be used within a StoreProvider');
+    throw new Error('useStore(UI) must be used within a StoreProvider');
   }
   const dispatchContext = useContext(DispatchContext);
   if (dispatchContext === undefined) {

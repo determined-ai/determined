@@ -21,7 +21,6 @@ import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
@@ -149,11 +148,9 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <StoreProvider>
-        <UIStoreProvider>
-          <DndProvider backend={HTML5Backend}>
-            <AppView />
-          </DndProvider>
-        </UIStoreProvider>
+        <DndProvider backend={HTML5Backend}>
+          <AppView />
+        </DndProvider>
       </StoreProvider>
     </HelmetProvider>
   );

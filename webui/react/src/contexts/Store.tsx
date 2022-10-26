@@ -2,6 +2,7 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
+import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
@@ -369,4 +370,13 @@ const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   );
 };
 
-export default StoreProvider;
+/** a set of app level store providers */
+const StackedStoreProvider: React.FC<Props> = ({ children }: Props) => {
+  return (
+    <StoreProvider>
+      <UIStoreProvider>{children}</UIStoreProvider>
+    </StoreProvider>
+  );
+};
+
+export default StackedStoreProvider;
