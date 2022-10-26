@@ -499,7 +499,7 @@ func (a *Allocation) SetResourcesAsDaemon(
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 			Log: `Ignoring request to daemonize resources within an allocation for an allocation
 			with only one manageable set of resources, because this would just kill it. This is
-			expected in when using Slurm.`,
+			expected in when using the HPC launcher.`,
 			Level: ptrs.Ptr(model.LogLevelInfo),
 		}))
 		return nil
@@ -622,11 +622,6 @@ func (a *Allocation) ResourcesStateChanged(
 			}))
 			a.Exit(ctx, "resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-				ContainerID: msg.ContainerIDStr(),
-				Log:         msg.ResourcesStopped.String(),
-				Level:       ptrs.Ptr(model.LogLevelError),
-			}))
 			a.Error(ctx, *msg.ResourcesStopped.Failure)
 		default:
 			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
@@ -891,7 +886,12 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	defer a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
 	defer a.unregisterProxies(ctx)
 	defer ctx.Self().Stop()
-	defer a.sendEvent(ctx, sproto.Event{ExitedEvent: &exitReason})
+
+	level := ptrs.Ptr(model.LogLevelInfo)
+	if a.exitErr != nil {
+		level = ptrs.Ptr(model.LogLevelError)
+	}
+	defer a.sendEvent(ctx, sproto.Event{Level: level, ExitedEvent: &exitReason})
 	if err := a.purgeRestorableResources(ctx); err != nil {
 		ctx.Log().WithError(err).Error("failed to purge restorable resources")
 	}

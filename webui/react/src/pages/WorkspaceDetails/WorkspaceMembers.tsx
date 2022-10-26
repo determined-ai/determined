@@ -1,39 +1,24 @@
-import { Button, Dropdown, Menu, Select } from 'antd';
+import { Button, Dropdown, Menu } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import { RawValueType } from 'rc-select/lib/BaseSelect';
-import { LabelInValueType } from 'rc-select/lib/Select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
-import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
-import {
-  assignRolesToGroup,
-  assignRolesToUser,
-  removeRolesFromGroup,
-  removeRolesFromUser,
-} from 'services/api';
-import {
-  V1Group,
-  V1GroupDetails,
-  V1RoleAssignment,
-  V1RoleWithAssignments,
-} from 'services/api-ts-sdk';
+import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, Workspace } from 'types';
-import handleError from 'utils/error';
-import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
+import RoleRenderer from './RoleRenderer';
 import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -45,6 +30,7 @@ interface Props {
   groupsAssignedDirectly: V1Group[];
   onFilterUpdate: (name: string | undefined) => void;
   pageRef: React.RefObject<HTMLElement>;
+  rolesAssignableToScope: V1Role[];
   usersAssignedDirectly: User[];
   workspace: Workspace;
 }
@@ -99,38 +85,14 @@ const WorkspaceMembers: React.FC<Props> = ({
   usersAssignedDirectly,
   groupsAssignedDirectly,
   pageRef,
+  rolesAssignableToScope,
   workspace,
 }: Props) => {
-  let { knownRoles } = useStore();
-  const rbacEnabled = useFeature().isOn('rbac');
   const { canUpdateRoles } = usePermissions();
-  const [canceler] = useState(new AbortController());
-  const fetchKnownRoles = useFetchKnownRoles(canceler);
-  useEffect(() => {
-    if (rbacEnabled) {
-      fetchKnownRoles();
-    }
-  }, [fetchKnownRoles, rbacEnabled]);
-
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-
-  knownRoles = mockWorkspaceMembers
-    ? [
-        {
-          id: 1,
-          name: 'Editor',
-          permissions: [],
-        },
-        {
-          id: 2,
-          name: 'Viewer',
-          permissions: [],
-        },
-      ]
-    : knownRoles;
 
   const usersAndGroups: UserOrGroup[] = useMemo(
     () =>
@@ -264,90 +226,18 @@ const WorkspaceMembers: React.FC<Props> = ({
       );
     };
 
-    const getAssignedRole = (record: UserOrGroup): V1RoleAssignment | null => {
-      const currentAssignment = assignments.find((aGroup) =>
-        isUser(record)
-          ? !!aGroup?.userRoleAssignments &&
-            !!aGroup.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
-          : !!aGroup?.groupRoleAssignments &&
-            !!aGroup.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
-      );
-      if (isUser(record) && !!record) {
-        if (currentAssignment?.userRoleAssignments) {
-          const myAssignment = currentAssignment.userRoleAssignments.find(
-            (a) => a.userId === getIdFromUserOrGroup(record),
-          );
-          return myAssignment?.roleAssignment || null;
-        }
-      } else if (currentAssignment?.groupRoleAssignments) {
-        const myAssignment = currentAssignment.groupRoleAssignments.find(
-          (a) => a.groupId === getIdFromUserOrGroup(record),
-        );
-        return myAssignment?.roleAssignment || null;
-      }
-      return null;
-    };
-
-    const roleRenderer = (value: string, record: UserOrGroup) => {
-      const roleAssignment = getAssignedRole(record);
-      return (
-        <Select
-          className={css.selectContainer}
-          disabled={!userCanAssignRoles || !roleAssignment?.scopeWorkspaceId}
-          value={roleAssignment?.role?.roleId}
-          onSelect={async (value: RawValueType | LabelInValueType) => {
-            const roleIdValue = value as number;
-            const userOrGroupId = getIdFromUserOrGroup(record);
-            const oldRoleIds = roleAssignment?.role?.roleId ? [roleAssignment?.role?.roleId] : [];
-
-            try {
-              // Try to remove the old role and then add the new role
-              isUser(record)
-                ? await removeRolesFromUser({
-                    roleIds: oldRoleIds,
-                    scopeWorkspaceId: workspace.id,
-                    userId: userOrGroupId,
-                  })
-                : await removeRolesFromGroup({
-                    groupId: userOrGroupId,
-                    roleIds: oldRoleIds,
-                    scopeWorkspaceId: workspace.id,
-                  });
-              try {
-                isUser(record)
-                  ? await assignRolesToUser({
-                      roleIds: [roleIdValue],
-                      scopeWorkspaceId: workspace.id,
-                      userId: userOrGroupId,
-                    })
-                  : await assignRolesToGroup({
-                      groupId: userOrGroupId,
-                      roleIds: [roleIdValue],
-                      scopeWorkspaceId: workspace.id,
-                    });
-              } catch (addRoleError) {
-                handleError(addRoleError, {
-                  publicSubject: 'Unable to update role for user or group unable to add new role.',
-                });
-              }
-            } catch (removeRoleError) {
-              handleError(removeRoleError, {
-                publicSubject:
-                  'Unable to update role for user or group could unable to remove current role.',
-              });
-            }
-          }}>
-          {knownRoles.map((role) => (
-            <Select.Option key={role.id} value={role.id}>
-              {role.name}
-            </Select.Option>
-          ))}
-        </Select>
-      );
-    };
+    const roleRenderer = (value: string, record: UserOrGroup) => (
+      <RoleRenderer
+        assignments={assignments}
+        rolesAssignableToScope={rolesAssignableToScope}
+        userCanAssignRoles={userCanAssignRoles}
+        userOrGroup={record}
+        workspaceId={workspace.id}
+      />
+    );
 
     const actionRenderer = (value: string, record: UserOrGroup) => {
-      const assignedRole = getAssignedRole(record);
+      const assignedRole = getAssignedRole(record, assignments);
 
       return userCanAssignRoles && assignedRole?.role.roleId ? (
         <GroupOrMemberActionDropdown
@@ -386,7 +276,14 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: '',
       },
     ] as ColumnDef<UserOrGroup>[];
-  }, [assignments, knownRoles, nameFilterSearch, tableSearchIcon, userCanAssignRoles, workspace]);
+  }, [
+    assignments,
+    nameFilterSearch,
+    rolesAssignableToScope,
+    tableSearchIcon,
+    userCanAssignRoles,
+    workspace,
+  ]);
 
   return (
     <div className={css.membersContainer}>

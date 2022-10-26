@@ -168,6 +168,11 @@ export const removeRolesFromUser = generateDetApi<
   Api.V1RemoveAssignmentsResponse
 >(Config.removeRolesFromUser);
 
+export const searchRolesAssignableToScope = generateDetApi<
+  Service.SearchRolesAssignableToScopeParams,
+  Api.V1SearchRolesAssignableToScopeResponse,
+  Api.V1SearchRolesAssignableToScopeResponse
+>(Config.searchRolesAssignableToScope);
 /* Info */
 
 export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo>(
