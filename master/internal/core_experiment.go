@@ -121,8 +121,10 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	if _, _, err := echoGetExperimentAndCheckCanDoActions(c.Request().Context(), c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
+	); err != nil {
 		return nil, err
 	}
 
@@ -167,8 +169,10 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	if _, _, err := echoGetExperimentAndCheckCanDoActions(c.Request().Context(), c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
+	); err != nil {
 		return err
 	}
 
@@ -193,8 +197,10 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	if _, _, err := echoGetExperimentAndCheckCanDoActions(c.Request().Context(), c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
+	); err != nil {
 		return err
 	}
 
