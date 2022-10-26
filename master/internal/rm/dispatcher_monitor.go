@@ -254,6 +254,20 @@ func (m *launcherMonitor) ReloadAuthToken() {
 	}
 }
 
+func getJobID(additionalProperties map[string]interface{}) string {
+	tagValue, ok := additionalProperties["job-id"]
+	if !ok {
+		return ""
+	}
+
+	// Ensure that the tag value is a string.
+	typed, ok := tagValue.(string)
+	if !ok {
+		return ""
+	}
+	return typed
+}
+
 /*
  Processes the job state and sends DispatchStateChange on each call.
  updateJobStatus returns true when the job has finished or no longer exists,
@@ -314,6 +328,7 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		ctx.Tell(ctx.Self(), DispatchStateChange{
 			DispatchID: dispatchID,
 			State:      *resp.State,
+			HPCJobID:   getJobID(resp.GetAdditionalPropertiesField()),
 		})
 	}
 	return removeJob

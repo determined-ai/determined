@@ -108,3 +108,25 @@ func Test_getJobExitMessagesAndFiltering(t *testing.T) {
 		assert.DeepEqual(t, filteredMessages, test.filteredMessages)
 	}
 }
+
+func Test_getJobID(t *testing.T) {
+	var jobID string
+
+	jobID = getJobID(map[string]interface{}{})
+	assert.Equal(t, jobID, "")
+
+	jobID = getJobID(map[string]interface{}{
+		"job-id": 1234,
+	})
+	assert.Equal(t, jobID, "")
+
+	jobID = getJobID(map[string]interface{}{
+		"jobid": "1234",
+	})
+	assert.Equal(t, jobID, "")
+
+	jobID = getJobID(map[string]interface{}{
+		"job-id": "1234",
+	})
+	assert.Equal(t, jobID, "1234")
+}
