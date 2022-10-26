@@ -195,7 +195,8 @@ func (a *apiServer) GetUser(
 	}
 
 	var ok bool
-	if ok, err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); err != nil {
+	if ok, err = user.AuthZProvider.Get().CanGetUser(
+		ctx, *curUser, targetFullUser.ToUser()); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errUserNotFound
@@ -487,7 +488,8 @@ func (a *apiServer) PostUserSetting(
 		Value:       req.Setting.Value,
 		StoragePath: req.StoragePath,
 	}
-	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(ctx, *curUser, settingModel); err != nil {
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(
+		ctx, *curUser, settingModel); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

@@ -55,13 +55,15 @@ func (a *ExperimentAuthZBasic) FilterExperimentLabelsQuery(
 
 // CanPreviewHPSearch always returns a nil error.
 func (a *ExperimentAuthZBasic) CanPreviewHPSearch(
-	ctx context.Context, curUser model.User) error {
+	ctx context.Context, curUser model.User,
+) error {
 	return nil
 }
 
 // CanEditExperiment always returns a nil error.
 func (a *ExperimentAuthZBasic) CanEditExperiment(
-	ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ctx context.Context, curUser model.User, e *model.Experiment,
+) error {
 	return nil
 }
 

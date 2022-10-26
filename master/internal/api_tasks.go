@@ -80,7 +80,8 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 }
 
 func (a *apiServer) canDoActionsOnTask(
-	ctx context.Context, taskID model.TaskID, actions ...func(context.Context, model.User, *model.Experiment) error,
+	ctx context.Context, taskID model.TaskID,
+	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
 	t, err := a.m.db.TaskByID(taskID)

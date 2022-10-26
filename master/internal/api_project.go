@@ -17,7 +17,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetProjectByID(ctx context.Context, id int32, curUser model.User) (*projectv1.Project, error) {
+func (a *apiServer) GetProjectByID(
+	ctx context.Context, id int32, curUser model.User,
+) (*projectv1.Project, error) {
 	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
 	p := &projectv1.Project{}
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
@@ -35,7 +37,8 @@ func (a *apiServer) GetProjectByID(ctx context.Context, id int32, curUser model.
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
-	ctx context.Context, projectID int32, canDoActions ...func(context.Context, model.User, *projectv1.Project) error,
+	ctx context.Context, projectID int32,
+	canDoActions ...func(context.Context, model.User, *projectv1.Project) error,
 ) (*projectv1.Project, model.User, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {

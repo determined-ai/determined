@@ -934,7 +934,8 @@ func (a *apiServer) PatchExperiment(
 		return nil, err
 	}
 
-	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(ctx, *curUser, modelExp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 

@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -40,25 +41,25 @@ type WorkspaceAuthZ interface {
 	// DELETE /api/v1/workspaces/:workspace_id
 	CanDeleteWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-		) error
+	) error
 
 	// POST /api/v1/workspaces/:workspace_id/archive
 	CanArchiveWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-		) error
+	) error
 	// POST /api/v1/workspaces/:workspace_id/unarchive
 	CanUnarchiveWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-		) error
+	) error
 
 	// POST /api/v1/workspaces/:workspace_id/pin
 	CanPinWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-		) error
+	) error
 	// POST /api/v1/workspaces/:workspace_id/unpin
 	CanUnpinWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-		) error
+	) error
 }
 
 // AuthZProvider providers WorkspaceAuthZ implementations.

@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"

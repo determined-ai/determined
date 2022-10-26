@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 )

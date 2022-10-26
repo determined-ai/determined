@@ -48,8 +48,9 @@ func (a *apiServer) GetWorkspaceByID(
 	return w, nil
 }
 
-func (a *apiServer) getWorkspaceAndCheckCanDoActions(ctx context.Context, workspaceID int32,
-	rejectImmutable bool, canDoActions ...func(context.Context, model.User, *workspacev1.Workspace) error,
+func (a *apiServer) getWorkspaceAndCheckCanDoActions(
+	ctx context.Context, workspaceID int32, rejectImmutable bool,
+	canDoActions ...func(context.Context, model.User, *workspacev1.Workspace) error,
 ) (*workspacev1.Workspace, model.User, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {

@@ -2,6 +2,7 @@ package experiment
 
 import (
 	"context"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -103,7 +104,7 @@ type ExperimentAuthZ interface {
 	) error
 	CanSetExperimentsPriority(
 		ctx context.Context, curUser model.User, e *model.Experiment, priority int,
-		) error
+	) error
 	CanSetExperimentsCheckpointGCPolicy(
 		ctx context.Context, curUser model.User, e *model.Experiment,
 	) error
