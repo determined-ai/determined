@@ -47,6 +47,7 @@ def login_admin() -> None:
     expected = f"Password for user '{a_username}':"
     child.expect(expected, timeout=EXPECT_TIMEOUT)
     child.sendline(a_password)
+    print("in admin logging in.")
     child.read()
     child.wait()
     child.close()
@@ -295,8 +296,8 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     # SDK testing for activating and deactivating. 
     log_in_user(ADMIN_CREDENTIALS)
     user = client.get_user_by_name(user_name=creds.username)
-    assert user.deactivate().user == False
-    assert user.deactivate().user == True
+    assert user.deactivate().user.active == False
+    assert user.activate().user.active == True
     
     # Now log in again.
     assert log_in_user(creds) == 0
