@@ -9,8 +9,13 @@ import useFeature from 'hooks/useFeature';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getGroups, getWorkspace, getWorkspaceMembers } from 'services/api';
-import { V1Group, V1GroupSearchResult, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import {
+  getGroups,
+  getWorkspace,
+  getWorkspaceMembers,
+  searchRolesAssignableToScope,
+} from 'services/api';
+import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
@@ -53,6 +58,7 @@ const WorkspaceDetails: React.FC = () => {
   const [groupsAssignedDirectlyIds, setGroupsAssignedDirectlyIds] = useState<Set<number>>(
     new Set<number>(),
   );
+  const [rolesAssignableToScope, setRolesAssignableToScope] = useState<V1Role[]>([]);
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [nameFilter, setNameFilter] = useState<string>();
   const [workspaceAssignments, setWorkspaceAssignments] = useState<V1RoleWithAssignments[]>([]);
@@ -110,6 +116,22 @@ const WorkspaceDetails: React.FC = () => {
     setWorkspaceAssignments(response.assignments);
   }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
 
+  const fetchRolesAssignableToScope = useCallback(async (): Promise<void> => {
+    try {
+      const response = await searchRolesAssignableToScope(
+        { workspaceId: id },
+        { signal: canceler.signal },
+      );
+
+      setRolesAssignableToScope((prev) => {
+        if (isEqual(prev, response.roles)) return prev;
+        return response.roles || [];
+      });
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler.signal, id]);
+
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
   const fetchAll = useCallback(async () => {
@@ -118,8 +140,15 @@ const WorkspaceDetails: React.FC = () => {
       fetchUsers(),
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
+      fetchRolesAssignableToScope(),
     ]);
-  }, [fetchWorkspace, fetchGroups, fetchUsers, fetchGroupsAndUsersAssignedToWorkspace]);
+  }, [
+    fetchWorkspace,
+    fetchGroups,
+    fetchUsers,
+    fetchGroupsAndUsersAssignedToWorkspace,
+    fetchRolesAssignableToScope,
+  ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -174,6 +203,7 @@ const WorkspaceDetails: React.FC = () => {
         <WorkspaceDetailsHeader
           addableUsersAndGroups={addableUsersAndGroups}
           fetchWorkspace={fetchAll}
+          rolesAssignableToScope={rolesAssignableToScope}
           workspace={workspace}
         />
       }
@@ -188,6 +218,7 @@ const WorkspaceDetails: React.FC = () => {
               assignments={workspaceAssignments}
               groupsAssignedDirectly={groupsAssignedDirectly}
               pageRef={pageRef}
+              rolesAssignableToScope={rolesAssignableToScope}
               usersAssignedDirectly={usersAssignedDirectly}
               workspace={workspace}
               onFilterUpdate={handleFilterUpdate}

@@ -5514,17 +5514,23 @@ export interface V1PatchUser {
      */
     active?: boolean;
     /**
-     * Name to display in the web UI.
-     * @type {string}
-     * @memberof V1PatchUser
-     */
-    displayName?: string;
-    /**
      * The user and group on the agent host machine.
      * @type {V1AgentUserGroup}
      * @memberof V1PatchUser
      */
     agentUserGroup?: V1AgentUserGroup;
+    /**
+     * The new username.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    username?: string;
+    /**
+     * Name to display in the web UI.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    displayName?: string;
 }
 
 /**

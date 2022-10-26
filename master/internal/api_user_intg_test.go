@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -215,7 +214,7 @@ func TestAuthzPatchUser(t *testing.T) {
 	req := &apiv1.PatchUserRequest{
 		UserId: int32(curUser.ID),
 		User: &userv1.PatchUser{
-			DisplayName: wrapperspb.String("u"),
+			DisplayName: ptrs.Ptr("u"),
 		},
 	}
 	_, err := api.PatchUser(ctx, req)

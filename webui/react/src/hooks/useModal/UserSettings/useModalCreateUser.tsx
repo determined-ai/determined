@@ -81,10 +81,10 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
     });
-    if (user) {
+    if (user && canGetPermissions) {
       updatePermissions();
     }
-  }, [form, updatePermissions, user]);
+  }, [form, canGetPermissions, updatePermissions, user]);
 
   const permissionTableColumn = useMemo(() => {
     const columns = [
@@ -117,7 +117,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     return columns;
   }, [canModifyPermissions, viewOnly]);
 
-  if (user !== undefined && roles === null) {
+  if (user !== undefined && roles === null && canGetPermissions) {
     return <Spinner tip="Loading roles..." />;
   }
 
@@ -169,7 +169,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
             disabled={user !== undefined && roles === null}
             mode="multiple"
             optionFilterProp="children"
-            placeholder={'Add Global Roles'}
+            placeholder={'Add Roles'}
             showSearch>
             {knownRoles.map((r) => (
               <Select.Option key={r.id} value={r.id}>
@@ -206,21 +206,22 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
+  const { canGetPermissions, canModifyPermissions } = usePermissions();
 
   const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined) {
+    if (user !== undefined && canGetPermissions) {
       try {
         const roles = await getUserRoles({ userId: user.id });
-        setUserRoles(roles.filter((r) => r.permissions.find((p) => p.isGlobal)));
+        setUserRoles(roles);
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
     }
-  }, [user]);
+  }, [user, canGetPermissions]);
 
   useEffect(() => {
     fetchUserRoles();
-  }, []);
+  }, [fetchUserRoles]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
@@ -245,8 +246,10 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       try {
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
-          await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
-          await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
+          if (canModifyPermissions) {
+            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
+            await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
+          }
           message.success(API_SUCCESS_MESSAGE_EDIT);
         } else {
           const u = await postUser(formData);
@@ -273,7 +276,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel, userRoles],
+    [form, onClose, user, handleCancel, userRoles, canModifyPermissions],
   );
 
   const modalOpen = useCallback(

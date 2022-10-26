@@ -71,8 +71,8 @@ func (a *UserAuthZBasic) CanSetUsersAgentUserGroup(
 
 // CanSetUsersUsername returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanSetUsersUsername(curUser, targetUser model.User) error {
-	if !curUser.Admin {
-		return fmt.Errorf("only admin privileged users can update users")
+	if !curUser.Admin && curUser.ID != targetUser.ID {
+		return fmt.Errorf("only admin privileged users can update other users")
 	}
 	return nil
 }
