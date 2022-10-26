@@ -60,11 +60,11 @@ types may be structured differently.
             "id": 41,
             "state": "COMPLETED",
             "name": "cifar10_pytorch_const",
-            "duration": 41, // this is in seconds
+            "slots": 2, // slots per trial
+            "duration": 41, // experiment duration measured in seconds
             "resource_pool": "default",
-            "slots": 0,
-            "workspace": "test workspace", // name of the workspace
-            "project": "test project" // name of the project
+            "workspace": "test workspace", // experiment workspace name
+            "project": "test project" // experiment project name
          }
       }
    }
