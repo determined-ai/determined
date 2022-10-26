@@ -1,9 +1,21 @@
 import enum
-from typing import Any, Optional
+from typing import Any, Iterable, List, Optional
 
 from determined.common import api
-from determined.common.api import bindings
+from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint
+
+
+class LogLevel(enum.Enum):
+    TRACE = bindings.v1LogLevel.LOG_LEVEL_TRACE.value
+    DEBUG = bindings.v1LogLevel.LOG_LEVEL_DEBUG.value
+    INFO = bindings.v1LogLevel.LOG_LEVEL_INFO.value
+    WARNING = bindings.v1LogLevel.LOG_LEVEL_WARNING.value
+    ERROR = bindings.v1LogLevel.LOG_LEVEL_ERROR.value
+    CRITICAL = bindings.v1LogLevel.LOG_LEVEL_CRITICAL.value
+
+    def _to_bindings(self) -> bindings.v1LogLevel:
+        return bindings.v1LogLevel(self.value)
 
 
 class TrialReference:
@@ -18,6 +30,61 @@ class TrialReference:
     def __init__(self, trial_id: int, session: api.Session):
         self.id = trial_id
         self._session = session
+
+    def logs(
+        self,
+        follow: bool = False,
+        *,
+        head: Optional[int] = None,
+        tail: Optional[int] = None,
+        container_ids: Optional[List[str]] = None,
+        rank_ids: Optional[List[int]] = None,
+        stdtypes: Optional[List[str]] = None,
+        min_level: Optional[LogLevel] = None,
+    ) -> Iterable[str]:
+        """
+        Return an iterable of log lines from this trial meeting the specified criteria.
+
+        Arguments:
+            follow (bool, optional): If the iterable should block waiting for new logs to arrive.
+                Mutually exclusive with ``head`` and ``tail``.  Defaults to ``False``.
+            head (int, optional): When set, only fetches the first ``head`` lines.  Mutually
+                exclusive with ``follow`` and ``tail``.  Defaults to ``None``.
+            tail (int, optional): When set, only fetches the first ``head`` lines.  Mutually
+                exclusive with ``follow`` and ``head``.  Defaults to ``None``.
+            container_ids (List[str], optional): When set, only fetch logs from lines from
+                specific containers.  Defaults to ``None``.
+            rank_ids (List[int], optional): When set, only fetch logs from lines from
+                specific ranks.  Defaults to ``None``.
+            stdtypes (List[int], optional): When set, only fetch logs from lines from the given
+                stdio outputs.  Defaults to ``None`` (same as ``["stdout", "stderr"]``).
+            min_level: (LogLevel, optional): When set, defines the minimum log priority for lines
+                that will be returned.  Defaults to ``None`` (all logs returned).
+        """
+        if head is not None and head < 0:
+            raise ValueError(f"head must be non-negative, got {head}")
+        if tail is not None and tail < 0:
+            raise ValueError(f"tail must be non-negative, got {tail}")
+        for log in logs.trial_logs(
+            session=self._session,
+            trial_id=self.id,
+            head=head,
+            tail=tail,
+            follow=follow,
+            # TODO: Rename this to "node_id" and support it in the python sdk.
+            agent_ids=None,
+            container_ids=container_ids,
+            rank_ids=rank_ids,
+            # sources would be something like "originated from master" or "originated from task".
+            sources=None,
+            stdtypes=stdtypes,
+            min_level=None if min_level is None else min_level._to_bindings(),
+            # TODO: figure out what type is a good type to accept for timestamps.  Until then, be
+            # conservative with the public API and disallow it.
+            timestamp_before=None,
+            timestamp_after=None,
+        ):
+            yield log.message
 
     def kill(self) -> None:
         bindings.post_KillTrial(self._session, id=self.id)

@@ -329,6 +329,7 @@ export interface PatchUserParams {
     active?: boolean;
     admin?: boolean;
     displayName?: string;
+    username?: string;
   };
 }
 
@@ -472,4 +473,10 @@ export type UnpinWorkspaceParams = ArchiveWorkspaceParams;
 
 export interface GetWebhookParams {
   id: number;
+}
+
+export interface SearchRolesAssignableToScopeParams {
+  limit?: number;
+  offset?: number;
+  workspaceId: number;
 }

@@ -1,5 +1,5 @@
+import Hermes, { DimensionType } from '@determined-ai/hermes-parallel-coordinates';
 import { Alert } from 'antd';
-import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -56,6 +56,17 @@ interface HpTrialData {
   trialIds: number[];
 }
 
+export interface HermesInternalFilter {
+  p0: number;
+  p1: number;
+  value0: Primitive;
+  value1: Primitive;
+}
+
+export interface HermesInternalFilters {
+  [key: string]: HermesInternalFilter[];
+}
+
 const HpParallelCoordinates: React.FC<Props> = ({
   experiment,
   filters,
@@ -77,6 +88,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [filteredTrialIdMap, setFilteredTrialIdMap] = useState<Record<number, boolean>>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
+  const [hermesCreatedFeatures, setHermesCreatedFeatures] = useState<HermesInternalFilters>({});
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -97,39 +109,45 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [experiment.config.searcher, selectedMetric]);
 
-  const handleFilterChange = useCallback(
-    (hermesFilters: Hermes.Filters) => {
-      // Skip if there aren't any chart data.
-      if (!chartData) return;
+  const resetFilteredTrials = useCallback(() => {
+    // Skip if there aren't any chart data.
+    if (!chartData) return;
 
-      // Initialize a new trial id filter map.
-      const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
-        acc[trialId] = true;
-        return acc;
-      }, {} as Record<number, boolean>);
+    // Initialize a new trial id filter map.
+    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
+      acc[trialId] = true;
+      return acc;
+    }, {} as Record<number, boolean>);
 
-      // Figure out which trials are filtered out based on user filters.
-      Object.entries(hermesFilters).forEach(([key, list]) => {
-        if (!chartData.data[key] || list.length === 0) return;
+    // Figure out which trials are filtered out based on user filters.
 
-        chartData.data[key].forEach((value, index) => {
-          let isWithinFilter = false;
+    Object.entries(hermesCreatedFeatures).forEach(([key, list]) => {
+      if (!chartData.data[key] || list.length === 0) return;
 
-          list.forEach((filter: Hermes.Filter) => {
-            if (value >= filter[0] && value <= filter[1]) isWithinFilter = true;
-          });
+      chartData.data[key].forEach((value, index) => {
+        let isWithinFilter = false;
 
-          if (!isWithinFilter) {
-            const trialId = chartData.trialIds[index];
-            newFilteredTrialIdMap[trialId] = false;
+        list.forEach((filter: HermesInternalFilter) => {
+          const min = Math.min(Number(filter.value0), Number(filter.value1));
+          const max = Math.max(Number(filter.value0), Number(filter.value1));
+          if (value >= min && value <= max) {
+            isWithinFilter = true;
           }
         });
-      });
 
-      setFilteredTrialIdMap(newFilteredTrialIdMap);
-    },
-    [chartData],
-  );
+        if (!isWithinFilter) {
+          const trialId = chartData.trialIds[index];
+          newFilteredTrialIdMap[trialId] = false;
+        }
+      });
+    });
+
+    setFilteredTrialIdMap(newFilteredTrialIdMap);
+  }, [chartData, hermesCreatedFeatures]);
+
+  useEffect(() => {
+    resetFilteredTrials();
+  }, [resetFilteredTrials]);
 
   const colorScale = useMemo(() => {
     return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
@@ -137,7 +155,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(
     () => ({
-      hooks: { onFilterChange: handleFilterChange },
+      filters: hermesCreatedFeatures,
+      hooks: {
+        onFilterChange: setHermesCreatedFeatures,
+      },
       style: {
         axes: { label: { placement: 'after' } },
         data: {
@@ -150,7 +171,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorScale, handleFilterChange, selectedMetric],
+    [colorScale, setHermesCreatedFeatures, hermesCreatedFeatures, selectedMetric],
   );
 
   const dimensions = useMemo(() => {

@@ -33,13 +33,15 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const storeDispatch = useStoreDispatch();
   const fetchMyRoles = useFetchMyRoles(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
-  const [isBadCredentials, setIsBadCredentials] = useState(false);
-  const [canSubmit, setCanSubmit] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
+  const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
+  const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
       storeDispatch({ type: StoreActionUI.ShowUISpinner });
       setCanSubmit(false);
+      setIsSubmitted(true);
       try {
         const { token, user } = await login(
           {
@@ -72,6 +74,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         });
       } finally {
         setCanSubmit(true);
+        setIsSubmitted(false);
       }
     },
     [canceler, storeDispatch, fetchMyRoles, rbacEnabled],
@@ -107,7 +110,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" loading={!canSubmit} type="primary">
+        <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
           Sign In
         </Button>
       </Form.Item>

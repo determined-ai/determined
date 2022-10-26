@@ -1,5 +1,5 @@
-import { V1Group } from 'services/api-ts-sdk';
-import { DetailedUser, User, UserOrGroup } from 'types';
+import { V1Group, V1Role, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { DetailedUser, User, UserOrGroup, UserRole } from 'types';
 
 interface UserNameFields {
   displayName?: string;
@@ -30,4 +30,40 @@ export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {
 
   // The groupId should always exist
   return group.groupId || 0;
+};
+
+export const getAssignedRole = (
+  record: UserOrGroup,
+  assignments: V1RoleWithAssignments[],
+): V1RoleAssignment | null => {
+  const currentAssignment = assignments.find((aGroup) =>
+    isUser(record)
+      ? !!aGroup?.userRoleAssignments &&
+        !!aGroup.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
+      : !!aGroup?.groupRoleAssignments &&
+        !!aGroup.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
+  );
+  if (isUser(record) && !!record) {
+    if (currentAssignment?.userRoleAssignments) {
+      const myAssignment = currentAssignment.userRoleAssignments.find(
+        (a) => a.userId === getIdFromUserOrGroup(record),
+      );
+      return myAssignment?.roleAssignment || null;
+    }
+  } else if (currentAssignment?.groupRoleAssignments) {
+    const myAssignment = currentAssignment.groupRoleAssignments.find(
+      (a) => a.groupId === getIdFromUserOrGroup(record),
+    );
+    return myAssignment?.roleAssignment || null;
+  }
+  return null;
+};
+
+export const getAssignableWorkspaceRoles = (
+  roles: UserRole[],
+  rolesAssignableToScope: V1Role[],
+): UserRole[] => {
+  const validRoleIds = new Set<number>();
+  rolesAssignableToScope.forEach((role) => validRoleIds.add(role.roleId));
+  return roles.filter((role) => validRoleIds.has(role.id));
 };

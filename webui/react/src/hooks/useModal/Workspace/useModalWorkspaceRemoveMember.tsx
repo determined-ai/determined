@@ -1,6 +1,6 @@
 import { message } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -29,6 +29,7 @@ const useModalWorkspaceRemoveMember = ({
   userOrGroupId,
 }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const modalContent = useMemo(() => {
     return (
@@ -43,11 +44,13 @@ const useModalWorkspaceRemoveMember = ({
 
   const handleOk = useCallback(async () => {
     try {
+      setIsDeleting(true);
       isUser(userOrGroup)
         ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       message.success(`${name} removed from workspace`);
     } catch (e) {
+      setIsDeleting(false);
       if (e instanceof DetError) {
         handleError(e, {
           level: e.level,
@@ -66,7 +69,6 @@ const useModalWorkspaceRemoveMember = ({
         });
       }
     }
-    return;
   }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
@@ -74,7 +76,7 @@ const useModalWorkspaceRemoveMember = ({
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { danger: true },
+      okButtonProps: { danger: true, disabled: isDeleting },
       okText: 'Remove',
       onOk: handleOk,
       title: `Remove ${name}`,
@@ -93,8 +95,8 @@ const useModalWorkspaceRemoveMember = ({
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps());
-  }, [getModalProps, modalRef, name, openOrUpdate]);
+    if (modalRef.current && !isDeleting) openOrUpdate(getModalProps());
+  }, [getModalProps, isDeleting, modalRef, name, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

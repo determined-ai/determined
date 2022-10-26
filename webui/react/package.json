@@ -33,13 +33,13 @@
     "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_OPTIONS='--max-old-space-size=2048' NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
+    "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
     "ansi-to-html": "^0.7.1",
     "antd": "^4.21.4",
     "dayjs": "^1.10.7",
     "debug": "^4.3.4",
     "fp-ts": "^2.11.2",
     "fuse.js": "^6.4.6",
-    "hermes-parallel-coordinates": "^0.5.18",
     "history": "^5.3.0",
     "humanize-duration": "^3.27.0",
     "io-ts": "^2.2.16",

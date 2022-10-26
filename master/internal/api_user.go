@@ -22,7 +22,33 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
-var errUserNotFound = status.Error(codes.NotFound, "user not found")
+const determinedName = "determined"
+
+var (
+	errUserNotFound = status.Error(codes.NotFound, "user not found")
+	latinText       = regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
+)
+
+func clearUsername(targetUser model.User, name string, minLength int) (*string, error) {
+	clearName := strings.TrimSpace(name)
+	// Reject non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
+	if latinText.ReplaceAllLiteralString(clearName, "") != clearName {
+		return nil, status.Error(codes.InvalidArgument,
+			"Display name and username cannot contain non-ASCII characters.")
+	}
+	if len(clearName) < minLength {
+		return nil, status.Error(codes.InvalidArgument,
+			"Display name or username value has minimum length.")
+	}
+	// Restrict 'admin' and 'determined'.
+	if !targetUser.Admin && (strings.ToLower(clearName) == "admin") {
+		return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
+	}
+	if targetUser.Username != determinedName && (strings.ToLower(clearName) == determinedName) {
+		return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
+	}
+	return &clearName, nil
+}
 
 func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
 	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
@@ -316,23 +342,47 @@ func (a *apiServer) PatchUser(
 		}
 
 		u := &userv1.User{}
-		if req.User.DisplayName.Value == "" {
-			// Disallow empty diaplay name for sorting purpose.
+
+		displayName, err2 := clearUsername(targetUser, *req.User.DisplayName, 0)
+		if err2 != nil {
+			return nil, err2
+		}
+
+		if displayName == nil || *displayName == "" {
+			// Set empty display name to null.
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, nil)
 		} else {
-			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
-			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
-			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
-			// Restrict 'admin' and 'determined' in display names.
-			if !targetUser.Admin && (strings.TrimSpace(strings.ToLower(displayName)) == "admin") {
-				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
-			}
-			if targetUser.Username != displayName &&
-				(strings.TrimSpace(strings.ToLower(displayName)) == "determined") {
-				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
-			}
-			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, displayName)
 		}
+		if err == db.ErrNotFound {
+			return nil, errUserNotFound
+		} else if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.User.Username != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersUsername(*curUser, targetUser); err != nil {
+			if ok, findErr := user.AuthZProvider.Get().CanGetUser(*curUser, targetUser); err != nil {
+				return nil, findErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, err
+		}
+
+		// Reject SSO and SCIM
+		if user.IsSSOUser(targetUser) {
+			return nil, status.Error(codes.InvalidArgument,
+				"Cannot change username of SSO/SCIM user through this API.")
+		}
+
+		username, err3 := clearUsername(targetUser, *req.User.Username, 2)
+		if err3 != nil {
+			return nil, err3
+		}
+
+		err = a.m.db.UpdateUsername(&targetUser.ID, *username)
 		if err == db.ErrNotFound {
 			return nil, errUserNotFound
 		} else if err != nil {

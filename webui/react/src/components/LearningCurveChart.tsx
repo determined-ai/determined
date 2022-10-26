@@ -3,6 +3,7 @@ import { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { glasbeyColor } from 'shared/utils/color';
 import { Metric, Scale } from 'types';
 import { metricToStr } from 'utils/metric';
@@ -63,10 +64,6 @@ const LearningCurveChart: React.FC<Props> = ({
       legend: { show: false },
       plugins: [
         closestPointPlugin({
-          getPointTooltipHTML: (x, y, point) => {
-            const trialId = trialIds[point.seriesIdx - 1];
-            return `Trial ID: ${trialId}<br />Batches: ${x}<br />Metric: ${y}`;
-          },
           onPointClick: (e, point) => {
             if (typeof onTrialClick !== 'function') return;
             onTrialClick(e, trialIds[point.seriesIdx - 1]);
@@ -77,6 +74,7 @@ const LearningCurveChart: React.FC<Props> = ({
           },
           yScale: 'y',
         }),
+        tooltipsPlugin({ isShownEmptyVal: false }),
       ],
       scales: { x: { time: false }, y: { distr: selectedScale === Scale.Log ? 3 : 1 } },
       series: [

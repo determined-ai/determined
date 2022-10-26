@@ -937,8 +937,8 @@ func ExperimentWithoutConfigByTaskID(
 ) (*model.Experiment, error) {
 	var experiment model.Experiment
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time, 
-       e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, 
+SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time,
+       e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id,
        e.notes, e.job_id, u.username as username, e.project_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
@@ -982,16 +982,25 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 	for rows.Next() {
 		var exp model.Experiment
 		if err := rows.StructScan(&exp); err != nil {
+			// Log this error, but try to figure out the experiment ID first.
+			configErr := err
+
 			items, err := rows.SliceScan()
 			if err != nil {
+				log.WithError(configErr).Errorf("failed to read non-terminal experiment config")
 				return nil, errors.Wrap(err, "unable to read experiment from db")
 			}
 
 			expID, ok := items[0].(int64)
 			if !ok {
+				log.WithError(configErr).Errorf("failed to read non-terminal experiment config")
 				return nil, errors.Errorf(
 					"Expected an integer experiment ID, but got: %s", reflect.TypeOf(items[0]))
 			}
+
+			log.WithError(configErr).Errorf(
+				"failed to read non-terminal experiment config for experiment %v", expID,
+			)
 
 			err = db.TerminateExperimentInRestart(int(expID), model.ErrorState)
 			if err != nil {
