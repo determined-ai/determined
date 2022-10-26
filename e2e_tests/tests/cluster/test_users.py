@@ -44,19 +44,14 @@ def login_admin() -> None:
     a_username, a_password = ADMIN_CREDENTIALS
     child = det_spawn(["user", "login", a_username])
     child.setecho(True)
+    print("in login admin")
     expected = f"Password for user '{a_username}':"
     child.expect(expected, timeout=EXPECT_TIMEOUT)
     child.sendline(a_password)
-    print("in admin logging in.")
     child.read()
     child.wait()
     child.close()
     assert child.exitstatus == 0
-    '''dir_path = appdirs.user_data_dir("determined")
-    f = open(f"{dir_path}/auth.json")
-    content = f.read()
-    print(content)
-    print(".json")'''
 
 
 @contextlib.contextmanager
