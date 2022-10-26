@@ -32,13 +32,10 @@ class WebhookRequestHandler(SimpleHTTPRequestHandler):
         keep_server_running = False
 
 
-def run_server(
-    server_class: HTTPServer = HTTPServer,
-    handler_class: SimpleHTTPRequestHandler = WebhookRequestHandler,
-) -> None:
+def run_server() -> None:
     global keep_server_running
     server_address = ("", SERVER_PORT)
-    http_server = server_class(server_address, handler_class)
+    http_server = HTTPServer(server_address, WebhookRequestHandler)
     while keep_server_running:
         http_server.handle_request()
 
