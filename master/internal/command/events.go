@@ -141,7 +141,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 		return err
 	}
 
-	ctxTodo := goCtx.TODO()
+	ctxTodo := c.Request().Context()
 	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(ctxTodo, curUser, ownerID); err != nil {
 		return err
 	} else if !ok {

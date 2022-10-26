@@ -28,7 +28,7 @@ func echoCanGetTrial(c echo.Context, m *Master, trialID string) error {
 		return err
 	}
 	var ok bool
-	ctx := context.TODO()
+	ctx := c.Request().Context()
 	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
 		return err
 	} else if !ok {
