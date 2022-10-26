@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
