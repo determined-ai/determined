@@ -142,13 +142,13 @@ concepts:
   concept_strs: # Individual strings representing new concepts. Must not exist in tokenizer.  
     - det-logo
   initializer_strs: # Strings which describe the added concepts. 
-    - brain logo, concept art
+    - brain logo, sharp lines, connected circles, concept art
   img_dirs:
     - det_logos
 #...
 inference:
   inference_prompts:
-    - a photo of a det-logo
+    - a watercolor painting on textured paper of a det-logo using soft strokes, pastel colors, incredible composition, masterpiece
 ```
 
 To fine-tune on a new concept:
