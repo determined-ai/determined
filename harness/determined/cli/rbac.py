@@ -76,7 +76,7 @@ def my_permissions(args: Namespace) -> None:
         if a.roleId is None:
             raise api.errors.BadResponseException("expected roleId to be provided")
 
-        if a.isGlobal:
+        if a.scopeCluster:
             if 0 not in scope_id_to_permissions:
                 scope_id_to_permissions[0] = set()
             scope_id_to_permissions[0].update(role_id_to_permissions[a.roleId])
@@ -138,7 +138,7 @@ def role_with_assignment_to_dict(
     r: bindings.v1RoleWithAssignments,
     assignment: bindings.v1RoleAssignment,
 ) -> Dict[str, Any]:
-    is_global = assignment.scopeWorkspaceId is None
+    is_global = assignment.scopeCluster
     workspace_id = assignment.scopeWorkspaceId
     workspace_name = None
     if workspace_id is not None:
@@ -210,7 +210,7 @@ def list_groups_roles(args: Namespace) -> None:
 
     for i, r in enumerate(resp.roles):
         workspaces = []  # type: List[Dict[str, Any]]
-        if resp.assignments[i].isGlobal:
+        if resp.assignments[i].scopeCluster:
             workspaces.append(
                 {"workspaceID": None, "workspaceName": None, "assignedGlobally": True}
             )
