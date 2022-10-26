@@ -98,7 +98,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023')
+CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023' 'sawmill')
 
 function lookup() {
     echo "${!1}"
@@ -221,6 +221,17 @@ OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login2=false
 
+# Configuration for sawmill
+OPT_name_sawmill=10.100.97.101
+OPT_LAUNCHERHOST_sawmill=localhost
+OPT_LAUNCHERPROTOCOL_sawmill=http
+OPT_CHECKPOINTPATH_sawmill=/scratch2/launcher/determined-cp
+OPT_MASTERHOST_sawmill=nid000001
+OPT_MASTERPORT_sawmill=$USERPORT
+OPT_TRESSUPPORTED_sawmill=false
+OPT_GRESSUPPORTED_sawmill=false
+OPT_PROTOCOL_sawmill=http
+
 # Configuration for shuco
 OPT_name_shuco=shuco.us.cray.com
 OPT_LAUNCHERHOST_shuco=localhost
@@ -249,7 +260,6 @@ OPT_REMOTEUSER_mosaic=root@
 # Configuration for osprey
 OPT_name_osprey=osprey.us.cray.com
 OPT_LAUNCHERHOST_osprey=localhost
-OPT_LAUNCHERPORT_osprey=8181
 OPT_LAUNCHERPROTOCOL_osprey=http
 OPT_CHECKPOINTPATH_osprey=/lus/scratch/foundation_engineering/determined-cp
 OPT_DEBUGLEVEL_osprey=debug
@@ -261,7 +271,6 @@ OPT_PROTOCOL_osprey=http
 # Configuration for swan
 OPT_name_swan=swan.hpcrb.rdlabs.ext.hpe.com
 OPT_LAUNCHERHOST_swan=localhost
-OPT_LAUNCHERPORT_swan=8181
 OPT_LAUNCHERPROTOCOL_swan=http
 OPT_CHECKPOINTPATH_swan=/lus/scratch/foundation_engineering/determined-cp
 OPT_MASTERHOST_swan=swan
@@ -272,7 +281,6 @@ OPT_PROTOCOL_swan=http
 # Configuration for raptor
 OPT_name_raptor=raptor.hpcrb.rdlabs.ext.hpe.com
 OPT_LAUNCHERHOST_raptor=localhost
-OPT_LAUNCHERPORT_raptor=8181
 OPT_LAUNCHERPROTOCOL_raptor=http
 OPT_CHECKPOINTPATH_raptor=/lus/scratch/foundation_engineering/determined-cp
 OPT_MASTERHOST_raptor=raptor
@@ -333,6 +341,12 @@ if [[ -z $SLURMCLUSTER ]]; then
     echo "$0: Cluster name $CLUSTER does not have a configuration. Specify one of: $(set -o posix; set | grep OPT_name | cut -f 2 -d =)."
     exit 1
 fi
+
+if [[ -z $OPT_LAUNCHERPORT ]]; then
+    echo "$0: Cluster name $CLUSTER does not have an installed launcher, specify -d to utilize a dev launcher."
+    exit 1
+fi
+
 
 if [[ -z $INTUNNEL ]]; then
     OPT_LAUNCHERHOST=$SLURMCLUSTER
