@@ -1,9 +1,9 @@
-import React, { Dispatch, useContext, useReducer } from 'react';
+import React, { Dispatch, useContext, useMemo, useReducer } from 'react';
 
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
 
-const logger = rootLogger.extend('store');
+const logger = rootLogger.extend('stores/ui');
 
 import { DarkLight, Mode, Theme } from '../../themes';
 
@@ -128,7 +128,8 @@ const useUI = (): { actions: UIActions; ui: StateUI } => {
   if (dispatchContext === undefined) {
     throw new Error('useStoreDispatch must be used within a StoreProvider');
   }
-  return { actions: new UIActions(dispatchContext), ui: context };
+  const uiActions = useMemo(() => new UIActions(dispatchContext), [dispatchContext]);
+  return { actions: uiActions, ui: context };
 };
 
 export const StoreProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
