@@ -64,10 +64,10 @@ class Determined:
         self._session = api.Session(master, user, auth, cert)
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
-        print("in create sdk")
-        print(self._session._master)
+        #("in create sdk")
+       # print(self._session._master)
         cur_user = bindings.get_CurrentUser(session=self._session)
-        print(cur_user.user.username)
+       # print(cur_user.user.username)
         create_user = bindings.v1User(username=username, admin=admin, active=True)
         req = bindings.v1PostUserRequest(password=password, user=create_user)
         resp = bindings.post_PostUser(self._session, body=req)
