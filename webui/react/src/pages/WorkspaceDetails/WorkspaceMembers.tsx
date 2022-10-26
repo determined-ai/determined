@@ -1,6 +1,6 @@
 import { Button, Dropdown, Menu } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InteractiveTable, {
   ColumnDef,
@@ -10,7 +10,6 @@ import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import useFeature from 'hooks/useFeature';
-import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -91,15 +90,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   rolesAssignableToScope,
   workspace,
 }: Props) => {
-  const rbacEnabled = useFeature().isOn('rbac');
   const { canUpdateRoles } = usePermissions();
-  const [canceler] = useState(new AbortController());
-  const fetchKnownRoles = useFetchKnownRoles(canceler);
-  useEffect(() => {
-    if (rbacEnabled) {
-      fetchKnownRoles();
-    }
-  }, [fetchKnownRoles, rbacEnabled]);
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canUpdateRoles({ workspace });
 
@@ -287,7 +278,14 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: '',
       },
     ] as ColumnDef<UserOrGroup>[];
-  }, [assignments, nameFilterSearch, tableSearchIcon, userCanAssignRoles, workspace]);
+  }, [
+    assignments,
+    nameFilterSearch,
+    rolesAssignableToScope,
+    tableSearchIcon,
+    userCanAssignRoles,
+    workspace,
+  ]);
 
   return (
     <div className={css.membersContainer}>
