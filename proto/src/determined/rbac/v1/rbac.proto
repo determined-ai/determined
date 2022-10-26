@@ -3,8 +3,24 @@ syntax = "proto3";
 package determined.rbac.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/rbacv1";
 
-import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+
+// ScopeTypeMask lists which scope types are allowed for the given Permission or
+// Role. Scope type mask is a different way to represent `is_global` flag.
+// Value mapping:
+// is_global: true => {cluster: true, workspace: false}
+// is_global: false => {cluster: true, workspace: true}
+message ScopeTypeMask {
+  // Whether this permission or role can be assigned globally, i.e.
+  // cluster-wide. Currently, all permissions can be assigned globally, so this
+  // is always true.
+  bool cluster = 1;
+  // Whether this permission or role can be assigned on a particular workspace.
+  // For example, `ADMINISTRATE_USER` permission will have this field set to
+  // false, since user creation can only be done at a cluster level, and it
+  // doesn't make sense for a single workspace.
+  bool workspace = 2;
+}
 
 // Role contains information about a specific Role
 message Role {
@@ -17,6 +33,8 @@ message Role {
   string name = 2;
   // The permissions granted to the role
   repeated Permission permissions = 3;
+  // Allowed scope types.
+  ScopeTypeMask scope_type_mask = 4;
 }
 
 // Permission represents an action a user can take in the system
@@ -28,8 +46,8 @@ message Permission {
   PermissionType id = 1;
   // The name of the permission
   string name = 2;
-  // Whether the permission is a global-only permission
-  bool is_global = 3;
+  // Allowed scope types.
+  ScopeTypeMask scope_type_mask = 4;
 }
 
 // List of permissions types.
@@ -97,15 +115,12 @@ message RoleAssignmentSummary {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "role_id" ] }
   };
-
   // The id of the role being detailed
   int32 role_id = 1;
-
   // List of workspace IDs to apply the role.
   repeated int32 scope_workspace_ids = 2;
-
-  // Whether the permission is a global-only permission
-  bool is_global = 3;
+  // Whether the role is assigned cluster-wide.
+  bool scope_cluster = 3;
 }
 
 // RoleAssignment contains information about the scope
@@ -116,9 +131,10 @@ message RoleAssignment {
   };
   // The role of the assignment.
   Role role = 1;
-  // The id of the workspace the role belongs to.
-  // Omit for a global scope.
-  google.protobuf.Int32Value scope_workspace_id = 2;
+  // The id of the workspace the role belongs to. Empty for cluster-wide scope.
+  optional int32 scope_workspace_id = 2;
+  // Whether the role is assigned cluster-wide.
+  bool scope_cluster = 3;
 }
 
 // GroupRoleAssignment contains information about the groups

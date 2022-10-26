@@ -5594,11 +5594,11 @@ export interface V1Permission {
      */
     name?: string;
     /**
-     * 
-     * @type {boolean}
+     * Allowed scope types.
+     * @type {V1ScopeTypeMask}
      * @memberof V1Permission
      */
-    isGlobal?: boolean;
+    scopeTypeMask?: V1ScopeTypeMask;
 }
 
 /**
@@ -7114,6 +7114,12 @@ export interface V1Role {
      * @memberof V1Role
      */
     permissions?: Array<V1Permission>;
+    /**
+     * Allowed scope types.
+     * @type {V1ScopeTypeMask}
+     * @memberof V1Role
+     */
+    scopeTypeMask?: V1ScopeTypeMask;
 }
 
 /**
@@ -7129,11 +7135,17 @@ export interface V1RoleAssignment {
      */
     role: V1Role;
     /**
-     * The id of the workspace the role belongs to. Omit for a global scope.
+     * The id of the workspace the role belongs to. Empty for cluster-wide scope.
      * @type {number}
      * @memberof V1RoleAssignment
      */
     scopeWorkspaceId?: number;
+    /**
+     * Whether the role is assigned cluster-wide.
+     * @type {boolean}
+     * @memberof V1RoleAssignment
+     */
+    scopeCluster?: boolean;
 }
 
 /**
@@ -7155,11 +7167,11 @@ export interface V1RoleAssignmentSummary {
      */
     scopeWorkspaceIds?: Array<number>;
     /**
-     * 
+     * Whether the role is assigned cluster-wide.
      * @type {boolean}
      * @memberof V1RoleAssignmentSummary
      */
-    isGlobal?: boolean;
+    scopeCluster?: boolean;
 }
 
 /**
@@ -7263,6 +7275,26 @@ export enum V1SchedulerType {
     KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
     SLURM = <any> 'SCHEDULER_TYPE_SLURM',
     PBS = <any> 'SCHEDULER_TYPE_PBS'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ScopeTypeMask
+ */
+export interface V1ScopeTypeMask {
+    /**
+     * Whether this permission or role can be assigned globally, i.e. cluster-wide. Currently, all permissions can be assigned globally, so this is always true.
+     * @type {boolean}
+     * @memberof V1ScopeTypeMask
+     */
+    cluster?: boolean;
+    /**
+     * Whether this permission or role can be assigned on a particular workspace. For example, `ADMINISTRATE_USER` permission will have this field set to false, since user creation can only be done at a cluster level, and it doesn't make sense for a single workspace.
+     * @type {boolean}
+     * @memberof V1ScopeTypeMask
+     */
+    workspace?: boolean;
 }
 
 /**
