@@ -84,18 +84,20 @@ const ModelRegistry: React.FC = () => {
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchModels = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const response = await getModels(
         {
-          archived: settings?.archived ? undefined : false,
-          description: settings?.description,
-          labels: settings?.tags,
-          limit: settings?.tableLimit,
-          name: settings?.name,
-          offset: settings?.tableOffset,
-          orderBy: settings?.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings?.sortKey),
-          users: settings?.users,
+          archived: settings.archived ? undefined : false,
+          description: settings.description,
+          labels: settings.tags,
+          limit: settings.tableLimit,
+          name: settings.name,
+          offset: settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
+          users: settings.users,
         },
         { signal: canceler.signal },
       );

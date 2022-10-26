@@ -141,9 +141,24 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   // creates an entry at the global state
   useEffect(() => {
-    const settings = state.get(config.storagePath);
+    const settings = state.get(config.applicableRoutespace);
 
-    if (settings) return;
+    if (settings) {
+      const stateSettings = Object.keys(settings);
+      const missingSettings = Object.keys(config.settings).filter((st) => !stateSettings.includes(st));
+
+      if (!missingSettings.length) return;
+
+      for (const key of missingSettings) {
+        const setting = config.settings[key];
+
+        setting[key] = setting.defaultValue;
+      }
+
+      update(config.applicableRoutespace, settings);
+
+      return;
+    }
 
     const newSettings: Settings = {};
 
@@ -153,7 +168,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       newSettings[setting.storageKey] = setting.defaultValue;
     }
 
-    update(config.storagePath, newSettings);
+    update(config.applicableRoutespace, newSettings);
   }, [config, state, update]);
 
   // parse navigation url to state
@@ -161,7 +176,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.storagePath) ?? {};
+    const stateSettings = state.get(config.applicableRoutespace) ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
@@ -169,11 +184,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       stateSettings[setting] = settings[setting];
     });
 
-    update(config.storagePath, stateSettings, true);
+    update(config.applicableRoutespace, stateSettings, true);
   }, [config, querySettings, state, update]);
 
-  const settings: T | null = (state.get(config.storagePath) as T) ?? null;
-
+  const settings: T | null = (state.get(config.applicableRoutespace) as T) ?? null;
   /*
    * A setting is considered active if it is set to a value and the
    * value is not equivalent to a default value (if applicable).
@@ -264,7 +278,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting] = defaultSetting.defaultValue;
       });
 
-      update(config.storagePath, newSettings);
+      update(config.applicableRoutespace, newSettings);
 
       updateDB(newSettings);
     },
@@ -285,7 +299,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (isEqual(newSettings, settings)) return;
 
-      update(config.storagePath, newSettings);
+      update(config.applicableRoutespace, newSettings);
 
       await updateDB(newSettings);
 

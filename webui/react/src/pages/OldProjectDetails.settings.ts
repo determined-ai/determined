@@ -76,7 +76,7 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<ProjectDetailsSettings> = {
-  applicableRoutespace: 'project-details',
+  applicableRoutespace: '/experiments',
   settings: {
     archived: {
       defaultValue: false,

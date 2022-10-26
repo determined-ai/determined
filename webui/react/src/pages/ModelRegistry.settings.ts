@@ -50,7 +50,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'model-registry',
+  applicableRoutespace: '/models',
   settings: {
     archived: {
       defaultValue: undefined,
