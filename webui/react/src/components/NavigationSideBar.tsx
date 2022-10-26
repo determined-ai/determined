@@ -8,7 +8,6 @@ import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
-import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -117,8 +116,7 @@ const NavigationSideBar: React.FC = () => {
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
 
-  const { canCreateWorkspace, canViewWorkspace } = usePermissions();
-  const showWebhooks = useFeature().isOn('webhooks');
+  const { canCreateWorkspace, canViewWorkspace, canEditWebhooks } = usePermissions();
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
@@ -132,7 +130,7 @@ const NavigationSideBar: React.FC = () => {
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
     ];
-    if (showWebhooks) {
+    if (canEditWebhooks) {
       topItems.splice(topItems.length - 1, 0, {
         icon: 'webhooks',
         label: 'Webhooks',
@@ -159,7 +157,7 @@ const NavigationSideBar: React.FC = () => {
       ],
       top: topItems,
     };
-  }, [canAccessUncategorized, info.branding, showWebhooks]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
