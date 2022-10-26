@@ -4,11 +4,9 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import pytest
 
-from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.test_users import ADMIN_CREDENTIALS
 
 # global variable to store the webhook request
 request_to_webhook_endpoint = {}
