@@ -145,7 +145,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
     if (settings) {
       const stateSettings = Object.keys(settings);
-      const missingSettings = Object.keys(config.settings).filter((st) => !stateSettings.includes(st));
+      const missingSettings = Object.keys(config.settings).filter(
+        (st) => !stateSettings.includes(st),
+      );
 
       if (!missingSettings.length) return;
 
