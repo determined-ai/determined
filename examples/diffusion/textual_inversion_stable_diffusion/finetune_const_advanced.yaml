@@ -21,7 +21,7 @@ hyperparameters:
         concept_strs: # Individual strings representing new concepts. Must not exist in tokenizer.  
             - det-logo
         initializer_strs: # Strings which describe the added concepts. 
-            - brain logo, concept art
+            - brain logo, sharp lines, connected circles, concept art
         img_dirs:
             - det_logos
         img_size: 512
