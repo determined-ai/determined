@@ -197,7 +197,7 @@ func experimentToWebhookPayload(e model.Experiment) *ExperimentPayload {
 		Name:          e.Config.Name(),
 		Duration:      duration,
 		ResourcePool:  e.Config.Resources().ResourcePool(),
-		Slots:         e.Config.Resources().SlotsPerTrial(),
+		SlotsPerTrial: e.Config.Resources().SlotsPerTrial(),
 		WorkspaceName: e.Config.Workspace(),
 		ProjectName:   e.Config.Project(),
 	}
@@ -267,7 +267,7 @@ type ExperimentPayload struct {
 	Name          expconf.Name `json:"name"`
 	Duration      int          `json:"duration"`
 	ResourcePool  string       `json:"resource_pool"`
-	Slots         int          `json:"slots"`
+	SlotsPerTrial int          `json:"slots_per_trial"`
 	WorkspaceName string       `json:"workspace"`
 	ProjectName   string       `json:"project"`
 }

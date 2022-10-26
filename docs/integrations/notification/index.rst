@@ -60,7 +60,7 @@ types may be structured differently.
             "id": 41,
             "state": "COMPLETED",
             "name": "cifar10_pytorch_const",
-            "slots": 2, // slots per trial
+            "slots_per_trial": 2,
             "duration": 41, // experiment duration measured in seconds
             "resource_pool": "default",
             "workspace": "test workspace", // experiment workspace name
