@@ -278,7 +278,7 @@ export interface GetHPImportanceResponseMetricHPImportance {
  * @export
  * @enum {string}
  */
-export enum GetMasterResponseCommunityProduct {
+export enum GetMasterResponseProduct {
     UNSPECIFIED = <any> 'PRODUCT_UNSPECIFIED',
     COMMUNITY = <any> 'PRODUCT_COMMUNITY'
 }
@@ -3153,10 +3153,10 @@ export interface V1GetMasterResponse {
     rbacEnabled?: boolean;
     /**
      * 
-     * @type {GetMasterResponseCommunityProduct}
+     * @type {GetMasterResponseProduct}
      * @memberof V1GetMasterResponse
      */
-    product?: GetMasterResponseCommunityProduct;
+    product?: GetMasterResponseProduct;
     /**
      * List of features that is on.
      * @type {Array<string>}

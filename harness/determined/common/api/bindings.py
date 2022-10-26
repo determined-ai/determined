@@ -124,7 +124,7 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
-class GetMasterResponseCommunityProduct(enum.Enum):
+class GetMasterResponseProduct(enum.Enum):
     PRODUCT_UNSPECIFIED = "PRODUCT_UNSPECIFIED"
     PRODUCT_COMMUNITY = "PRODUCT_COMMUNITY"
 
@@ -2545,7 +2545,7 @@ class v1GetMasterResponse:
         externalLoginUri: "typing.Optional[str]" = None,
         externalLogoutUri: "typing.Optional[str]" = None,
         featureSwitches: "typing.Optional[typing.Sequence[str]]" = None,
-        product: "typing.Optional[GetMasterResponseCommunityProduct]" = None,
+        product: "typing.Optional[GetMasterResponseProduct]" = None,
         rbacEnabled: "typing.Optional[bool]" = None,
         ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None,
         telemetryEnabled: "typing.Optional[bool]" = None,
@@ -2576,7 +2576,7 @@ class v1GetMasterResponse:
             externalLogoutUri=obj.get("externalLogoutUri", None),
             branding=obj.get("branding", None),
             rbacEnabled=obj.get("rbacEnabled", None),
-            product=GetMasterResponseCommunityProduct(obj["product"]) if obj.get("product", None) is not None else None,
+            product=GetMasterResponseProduct(obj["product"]) if obj.get("product", None) is not None else None,
             featureSwitches=obj.get("featureSwitches", None),
         )
 

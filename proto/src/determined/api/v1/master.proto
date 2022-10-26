@@ -31,7 +31,7 @@ message GetMasterResponse {
     }
   };
   // Different kinds of Determined Cloud offerings
-  enum CommunityProduct {
+  enum Product {
     // Not a Cloud Community offering
     PRODUCT_UNSPECIFIED = 0;
     // Determined Cloud, Community Edition
@@ -58,7 +58,7 @@ message GetMasterResponse {
   // Feature flag for RBAC and user groups.
   bool rbac_enabled = 10;
   // What kind of product offering the cluster is part of, if any
-  CommunityProduct product = 11;
+  Product product = 11;
   // List of features that is on.
   repeated string feature_switches = 12;
 }
