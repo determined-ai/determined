@@ -1,7 +1,7 @@
 import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 
 import { Size } from '../Avatar/Avatar';
 
@@ -26,7 +26,7 @@ export const Default: Story<AvatarCardProps & { nameLength: number }> = ({
   nameLength,
   ...args
 }) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   return <AvatarCard {...args} darkLight={ui.darkLight} displayName={names[nameLength - 1]} />;
 };
 

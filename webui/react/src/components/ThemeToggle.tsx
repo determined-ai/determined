@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { useStore, useStoreDispatch } from 'contexts/Store';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 import { Mode } from 'shared/themes';
 
 import css from './ThemeToggle.module.scss';
@@ -31,17 +30,19 @@ export const ThemeOptions: Record<Mode, ThemeOption> = {
 };
 
 const ThemeToggle: React.FC = () => {
-  const { ui } = useStore();
-  const storeDispatch = useStoreDispatch();
+  const {
+    ui: { mode: uiMode },
+    actions: { setMode },
+  } = useUI();
 
   const classes = [css.toggler];
-  const currentThemeOption = ThemeOptions[ui.mode];
+  const currentThemeOption = ThemeOptions[uiMode];
   classes.push(css[currentThemeOption.className]);
 
   const newThemeMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    storeDispatch({ type: StoreActionUI.SetMode, value: currentThemeOption.next });
+    setMode(currentThemeOption.next);
   };
 
   return (

@@ -18,6 +18,7 @@ import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import useUI from 'shared/contexts/stores/UI';
 import { BrandingType } from 'types';
 
 import css from './NavigationSideBar.module.scss';
@@ -106,7 +107,8 @@ export const NavigationItem: React.FC<ItemProps> = ({
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { agents, auth, cluster: overview, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { ui } = useUI();
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab();
