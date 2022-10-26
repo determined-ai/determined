@@ -14,7 +14,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeOptions } from '../src/components/ThemeToggle';
 import StoreProvider, { StoreAction, useStoreDispatch } from '../src/contexts/Store';
 import useTheme from '../src/hooks/useTheme';
-import { StoreActionUI } from '../src/shared/contexts/UIStore';
+import useUI from '../src/shared/contexts/stores/UI';
 import { BrandingType } from '../src/types';
 
 export const globalTypes = {
@@ -45,6 +45,7 @@ const ChildView = (
 ) => {
   const storeDispatch = useStoreDispatch();
   useTheme();
+  const { actions: uiActions } = useUI();
 
   useEffect(() => {
     // Have to set info.branding for useTheme to work
@@ -97,8 +98,8 @@ const ChildView = (
       default:
         currentTheme = ThemeOptions.system.className;
     }
-    storeDispatch({ type: StoreActionUI.SetMode, value: currentTheme });
-  }, [ context.globals.theme, storeDispatch ]);
+    uiActions.setMode(currentTheme);
+  }, [ context.globals.theme, uiActions]);
 
   return <>{children}</>;
 };
