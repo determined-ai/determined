@@ -1,23 +1,22 @@
-export const UserWebSettingsDomain = {
-  Global: 'global',
-  ProjectDetail: 'projectDetail',
-} as const;
+import { number, string } from '@recoiljs/refine';
+import { atom, atomFamily, selector, selectorFamily } from 'recoil';
+import { urlSyncEffect } from 'recoil-sync';
 
-const GlobalKeys = {
-  Global_Theme: 'theme',
+import { getUserWebSetting, updateUserWebSetting } from 'services/api';
+
+export const UserWebSettingsDomain = {
+  ProjectDetail: 'projectDetail',
 } as const;
 
 export const ProjectDetailKeys = {
   Columns: 'columns',
   ColumnWidths: 'columnWidths',
-  Each: 'each',
   TableLimit: 'tableLimit',
 } as const;
 
-export type GlobalKeys = typeof GlobalKeys[keyof typeof GlobalKeys];
 export type ProjectDetailKeys = typeof ProjectDetailKeys[keyof typeof ProjectDetailKeys];
 
-export type UserWebSettingsSubDomainName = GlobalKeys | ProjectDetailKeys;
+export type UserWebSettingsSubDomainName = ProjectDetailKeys;
 
 export type UserWebSettingsDomainName =
   typeof UserWebSettingsDomain[keyof typeof UserWebSettingsDomain];
@@ -25,45 +24,104 @@ export type UserWebSettingsDomainName =
 export type ProjectDetailData = {
   [ProjectDetailKeys.ColumnWidths]: number[];
   [ProjectDetailKeys.Columns]: string[];
-  [ProjectDetailKeys.Each]: Record<
-    number,
-    {
-      archived: boolean;
-      pinned: number[];
-      sortKey: string;
-      userFilter: number[];
-    }
-  >;
   [ProjectDetailKeys.TableLimit]: number;
-};
-
-export type GlobalData = {
-  [GlobalKeys.Global_Theme]: 'dark' | 'light' | 'system';
+  [projectId: number]: {
+    archived: boolean;
+    pinned: number[];
+    sortKey: string;
+    userFilter: number[];
+  };
 };
 
 export type UserWebSettings = {
-  [UserWebSettingsDomain.Global]: GlobalData;
   [UserWebSettingsDomain.ProjectDetail]: ProjectDetailData;
 };
 
-export type Param<T extends keyof UserWebSettings, S extends UserWebSettingsSubDomainName> = {
-  domain: T;
-  subDomain: S;
-};
-
-export const defaultUserWebSettings: UserWebSettings = {
-  [UserWebSettingsDomain.Global]: { [GlobalKeys.Global_Theme]: 'system' },
+const defaultUserWebSettings: UserWebSettings = {
   [UserWebSettingsDomain.ProjectDetail]: {
     [ProjectDetailKeys.Columns]: ['id', 'name'],
     [ProjectDetailKeys.ColumnWidths]: [],
-    [ProjectDetailKeys.Each]: {
-      1: {
-        archived: false,
-        pinned: [],
-        sortKey: '',
-        userFilter: [],
-      },
-    },
     [ProjectDetailKeys.TableLimit]: 20,
+    1: {
+      archived: false,
+      pinned: [],
+      sortKey: '',
+      userFilter: [],
+    },
   },
 };
+
+const allUserSettingsState = selector<UserWebSettings>({
+  get: async () => {
+    try {
+      const response = await getUserWebSetting({});
+      const resSettings = response.settings;
+      const settings: UserWebSettings = { ...defaultUserWebSettings, ...resSettings };
+      return settings;
+    } catch (e) {
+      throw new Error('unable to fetch userWebSettings data');
+    }
+  },
+  key: 'allUserSettingsState',
+});
+
+const userSettingsSelector = selectorFamily<unknown, UserWebSettingsSubDomainName>({
+  get:
+    (subDomain) =>
+    ({ get }) => {
+      const domains = get(allUserSettingsState);
+      const domain = domains['projectDetail'];
+      return domain[subDomain];
+    },
+  key: 'userSettingsDomainQuery',
+});
+
+const userSettingsDomainState = atomFamily<any, UserWebSettingsSubDomainName>({
+  default: userSettingsSelector,
+  effects: (subDomain) => [
+    ({ onSet }) => {
+      onSet((newValue) => {
+        updateUserWebSetting({
+          setting: { value: { projectDetail: { [subDomain]: newValue } } },
+        });
+      });
+    },
+  ],
+  key: 'userSettingsDomainState',
+});
+
+export const config = {
+  settings: {
+    columns: {
+      atom: userSettingsDomainState('columns'),
+    },
+    columnWidths: {
+      atom: userSettingsDomainState('columnWidths'),
+    },
+    letter: {
+      atom: atom<string>({
+        default: 'abc',
+        effects: [
+          urlSyncEffect({ history: 'replace', refine: string(), storeKey: 'projectDetail' }),
+        ],
+        key: 'letter',
+      }),
+    },
+    numOfCake: {
+      atom: atom<number>({
+        default: 0,
+        effects: [
+          urlSyncEffect({
+            history: 'replace',
+            refine: number(),
+            storeKey: 'projectDetail',
+          }),
+        ],
+        key: 'numOfCake',
+      }),
+    },
+    tableLimit: {
+      atom: userSettingsDomainState('tableLimit'),
+    },
+  },
+} as const;

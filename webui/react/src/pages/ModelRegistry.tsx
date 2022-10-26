@@ -1,7 +1,7 @@
 import { Button, Dropdown, Menu, Space, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
@@ -50,6 +50,7 @@ import settingsConfig, {
   ModelColumnName,
   Settings,
 } from './ModelRegistry.settings';
+import Test from './Test';
 
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
@@ -552,6 +553,9 @@ const ModelRegistry: React.FC = () => {
         </Space>
       }
       title="Model Registry">
+      <Suspense fallback={<div>loading</div>}>
+        <Test />
+      </Suspense>
       {models.length === 0 && !isLoading && filterCount === 0 ? (
         <div className={css.emptyBase}>
           <div className={css.icon}>
