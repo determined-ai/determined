@@ -79,12 +79,11 @@ def log_in_user(parsed_args: Namespace) -> None:
     token_store.set_token(username, token)
     token_store.set_active(username)
 
-@login_sdk_client
+@authentication.optional
 def log_out_user(parsed_args: Namespace) -> None:
     auth = authentication.cli_auth
     if auth is None:
         return
-
     try:
         api.post(
             parsed_args.master,
@@ -95,7 +94,7 @@ def log_out_user(parsed_args: Namespace) -> None:
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
-
+    
     token_store = authentication.TokenStore(parsed_args.master)
     token_store.drop_user(auth.get_session_user())
 

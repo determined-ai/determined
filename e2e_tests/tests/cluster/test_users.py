@@ -53,7 +53,6 @@ def login_admin() -> None:
     child.close()
     assert child.exitstatus == 0
 
-
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
     assert log_in_user(credentials) == 0
@@ -216,6 +215,7 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
 def test_create_user_sdk(clean_auth: None, login_admin: None): 
     username =  get_random_string()
     password = get_random_string()
+    client.login(master=conf.make_master_url())
     user = client.create_user(username=username, admin= False, password=password)
     assert user.user_id is not None and user.username == username
 
@@ -295,6 +295,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
 
     # SDK testing for activating and deactivating. 
     log_in_user(ADMIN_CREDENTIALS)
+    client.login(master=conf.make_master_url())
     user = client.get_user_by_name(user_name=creds.username)
     assert user.deactivate().user.active == False
     assert user.activate().user.active == True
@@ -323,6 +324,7 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
     
     newPasswordSdk = get_random_string()
+    client.login(master=conf.make_master_url())
     user = client.get_user_by_name(user_name=creds.username)
     assert user.change_password(new_password=newPasswordSdk, is_hashed=False)
     assert log_in_user(authentication.Credentials(creds.username, newPasswordSdk)) == 0
@@ -764,6 +766,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
 
 def create_linked_user_sdk(uid: int, agent_user: str, gid: int, group: str): 
     creds = create_test_user(False)
+    client.login(master=conf.make_master_url())
     user = client.get_user_by_name(user_name=creds.username)
     resp = user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
     return creds
