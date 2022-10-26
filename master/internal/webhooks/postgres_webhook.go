@@ -75,12 +75,7 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	return nil
 }
 
-// CountEvents returns the total number of events from the DB.
-func CountEvents(ctx context.Context) (int, error) {
-	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
-}
-
-// ReportExperimentStateChanged adds webhook events to the que.
+// ReportExperimentStateChanged adds webhook events to the queue.
 func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error {
 	defer func() {
 		if rec := recover(); rec != nil {
@@ -162,7 +157,8 @@ func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, erro
 	wName := e.Config.Workspace()
 	pName := e.Config.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
-	if webUIBaseURL != "" && wName != "" && pName != "" {
+	baseUrlIsSet := webUIBaseURL != nil
+	if baseUrlIsSet && wName != "" && pName != "" {
 		ws, err := workspace.WorkspaceByName(ctx, wName)
 		if err != nil {
 			return nil, err
@@ -185,7 +181,7 @@ func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, erro
 
 	if e.State == model.CompletedState {
 		status = "Your experiment completed successfully 🎉"
-		if webUIBaseURL != "" {
+		if baseUrlIsSet {
 			eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>",
 				webUIBaseURL, e.ID, e.Config.Name(), e.ID)
 		} else {
@@ -195,7 +191,7 @@ func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, erro
 		mStatus = "Completed"
 	} else {
 		status = "Your experiment has stopped with errors"
-		if webUIBaseURL != "" {
+		if baseUrlIsSet {
 			eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
 				webUIBaseURL, e.ID, e.Config.Name(), e.ID)
 		} else {
@@ -218,7 +214,7 @@ func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, erro
 			Text: fmt.Sprintf("*Duration*: %v", duration),
 		},
 	}
-	if wID != 0 && wName != "" && webUIBaseURL != "" {
+	if wID != 0 && wName != "" && baseUrlIsSet {
 		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Workspace*: <%v/det/workspaces/%v/projects | %v>",
@@ -230,7 +226,7 @@ func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, erro
 			Text: fmt.Sprintf("*Workspace*: %v", wName),
 		})
 	}
-	if projectID != 0 && pName != "" && webUIBaseURL != "" {
+	if projectID != 0 && pName != "" && baseUrlIsSet {
 		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Project*: <%v/det/projects/%v | %v>",
@@ -279,14 +275,14 @@ type eventBatch struct {
 	consumed bool
 }
 
-func (b *eventBatch) close() error {
+func (b *eventBatch) rollback() error {
 	if !b.consumed {
 		return b.tx.Rollback()
 	}
 	return nil
 }
 
-func (b *eventBatch) consume() error {
+func (b *eventBatch) commit() error {
 	b.consumed = true
 	if err := b.tx.Commit(); err != nil {
 		return fmt.Errorf("consuming event batch: %w", err)

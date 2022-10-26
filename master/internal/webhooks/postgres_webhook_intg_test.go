@@ -304,7 +304,7 @@ func TestDequeueEvents(t *testing.T) {
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp))
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
-		require.NoError(t, batch.consume())
+		require.NoError(t, batch.commit())
 		require.NoError(t, err)
 		require.Equal(t, 1, len(batch.events))
 	})
@@ -318,7 +318,7 @@ func TestDequeueEvents(t *testing.T) {
 		}
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
-		require.NoError(t, batch.consume())
+		require.NoError(t, batch.commit())
 		require.NoError(t, err)
 		require.Equal(t, maxEventBatchSize, len(batch.events))
 	})
@@ -331,10 +331,10 @@ func TestDequeueEvents(t *testing.T) {
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
 		require.NoError(t, err)
-		require.NoError(t, batch.close())
+		require.NoError(t, batch.rollback())
 
 		batch, err = dequeueEvents(ctx, maxEventBatchSize)
-		require.NoError(t, batch.consume())
+		require.NoError(t, batch.commit())
 		require.NoError(t, err)
 		require.Equal(t, 1, len(batch.events))
 	})
@@ -342,8 +342,13 @@ func TestDequeueEvents(t *testing.T) {
 
 func clearWebhooksTables(ctx context.Context, t *testing.T) {
 	t.Log("clear webhooks db")
-	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("1=1").Exec(ctx)
+	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("true").Exec(ctx)
 	require.NoError(t, err)
-	_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("1=1").Exec(ctx)
+	_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
 	require.NoError(t, err)
+}
+
+// CountEvents returns the total number of events from the DB.
+func CountEvents(ctx context.Context) (int, error) {
+	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
 }

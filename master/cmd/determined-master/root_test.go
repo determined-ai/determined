@@ -47,7 +47,8 @@ webhooks:
 `
 
 	expected := config.DefaultConfig()
-	expected.Webhooks.SigningKey = "testWebhookSigningKey"
+	expectedSigningKey := "testWebhookSigningKey"
+	expected.Webhooks.SigningKey = &expectedSigningKey
 	providerConf := provconfig.DefaultConfig()
 	providerConf.GCP = provconfig.DefaultGCPClusterConfig()
 	providerConf.GCP.BaseConfig = &compute.Instance{

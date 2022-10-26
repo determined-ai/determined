@@ -22,8 +22,7 @@ import (
 )
 
 const (
-	pathToMigrations = "file://../../static/migrations"
-	testURL          = "localhost:8181"
+	testURL = "localhost:8181"
 )
 
 func TestShipper(t *testing.T) {
@@ -31,7 +30,8 @@ func TestShipper(t *testing.T) {
 	defer cancel()
 
 	pgDB := db.MustResolveTestPostgres(t)
-	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
+	db.MustMigrateTestPostgres(t, dbIns, db.MigrationsFromDB)
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 
 	t.Log("setup test webhook receiver")

@@ -47,20 +47,17 @@ def test_slack_webhook() -> None:
     global request_to_webhook_endpoint
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
-    master_url = conf.make_master_url()
-    admin_auth = authentication.Authentication(
-        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
-    )
-    sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
+    sess = exp.determined_test_session(admin=True)
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE,
-        condition= {"state": "COMPLETED"})
+        condition={"state": "COMPLETED"},
+    )
 
     webhook_request = bindings.v1Webhook(
         url=f"http://localhost:{SERVER_PORT}",
         webhookType=bindings.v1WebhookType.WEBHOOK_TYPE_SLACK,
-        triggers=[webhook_trigger]
+        triggers=[webhook_trigger],
     )
 
     result = bindings.post_PostWebhook(sess, body=webhook_request)

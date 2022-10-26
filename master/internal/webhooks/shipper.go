@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	back "github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -144,7 +144,7 @@ func (w *worker) shipBatch(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("getting events: %w", err)
 	}
 	defer func() {
-		if err := b.close(); err != nil {
+		if err := b.rollback(); err != nil {
 			w.log.WithError(err).Warn("failed to finalize batch")
 		}
 	}()
@@ -154,9 +154,9 @@ func (w *worker) shipBatch(ctx context.Context) (int, error) {
 		wg.Add(1)
 		go func(e Event) {
 			defer wg.Done()
-			if err := backoff.Retry(
+			if err := back.Retry(
 				func() error { return w.deliver(ctx, e) },
-				w.backoff(),
+				backoff(),
 			); err != nil {
 				w.log.WithError(err).Error("failed to deliver webhook")
 			}
@@ -167,17 +167,17 @@ func (w *worker) shipBatch(ctx context.Context) (int, error) {
 		return 0, err
 	}
 
-	if err := b.consume(); err != nil {
+	if err := b.commit(); err != nil {
 		return 0, fmt.Errorf("consuming batch: %w", err)
 	}
 	return len(b.events), nil
 }
 
-func (w *worker) backoff() backoff.BackOff {
-	bf := backoff.NewExponentialBackOff()
+func backoff() back.BackOff {
+	bf := back.NewExponentialBackOff()
 	bf.InitialInterval = backoffInterval
 	bf.MaxInterval = backoffMax
-	return backoff.WithMaxRetries(bf, backoffAttempts)
+	return back.WithMaxRetries(bf, backoffAttempts)
 }
 
 func (w *worker) deliver(ctx context.Context, e Event) error {
@@ -200,7 +200,7 @@ func (w *worker) deliver(ctx context.Context, e Event) error {
 	case resp.StatusCode >= 500:
 		return fmt.Errorf("request returned %v: %w", resp.StatusCode, err)
 	case resp.StatusCode >= 400:
-		return backoff.Permanent(fmt.Errorf("request returned %v: %w", resp.StatusCode, err))
+		return back.Permanent(fmt.Errorf("request returned %v: %w", resp.StatusCode, err))
 	default:
 		return nil
 	}
@@ -225,7 +225,7 @@ func generateWebhookRequest(
 }
 
 func generateSignedPayload(req *http.Request, t int64) string {
-	key := []byte(conf.GetMasterConfig().Webhooks.SigningKey)
+	key := []byte(*conf.GetMasterConfig().Webhooks.SigningKey)
 	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
 	return hex.EncodeToString(hmac.New(sha256.New, key).Sum(message))
 }

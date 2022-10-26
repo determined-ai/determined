@@ -1,6 +1,6 @@
-DROP TABLE webhook_events;
+DROP TABLE IF EXISTS webhook_events;
 
-CREATE TABLE webhook_events_queue (
+CREATE TABLE IF NOT EXISTS webhook_events_queue (
   id SERIAL PRIMARY KEY,
   url text NOT NULL,
   payload bytea NOT NULL

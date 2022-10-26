@@ -76,8 +76,8 @@ type DBConfig struct {
 
 // WebhooksConfig hosts configuration fields for webhook functionality.
 type WebhooksConfig struct {
-	BaseURL    string `json:"base_url"`
-	SigningKey string `json:"signing_key"`
+	BaseURL    *string `json:"base_url"`
+	SigningKey *string `json:"signing_key"`
 }
 
 // DefaultConfig returns the default configuration of the master.
@@ -119,10 +119,6 @@ func DefaultConfig() *Config {
 		// For developers this should be a writable directory for caching files.
 		Cache: CacheConfig{
 			CacheDir: "/var/cache/determined",
-		},
-		Webhooks: WebhooksConfig{
-			BaseURL:    "",
-			SigningKey: "",
 		},
 		FeatureSwitches: []string{},
 		HPImportance: HPImportanceConfig{
@@ -238,12 +234,13 @@ func (c *Config) Resolve() error {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
-	if c.Webhooks.SigningKey == "" {
+	if c.Webhooks.SigningKey == nil {
 		b := make([]byte, 6)
 		if _, err := rand.Read(b); err != nil {
 			return err
 		}
-		c.Webhooks.SigningKey = hex.EncodeToString(b)
+		generatedSigningKey := hex.EncodeToString(b)
+		c.Webhooks.SigningKey = &generatedSigningKey
 	}
 
 	if err := c.ResolveResource(); err != nil {
