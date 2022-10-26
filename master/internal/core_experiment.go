@@ -121,7 +121,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	ctx := context.TODO()
+	ctx := c.Request().Context()
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID, false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	ctx := context.TODO()
+	ctx := c.Request().Context()
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID, false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
@@ -195,7 +195,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	ctx := context.TODO()
+	ctx := c.Request().Context()
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID, false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
@@ -241,7 +241,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	ctx := context.TODO()
+	ctx := c.Request().Context()
 	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID, true)
 	if err != nil {
 		return nil, err
@@ -541,7 +541,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	if err = json.Unmarshal(body, &params); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
-	ctx := context.TODO()
+	ctx := c.Request().Context()
 	if params.ParentID != nil {
 		if _, _, err = echoGetExperimentAndCheckCanDoActions(ctx, c, m, *params.ParentID, false,
 			expauth.AuthZProvider.Get().CanForkFromExperiment); err != nil {
