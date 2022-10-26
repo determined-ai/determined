@@ -2,7 +2,6 @@ import { Form, message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
@@ -17,8 +16,8 @@ import css from './useModalWorkspaceAddMember.module.scss';
 
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
-  rolesAssignableToScope: V1Role[];
   onClose?: () => void;
+  rolesAssignableToScope: V1Role[];
   workspaceId: number;
 }
 interface FormInputs {
@@ -43,14 +42,14 @@ const useModalWorkspaceAddMember = ({
       mockWorkspaceMembers
         ? [
             {
-              roleId: 1,
               name: 'Editor',
               permissions: [],
+              roleId: 1,
             },
             {
-              roleId: 2,
               name: 'Viewer',
               permissions: [],
+              roleId: 2,
             },
           ]
         : knownRoles,
@@ -178,7 +177,7 @@ const useModalWorkspaceAddMember = ({
         </Form>
       </div>
     );
-  }, [addableUsersAndGroups, form, handleFilter, handleSelect, knownRoles]);
+  }, [addableUsersAndGroups, form, handleFilter, handleSelect, knownRoles, rolesAssignableToScope]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {

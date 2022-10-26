@@ -130,7 +130,7 @@ const WorkspaceDetails: React.FC = () => {
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal]);
+  }, [canceler.signal, id]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
@@ -142,7 +142,13 @@ const WorkspaceDetails: React.FC = () => {
       fetchGroupsAndUsersAssignedToWorkspace(),
       fetchRolesAssignableToScope(),
     ]);
-  }, [fetchWorkspace, fetchGroups, fetchUsers, fetchGroupsAndUsersAssignedToWorkspace]);
+  }, [
+    fetchWorkspace,
+    fetchGroups,
+    fetchUsers,
+    fetchGroupsAndUsersAssignedToWorkspace,
+    fetchRolesAssignableToScope,
+  ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
