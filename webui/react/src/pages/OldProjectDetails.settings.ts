@@ -85,6 +85,7 @@ const config: SettingsConfig<ProjectDetailsSettings> = {
     },
     columns: {
       defaultValue: DEFAULT_COLUMNS,
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: array(
         union([
