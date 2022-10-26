@@ -1,4 +1,4 @@
-import { Form, Input, message, Select, Switch } from 'antd';
+import { Form, Input, message, Select, Switch, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -125,6 +125,9 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
               </Select.Option>
             ))}
           </Select>
+          <Typography.Text type="secondary">
+            Note that roles inherited from user groups cannot be removed here.
+          </Typography.Text>
         </Form.Item>
       )}
     </Form>
@@ -187,8 +190,10 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
           if (canModifyPermissions) {
-            rolesToAdd.size > 0 && await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id });
-            rolesToRemove.size > 0 && await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id });
+            rolesToAdd.size > 0 &&
+              (await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id }));
+            rolesToRemove.size > 0 &&
+              (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
           }
           fetchUserRoles();
           message.success(API_SUCCESS_MESSAGE_EDIT);

@@ -181,14 +181,16 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
           const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
           const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
-          rolesToAdd.size > 0 && await assignRolesToGroup({
-            groupId: group.group.groupId,
-            roleIds: Array.from(rolesToAdd),
-          });
-          rolesToRemove.size > 0 && await removeRolesFromGroup({
-            groupId: group.group.groupId,
-            roleIds: Array.from(rolesToRemove),
-          });
+          rolesToAdd.size > 0 &&
+            (await assignRolesToGroup({
+              groupId: group.group.groupId,
+              roleIds: Array.from(rolesToAdd),
+            }));
+          rolesToRemove.size > 0 &&
+            (await removeRolesFromGroup({
+              groupId: group.group.groupId,
+              roleIds: Array.from(rolesToRemove),
+            }));
           await fetchGroupRoles();
         }
         message.success(API_SUCCESS_MESSAGE_EDIT);
