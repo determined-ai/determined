@@ -305,15 +305,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       await updateDB(newSettings);
 
-      const queries = window.location.search;
-      const querySettings = queries.substr(/^\?/.test(location.search) ? 1 : 0);
       const mappedSettings = settingsToQuery(config, newSettings);
-
-      const filteredQueries = querySettings
-        .split('&')
-        .filter((query) => !Object.keys(newSettings).includes(query))
-        .join('&');
-      const url = `${filteredQueries ? `?${filteredQueries}&` : '?'}${mappedSettings}`;
+      const url = `?${mappedSettings}`;
 
       shouldPush ? navigate(url) : navigate(url, { replace: true });
     },
