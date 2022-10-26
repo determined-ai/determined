@@ -5,8 +5,12 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/webhookv1"
+
+	"github.com/google/uuid"
 )
 
 // Webhooks is a slice of Webhook objects.
@@ -25,11 +29,11 @@ func (ws Webhooks) Proto() []*webhookv1.Webhook {
 type Webhook struct {
 	bun.BaseModel `bun:"table:webhooks"`
 
-	ID  WebhookID `bun:"id,pk,autoincrement"`
-	URL string    `bun:"url,notnull"`
-
-	Triggers    Triggers    `bun:"rel:has-many,join:id=webhook_id"`
+	ID          WebhookID   `bun:"id,pk,autoincrement"`
 	WebhookType WebhookType `bun:"webhook_type,notnull"`
+	URL         string      `bun:"url,notnull"`
+
+	Triggers Triggers `bun:"rel:has-many,join:id=webhook_id"`
 }
 
 // WebhookFromProto returns a model Webhook from a proto definition.
@@ -178,4 +182,92 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
 	}
+}
+
+// Proto returns a proto from a TriggerType.
+func experimentToWebhookPayload(e model.Experiment) *ExperimentPayload {
+	var duration int
+	if e.EndTime != nil {
+		duration = int(e.EndTime.Sub(e.StartTime).Seconds())
+	}
+
+	return &ExperimentPayload{
+		ID:            e.ID,
+		State:         e.State,
+		Name:          e.Config.Name(),
+		Duration:      duration,
+		ResourcePool:  e.Config.Resources().ResourcePool(),
+		SlotsPerTrial: e.Config.Resources().SlotsPerTrial(),
+		WorkspaceName: e.Config.Workspace(),
+		ProjectName:   e.Config.Project(),
+	}
+}
+
+// WebhookEventID is the type for Trigger IDs.
+type WebhookEventID int
+
+// Event corresponds to a row in the "webhook_events" DB table.
+type Event struct {
+	bun.BaseModel `bun:"table:webhook_events_queue"`
+
+	ID      WebhookEventID `bun:"id,pk,autoincrement"`
+	URL     string         `bun:"url,notnull"`
+	Payload []byte         `bun:"payload,notnull"`
+}
+
+// SlackMessageBody corresponds to an entire message as a Slack Block.
+type SlackMessageBody struct {
+	Blocks      []SlackBlock       `json:"blocks,omitempty"`
+	Attachments *[]SlackAttachment `json:"attachments,omitempty"`
+}
+
+// SlackAttachment corresponds to an Attachment Slack Block element.
+type SlackAttachment struct {
+	Color  string       `json:"color,omitempty"`
+	Blocks []SlackBlock `json:"blocks,omitempty"`
+}
+
+// SlackBlock corresponds to a Slack Block element.
+type SlackBlock struct {
+	Type   string        `json:"type,omitempty"`
+	Text   SlackField    `json:"text,omitempty"`
+	Fields *[]SlackField `json:"fields,omitempty"`
+}
+
+// SlackField corresponds to a field in a Slack Block element.
+type SlackField struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// EventPayload respresents a webhook event.
+type EventPayload struct {
+	ID        uuid.UUID   `json:"event_id"`
+	Type      TriggerType `json:"event_type"`
+	Timestamp int64       `json:"timestamp"`
+	Condition Condition   `json:"condition"`
+	Data      EventData   `json:"event_data"`
+}
+
+// Condition represents a trigger condition.
+type Condition struct {
+	State model.State `json:"state,omitempty"`
+}
+
+// EventData represents the event_data for a webhook event.
+type EventData struct {
+	TestData   *string            `json:"data,omitempty"`
+	Experiment *ExperimentPayload `json:"experiment,omitempty"`
+}
+
+// ExperimentPayload is the webhook request representation of an experiment.
+type ExperimentPayload struct {
+	ID            int          `json:"id"`
+	State         model.State  `json:"state"`
+	Name          expconf.Name `json:"name"`
+	Duration      int          `json:"duration"`
+	ResourcePool  string       `json:"resource_pool"`
+	SlotsPerTrial int          `json:"slots_per_trial"`
+	WorkspaceName string       `json:"workspace"`
+	ProjectName   string       `json:"project"`
 }

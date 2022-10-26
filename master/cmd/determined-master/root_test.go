@@ -42,8 +42,12 @@ task_container_defaults:
     spec:
       containers:
         - name: determined-container
+webhooks:
+    signing_key: testWebhookSigningKey
 `
+
 	expected := config.DefaultConfig()
+	expected.Webhooks.SigningKey = "testWebhookSigningKey"
 	providerConf := provconfig.DefaultConfig()
 	providerConf.GCP = provconfig.DefaultGCPClusterConfig()
 	providerConf.GCP.BaseConfig = &compute.Instance{
