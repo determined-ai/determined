@@ -191,18 +191,13 @@ func experimentToWebhookPayload(e model.Experiment) *ExperimentPayload {
 		duration = int(e.EndTime.Sub(e.StartTime).Seconds())
 	}
 
-	var slots int
-	if s := e.Config.Resources().Slots(); s != nil {
-		slots = *s
-	}
-
 	return &ExperimentPayload{
 		ID:            e.ID,
 		State:         e.State,
 		Name:          e.Config.Name(),
 		Duration:      duration,
 		ResourcePool:  e.Config.Resources().ResourcePool(),
-		Slots:         slots,
+		Slots:         e.Config.Resources().SlotsPerTrial(),
 		WorkspaceName: e.Config.Workspace(),
 		ProjectName:   e.Config.Project(),
 	}
