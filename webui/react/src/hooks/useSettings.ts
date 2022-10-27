@@ -1,6 +1,6 @@
 import * as t from 'io-ts';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
@@ -37,7 +37,7 @@ export type UseSettingsReturn<T> = {
   activeSettings: (keys?: string[]) => string[];
   isLoading: boolean;
   resetSettings: ResetSettings;
-  settings: T | null;
+  settings: T;
   updateSettings: UpdateSettings;
 };
 
@@ -139,40 +139,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
 
-  // creates an entry at the global state
-  useEffect(() => {
-    const settings = state.get(config.applicableRoutespace);
-
-    if (settings) {
-      const stateSettings = Object.keys(settings);
-      const missingSettings = Object.keys(config.settings).filter(
-        (st) => !stateSettings.includes(st),
-      );
-
-      if (!missingSettings.length) return;
-
-      for (const key of missingSettings) {
-        const setting = config.settings[key];
-
-        setting[key] = setting.defaultValue;
-      }
-
-      update(config.applicableRoutespace, settings);
-
-      return;
-    }
-
-    const newSettings: Settings = {};
-
-    for (const key in config.settings) {
-      const setting = config.settings[key];
-
-      newSettings[setting.storageKey] = setting.defaultValue;
-    }
-
-    update(config.applicableRoutespace, newSettings);
-  }, [config, state, update]);
-
   // parse navigation url to state
   useEffect(() => {
     if (!querySettings) return;
@@ -189,7 +155,18 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     update(config.applicableRoutespace, stateSettings, true);
   }, [config, querySettings, state, update]);
 
-  const settings: T | null = (state.get(config.applicableRoutespace) as T) ?? null;
+  const settings: T = useMemo(() => ({
+    ...(state.get(config.applicableRoutespace) ?? {}),
+} as T), [config, state]);
+
+  for (const key in config.settings) {
+    const setting = config.settings[key];
+
+    if (!settings[setting.storageKey]) {
+      settings[setting.storageKey] = setting.defaultValue;
+    }
+  }
+
   /*
    * A setting is considered active if it is set to a value and the
    * value is not equivalent to a default value (if applicable).

@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { getUserSetting } from 'services/api';
+import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -29,21 +30,17 @@ export const UserSettings = createContext<UserSettingsContext>({
   update: () => undefined,
 });
 
-// TODO: check navigation and settings and changing map to state
-
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const {
     auth: { user },
   } = useStore();
   const [canceler] = useState(new AbortController());
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');
   const settingsState = useRef(new Map<string, Settings>());
 
   useEffect(() => {
     if (!user?.id) return;
-
-    setIsLoading(true);
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
@@ -87,6 +84,8 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
 
     if (clearQuerySettings) querySettings.current = '';
   };
+
+  if (isLoading) return <Spinner spinning />;
 
   return (
     <UserSettings.Provider
