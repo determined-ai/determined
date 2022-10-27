@@ -155,9 +155,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     update(config.applicableRoutespace, stateSettings, true);
   }, [config, querySettings, state, update]);
 
-  const settings: T = useMemo(() => ({
-    ...(state.get(config.applicableRoutespace) ?? {}),
-} as T), [config, state]);
+  const settings: T = useMemo(
+    () =>
+      ({
+        ...(state.get(config.applicableRoutespace) ?? {}),
+      } as T),
+    [config, state],
+  );
 
   for (const key in config.settings) {
     const setting = config.settings[key];

@@ -99,7 +99,7 @@ const GroupManagement: React.FC = () => {
   const { canModifyGroups, canViewGroups } = usePermissions();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
-    if (!settings?.tableLimit || !settings.tableOffset) return;
+    if (!settings.tableLimit || !settings.tableOffset) return;
 
     try {
       const response = await getGroups(
@@ -120,7 +120,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings?.tableLimit, settings?.tableOffset]);
+  }, [canceler.signal, settings.tableLimit, settings.tableOffset]);
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
@@ -149,7 +149,7 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-  }, [settings?.tableLimit, settings?.tableOffset, fetchGroups, fetchUsers]);
+  }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
 
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {

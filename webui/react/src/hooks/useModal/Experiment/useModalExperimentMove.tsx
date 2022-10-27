@@ -114,7 +114,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [canMoveExperimentsTo]);
 
   const fetchProjects = useCallback(async () => {
-    if (!destSettings?.workspaceId) return;
+    if (!destSettings.workspaceId) return;
     try {
       const response = await getWorkspaceProjects({
         id: destSettings.workspaceId,
@@ -131,7 +131,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [destSettings?.workspaceId]);
+  }, [destSettings.workspaceId]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();
@@ -162,7 +162,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const renderRow = useCallback(
     ({ index, style }) => {
-      if (!destSettings?.projectId) return <Spinner spinning />;
+      if (!destSettings.projectId) return <Spinner spinning />;
 
       const disabled = projects[index].archived || projects[index].id === sourceProjectId;
       const selected = projects[index].id === destSettings.projectId;
@@ -179,7 +179,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         </li>
       );
     },
-    [destSettings?.projectId, handleProjectSelect, projects, sourceProjectId],
+    [destSettings.projectId, handleProjectSelect, projects, sourceProjectId],
   );
 
   const modalContent = useMemo(() => {
@@ -194,7 +194,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             placeholder="Select a destination workspace."
             showSearch={false}
             style={{ width: '100%' }}
-            value={destSettings?.workspaceId}
+            value={destSettings.workspaceId}
             onSelect={handleWorkspaceSelect}>
             {workspaces.map((workspace) => {
               return (
@@ -208,7 +208,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             })}
           </SelectFilter>
         </div>
-        {destSettings?.workspaceId && destSettings.workspaceId !== 1 && (
+        {destSettings.workspaceId && destSettings.workspaceId !== 1 && (
           <div>
             <label className={css.label} htmlFor="project">
               Project
@@ -239,12 +239,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         )}
       </div>
     );
-  }, [handleWorkspaceSelect, projects.length, renderRow, destSettings?.workspaceId, workspaces]);
+  }, [handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
   const handleOk = useCallback(async () => {
-    if (!destSettings?.projectId || !experimentIds?.length || !projectSettings?.pinned) return;
+    if (!destSettings.projectId || !experimentIds?.length || !projectSettings.pinned) return;
 
     const results = await Promise.allSettled(
       experimentIds.map((experimentId) =>
@@ -307,9 +307,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     }
   }, [
     closeNotification,
-    destSettings?.projectId,
+    destSettings.projectId,
     experimentIds,
-    projectSettings?.pinned,
+    projectSettings.pinned,
     projects,
     sourceProjectId,
     updateProjectSettings,
@@ -338,7 +338,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       sourceWorkspaceId,
       sourceProjectId,
     }: ShowModalProps = {}) => {
-      if (!destSettings?.workspaceId || destSettings.projectId) return;
+      if (!destSettings.workspaceId || destSettings.projectId) return;
 
       setExperimentIds(experimentIds);
       if (!destSettings.workspaceId)
@@ -356,8 +356,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       getModalProps,
       openOrUpdate,
       fetchProjects,
-      destSettings?.projectId,
-      destSettings?.workspaceId,
+      destSettings.projectId,
+      destSettings.workspaceId,
       updateDestSettings,
     ],
   );
@@ -367,9 +367,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current && destSettings?.projectId)
+    if (modalRef.current && destSettings.projectId)
       openOrUpdate(getModalProps(experimentIds, destSettings.projectId));
-  }, [destSettings?.projectId, getModalProps, modalRef, openOrUpdate, experimentIds]);
+  }, [destSettings.projectId, getModalProps, modalRef, openOrUpdate, experimentIds]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

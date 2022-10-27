@@ -86,7 +86,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   containerRef: MutableRefObject<HTMLElement | null>;
   interactiveColumns?: boolean;
   numOfPinned?: number;
-  settings?: InteractiveTableSettings;
+  settings: InteractiveTableSettings;
   updateSettings: UpdateSettings;
 }
 
@@ -411,7 +411,7 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const [widthData, setWidthData] = useState(() => {
-    const widths = settings?.columnWidths || [];
+    const widths = settings.columnWidths || [];
     return {
       dropLeftStyles:
         widths.map((width, idx) => ({
@@ -453,12 +453,12 @@ const InteractiveTable: InteractiveTable = ({
       };
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (columnKey && settings?.columns.find((col) => columnDefs[col]?.key === columnKey)) {
+      if (columnKey && settings.columns.find((col) => columnDefs[col]?.key === columnKey)) {
         newSettings.sortDesc = order === 'descend';
         newSettings.sortKey = columnKey;
       }
 
-      const shouldPush = settings?.tableOffset !== newSettings.tableOffset;
+      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
 
       if (isEqual(newSettings, settings)) return;
 
@@ -469,7 +469,7 @@ const InteractiveTable: InteractiveTable = ({
 
   const moveColumn = useCallback(
     (fromIndex, toIndex) => {
-      if (!settings?.columnWidths || !settings.columns) return;
+      if (!settings.columnWidths || !settings.columns) return;
 
       const reorderedColumns = [...settings.columns];
       const reorderedWidths = [...settings.columnWidths];
@@ -480,13 +480,13 @@ const InteractiveTable: InteractiveTable = ({
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
-    [settings?.columns, settings?.columnWidths, widthData, updateSettings],
+    [settings.columns, settings.columnWidths, widthData, updateSettings],
   );
 
   const handleResize = useCallback(
     (resizeIndex) => {
       return (e: Event, { x }: DraggableData) => {
-        if (!settings?.columns) return;
+        if (!settings.columns) return;
 
         if (timeout.current) clearTimeout(timeout.current);
         const column = settings.columns[resizeIndex];
@@ -528,13 +528,13 @@ const InteractiveTable: InteractiveTable = ({
         }, DEFAULT_RESIZE_THROTTLE_TIME);
       };
     },
-    [settings?.columns, widthData.widths, pageWidth, columnDefs],
+    [settings.columns, widthData.widths, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
     (index) =>
       (e: Event, { x }: DraggableData) => {
-        if (!settings?.columns) return;
+        if (!settings.columns) return;
 
         setIsResizing(true);
 
@@ -547,7 +547,7 @@ const InteractiveTable: InteractiveTable = ({
           return { minX, widths, ...rest };
         });
       },
-    [settings?.columns, columnDefs],
+    [settings.columns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -637,8 +637,7 @@ const InteractiveTable: InteractiveTable = ({
 
   useEffect(() => {
     // this should run only when getting new number of cols
-    if (!settings?.columnWidths || settings?.columnWidths.length === widthData.widths.length)
-      return;
+    if (!settings.columnWidths || settings.columnWidths.length === widthData.widths.length) return;
 
     const widths = getUpscaledWidths(settings.columnWidths);
     const dropRightStyles = widths.map((width, idx) => ({
@@ -651,7 +650,7 @@ const InteractiveTable: InteractiveTable = ({
     }));
 
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  }, [settings?.columnWidths, widthData, getUpscaledWidths]);
+  }, [settings.columnWidths, widthData, getUpscaledWidths]);
 
   return (
     <div className={css.tableContainer} ref={tableRef}>

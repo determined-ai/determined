@@ -155,8 +155,8 @@ const WorkspaceMembers: React.FC<Props> = ({
   }
 
   useEffect(() => {
-    onFilterUpdate(settings?.name);
-  }, [onFilterUpdate, settings?.name]);
+    onFilterUpdate(settings.name);
+  }, [onFilterUpdate, settings.name]);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -173,12 +173,12 @@ const WorkspaceMembers: React.FC<Props> = ({
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings?.name || ''}
+        value={settings.name || ''}
         onReset={handleNameSearchReset}
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings?.name],
+    [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);

@@ -217,7 +217,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             };
             break;
           case SCHEDULING_VAL_KEY: {
-            if (!settings?.columns) break;
+            if (!settings.columns) break;
 
             const replaceIndex = settings.columns.findIndex((column) =>
               ['priority', 'weight', 'resourcePool'].includes(column),
@@ -277,8 +277,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       })
       .map((column) => {
         column.sortOrder = null;
-        if (column.key === settings?.sortKey) {
-          column.sortOrder = settings?.sortDesc ? 'descend' : 'ascend';
+        if (column.key === settings.sortKey) {
+          column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
         }
         return column;
       });
@@ -287,9 +287,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [
     isJobOrderAvailable,
     dropDownOnTrigger,
-    settings?.columns,
-    settings?.sortKey,
-    settings?.sortDesc,
+    settings.columns,
+    settings.sortKey,
+    settings.sortDesc,
     selectedRp.schedulerType,
     updateSettings,
   ]);
@@ -301,7 +301,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   useEffect(() => {
     setPageState((cur) => ({ ...cur, isLoading: true }));
-  }, [settings?.sortDesc, settings?.sortKey, settings?.tableLimit, settings?.tableOffset]);
+  }, [settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset]);
 
   useEffect(() => {
     if (!managingJob) return;
@@ -342,8 +342,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             loading={pageState.isLoading}
             pagination={getFullPaginationConfig(
               {
-                limit: settings?.tableLimit ?? 0,
-                offset: settings?.tableOffset ?? 0,
+                limit: settings.tableLimit ?? 0,
+                offset: settings.tableOffset ?? 0,
               },
               total,
             )}

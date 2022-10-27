@@ -143,7 +143,7 @@ const TrialTable: React.FC<Props> = ({
         <TableFilterRank
           {...filterProps}
           column={filters.ranker?.sorter.sortKey}
-          columns={settings?.columns.filter((col) => !nonRankableColumns.includes(col)) ?? []}
+          columns={settings.columns.filter((col) => !nonRankableColumns.includes(col)) ?? []}
           rank={filters.ranker?.rank}
           sortDesc={filters.ranker?.sorter.sortDesc ?? false}
           onReset={() =>
@@ -174,7 +174,7 @@ const TrialTable: React.FC<Props> = ({
     [
       filters.ranker?.rank,
       setFilters,
-      settings?.columns,
+      settings.columns,
       filters.ranker?.sorter.sortDesc,
       filters.ranker?.sorter.sortKey,
     ],
@@ -535,8 +535,8 @@ const TrialTable: React.FC<Props> = ({
   }, [availableColumns]);
 
   const pagination = useMemo(() => {
-    const limit = settings?.tableLimit || 0;
-    const offset = settings?.tableOffset || 0;
+    const limit = settings.tableLimit || 0;
+    const offset = settings.tableOffset || 0;
     // we fetched 3 * params.limit to be able to see ahead like this
     // also has bonus side effect of giving us a better hit rate
     // for the relevant dynamic columns
@@ -548,7 +548,7 @@ const TrialTable: React.FC<Props> = ({
       },
       fakeTotal,
     );
-  }, [settings?.tableLimit, settings?.tableOffset, trials.data.length]);
+  }, [settings.tableLimit, settings.tableOffset, trials.data.length]);
 
   return (
     <div className={css.base}>
@@ -557,7 +557,7 @@ const TrialTable: React.FC<Props> = ({
           columns={columns}
           containerRef={containerRef}
           ContextMenu={ContextMenu}
-          dataSource={trials.data.slice(0, settings?.tableLimit)}
+          dataSource={trials.data.slice(0, settings.tableLimit)}
           interactiveColumns={false}
           pagination={pagination}
           rowClassName={highlights.rowClassName}

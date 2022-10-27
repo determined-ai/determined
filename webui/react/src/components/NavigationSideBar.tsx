@@ -163,8 +163,8 @@ const NavigationSideBar: React.FC = () => {
   }, [canAccessUncategorized, info.branding, showWebhooks]);
 
   const handleCollapse = useCallback(() => {
-    updateSettings({ navbarCollapsed: !settings?.navbarCollapsed });
-  }, [settings?.navbarCollapsed, updateSettings]);
+    updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
+  }, [settings.navbarCollapsed, updateSettings]);
 
   const handleCreateWorkspace = useCallback(() => {
     openWorkspaceCreateModal();
@@ -177,10 +177,8 @@ const NavigationSideBar: React.FC = () => {
       appear={true}
       classNames={{
         appear: css.collapsedAppear,
-        appearActive: settings?.navbarCollapsed
-          ? css.collapsedEnterActive
-          : css.collapsedExitActive,
-        appearDone: settings?.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
+        appearActive: settings.navbarCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
+        appearDone: settings.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
         enter: css.collapsedEnter,
         enterActive: css.collapsedEnterActive,
         enterDone: css.collapsedEnterDone,
@@ -188,7 +186,7 @@ const NavigationSideBar: React.FC = () => {
         exitActive: css.collapsedExitActive,
         exitDone: css.collapsedExitDone,
       }}
-      in={settings?.navbarCollapsed}
+      in={settings.navbarCollapsed}
       nodeRef={nodeRef}
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
@@ -207,8 +205,8 @@ const NavigationSideBar: React.FC = () => {
                 selectable={false}
               />
             }
-            offset={settings?.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
-            placement={settings?.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
+            offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
+            placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <AvatarCard className={css.user} darkLight={ui.darkLight} user={auth.user} />
           </Dropdown>
         </header>
@@ -218,7 +216,7 @@ const NavigationSideBar: React.FC = () => {
               <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
                 Launch JupyterLab
               </Button>
-              {settings?.navbarCollapsed ? (
+              {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
                   <Icon name="jupyter-lab" />
                 </Button>
@@ -234,7 +232,7 @@ const NavigationSideBar: React.FC = () => {
                     ? clusterStatusText(overview, resourcePools, agents)
                     : undefined
                 }
-                tooltip={settings?.navbarCollapsed}
+                tooltip={settings.navbarCollapsed}
                 {...config}
               />
             ))}
@@ -259,7 +257,7 @@ const NavigationSideBar: React.FC = () => {
               key="workspaces"
               label="Workspaces"
               path={paths.workspaceList()}
-              tooltip={settings?.navbarCollapsed}
+              tooltip={settings.navbarCollapsed}
             />
             {pinnedWorkspaces.length === 0 ? (
               <p className={css.noWorkspaces}>No pinned workspaces</p>
@@ -289,19 +287,19 @@ const NavigationSideBar: React.FC = () => {
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map((config) => (
-              <NavigationItem key={config.icon} tooltip={settings?.navbarCollapsed} {...config} />
+              <NavigationItem key={config.icon} tooltip={settings.navbarCollapsed} {...config} />
             ))}
             <NavigationItem
-              icon={settings?.navbarCollapsed ? 'expand' : 'collapse'}
-              label={settings?.navbarCollapsed ? 'Expand' : 'Collapse'}
-              tooltip={settings?.navbarCollapsed}
+              icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
+              label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
+              tooltip={settings.navbarCollapsed}
               onClick={handleCollapse}
             />
           </section>
         </main>
         <footer>
           <div className={css.version}>
-            {isVersionLong && settings?.navbarCollapsed ? (
+            {isVersionLong && settings.navbarCollapsed ? (
               <Tooltip placement="right" title={`Version ${version}`}>
                 <span className={css.versionLabel}>{shortVersion}</span>
               </Tooltip>

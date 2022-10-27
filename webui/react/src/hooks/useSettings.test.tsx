@@ -151,9 +151,7 @@ describe('useSettings', () => {
     const { result } = await setup();
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
-      expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
-        configProp.defaultValue,
-      );
+      expect(result.container.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
     });
 
     expect(history.location.search).toBe('');
@@ -166,7 +164,7 @@ describe('useSettings', () => {
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
       waitFor(() =>
-        expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
+        expect(result.container.current.settings[settingsKey]).toStrictEqual(
           newSettings[settingsKey],
         ),
       );
@@ -202,7 +200,7 @@ describe('useSettings', () => {
     Object.values(config.settings).forEach(async (configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
       await waitFor(() =>
-        expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
+        expect(result.container.current.settings[settingsKey]).toStrictEqual(
           configProp.defaultValue,
         ),
       );
@@ -219,7 +217,7 @@ describe('useSettings', () => {
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
       waitFor(() =>
-        expect(result.container.current.settings?.[settingsKey]).toStrictEqual(
+        expect(result.container.current.settings[settingsKey]).toStrictEqual(
           newSettings[settingsKey],
         ),
       );
@@ -228,7 +226,7 @@ describe('useSettings', () => {
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof ExtraSettings;
       waitFor(() =>
-        expect(extraResult.container.current.settings?.[settingsKey]).toStrictEqual(
+        expect(extraResult.container.current.settings[settingsKey]).toStrictEqual(
           newExtraSettings[settingsKey],
         ),
       );

@@ -198,7 +198,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
     (action) => {
       if (action === Action.SwitchPin) {
-        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
+        const label = (settings.pinned?.[experiment.projectId] ?? []).includes(id)
           ? 'Unpin'
           : 'Pin';
         return { key: action, label };

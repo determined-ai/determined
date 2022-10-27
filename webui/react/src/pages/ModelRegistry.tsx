@@ -197,12 +197,12 @@ const ModelRegistry: React.FC = () => {
         {...filterProps}
         multiple
         searchable
-        values={settings?.users}
+        values={settings.users}
         onFilter={handleUserFilterApply}
         onReset={handleUserFilterReset}
       />
     ),
-    [handleUserFilterApply, handleUserFilterReset, settings?.users],
+    [handleUserFilterApply, handleUserFilterReset, settings.users],
   );
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
@@ -222,12 +222,12 @@ const ModelRegistry: React.FC = () => {
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings?.name || ''}
+        value={settings.name || ''}
         onReset={handleNameSearchReset}
         onSearch={handleNameSearchApply}
       />
     ),
-    [handleNameSearchApply, handleNameSearchReset, settings?.name],
+    [handleNameSearchApply, handleNameSearchReset, settings.name],
   );
 
   const handleDescriptionSearchApply = useCallback(
@@ -245,12 +245,12 @@ const ModelRegistry: React.FC = () => {
     (filterProps: FilterDropdownProps) => (
       <TableFilterSearch
         {...filterProps}
-        value={settings?.description || ''}
+        value={settings.description || ''}
         onReset={handleDescriptionSearchReset}
         onSearch={handleDescriptionSearchApply}
       />
     ),
-    [handleDescriptionSearchApply, handleDescriptionSearchReset, settings?.description],
+    [handleDescriptionSearchApply, handleDescriptionSearchReset, settings.description],
   );
 
   const handleLabelFilterApply = useCallback(
@@ -270,12 +270,12 @@ const ModelRegistry: React.FC = () => {
         {...filterProps}
         multiple
         searchable
-        values={settings?.tags}
+        values={settings.tags}
         onFilter={handleLabelFilterApply}
         onReset={handleLabelFilterReset}
       />
     ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings?.tags],
+    [handleLabelFilterApply, handleLabelFilterReset, settings.tags],
   );
 
   const showConfirmDelete = useCallback(
@@ -379,7 +379,7 @@ const ModelRegistry: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: Settings) => !!settings?.name,
+        isFiltered: (settings: Settings) => !!settings.name,
         key: V1GetModelsRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: modelNameRenderer,
@@ -391,7 +391,7 @@ const ModelRegistry: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         filterDropdown: descriptionFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: Settings) => !!settings?.description,
+        isFiltered: (settings: Settings) => !!settings.description,
         key: V1GetModelsRequestSortBy.DESCRIPTION,
         render: descriptionRenderer,
         sorter: true,
@@ -420,7 +420,7 @@ const ModelRegistry: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: tags.map((tag) => ({ text: tag, value: tag })),
-        isFiltered: (settings: Settings) => !!settings?.tags,
+        isFiltered: (settings: Settings) => !!settings.tags,
         key: 'tags',
         render: tagsRenderer,
         title: 'Tags',
@@ -438,7 +438,7 @@ const ModelRegistry: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: Settings) => !!settings?.users,
+        isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
         render: userRenderer,
         title: 'User',
@@ -481,10 +481,10 @@ const ModelRegistry: React.FC = () => {
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
-      const shouldPush = settings?.tableOffset !== newSettings?.tableOffset;
+      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings?.tableOffset, updateSettings],
+    [columns, settings.tableOffset, updateSettings],
   );
 
   useEffect(() => {
@@ -497,20 +497,20 @@ const ModelRegistry: React.FC = () => {
     (showArchived: boolean) => {
       let newColumns: ModelColumnName[];
       let newColumnWidths: number[];
-      const settingsColumns = settings?.columns ?? [];
-      const settingsColumnsWidths = settings?.columnWidths ?? [];
+      const settingsColumns = settings.columns ?? [];
+      const settingsColumnsWidths = settings.columnWidths ?? [];
 
       if (showArchived) {
-        if (settings?.columns?.includes('archived')) {
+        if (settings.columns?.includes('archived')) {
           // just some defensive coding: don't add archived twice
-          newColumns = settings?.columns;
-          newColumnWidths = settings?.columnWidths;
+          newColumns = settings.columns;
+          newColumnWidths = settings.columnWidths;
         } else {
           newColumns = [...settingsColumns, 'archived'];
           newColumnWidths = [...settingsColumnsWidths, DEFAULT_COLUMN_WIDTHS['archived']];
         }
       } else {
-        const archivedIndex = settings?.columns.indexOf('archived') ?? 0;
+        const archivedIndex = settings.columns.indexOf('archived') ?? 0;
         if (archivedIndex !== -1) {
           newColumns = [...settingsColumns];
           newColumnWidths = [...settingsColumnsWidths];
@@ -550,7 +550,7 @@ const ModelRegistry: React.FC = () => {
       options={
         <Space>
           <Toggle
-            checked={settings?.archived}
+            checked={settings.archived}
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
@@ -583,8 +583,8 @@ const ModelRegistry: React.FC = () => {
           loading={isLoading || isLoadingSettings}
           pagination={getFullPaginationConfig(
             {
-              limit: settings?.tableLimit ?? 0,
-              offset: settings?.tableOffset ?? 0,
+              limit: settings.tableLimit ?? 0,
+              offset: settings.tableOffset ?? 0,
             },
             total,
           )}

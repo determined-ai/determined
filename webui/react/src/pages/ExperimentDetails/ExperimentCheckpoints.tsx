@@ -108,7 +108,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const stateFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => {
-      if (!settings?.state) return <Spinner spinning />;
+      if (!settings.state) return <Spinner spinning />;
 
       return (
         <TableFilterDropdown
@@ -120,7 +120,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         />
       );
     },
-    [handleStateFilterApply, handleStateFilterReset, settings?.state],
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
   const handleRegisterCheckpoint = useCallback(
@@ -217,16 +217,16 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }
-      if (column.key === settings?.sortKey) {
-        column.sortOrder = settings?.sortDesc ? 'descend' : 'ascend';
+      if (column.key === settings.sortKey) {
+        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
       }
       return column;
     });
 
     return newColumns;
-  }, [dropDownOnTrigger, experiment, settings?.sortDesc, settings?.sortKey, stateFilterDropdown]);
+  }, [dropDownOnTrigger, experiment, settings.sortDesc, settings.sortKey, stateFilterDropdown]);
 
-  const stateString = settings?.state?.join('.');
+  const stateString = settings.state?.join('.');
   const fetchExperimentCheckpoints = useCallback(async () => {
     if (!settings) return;
     try {
@@ -259,7 +259,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
-      if (!settings?.row) return;
+      if (!settings.row) return;
       try {
         dropDownOnTrigger(settings.row)[action]();
 
@@ -276,7 +276,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         });
       }
     },
-    [dropDownOnTrigger, fetchExperimentCheckpoints, settings?.row],
+    [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
   );
 
   const { stopPolling } = usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
@@ -287,11 +287,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     setIsLoading(true);
   }, [
     fetchExperimentCheckpoints,
-    settings?.sortDesc,
-    settings?.sortKey,
+    settings.sortDesc,
+    settings.sortKey,
     stateString,
-    settings?.tableLimit,
-    settings?.tableOffset,
+    settings.tableLimit,
+    settings.tableOffset,
   ]);
 
   // cleanup
@@ -320,9 +320,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [checkpoints]);
 
   const availableBatchActions = useMemo(() => {
-    const checkpoints = settings?.row?.map((uuid) => checkpointMap[uuid]) ?? [];
+    const checkpoints = settings.row?.map((uuid) => checkpointMap[uuid]) ?? [];
     return getActionsForCheckpointsUnion(checkpoints, batchActions);
-  }, [checkpointMap, settings?.row]);
+  }, [checkpointMap, settings.row]);
 
   return (
     <div className={css.base}>
@@ -333,7 +333,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             label: action,
             value: action,
           }))}
-          selectedRowCount={(settings?.row ?? []).length}
+          selectedRowCount={(settings.row ?? []).length}
           onAction={(action) => submitBatchAction(action)}
           onClear={clearSelected}
         />
@@ -346,8 +346,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             loading={isLoading}
             pagination={getFullPaginationConfig(
               {
-                limit: settings?.tableLimit ?? 0,
-                offset: settings?.tableOffset ?? 0,
+                limit: settings.tableLimit ?? 0,
+                offset: settings.tableOffset ?? 0,
               },
               total,
             )}
@@ -356,7 +356,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             rowSelection={{
               onChange: handleTableRowSelect,
               preserveSelectedRowKeys: true,
-              selectedRowKeys: settings?.row ?? [],
+              selectedRowKeys: settings.row ?? [],
             }}
             settings={settings}
             showSorterTooltip={false}

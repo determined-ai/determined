@@ -35,11 +35,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const filterValues: Filters = useMemo(
     () => ({
-      agentIds: settings?.agentId,
-      containerIds: settings?.containerId,
-      levels: settings?.level,
-      rankIds: settings?.rankId,
-      searchText: settings?.searchText,
+      agentIds: settings.agentId,
+      containerIds: settings.containerId,
+      levels: settings.level,
+      rankIds: settings.rankId,
+      searchText: settings.searchText,
     }),
     [settings],
   );
@@ -132,16 +132,16 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         trial?.id ?? 0,
         options.limit,
         options.follow,
-        settings?.agentId,
-        settings?.containerId,
-        settings?.rankId,
-        settings?.level,
+        settings.agentId,
+        settings.containerId,
+        settings.rankId,
+        settings.level,
         undefined,
         undefined,
         options.timestampBefore ? new Date(options.timestampBefore) : undefined,
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
-        settings?.searchText,
+        settings.searchText,
         { signal: config.canceler.signal },
       );
     },

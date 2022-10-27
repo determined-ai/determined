@@ -87,7 +87,7 @@ export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
     <div ref={containerRef}>
       <InteractiveTable
         {...args}
-        areRowsSelected={!!settings?.row}
+        areRowsSelected={!!settings.row}
         columns={columns}
         containerRef={containerRef}
         dataSource={data}
@@ -95,7 +95,7 @@ export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
         rowSelection={{
           onChange: handleTableRowSelect,
           preserveSelectedRowKeys: true,
-          selectedRowKeys: settings?.row ?? [],
+          selectedRowKeys: settings.row ?? [],
         }}
         settings={settings as InteractiveTableSettings}
         updateSettings={updateSettings}

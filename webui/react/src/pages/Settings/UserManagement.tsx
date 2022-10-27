@@ -157,13 +157,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [
-    settings?.sortDesc,
-    settings?.sortKey,
-    settings?.tableLimit,
-    settings?.tableOffset,
-    fetchUsers,
-  ]);
+  }, [settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset, fetchUsers]);
 
   useEffect(() => {
     fetchGroups();

@@ -71,7 +71,7 @@ const useTrialActions = ({
 }: Props): TrialActionsInterface => {
   const { settings, updateSettings } = useSettings<{ ids: number[] }>(settingsConfig);
 
-  const [selectedTrials, setSelectedTrials] = useState<number[]>(settings?.ids ?? []);
+  const [selectedTrials, setSelectedTrials] = useState<number[]>(settings.ids ?? []);
 
   const previouslySelectedTrials = usePrevious(selectedTrials, undefined);
 

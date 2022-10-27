@@ -389,7 +389,7 @@ const CodeViewer: React.FC<Props> = ({
 
   // Set the selected node based on the active settings
   useEffect(() => {
-    if (!settings?.filePath) return;
+    if (!settings.filePath) return;
 
     if (settings.filePath && activeFile?.key !== settings.filePath) {
       if (isConfig(settings.filePath)) {
@@ -405,7 +405,7 @@ const CodeViewer: React.FC<Props> = ({
     }
   }, [
     treeData,
-    settings?.filePath,
+    settings.filePath,
     activeFile,
     fetchFile,
     handleSelectConfig,
@@ -415,8 +415,8 @@ const CodeViewer: React.FC<Props> = ({
   // Set the code renderer to ipynb if needed
   useEffect(() => {
     const hasActiveFile = activeFile?.text;
-    const isSameFile = activeFile?.key === settings?.filePath;
-    const isIpybnFile = settings?.filePath.includes('.ipynb');
+    const isSameFile = activeFile?.key === settings.filePath;
+    const isIpybnFile = settings.filePath.includes('.ipynb');
 
     if (hasActiveFile && isSameFile && isIpybnFile) {
       setEditorMode('ipynb');
@@ -465,7 +465,7 @@ const CodeViewer: React.FC<Props> = ({
             defaultSelectedKeys={
               viewMode
                 ? // this is to ensure that, at least, the most parent node gets highlighted...
-                  [settings?.filePath.split('/')[0] ?? firstConfig]
+                  [settings.filePath.split('/')[0] ?? firstConfig]
                 : undefined
             }
             treeData={treeData}

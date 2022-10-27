@@ -39,8 +39,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const { trials, refetch, loading } = useFetchTrials({
     filters: collections.filters,
-    limit: tableSettings?.tableLimit || 0,
-    offset: tableSettings?.tableOffset || 0,
+    limit: tableSettings.tableLimit || 0,
+    offset: tableSettings.tableOffset || 0,
     sorter: collections.sorter,
   });
 

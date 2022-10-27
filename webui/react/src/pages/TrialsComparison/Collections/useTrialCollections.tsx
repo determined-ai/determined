@@ -110,10 +110,10 @@ export const useTrialCollections = (
   const sorter: TrialSorter = useMemo(
     () => ({
       ...defaultSorter,
-      sortDesc: !!tableSettings?.sortDesc,
-      sortKey: tableSettings?.sortKey ? String(tableSettings?.sortKey) : '',
+      sortDesc: !!tableSettings.sortDesc,
+      sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
     }),
-    [tableSettings?.sortDesc, tableSettings?.sortKey],
+    [tableSettings.sortDesc, tableSettings.sortKey],
   );
 
   const filtersStringified = useMemo(
@@ -151,8 +151,8 @@ export const useTrialCollections = (
   );
 
   const activeCollection = useMemo(
-    () => collections.find((c) => c.name === settings?.collection),
-    [collections, settings?.collection],
+    () => collections.find((c) => c.name === settings.collection),
+    [collections, settings.collection],
   );
 
   const fetchCollections = useCallback(async () => {
@@ -289,11 +289,11 @@ export const useTrialCollections = (
     useModalRenameCollection({ onComplete: handleRenameComplete });
 
   const renameCollection = useCallback(() => {
-    const id = collections.find((c) => c.name === settings?.collection)?.id;
-    if (id) openRenameModal({ id, name: settings?.collection ?? '' });
-  }, [collections, settings?.collection, openRenameModal]);
+    const id = collections.find((c) => c.name === settings.collection)?.id;
+    if (id) openRenameModal({ id, name: settings.collection ?? '' });
+  }, [collections, settings.collection, openRenameModal]);
 
-  const collectionIsActive = !!(collections.length && settings?.collection);
+  const collectionIsActive = !!(collections.length && settings.collection);
 
   const controls = useMemo(
     () => (
@@ -303,7 +303,7 @@ export const useTrialCollections = (
           <Select
             disabled={!collections.length}
             placeholder={collections?.length ? 'Select Collection' : 'No collections created'}
-            status={settings?.collection && hasUnsavedFilters ? 'warning' : undefined}
+            status={settings.collection && hasUnsavedFilters ? 'warning' : undefined}
             style={{ width: '200px' }}
             value={collectionIsActive ? settings.collection : undefined}
             onChange={async (value) => await setCollection(value)}>
@@ -400,7 +400,7 @@ export const useTrialCollections = (
       resetFiltersToCollection,
       saveCollection,
       setCollection,
-      settings?.collection,
+      settings.collection,
       userId,
       userOwnsCollection,
       viewFilters,

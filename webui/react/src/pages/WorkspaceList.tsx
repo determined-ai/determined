@@ -122,7 +122,7 @@ const WorkspaceList: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!settings?.whose) return;
+    if (!settings.whose) return;
 
     switch (settings.whose) {
       case WhoseWorkspaces.All:
@@ -135,7 +135,7 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [updateSettings, user, users, settings?.whose]);
+  }, [updateSettings, user, users, settings.whose]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
@@ -329,7 +329,7 @@ const WorkspaceList: React.FC = () => {
         <SelectFilter
           dropdownMatchSelectWidth={160}
           showSearch={false}
-          value={settings?.whose}
+          value={settings.whose}
           onSelect={handleViewSelect}>
           <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
           <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
@@ -337,14 +337,14 @@ const WorkspaceList: React.FC = () => {
         </SelectFilter>
         <Space wrap>
           <Toggle
-            checked={settings?.archived}
+            checked={settings.archived}
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
           <SelectFilter
             dropdownMatchSelectWidth={150}
             showSearch={false}
-            value={settings?.sortKey}
+            value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
@@ -355,7 +355,7 @@ const WorkspaceList: React.FC = () => {
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList
-        ) : settings?.whose === WhoseWorkspaces.All && settings?.archived && !isLoading ? (
+        ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
           <div className={css.emptyBase}>
             <div className={css.icon}>
               <Icon name="workspaces" size="mega" />

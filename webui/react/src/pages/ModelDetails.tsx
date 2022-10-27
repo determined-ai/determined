@@ -240,7 +240,7 @@ const ModelDetails: React.FC = () => {
 
   const handleTableChange = useCallback(
     (tablePagination, tableFilters, tableSorter) => {
-      if (Array.isArray(tableSorter) || !settings?.tableOffset) return;
+      if (Array.isArray(tableSorter) || !settings.tableOffset) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
@@ -254,7 +254,7 @@ const ModelDetails: React.FC = () => {
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [columns, settings?.tableOffset, updateSettings],
+    [columns, settings.tableOffset, updateSettings],
   );
 
   const saveMetadata = useCallback(
@@ -430,8 +430,8 @@ const ModelDetails: React.FC = () => {
             loading={isLoading || isLoadingSettings}
             pagination={getFullPaginationConfig(
               {
-                limit: settings?.tableLimit ?? 0,
-                offset: settings?.tableOffset ?? 0,
+                limit: settings.tableLimit ?? 0,
+                offset: settings.tableOffset ?? 0,
               },
               total,
             )}

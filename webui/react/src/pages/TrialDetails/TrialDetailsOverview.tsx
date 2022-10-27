@@ -52,13 +52,13 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [defaultMetric] : [];
-    const settingMetrics: Metric[] = (settings?.metric || []).map((metric) => {
+    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metrics };
-  }, [experiment?.config?.searcher, metricNames, settings?.metric]);
+  }, [experiment?.config?.searcher, metricNames, settings.metric]);
 
   const handleMetricChange = useCallback(
     (value: Metric[]) => {

@@ -98,7 +98,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const stateFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => {
-      if (!settings?.state) return;
+      if (!settings.state) return;
 
       return (
         <TableFilterDropdown
@@ -110,7 +110,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         />
       );
     },
-    [handleStateFilterApply, handleStateFilterReset, settings?.state],
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
   const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
@@ -232,8 +232,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }
-      if (column.key === settings?.sortKey) {
-        column.sortOrder = settings?.sortDesc ? 'descend' : 'ascend';
+      if (column.key === settings.sortKey) {
+        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
       }
       return column;
     });
@@ -262,7 +262,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [columns, settings, updateSettings],
   );
 
-  const stateString = useMemo(() => settings?.state?.join('.'), [settings?.state]);
+  const stateString = useMemo(() => settings.state?.join('.'), [settings.state]);
   const fetchExperimentTrials = useCallback(async () => {
     if (!settings) return;
 
@@ -296,7 +296,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
-      if (!settings?.row) return;
+      if (!settings.row) return;
 
       if (action === Action.OpenTensorBoard) {
         return await openOrCreateTensorBoard({ trialIds: settings.row });
@@ -304,7 +304,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         return updateSettings({ compare: true });
       }
     },
-    [settings?.row, updateSettings],
+    [settings.row, updateSettings],
   );
 
   const submitBatchAction = useCallback(
@@ -362,10 +362,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const handleTrialUnselect = useCallback(
     (trialId: number) => {
-      const trialIds = settings?.row ? settings.row.filter((id) => id !== trialId) : undefined;
+      const trialIds = settings.row ? settings.row.filter((id) => id !== trialId) : undefined;
       updateSettings({ row: trialIds });
     },
-    [settings?.row, updateSettings],
+    [settings.row, updateSettings],
   );
 
   const TrialActionDropdown = useCallback(
@@ -418,7 +418,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
             { label: Action.CompareTrials, value: Action.CompareTrials },
           ]}
-          selectedRowCount={(settings?.row ?? []).length}
+          selectedRowCount={(settings.row ?? []).length}
           onAction={(action) => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
@@ -430,8 +430,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           loading={isLoading}
           pagination={getFullPaginationConfig(
             {
-              limit: settings?.tableLimit ?? 0,
-              offset: settings?.tableOffset ?? 0,
+              limit: settings.tableLimit ?? 0,
+              offset: settings.tableOffset ?? 0,
             },
             total,
           )}
@@ -440,7 +440,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
-            selectedRowKeys: settings?.row ?? [],
+            selectedRowKeys: settings.row ?? [],
           }}
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
@@ -449,7 +449,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onChange={handleTableChange}
         />
       </Section>
-      {settings?.compare && (
+      {settings.compare && (
         <TrialsComparisonModal
           experiment={experiment}
           trials={settings.row ?? []}
