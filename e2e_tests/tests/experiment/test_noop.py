@@ -441,15 +441,18 @@ def remove_item_from_yaml_file(filename: str, item_name: str) -> str:
 
         del data[item_name]
 
-    with tempfile.NamedTemporaryFile(
-        prefix=os.path.splitext(os.path.basename(filename))[0], delete=False
-    ) as f:
-        y.dump(data, f)
+    # Create a temporary file that looks something like
+    # ${TMPDIR}/single-medium-train-step_axh4946j.yaml
+    tmpFile = tempfile.NamedTemporaryFile(
+        prefix=os.path.splitext(os.path.basename(filename))[0] + "_", suffix=".yaml", delete=False
+    )
 
-    return str(f.name)
+    y.dump(data, tmpFile)
+
+    return tmpFile.name
 
 
-def has_at_least_one_checkpoint(exp_id: int) -> None:
+def has_at_least_one_checkpoint(exp_id: int) -> bool:
     trials = exp.experiment_trials(exp_id)
 
     # Check if the most recent trial has any checkpoints.
@@ -462,7 +465,7 @@ def has_at_least_one_checkpoint(exp_id: int) -> None:
     return False
 
 
-def wait_for_at_least_one_checkpoint(experiment_id: str):
+def wait_for_at_least_one_checkpoint(experiment_id: int) -> None:
 
     for _ in range(20):
         if has_at_least_one_checkpoint(experiment_id):
