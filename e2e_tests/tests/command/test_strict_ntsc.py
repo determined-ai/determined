@@ -8,7 +8,7 @@ from determined.common.api.errors import APIException, BadRequestException, NotF
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.test_users import ADMIN_CREDENTIALS, create_test_user, logged_in_user
+from tests.cluster.test_users import ADMIN_CREDENTIALS, create_test_user, logged_in_user, log_in_user
 
 
 def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_access: bool) -> None:
@@ -208,8 +208,9 @@ def assert_access_task(creds: authentication.Credentials, task_id: str, can_acce
 
 
 def strict_task_test(start_command: List[str], start_message: str, assert_access_func: Any) -> None:
-    user_a = create_test_user(ADMIN_CREDENTIALS)
-    user_b = create_test_user(ADMIN_CREDENTIALS)
+    log_in_user(ADMIN_CREDENTIALS)
+    user_a = create_test_user()
+    user_b = create_test_user()
 
     with logged_in_user(user_a):
         with cmd.interactive_command(*start_command) as task:
