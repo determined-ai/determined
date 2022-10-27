@@ -246,7 +246,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       }, []);
 
       if (dbUpdates.length !== 0) {
-
         try {
           // Persist storage to backend.
           await Promise.allSettled(

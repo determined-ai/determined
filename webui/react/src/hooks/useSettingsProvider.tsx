@@ -19,7 +19,12 @@ type UserSettingsContext = {
   isLoading: boolean;
   querySettings: string;
   state: UserSettingsState;
-  update: (key: string, value: Settings, clearQuerySettings?: boolean, callback?: () => void) => void;
+  update: (
+    key: string,
+    value: Settings,
+    clearQuerySettings?: boolean,
+    callback?: () => void,
+  ) => void;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
