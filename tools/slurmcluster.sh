@@ -98,7 +98,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-CLUSTERS=('casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023' 'sawmill')
+CLUSTERS=('atlas' 'casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023' 'sawmill')
 
 function lookup() {
     echo "${!1}"
@@ -178,6 +178,19 @@ DEV_LAUNCHER_PORT_alyssa=18088
 DEV_LAUNCHER_PORT_jerryharrow=18090
 DEV_LAUNCHER_PORT_canmingcobble=18092
 DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USERNAME")
+
+
+# Configuration for atlas
+OPT_name_atlas=atlas.us.cray.com
+OPT_LAUNCHERHOST_atlas=localhost
+OPT_LAUNCHERPROTOCOL_atlas=http
+OPT_CHECKPOINTPATH_atlas=/lus/scratch/foundation-engineering/determined-cp
+OPT_MASTERHOST_atlas=atlas
+OPT_MASTERPORT_atlas=$USERPORT
+OPT_TRESSUPPORTED_atlas=false
+OPT_GRESSUPPORTED_atlas=false
+OPT_PROTOCOL_atlas=http
+
 
 # Configuration for casablanca (really casablanca-mgmt1)
 OPT_name_casablanca=casablanca-mgmt1.us.cray.com
