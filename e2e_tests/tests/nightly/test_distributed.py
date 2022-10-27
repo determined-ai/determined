@@ -257,13 +257,13 @@ def test_remote_search_runner() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_textual_inversion_stable_diffusion_finetune() -> None:
-    """Requires a Hugging Face User Access Token which is expected to be stored as the environment
-    variable HF_AUTH_TOKEN.
+    """Requires downloading weights from Hugging Face via an authorization token. The experiment
+    expects the token to be stored in the HF_AUTH_TOKEN environment variable.
 
-    Note that we pass these variables as part of CircleCI's "hugging-face" context, which passes in
-    a read-only token.
+    Hugging Face tokens are stored in CircleCI's "hugging-face" context as HF_READ_ONLY_TOKEN and
+    HF_READ_WRITE_TOKEN environment variables which are accessible during CI runs.
 
-    The Hugging Face account is associated with the email address listed at
+    The Hugging Face account details can be found at
     github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
     """
     config = conf.load_config(
@@ -274,25 +274,28 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
     config = conf.set_max_length(config, 10)
     try:
         config = conf.set_environment_variables(
-            config, [f'HF_AUTH_TOKEN={os.environ["HF_AUTH_TOKEN"]}']
+            config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
         )
         exp.run_basic_test_with_temp_config(
             config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
         )
-    except KeyError:
-        pytest.skip("HF_AUTH_TOKEN environment variable missing, skipping test")
+    except KeyError as k:
+        if str(k) == "'HF_READ_ONLY_TOKEN'":
+            pytest.skip("HF_READ_ONLY_TOKEN environment variable missing, skipping test")
+        else:
+            raise k
 
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_textual_inversion_stable_diffusion_generate() -> None:
-    """Requires a Hugging Face User Access Token which is expected to be stored as the environment
-    variable HF_AUTH_TOKEN.
+    """Requires downloading weights from Hugging Face via an authorization token. The experiment
+    expects the token to be stored in the HF_AUTH_TOKEN environment variable.
 
-    Note that we pass these variables as part of CircleCI's "hugging-face" context, which passes in
-    a read-only token.
+    Hugging Face tokens are stored in CircleCI's "hugging-face" context as HF_READ_ONLY_TOKEN and
+    HF_READ_WRITE_TOKEN environment variables which are accessible during CI runs.
 
-    The Hugging Face account is associated with the email address listed at
+    The Hugging Face account details can be found at
     github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
     """
     config = conf.load_config(
@@ -307,10 +310,13 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 
     try:
         config = conf.set_environment_variables(
-            config, [f'HF_AUTH_TOKEN={os.environ["HF_AUTH_TOKEN"]}']
+            config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
         )
         exp.run_basic_test_with_temp_config(
             config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 2
         )
-    except KeyError:
-        pytest.skip("HF_AUTH_TOKEN environment variable missing, skipping test")
+    except KeyError as k:
+        if str(k) == "'HF_READ_ONLY_TOKEN'":
+            pytest.skip("HF_READ_ONLY_TOKEN environment variable missing, skipping test")
+        else:
+            raise k
