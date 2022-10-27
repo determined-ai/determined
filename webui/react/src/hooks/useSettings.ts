@@ -1,6 +1,6 @@
 import * as t from 'io-ts';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
