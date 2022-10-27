@@ -66,7 +66,7 @@ func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) erro
 	}
 
 	exists, err := db.Bun().NewSelect().Table("groups").
-		Join("user_group_membership ugm ON ugm.group_id = groups.ID").
+		Join("LEFT JOIN user_group_membership ugm ON ugm.group_id = groups.ID").
 		Where("ugm.user_id = ?", userBelongsTo).
 		Where("groups.ID = ?", gid).
 		Exists(ctx)

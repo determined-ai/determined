@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -377,6 +378,11 @@ func (a *RBACAPIServerImpl) ListRoles(ctx context.Context, req *apiv1.ListRolesR
 // AssignRoles grants the specified users or groups a particular role.
 func (a *RBACAPIServerImpl) AssignRoles(ctx context.Context, req *apiv1.AssignRolesRequest,
 ) (resp *apiv1.AssignRolesResponse, err error) {
+	if len(req.GroupRoleAssignments)+len(req.UserRoleAssignments) == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"must specify at least one group or user assignment")
+	}
+
 	defer func() {
 		err = mapAndFilterErrors(err)
 	}()
@@ -409,6 +415,11 @@ func (a *RBACAPIServerImpl) AssignRoles(ctx context.Context, req *apiv1.AssignRo
 func (a *RBACAPIServerImpl) RemoveAssignments(ctx context.Context,
 	req *apiv1.RemoveAssignmentsRequest,
 ) (resp *apiv1.RemoveAssignmentsResponse, err error) {
+	if len(req.GroupRoleAssignments)+len(req.UserRoleAssignments) == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"must specify at least one group or user assignment")
+	}
+
 	defer func() {
 		err = mapAndFilterErrors(err)
 	}()
@@ -500,6 +511,10 @@ var (
 )
 
 func mapAndFilterErrors(err error) error {
+	if _, ok := err.(authz.PermissionDeniedError); ok {
+		return status.Error(codes.PermissionDenied, err.Error())
+	}
+
 	if allowed := errPassthroughMap[err]; allowed {
 		return err
 	}
