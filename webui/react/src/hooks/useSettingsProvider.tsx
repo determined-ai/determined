@@ -33,7 +33,7 @@ export const UserSettings = createContext<UserSettingsContext>({
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const {
-    auth: { user },
+    auth: { user, checked },
   } = useStore();
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +89,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (clearQuerySettings) querySettings.current = '';
   };
 
-  if (isLoading) return <Spinner spinning />;
+  if (isLoading && !(checked && !user)) return <Spinner spinning />;
 
   return (
     <UserSettings.Provider
