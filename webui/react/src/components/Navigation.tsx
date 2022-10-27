@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import {
   useFetchAgents,
@@ -9,6 +8,7 @@ import {
   useFetchResourcePools,
 } from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 
 import css from './Navigation.module.scss';
@@ -20,7 +20,7 @@ interface Props {
 }
 
 const Navigation: React.FC<Props> = ({ children }) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const [canceler] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);

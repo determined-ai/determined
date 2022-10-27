@@ -10,6 +10,7 @@ import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { BrandingType } from 'types';
 
@@ -40,7 +41,8 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { agents, auth, cluster: overview, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { ui } = useUI();
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =

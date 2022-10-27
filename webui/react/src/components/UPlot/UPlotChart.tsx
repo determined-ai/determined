@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/Message';
+import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -93,7 +93,7 @@ const UPlotChart: React.FC<Props> = ({
   const [isReady, setIsReady] = useState(false);
   const classes = [css.base];
 
-  const { ui } = useStore();
+  const { ui } = useUI();
   const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);

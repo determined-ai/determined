@@ -242,7 +242,8 @@ The master supports the following configuration settings:
                   ``skip_verify`` is enabled.
 
       -  ``container_run_type``: The type of the container runtime to be used when launching tasks.
-         The value may be ``singularity`` or ``podman``. The default value is ``singularity``.
+         The value may be ``singularity`` or ``podman``. The default value is ``singularity``. The
+         value ``singularity`` is also used when using Apptainer.
 
       -  ``auth_file``: The location of a file which contains an authorization token to communicate
          with the launcher. It is automatically updated by the launcher as needed when the launcher

@@ -1,7 +1,7 @@
 import Hermes from '@determined-ai/hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 
 import css from './ParallelCoordinates.module.scss';
 
@@ -20,7 +20,7 @@ const ParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<Hermes>();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { ui } = useStore();
+  const { ui } = useUI();
 
   useEffect(() => {
     if (!containerRef.current) return;

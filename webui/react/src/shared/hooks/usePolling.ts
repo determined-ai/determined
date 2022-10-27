@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 
 type PollingFn = (() => Promise<void>) | (() => void);
 
@@ -48,7 +48,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
   const isPolling = useRef(false);
   const isPollingBeforeHidden = useRef(false);
   const pollingFnIndicator = pollingOptions.current.rerunOnNewFn ? pollingFn : undefined;
-  const { ui } = useStore();
+  const { ui } = useUI();
 
   const clearTimer = useCallback(() => {
     if (timer.current) {

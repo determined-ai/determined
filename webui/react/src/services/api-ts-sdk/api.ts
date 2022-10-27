@@ -274,6 +274,16 @@ export interface GetHPImportanceResponseMetricHPImportance {
 }
 
 /**
+ * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
+ * @export
+ * @enum {string}
+ */
+export enum GetMasterResponseProduct {
+    UNSPECIFIED = <any> 'PRODUCT_UNSPECIFIED',
+    COMMUNITY = <any> 'PRODUCT_COMMUNITY'
+}
+
+/**
  * Filter workloads with training, validation, and checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
  * @export
  * @enum {string}
@@ -3141,6 +3151,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     rbacEnabled?: boolean;
+    /**
+     * 
+     * @type {GetMasterResponseProduct}
+     * @memberof V1GetMasterResponse
+     */
+    product?: GetMasterResponseProduct;
     /**
      * List of features that is on.
      * @type {Array<string>}

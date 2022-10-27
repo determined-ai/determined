@@ -1,7 +1,9 @@
 package config
 
 import (
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -70,6 +72,12 @@ type DBConfig struct {
 	Name        string `json:"name"`
 	SSLMode     string `json:"ssl_mode"`
 	SSLRootCert string `json:"ssl_root_cert"`
+}
+
+// WebhooksConfig hosts configuration fields for webhook functionality.
+type WebhooksConfig struct {
+	BaseURL    string `json:"base_url"`
+	SigningKey string `json:"signing_key"`
 }
 
 // DefaultConfig returns the default configuration of the master.
@@ -145,6 +153,7 @@ type Config struct {
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
+	Webhooks              WebhooksConfig                    `json:"webhooks"`
 	FeatureSwitches       []string                          `json:"feature_switches"`
 	*ResourceConfig
 
@@ -223,6 +232,14 @@ func (c *Config) Resolve() error {
 
 	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
+	}
+
+	if c.Webhooks.SigningKey == "" {
+		b := make([]byte, 6)
+		if _, err := rand.Read(b); err != nil {
+			return err
+		}
+		c.Webhooks.SigningKey = hex.EncodeToString(b)
 	}
 
 	if err := c.ResolveResource(); err != nil {

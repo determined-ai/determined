@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { useStoreDispatch } from 'contexts/Store';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 
 interface DocumentHidden {
   hidden?: unknown;
@@ -10,7 +9,7 @@ interface DocumentHidden {
 }
 
 const usePageVisibility = (): void => {
-  const storeDispatch = useStoreDispatch();
+  const { actions: uiActions } = useUI();
 
   const [hidden, visibilityChange] = useMemo(() => {
     if (typeof (document as DocumentHidden).hidden !== 'undefined') {
@@ -25,11 +24,9 @@ const usePageVisibility = (): void => {
 
   const handleVisibilityChange = useCallback(() => {
     if (!hidden) return;
-    storeDispatch({
-      type: StoreActionUI.SetPageVisibility,
-      value: !!(document as DocumentHidden)[hidden as keyof DocumentHidden],
-    });
-  }, [hidden, storeDispatch]);
+
+    uiActions.setPageVisibility(!!(document as DocumentHidden)[hidden as keyof DocumentHidden]);
+  }, [hidden, uiActions]);
 
   useEffect(() => {
     if (visibilityChange) {

@@ -5,13 +5,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
 import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
-import { useStore } from 'contexts/Store';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
@@ -27,7 +27,7 @@ export interface Props {
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const [downloadModal, setDownloadModal] = useState<{ destroy: () => void }>();
 
