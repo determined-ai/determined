@@ -171,6 +171,14 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     }
   }
 
+  useEffect(() => {
+    const mappedSettings = settingsToQuery(config, settings as Settings);
+    const url = `?${mappedSettings}`;
+
+    if (mappedSettings && url !== window.location.search) navigate(url, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /*
    * A setting is considered active if it is set to a value and the
    * value is not equivalent to a default value (if applicable).
