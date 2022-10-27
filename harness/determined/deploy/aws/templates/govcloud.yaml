@@ -47,7 +47,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.19.6-rc2
+    Default: 0.19.6-rc3
 
   DBPassword:
     Type: String
