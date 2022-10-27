@@ -467,7 +467,6 @@ def wait_for_at_least_one_checkpoint(experiment_id: str):
 
     for _ in range(20):
         if has_at_least_one_checkpoint(experiment_id):
-            logging.info(f"At least one checkpoint reported. Continuing to pause the experiment.")
             break
         else:
             time.sleep(1)
