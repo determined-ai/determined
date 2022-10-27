@@ -2,7 +2,7 @@ import React from 'react';
 
 import NotebookJS from 'vendor/notebook';
 
-import './onedork.css';
+import 'vendor/monokai.css';
 
 interface Props {
   file: string;
