@@ -109,7 +109,8 @@ describe('Experment Details Page', () => {
     });
 
     it('should show single trial experiment page with id', async () => {
-      const { container } = setup().view;
+      const containerView = await waitFor(() => setup());
+      const { container } = containerView.view;
 
       const experimentId = RESPONSES.singleTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.singleTrial.getExperimentsDetails.name;
