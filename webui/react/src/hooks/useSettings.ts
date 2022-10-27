@@ -30,7 +30,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => void;
+export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
 export type ResetSettings = (settings?: string[]) => void;
 
 export type UseSettingsReturn<T> = {
@@ -69,8 +69,8 @@ const queryParamToType = <T>(
     return !isNaN(value) ? value : undefined;
   }
   if (type.is({})) return JSON.parse(param);
-
-  return param;
+  if (type.is('')) return param;
+  return undefined;
 };
 
 const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
@@ -179,26 +179,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
     const settings = queryToSettings<T>(config, querySettings);
     const stateSettings = state.get(config.applicableRoutespace) ?? {};
-    let hasDiff = false;
 
-    if (!Object.keys(settings).length) return;
+    if (isEqual(settings, stateSettings)) return;
 
     Object.keys(settings).forEach((setting) => {
-      // checking manually because settings from query params are usually smaller than settings state.
-      if (stateSettings[setting] !== settings[setting]) {
-        stateSettings[setting] = settings[setting];
-        hasDiff = true;
-      }
+      stateSettings[setting] = settings[setting];
     });
 
-    if (!hasDiff) return;
-
     update(config.applicableRoutespace, stateSettings, true);
-
-    const mappedSettings = settingsToQuery(config, stateSettings);
-    const url = `?${mappedSettings}`;
-    navigate(url, { replace: true });
-  }, [config, querySettings, state, update, navigate]);
+  }, [config, querySettings, state, update]);
 
   const settings: T | null = (state.get(config.applicableRoutespace) as T) ?? null;
   /*
@@ -291,13 +280,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting] = defaultSetting.defaultValue;
       });
 
-      update(config.applicableRoutespace, newSettings, false, () => updateDB(newSettings));
+      update(config.applicableRoutespace, newSettings);
+
+      updateDB(newSettings);
     },
     [config, update, updateDB, settings],
   );
 
   const updateSettings = useCallback(
-    (updates: Settings, shouldPush = false) => {
+    async (updates: Settings, shouldPush = false) => {
       if (!settings) return;
 
       if (
@@ -310,7 +301,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (isEqual(newSettings, settings)) return;
 
-      update(config.applicableRoutespace, newSettings, false, () => updateDB(newSettings));
+      update(config.applicableRoutespace, newSettings);
+
+      await updateDB(newSettings);
 
       const mappedSettings = settingsToQuery(config, newSettings);
       const url = `?${mappedSettings}`;

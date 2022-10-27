@@ -19,12 +19,7 @@ type UserSettingsContext = {
   isLoading: boolean;
   querySettings: string;
   state: UserSettingsState;
-  update: (
-    key: string,
-    value: Settings,
-    clearQuerySettings?: boolean,
-    callback?: () => void,
-  ) => void;
+  update: (key: string, value: Settings, clearQuerySettings?: boolean) => void;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
@@ -82,17 +77,15 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   }, [canceler, user?.id]);
 
   useEffect(() => {
-    const url = window.location.search;
+    const url = window.location.search.substr(/^\?/.test(location.search) ? 1 : 0);
 
     querySettings.current = url;
   }, []);
 
-  const update = (key: string, value: Settings, clearQuerySettings = false, callback) => {
+  const update = (key: string, value: Settings, clearQuerySettings = false) => {
     settingsState.current.set(key, value);
 
     if (clearQuerySettings) querySettings.current = '';
-
-    callback?.();
   };
 
   return (
