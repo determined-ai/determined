@@ -166,7 +166,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   for (const key in config.settings) {
     const setting = config.settings[key];
 
-    if (!settings[setting.storageKey]) {
+    if (settings[setting.storageKey] === undefined) {
       settings[setting.storageKey] = setting.defaultValue;
     }
   }
