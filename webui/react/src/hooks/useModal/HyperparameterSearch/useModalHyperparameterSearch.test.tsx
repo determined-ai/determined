@@ -8,7 +8,7 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { CreateExperimentParams } from 'services/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import { ResourceType } from 'types';
+import { DetailedUser, ResourceType } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
@@ -22,6 +22,11 @@ jest.mock('services/api', () => ({
   },
   getResourcePools: () => Promise.resolve([]),
   getUserSetting: () => Promise.resolve({ settings: [] }),
+}));
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser }, resourcePools: [] }),
 }));
 
 const { experiment } = generateTestExperimentData();
@@ -94,7 +99,11 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 
 const setup = async () => {
   const view = render(<Container />);
-  await user.click(screen.getByRole('button', { name: 'Open Modal' }));
+
+  await waitFor(() => {
+    const button = screen.getByRole('button', { name: 'Open Modal' });
+    user.click(button);
+  });
 
   return { view };
 };
@@ -103,13 +112,13 @@ describe('useModalHyperparameterSearch', () => {
   it('should open modal', async () => {
     const { view } = await setup();
 
-    expect(await view.findByText(MODAL_TITLE)).toBeInTheDocument();
+    await waitFor(() => expect(view.findByText(MODAL_TITLE)).toBeInTheDocument());
   });
 
   it('should cancel modal', async () => {
     const { view } = await setup();
 
-    await user.click(view.getAllByRole('button', { name: 'Cancel' })[0]);
+    await waitFor(() => user.click(view.getAllByRole('button', { name: 'Cancel' })[0]));
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
@@ -120,7 +129,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should submit experiment', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+    await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
     mockCreateExperiment.mockReturnValue({ id: 1 });
     await user.click(view.getByRole('button', { name: 'Run Experiment' }));
 
@@ -130,7 +139,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should only allow current on constant hyperparameter', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+    await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
 
     await user.click(view.getAllByRole('combobox')[0]);
     await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Constant'));
@@ -143,7 +152,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should only allow min and max on int hyperparameter', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+    await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
 
     await user.click(view.getAllByRole('combobox')[0]);
     await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Int'));
@@ -156,7 +165,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should show count fields when using grid searcher', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('radio', { name: 'Grid' }));
+    await waitFor(() => user.click(view.getByRole('radio', { name: 'Grid' })));
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     expect(view.getByText('Grid Count')).toBeInTheDocument();
@@ -165,7 +174,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should remove adaptive fields when not using adaptive searcher', async () => {
     const { view } = await setup();
 
-    await user.click(view.getByRole('radio', { name: /adaptive/i }));
+    await waitFor(() => user.click(view.getByRole('radio', { name: /adaptive/i })));
     expect(view.getByText(/Early stopping mode/i)).toBeInTheDocument();
 
     await user.click(view.getByRole('radio', { name: 'Grid' }));

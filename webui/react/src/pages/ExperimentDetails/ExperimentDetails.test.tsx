@@ -4,7 +4,6 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettingsProvider';
 import {
   getExperimentDetails,
   getExpTrials,
@@ -38,7 +37,6 @@ jest.mock('services/api', () => ({
   getExpValidationHistory: jest.fn(),
   getProject: jest.fn(),
   getTrialDetails: jest.fn(),
-  getUserSetting: () => Promise.resolve({ settings: [] }),
   getWorkspace: jest.fn(),
 }));
 
@@ -57,9 +55,7 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <HistoryRouter history={history}>
-          <SettingsProvider>
-            <ExperimentDetails />
-          </SettingsProvider>
+          <ExperimentDetails />
         </HistoryRouter>
       </HelmetProvider>
     </StoreProvider>,
@@ -76,7 +72,7 @@ describe('Experment Details Page', () => {
     });
 
     it('should show invalid experiment page without id', async () => {
-      setup();
+      await waitFor(() => setup());
       const invalidMessage = await screen.findByText(`${INVALID_ID_MESSAGE} ${INVALID_ID}`);
       expect(invalidMessage).toBeInTheDocument();
     });
@@ -91,7 +87,7 @@ describe('Experment Details Page', () => {
     });
 
     it('should show experiment is unfetchable', async () => {
-      setup();
+      await waitFor(() => setup());
       const errorMessage = await screen.findByText(`${ERROR_MESSAGE} ${NON_EXISTING_ID}`);
       expect(errorMessage).toBeInTheDocument();
     });
@@ -143,7 +139,8 @@ describe('Experment Details Page', () => {
     });
 
     it('should show multi-trial experiment page with id', async () => {
-      const { container } = setup().view;
+      const containerView = await waitFor(() => setup());
+      const { container } = containerView.view;
 
       const experimentId = RESPONSES.multiTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.multiTrial.getExperimentsDetails.name;

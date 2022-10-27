@@ -12,6 +12,7 @@ import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import history from 'shared/routes/history';
+import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
 
@@ -80,6 +81,11 @@ jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
   default: () => MonacoEditorMock,
 }));
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+}));
 
 jest.mock('hooks/useSettings', () => {
   const actualModule = jest.requireActual('hooks/useSettings');
@@ -126,7 +132,7 @@ describe('CodeViewer', () => {
   afterAll(() => jest.clearAllMocks());
 
   it('should handle the initial render properly', async () => {
-    setup();
+    await waitFor(() => setup());
     const { treeNodes } = await getElements();
 
     expect(treeNodes).toHaveLength(4);
@@ -134,7 +140,7 @@ describe('CodeViewer', () => {
 
   it('should handle clicking in the download icon when opening a file from the tree', async () => {
     const pathBuilderSpy = jest.spyOn(paths, 'experimentFileFromTree').mockReturnValueOnce('');
-    setup();
+    await waitFor(() => setup());
 
     const { treeNodes } = await getElements();
 

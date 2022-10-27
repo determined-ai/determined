@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { DetailedUser } from 'types';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
@@ -20,6 +21,11 @@ jest.mock('services/api', () => ({
   getTaskTemplates: () => Promise.resolve([]),
   getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
+}));
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
 }));
 
 jest.mock('utils/wait', () => ({
@@ -61,7 +67,7 @@ const setup = async () => {
     </BrowserRouter>,
   );
 
-  await user.click(screen.getByRole('button'));
+  await waitFor(() => user.click(screen.getByRole('button')));
 
   return user;
 };

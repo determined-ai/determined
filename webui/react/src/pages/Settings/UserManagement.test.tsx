@@ -34,6 +34,11 @@ jest.mock('services/api', () => ({
   },
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+}));
 
 const Container: React.FC = () => {
   const storeDispatch = useStoreDispatch();
