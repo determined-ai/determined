@@ -1,19 +1,15 @@
 import getpass
-import json
 from argparse import Namespace
 from collections import namedtuple
-from enum import auto
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
-from requests import Response
 from termcolor import colored
 
+from determined.cli import login_sdk_client
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import user
 from determined.experimental import client
-from determined.cli import login_sdk_client
 
 from . import render
 
@@ -22,46 +18,23 @@ FullUser = namedtuple(
     ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
 )
 
-def update_user(
-    user_obj: user.User,
-    username: str,
-    active: Optional[bool] = None,
-    password: Optional[str] = None,
-    agent_user_group: Optional[Dict[str, Any]] = None,
-) -> Response:
-    if active is None and password is None and agent_user_group is None:
-        raise Exception("Internal error (must supply at least one kwarg to update_user).")
-
-    if agent_user_group is None:
-        user_obj.update(
-            username=username,
-            active=active,
-            password=password,
-        )
-    else:
-        user_obj.update(
-            username=username,
-            active=active,
-            password=password,
-            agent_uid=agent_user_group.agent_uid,
-            agent_gid=agent_user_group.agent_gid,
-            agent_user=agent_user_group.agent_user,
-            agent_group=agent_user_group.agent_group,
-        )
 
 @login_sdk_client
 def list_users(args: Namespace) -> None:
     render.render_objects(FullUser, client.list_users())
+
 
 @login_sdk_client
 def activate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
     user_obj.activate()
 
+
 @login_sdk_client
 def deactivate_user(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.username)
     user_obj.deactivate()
+
 
 def log_in_user(parsed_args: Namespace) -> None:
     if parsed_args.username is None:
@@ -79,6 +52,7 @@ def log_in_user(parsed_args: Namespace) -> None:
     token_store.set_token(username, token)
     token_store.set_active(username)
 
+
 @authentication.optional
 def log_out_user(parsed_args: Namespace) -> None:
     auth = authentication.cli_auth
@@ -94,14 +68,16 @@ def log_out_user(parsed_args: Namespace) -> None:
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
-    
+
     token_store = authentication.TokenStore(parsed_args.master)
     token_store.drop_user(auth.get_session_user())
+
 
 @login_sdk_client
 def rename(parsed_args: Namespace) -> None:
     user_obj = client.get_user_by_name(parsed_args.target_user)
     user_obj.rename(new_username=parsed_args.new_username)
+
 
 @login_sdk_client
 def change_password(parsed_args: Namespace) -> None:
@@ -137,6 +113,7 @@ def change_password(parsed_args: Namespace) -> None:
         token_store.set_token(username, token)
         token_store.set_active(username)
 
+
 @login_sdk_client
 def link_with_agent_user(parsed_args: Namespace) -> None:
     if parsed_args.agent_uid is None:
@@ -155,12 +132,15 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
         agent_uid=parsed_args.agent_uid,
         agent_user=parsed_args.agent_user,
     )
+
+
 @login_sdk_client
 def create_user(parsed_args: Namespace) -> None:
     print("in create user cli")
     username = parsed_args.username
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)
+
 
 def whoami(parsed_args: Namespace) -> None:
     user = client.whoami()

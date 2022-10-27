@@ -31,8 +31,6 @@ func replicateClientSideSaltAndHash(password string) string {
 func (a *apiServer) Login(
 	ctx context.Context, req *apiv1.LoginRequest,
 ) (*apiv1.LoginResponse, error) {
-	fmt.Println("In login")
-	fmt.Println(req.Username)
 	if a.m.config.InternalConfig.ExternalSessions.JwtKey != "" {
 		return nil, status.Error(codes.FailedPrecondition, "authentication is configured to be external")
 	}
@@ -45,8 +43,6 @@ func (a *apiServer) Login(
 	switch err {
 	case nil:
 	case db.ErrNotFound:
-		fmt.Println(req.Username)
-		fmt.Println("DB ERR not found")
 		return nil, grpcutil.ErrInvalidCredentials
 	default:
 		return nil, err
@@ -60,18 +56,11 @@ func (a *apiServer) Login(
 	}
 
 	if !userModel.ValidatePassword(hashedPassword) {
-		fmt.Println(req.Username)
-		fmt.Println("Password is not right")
 		return nil, grpcutil.ErrInvalidCredentials
 	}
 
 	if !userModel.Active {
-		fmt.Println(userModel.Username)
-		fmt.Println("user is not active")
 		return nil, grpcutil.ErrNotActive
-	} else {
-		fmt.Println(userModel.Username)
-		fmt.Println("user is active")
 	}
 	token, err := a.m.db.StartUserSession(userModel)
 	if err != nil {

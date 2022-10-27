@@ -1,6 +1,6 @@
 import pathlib
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
@@ -64,14 +64,10 @@ class Determined:
         self._session = api.Session(master, user, auth, cert)
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
-        #("in create sdk")
-       # print(self._session._master)
-        cur_user = bindings.get_CurrentUser(session=self._session)
-       # print(cur_user.user.username)
         create_user = bindings.v1User(username=username, admin=admin, active=True)
         req = bindings.v1PostUserRequest(password=password, user=create_user)
         resp = bindings.post_PostUser(self._session, body=req)
-        if resp.user.agentUserGroup is not None: 
+        if resp.user.agentUserGroup is not None:
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -83,17 +79,18 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else: 
-             return user.User(
+        else:
+            return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
                 admin=resp.user.admin,
                 session=self._session,
-                active=resp.user.active)
+                active=resp.user.active,
+            )
 
     def get_user_by_id(self, user_id: int) -> user.User:
-        resp = bindings.get_GetUser(self._session, user_id).user
-        if resp.user.agentUserGroup is not None: 
+        resp = bindings.get_GetUser(self._session, user_id)
+        if resp.user.agentUserGroup is not None:
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -105,17 +102,18 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else: 
-             return user.User(
+        else:
+            return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
                 admin=resp.user.admin,
                 session=self._session,
-                active=resp.user.active)
+                active=resp.user.active,
+            )
 
     def get_user_by_name(self, user_name: str) -> user.User:
         resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
-        if resp.user.agentUserGroup is not None: 
+        if resp.user.agentUserGroup is not None:
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -127,20 +125,21 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else: 
+        else:
             return user.User(
-            user_id=resp.user.id,
-            username=resp.user.username,
-            admin=resp.user.admin,
-            session=self._session,
-        active=resp.user.active)
+                user_id=resp.user.id,
+                username=resp.user.username,
+                admin=resp.user.admin,
+                session=self._session,
+                active=resp.user.active,
+            )
 
-    def whoami(self):
+    def whoami(self) -> user.User:
         print("in whoami")
         resp = bindings.get_GetMe(self._session)
         print("after api call")
         print(resp)
-        if resp.user.agentUserGroup is not None: 
+        if resp.user.agentUserGroup is not None:
             return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
@@ -152,20 +151,20 @@ class Determined:
                 agent_user=resp.user.agentUserGroup.agentUser,
                 agent_group=resp.user.agentUserGroup.agentGroup,
             )
-        else: 
-             return user.User(
+        else:
+            return user.User(
                 user_id=resp.user.id,
                 username=resp.user.username,
                 admin=resp.user.admin,
                 session=self._session,
-                active=resp.user.active)
+                active=resp.user.active,
+            )
 
-
-    def list_users(self):
+    def list_users(self) -> Sequence[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
         users = []
         for user_b in users_bindings:
-            if user_b.agentUserGroup is not None: 
+            if user_b.agentUserGroup is not None:
                 user_obj = user.User(
                     user_id=user_b.id,
                     username=user_b.username,
@@ -177,13 +176,14 @@ class Determined:
                     agent_user=user_b.agentUserGroup.agentUser,
                     agent_group=user_b.agentUserGroup.agentGroup,
                 )
-            else: 
-                user_obj =  user.User(
+            else:
+                user_obj = user.User(
                     user_id=user_b.id,
                     username=user_b.username,
                     admin=user_b.admin,
                     session=self._session,
-                    active=user_b.active)
+                    active=user_b.active,
+                )
             users.append(user_obj)
         return users
 
@@ -191,6 +191,7 @@ class Determined:
         self,
         config: Union[str, pathlib.Path, Dict],
         model_dir: Union[str, pathlib.Path],
+        includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
     ) -> experiment.ExperimentReference:
         """
         Create an experiment with config parameters and model directory. The function
@@ -200,6 +201,8 @@ class Determined:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
                 or a dict.
             model_dir(string): directory containing model definition.
+            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files or
+            directories to include in the model definition.  (default: ``None``)
         """
         if isinstance(config, str):
             with open(config) as f:
@@ -219,7 +222,8 @@ class Determined:
         if isinstance(model_dir, str):
             model_dir = pathlib.Path(model_dir)
 
-        model_context = context.read_v1_context(model_dir)
+        path_includes = (pathlib.Path(i) for i in includes or [])
+        model_context = context.read_v1_context(model_dir, includes=path_includes)
 
         req = bindings.v1CreateExperimentRequest(
             # TODO: add this as a param to create_experiment()

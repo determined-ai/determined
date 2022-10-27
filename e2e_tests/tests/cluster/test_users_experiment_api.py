@@ -9,11 +9,12 @@ from determined.common.api.bindings import determinedexperimentv1State as EXP_ST
 from tests import config as conf
 from tests import experiment as exp
 
-from .test_users import ADMIN_CREDENTIALS, create_test_user, det_spawn, clean_auth, login_admin
+from .test_users import ADMIN_CREDENTIALS, create_test_user, det_spawn, log_in_user
 
 
 @pytest.mark.e2e_cpu
-def test_experimental_experiment_api_determined_disabled(clean_auth: None, login_admin: None) -> None:
+def test_experimental_experiment_api_determined_disabled() -> None:
+    log_in_user(ADMIN_CREDENTIALS)
     context_path = pathlib.Path(conf.fixtures_path("no_op"))
     model_def_path = pathlib.Path(conf.fixtures_path("no_op/single-medium-train-step.yaml"))
 

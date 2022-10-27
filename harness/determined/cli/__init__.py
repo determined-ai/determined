@@ -3,8 +3,8 @@ from determined.cli._util import (
     make_pagination_args,
     default_pagination_args,
     setup_session,
-    require_feature_flag, 
-    login_sdk_client
+    require_feature_flag,
+    login_sdk_client,
 )
 from determined.cli import (
     agent,

@@ -1,10 +1,7 @@
-import uuid
-from typing import Any, Dict, List, Optional
-
-from requests import Response
+from typing import Optional
 
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 
 
 class User:
@@ -40,7 +37,7 @@ class User:
         agent_user: Optional[str] = None,
         agent_group: Optional[str] = None,
         admin: Optional[bool] = None,
-    ) -> Response:
+    ) -> bindings.v1PatchUserResponse:
         v1agent_user_group = bindings.v1AgentUserGroup(
             agentGid=agent_gid,
             agentGroup=agent_group,
@@ -55,25 +52,27 @@ class User:
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp
 
-    def rename(self, new_username: str) -> Response:
+    def rename(self, new_username: str) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(username=new_username)
         patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp
 
-    def activate(self) -> Response:
+    def activate(self) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(active=True)
         patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp
 
-    def deactivate(self) -> Response:
+    def deactivate(self) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(active=False)
         patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp
 
-    def change_password(self, new_password: str, is_hashed: Optional[bool] = False) -> Response:
+    def change_password(
+        self, new_password: str, is_hashed: Optional[bool] = False
+    ) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(password=new_password)
         patch_user_req = bindings.v1PatchUserRequest(
             userId=self.user_id, user=patch_user, isHashed=is_hashed
@@ -81,7 +80,9 @@ class User:
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp
 
-    def link_with_agent(self, agent_gid, agent_group, agent_uid, agent_user) -> Response:
+    def link_with_agent(
+        self, agent_gid, agent_group, agent_uid, agent_user
+    ) -> bindings.v1PatchUserResponse:
         v1agent_user_group = bindings.v1AgentUserGroup(
             agentGid=agent_gid,
             agentGroup=agent_group,

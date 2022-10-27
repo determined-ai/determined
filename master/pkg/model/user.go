@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -84,8 +83,6 @@ func (user User) ValidatePassword(password string) bool {
 		return false
 	}
 
-	fmt.Println("given password")
-	fmt.Println(password)
 	err := bcrypt.CompareHashAndPassword(
 		[]byte(user.PasswordHash.ValueOrZero()),
 		[]byte(password))

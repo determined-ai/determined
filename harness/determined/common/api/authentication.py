@@ -48,8 +48,8 @@ class Authentication:
         cert: Optional[certs.Cert] = None,
     ) -> None:
         self.master_address = master_address or util.get_default_master_address()
-        #print("master address in auth")
-        #print(self.master_address)
+        # print("master address in auth")
+        # print(self.master_address)
         self.token_store = TokenStore(self.master_address)
 
         self.session = self._init_session(requested_user, password, try_reauth, cert)

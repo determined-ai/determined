@@ -16,7 +16,7 @@ from pexpect import spawn
 
 from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
-from determined.experimental import client, Determined
+from determined.experimental import Determined
 from tests import command
 from tests import config as conf
 from tests import experiment as exp
@@ -53,6 +53,7 @@ def login_admin() -> None:
     child.close()
     assert child.exitstatus == 0
 
+
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
     assert log_in_user(credentials) == 0
@@ -86,7 +87,7 @@ def log_in_user(credentials: authentication.Credentials) -> int:
     return cast(int, child.exitstatus)
 
 
-def create_test_user(add_password: bool = False) -> None:
+def create_test_user(add_password: bool = False) -> authentication.Credentials:
     n_username = get_random_string()
     command = ["det", "-m", conf.make_master_url(), "user", "create", n_username]
     output = subprocess.check_call(command)
@@ -212,12 +213,13 @@ def test_post_user_api(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_create_user_sdk(clean_auth: None, login_admin: None): 
-    username =  get_random_string()
+def test_create_user_sdk(clean_auth: None, login_admin: None) -> None:
+    username = get_random_string()
     password = get_random_string()
     det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.create_user(username=username, admin= False, password=password)
+    user = det_obj.create_user(username=username, admin=False, password=password)
     assert user.user_id is not None and user.username == username
+
 
 @pytest.mark.e2e_cpu
 def test_logout(clean_auth: None, login_admin: None) -> None:
@@ -293,13 +295,13 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     # Now log in again.
     assert log_in_user(creds) == 0
 
-    # SDK testing for activating and deactivating. 
+    # SDK testing for activating and deactivating.
     log_in_user(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    assert user.deactivate().user.active == False
-    assert user.activate().user.active == True
-    
+    assert not user.deactivate().user.active
+    assert user.activate().user.active
+
     # Now log in again.
     assert log_in_user(creds) == 0
 
@@ -322,7 +324,7 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     newPassword = get_random_string()
     assert change_user_password(creds.username, newPassword) == 0
     assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
-    
+
     newPasswordSdk = get_random_string()
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
@@ -339,7 +341,7 @@ def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) ->
 
     creds2 = create_test_user(True)
 
-    # Ensure determined creds are the default values. 
+    # Ensure determined creds are the default values.
     change_user_password("determined", "")
 
     # Create an experiment as first user.
@@ -407,7 +409,7 @@ def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None
 
 
 @pytest.mark.e2e_cpu
-def test_login_with_environment_variables(clean_auth: None, login_admin) -> None:
+def test_login_with_environment_variables(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user(True)
     # logout admin
     assert log_out_user() == 0
@@ -531,7 +533,7 @@ def test_non_admin_user_link_with_agent_user(clean_auth: None, login_admin: None
 
 
 @pytest.mark.e2e_cpu
-def test_non_admin_commands(clean_auth, login_admin) -> None:
+def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user()
     log_in_user(creds)
     command = [
@@ -764,15 +766,18 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
     return user_creds
 
 
-def create_linked_user_sdk(uid: int, agent_user: str, gid: int, group: str): 
+def create_linked_user_sdk(
+    uid: int, agent_user: str, gid: int, group: str
+) -> authentication.Credentials:
     creds = create_test_user(False)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    resp = user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
+    user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
     return creds
 
-def check_link_with_agent_output(user, expected_output):
-     with logged_in_user(user), command.interactive_command(
+
+def check_link_with_agent_output(user: authentication.Credentials, expected_output: str) -> None:
+    with logged_in_user(user), command.interactive_command(
         "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
     ) as cmd:
         for line in cmd.stdout:
@@ -781,16 +786,18 @@ def check_link_with_agent_output(user, expected_output):
         else:
             raise AssertionError(f"Did not find {expected_output} in output")
 
+
 @pytest.mark.e2e_cpu
 def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
     user = create_linked_user(200, "someuser", 300, "somegroup")
     expected_output = "someuser:200:somegroup:300"
-    check_link_with_agent_output(user, expected_output) 
+    check_link_with_agent_output(user, expected_output)
 
     log_in_user(ADMIN_CREDENTIALS)
     user_sdk = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
-    expected_output="anyuser:210:anygroup:310"
+    expected_output = "anyuser:210:anygroup:310"
     check_link_with_agent_output(user_sdk, expected_output)
+
 
 @pytest.mark.e2e_cpu
 def test_link_with_large_uid(clean_auth: None, login_admin: None) -> None:
@@ -798,6 +805,7 @@ def test_link_with_large_uid(clean_auth: None, login_admin: None) -> None:
 
     expected_output = "someuser:2000000000:somegroup:2000000000"
     check_link_with_agent_output(user, expected_output)
+
 
 @pytest.mark.e2e_cpu
 def test_link_with_existing_agent_user(clean_auth: None, login_admin: None) -> None:

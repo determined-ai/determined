@@ -92,7 +92,7 @@ message PostUserRequest {
   // The password of the user.
   string password = 2;
   // Indicate whether the provided password is pre-salted & hashed or not.
-  bool is_hashed = 3; 
+  bool is_hashed = 3;
 }
 // Response to PostUserRequest.
 message PostUserResponse {
