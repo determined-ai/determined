@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	semvar "github.com/Masterminds/semver/v3"
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -39,10 +40,11 @@ import (
 
 const maxResourceDetailsSampleAgeSeconds = 60
 const (
-	slurmSchedulerType    = "slurm"
-	pbsSchedulerType      = "pbs"
-	slurmResourcesCarrier = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
-	pbsResourcesCarrier   = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
+	slurmSchedulerType     = "slurm"
+	pbsSchedulerType       = "pbs"
+	slurmResourcesCarrier  = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
+	pbsResourcesCarrier    = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
+	launcherMinimumVersion = "3.1.3"
 )
 
 // hpcResources is a data type describing the HPC resources available
@@ -235,6 +237,7 @@ type dispatcherResourceManager struct {
 	authToken                string
 	resourceDetails          hpcResourceDetailsCache
 	wlmType                  string
+	launcherVersionIsOK      bool
 }
 
 func newDispatcherResourceManager(
@@ -278,10 +281,11 @@ func newDispatcherResourceManager(
 		dispatchIDToAllocationID: make(map[string]model.AllocationID),
 		slotsUsedPerGroup:        make(map[*group]int),
 
-		masterTLSConfig: masterTLSConfig,
-		loggingConfig:   loggingConfig,
-		jobWatcher:      newDispatchWatcher(apiClient, authToken, config.LauncherAuthFile),
-		authToken:       authToken,
+		masterTLSConfig:     masterTLSConfig,
+		loggingConfig:       loggingConfig,
+		jobWatcher:          newDispatchWatcher(apiClient, authToken, config.LauncherAuthFile),
+		authToken:           authToken,
+		launcherVersionIsOK: false,
 	}
 }
 
@@ -1017,6 +1021,30 @@ func (m *dispatcherResourceManager) resolveSlotType(
 	return device.CUDA, nil
 }
 
+// retrieves the launcher version and log error if not meeting minimum required version.
+func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Context) {
+	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.authContext(ctx)).Execute()
+	if err == nil {
+		if checkMinimumLauncherVersion(resp) {
+			m.launcherVersionIsOK = true
+		}
+	}
+	if !m.launcherVersionIsOK {
+		ctx.Log().Error(fmt.Sprintf("Launcher version %s does not meet the required minimum. "+
+			"Upgrade to hpe-hpc-launcher version %s",
+			resp, launcherMinimumVersion))
+	}
+}
+
+func checkMinimumLauncherVersion(version string) bool {
+	c, _ := semvar.NewConstraint(">=" + launcherMinimumVersion)
+	launcherVersion, err := semvar.NewVersion(strings.TrimSuffix(version, "-SNAPSHOT"))
+	if err != nil {
+		return false
+	}
+	return c.Check(launcherVersion)
+}
+
 // fetchHpcResourceDetails retrieves the details about HPC Resources.
 // This function uses HPC Resources manifest to retrieve the required details.
 // This function performs the following steps:
@@ -1025,6 +1053,8 @@ func (m *dispatcherResourceManager) resolveSlotType(
 // 	3. Parse and load the details into a predefined struct - HpcResourceDetails
 // 	4. Terminate the manifest.
 // Returns struct with HPC resource details - HpcResourceDetails.
+// This function also queries launcher version and warns user if minimum required
+// launcher version is not met.
 func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) {
 	impersonatedUser := ""
 	newSample := hpcResources{}
@@ -1119,6 +1149,10 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	ctx.Log().Infof("default resource pools are '%s', '%s'",
 		m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
+
+	if !m.launcherVersionIsOK {
+		m.getAndCheckLauncherVersion(ctx)
+	}
 }
 
 // determineWlmType determines the WLM type of the cluster from the dispatchInfo response.

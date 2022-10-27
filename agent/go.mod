@@ -171,7 +171,12 @@ require (
 )
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/RobotsAndPencils/go-saml v0.0.0-20170520135329-fb13cb52a46b // indirect
 	github.com/coreos/go-oidc/v3 v3.1.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.hpe.com/hpe/hpc-ard-launcher-go/launcher v0.1.2 // indirect
 	gopkg.in/oauth2.v3 v3.12.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
