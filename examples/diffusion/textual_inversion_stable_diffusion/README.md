@@ -187,7 +187,7 @@ file. Examples:
 
 ## Some Tips
 
-* Training images are resized to 512 x 512 pixels by default. Resize your images accordingly will
+* Training images are resized to 512 x 512 pixels by default. Resizing your images accordingly will
   lead to the most consistent results. 
 * There is generally a tradeoff between how faithfully the training images are reproduced and how
   well they can be incorporated into the desired scene. Over-training may lead to perfect-likeness,
