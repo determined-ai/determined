@@ -80,6 +80,7 @@ def _require_singleton(fn: Callable) -> Callable:
 
     return _fn
 
+
 def login(
     master: Optional[str] = None,
     user: Optional[str] = None,
