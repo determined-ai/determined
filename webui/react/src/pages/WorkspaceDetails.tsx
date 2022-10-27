@@ -117,6 +117,8 @@ const WorkspaceDetails: React.FC = () => {
   }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
 
   const fetchRolesAssignableToScope = useCallback(async (): Promise<void> => {
+    // Only fetch roles if rbac is enabled.
+    if (!rbacEnabled) return;
     try {
       const response = await searchRolesAssignableToScope(
         { workspaceId: id },
