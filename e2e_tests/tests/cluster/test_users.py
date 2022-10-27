@@ -33,7 +33,6 @@ def clean_auth() -> Iterator[None]:
     clean_auth is a session-level fixture that ensures that we run tests with no preconfigured
     authentication, and that any settings we save during tests are cleaned up afterwards.
     """
-    print("clean auth")
     authentication.TokenStore(conf.make_master_url()).delete_token_cache()
     yield None
     authentication.TokenStore(conf.make_master_url()).delete_token_cache()
@@ -44,7 +43,6 @@ def login_admin() -> None:
     a_username, a_password = ADMIN_CREDENTIALS
     child = det_spawn(["user", "login", a_username])
     child.setecho(True)
-    print("in login admin")
     expected = f"Password for user '{a_username}':"
     child.expect(expected, timeout=EXPECT_TIMEOUT)
     child.sendline(a_password)
@@ -120,8 +118,7 @@ def change_user_password(
     child.sendline(target_password)
     child.expect(confirm_pword_prompt, timeout=EXPECT_TIMEOUT)
     child.sendline(target_password)
-
-    print(child.read())
+    child.read()
     child.wait()
     child.close()
     return cast(int, child.exitstatus)
@@ -416,8 +413,6 @@ def test_login_with_environment_variables(clean_auth: None, login_admin: None) -
 
     os.environ["DET_USER"] = creds.username
     os.environ["DET_PASS"] = creds.password
-    print("env det user")
-    print(os.environ.get("DET_USER"))
     try:
         child = det_spawn(["user", "whoami"])
         child.expect(creds.username)
@@ -487,8 +482,6 @@ def test_login_as_non_active_user(clean_auth: None, login_admin: None) -> None:
 
     passwd_prompt = f"Password for user '{creds.username}':"
     unauth_error = "user is not active"
-    print("deactivating user")
-    print(creds.username)
     command = ["det", "-m", conf.make_master_url(), "user", "deactivate", creds.username]
     assert subprocess.call(command) == 0
 
@@ -758,7 +751,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
             group,
         ]
     )
-    print(child.read())
+    child.read()
     child.wait()
     child.close()
     assert child.exitstatus == 0
@@ -972,8 +965,6 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
-    print("curr user id in e2e test")
-    print(current_user.id)
     bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user

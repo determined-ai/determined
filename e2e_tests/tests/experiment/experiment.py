@@ -47,7 +47,6 @@ def create_experiment(
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr
     )
-    print("assertion completed creating experiment")
     m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
     assert m is not None
     return int(m.group(1))
