@@ -30,7 +30,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
+export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => void;
 export type ResetSettings = (settings?: string[]) => void;
 
 export type UseSettingsReturn<T> = {
@@ -69,8 +69,8 @@ const queryParamToType = <T>(
     return !isNaN(value) ? value : undefined;
   }
   if (type.is({})) return JSON.parse(param);
-  if (type.is('')) return param;
-  return undefined;
+
+  return param;
 };
 
 const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
@@ -136,9 +136,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const {
     auth: { user },
   } = useStore();
-  const { isLoading: initialLoading, querySettings, state, update } = useContext(UserSettings);
+  const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
 
   // creates an entry at the global state
   useEffect(() => {
@@ -180,15 +179,26 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
     const settings = queryToSettings<T>(config, querySettings);
     const stateSettings = state.get(config.applicableRoutespace) ?? {};
+    let hasDiff = false;
 
-    if (isEqual(settings, stateSettings)) return;
+    if (!Object.keys(settings).length) return;
 
     Object.keys(settings).forEach((setting) => {
-      stateSettings[setting] = settings[setting];
+      // checking manually because settings from query params are usually smaller than settings state.
+      if (stateSettings[setting] !== settings[setting]) {
+        stateSettings[setting] = settings[setting];
+        hasDiff = true;
+      }
     });
 
+    if (!hasDiff) return;
+
     update(config.applicableRoutespace, stateSettings, true);
-  }, [config, querySettings, state, update]);
+
+    const mappedSettings = settingsToQuery(config, stateSettings);
+    const url = `?${mappedSettings}`;
+    navigate(url, { replace: true });
+  }, [config, querySettings, state, update, navigate]);
 
   const settings: T | null = (state.get(config.applicableRoutespace) as T) ?? null;
   /*
@@ -236,7 +246,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       }, []);
 
       if (dbUpdates.length !== 0) {
-        setIsLoading(true);
 
         try {
           // Persist storage to backend.
@@ -253,8 +262,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
             silent: true,
             type: ErrorType.Api,
           });
-        } finally {
-          setIsLoading(false);
         }
       }
     },
@@ -285,15 +292,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting] = defaultSetting.defaultValue;
       });
 
-      update(config.applicableRoutespace, newSettings);
-
-      updateDB(newSettings);
+      update(config.applicableRoutespace, newSettings, false, () => updateDB(newSettings));
     },
     [config, update, updateDB, settings],
   );
 
   const updateSettings = useCallback(
-    async (updates: Settings, shouldPush = false) => {
+    (updates: Settings, shouldPush = false) => {
       if (!settings) return;
 
       if (
@@ -306,9 +311,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (isEqual(newSettings, settings)) return;
 
-      update(config.applicableRoutespace, newSettings);
-
-      await updateDB(newSettings);
+      update(config.applicableRoutespace, newSettings, false, () => updateDB(newSettings));
 
       const mappedSettings = settingsToQuery(config, newSettings);
       const url = `?${mappedSettings}`;
@@ -320,7 +323,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   return {
     activeSettings,
-    isLoading: isLoading || initialLoading,
+    isLoading,
     resetSettings,
     settings,
     updateSettings,
