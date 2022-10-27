@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
@@ -23,7 +24,13 @@ var (
 	iters        = 10
 )
 
-func setup(t *testing.T) {
+var userModel model.User
+
+func setup(t *testing.T, pgDB *PgDB) {
+	userModel = model.User{Username: uuid.New().String(), Active: true}
+	_, err := pgDB.AddUser(&userModel, nil)
+	require.NoError(t, err)
+
 	ctx := context.TODO()
 	workspaceData := map[string]interface{}{}
 	rasData := map[string]interface{}{}
@@ -38,7 +45,7 @@ func setup(t *testing.T) {
 
 		workspaceData["id"] = constantID
 		workspaceData["name"] = fmt.Sprintf("test_workspace_permissions_%s", constantID)
-		_, err := Bun().NewInsert().Model(&workspaceData).TableExpr("workspaces").Exec(ctx)
+		_, err = Bun().NewInsert().Model(&workspaceData).TableExpr("workspaces").Exec(ctx)
 		require.NoError(t, err, "error inserting workspace")
 
 		rasData["id"] = constantID
@@ -69,16 +76,16 @@ func setup(t *testing.T) {
 		require.NoError(t, err, "serror inserting editor role assignment")
 	}
 
-	groupMembership := map[string]interface{}{"user_id": "1", "group_id": "1000000"}
-	_, err := Bun().NewInsert().Model(&groupMembership).TableExpr("user_group_membership").
+	groupMembership := map[string]interface{}{"user_id": userModel.ID, "group_id": "1000000"}
+	_, err = Bun().NewInsert().Model(&groupMembership).TableExpr("user_group_membership").
 		Exec(ctx)
 	require.NoError(t, err, "error inserting user group membership 1000000")
 
-	groupMembership = map[string]interface{}{"user_id": "1", "group_id": "1000001"}
+	groupMembership = map[string]interface{}{"user_id": userModel.ID, "group_id": "1000001"}
 	_, err = Bun().NewInsert().Model(&groupMembership).TableExpr("user_group_membership").Exec(ctx)
 	require.NoError(t, err, "error inserting user group membership 1000001")
 
-	groupMembership = map[string]interface{}{"user_id": "1", "group_id": "1000002"}
+	groupMembership = map[string]interface{}{"user_id": userModel.ID, "group_id": "1000002"}
 	_, err = Bun().NewInsert().Model(&groupMembership).TableExpr("user_group_membership").Exec(ctx)
 	require.NoError(t, err, "error inserting user group membership 1000002")
 }
@@ -93,7 +100,10 @@ func cleanUp(t *testing.T) {
 		editorIDs = append(editorIDs, editorOffset+i)
 	}
 
-	_, err := Bun().NewDelete().Table("workspaces").Where("id IN (?)",
+	_, err := Bun().NewDelete().Table("users").Where("id = ?", userModel.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = Bun().NewDelete().Table("workspaces").Where("id IN (?)",
 		bun.In(constantIDs)).Exec(ctx)
 	require.NoError(t, err, "error cleaning up workspace")
 
@@ -110,21 +120,22 @@ func TestPermissionMatch(t *testing.T) {
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	t.Cleanup(func() { cleanUp(t) })
-	setup(t)
+	setup(t, pgDB)
+	userID := userModel.ID
 
 	t.Run("test DoesPermissionMatch", func(t *testing.T) {
 		workspaceID := int32(1000000)
-		err := DoesPermissionMatch(ctx, model.UserID(1), &workspaceID,
+		err := DoesPermissionMatch(ctx, userID, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 		require.NoError(t, err, "error when searching for permissions")
 
-		err = DoesPermissionMatch(ctx, model.UserID(1), &workspaceID,
+		err = DoesPermissionMatch(ctx, userID, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to update experiments")
 
 		workspaceID = int32(99999)
-		err = DoesPermissionMatch(ctx, model.UserID(1), &workspaceID,
+		err = DoesPermissionMatch(ctx, userID, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 
 		require.IsType(t, authz.PermissionDeniedError{}, err, "workspace should not exist")
@@ -132,11 +143,11 @@ func TestPermissionMatch(t *testing.T) {
 
 	t.Run("test DoesPermissionMatchAll", func(t *testing.T) {
 		workspaceID := wrappers.Int32Value{Value: 1000000}
-		err := DoesPermissionMatchAll(ctx, model.UserID(1),
+		err := DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, &workspaceID)
 		require.NoError(t, err, "error when searching for permissions")
 
-		err = DoesPermissionMatchAll(ctx, model.UserID(1),
+		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, &workspaceID)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to update experiments")
@@ -148,7 +159,7 @@ func TestPermissionMatch(t *testing.T) {
 			{Value: 1000001},
 			{Value: 1000002},
 		}
-		err := DoesPermissionMatchAll(ctx, model.UserID(1),
+		err := DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, workspaceIDs...)
 		require.NoError(t, err, "error when searching for permissions")
 
@@ -156,7 +167,7 @@ func TestPermissionMatch(t *testing.T) {
 			{Value: 1000000},
 			{Value: 999999},
 		}
-		err = DoesPermissionMatchAll(ctx, model.UserID(1),
+		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
@@ -165,7 +176,7 @@ func TestPermissionMatch(t *testing.T) {
 			{Value: 1000000},
 			{Value: 1000011},
 		}
-		err = DoesPermissionMatchAll(ctx, model.UserID(1),
+		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
@@ -177,7 +188,7 @@ func TestPermissionMatch(t *testing.T) {
 			{Value: 1000001},
 			{Value: 1000002},
 		}
-		err := DoesPermissionMatchAll(ctx, model.UserID(1),
+		err := DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
@@ -187,18 +198,18 @@ func TestPermissionMatch(t *testing.T) {
 			{Value: 1000001},
 			{Value: 1000003},
 		}
-		err = DoesPermissionMatchAll(ctx, model.UserID(1),
+		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
 
 	t.Run("test DoesPermissionExist", func(t *testing.T) {
-		err := DoPermissionsExist(ctx, model.UserID(1),
+		err := DoPermissionsExist(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 		require.NoError(t, err, "error when checking if permission exists in any workspace")
 
-		err = DoPermissionsExist(ctx, model.UserID(1),
+		err = DoPermissionsExist(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
