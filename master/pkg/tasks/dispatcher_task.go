@@ -347,8 +347,7 @@ func (t *TaskSpec) computeLaunchConfig(
 		launchConfig["networkMode"] = "host"
 	}
 	// From launcher 3.0.16, disableImageCache & add/dropCapabilities are supported, but
-	// implemented for podman only. For Singularity we control these features using environment
-	// variables (see getEnvVarsForLauncherManifest)
+	// implemented for podman only. Added to singularity as well for 3.1.4.
 	if t.Environment.ForcePullImage() {
 		launchConfig["disableImageCache"] = trueValue
 	}
@@ -523,6 +522,8 @@ func getEnvVarsForLauncherManifest(
 	if taskSpec.Environment.RegistryAuth() != nil {
 		m["SINGULARITY_DOCKER_USERNAME"] = taskSpec.Environment.RegistryAuth().Username
 		m["SINGULARITY_DOCKER_PASSWORD"] = taskSpec.Environment.RegistryAuth().Password
+		m["APPTAINER_DOCKER_USERNAME"] = taskSpec.Environment.RegistryAuth().Username
+		m["APPTAINER_DOCKER_PASSWORD"] = taskSpec.Environment.RegistryAuth().Password
 		if len(taskSpec.Environment.RegistryAuth().ServerAddress) > 0 {
 			logrus.Warningf(
 				"NOT SUPPORTED: environment.registry_auth.serveraddress: %s ",
@@ -534,21 +535,6 @@ func getEnvVarsForLauncherManifest(
 				taskSpec.Environment.RegistryAuth().Email)
 		}
 	}
-
-	if taskSpec.Environment.ForcePullImage() {
-		m["SINGULARITY_DISABLE_CACHE"] = trueValue
-	}
-
-	if len(taskSpec.Environment.AddCapabilities()) > 0 {
-		m["SINGULARITY_ADD_CAPS"] = strings.Join(taskSpec.Environment.AddCapabilities(), ",")
-	}
-
-	if len(taskSpec.Environment.DropCapabilities()) > 0 {
-		m["SINGULARITY_DROP_CAPS"] = strings.Join(taskSpec.Environment.DropCapabilities(), ",")
-	}
-
-	// Do not auto mount the host /tmp within the container
-	m["SINGULARITY_NO_MOUNT"] = "tmp"
 
 	return m, nil
 }

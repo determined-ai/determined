@@ -752,11 +752,10 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["DET_MASTER_CERT_NAME"], "certName")
 	assert.Equal(t, envVars["DET_CONTAINER_LOCAL_TMP"], "1")
 	assert.Equal(t, envVars["SINGULARITY_DOCKER_USERNAME"], "user")
+	assert.Equal(t, envVars["APPTAINER_DOCKER_USERNAME"], "user")
 	assert.Equal(t, envVars["SINGULARITY_DOCKER_PASSWORD"], "pwd")
-	assert.Equal(t, envVars["SINGULARITY_DISABLE_CACHE"], "true")
-	assert.Equal(t, envVars["SINGULARITY_ADD_CAPS"], "add1,add2")
-	assert.Equal(t, envVars["SINGULARITY_DROP_CAPS"], "drop1,drop2")
-	assert.Equal(t, envVars["SINGULARITY_NO_MOUNT"], "tmp")
+	assert.Equal(t, envVars["APPTAINER_DOCKER_PASSWORD"], "pwd")
+
 	assert.Equal(t, envVars["cpu"], "default")
 	assert.Equal(t, envVars["myenv"], "xyz")
 }
