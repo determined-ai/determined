@@ -144,7 +144,8 @@ const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-  }, [updateDestinationSettings, project?.workspaceId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.workspaceId]);
 
   const id = parseInt(projectId ?? '1');
 

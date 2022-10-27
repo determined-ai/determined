@@ -1,3 +1,4 @@
+import { Map } from 'immutable';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
@@ -26,7 +27,7 @@ type UserSettingsContext = {
 export const UserSettings = createContext<UserSettingsContext>({
   isLoading: false,
   querySettings: '',
-  state: new Map(),
+  state: Map<string, Settings>(),
   update: () => undefined,
 });
 
@@ -37,7 +38,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');
-  const settingsState = useRef(new Map<string, Settings>());
+  const [settingsState, setSettingsState] = useState(() => Map<string, Settings>());
 
   useEffect(() => {
     if (!user?.id) return;
@@ -45,20 +46,23 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
         setIsLoading(false);
+        setSettingsState((currentState) => {
+          return currentState.withMutations((state) => {
+            response.settings.forEach((setting) => {
+              const value = setting.value ? JSON.parse(setting.value) : undefined;
+              let key = setting.storagePath || setting.key; // falls back to the setting key due to storagePath being optional.
 
-        response.settings.forEach((setting) => {
-          const value = setting.value ? JSON.parse(setting.value) : undefined;
-          let key = setting.storagePath || setting.key; // falls back to the setting key due to storagePath being optional.
+              if (key.includes('u:2/')) key = key.replace(/u:2\//g, '');
 
-          if (key.includes('u:2/')) key = key.replace(/u:2\//g, '');
+              const entry = state.get(key);
 
-          const entry = settingsState.current.get(key);
-
-          if (!entry) {
-            settingsState.current.set(key, { [setting.key]: value });
-          } else {
-            settingsState.current.set(key, Object.assign(entry, { [setting.key]: value }));
-          }
+              if (!entry) {
+                state.set(key, { [setting.key]: value });
+              } else {
+                state.set(key, Object.assign(entry, { [setting.key]: value }));
+              }
+            });
+          });
         });
       });
     } catch (error) {
@@ -71,7 +75,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id]);
+  }, [canceler, user?.id, settingsState]);
 
   useEffect(() => {
     const url = window.location.search.substr(/^\?/.test(location.search) ? 1 : 0);
@@ -80,7 +84,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   }, []);
 
   const update = (key: string, value: Settings, clearQuerySettings = false) => {
-    settingsState.current.set(key, value);
+    setSettingsState((currentState) => currentState.set(key, value));
 
     if (clearQuerySettings) querySettings.current = '';
   };
@@ -92,7 +96,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
       value={{
         isLoading: isLoading,
         querySettings: querySettings.current,
-        state: settingsState.current,
+        state: settingsState,
         update,
       }}>
       {children}
