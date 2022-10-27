@@ -281,7 +281,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            pytest.skip("HF_READ_ONLY_TOKEN environment variable missing, skipping test")
+            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
         else:
             raise k
 
@@ -317,6 +317,6 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
-            pytest.skip("HF_READ_ONLY_TOKEN environment variable missing, skipping test")
+            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
         else:
             raise k
