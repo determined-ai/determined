@@ -1,9 +1,10 @@
 import copy
+import logging
 import os
 import shutil
 import tempfile
 import time
-from typing import Union
+from typing import List, Optional, Union
 
 import pytest
 
@@ -16,14 +17,59 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_cpu
 def test_noop_pause() -> None:
+
+    _test_noop_pause(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"), conf.fixtures_path("no_op"), None
+    )
+
+
+@pytest.mark.e2e_slurm
+def test_noop_pause_slurm() -> None:
+
+    # The original configuration file, which we will need to modify for HPC
+    # clusters.
+    config_file = conf.fixtures_path("no_op/single-medium-train-step.yaml")
+
+    # For HPC, we need to remove the "checkpoint_storage" item from the
+    # configuration file, because it sets "host_path" to "/tmp", which is
+    # not desirable on HPC clusters for the following two reasons:
+    #
+    #    1. The "storage_path:" directory, which is set to
+    #       "determined-integration-checkpoints" in the configuration file,
+    #       disappears as soon as the experiment is paused. Don't know the
+    #       reason why it disappears, but it only happens if "host_path" is
+    #       set to "/tmp".  This causes the "activate" to fail, because it
+    #       cannot find the checkpoints from the previously paused experiment.
+    #
+    #    2. On HPC clusters, there is no guarantee that when the experiment is
+    #       "activated" after it has been paused, that the Workload Manager
+    #       (e.g., Slurm, PBS) is going to pick the same node that the job ran on
+    #       when it was paused.  If it picks a different node and "host_path" is
+    #       is not a shared directory, then the new node on which the job is
+    #       restarted on will not have access to the checkpoint directory.
+    #       This will cause the experiment to fail, because it cannot find the
+    #       checkpoints from the previously paused experiment.
+    #
+    # For e2e_tests targeted to HPC clusters, the "master.yaml" file will have
+    # a "checkpoint_storage' with a "host_path" that points to a shared
+    # directory on the cluster that is accessible by all the compute nodes.
+    # Therefore, by removing the "checkpoint_storage" item from experiment's
+    # configuration file, the test will use the "checkpoint_storage" item from
+    # the "master.yaml".
+    config_file_slurm = remove_item_from_yaml_file(config_file, "checkpoint_storage")
+
+    _test_noop_pause(config_file_slurm, conf.fixtures_path("no_op"), None)
+
+    os.remove(config_file_slurm)
+
+
+def _test_noop_pause(
+    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+) -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
     """
-    experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
+    experiment_id = exp.create_experiment(config_file, model_def_file, create_args)
     exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_RUNNING)
 
     # Wait for the only trial to get scheduled.
@@ -31,6 +77,14 @@ def test_noop_pause() -> None:
 
     # Wait for the only trial to show progress, indicating the image is built and running.
     exp.wait_for_experiment_workload_progress(experiment_id)
+
+    # If we pause the experiment before it gets to write at least one checkpoint,
+    # then we're really not testing whether the experiment can pick up from where
+    # it left off when it's activated.  In which case, the "activate" simply
+    # starts from the beginning upon finding that are no checkpoints to start
+    # from.  Therefore, wait a while to give the experiment a chance to write at
+    # least one checkpoint.
+    wait_for_at_least_one_checkpoint(experiment_id)
 
     # Pause the experiment. Note that Determined does not currently differentiate
     # between a "stopping paused" and a "paused" state, so we follow this check
@@ -378,3 +432,42 @@ def test_noop_experiment_config_override() -> None:
         exp_config = exp.experiment_config_json(experiment_id)
         assert exp_config["reproducibility"]["experiment_seed"] == 8200
         exp.cancel_single(experiment_id)
+
+
+def remove_item_from_yaml_file(filename: str, item_name: str) -> str:
+    with open(filename) as f:
+        file_contents = f.read()
+        y = yaml.YAML(typ="safe", pure=True)
+        data = y.load(file_contents)
+
+        del data[item_name]
+
+    with tempfile.NamedTemporaryFile(
+        prefix=os.path.splitext(os.path.basename(filename))[0], delete=False
+    ) as f:
+        y.dump(data, f)
+
+    return str(f.name)
+
+
+def has_at_least_one_checkpoint(exp_id: int) -> None:
+    trials = exp.experiment_trials(exp_id)
+
+    # Check if the most recent trial has any checkpoints.
+    if (
+        len(trials) > 0
+        and len(exp.workloads_with_checkpoint(trials[len(trials) - 1].workloads)) > 0
+    ):
+        return True
+
+    return False
+
+
+def wait_for_at_least_one_checkpoint(experiment_id: str):
+
+    for _ in range(20):
+        if has_at_least_one_checkpoint(experiment_id):
+            logging.info(f"At least one checkpoint reported. Continuing to pause the experiment.")
+            break
+        else:
+            time.sleep(1)
