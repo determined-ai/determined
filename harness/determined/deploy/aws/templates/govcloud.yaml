@@ -140,6 +140,12 @@ Parameters:
     Type: String
     Description: Whether to retain CloudWatch log group after the stack is deleted
     Default: false
+  
+  WebhooksBaseUrl:
+    Type: String
+    Description: The url that webhook messages will link to
+    Default: ""
+
 
   MasterConfigTemplate:
     Type: String
@@ -584,6 +590,9 @@ Resources:
               host: "${Database.Endpoint.Address}"
 
             enable_cors: ${EnableCORS}
+
+            webhooks:
+              ${WebhooksBaseUrl}
 
             resource_manager:
               scheduler:
