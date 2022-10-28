@@ -221,7 +221,8 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 	}
 
 	var ctx context.Context
-	if c.Request().Context() == nil {
+
+	if c.Request() == nil || c.Request().Context() == nil {
 		ctx = context.TODO()
 	} else {
 		ctx = c.Request().Context()
@@ -509,7 +510,8 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 	currUser := c.(*detContext.DetContext).MustGetUser()
 
 	var ctx context.Context
-	if c.Request().Context() == nil {
+
+	if c.Request() == nil || c.Request().Context() == nil {
 		ctx = context.TODO()
 	} else {
 		ctx = c.Request().Context()
@@ -585,7 +587,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 	currUser := c.(*detContext.DetContext).MustGetUser()
 
 	var ctx context.Context
-	if c.Request().Context() == nil {
+	if c.Request() == nil || c.Request().Context() == nil {
 		ctx = context.TODO()
 	} else {
 		ctx = c.Request().Context()
@@ -625,7 +627,8 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	currUser := c.(*detContext.DetContext).MustGetUser()
 
 	var ctx context.Context
-	if c.Request().Context() == nil {
+
+	if c.Request() == nil || c.Request().Context() == nil {
 		ctx = context.TODO()
 	} else {
 		ctx = c.Request().Context()
