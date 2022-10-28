@@ -166,7 +166,7 @@ service Determined {
       tags: "Users"
     };
   }
-
+  
   // Get the current user.
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {

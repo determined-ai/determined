@@ -7,6 +7,8 @@ import shutil
 import subprocess
 import time
 import uuid
+import random 
+import string
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
 
 import appdirs
@@ -327,6 +329,27 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     user = det_obj.get_user_by_name(user_name=creds.username)
     assert user.change_password(new_password=newPasswordSdk, is_hashed=False)
     assert log_in_user(authentication.Credentials(creds.username, newPasswordSdk)) == 0
+
+@pytest.mark.e2e_cpu
+def test_change_username(clean_auth: None, login_admin: None):
+    creds = create_test_user()
+    new_username = "renameusername"
+    print("new username")
+    print(creds.username)
+    print(new_username)
+    command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
+    assert subprocess.call(command) == 0
+    det_obj =Determined(master=conf.make_master_url())
+    user = det_obj.get_user_by_name(user_name=new_username)
+    assert user.username == new_username
+    assert log_in_user(authentication.Credentials(new_username, "")) == 0
+
+    # Test SDK
+    new_username = "renameusername2"
+    user.rename(new_username)
+    user = det_obj.get_user_by_name(user_name=new_username)
+    assert user.username == new_username
+    assert log_in_user(authentication.Credentials(new_username, "")) == 0
 
 
 @pytest.mark.e2e_cpu
