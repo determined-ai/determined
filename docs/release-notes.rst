@@ -17,11 +17,11 @@ Version 0.19.6
 
 **Breaking Changes**
 
--  API: removed legacy endpoint ``/tasks/:task_id`` due to it always incorrectly returning missing
+-  API: Remove the legacy endpoint ``/tasks/:task_id`` due to it always incorrectly returning missing
    parameter.
 
--  Additional Slurm options formerly specified in the experiment environment section are now part of
-   a new Slurm section of the experiment configuration. For example, what was formerly written as:
+-  Experiment: Additional Slurm options formerly specified in the experiment environment section are now part of
+   a new ``slurm`` section of the experiment configuration. For example, what was formerly written as
 
    .. code:: yaml
 
@@ -31,7 +31,7 @@ Version 0.19.6
           - --mem-per-cpu=10
           - --exclusive
 
-   Is now specified as:
+   is now specified as
 
    .. code:: yaml
 
@@ -44,16 +44,16 @@ Version 0.19.6
 
 **Improvements**
 
--  CLI: Add the `ls` abbreviation for `list` to all applicable CLI commands.
+-  CLI: Add the ``ls`` abbreviation for ``list`` to all applicable CLI commands.
 
--  Support a new ``-i``/``--include`` option in task-starting CLI commands. The context option
+-  CLI: Support a new ``-i``/``--include`` option in task-starting CLI commands. The context option
    (``--context``) is useful for copying a directory of files into the task container, but it may
-   only be provided once, and it can be clunky if you only care about one or two files. The Include
+   only be provided once, and it can be clunky if you only care about one or two files. The ``--include``
    option also copies files into the task container, but:
 
       -  The directory name is preserved, so ``-i my_data/`` would result in a directory named
          ``my_data/`` appearing in the working directory of the task container.
-      -  It may point to a file, so ``-i my_data.csv`` will work.
+      -  It may point to a file, so ``-i my_data.csv`` will place ``my_data.csv`` into the working directory.
       -  It may be specified multiple times to include multiple files and/or directories.
 
 -  **Breaking Change:** ``det deploy aws`` by default now configures agent instances to
