@@ -562,7 +562,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
@@ -607,14 +607,14 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
 	})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsLabelsQuery passes through.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentLabelsQueryError")
 	authZExp.On("FilterExperimentLabelsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
@@ -649,8 +649,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't fork from experiment.
 	expectedErr := status.Errorf(codes.PermissionDenied, "canForkExperimentError")
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanForkFromExperiment", curUser, mock.Anything).
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanForkFromExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canForkExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ParentId: int32(forkFrom.ID),
@@ -658,7 +658,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Can't view project passed in.
-	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
@@ -667,7 +667,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 		fmt.Sprintf("project (%d) not found", projectID)), err)
 
 	// Can't view project passed in from config.
-	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
@@ -683,8 +683,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
-	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
@@ -694,9 +694,9 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't activate experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
-	pAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).Return(nil).Once()
-	authZExp.On("CanEditExperiment", curUser, mock.Anything, mock.Anything).Return(
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(nil).Once()
+	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Activate: true,
