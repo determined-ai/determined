@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Loadable<T> =
   | {
       _tag: 'Loaded';
@@ -134,8 +133,8 @@ function all<A, B, C, D>(
 function all<A, B, C, D, E>(
   ls: [Loadable<A>, Loadable<B>, Loadable<C>, Loadable<D>, Loadable<E>],
 ): Loadable<[A, B, C, D, E]>;
-function all(ls: Array<Loadable<any>>): Loadable<Array<any>> {
-  const res: any[] = [];
+function all(ls: Array<Loadable<unknown>>): Loadable<Array<unknown>> {
+  const res: unknown[] = [];
   for (const l of ls) {
     if (l._tag === 'NotLoaded') {
       return NotLoaded;
