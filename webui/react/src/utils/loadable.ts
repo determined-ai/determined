@@ -13,6 +13,12 @@ const exhaustive = (v: never): never => v;
 const Loaded = <T>(data: T): Loadable<T> => ({ _tag: 'Loaded', data });
 const NotLoaded: Loadable<never> = { _tag: 'NotLoaded' };
 
+/**
+ * The map() function creates a new Loadable with the result of calling
+ * the provided function on the contained value in the passed Loadable.
+ *
+ * If the passed Loadable is NotLoaded then the return value is NotLoaded
+ */
 const map = <T, U>(l: Loadable<T>, fn: (_: T) => U): Loadable<U> => {
   switch (l._tag) {
     case 'Loaded':
@@ -24,6 +30,13 @@ const map = <T, U>(l: Loadable<T>, fn: (_: T) => U): Loadable<U> => {
   }
 };
 
+/**
+ * The flatMap() function creates a new Loadable with the result of calling
+ * the provided function on the contained value in the passed Loadable and then
+ * flattening the result.
+ *
+ * If any of the passed or returned Loadables is NotLoaded, the result is NotLoaded.
+ */
 const flatMap = <T, U>(l: Loadable<T>, fn: (_: T) => Loadable<U>): Loadable<U> => {
   const res = map(l, fn);
   if (res._tag === 'Loaded') {
@@ -32,6 +45,9 @@ const flatMap = <T, U>(l: Loadable<T>, fn: (_: T) => Loadable<U>): Loadable<U> =
   return res;
 };
 
+/**
+ * Performs a side-effecting function if the passed Loadable is Loaded.
+ */
 const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
   switch (l._tag) {
     case 'Loaded': {
@@ -45,6 +61,10 @@ const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
   }
 };
 
+/**
+ * If the passed Loadable is Loaded this returns the data, otherwise
+ * it returns the default value.
+ */
 const getOrElse = <T>(def: T, l: Loadable<T>): T => {
   switch (l._tag) {
     case 'Loaded':
@@ -69,6 +89,10 @@ type MatchArgs<T, U> =
       NotLoaded: () => U;
       _: () => U;
     };
+/**
+ * Allows you to match out the cases in the Loadable with named
+ * arguments.
+ */
 const match = <T, U>(l: Loadable<T>, cases: MatchArgs<T, U>): U => {
   switch (l._tag) {
     case 'Loaded':
@@ -80,6 +104,7 @@ const match = <T, U>(l: Loadable<T>, cases: MatchArgs<T, U>): U => {
   }
 };
 
+/** Like `match` but without argument names */
 const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
   switch (l._tag) {
     case 'Loaded':
@@ -91,6 +116,7 @@ const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
   }
 };
 
+/** Returns true if the passed object is a Loadable */
 const isLoadable = <T, Z>(l: Loadable<T> | Z): l is Loadable<T> => {
   return ['Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
 };
