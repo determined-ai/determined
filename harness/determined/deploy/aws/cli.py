@@ -511,6 +511,11 @@ args_description = Cmd(
                     help="max attempts an agent has to reconnect",
                 ),
                 Arg(
+                    "--webhooks-base-url",
+                    type=str,
+                    help="the base url that webhook messages will link to",
+                ),
+                Arg(
                     "--agent-reconnect-backoff",
                     type=int,
                     default=5,
