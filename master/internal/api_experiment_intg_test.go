@@ -579,7 +579,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 	resQuery := &bun.SelectQuery{}
 	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
-		q := args.Get(2).(*bun.SelectQuery)
+		q := args.Get(3).(*bun.SelectQuery)
 		*resQuery = *q.Where("e.id = ?", exp0.ID)
 	})
 	res, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{})
@@ -627,7 +627,7 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 	resQuery := &bun.SelectQuery{}
 	authZExp.On("FilterExperimentLabelsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
-		q := args.Get(2).(*bun.SelectQuery)
+		q := args.Get(3).(*bun.SelectQuery)
 		*resQuery = *q.Where("id = ?", exp0.ID)
 	})
 	res, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{})

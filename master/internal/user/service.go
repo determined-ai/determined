@@ -368,7 +368,7 @@ func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr er
 
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	var ctx context.Context
-	if c.Request()== nil || c.Request().Context() == nil {
+	if c.Request() == nil || c.Request().Context() == nil {
 		ctx = context.TODO()
 	} else {
 		ctx = c.Request().Context()
