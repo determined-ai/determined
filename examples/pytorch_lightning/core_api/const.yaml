@@ -1,0 +1,13 @@
+name: ptl test
+resources:
+  slots_per_trial: 8
+hyperparameters:
+  lr: 0.02
+  batch_size: 256
+  num_workers: 4
+searcher:
+  name: single
+  metric: val_loss
+  max_length: 5
+entrypoint: python3 -m determined.launch.torch_distributed python3 trainer.py
+max_restarts: 0

@@ -1,0 +1,23 @@
+name: ptl test
+resources:
+  slots_per_trial: 8
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # If you encounter NCCL errors, you may need to alter this to match your network device name.
+    - NCCL_SOCKET_IFNAME=ens8,ens,eth,ib
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-9119094
+hyperparameters:
+  lr: 0.02
+  batch_size: 256
+  num_workers: 4
+  # Note that many parameters such as batch_size, learning rate scheduling, and optimizer
+  # are controlled through Lightning.
+  ds_config: ds_config.json
+searcher:
+  name: single
+  metric: val_loss
+  max_length: 10
+entrypoint: python3 -m determined.launch.deepspeed python3 trainer.py
+max_restarts: 0
