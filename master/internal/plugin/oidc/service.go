@@ -148,9 +148,12 @@ func (s *Service) callback(c echo.Context) error {
 	c.SetCookie(user.NewCookieFromToken(token))
 	redirectPath := defaultRedirectPath
 	switch relayState := c.QueryParam("relayState"); relayState {
+	case deprecatedCliRelayState:
+		fallthrough
 	case cliRelayState:
 		redirectPath = cliRedirectPath + fmt.Sprintf("?token=%s", url.QueryEscape(token))
 	case "":
+		// do nothing to the default redirectPath
 	default:
 		redirectPath += fmt.Sprintf("?relayState=%s", url.QueryEscape(relayState))
 	}
