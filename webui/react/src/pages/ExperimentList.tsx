@@ -832,7 +832,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // cleanup

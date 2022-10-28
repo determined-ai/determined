@@ -285,7 +285,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   useEffect(() => {
     setIsLoading(true);
     fetchExperimentCheckpoints();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // cleanup

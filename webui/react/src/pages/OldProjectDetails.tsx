@@ -903,7 +903,7 @@ const ProjectDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // cleanup
