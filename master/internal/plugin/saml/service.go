@@ -18,8 +18,9 @@ import (
 const (
 	defaultRedirectPath = "/det/login"
 	// This must match the value at $PROJECT_ROOT/cli/determined_cli/sso.CLI_REDIRECT_PORT.
-	cliRedirectPath = "http://localhost:49176"
-	cliRelayState   = "cli=true"
+	cliRedirectPath         = "http://localhost:49176"
+	deprecatedCliRelayState = "cli=true"
+	cliRelayState           = "cli"
 )
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
@@ -112,9 +113,12 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 	c.SetCookie(user.NewCookieFromToken(token))
 	redirectPath := defaultRedirectPath
 	switch relayState := c.FormValue("RelayState"); relayState {
+	case deprecatedCliRelayState:
+		fallthrough
 	case cliRelayState:
 		redirectPath = cliRedirectPath + fmt.Sprintf("?token=%s", url.QueryEscape(token))
 	case "":
+		// do nothing to the default redirectPath
 	default:
 		redirectPath += fmt.Sprintf("?relayState=%s", url.QueryEscape(relayState))
 	}
