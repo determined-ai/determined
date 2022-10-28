@@ -128,11 +128,7 @@
     };
     nb.display["text/latex"] = nb.display.latex;
 
-    nb.display.javascript = function (js) {
-        var el = makeElement("script");
-        el.innerHTML = joinText(js);
-        return el;
-    };
+    nb.display.javascript = nb.display.text;
     nb.display["application/javascript"] = nb.display.javascript;
 
     nb.display.png = imageCreator("png");
