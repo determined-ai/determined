@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  The custom searcher API allows users to implement their own logic to coordinate across multiple
-   training jobs, enabling easy implementation of custom meta algorithms like hyperparameter tuning
-   and ensembling methods. See :ref:`topic-guides_hp-tuning-det_custom` for more information.
