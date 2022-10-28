@@ -5079,26 +5079,26 @@ class v1Permission:
         self,
         *,
         id: "v1PermissionType",
-        isGlobal: "typing.Optional[bool]" = None,
         name: "typing.Optional[str]" = None,
+        scopeTypeMask: "typing.Optional[v1ScopeTypeMask]" = None,
     ):
         self.id = id
         self.name = name
-        self.isGlobal = isGlobal
+        self.scopeTypeMask = scopeTypeMask
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Permission":
         return cls(
             id=v1PermissionType(obj["id"]),
             name=obj.get("name", None),
-            isGlobal=obj.get("isGlobal", None),
+            scopeTypeMask=v1ScopeTypeMask.from_json(obj["scopeTypeMask"]) if obj.get("scopeTypeMask", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "id": self.id.value,
             "name": self.name if self.name is not None else None,
-            "isGlobal": self.isGlobal if self.isGlobal is not None else None,
+            "scopeTypeMask": self.scopeTypeMask.to_json() if self.scopeTypeMask is not None else None,
         }
 
 class v1PermissionType(enum.Enum):
@@ -6408,10 +6408,12 @@ class v1Role:
         roleId: int,
         name: "typing.Optional[str]" = None,
         permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None,
+        scopeTypeMask: "typing.Optional[v1ScopeTypeMask]" = None,
     ):
         self.roleId = roleId
         self.name = name
         self.permissions = permissions
+        self.scopeTypeMask = scopeTypeMask
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Role":
@@ -6419,6 +6421,7 @@ class v1Role:
             roleId=obj["roleId"],
             name=obj.get("name", None),
             permissions=[v1Permission.from_json(x) for x in obj["permissions"]] if obj.get("permissions", None) is not None else None,
+            scopeTypeMask=v1ScopeTypeMask.from_json(obj["scopeTypeMask"]) if obj.get("scopeTypeMask", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -6426,6 +6429,7 @@ class v1Role:
             "roleId": self.roleId,
             "name": self.name if self.name is not None else None,
             "permissions": [x.to_json() for x in self.permissions] if self.permissions is not None else None,
+            "scopeTypeMask": self.scopeTypeMask.to_json() if self.scopeTypeMask is not None else None,
         }
 
 class v1RoleAssignment:
@@ -6433,22 +6437,26 @@ class v1RoleAssignment:
         self,
         *,
         role: "v1Role",
+        scopeCluster: "typing.Optional[bool]" = None,
         scopeWorkspaceId: "typing.Optional[int]" = None,
     ):
         self.role = role
         self.scopeWorkspaceId = scopeWorkspaceId
+        self.scopeCluster = scopeCluster
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RoleAssignment":
         return cls(
             role=v1Role.from_json(obj["role"]),
             scopeWorkspaceId=obj.get("scopeWorkspaceId", None),
+            scopeCluster=obj.get("scopeCluster", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "role": self.role.to_json(),
             "scopeWorkspaceId": self.scopeWorkspaceId if self.scopeWorkspaceId is not None else None,
+            "scopeCluster": self.scopeCluster if self.scopeCluster is not None else None,
         }
 
 class v1RoleAssignmentSummary:
@@ -6456,26 +6464,26 @@ class v1RoleAssignmentSummary:
         self,
         *,
         roleId: int,
-        isGlobal: "typing.Optional[bool]" = None,
+        scopeCluster: "typing.Optional[bool]" = None,
         scopeWorkspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.roleId = roleId
         self.scopeWorkspaceIds = scopeWorkspaceIds
-        self.isGlobal = isGlobal
+        self.scopeCluster = scopeCluster
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RoleAssignmentSummary":
         return cls(
             roleId=obj["roleId"],
             scopeWorkspaceIds=obj.get("scopeWorkspaceIds", None),
-            isGlobal=obj.get("isGlobal", None),
+            scopeCluster=obj.get("scopeCluster", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "roleId": self.roleId,
             "scopeWorkspaceIds": self.scopeWorkspaceIds if self.scopeWorkspaceIds is not None else None,
-            "isGlobal": self.isGlobal if self.isGlobal is not None else None,
+            "scopeCluster": self.scopeCluster if self.scopeCluster is not None else None,
         }
 
 class v1RoleWithAssignments:
@@ -6569,6 +6577,29 @@ class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
     SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
     SCHEDULER_TYPE_PBS = "SCHEDULER_TYPE_PBS"
+
+class v1ScopeTypeMask:
+    def __init__(
+        self,
+        *,
+        cluster: "typing.Optional[bool]" = None,
+        workspace: "typing.Optional[bool]" = None,
+    ):
+        self.cluster = cluster
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ScopeTypeMask":
+        return cls(
+            cluster=obj.get("cluster", None),
+            workspace=obj.get("workspace", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "cluster": self.cluster if self.cluster is not None else None,
+            "workspace": self.workspace if self.workspace is not None else None,
+        }
 
 class v1SearchRolesAssignableToScopeRequest:
     def __init__(

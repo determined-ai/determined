@@ -40,7 +40,7 @@ export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
 export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
   return {
     id: permission.id,
-    isGlobal: permission.isGlobal || false,
+    isGlobal: !permission.scopeTypeMask?.workspace || false,
   };
 };
 
@@ -48,7 +48,7 @@ export const mapV1UserAssignment = (
   assignment: Sdk.V1RoleAssignmentSummary,
 ): types.UserAssignment => {
   return {
-    isGlobal: assignment.isGlobal || false,
+    isGlobal: assignment.scopeCluster || false,
     roleId: assignment.roleId,
     workspaces: assignment.scopeWorkspaceIds || [],
   };
