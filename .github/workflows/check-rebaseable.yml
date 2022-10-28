@@ -15,13 +15,13 @@ jobs:
       - name: get PR
         uses: actions/checkout@v3
         with:
-          repository: determined/determined-ee
           fetch-depth: 1 # we only need this branch
           token: ${{ secrets.DETERMINED_TOKEN }}
       - name: add EE repository remote
         run: |
           git remote add EE github.com:determined-ai/determined-ee
           git fetch EE
+          git checkout EE/master
       - name: attempt rebase
         run: |
-          git rebase EE/master
+          git rebase "${{ github.head_ref }}"
