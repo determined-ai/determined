@@ -19,7 +19,6 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 jest.mock('services/api', () => ({
-  ...jest.requireActual('services/api'),
   getGroups: () => Promise.resolve({ groups: [] }),
   getUserRoles: () => Promise.resolve([]),
   getUsers: () => {
@@ -33,12 +32,12 @@ jest.mock('services/api', () => ({
     const users: Array<DetailedUser> = [currentUser];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
-  getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
+
 jest.mock('contexts/Store', () => ({
   __esModule: true,
   ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { checked: true, user: { id: 1 } as DetailedUser } }),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
 }));
 
 const Container: React.FC = () => {
@@ -91,11 +90,9 @@ describe('UserManagement', () => {
   });
 
   it('should render modal for create user when click the button', async () => {
-    await waitFor(() => {
-      setup();
-      user.click(screen.getByLabelText(CREAT_USER_LABEL));
-    });
+    await waitFor(() => setup());
+    await user.click(screen.getByLabelText(CREAT_USER_LABEL));
 
-    expect(await screen.getAllByText('Create User')).toHaveLength(2);
+    expect(screen.getAllByText('Create User')).toHaveLength(2);
   });
 });

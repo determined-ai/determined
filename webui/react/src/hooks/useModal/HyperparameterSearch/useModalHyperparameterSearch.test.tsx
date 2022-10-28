@@ -20,7 +20,6 @@ jest.mock('services/api', () => ({
     return mockCreateExperiment(params);
   },
   getResourcePools: () => Promise.resolve([]),
-  getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
 const { experiment } = generateTestExperimentData();
@@ -91,11 +90,7 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 
 const setup = async () => {
   const view = render(<Container />);
-
-  await waitFor(() => {
-    const button = screen.getByRole('button', { name: 'Open Modal' });
-    user.click(button);
-  });
+  await user.click(screen.getByRole('button', { name: 'Open Modal' }));
 
   return { view };
 };
@@ -104,13 +99,13 @@ describe('useModalHyperparameterSearch', () => {
   it('should open modal', async () => {
     const { view } = await setup();
 
-    await waitFor(() => expect(view.findByText(MODAL_TITLE)).toBeInTheDocument());
+    expect(await view.findByText(MODAL_TITLE)).toBeInTheDocument();
   });
 
   it('should cancel modal', async () => {
     const { view } = await setup();
 
-    await waitFor(() => user.click(view.getAllByRole('button', { name: 'Cancel' })[0]));
+    await user.click(view.getAllByRole('button', { name: 'Cancel' })[0]);
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
@@ -121,7 +116,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should submit experiment', async () => {
     const { view } = await setup();
 
-    await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
+    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
     mockCreateExperiment.mockReturnValue({ id: 1 });
     await user.click(view.getByRole('button', { name: 'Run Experiment' }));
 
@@ -131,7 +126,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should only allow current on constant hyperparameter', async () => {
     const { view } = await setup();
 
-    await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
+    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     await user.click(view.getAllByRole('combobox')[0]);
     await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Constant'));
@@ -144,7 +139,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should only allow min and max on int hyperparameter', async () => {
     const { view } = await setup();
 
-    await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
+    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     await user.click(view.getAllByRole('combobox')[0]);
     await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Int'));
@@ -157,7 +152,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should show count fields when using grid searcher', async () => {
     const { view } = await setup();
 
-    await waitFor(() => user.click(view.getByRole('radio', { name: 'Grid' })));
+    await user.click(view.getByRole('radio', { name: 'Grid' }));
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
 
     expect(view.getByText('Grid Count')).toBeInTheDocument();
@@ -166,7 +161,7 @@ describe('useModalHyperparameterSearch', () => {
   it('should remove adaptive fields when not using adaptive searcher', async () => {
     const { view } = await setup();
 
-    await waitFor(() => user.click(view.getByRole('radio', { name: /adaptive/i })));
+    await user.click(view.getByRole('radio', { name: /adaptive/i }));
     expect(view.getByText(/Early stopping mode/i)).toBeInTheDocument();
 
     await user.click(view.getByRole('radio', { name: 'Grid' }));
