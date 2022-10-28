@@ -57,7 +57,8 @@ func TestAuthzUserList(t *testing.T) {
 
 	// Error passes through.
 	expectedErr := fmt.Errorf("filterUserListError")
-	authzUser.On("FilterUserList", mock.Anything, model.User{}, mock.Anything).Return(nil, expectedErr).Once()
+	authzUser.On("FilterUserList", mock.Anything, model.User{}, mock.Anything).
+		Return(nil, expectedErr).Once()
 	_, err := svc.getUsers(ctx)
 	require.Equal(t, err, expectedErr)
 
@@ -66,7 +67,8 @@ func TestAuthzUserList(t *testing.T) {
 		{Username: "a"},
 		{Username: "b"},
 	}
-	authzUser.On("FilterUserList", mock.Anything, model.User{}, mock.Anything).Return(users, nil).Once()
+	authzUser.On("FilterUserList", mock.Anything, model.User{}, mock.Anything).
+		Return(users, nil).Once()
 	actualUsers, err := svc.getUsers(ctx)
 	require.NoError(t, err)
 	require.Equal(t, users, actualUsers)
@@ -114,7 +116,8 @@ func TestAuthzPatchUser(t *testing.T) {
 		expectedErr := errors.Wrap(forbiddenError, testCase.expectedCall+"Error")
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
-		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(true, nil).Once()
+		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
+			Return(true, nil).Once()
 
 		_, err := svc.patchUser(ctx)
 		require.Equal(t, expectedErr.Error(), err.Error())
@@ -127,7 +130,8 @@ func TestAuthzPatchUser(t *testing.T) {
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
 		cantGetUserError := fmt.Errorf("cantGetUserError")
-		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(false, cantGetUserError).Once()
+		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
+			Return(false, cantGetUserError).Once()
 
 		_, err = svc.patchUser(ctx)
 		require.Equal(t, cantGetUserError, err)
@@ -137,7 +141,8 @@ func TestAuthzPatchUser(t *testing.T) {
 			strings.NewReader(testCase.body)))
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
-		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(false, nil).Once()
+		authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
+			Return(false, nil).Once()
 
 		_, err = svc.patchUser(ctx)
 		require.Equal(t,
@@ -174,7 +179,8 @@ func TestAuthzPatchUsername(t *testing.T) {
 	authzUser.On("CanSetUsersUsername", mock.Anything, model.User{}, mock.Anything).
 		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
 	cantGetUserError := fmt.Errorf("cantGetUserError")
-	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(false, cantGetUserError).Once()
+	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
+		Return(false, cantGetUserError).Once()
 
 	_, err = svc.patchUsername(ctx)
 	require.Equal(t, cantGetUserError, err)
@@ -183,7 +189,8 @@ func TestAuthzPatchUsername(t *testing.T) {
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	authzUser.On("CanSetUsersUsername", mock.Anything, model.User{}, mock.Anything).
 		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
-	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(false, nil).Once()
+	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
+		Return(false, nil).Once()
 
 	_, err = svc.patchUsername(ctx)
 	require.Equal(t, db.ErrNotFound.Error(), err.Error())
@@ -234,7 +241,8 @@ func TestAuthzGetUserImage(t *testing.T) {
 	authzUser.On("CanGetUsersImage", mock.Anything, model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError")).Once()
 	cantGetUserError := fmt.Errorf("cantGetUserError")
-	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(true, cantGetUserError).Once()
+	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).
+		Return(true, cantGetUserError).Once()
 
 	_, err = svc.getUserImage(ctx)
 	require.Equal(t, cantGetUserError, err)

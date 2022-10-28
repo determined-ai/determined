@@ -97,7 +97,8 @@ func TestAuthzGetUsers(t *testing.T) {
 
 	// Error just passes error through.
 	expectedErr := fmt.Errorf("filterUseList")
-	authzUsers.On("FilterUserList", mock.Anything, curUser, mock.Anything).Return(nil, expectedErr).Once()
+	authzUsers.On("FilterUserList", mock.Anything, curUser, mock.Anything).
+		Return(nil, expectedErr).Once()
 	_, err := api.GetUsers(ctx, &apiv1.GetUsersRequest{})
 	require.Equal(t, expectedErr, err)
 
@@ -122,7 +123,8 @@ func TestAuthzGetUser(t *testing.T) {
 
 	// Error passes through when CanGetUser returns non nil error.
 	expectedErr := fmt.Errorf("canGetUserError")
-	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).Return(false, expectedErr).Once()
+	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).
+		Return(false, expectedErr).Once()
 	_, err := api.GetUser(ctx, &apiv1.GetUserRequest{UserId: 1})
 	require.Equal(t, expectedErr, err)
 
@@ -197,7 +199,8 @@ func TestAuthzSetUserPassword(t *testing.T) {
 	cantViewUserError := fmt.Errorf("cantViewUserError")
 	authzUsers.On("CanSetUsersPassword", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersPassword")).Once()
-	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).Return(false, cantViewUserError).Once()
+	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).
+		Return(false, cantViewUserError).Once()
 	_, err = api.SetUserPassword(ctx, &apiv1.SetUserPasswordRequest{UserId: int32(curUser.ID)})
 	require.Equal(t, err, cantViewUserError)
 }
@@ -224,7 +227,8 @@ func TestAuthzPatchUser(t *testing.T) {
 	cantViewUserError := fmt.Errorf("cantViewUserError")
 	authzUsers.On("CanSetUsersDisplayName", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersDisplayName")).Once()
-	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).Return(false, cantViewUserError).Once()
+	authzUsers.On("CanGetUser", mock.Anything, curUser, mock.Anything).
+		Return(false, cantViewUserError).Once()
 	_, err = api.PatchUser(ctx, req)
 	require.Equal(t, cantViewUserError.Error(), err.Error())
 

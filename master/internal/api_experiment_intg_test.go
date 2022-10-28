@@ -537,13 +537,15 @@ func TestAuthZGetExperiment(t *testing.T) {
 	_, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: -999})
 	require.Equal(t, expNotFoundErr(-999).Error(), err.Error())
 
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(false, nil).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.Equal(t, expNotFoundErr(exp.ID).Error(), err.Error())
 
 	// Error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetExperimentError")
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, expectedErr).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(false, expectedErr).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.Equal(t, expectedErr, err)
 
@@ -565,7 +567,8 @@ func TestAuthZGetExperiments(t *testing.T) {
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsQuery passes through.
-	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).
+		Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentsQueryError")
 	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()

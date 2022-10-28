@@ -46,17 +46,20 @@ func TestTrialAuthZEcho(t *testing.T) {
 		require.Equal(t, trialNotFoundErrEcho(-999), funcCall(-999))
 
 		// Can't view trials experiment gives same error.
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, nil).Once()
 		require.Equal(t, trialNotFoundErrEcho(trial.ID), funcCall(trial.ID))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, expectedErr).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, expectedErr).Once()
 		require.Equal(t, expectedErr, funcCall(trial.ID))
 
 		// Action func error returns error in forbidden.
 		expectedErr = echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("%dError", i))
-		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(true, nil).Once()
 		authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf("%dError", i)).Once()
 		require.Equal(t, expectedErr, funcCall(trial.ID))

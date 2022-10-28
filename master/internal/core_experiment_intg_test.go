@@ -94,7 +94,8 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 	// Can't activate experiment deny.
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canActivateExperimentError")
 	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+		Return(nil).Once()
 	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canActivateExperimentError")).Once()
 	err = echoPostExperiment(ctx, api, t, CreateExperimentParams{
@@ -195,7 +196,8 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 		// Not found returns same as permission denied.
 		require.Equal(t, expNotFoundErrEcho(-999), curCase.IDToReqCall(-999))
 
-		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).Return(false, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
+			Return(false, nil).Once()
 		require.Equal(t, expNotFoundErrEcho(exp.ID), curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
@@ -206,7 +208,8 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 
 		// Deny returns error with Forbidden.
 		expectedErr = echo.NewHTTPError(http.StatusForbidden, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).Return(true, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
+			Return(true, nil).Once()
 		authZExp.On(curCase.DenyFuncName, curCase.Params...).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())

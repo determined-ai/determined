@@ -127,7 +127,8 @@ func TestCheckpointAuthZ(t *testing.T) {
 					curCase.IDToReqCall(notFoundUUID))
 			}
 
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
+			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+				Return(false, nil).Once()
 			if curCase.UseMultiCheckpointError {
 				require.Equal(t, errCheckpointsNotFound([]string{checkpointID}),
 					curCase.IDToReqCall(checkpointID))
@@ -137,11 +138,13 @@ func TestCheckpointAuthZ(t *testing.T) {
 			}
 
 			expectedErr := fmt.Errorf("canGetExperimentError")
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, expectedErr).Once()
+			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+				Return(false, expectedErr).Once()
 			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
 
 			expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+			authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+				Return(true, nil).Once()
 			authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 				Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 			require.Equal(t, expectedErr, curCase.IDToReqCall(checkpointID))
