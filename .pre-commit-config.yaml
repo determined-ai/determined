@@ -19,3 +19,7 @@ repos:
         language: system
         files: '^webui/react/'
         types_or: [markdown, json]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.17.0
+    hooks:
+      - id: yamllint
