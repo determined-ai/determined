@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
+import Spinner from 'shared/components/Spinner';
+import { useAgents, useClusterOverview } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -13,9 +14,8 @@ import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
   const { activeExperiments, activeTasks, resourcePools } = useStore();
-  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
-  // TODO: handle loading state
-  const agents = Loadable.getOrElse([], useAgents());
+  const overview = useClusterOverview();
+  const agents = useAgents();
 
   const auxContainers = useMemo(() => {
     const tally = {
@@ -30,20 +30,29 @@ export const ClusterOverallStats: React.FC = () => {
   }, [resourcePools]);
 
   const maxTotalSlots = useMemo(() => {
-    return maxClusterSlotCapacity(resourcePools, agents);
+    return Loadable.map(agents, (agents) => maxClusterSlotCapacity(resourcePools, agents));
   }, [resourcePools, agents]);
 
   return (
     <Section hideTitle title="Overview Stats">
       <Grid gap={ShirtSize.Medium} minItemWidth={150} mode={GridMode.AutoFill}>
-        <OverviewStats title="Connected Agents">{agents ? agents.length : '?'}</OverviewStats>
+        <OverviewStats title="Connected Agents">
+          {Loadable.match(agents, {
+            Loaded: (agents) => (agents ? agents.length : '?'),
+            NotLoaded: (): ReactNode => <Spinner />,
+          })}
+        </OverviewStats>
         {[ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
-          maxTotalSlots[resType] > 0 ? (
-            <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
-              {overview[resType].total - overview[resType].available}
-              <small>/ {maxTotalSlots[resType]}</small>
-            </OverviewStats>
-          ) : null,
+          Loadable.match(Loadable.all([overview, maxTotalSlots]), {
+            Loaded: ([overview, maxTotalSlots]) =>
+              maxTotalSlots[resType] > 0 ? (
+                <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
+                  {overview[resType].total - overview[resType].available}
+                  <small>/ {maxTotalSlots[resType]}</small>
+                </OverviewStats>
+              ) : null,
+            NotLoaded: () => undefined,
+          }),
         )}
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">

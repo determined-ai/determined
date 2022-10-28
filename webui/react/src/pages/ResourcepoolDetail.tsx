@@ -1,5 +1,5 @@
 import { Divider, Tabs } from 'antd';
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
@@ -52,8 +52,7 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 const ResourcepoolDetail: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
   const { resourcePools } = useStore();
-  // TODO: handle loading state
-  const agents = Loadable.getOrElse([], useAgents());
+  const agents = Loadable.waitFor(useAgents());
 
   const pool = useMemo(() => {
     return resourcePools.find((pool) => pool.name === poolname);
@@ -201,4 +200,10 @@ const ResourcepoolDetail: React.FC = () => {
   );
 };
 
-export default ResourcepoolDetail;
+const ResourcepoolDetailPage: React.FC = () => (
+  <Suspense fallback={<Page loading />}>
+    <ResourcepoolDetail />
+  </Suspense>
+);
+
+export default ResourcepoolDetailPage;

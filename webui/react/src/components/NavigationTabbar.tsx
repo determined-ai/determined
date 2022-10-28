@@ -12,7 +12,7 @@ import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
+import { useAgents, useClusterOverview } from 'stores/agents';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -45,9 +45,12 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { auth, resourcePools, info, pinnedWorkspaces } = useStore();
   const { ui } = useUI();
-  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
-  // TODO: handle loading state
-  const agents = Loadable.getOrElse([], useAgents());
+  const overview = useClusterOverview();
+  const agents = useAgents();
+  const clusterStatus = Loadable.match(Loadable.all([agents, overview]), {
+    Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
+    NotLoaded: () => undefined, // TODO show spinner when this is loading
+  });
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
@@ -86,12 +89,7 @@ const NavigationTabbar: React.FC = () => {
         <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
-        <ToolbarItem
-          icon="cluster"
-          label="Cluster"
-          path={paths.cluster()}
-          status={clusterStatusText(overview, resourcePools, agents)}
-        />
+        <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />
         <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>

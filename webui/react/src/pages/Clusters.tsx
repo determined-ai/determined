@@ -6,7 +6,7 @@ import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
-import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
+import { useAgents, useClusterOverview } from 'stores/agents';
 import { Loadable } from 'utils/loadable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
@@ -37,12 +37,14 @@ const Clusters: React.FC = () => {
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const { resourcePools } = useStore();
-  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
-  // TODO: handle loading state
-  const agents = Loadable.getOrElse([], useAgents());
+  const overview = useClusterOverview();
+  const agents = useAgents();
 
   const cluster = useMemo(() => {
-    return clusterStatusText(overview, resourcePools, agents);
+    return Loadable.match(Loadable.all([agents, overview]), {
+      Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
+      NotLoaded: () => undefined, // TODO show spinner when this is loading
+    });
   }, [overview, resourcePools, agents]);
 
   const handleTabChange = useCallback(

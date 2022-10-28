@@ -11,7 +11,7 @@ import {
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
-import { initClusterOverview, useClusterOverview, useFetchAgents } from 'stores/agents';
+import { useClusterOverview, useFetchAgents } from 'stores/agents';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
@@ -28,7 +28,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const { ui } = useUI();
   const { info } = useStore();
   const [canceler] = useState(new AbortController());
-  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
+  const overview = useClusterOverview();
 
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
@@ -42,7 +42,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   useEffect(() => {
     updateFaviconType(
-      overview[ResourceType.ALL].allocation !== 0,
+      Loadable.quickMatch(overview, false, (o) => o[ResourceType.ALL].allocation !== 0),
       info.branding || BrandingType.Determined,
     );
   }, [overview, info]);

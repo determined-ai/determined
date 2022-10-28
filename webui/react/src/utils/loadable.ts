@@ -6,16 +6,12 @@ export type Loadable<T> =
     }
   | {
       _tag: 'NotLoaded';
-    }
-  | {
-      _tag: 'NotFound';
     };
 
 const exhaustive = (v: never): never => v;
 
 const Loaded = <T>(data: T): Loadable<T> => ({ _tag: 'Loaded', data });
 const NotLoaded: Loadable<never> = { _tag: 'NotLoaded' };
-const NotFound: Loadable<never> = { _tag: 'NotFound' };
 
 const map = <T, U>(l: Loadable<T>, fn: (_: T) => U): Loadable<U> => {
   switch (l._tag) {
@@ -23,8 +19,6 @@ const map = <T, U>(l: Loadable<T>, fn: (_: T) => U): Loadable<U> => {
       return Loaded(fn(l.data));
     case 'NotLoaded':
       return NotLoaded;
-    case 'NotFound':
-      return NotFound;
     default:
       return exhaustive(l);
   }
@@ -46,8 +40,6 @@ const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
     }
     case 'NotLoaded':
       return;
-    case 'NotFound':
-      return;
     default:
       exhaustive(l);
   }
@@ -59,8 +51,6 @@ const getOrElse = <T>(def: T, l: Loadable<T>): T => {
       return l.data;
     case 'NotLoaded':
       return def;
-    case 'NotFound':
-      return def;
     default:
       return exhaustive(l);
   }
@@ -69,15 +59,10 @@ const getOrElse = <T>(def: T, l: Loadable<T>): T => {
 type MatchArgs<T, U> =
   | {
       Loaded: (data: T) => U;
-      NotFound: () => U;
       NotLoaded: () => U;
     }
   | {
       Loaded: (data: T) => U;
-      _: () => U;
-    }
-  | {
-      NotFound: () => U;
       _: () => U;
     }
   | {
@@ -90,8 +75,6 @@ const match = <T, U>(l: Loadable<T>, cases: MatchArgs<T, U>): U => {
       return 'Loaded' in cases ? cases.Loaded(l.data) : cases._();
     case 'NotLoaded':
       return 'NotLoaded' in cases ? cases.NotLoaded() : cases._();
-    case 'NotFound':
-      return 'NotFound' in cases ? cases.NotFound() : cases._();
     default:
       return exhaustive(l);
   }
@@ -102,8 +85,6 @@ const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
     case 'Loaded':
       return f(l.data);
     case 'NotLoaded':
-      return def;
-    case 'NotFound':
       return def;
     default:
       return exhaustive(l);
@@ -130,9 +111,6 @@ function all<A, B, C, D, E>(
 function all(ls: Array<Loadable<any>>): Loadable<Array<any>> {
   const res: any[] = [];
   for (const l of ls) {
-    if (l._tag === 'NotFound') {
-      return NotFound;
-    }
     if (l._tag === 'NotLoaded') {
       return NotLoaded;
     }
@@ -141,7 +119,29 @@ function all(ls: Array<Loadable<any>>): Loadable<Array<any>> {
   return Loaded(res);
 }
 
-// exported immediately because of name collision
-export const Loadable = { all, flatMap, forEach, getOrElse, isLoadable, map, match, quickMatch };
+/** Allows you to use Loadables with React's Suspense component */
+const waitFor = <T>(l: Loadable<T>): T => {
+  switch (l._tag) {
+    case 'Loaded':
+      return l.data;
+    case 'NotLoaded':
+      throw Promise.resolve(undefined);
+    default:
+      return exhaustive(l);
+  }
+};
 
-export { Loaded, NotLoaded, NotFound };
+// exported immediately because of name collision
+export const Loadable = {
+  all,
+  flatMap,
+  forEach,
+  getOrElse,
+  isLoadable,
+  map,
+  match,
+  quickMatch,
+  waitFor,
+};
+
+export { Loaded, NotLoaded };
