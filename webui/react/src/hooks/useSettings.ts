@@ -138,10 +138,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   } = useStore();
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
+  const shouldSkipUpdates = useMemo(() => config.applicableRoutespace.includes('/') &&
+    !window.location.pathname.endsWith(config.applicableRoutespace), [config.applicableRoutespace]);
 
   // parse navigation url to state
   useEffect(() => {
-    if (!querySettings) return;
+    if (!querySettings || shouldSkipUpdates) return;
 
     const settings = queryToSettings<T>(config, querySettings);
     const stateSettings = state.get(config.applicableRoutespace) ?? {};
@@ -153,7 +155,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     });
 
     update(config.applicableRoutespace, stateSettings, true);
-  }, [config, querySettings, state, update]);
+  }, [config, querySettings, state, update, shouldSkipUpdates]);
 
   const settings: T = useMemo(
     () =>
@@ -172,6 +174,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   }
 
   useEffect(() => {
+    if (shouldSkipUpdates) return;
+
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
 
@@ -282,7 +286,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (
         config.applicableRoutespace.includes('/') &&
-        !window.location.pathname.includes(config.applicableRoutespace)
+        !window.location.pathname.endsWith(config.applicableRoutespace)
       )
         return;
 

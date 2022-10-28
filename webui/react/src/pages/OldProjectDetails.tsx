@@ -903,19 +903,8 @@ const ProjectDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  }, [
-    fetchExperiments,
-    settings.archived,
-    labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // cleanup
   useEffect(() => {

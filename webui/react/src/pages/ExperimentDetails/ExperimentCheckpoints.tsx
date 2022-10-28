@@ -283,16 +283,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {
-    fetchExperimentCheckpoints();
     setIsLoading(true);
-  }, [
-    fetchExperimentCheckpoints,
-    settings.sortDesc,
-    settings.sortKey,
-    stateString,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
+    fetchExperimentCheckpoints();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // cleanup
   useEffect(() => {

@@ -300,7 +300,8 @@ const WorkspaceList: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchWorkspaces().then(() => setIsLoading(false));
-  }, [fetchWorkspaces]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return () => canceler.abort();

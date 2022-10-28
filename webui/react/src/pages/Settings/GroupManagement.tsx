@@ -149,7 +149,8 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-  }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {

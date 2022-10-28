@@ -99,7 +99,8 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-  }, [fetchModel]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const downloadModel = useCallback(
     (version: ModelVersion) => {

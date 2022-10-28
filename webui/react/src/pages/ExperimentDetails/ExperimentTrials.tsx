@@ -338,9 +338,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {
-    fetchExperimentTrials();
     setIsLoading(true);
-  }, [fetchExperimentTrials]);
+    fetchExperimentTrials();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
   }, [experiment.state, stopPolling]);

@@ -157,7 +157,8 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset, fetchUsers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchGroups();

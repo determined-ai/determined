@@ -829,26 +829,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [total, settings, updateSettings]);
 
-  /*
-   * Get new experiments based on changes to the
-   * filters, pagination, search and sorter.
-   */
   useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  }, [
-    fetchExperiments,
-    settings.archived,
-    labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // cleanup
   useEffect(() => {

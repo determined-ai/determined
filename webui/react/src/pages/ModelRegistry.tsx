@@ -139,7 +139,8 @@ const ModelRegistry: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModels();
-  }, [fetchModels, settings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const switchArchived = useCallback(
     async (model: ModelItem) => {
