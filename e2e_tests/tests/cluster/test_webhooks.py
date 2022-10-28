@@ -71,7 +71,7 @@ def test_slack_webhook() -> None:
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
     exp_config = exp.experiment_config_json(experiment_id)
-
+    expected_field = {"type": "mrkdwn", "text": "*Status*: Completed"}
     expected_payload = {
         "blocks": [
             {
@@ -99,4 +99,9 @@ def test_slack_webhook() -> None:
         ],
     }
     server_thread.join()
+    expected_color = "#13B670"
+    assert expected_payload["blocks"] == request_to_webhook_endpoint["blocks"]
+    assert expected_color == request_to_webhook_endpoint["attachments"][0]["color"]
+    assert expected_field == request_to_webhook_endpoint["attachments"][0]["blocks"][0]["fields"][0]
+    assert expected_payload == request_to_webhook_endpoint
     assert expected_payload == request_to_webhook_endpoint
