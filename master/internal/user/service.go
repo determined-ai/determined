@@ -219,8 +219,15 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 	if err != nil {
 		return true, err
 	}
+
+	var ctx context.Context
+	if c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
 	if ok, err := AuthZProvider.Get().CanAccessNTSCTask(
-		c.Request().Context(), *user, ownerID); err != nil {
+		ctx, *user, ownerID); err != nil {
 		return true, err
 	} else if !ok {
 		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
@@ -360,7 +367,12 @@ func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr er
 }
 
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {
-	ctx := context.TODO()
+	var ctx context.Context
+	if c.Request()== nil || c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
 
 	type (
 		request struct {
@@ -495,7 +507,14 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 	}
 
 	currUser := c.(*detContext.DetContext).MustGetUser()
-	if err = AuthZProvider.Get().CanSetUsersUsername(c.Request().Context(), currUser,
+
+	var ctx context.Context
+	if c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
+	if err = AuthZProvider.Get().CanSetUsersUsername(ctx, currUser,
 		*user); err != nil {
 		return nil, canViewUserErrorHandle(currUser, *user,
 			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
@@ -564,7 +583,14 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		Active:   params.Active,
 	}
 	currUser := c.(*detContext.DetContext).MustGetUser()
-	if err = AuthZProvider.Get().CanCreateUser(c.Request().Context(), currUser, userToAdd,
+
+	var ctx context.Context
+	if c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
+	if err = AuthZProvider.Get().CanCreateUser(ctx, currUser, userToAdd,
 		ug); err != nil {
 		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
@@ -597,7 +623,14 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 	currUser := c.(*detContext.DetContext).MustGetUser()
-	if err := AuthZProvider.Get().CanGetUsersImage(c.Request().Context(), currUser,
+
+	var ctx context.Context
+	if c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
+	if err := AuthZProvider.Get().CanGetUsersImage(ctx, currUser,
 		*user); err != nil {
 		return nil, canViewUserErrorHandle(currUser, *user,
 			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
