@@ -250,7 +250,7 @@ func TestAuthzGetUserImage(t *testing.T) {
 	// If we can't view the user return the same error as the user not existing.
 	authzUser.On("CanGetUsersImage", mock.Anything, model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError"))
-	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false, nil).Once()
+	authzUser.On("CanGetUser", mock.Anything, model.User{}, mock.Anything).Return(false, nil).Once()
 
 	_, err = svc.getUserImage(ctx)
 	require.Equal(t, db.ErrNotFound.Error(), err.Error())

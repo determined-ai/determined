@@ -217,7 +217,7 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 
 	for _, curCase := range cases {
 		// Create workspace to test with.
-		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
+		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 		resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 		require.NoError(t, err)
 		id := int(resp.Workspace.Id)
@@ -238,7 +238,8 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 
 		// Deny with permission to view returns error wrapped in forbidden.
 		expectedErr := status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Deny")
-		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+			Return(true, nil).Once()
 		workspaceAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything).
 			Return(fmt.Errorf("%sDeny", curCase.DenyFuncName)).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(id).Error())

@@ -147,7 +147,7 @@ func TestAuthzPostUser(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUserError")
-	authzUsers.On("CanCreateUser", curUser,
+	authzUsers.On("CanCreateUser", mock.Anything, curUser,
 		model.User{Username: "admin", Admin: true},
 		&model.AgentUserGroup{
 			UID:   5,
@@ -248,7 +248,7 @@ func TestAuthzGetUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canGetUsersOwnSettings")
-	authzUsers.On("CanGetUsersOwnSettings", curUser).
+	authzUsers.On("CanGetUsersOwnSettings", mock.Anything, curUser).
 		Return(fmt.Errorf("canGetUsersOwnSettings")).Once()
 
 	_, err := api.GetUserSetting(ctx, &apiv1.GetUserSettingRequest{})
@@ -259,7 +259,7 @@ func TestAuthzPostUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
-	authzUsers.On("CanCreateUsersOwnSetting", curUser,
+	authzUsers.On("CanCreateUsersOwnSetting", mock.Anything, curUser,
 		model.UserWebSetting{UserID: curUser.ID, Key: "k", Value: "v"}).
 		Return(fmt.Errorf("canCreateUsersOwnSetting")).Once()
 
@@ -273,7 +273,7 @@ func TestAuthzResetUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canResetUsersOwnSettings")
-	authzUsers.On("CanResetUsersOwnSettings", curUser).
+	authzUsers.On("CanResetUsersOwnSettings", mock.Anything, curUser).
 		Return(fmt.Errorf("canResetUsersOwnSettings")).Once()
 
 	_, err := api.ResetUserSetting(ctx, &apiv1.ResetUserSettingRequest{})
