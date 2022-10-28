@@ -338,7 +338,14 @@ func (s *Service) getUsers(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	return AuthZProvider.Get().FilterUserList(c.Request().Context(),
+	var ctx context.Context
+	if c.Request() == nil || c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
+
+	return AuthZProvider.Get().FilterUserList(ctx,
 		c.(*detContext.DetContext).MustGetUser(), userList)
 }
 
