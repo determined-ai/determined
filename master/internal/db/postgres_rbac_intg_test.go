@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -142,40 +141,30 @@ func TestPermissionMatch(t *testing.T) {
 	})
 
 	t.Run("test DoesPermissionMatchAll", func(t *testing.T) {
-		workspaceID := wrappers.Int32Value{Value: 1000000}
+		var workspaceID int32 = 1000000
 		err := DoesPermissionMatchAll(ctx, userID,
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, &workspaceID)
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, workspaceID)
 		require.NoError(t, err, "error when searching for permissions")
 
 		err = DoesPermissionMatchAll(ctx, userID,
-			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, &workspaceID)
+			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceID)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to update experiments")
 	})
 
 	t.Run("test DoesPermissionMatchAll multiple inputs single failure", func(t *testing.T) {
-		workspaceIDs := []*wrappers.Int32Value{
-			{Value: 1000000},
-			{Value: 1000001},
-			{Value: 1000002},
-		}
+		workspaceIDs := []int32{1000000, 1000001, 1000002}
 		err := DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, workspaceIDs...)
 		require.NoError(t, err, "error when searching for permissions")
 
-		workspaceIDs = []*wrappers.Int32Value{
-			{Value: 1000000},
-			{Value: 999999},
-		}
+		workspaceIDs = []int32{1000000, 999999}
 		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 
-		workspaceIDs = []*wrappers.Int32Value{
-			{Value: 1000000},
-			{Value: 1000011},
-		}
+		workspaceIDs = []int32{1000000, 1000011}
 		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
@@ -183,21 +172,13 @@ func TestPermissionMatch(t *testing.T) {
 	})
 
 	t.Run("test DoesPermissionMatchAll multiple failures", func(t *testing.T) {
-		workspaceIDs := []*wrappers.Int32Value{
-			{Value: 99999},
-			{Value: 1000001},
-			{Value: 1000002},
-		}
+		workspaceIDs := []int32{99999, 1000001, 1000002}
 		err := DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 
-		workspaceIDs = []*wrappers.Int32Value{
-			{Value: 1000000},
-			{Value: 1000001},
-			{Value: 1000003},
-		}
+		workspaceIDs = []int32{1000000, 1000001, 1000003}
 		err = DoesPermissionMatchAll(ctx, userID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,

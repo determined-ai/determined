@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -32,9 +29,17 @@ type Permission struct {
 // Proto turns a permission into its rbac representation.
 func (p *Permission) Proto() *rbacv1.Permission {
 	return &rbacv1.Permission{
-		Id:       rbacv1.PermissionType(int32(p.ID)),
-		Name:     p.Name,
-		IsGlobal: p.Global,
+		Id:            rbacv1.PermissionType(int32(p.ID)),
+		Name:          p.Name,
+		ScopeTypeMask: p.ScopeTypeMask(),
+	}
+}
+
+// ScopeTypeMask returns a mask of allowed scope types for this permission.
+func (p *Permission) ScopeTypeMask() *rbacv1.ScopeTypeMask {
+	return &rbacv1.ScopeTypeMask{
+		Cluster:   true,
+		Workspace: !p.Global,
 	}
 }
 
@@ -66,6 +71,22 @@ func (p Permissions) Proto() []*rbacv1.Permission {
 	return result
 }
 
+// ScopeTypeMask returns a rolled-up mask of allowed scope types.
+func (p Permissions) ScopeTypeMask() *rbacv1.ScopeTypeMask {
+	workspace := true
+	for i := range p {
+		if !p[i].ScopeTypeMask().Workspace {
+			workspace = false
+			break
+		}
+	}
+
+	return &rbacv1.ScopeTypeMask{
+		Cluster:   true,
+		Workspace: workspace,
+	}
+}
+
 // PermissionAssignment contains the database representation of a PermissionAssignment
 // as well as the Permission itself and the Role it is assigned to.
 type PermissionAssignment struct {
@@ -90,16 +111,22 @@ type Role struct {
 	RoleAssignments []*RoleAssignment `bun:"rel:has-many,join:id=role_id"`
 }
 
-// Proto converts a Role into a RoleWithAssignments.
-func (r *Role) Proto() *rbacv1.RoleWithAssignments {
+// Proto converts a Role into a rbacv1.Role.
+func (r *Role) Proto() *rbacv1.Role {
+	return &rbacv1.Role{
+		RoleId:        int32(r.ID),
+		Name:          r.Name,
+		Permissions:   Permissions(r.Permissions).Proto(),
+		ScopeTypeMask: Permissions(r.Permissions).ScopeTypeMask(),
+	}
+}
+
+// ProtoRoleWithAssignments converts a Role into a RoleWithAssignments.
+func (r *Role) ProtoRoleWithAssignments() *rbacv1.RoleWithAssignments {
 	userAssignments, groupAssignments := RoleAssignments(r.RoleAssignments).Proto()
 
 	return &rbacv1.RoleWithAssignments{
-		Role: &rbacv1.Role{
-			RoleId:      int32(r.ID),
-			Name:        r.Name,
-			Permissions: Permissions(r.Permissions).Proto(),
-		},
+		Role:                 r.Proto(),
 		GroupRoleAssignments: groupAssignments,
 		UserRoleAssignments:  userAssignments,
 	}
@@ -112,7 +139,7 @@ type Roles []Role
 func (rs Roles) Proto() []*rbacv1.RoleWithAssignments {
 	result := make([]*rbacv1.RoleWithAssignments, 0, len(rs))
 	for _, r := range rs {
-		result = append(result, r.Proto())
+		result = append(result, r.ProtoRoleWithAssignments())
 	}
 
 	return result
@@ -146,15 +173,16 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 		protoRole := &rbacv1.Role{RoleId: int32(a.RoleID)}
 		if a.Role != nil {
 			protoRole = &rbacv1.Role{
-				RoleId:      int32(a.RoleID),
-				Name:        a.Role.Name,
-				Permissions: Permissions(a.Role.Permissions).Proto(),
+				RoleId:        int32(a.RoleID),
+				Name:          a.Role.Name,
+				Permissions:   Permissions(a.Role.Permissions).Proto(),
+				ScopeTypeMask: Permissions(a.Role.Permissions).ScopeTypeMask(),
 			}
 		}
 
-		var scopeWorkspaceID *wrappers.Int32Value
+		var scopeWorkspaceID *int32
 		if a.Scope != nil && a.Scope.WorkspaceID.Valid {
-			scopeWorkspaceID = wrapperspb.Int32(a.Scope.WorkspaceID.Int32)
+			scopeWorkspaceID = &a.Scope.WorkspaceID.Int32
 		}
 
 		if a.Group.OwnerID == 0 {
@@ -163,6 +191,7 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             protoRole,
 					ScopeWorkspaceId: scopeWorkspaceID,
+					ScopeCluster:     scopeWorkspaceID == nil,
 				},
 			})
 		} else {
@@ -171,6 +200,7 @@ func (ra RoleAssignments) Proto() ([]*rbacv1.UserRoleAssignment, []*rbacv1.Group
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             protoRole,
 					ScopeWorkspaceId: scopeWorkspaceID,
+					ScopeCluster:     scopeWorkspaceID == nil,
 				},
 			})
 		}

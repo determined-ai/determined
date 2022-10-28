@@ -9,7 +9,6 @@ import (
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
@@ -17,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -64,7 +64,7 @@ func (a *RBACAPIServerImpl) GetPermissionsSummary(
 		assignments = append(assignments, &rbacv1.RoleAssignmentSummary{
 			RoleId:            int32(role.ID),
 			ScopeWorkspaceIds: workspaceIDs,
-			IsGlobal:          isGlobal,
+			ScopeCluster:      isGlobal,
 		})
 		roles = append(roles, *role)
 	}
@@ -280,7 +280,7 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToGroup(ctx context.Context,
 		resp.Assignments = append(resp.Assignments, &rbacv1.RoleAssignmentSummary{
 			RoleId:            int32(r.ID),
 			ScopeWorkspaceIds: workspaceIDs,
-			IsGlobal:          isGlobal,
+			ScopeCluster:      isGlobal,
 		})
 	}
 
@@ -462,7 +462,8 @@ func (a *RBACAPIServerImpl) AssignWorkspaceAdminToUserTx(
 			UserId: int32(userID),
 			RoleAssignment: &rbacv1.RoleAssignment{
 				Role:             &rbacv1.Role{RoleId: int32(workspaceCreatorConfig.RoleID)},
-				ScopeWorkspaceId: wrapperspb.Int32(int32(workspaceID)),
+				ScopeWorkspaceId: ptrs.Ptr(int32(workspaceID)),
+				ScopeCluster:     false,
 			},
 		},
 	})
@@ -479,11 +480,7 @@ func (a *RBACAPIServerImpl) AssignWorkspaceAdminToUserTx(
 func dbRolesToAPISummary(roles []Role) []*rbacv1.Role {
 	apiRoles := make([]*rbacv1.Role, 0, len(roles))
 	for _, r := range roles {
-		apiRoles = append(apiRoles, &rbacv1.Role{
-			RoleId:      int32(r.ID),
-			Name:        r.Name,
-			Permissions: Permissions(r.Permissions).Proto(),
-		})
+		apiRoles = append(apiRoles, r.Proto())
 	}
 
 	return apiRoles

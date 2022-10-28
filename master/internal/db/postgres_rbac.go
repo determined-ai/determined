@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -66,21 +65,14 @@ func DoPermissionsExist(ctx context.Context, curUserID model.UserID,
 
 // DoesPermissionMatchAll checks for the existence of a permission in all specified workspaces.
 func DoesPermissionMatchAll(ctx context.Context, curUserID model.UserID,
-	permissionID rbacv1.PermissionType, workspaces ...*wrappers.Int32Value,
+	permissionID rbacv1.PermissionType, workspaceIds ...int32,
 ) error {
 	type workspaceScope struct {
 		ID          int           `bun:"id,pk,autoincrement" json:"id"`
 		WorkspaceID sql.NullInt32 `bun:"scope_workspace_id"  json:"workspace_id"`
 	}
 	var scopes []workspaceScope
-	var workspaceIds []int32
 	scopesMap := map[int32]bool{}
-
-	for _, v := range workspaces {
-		if v != nil {
-			workspaceIds = append(workspaceIds, v.Value)
-		}
-	}
 
 	err := Bun().NewSelect().
 		TableExpr("role_assignment_scopes as ras").
@@ -104,16 +96,8 @@ func DoesPermissionMatchAll(ctx context.Context, curUserID model.UserID,
 		scopesMap[v.WorkspaceID.Int32] = true
 	}
 
-	for _, v := range workspaces {
-		if v == nil {
-			return authz.PermissionDeniedError{
-				RequiredPermissions: []rbacv1.PermissionType{permissionID},
-			}
-		}
-	}
-
-	for _, v := range workspaces {
-		if ok := scopesMap[v.Value]; !ok {
+	for _, v := range workspaceIds {
+		if ok := scopesMap[v]; !ok {
 			return authz.PermissionDeniedError{
 				RequiredPermissions: []rbacv1.PermissionType{permissionID},
 			}

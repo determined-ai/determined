@@ -14,11 +14,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
@@ -121,10 +121,17 @@ func TestRbac(t *testing.T) {
 		Name:   testRole.Name,
 		Permissions: []*rbacv1.Permission{
 			{
-				Id:       rbacv1.PermissionType(testPermission.ID),
-				Name:     testPermission.Name,
-				IsGlobal: testPermission.Global,
+				Id:   rbacv1.PermissionType(testPermission.ID),
+				Name: testPermission.Name,
+				ScopeTypeMask: &rbacv1.ScopeTypeMask{
+					Cluster:   true,
+					Workspace: !testPermission.Global,
+				},
 			},
+		},
+		ScopeTypeMask: &rbacv1.ScopeTypeMask{
+			Cluster:   true,
+			Workspace: !testPermission.Global,
 		},
 	}
 	rbacRole2 := &rbacv1.Role{
@@ -132,10 +139,17 @@ func TestRbac(t *testing.T) {
 		Name:   testRole2.Name,
 		Permissions: []*rbacv1.Permission{
 			{
-				Id:       rbacv1.PermissionType(testPermission.ID),
-				Name:     testPermission.Name,
-				IsGlobal: testPermission.Global,
+				Id:   rbacv1.PermissionType(testPermission.ID),
+				Name: testPermission.Name,
+				ScopeTypeMask: &rbacv1.ScopeTypeMask{
+					Cluster:   true,
+					Workspace: !testPermission.Global,
+				},
 			},
+		},
+		ScopeTypeMask: &rbacv1.ScopeTypeMask{
+			Cluster:   true,
+			Workspace: !testPermission.Global,
 		},
 	}
 	rbacRole3 := &rbacv1.Role{
@@ -143,10 +157,17 @@ func TestRbac(t *testing.T) {
 		Name:   testRole3.Name,
 		Permissions: []*rbacv1.Permission{
 			{
-				Id:       rbacv1.PermissionType(testPermission.ID),
-				Name:     testPermission.Name,
-				IsGlobal: testPermission.Global,
+				Id:   rbacv1.PermissionType(testPermission.ID),
+				Name: testPermission.Name,
+				ScopeTypeMask: &rbacv1.ScopeTypeMask{
+					Cluster:   true,
+					Workspace: !testPermission.Global,
+				},
 			},
+		},
+		ScopeTypeMask: &rbacv1.ScopeTypeMask{
+			Cluster:   true,
+			Workspace: !testPermission.Global,
 		},
 	}
 
@@ -155,7 +176,7 @@ func TestRbac(t *testing.T) {
 		UserId: int32(testUser.ID),
 		RoleAssignment: &rbacv1.RoleAssignment{
 			Role:             rbacRole,
-			ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+			ScopeWorkspaceId: &workspaceID,
 		},
 	}
 
@@ -163,7 +184,7 @@ func TestRbac(t *testing.T) {
 		GroupId: int32(testGroupStatic.ID),
 		RoleAssignment: &rbacv1.RoleAssignment{
 			Role:             rbacRole,
-			ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+			ScopeWorkspaceId: &workspaceID,
 		},
 	}
 	assignmentScope := RoleAssignmentScope{}
@@ -337,20 +358,21 @@ func TestRbac(t *testing.T) {
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+					ScopeWorkspaceId: &workspaceID,
 				},
 			},
 			{
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
-					Role: rbacRole3,
+					Role:         rbacRole3,
+					ScopeCluster: true,
 				},
 			},
 			{
 				GroupId: int32(testGroupStatic2.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole3,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+					ScopeWorkspaceId: &workspaceID,
 				},
 			},
 		}
@@ -393,14 +415,15 @@ func TestRbac(t *testing.T) {
 			{
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
-					Role: rbacRole,
+					Role:         rbacRole,
+					ScopeCluster: true,
 				},
 			},
 			{
 				GroupId: int32(testGroupOwnedByUser.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+					ScopeWorkspaceId: &workspaceID,
 				},
 			},
 		}
@@ -534,14 +557,14 @@ func TestRbac(t *testing.T) {
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole2,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+					ScopeWorkspaceId: &workspaceID,
 				},
 			},
 			{
 				GroupId: int32(testGroupStatic.ID),
 				RoleAssignment: &rbacv1.RoleAssignment{
 					Role:             rbacRole3,
-					ScopeWorkspaceId: wrapperspb.Int32(workspaceID),
+					ScopeWorkspaceId: &workspaceID,
 				},
 			},
 		}
@@ -726,7 +749,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 					Role: &rbacv1.Role{
 						RoleId: 2,
 					},
-					ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+					ScopeWorkspaceId: ptrs.Ptr(int32(ws.ID)),
 				},
 			},
 			{
@@ -736,6 +759,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 						RoleId: 5,
 					},
 					ScopeWorkspaceId: nil, // Global shouldn't show up.
+					ScopeCluster:     true,
 				},
 			},
 			{
@@ -744,7 +768,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 					Role: &rbacv1.Role{
 						RoleId: 5,
 					},
-					ScopeWorkspaceId: wrapperspb.Int32(1), // Different workspace shouldn't show up.
+					ScopeWorkspaceId: ptrs.Ptr[int32](1), // Different workspace shouldn't show up.
 				},
 			},
 			{
@@ -753,7 +777,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 					Role: &rbacv1.Role{
 						RoleId: 5,
 					},
-					ScopeWorkspaceId: wrapperspb.Int32(1), // Different workspace shouldn't show up.
+					ScopeWorkspaceId: ptrs.Ptr[int32](1), // Different workspace shouldn't show up.
 				},
 			},
 		},
@@ -793,7 +817,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 				Role: &rbacv1.Role{
 					RoleId: 2,
 				},
-				ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+				ScopeWorkspaceId: ptrs.Ptr(int32(ws.ID)),
 			},
 		},
 		{
@@ -802,7 +826,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 				Role: &rbacv1.Role{
 					RoleId: 5,
 				},
-				ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+				ScopeWorkspaceId: ptrs.Ptr(int32(ws.ID)),
 			},
 		},
 		{
@@ -811,7 +835,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 				Role: &rbacv1.Role{
 					RoleId: 4,
 				},
-				ScopeWorkspaceId: wrapperspb.Int32(int32(ws.ID)),
+				ScopeWorkspaceId: ptrs.Ptr(int32(ws.ID)),
 			},
 		},
 		{
@@ -820,7 +844,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 				Role: &rbacv1.Role{
 					RoleId: 2,
 				},
-				ScopeWorkspaceId: wrapperspb.Int32(1), // Shouldn't show up since different workspace.
+				ScopeWorkspaceId: ptrs.Ptr[int32](1), // Shouldn't show up since different workspace.
 			},
 		},
 		{
@@ -830,6 +854,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 					RoleId: 2,
 				},
 				ScopeWorkspaceId: nil, // Global shouldn't be returned.
+				ScopeCluster:     true,
 			},
 		},
 	}, nil))

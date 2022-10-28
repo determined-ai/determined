@@ -518,9 +518,9 @@ func getOrCreateRoleAssignmentScopeTx(ctx context.Context, idb bun.IDB,
 			return r, nil
 		}
 	} else {
-		scopeSelect = scopeSelect.Where("scope_workspace_id = ?", assignment.ScopeWorkspaceId.Value)
+		scopeSelect = scopeSelect.Where("scope_workspace_id = ?", *assignment.ScopeWorkspaceId)
 
-		r.WorkspaceID.Int32 = assignment.ScopeWorkspaceId.Value
+		r.WorkspaceID.Int32 = *assignment.ScopeWorkspaceId
 		r.WorkspaceID.Valid = true
 	}
 
