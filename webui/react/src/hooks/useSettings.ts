@@ -286,13 +286,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateSettings = useCallback(
     async (updates: Settings, shouldPush = false) => {
-      if (!settings) return;
-
-      if (
-        config.applicableRoutespace.includes('/') &&
-        !window.location.pathname.endsWith(config.applicableRoutespace)
-      )
-        return;
+      if (!settings || shouldSkipUpdates) return;
 
       const newSettings = { ...settings, ...updates };
 
@@ -307,7 +301,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       shouldPush ? navigate(url) : navigate(url, { replace: true });
     },
-    [config, settings, navigate, update, updateDB],
+    [config, settings, navigate, update, updateDB, shouldSkipUpdates],
   );
 
   return {
