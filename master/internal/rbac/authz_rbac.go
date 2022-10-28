@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -133,11 +132,11 @@ func (a *RBACAuthZRBAC) CanAssignRoles(
 	groupRoleAssignments []*rbacv1.GroupRoleAssignment,
 	userRoleAssignments []*rbacv1.UserRoleAssignment,
 ) error {
-	var workspaces []*wrappers.Int32Value
+	var workspaces []int32
 
 	for _, v := range groupRoleAssignments {
 		if v.RoleAssignment.ScopeWorkspaceId != nil {
-			workspaces = append(workspaces, v.RoleAssignment.ScopeWorkspaceId)
+			workspaces = append(workspaces, *v.RoleAssignment.ScopeWorkspaceId)
 		} else {
 			return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
@@ -146,7 +145,7 @@ func (a *RBACAuthZRBAC) CanAssignRoles(
 
 	for _, v := range userRoleAssignments {
 		if v.RoleAssignment.ScopeWorkspaceId != nil {
-			workspaces = append(workspaces, v.RoleAssignment.ScopeWorkspaceId)
+			workspaces = append(workspaces, *v.RoleAssignment.ScopeWorkspaceId)
 		} else {
 			return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
