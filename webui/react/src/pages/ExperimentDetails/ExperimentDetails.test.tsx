@@ -40,6 +40,15 @@ jest.mock('services/api', () => ({
   getWorkspace: jest.fn(),
 }));
 
+jest.mock('hooks/useTelemetry', () => ({
+  ...jest.requireActual('hooks/useTelemetry'),
+  telemetryInstance: {
+    track: jest.fn(),
+    trackPage: jest.fn(),
+    updateTelemetry: jest.fn(),
+  },
+}));
+
 /**
  * TODO: Temporarily mock ExperimentVisualization module.
  * This is a challenging module to test as it has `readStream` calls.
