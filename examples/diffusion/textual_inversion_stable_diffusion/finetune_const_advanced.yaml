@@ -1,0 +1,65 @@
+name: detsd_finetune_advanced
+entrypoint: python3 -m determined.launch.torch_distributed python3 finetune.py
+searcher:
+  name: single
+  metric: loss
+  max_length: 1000 # Number of SGD steps.
+resources:
+  slots_per_trial: 4
+max_restarts: 1
+environment:
+    environment_variables:
+        - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
+checkpoint_storage:
+    save_trial_latest: 5
+hyperparameters:
+    model:
+        pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
+    concepts:
+        learnable_properties: # One of 'object' or 'style'. 
+            - object
+        concept_strs: # Individual strings representing new concepts. Must not exist in tokenizer.  
+            - det-logo
+        initializer_strs: # Strings which describe the added concepts. 
+            - brain logo, sharp lines, connected circles, concept art
+        img_dirs:
+            - det_logos
+        img_size: 512
+        interpolation: bicubic # One of "nearest", "bilinear", or "bicubic".
+        flip_p: 0.0
+        center_crop: True
+        append_file_name_to_text: True # For additional control over training prompts.
+        file_name_split_char: '_'
+        num_blank_prompts: 10
+        num_a_prompts: 10
+    training:
+        train_batch_size: 1
+        gradient_accumulation_steps: 4
+        optimizer_name: adam
+        learning_rate: 3.1e-4
+        scale_lr: True
+        checkpoint_freq: 100
+        metric_report_freq: 100
+        beta_start: 0.00085
+        beta_end: .012
+        beta_schedule: scaled_linear # One of "linear", "scaled_linear", or "squaredcos_cap_v2".
+        num_train_timesteps: 1000
+        train_seed: 2147483647
+        norm_reg_weight: 8.8e-7
+        hidden_reg_weight: 7.8e-7
+    inference:
+        generate_training_images: True
+        inference_batch_size: 2
+        num_pipeline_calls: 2
+        inference_scheduler_name: pndm # One of "ddim", "lms-discrete", or "pndm".
+        inference_prompts:
+          - a watercolor painting on textured paper of a det-logo using soft strokes, pastel colors, incredible composition, masterpiece
+          - a Van Gogh painting of a det-logo with vibrant colors, thick strokes, masterpiece, incredible composition
+          - Beautiful tarot illustration of a det-logo, in the style of james jean and victo ngai, mystical colors, trending on artstation
+        num_inference_steps: 50
+        guidance_scale: 7.5
+        main_process_generator_seed: 2147483647
+        other_inference_scheduler_kwargs:
+            skip_prk_steps: True
+
+    

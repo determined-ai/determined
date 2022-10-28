@@ -55,6 +55,12 @@
 |:----------------------------------------------------------------------:|:--------:|:---------:|
 | [protonet\_omniglot\_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch   |
 
+## Diffusion
+
+|                                        Example                                        |  Dataset  | Framework |
+|:-------------------------------------------------------------------------------------:|:---------:|:---------:|
+| [textual\_inversion\_stable\_diffusion](diffusion/textual_inversion_stable_diffusion) | det_logos |  PyTorch  |
+
 ## Generative Adversarial Networks (GAN)
 
 | Example                                       | Dataset          | Framework             |
