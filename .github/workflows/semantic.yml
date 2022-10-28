@@ -1,6 +1,7 @@
+---
 name: "Semantic Pull Request v2"
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request_target:
     types:
       - opened
