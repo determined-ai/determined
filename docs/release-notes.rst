@@ -10,6 +10,70 @@
  Version 0.19
 **************
 
+Version 0.19.6
+==============
+
+**Release Date:** October 28, 2022
+
+**Breaking Changes**
+
+-  API: removed legacy endpoint ``/tasks/:task_id`` due to it always incorrectly returning missing
+   parameter.
+
+-  Additional Slurm options formerly specified in the experiment environment section are now part of
+   a new Slurm section of the experiment configuration. For example, what was formerly written as:
+
+   .. code:: yaml
+
+      environment:
+      ...
+        slurm:
+          - --mem-per-cpu=10
+          - --exclusive
+
+   Is now specified as:
+
+   .. code:: yaml
+
+      environment:
+      ...
+      slurm:
+        sbatch_args:
+          - --mem-per-cpu=10
+          - --exclusive
+
+**Improvements**
+
+-  CLI: Add the `ls` abbreviation for `list` to all applicable CLI commands.
+
+-  Support a new ``-i``/``--include`` option in task-starting CLI commands. The context option
+   (``--context``) is useful for copying a directory of files into the task container, but it may
+   only be provided once, and it can be clunky if you only care about one or two files. The Include
+   option also copies files into the task container, but:
+
+      -  The directory name is preserved, so ``-i my_data/`` would result in a directory named
+         ``my_data/`` appearing in the working directory of the task container.
+      -  It may point to a file, so ``-i my_data.csv`` will work.
+      -  It may be specified multiple times to include multiple files and/or directories.
+
+-  **Breaking Change:** ``det deploy aws`` by default now configures agent instances to
+   automatically shut down if they lose their connection to the master. The
+   ``--no-shut-down-agents-on-connection-loss`` option can be used to turn off this behavior.
+
+**New Features**
+
+-  The custom searcher API allows users to implement their own logic to coordinate across multiple
+   training jobs, enabling easy implementation of custom meta algorithms like hyperparameter tuning
+   and ensembling methods. See :ref:`topic-guides_hp-tuning-det_custom` for more information.
+
+-  Cluster: The enterprise edition of `HPE Machine Learning Development Environment
+   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_
+   can now be deployed on a PBS cluster. When using PBS scheduler, HPE Machine Learning Development
+   Environment delegates all job scheduling and prioritization to the PBS workload manager. This
+   integration enables existing PBS workloads and HPE Machine Learning Development Environment
+   workloads to coexist and access all of the advanced capabilities of the PBS workload manager. You
+   can use either Singularity or Podman for the container runtime.
+
 Version 0.19.5
 ==============
 
