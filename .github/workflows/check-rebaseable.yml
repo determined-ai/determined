@@ -1,7 +1,7 @@
 ---
 name: "Check Rebaseable"
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - 'main'
@@ -15,7 +15,7 @@ jobs:
       - name: get PR
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1 # we only need this branch
+          fetch-depth: 1  # we only need this branch
           token: ${{ secrets.DETERMINED_TOKEN }}
       - name: add EE repository remote
         run: |
