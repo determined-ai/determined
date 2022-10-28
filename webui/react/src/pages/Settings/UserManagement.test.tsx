@@ -78,13 +78,13 @@ const setup = () =>
   render(
     <StoreProvider>
       <DndProvider backend={HTML5Backend}>
-        <HelmetProvider>
-          <HistoryRouter history={history}>
-            <SettingsProvider>
+        <SettingsProvider>
+          <HelmetProvider>
+            <HistoryRouter history={history}>
               <Container />
-            </SettingsProvider>
-          </HistoryRouter>
-        </HelmetProvider>
+            </HistoryRouter>
+          </HelmetProvider>
+        </SettingsProvider>
       </DndProvider>
     </StoreProvider>,
   );
