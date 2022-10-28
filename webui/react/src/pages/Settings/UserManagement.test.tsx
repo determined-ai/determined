@@ -37,7 +37,7 @@ jest.mock('services/api', () => ({
 jest.mock('contexts/Store', () => ({
   __esModule: true,
   ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+  useStore: () => ({ auth: { checked: true, user: { id: 1 } as DetailedUser } }),
 }));
 
 const Container: React.FC = () => {
