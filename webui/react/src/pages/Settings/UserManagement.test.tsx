@@ -32,12 +32,22 @@ jest.mock('services/api', () => ({
     const users: Array<DetailedUser> = [currentUser];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
+  getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
 jest.mock('contexts/Store', () => ({
   __esModule: true,
   ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+  useStore: () => ({ auth: { checked: true, user: { id: 1 } as DetailedUser }, info: { featureSwitches: [], rbacEnabled: false } }),
+}));
+
+jest.mock('hooks/useTelemetry', () => ({
+  ...jest.requireActual('hooks/useTelemetry'),
+  telemetryInstance: {
+    track: jest.fn(),
+    trackPage: jest.fn(),
+    updateTelemetry: jest.fn(),
+  },
 }));
 
 const Container: React.FC = () => {
