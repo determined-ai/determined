@@ -19,6 +19,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 jest.mock('services/api', () => ({
+  ...jest.requireActual('services/api'),
   getGroups: () => Promise.resolve({ groups: [] }),
   getUserRoles: () => Promise.resolve([]),
   getUsers: () => {

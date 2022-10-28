@@ -4,11 +4,10 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { CreateExperimentParams } from 'services/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import { DetailedUser, ResourceType } from 'types';
+import { ResourceType } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
@@ -22,11 +21,6 @@ jest.mock('services/api', () => ({
   },
   getResourcePools: () => Promise.resolve([]),
   getUserSetting: () => Promise.resolve({ settings: [] }),
-}));
-jest.mock('contexts/Store', () => ({
-  __esModule: true,
-  ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { checked: true, user: { id: 1 } as DetailedUser }, resourcePools: [] }),
 }));
 
 const { experiment } = generateTestExperimentData();
@@ -88,9 +82,7 @@ const ModalTrigger: React.FC = () => {
 const Container: React.FC = () => {
   return (
     <StoreProvider>
-      <SettingsProvider>
-        <ModalTrigger />
-      </SettingsProvider>
+      <ModalTrigger />
     </StoreProvider>
   );
 };
@@ -110,13 +102,13 @@ const setup = async () => {
 
 describe('useModalHyperparameterSearch', () => {
   it('should open modal', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => expect(view.findByText(MODAL_TITLE)).toBeInTheDocument());
   });
 
   it('should cancel modal', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => user.click(view.getAllByRole('button', { name: 'Cancel' })[0]));
 
@@ -127,7 +119,7 @@ describe('useModalHyperparameterSearch', () => {
   });
 
   it('should submit experiment', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
     mockCreateExperiment.mockReturnValue({ id: 1 });
@@ -137,7 +129,7 @@ describe('useModalHyperparameterSearch', () => {
   });
 
   it('should only allow current on constant hyperparameter', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
 
@@ -150,7 +142,7 @@ describe('useModalHyperparameterSearch', () => {
   });
 
   it('should only allow min and max on int hyperparameter', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => user.click(view.getByRole('button', { name: 'Select Hyperparameters' })));
 
@@ -163,7 +155,7 @@ describe('useModalHyperparameterSearch', () => {
   });
 
   it('should show count fields when using grid searcher', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => user.click(view.getByRole('radio', { name: 'Grid' })));
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
@@ -172,7 +164,7 @@ describe('useModalHyperparameterSearch', () => {
   });
 
   it('should remove adaptive fields when not using adaptive searcher', async () => {
-    const { view } = await waitFor(() => setup());
+    const { view } = await setup();
 
     await waitFor(() => user.click(view.getByRole('radio', { name: /adaptive/i })));
     expect(view.getByText(/Early stopping mode/i)).toBeInTheDocument();
