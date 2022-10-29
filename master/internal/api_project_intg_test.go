@@ -296,20 +296,21 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		require.Equal(t, projectNotFoundErr(-9999).Error(), err.Error())
 
 		// Project can't be viewed.
-		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).Return(false, nil).Once()
+		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
+			Return(false, nil).Once()
 		err = curCase.IDToReqCall(projectID)
 		require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 		// Error checking if project errors during view check.
 		expectedErr := fmt.Errorf("canGetProjectError")
-		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).
+		projectAuthZ.On("CanGetProject", mock.Anythingmock.Anything, mock.Anything).
 			Return(false, expectedErr).Once()
 		err = curCase.IDToReqCall(projectID)
 		require.Equal(t, expectedErr, err)
 
 		// Can view but can't perform action.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Deny")
-		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything).
+		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(true, nil).Once()
 		projectAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Deny"))
