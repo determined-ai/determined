@@ -303,7 +303,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 
 		// Error checking if project errors during view check.
 		expectedErr := fmt.Errorf("canGetProjectError")
-		projectAuthZ.On("CanGetProject", mock.Anythingmock.Anything, mock.Anything).
+		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(false, expectedErr).Once()
 		err = curCase.IDToReqCall(projectID)
 		require.Equal(t, expectedErr, err)
