@@ -277,7 +277,7 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
 	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", curUser, mock.Anything).
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canGetArtifactsError")).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 }
