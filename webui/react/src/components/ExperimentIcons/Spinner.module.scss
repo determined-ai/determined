@@ -1,0 +1,45 @@
+.base {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 16px;
+    width: 50px;
+    height: 50px;
+}
+
+$axes: X Y Z;
+
+@each $axis in $axes {
+  @keyframes rotate#{$axis} {
+    from { transform: rotate#{$axis}#{"(0deg)"}; }
+    to { transform: rotate#{$axis}#{"(360deg)"}; }
+  }
+}
+
+.spinner {
+    $size: 2rem;
+    
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-name: rotateZ;
+    animation-timing-function: linear;
+    height: $size;
+    width: $size;
+
+    border-color: rgba(255, 255, 255, 0.3);
+
+    border-radius: 50%;
+    border-style: solid;
+    border-width: 4px;
+  }
+
+
+  .spinner__bowtie {
+    border-bottom-color: var(--theme-stage-on);
+    border-top-color: var(--theme-stage-on);
+  }
+
+  .spinner__half {
+    border-left-color: var(--theme-stage-on);
+    border-top-color: var(--theme-stage-on);
+  }

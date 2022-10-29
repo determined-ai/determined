@@ -193,6 +193,9 @@ const themeLight = {
   elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
   elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
   elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
+
+  breathButton: 'rgba(143, 143, 143, 0.4)',
+  breathButtonOverlay: 'rgba(143, 143, 143, 0.2)',
 };
 
 const themeDark = {
@@ -235,6 +238,9 @@ const themeDark = {
   elevation: '0px 6px 12px rgba(255, 255, 255, 0.06)',
   elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.06)',
   elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.12)',
+
+  breathButton: 'rgba(205, 158, 234, 0.6)',
+  breathButtonOverlay: 'rgba(205, 158, 234, 0.3)',
 };
 
 export const themeLightDetermined: Theme = generateStrongWeak(
