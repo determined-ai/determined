@@ -1,0 +1,55 @@
+.base {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 16px;
+    width: 50px;
+    height: 50px;
+}
+
+@keyframes pulse {
+    50% { opacity: 0.5; }
+  }
+
+
+  .dots {
+    $duration: 1s;
+    $size: 5px;
+    
+    &,
+    &:before,
+    &:after {
+      animation-duration: $duration;
+      animation-delay: -$duration / 3;
+      animation-iteration-count: infinite;
+      border-radius: 50%;
+      box-shadow: 0 -1rem var(--theme-strong);
+      content: "";
+      display: block;
+      height: $size;
+      top: 1rem;
+      position: relative;
+      width: $size;
+
+      animation-name: pulse;
+      animation-timing-function: ease-in-out;
+    }
+    
+    &:before,
+    &:after {
+      height: 100%;
+      position: absolute;
+      top: 0;
+      width: 100%;
+    }
+    
+    &:before {
+      animation-delay: -(2 * $duration) / 3;
+      left: -1rem;
+    }
+    
+    &:after {
+      animation-delay: 0s;
+      left: 1rem;
+    }
+  }
