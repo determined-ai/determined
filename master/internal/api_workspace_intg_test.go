@@ -240,7 +240,7 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 		expectedErr := status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Deny")
 		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 			Return(true, nil).Once()
-		workspaceAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything).
+		workspaceAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything, mock.Anything).
 			Return(fmt.Errorf("%sDeny", curCase.DenyFuncName)).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(id).Error())
 	}

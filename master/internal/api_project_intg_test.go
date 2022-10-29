@@ -312,7 +312,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Deny")
 		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(true, nil).Once()
-		projectAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything).
+		projectAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Deny"))
 		err = curCase.IDToReqCall(projectID)
 		require.Equal(t, expectedErr.Error(), err.Error())
