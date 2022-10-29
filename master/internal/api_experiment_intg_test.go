@@ -594,7 +594,8 @@ func TestAuthZPreviewHPSearch(t *testing.T) {
 
 	// Can't preview hp search returns error with PermissionDenied
 	expectedErr := status.Errorf(codes.PermissionDenied, "canPreviewHPSearchError")
-	authZExp.On("CanPreviewHPSearch", curUser).Return(fmt.Errorf("canPreviewHPSearchError")).Once()
+	authZExp.On("CanPreviewHPSearch", mock.Anything, curUser).
+		Return(fmt.Errorf("canPreviewHPSearchError")).Once()
 	_, err := api.PreviewHPSearch(ctx, &apiv1.PreviewHPSearchRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
