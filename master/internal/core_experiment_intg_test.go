@@ -127,7 +127,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/?path=rootPath", nil))
 			return api.m.getExperimentModelFile(ctx)
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, _, _, _, ctx := setupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
@@ -137,7 +137,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 
 			_, err := api.m.getExperimentCheckpointsToGC(ctx)
 			return err
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanSetExperimentsMaxSlots", func(id int) error {
 			_, _, _, _, ctx := setupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
@@ -148,7 +148,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			ctx.SetRequest(req)
 			_, err := api.m.patchExperiment(ctx)
 			return err
-		}, []any{mock.Anything, mock.Anything, 5}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything, 5}},
 		{"CanSetExperimentsWeight", func(id int) error {
 			_, _, _, _, ctx := setupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
@@ -159,7 +159,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			ctx.SetRequest(req)
 			_, err := api.m.patchExperiment(ctx)
 			return err
-		}, []any{mock.Anything, mock.Anything, 2.5}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything, 2.5}},
 		{"CanSetExperimentsPriority", func(id int) error {
 			_, _, _, _, ctx := setupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
@@ -170,7 +170,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			ctx.SetRequest(req)
 			_, err := api.m.patchExperiment(ctx)
 			return err
-		}, []any{mock.Anything, mock.Anything, 3}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything, 3}},
 		{"CanSetExperimentsCheckpointGCPolicy", func(id int) error {
 			_, _, _, _, ctx := setupExpAuthTestEcho(t)
 			ctx.SetParamNames("experiment_id")
@@ -182,14 +182,14 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			ctx.SetRequest(req)
 			_, err := api.m.patchExperiment(ctx)
 			return err
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanForkFromExperiment", func(id int) error {
 			_, _, _, _, ctx := setupExpAuthTestEcho(t)
 			return echoPostExperiment(ctx, api, t, CreateExperimentParams{
 				ConfigBytes: minExpConfToYaml(t),
 				ParentID:    &id,
 			})
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 	}
 
 	for _, curCase := range cases {
