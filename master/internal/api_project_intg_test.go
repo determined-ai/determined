@@ -140,7 +140,7 @@ func TestAuthZCanMoveProject(t *testing.T) {
 	// Setup.
 	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
 
-	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	fromResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
