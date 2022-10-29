@@ -928,7 +928,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		expectedErr = status.Errorf(codes.PermissionDenied, curCase.DenyFuncName+"Error")
 		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
 			Return(true, nil).Once()
-		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
+		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())
 	}
