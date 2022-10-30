@@ -1,4 +1,4 @@
-import { Form, Input, message, Select } from 'antd';
+import { Form, Input, message, Select, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -118,15 +118,27 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
         </Form.Item>
       )}
       {rbacEnabled && canModifyPermissions && group && (
-        <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
-          <Select mode="multiple" optionFilterProp="children" placeholder={'Add Roles'} showSearch>
-            {knownRoles.map((r) => (
-              <Select.Option key={r.id} value={r.id}>
-                {r.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+        <>
+          <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
+            <Select
+              mode="multiple"
+              optionFilterProp="children"
+              placeholder={'Add Roles'}
+              showSearch>
+              {knownRoles.map((r) => (
+                <Select.Option
+                  disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
+                  key={r.id}
+                  value={r.id}>
+                  {r.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Typography.Text type="secondary">
+            Note that roles inherited from workspaces cannot be removed here.
+          </Typography.Text>
+        </>
       )}
     </Form>
   );

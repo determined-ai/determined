@@ -161,7 +161,11 @@ const relevantPermissions = (
   }
   const relevantAssigned = userAssignments
     .filter(
-      (a) => a.isGlobal || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)),
+      (a) =>
+        a.scopeCluster ||
+        (workspaceId &&
+          a.workspaces &&
+          Array.from(Object.values(a.workspaces)).includes(workspaceId)),
     )
     .map((a) => a.roleId);
   let permissions = Array<Permission>();

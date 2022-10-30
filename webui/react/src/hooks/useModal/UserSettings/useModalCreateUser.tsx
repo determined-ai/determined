@@ -120,7 +120,10 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
               showSearch>
               {knownRoles.map((r) => (
                 <Select.Option
-                  disabled={roles?.find((ro) => ro.id === r.id)?.fromGroup?.length}
+                  disabled={
+                    roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
+                    roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
+                  }
                   key={r.id}
                   value={r.id}>
                   {r.name}
@@ -129,7 +132,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
-            Note that roles inherited from user groups cannot be removed here.
+            Note that roles inherited from user groups or workspaces cannot be removed here.
           </Typography.Text>
         </>
       )}

@@ -274,6 +274,16 @@ export interface GetHPImportanceResponseMetricHPImportance {
 }
 
 /**
+ * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
+ * @export
+ * @enum {string}
+ */
+export enum GetMasterResponseProduct {
+    UNSPECIFIED = <any> 'PRODUCT_UNSPECIFIED',
+    COMMUNITY = <any> 'PRODUCT_COMMUNITY'
+}
+
+/**
  * Filter workloads with training, validation, and checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
  * @export
  * @enum {string}
@@ -3142,6 +3152,12 @@ export interface V1GetMasterResponse {
      */
     rbacEnabled?: boolean;
     /**
+     * 
+     * @type {GetMasterResponseProduct}
+     * @memberof V1GetMasterResponse
+     */
+    product?: GetMasterResponseProduct;
+    /**
      * List of features that is on.
      * @type {Array<string>}
      * @memberof V1GetMasterResponse
@@ -5594,11 +5610,11 @@ export interface V1Permission {
      */
     name?: string;
     /**
-     * 
-     * @type {boolean}
+     * Allowed scope types.
+     * @type {V1ScopeTypeMask}
      * @memberof V1Permission
      */
-    isGlobal?: boolean;
+    scopeTypeMask?: V1ScopeTypeMask;
 }
 
 /**
@@ -7114,6 +7130,12 @@ export interface V1Role {
      * @memberof V1Role
      */
     permissions?: Array<V1Permission>;
+    /**
+     * Allowed scope types.
+     * @type {V1ScopeTypeMask}
+     * @memberof V1Role
+     */
+    scopeTypeMask?: V1ScopeTypeMask;
 }
 
 /**
@@ -7129,11 +7151,17 @@ export interface V1RoleAssignment {
      */
     role: V1Role;
     /**
-     * The id of the workspace the role belongs to. Omit for a global scope.
+     * The id of the workspace the role belongs to. Empty for cluster-wide scope.
      * @type {number}
      * @memberof V1RoleAssignment
      */
     scopeWorkspaceId?: number;
+    /**
+     * Whether the role is assigned cluster-wide.
+     * @type {boolean}
+     * @memberof V1RoleAssignment
+     */
+    scopeCluster?: boolean;
 }
 
 /**
@@ -7155,11 +7183,11 @@ export interface V1RoleAssignmentSummary {
      */
     scopeWorkspaceIds?: Array<number>;
     /**
-     * 
+     * Whether the role is assigned cluster-wide.
      * @type {boolean}
      * @memberof V1RoleAssignmentSummary
      */
-    isGlobal?: boolean;
+    scopeCluster?: boolean;
 }
 
 /**
@@ -7263,6 +7291,26 @@ export enum V1SchedulerType {
     KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
     SLURM = <any> 'SCHEDULER_TYPE_SLURM',
     PBS = <any> 'SCHEDULER_TYPE_PBS'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ScopeTypeMask
+ */
+export interface V1ScopeTypeMask {
+    /**
+     * Whether this permission or role can be assigned globally, i.e. cluster-wide. Currently, all permissions can be assigned globally, so this is always true.
+     * @type {boolean}
+     * @memberof V1ScopeTypeMask
+     */
+    cluster?: boolean;
+    /**
+     * Whether this permission or role can be assigned on a particular workspace. For example, `ADMINISTRATE_USER` permission will have this field set to false, since user creation can only be done at a cluster level, and it doesn't make sense for a single workspace.
+     * @type {boolean}
+     * @memberof V1ScopeTypeMask
+     */
+    workspace?: boolean;
 }
 
 /**

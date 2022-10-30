@@ -38,19 +38,33 @@ export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
 };
 
 export const mapV1UserRole = (res: Sdk.V1RoleWithAssignments): types.UserRole => {
-  const { role, groupRoleAssignments } = res;
+  const { role, groupRoleAssignments, userRoleAssignments } = res;
   return {
     fromGroup: groupRoleAssignments?.map((g) => g.groupId),
+    fromWorkspace: userRoleAssignments
+      ?.map((ur) => ur.roleAssignment?.scopeWorkspaceId || 0)
+      .filter((v) => v > 0),
     id: role?.roleId || 0,
     name: role?.name || '',
     permissions: (role?.permissions || []).map(mapV1Permission),
   };
 };
 
+export const mapV1GroupRole = (res: Sdk.V1GetRolesAssignedToGroupResponse): types.UserRole[] => {
+  const { roles, assignments } = res;
+  return roles.map((role) => ({
+    fromWorkspace: assignments.find((a) => a.roleId === role.roleId)?.scopeWorkspaceIds,
+    id: role.roleId,
+    name: role.name || '',
+    permissions: (role.permissions || []).map(mapV1Permission),
+  }));
+};
+
 export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
   return {
     id: permission.id,
-    isGlobal: permission.isGlobal || false,
+    scopeCluster: permission.scopeTypeMask?.cluster || false,
+    scopeWorkspace: permission.scopeTypeMask?.workspace || false,
   };
 };
 
@@ -58,8 +72,8 @@ export const mapV1UserAssignment = (
   assignment: Sdk.V1RoleAssignmentSummary,
 ): types.UserAssignment => {
   return {
-    isGlobal: assignment.isGlobal || false,
     roleId: assignment.roleId,
+    scopeCluster: assignment.scopeCluster || false,
     workspaces: assignment.scopeWorkspaceIds || [],
   };
 };
