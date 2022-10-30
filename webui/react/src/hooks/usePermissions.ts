@@ -491,12 +491,11 @@ const canAssignRoles = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
-    rbacAllPermission ||
-    (!!workspace &&
-      !!user &&
+    (rbacAllPermission || (!!user && !!workspace && user.id === workspace.userId)) ||
+    (!!user &&
       (rbacEnabled
         ? permitted.has(V1PermissionType.ASSIGNROLES)
-        : user.isAdmin || user.id === workspace.userId))
+        : user.isAdmin))
   );
 };
 

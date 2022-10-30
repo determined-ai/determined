@@ -55,7 +55,7 @@ interface FormValues {
 
 const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => {
   const rbacEnabled = useFeature().isOn('rbac');
-  const { canGetPermissions, canModifyPermissions } = usePermissions();
+  const { canAssignRoles, canModifyPermissions } = usePermissions();
   const { knownRoles } = useStore();
 
   useEffect(() => {
@@ -64,9 +64,9 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       [DISPLAY_NAME_NAME]: user?.displayName,
       [ROLE_NAME]: roles?.map((r) => r.id),
     });
-  }, [form, canGetPermissions, user, roles]);
+  }, [form, user, roles]);
 
-  if (user !== undefined && roles === null && canGetPermissions) {
+  if (user !== undefined && roles === null && canAssignRoles({})) {
     return <Spinner tip="Loading roles..." />;
   }
 
@@ -155,10 +155,10 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
-  const { canGetPermissions, canModifyPermissions } = usePermissions();
+  const { canAssignRoles, canModifyPermissions } = usePermissions();
 
   const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined && canGetPermissions) {
+    if (user !== undefined && canAssignRoles({})) {
       try {
         const roles = await getUserRoles({ userId: user.id });
         setUserRoles(roles);
@@ -166,7 +166,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
     }
-  }, [user, canGetPermissions]);
+  }, [user, canAssignRoles]);
 
   useEffect(() => {
     fetchUserRoles();
