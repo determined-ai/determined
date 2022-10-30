@@ -2,10 +2,9 @@ import { Form, message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
-import { V1Group } from 'services/api-ts-sdk';
+import { V1Group, V1Role } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -18,6 +17,7 @@ import css from './useModalWorkspaceAddMember.module.scss';
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
   onClose?: () => void;
+  rolesAssignableToScope: V1Role[];
   workspaceId: number;
 }
 interface FormInputs {
@@ -27,10 +27,11 @@ interface FormInputs {
 
 const useModalWorkspaceAddMember = ({
   addableUsersAndGroups,
+  rolesAssignableToScope,
   onClose,
   workspaceId,
 }: Props): ModalHooks => {
-  let { knownRoles } = useStore();
+  let knownRoles = rolesAssignableToScope;
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
@@ -41,14 +42,14 @@ const useModalWorkspaceAddMember = ({
       mockWorkspaceMembers
         ? [
             {
-              id: 1,
               name: 'Editor',
               permissions: [],
+              roleId: 1,
             },
             {
-              id: 2,
               name: 'Viewer',
               permissions: [],
+              roleId: 2,
             },
           ]
         : knownRoles,
@@ -138,11 +139,7 @@ const useModalWorkspaceAddMember = ({
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <Form
-          autoComplete="off"
-          form={form}
-          layout="vertical"
-          onValuesChange={async () => await form.validateFields()}>
+        <Form autoComplete="off" form={form} layout="vertical">
           <Form.Item
             label="User or Group"
             name="userOrGroupId"
@@ -170,8 +167,8 @@ const useModalWorkspaceAddMember = ({
             name="roleId"
             rules={[{ message: 'Role is required ', required: true }]}>
             <Select placeholder="Role">
-              {knownRoles.map((role) => (
-                <Select.Option key={role.id} value={role.id}>
+              {rolesAssignableToScope.map((role) => (
+                <Select.Option key={role.roleId} value={role.roleId}>
                   {role.name}
                 </Select.Option>
               ))}
@@ -180,7 +177,7 @@ const useModalWorkspaceAddMember = ({
         </Form>
       </div>
     );
-  }, [addableUsersAndGroups, form, handleFilter, handleSelect, knownRoles]);
+  }, [addableUsersAndGroups, form, handleFilter, handleSelect, knownRoles, rolesAssignableToScope]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {

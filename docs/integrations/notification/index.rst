@@ -60,11 +60,11 @@ types may be structured differently.
             "id": 41,
             "state": "COMPLETED",
             "name": "cifar10_pytorch_const",
-            "duration": 41, // this is in seconds
+            "slots_per_trial": 2,
+            "duration": 41, // experiment duration measured in seconds
             "resource_pool": "default",
-            "slots": 0,
-            "workspace": "test workspace", // name of the workspace
-            "project": "test project" // name of the project
+            "workspace": "test workspace", // experiment workspace name
+            "project": "test project" // experiment project name
          }
       }
    }
@@ -91,8 +91,26 @@ endpoint.
 
 Below is an example of handling signed payload in python
 
-.. image:: /assets/images/webhook_security_eg.png
-   :width: 100%
+.. code:: python
+
+   import hashlib, hmac, json
+
+   # User defined function to authenticate webhook requests
+   def authenticate_webhook_request(request_body, request_headers, webhook_signing_key):
+      timestamp = request_headers["X-Determined-AI-Signature-Timestamp"]
+      signed_payload = request_headers["X-Determined-AI-Signature"]
+      request_body = json.dumps(separators=(",",":"), obj=json.loads(request_body))
+      calculated_signed_payload = hmac.new(webhook_signing_key.encode(),
+      f"{timestamp},{request_body}".encode(),
+      digestmod=hashlib.sha256).hexdigest()
+      return calculated_signed_payload == signed_payload
+
+.. note::
+
+   The request body in the function shown above will be the json payload from the request. Ensure
+   that the json payload does not contain spaces between keys and their values when creating the
+   signed payload. For example "{"key_one": "value_one"}" will fail authentication, while
+   "{"key_one":"value_one"}" will yield the correct signed payload value.
 
 *******************
  Creating Webhooks

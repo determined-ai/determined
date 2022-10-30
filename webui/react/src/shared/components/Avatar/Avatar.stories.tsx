@@ -1,7 +1,7 @@
 import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 
 import Avatar, { Size } from './Avatar';
 
@@ -21,7 +21,7 @@ type AvatarProps = React.ComponentProps<typeof Avatar>;
 const names = ['Admin', 'Determined AI', 'Gold Experience Requiem'];
 
 export const Default: Story<AvatarProps & { nameLength: number }> = ({ nameLength, ...args }) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   return <Avatar {...args} darkLight={ui.darkLight} displayName={names[nameLength - 1]} />;
 };
 

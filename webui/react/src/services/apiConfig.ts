@@ -297,6 +297,8 @@ export const deleteGroup: DetApi<
 
 /* Roles */
 
+const ROLES_LIMIT = 1000;
+
 export const getGroupRoles: DetApi<
   Service.GetGroupParams,
   Api.V1GetRolesAssignedToGroupResponse,
@@ -401,6 +403,21 @@ export const removeRolesFromUser: DetApi<
         },
         userId: params.userId,
       })),
+    }),
+};
+
+export const searchRolesAssignableToScope: DetApi<
+  Service.SearchRolesAssignableToScopeParams,
+  Api.V1SearchRolesAssignableToScopeResponse,
+  Api.V1SearchRolesAssignableToScopeResponse
+> = {
+  name: 'searchRolesAssignableToScope',
+  postProcess: (response) => response,
+  request: (params) =>
+    detApi.RBAC.searchRolesAssignableToScope({
+      limit: params.limit || ROLES_LIMIT,
+      offset: params.offset,
+      workspaceId: params.workspaceId,
     }),
 };
 

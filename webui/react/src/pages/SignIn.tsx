@@ -8,7 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
-import { useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useFeature from 'hooks/useFeature';
@@ -16,7 +16,7 @@ import { defaultRoute, rbacDefaultRoute } from 'routes';
 import { routeAll } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
@@ -37,9 +37,9 @@ const logoConfig: Record<RecordKey, string> = {
 };
 
 const SignIn: React.FC = () => {
+  const { actions: uiActions } = useUI();
   const location = useLocation();
   const { auth, info } = useStore();
-  const storeDispatch = useStoreDispatch();
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');
 
@@ -67,7 +67,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      storeDispatch({ type: StoreActionUI.HideUISpinner });
+      uiActions.hideSpinner();
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -82,14 +82,14 @@ const SignIn: React.FC = () => {
         routeAll(queries.redirect);
       }
     } else if (auth.checked) {
-      storeDispatch({ type: StoreActionUI.HideUISpinner });
+      uiActions.hideSpinner();
     }
-  }, [auth, info, location, queries, storeDispatch, rbacEnabled]);
+  }, [auth, info, location, queries, uiActions, rbacEnabled]);
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionUI.HideUIChrome });
-    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
-  }, [storeDispatch]);
+    uiActions.hideChrome();
+    return uiActions.showChrome;
+  }, [uiActions]);
 
   // Stop the polling upon a dismount of this page.
   useEffect(() => {

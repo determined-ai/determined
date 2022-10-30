@@ -5,7 +5,6 @@ import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -13,6 +12,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
@@ -53,7 +53,7 @@ const LearningCurve: React.FC<Props> = ({
   selectedMetric,
   selectedScale,
 }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const [trialIds, setTrialIds] = useState<number[]>([]);
   const [batches, setBatches] = useState<number[]>([]);
   const [chartData, setChartData] = useState<(number | null)[][]>([]);

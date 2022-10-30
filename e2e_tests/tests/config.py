@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
 
 from determined.common import util
 
@@ -49,6 +49,10 @@ def nas_examples_path(path: str) -> str:
 
 def meta_learning_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/meta_learning", path)
+
+
+def diffusion_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/diffusion", path)
 
 
 def gan_examples_path(path: str) -> str:
@@ -102,7 +106,9 @@ def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:
     return config
 
 
-def set_max_length(config: Dict[Any, Any], max_length: Dict[str, int]) -> Dict[Any, Any]:
+def set_max_length(
+    config: Dict[Any, Any], max_length: Union[Dict[str, int], int]
+) -> Dict[Any, Any]:
     config = config.copy()
     config["searcher"]["max_length"] = max_length
     return config
@@ -205,4 +211,12 @@ def set_profiling_enabled(config: Dict[Any, Any]) -> Dict[Any, Any]:
 def set_entrypoint(config: Dict[Any, Any], entrypoint: str) -> Dict[Any, Any]:
     config = config.copy()
     config["entrypoint"] = entrypoint
+    return config
+
+
+def set_environment_variables(
+    config: Dict[Any, Any], environment_variables: List[str]
+) -> Dict[Any, Any]:
+    config = config.copy()
+    config["environment"]["environment_variables"] = environment_variables
     return config

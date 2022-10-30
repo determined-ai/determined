@@ -4,7 +4,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
@@ -17,6 +16,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { hasObjectKeys } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -95,7 +95,7 @@ const getHpImportanceMap = (hpImportanceMetrics: {
 };
 
 const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);

@@ -1,0 +1,8 @@
+description: detsd-notebook
+resources:
+    slots: 1
+    shm_size: 17179869184 # 16 GiB
+environment:
+    environment_variables:
+        - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
+idle_timeout: 2h
