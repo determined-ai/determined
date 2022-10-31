@@ -3,12 +3,12 @@ import json
 import logging
 import os
 import pathlib
+import random
 import shutil
+import string
 import subprocess
 import time
 import uuid
-import random 
-import string
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
 
 import appdirs
@@ -330,6 +330,7 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     assert user.change_password(new_password=newPasswordSdk, is_hashed=False)
     assert log_in_user(authentication.Credentials(creds.username, newPasswordSdk)) == 0
 
+
 @pytest.mark.e2e_cpu
 def test_change_username(clean_auth: None, login_admin: None):
     creds = create_test_user()
@@ -339,7 +340,7 @@ def test_change_username(clean_auth: None, login_admin: None):
     print(new_username)
     command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
     assert subprocess.call(command) == 0
-    det_obj =Determined(master=conf.make_master_url())
+    det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username
     assert log_in_user(authentication.Credentials(new_username, "")) == 0
@@ -986,13 +987,20 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     # Rename user using display name
     patch_user = bindings.v1PatchUser(displayName="renamed")
     patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
-    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
-    assert modded_user is not None
     bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
     assert modded_user.displayName == "renamed display-name"
+
+    # Rename user display name using SDK
+    det_obj = Determined(master=conf.make_master_url())
+    user = det_obj.get_user_by_id(user_id=current_user.id)
+    user.change_display_name(display_name="renamedSDK")
+
+    modded_user_sdk = det_obj.get_user_by_id(user_id=current_user.id)
+    assert modded_user_sdk is not None
+    assert modded_user_sdk.display_name == "renamedSDK"
 
     # Avoid display name of 'admin'
     patch_user.displayName = "Admin"

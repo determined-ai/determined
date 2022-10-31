@@ -12,6 +12,7 @@ class User:
         admin: bool,
         session: api.Session,
         active: Optional[bool] = True,
+        display_name: Optional[str] = None,
         agent_uid: Optional[int] = None,
         agent_gid: Optional[int] = None,
         agent_user: Optional[str] = None,
@@ -26,6 +27,7 @@ class User:
         self.agent_user = agent_user
         self.agent_group = agent_group
         self.session = session
+        self.display_name = display_name
 
     def update(
         self,
@@ -66,6 +68,12 @@ class User:
 
     def deactivate(self) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(active=False)
+        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        return resp
+
+    def change_display_name(self, display_name: str) -> bindings.v1PatchUserResponse:
+        patch_user = bindings.v1PatchUser(displayName=display_name)
         patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp

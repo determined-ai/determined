@@ -238,8 +238,6 @@ func (a *apiServer) GetUserByUsername(
 		return nil, err
 	}
 
-	fmt.Println("in GetUserByUsername")
-	fmt.Println(req.Username)
 	var ok bool
 	if ok, err = user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
 		return nil, err

@@ -8,7 +8,12 @@ from determined.common.api.errors import APIException, BadRequestException, NotF
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.test_users import ADMIN_CREDENTIALS, create_test_user, logged_in_user, log_in_user
+from tests.cluster.test_users import (
+    ADMIN_CREDENTIALS,
+    create_test_user,
+    log_in_user,
+    logged_in_user,
+)
 
 
 def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_access: bool) -> None:

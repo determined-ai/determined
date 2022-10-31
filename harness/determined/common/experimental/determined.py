@@ -74,6 +74,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
                 agent_uid=resp.user.agentUserGroup.agentUid,
                 agent_gid=resp.user.agentUserGroup.agentGid,
                 agent_user=resp.user.agentUserGroup.agentUser,
@@ -86,10 +87,11 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
             )
 
     def get_user_by_id(self, user_id: int) -> user.User:
-        resp = bindings.get_GetUser(self._session, user_id)
+        resp = bindings.get_GetUser(session=self._session, userId=user_id)
         if resp.user.agentUserGroup is not None:
             return user.User(
                 user_id=resp.user.id,
@@ -97,6 +99,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
                 agent_uid=resp.user.agentUserGroup.agentUid,
                 agent_gid=resp.user.agentUserGroup.agentGid,
                 agent_user=resp.user.agentUserGroup.agentUser,
@@ -109,6 +112,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
             )
 
     def get_user_by_name(self, user_name: str) -> user.User:
@@ -120,6 +124,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
                 agent_uid=resp.user.agentUserGroup.agentUid,
                 agent_gid=resp.user.agentUserGroup.agentGid,
                 agent_user=resp.user.agentUserGroup.agentUser,
@@ -132,6 +137,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
             )
 
     def whoami(self) -> user.User:
@@ -146,6 +152,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
                 agent_uid=resp.user.agentUserGroup.agentUid,
                 agent_gid=resp.user.agentUserGroup.agentGid,
                 agent_user=resp.user.agentUserGroup.agentUser,
@@ -158,6 +165,7 @@ class Determined:
                 admin=resp.user.admin,
                 session=self._session,
                 active=resp.user.active,
+                display_name=resp.user.displayName,
             )
 
     def list_users(self) -> Sequence[user.User]:
@@ -171,6 +179,7 @@ class Determined:
                     admin=user_b.admin,
                     session=self._session,
                     active=user_b.active,
+                    display_name=user_b.displayName,
                     agent_uid=user_b.agentUserGroup.agentUid,
                     agent_gid=user_b.agentUserGroup.agentGid,
                     agent_user=user_b.agentUserGroup.agentUser,
@@ -183,6 +192,7 @@ class Determined:
                     admin=user_b.admin,
                     session=self._session,
                     active=user_b.active,
+                    display_name=user_b.displayName,
                 )
             users.append(user_obj)
         return users
