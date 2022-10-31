@@ -20,13 +20,15 @@ WORKSPACE_HEADERS = [
     "Agent Gid",
     "Agent User",
     "Agent Group",
-    "Checkpoint Storage Config",
 ]
 
 
-def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
-    values = [
-        [
+def render_workspaces(
+    workspaces: Sequence[bindings.v1Workspace], from_list_api: bool = False
+) -> None:
+    values = []
+    for w in workspaces:
+        value = [
             w.id,
             w.name,
             w.numProjects,
@@ -34,11 +36,15 @@ def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
             w.agentUserGroup.agentGid if w.agentUserGroup else None,
             w.agentUserGroup.agentUser if w.agentUserGroup else None,
             w.agentUserGroup.agentGroup if w.agentUserGroup else None,
-            w.checkpointStorageConfig,
         ]
-        for w in workspaces
-    ]
-    render.tabulate_or_csv(WORKSPACE_HEADERS, values, False)
+        if not from_list_api:
+            value.append(w.checkpointStorageConfig)
+        values.append(value)
+
+    headers = WORKSPACE_HEADERS
+    if not from_list_api:
+        headers = WORKSPACE_HEADERS + ["Checkpoint Storage Config"]
+    render.tabulate_or_csv(headers, values, False)
 
 
 def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
@@ -71,7 +77,7 @@ def list_workspaces(args: Namespace) -> None:
     if args.json:
         print(json.dumps([w.to_json() for w in all_workspaces], indent=2))
     else:
-        render_workspaces(all_workspaces)
+        render_workspaces(all_workspaces, from_list_api=True)
 
 
 @authentication.required
