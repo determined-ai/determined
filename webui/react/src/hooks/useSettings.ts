@@ -12,7 +12,7 @@ import {
   isObject,
   isString,
 } from 'shared/utils/data';
-import { Storage } from 'shared/utils/storage';
+import { StorageManager } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
 import { Primitive, RecordKey, ValueOf } from '../shared/types';
@@ -102,7 +102,7 @@ export const validateSetting = (config: SettingsConfigProp, value: unknown): boo
   return validateBaseType(config.type.baseType, value);
 };
 
-export const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage): T => {
+export const getDefaultSettings = <T>(config: SettingsConfig, storage: StorageManager): T => {
   return config.settings.reduce((acc, prop) => {
     let defaultValue = prop.defaultValue;
     if (prop.storageKey) {
