@@ -26,8 +26,8 @@ jobs:
           token: ${{ secrets.DETERMINED_TOKEN }}
       - name: add EE repository remote and get default branch
         run: |
-          DEFAULT_BRANCH=$( gh api repos/${{ EE_REPO }} -q '.default_branch' )
-          git remote add EE github.com:${{ EE_REPO }}
+          DEFAULT_BRANCH=$( gh api repos/${{ env.EE_REPO }} -q '.default_branch' )
+          git remote add EE github.com:${{ env.EE_REPO }}
           git fetch EE
           git checkout EE/$DEFAULT_BRANCH
       - name: attempt rebase
