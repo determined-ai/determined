@@ -93,8 +93,11 @@ const setup = () =>
   );
 
 describe('UserManagement', () => {
+  afterEach(() => jest.clearAllTimers());
   it('should render table/button correct values', async () => {
     await waitFor(() => setup());
+
+    await waitFor(() => jest.setTimeout(300));
 
     expect(screen.getByText(CREATE_USER)).toBeInTheDocument();
     expect(screen.getByText(USER_TITLE)).toBeInTheDocument();
@@ -104,6 +107,7 @@ describe('UserManagement', () => {
 
   it('should render modal for create user when click the button', async () => {
     await waitFor(() => setup());
+    await waitFor(() => jest.setTimeout(300));
     await user.click(screen.getByLabelText(CREAT_USER_LABEL));
 
     expect(screen.getAllByText('Create User')).toHaveLength(2);
