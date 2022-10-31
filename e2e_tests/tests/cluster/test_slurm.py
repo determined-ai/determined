@@ -39,7 +39,7 @@ def test_unsupported_option() -> None:
     exp.run_failure_test(
         conf.fixtures_path("failures/unsupported-slurm-option.yaml"),
         conf.fixtures_path("failures/"),
-        "ERROR: resources failed with non-zero exit code: unable to create "
+        "resources failed with non-zero exit code: unable to create "
         + "the launcher manifest: slurm option -G is not configurable",
     )
 
@@ -82,7 +82,7 @@ def test_bad_slurm_option() -> None:
     exp.run_failure_test(
         conf.fixtures_path("failures/bad-slurm-option.yaml"),
         conf.fixtures_path("failures/"),
-        "ERROR: task failed without an associated exit code: sbatch: unrecognized option",
+        "task failed without an associated exit code: sbatch: unrecognized option",
     )
 
 
