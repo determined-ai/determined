@@ -125,6 +125,20 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 }
 
+// CanGetWorkspaceMembership checks if a user can get membership on a workspace.
+func (a *RBACAuthZRBAC) CanGetWorkspaceMembership(
+	ctx context.Context, curUser model.User, workspaceID int32,
+) (bool, error) {
+	if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE); err != nil {
+		if _, ok := err.(authz.PermissionDeniedError); ok {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 // CanAssignRoles checks if a user can assign roles.
 func (a *RBACAuthZRBAC) CanAssignRoles(
 	ctx context.Context,
