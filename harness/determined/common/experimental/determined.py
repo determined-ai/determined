@@ -141,10 +141,7 @@ class Determined:
             )
 
     def whoami(self) -> user.User:
-        print("in whoami")
         resp = bindings.get_GetMe(self._session)
-        print("after api call")
-        print(resp)
         if resp.user.agentUserGroup is not None:
             return user.User(
                 user_id=resp.user.id,

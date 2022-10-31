@@ -57,6 +57,7 @@ def login_admin() -> None:
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
     assert log_in_user(credentials) == 0
+    print(f"logged in user{credentials.username}")
     yield
     assert log_out_user() == 0
 
@@ -440,6 +441,7 @@ def test_login_with_environment_variables(clean_auth: None, login_admin: None) -
     try:
         child = det_spawn(["user", "whoami"])
         child.expect(creds.username)
+        child.read()
         child.wait()
         assert child.exitstatus == 0
 
@@ -447,6 +449,7 @@ def test_login_with_environment_variables(clean_auth: None, login_admin: None) -
         with logged_in_user(ADMIN_CREDENTIALS):
             child = det_spawn(["-u", ADMIN_CREDENTIALS.username, "user", "whoami"])
             child.expect(ADMIN_CREDENTIALS.username)
+            child.read()
             child.wait()
             assert child.exitstatus == 0
     finally:

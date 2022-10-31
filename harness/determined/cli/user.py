@@ -141,7 +141,7 @@ def create_user(parsed_args: Namespace) -> None:
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)
 
-
+@login_sdk_client
 def whoami(parsed_args: Namespace) -> None:
     user = client.whoami()
     print("You are logged in as user '{}'".format(user.username))

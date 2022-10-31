@@ -48,8 +48,6 @@ class Authentication:
         cert: Optional[certs.Cert] = None,
     ) -> None:
         self.master_address = master_address or util.get_default_master_address()
-        #print("master address in auth")
-        #print(self.master_address)
         self.token_store = TokenStore(self.master_address)
 
         self.session = self._init_session(requested_user, password, try_reauth, cert)
@@ -72,11 +70,8 @@ class Authentication:
             and util.get_det_username_from_env() is not None
             and util.get_det_password_from_env() is not None
         ):
-            print("get from environment")
             session_user = util.get_det_username_from_env()  # type: ignore
             password = util.get_det_password_from_env()
-            print(session_user)
-            print(password)
 
         token = self.token_store.get_token(session_user)
         if token is not None and not _is_token_valid(self.master_address, token, cert):
