@@ -19,7 +19,7 @@ env:
 jobs:
   check-rebaseable:
     runs-on: ubuntu-latest
-    if: github.repository == ${{ env.OSS_REPO }}
+    if: github.repository != ${{ env.EE_REPO }}
     steps:
       - name: get EE
         uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 1  # we only need the main branch
           token: ${{ secrets.DETERMINED_TOKEN }}
           repository: ${{ env.EE_REPO }}
-      - name: add EE repository remote and get default branch
+      - name: add OSS repository remote and get candidate branch
         run: |
           git remote add OSS github.com:${{ env.OSS_REPO }}
           git fetch OSS "${{ github.ref }}":proposed_base
