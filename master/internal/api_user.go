@@ -170,7 +170,7 @@ func (a *apiServer) GetUsers(
 	if err != nil {
 		return nil, err
 	}
-	if users, err = user.AuthZProvider.Get().FilterUserList(*curUser, users); err != nil {
+	if users, err = user.AuthZProvider.Get().FilterUserList(ctx, *curUser, users); err != nil {
 		return nil, err
 	}
 
@@ -195,7 +195,8 @@ func (a *apiServer) GetUser(
 	}
 
 	var ok bool
-	if ok, err = user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+	if ok, err = user.AuthZProvider.Get().CanGetUser(
+		ctx, *curUser, targetFullUser.ToUser()); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errUserNotFound
@@ -244,7 +245,7 @@ func (a *apiServer) PostUser(
 		return nil, err
 	}
 	if err = user.AuthZProvider.Get().
-		CanCreateUser(*curUser, *userToAdd, agentUserGroup); err != nil {
+		CanCreateUser(ctx, *curUser, *userToAdd, agentUserGroup); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -283,9 +284,9 @@ func (a *apiServer) SetUserPassword(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
+	if err = user.AuthZProvider.Get().CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
 		if ok, canGetErr := user.AuthZProvider.
-			Get().CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 			return nil, canGetErr
 		} else if !ok {
 			return nil, errUserNotFound
@@ -320,9 +321,9 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
 		if ok, canGetErr := user.AuthZProvider.Get().
-			CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 			return nil, canGetErr
 		} else if !ok {
 			return nil, errUserNotFound
@@ -331,9 +332,9 @@ func (a *apiServer) PatchUser(
 	}
 
 	if req.User.DisplayName != nil {
-		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -362,8 +363,8 @@ func (a *apiServer) PatchUser(
 	}
 
 	if req.User.Username != nil {
-		if err = user.AuthZProvider.Get().CanSetUsersUsername(*curUser, targetUser); err != nil {
-			if ok, findErr := user.AuthZProvider.Get().CanGetUser(*curUser, targetUser); err != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersUsername(ctx, *curUser, targetUser); err != nil {
+			if ok, findErr := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
 				return nil, findErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -393,9 +394,9 @@ func (a *apiServer) PatchUser(
 	var toUpdate []string
 	if req.User.Active != nil {
 		if err = user.AuthZProvider.Get().
-			CanSetUsersActive(*curUser, targetUser, req.User.Active.Value); err != nil {
+			CanSetUsersActive(ctx, *curUser, targetUser, req.User.Active.Value); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -407,10 +408,10 @@ func (a *apiServer) PatchUser(
 	}
 
 	if req.User.Admin != nil {
-		if err = user.AuthZProvider.Get().CanSetUsersAdmin(*curUser, targetUser,
+		if err = user.AuthZProvider.Get().CanSetUsersAdmin(ctx, *curUser, targetUser,
 			req.User.Admin.Value); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -433,9 +434,9 @@ func (a *apiServer) PatchUser(
 			Group: *req.User.AgentUserGroup.AgentGroup,
 		}
 		if err = user.AuthZProvider.Get().
-			CanSetUsersAgentUserGroup(*curUser, targetUser, *ug); err != nil {
+			CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -462,7 +463,7 @@ func (a *apiServer) GetUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -487,7 +488,8 @@ func (a *apiServer) PostUserSetting(
 		Value:       req.Setting.Value,
 		StoragePath: req.StoragePath,
 	}
-	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(
+		ctx, *curUser, settingModel); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -502,7 +504,7 @@ func (a *apiServer) ResetUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -517,7 +519,7 @@ func (a *apiServer) GetUserWebSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

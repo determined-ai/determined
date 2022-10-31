@@ -7,7 +7,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
 import { RecordKey } from 'shared/types';
-import { MemoryStore, Storage } from 'shared/utils/storage';
+import { MemoryStore, StorageManager } from 'shared/utils/storage';
 
 import useSettings, * as hook from './useSettings';
 
@@ -149,7 +149,10 @@ describe('useSettings helper functions', () => {
   });
 
   describe('getDefaultSettings', () => {
-    const testStorage = new Storage({ basePath: config.storagePath, store: new MemoryStore() });
+    const testStorage = new StorageManager({
+      basePath: config.storagePath,
+      store: new MemoryStore(),
+    });
     const defaultResult = {
       boolean: true,
       booleanArray: undefined,

@@ -845,19 +845,22 @@ export interface ProjectPagination extends WithPagination {
 
 export interface Permission {
   id: Api.V1PermissionType;
-  isGlobal: boolean;
+  scopeCluster: boolean;
+  scopeWorkspace: boolean;
 }
 
 export interface UserRole {
+  fromGroup?: number[];
+  fromWorkspace?: number[];
   id: number;
   name: string;
   permissions: Permission[];
 }
 
 export interface UserAssignment {
-  isGlobal: boolean;
   roleId: number;
-  workspaces: number[];
+  scopeCluster: boolean;
+  workspaces?: number | number[];
 }
 
 export interface PermissionsSummary {

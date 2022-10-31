@@ -387,7 +387,6 @@ export interface AssignRolesToGroupParams {
 }
 
 export interface ListRolesParams {
-  isGlobal?: boolean;
   limit?: number;
   offset?: number;
 }

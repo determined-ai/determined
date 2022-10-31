@@ -1,0 +1,41 @@
+---
+name: "Check Rebaseable"
+
+############################################################
+# Understand this security concern before you edit this file:
+# https://securitylab.github.com/research/github-actions-preventing-pwn-requests
+############################################################
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request_target: {}
+
+env:
+  EE_REPO: determined-ai/determined-ee
+  OSS_REPO: determined-ai/determined
+
+jobs:
+  check-rebaseable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: get EE
+        # the env context is only available on the runner, so can only be used
+        # in parts of the job which are on the runner. :/
+        if: github.repository != env.EE_REPO
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1  # we only need the main branch
+          token: ${{ secrets.DETERMINED_TOKEN }}
+          repository: ${{ env.EE_REPO }}
+      - name: add OSS repository remote and get candidate branch
+        if: github.repository != env.EE_REPO
+        run: |
+          # ssh checkout of additional remotes fails :/
+          git remote add OSS https://github.com/${{ env.OSS_REPO }}
+          git fetch OSS "${{ github.ref }}":proposed_base
+      - name: attempt rebase
+        if: github.repository != env.EE_REPO
+        run: |
+          git rebase proposed_base

@@ -10,9 +10,9 @@ import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
-import { Storage } from 'shared/utils/storage';
+import { StorageManager } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -26,10 +26,11 @@ interface FromValues {
   username?: string;
 }
 
-const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
+const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
+  const { actions: uiActions } = useUI();
   const storeDispatch = useStoreDispatch();
   const fetchMyRoles = useFetchMyRoles(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
@@ -39,7 +40,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
-      storeDispatch({ type: StoreActionUI.ShowUISpinner });
+      uiActions.showSpinner();
       setCanSubmit(false);
       setIsSubmitted(true);
       try {
@@ -62,7 +63,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
       } catch (e) {
         const isBadCredentialsSync = isLoginFailure(e);
         setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
-        storeDispatch({ type: StoreActionUI.HideUISpinner });
+        uiActions.hideSpinner();
         const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
         if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
         handleError(e, {
@@ -77,7 +78,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, storeDispatch, fetchMyRoles, rbacEnabled],
+    [canceler, storeDispatch, uiActions, fetchMyRoles, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

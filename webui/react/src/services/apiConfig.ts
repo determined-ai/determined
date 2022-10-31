@@ -328,7 +328,7 @@ export const getGroupRoles: DetApi<
   Type.UserRole[]
 > = {
   name: 'getRolesAssignedToGroup',
-  postProcess: (response) => (response.roles || []).map(decoder.mapV1Role),
+  postProcess: (response) => decoder.mapV1GroupRole(response),
   request: (params) => detApi.RBAC.getRolesAssignedToGroup(params.groupId),
 };
 
@@ -338,7 +338,7 @@ export const getUserRoles: DetApi<
   Type.UserRole[]
 > = {
   name: 'getRolesAssignedToUser',
-  postProcess: (response) => response.roles.map((rwa) => decoder.mapV1Role(rwa.role!)),
+  postProcess: (response) => response.roles.map((rwa) => decoder.mapV1UserRole(rwa)),
   request: (params) => detApi.RBAC.getRolesAssignedToUser(params.userId),
 };
 

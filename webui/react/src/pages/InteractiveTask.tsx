@@ -3,9 +3,8 @@ import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
-import { useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
@@ -60,8 +59,7 @@ export const InteractiveTask: React.FC = () => {
     taskUrl: tUrl,
   } = useParams<Params>();
   const [taskState, setTaskState] = useState<CommandState>();
-  const storeDispatch = useStoreDispatch();
-  const { ui } = useStore();
+  const { actions: uiActions, ui } = useUI();
 
   const taskId = tId ?? '';
   const taskName = tName ?? '';
@@ -70,9 +68,9 @@ export const InteractiveTask: React.FC = () => {
   const taskUrl = tUrl ?? '';
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionUI.HideUIChrome });
-    return () => storeDispatch({ type: StoreActionUI.ShowUIChrome });
-  }, [storeDispatch]);
+    uiActions.hideChrome();
+    return uiActions.showChrome;
+  }, [uiActions]);
 
   useEffect(() => {
     const queryTask = setInterval(async () => {

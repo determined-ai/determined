@@ -65,11 +65,7 @@ message DeleteWebhookRequest {
 }
 
 // Response to DeleteWebhookRequest.
-message DeleteWebhookResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "completed" ] }
-  };
-}
+message DeleteWebhookResponse {}
 
 // Request for testing a webhook.
 message TestWebhookRequest {

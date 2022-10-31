@@ -1,36 +1,20 @@
 import React from 'react';
-import { CellType, IpynbRenderer } from 'react-ipynb-renderer';
 
-import 'react-ipynb-renderer/dist/styles/onedork.css';
+import NotebookJS from 'vendor/notebook';
 
-export type IpynbInterface = {
-  cells: CellType[];
-  nbformat: 3 | 4 | 5;
-  worksheets?: {
-    cells: CellType[];
-  }[];
-};
+import 'vendor/monokai.css';
 
 interface Props {
-  file: IpynbInterface;
+  file: string;
 }
 
 const JupyterRenderer: React.FC<Props> = React.memo(({ file }) => {
   return (
-    <IpynbRenderer
-      bgTransparent={true}
-      formulaOptions={{
-        // katex by default
-        katex: {
-          delimiters: 'gitlab', // dollars by default
-          katexOptions: { fleqn: false },
-        },
-        // optional
-        renderer: 'mathjax',
+    <div
+      className="ipynb-renderer-root"
+      dangerouslySetInnerHTML={{
+        __html: file && NotebookJS.parse(JSON.parse(file)).render().outerHTML,
       }}
-      ipynb={file}
-      language="python"
-      syntaxTheme="xonokai"
     />
   );
 });

@@ -2,10 +2,11 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
-import { ActionUI, initUI, reducerUI, StateUI } from 'shared/contexts/UIStore';
+import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
+import { checkDeepEquality } from 'shared/utils/store';
 import {
   Agent,
   Auth,
@@ -48,7 +49,7 @@ interface State {
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
-  ui: StateUI & {
+  ui: {
     omnibar: OmnibarState;
   };
   userAssignments: UserAssignment[];
@@ -136,8 +137,7 @@ type Action =
   | { type: typeof StoreAction.SetActiveExperiments; value: number }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] }
-  | ActionUI;
+  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -181,7 +181,7 @@ const initState: State = {
   pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
-  ui: { ...initUI, omnibar: { isShowing: false } },
+  ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
   userRoles: [
     {
@@ -341,7 +341,7 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.userAssignments, action.value)) return state;
       return { ...state, userAssignments: action.value };
     default:
-      return { ...state, ui: { ...state.ui, ...reducerUI(state.ui, action) } };
+      return state;
   }
 };
 
@@ -362,12 +362,7 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 };
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
-  const [state, dispatch] = useReducer((state: State, action: Action) => {
-    const newState = reducer(state, action);
-    if (isEqual(state, newState)) return state;
-    logger.debug('store state updated', action.type);
-    return newState;
-  }, initState);
+  const [state, dispatch] = useReducer(checkDeepEquality(reducer, logger), initState);
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
@@ -375,4 +370,13 @@ const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   );
 };
 
-export default StoreProvider;
+/** a set of app level store providers */
+const StackedStoreProvider: React.FC<Props> = ({ children }: Props) => {
+  return (
+    <StoreProvider>
+      <UIStoreProvider>{children}</UIStoreProvider>
+    </StoreProvider>
+  );
+};
+
+export default StackedStoreProvider;

@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/determined-ai/determined/master/pkg/model"
@@ -17,13 +19,13 @@ type ProjectAuthZ struct {
 	mock.Mock
 }
 
-// CanArchiveProject provides a mock function with given fields: curUser, _a1
-func (_m *ProjectAuthZ) CanArchiveProject(curUser model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUser, _a1)
+// CanArchiveProject provides a mock function with given fields: ctx, curUser, _a2
+func (_m *ProjectAuthZ) CanArchiveProject(ctx context.Context, curUser model.User, _a2 *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUser, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -31,13 +33,13 @@ func (_m *ProjectAuthZ) CanArchiveProject(curUser model.User, _a1 *projectv1.Pro
 	return r0
 }
 
-// CanCreateProject provides a mock function with given fields: curUser, targetWorkspace
-func (_m *ProjectAuthZ) CanCreateProject(curUser model.User, targetWorkspace *workspacev1.Workspace) error {
-	ret := _m.Called(curUser, targetWorkspace)
+// CanCreateProject provides a mock function with given fields: ctx, curUser, targetWorkspace
+func (_m *ProjectAuthZ) CanCreateProject(ctx context.Context, curUser model.User, targetWorkspace *workspacev1.Workspace) error {
+	ret := _m.Called(ctx, curUser, targetWorkspace)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *workspacev1.Workspace) error); ok {
-		r0 = rf(curUser, targetWorkspace)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *workspacev1.Workspace) error); ok {
+		r0 = rf(ctx, curUser, targetWorkspace)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -45,13 +47,13 @@ func (_m *ProjectAuthZ) CanCreateProject(curUser model.User, targetWorkspace *wo
 	return r0
 }
 
-// CanDeleteProject provides a mock function with given fields: curUser, targetProject
-func (_m *ProjectAuthZ) CanDeleteProject(curUser model.User, targetProject *projectv1.Project) error {
-	ret := _m.Called(curUser, targetProject)
+// CanDeleteProject provides a mock function with given fields: ctx, curUser, targetProject
+func (_m *ProjectAuthZ) CanDeleteProject(ctx context.Context, curUser model.User, targetProject *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, targetProject)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUser, targetProject)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, targetProject)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,20 +61,20 @@ func (_m *ProjectAuthZ) CanDeleteProject(curUser model.User, targetProject *proj
 	return r0
 }
 
-// CanGetProject provides a mock function with given fields: curUser, _a1
-func (_m *ProjectAuthZ) CanGetProject(curUser model.User, _a1 *projectv1.Project) (bool, error) {
-	ret := _m.Called(curUser, _a1)
+// CanGetProject provides a mock function with given fields: ctx, curUser, _a2
+func (_m *ProjectAuthZ) CanGetProject(ctx context.Context, curUser model.User, _a2 *projectv1.Project) (bool, error) {
+	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) bool); ok {
-		r0 = rf(curUser, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) bool); ok {
+		r0 = rf(ctx, curUser, _a2)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.User, *projectv1.Project) error); ok {
-		r1 = rf(curUser, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r1 = rf(ctx, curUser, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -80,13 +82,13 @@ func (_m *ProjectAuthZ) CanGetProject(curUser model.User, _a1 *projectv1.Project
 	return r0, r1
 }
 
-// CanMoveProject provides a mock function with given fields: curUser, _a1, from, to
-func (_m *ProjectAuthZ) CanMoveProject(curUser model.User, _a1 *projectv1.Project, from *workspacev1.Workspace, to *workspacev1.Workspace) error {
-	ret := _m.Called(curUser, _a1, from, to)
+// CanMoveProject provides a mock function with given fields: ctx, curUser, _a2, from, to
+func (_m *ProjectAuthZ) CanMoveProject(ctx context.Context, curUser model.User, _a2 *projectv1.Project, from *workspacev1.Workspace, to *workspacev1.Workspace) error {
+	ret := _m.Called(ctx, curUser, _a2, from, to)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project, *workspacev1.Workspace, *workspacev1.Workspace) error); ok {
-		r0 = rf(curUser, _a1, from, to)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project, *workspacev1.Workspace, *workspacev1.Workspace) error); ok {
+		r0 = rf(ctx, curUser, _a2, from, to)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -94,13 +96,13 @@ func (_m *ProjectAuthZ) CanMoveProject(curUser model.User, _a1 *projectv1.Projec
 	return r0
 }
 
-// CanMoveProjectExperiments provides a mock function with given fields: curUser, exp, from, to
-func (_m *ProjectAuthZ) CanMoveProjectExperiments(curUser model.User, exp *model.Experiment, from *projectv1.Project, to *projectv1.Project) error {
-	ret := _m.Called(curUser, exp, from, to)
+// CanMoveProjectExperiments provides a mock function with given fields: ctx, curUser, exp, from, to
+func (_m *ProjectAuthZ) CanMoveProjectExperiments(ctx context.Context, curUser model.User, exp *model.Experiment, from *projectv1.Project, to *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, exp, from, to)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, *projectv1.Project, *projectv1.Project) error); ok {
-		r0 = rf(curUser, exp, from, to)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment, *projectv1.Project, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, exp, from, to)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -108,13 +110,13 @@ func (_m *ProjectAuthZ) CanMoveProjectExperiments(curUser model.User, exp *model
 	return r0
 }
 
-// CanSetProjectDescription provides a mock function with given fields: curUser, _a1
-func (_m *ProjectAuthZ) CanSetProjectDescription(curUser model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUser, _a1)
+// CanSetProjectDescription provides a mock function with given fields: ctx, curUser, _a2
+func (_m *ProjectAuthZ) CanSetProjectDescription(ctx context.Context, curUser model.User, _a2 *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUser, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -122,13 +124,13 @@ func (_m *ProjectAuthZ) CanSetProjectDescription(curUser model.User, _a1 *projec
 	return r0
 }
 
-// CanSetProjectName provides a mock function with given fields: curUser, _a1
-func (_m *ProjectAuthZ) CanSetProjectName(curUser model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUser, _a1)
+// CanSetProjectName provides a mock function with given fields: ctx, curUser, _a2
+func (_m *ProjectAuthZ) CanSetProjectName(ctx context.Context, curUser model.User, _a2 *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUser, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -136,13 +138,13 @@ func (_m *ProjectAuthZ) CanSetProjectName(curUser model.User, _a1 *projectv1.Pro
 	return r0
 }
 
-// CanSetProjectNotes provides a mock function with given fields: curUser, _a1
-func (_m *ProjectAuthZ) CanSetProjectNotes(curUser model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUser, _a1)
+// CanSetProjectNotes provides a mock function with given fields: ctx, curUser, _a2
+func (_m *ProjectAuthZ) CanSetProjectNotes(ctx context.Context, curUser model.User, _a2 *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUser, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -150,13 +152,13 @@ func (_m *ProjectAuthZ) CanSetProjectNotes(curUser model.User, _a1 *projectv1.Pr
 	return r0
 }
 
-// CanUnarchiveProject provides a mock function with given fields: curUser, _a1
-func (_m *ProjectAuthZ) CanUnarchiveProject(curUser model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUser, _a1)
+// CanUnarchiveProject provides a mock function with given fields: ctx, curUser, _a2
+func (_m *ProjectAuthZ) CanUnarchiveProject(ctx context.Context, curUser model.User, _a2 *projectv1.Project) error {
+	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUser, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project) error); ok {
+		r0 = rf(ctx, curUser, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}

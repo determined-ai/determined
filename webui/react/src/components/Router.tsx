@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import { useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { paths } from 'routes/utils';
-import { StoreActionUI } from 'shared/contexts/UIStore';
+import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
 
@@ -14,8 +14,8 @@ interface Props {
 
 const Router: React.FC<Props> = (props: Props) => {
   const { auth } = useStore();
-  const storeDispatch = useStoreDispatch();
   const [canceler] = useState(new AbortController());
+  const { actions: uiActions } = useUI();
   const checkAuth = useAuthCheck(canceler);
   const location = useLocation();
 
@@ -25,9 +25,9 @@ const Router: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     if (auth.isAuthenticated) {
-      storeDispatch({ type: StoreActionUI.HideUISpinner });
+      uiActions.hideSpinner();
     }
-  }, [auth.isAuthenticated, storeDispatch]);
+  }, [auth.isAuthenticated, uiActions]);
 
   useEffect(() => {
     return () => canceler.abort();

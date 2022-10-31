@@ -186,18 +186,21 @@ func TestTrialAuthZ(t *testing.T) {
 		require.ErrorIs(t, curCase.IDToReqCall(-999), errTrialNotFound(-999))
 
 		// Can't view trials experiment gives same error.
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, nil).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), errTrialNotFound(trial.ID))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 
 		// Action func error returns error in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(true, nil).Once()
+		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 	}

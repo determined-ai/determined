@@ -7,7 +7,7 @@ import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import history from 'shared/routes/history';
 import { DetailedUser } from 'types';
 
-import Settings, { TabType } from './Settings';
+import Settings from './Settings';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
@@ -53,12 +53,5 @@ describe('Settings Page', () => {
     expect(screen.getByText('Username')).toBeInTheDocument();
     expect(screen.getByText('Display Name')).toBeInTheDocument();
     expect(screen.getByText('Password')).toBeInTheDocument();
-  });
-
-  it('should hide user management when no permission', () => {
-    history.push('/?f_rbac=on');
-    setup();
-
-    expect(screen.queryByRole('tab', { name: TabType.UserManagement })).not.toBeInTheDocument();
   });
 });

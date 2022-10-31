@@ -9,13 +9,13 @@ import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { Primitive, Range, ValueOf } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
@@ -83,7 +83,7 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedView,
   selectedScale,
 }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
   const [hasLoaded, setHasLoaded] = useState(false);

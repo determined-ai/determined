@@ -252,3 +252,71 @@ def test_remote_search_runner() -> None:
     )
 
     exp.run_basic_test(config, conf.custom_search_method_examples_path("asha_search_method"), 1)
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+def test_textual_inversion_stable_diffusion_finetune() -> None:
+    """Requires downloading weights from Hugging Face via an authorization token. The experiment
+    expects the token to be stored in the HF_AUTH_TOKEN environment variable.
+
+    Hugging Face tokens are stored in CircleCI's "hugging-face" context as HF_READ_ONLY_TOKEN and
+    HF_READ_WRITE_TOKEN environment variables which are accessible during CI runs.
+
+    The Hugging Face account details can be found at
+    github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
+    """
+    config = conf.load_config(
+        conf.diffusion_examples_path(
+            "textual_inversion_stable_diffusion/finetune_const_advanced.yaml"
+        )
+    )
+    config = conf.set_max_length(config, 10)
+    try:
+        config = conf.set_environment_variables(
+            config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
+        )
+        exp.run_basic_test_with_temp_config(
+            config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
+        )
+    except KeyError as k:
+        if str(k) == "'HF_READ_ONLY_TOKEN'":
+            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
+        else:
+            raise k
+
+
+@pytest.mark.distributed
+@pytest.mark.gpu_required
+def test_textual_inversion_stable_diffusion_generate() -> None:
+    """Requires downloading weights from Hugging Face via an authorization token. The experiment
+    expects the token to be stored in the HF_AUTH_TOKEN environment variable.
+
+    Hugging Face tokens are stored in CircleCI's "hugging-face" context as HF_READ_ONLY_TOKEN and
+    HF_READ_WRITE_TOKEN environment variables which are accessible during CI runs.
+
+    The Hugging Face account details can be found at
+    github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
+    """
+    config = conf.load_config(
+        conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
+    )
+    # Shorten the Experiment and reduce to two Trials.
+    config = conf.set_max_length(config, 2)
+    prompt_vals = config["hyperparameters"]["call_kwargs"]["prompt"]["vals"]
+    config["hyperparameters"]["call_kwargs"]["guidance_scale"] = 7.5
+    while len(prompt_vals) > 1:
+        prompt_vals.pop()
+
+    try:
+        config = conf.set_environment_variables(
+            config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
+        )
+        exp.run_basic_test_with_temp_config(
+            config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 2
+        )
+    except KeyError as k:
+        if str(k) == "'HF_READ_ONLY_TOKEN'":
+            pytest.skip("HF_READ_ONLY_TOKEN CircleCI environment variable missing, skipping test")
+        else:
+            raise k
