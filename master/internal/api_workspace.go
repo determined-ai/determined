@@ -276,7 +276,7 @@ func (a *apiServer) PostWorkspace(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
-	if req.CheckpointStorageConfig != nil {
+	if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
 		if err = workspace.AuthZProvider.Get().
 			CanCreateWorkspaceWithCheckpointStorageConfig(ctx, *curUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
@@ -302,7 +302,7 @@ func (a *apiServer) PostWorkspace(
 		w.AgentGroup = req.AgentUserGroup.AgentGroup
 	}
 
-	if req.CheckpointStorageConfig != nil {
+	if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
 		var bytes []byte
 		bytes, err = req.CheckpointStorageConfig.MarshalJSON()
 		if err != nil {
@@ -390,20 +390,22 @@ func (a *apiServer) PatchWorkspace(
 			CanSetWorkspacesCheckpointStorageConfig(ctx, currUser, currWorkspace); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
-		var bytes []byte
-		bytes, err = req.Workspace.CheckpointStorageConfig.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		var sc expconf.CheckpointStorageConfig
-		updatedWorkspace.CheckpointStorageConfig = &sc
-		if err = updatedWorkspace.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
-			return nil, err
-		}
-		if err = schemas.IsComplete(updatedWorkspace.CheckpointStorageConfig); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
-		}
 
+		if len(req.Workspace.CheckpointStorageConfig.Fields) > 0 {
+			var bytes []byte
+			bytes, err = req.Workspace.CheckpointStorageConfig.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+			var sc expconf.CheckpointStorageConfig
+			updatedWorkspace.CheckpointStorageConfig = &sc
+			if err = updatedWorkspace.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+				return nil, err
+			}
+			if err = schemas.IsComplete(updatedWorkspace.CheckpointStorageConfig); err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			}
+		}
 		insertColumns = append(insertColumns, "checkpoint_storage_config")
 	}
 

@@ -239,6 +239,20 @@ def json_file_arg(val: str) -> Any:
         return json.load(f)
 
 
+CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
+    Arg(
+        "--checkpoint-storage-config",
+        type=str,
+        help="Storage config (JSON-formatted string). To remove storage config use '{}'",
+    ),
+    Arg(
+        "--checkpoint-storage-config-file",
+        type=json_file_arg,
+        help="Storage config (path to JSON-formatted file)",
+    ),
+]
+
+
 # do not use util.py's pagination_args because behavior here is
 # to hide pagination and unify all pages of experiments into one output
 pagination_args = [
@@ -316,16 +330,7 @@ args_description = [
                 [
                     Arg("name", type=str, help="unique name of the workspace"),
                     *AGENT_USER_GROUP_ARGS,
-                    Arg(
-                        "--checkpoint-storage-config",
-                        type=str,
-                        help="Storage config (JSON-formatted string)",
-                    ),
-                    Arg(
-                        "--checkpoint-storage-config-file",
-                        type=json_file_arg,
-                        help="Storage config (JSON-formatted file)",
-                    ),
+                    *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -360,16 +365,7 @@ args_description = [
                     Arg("workspace_name", type=str, help="current name of the workspace"),
                     Arg("--name", type=str, help="new name of the workspace"),
                     *AGENT_USER_GROUP_ARGS,
-                    Arg(
-                        "--checkpoint-storage-config",
-                        type=str,
-                        help="Storage config (JSON-formatted string)",
-                    ),
-                    Arg(
-                        "--checkpoint-storage-config-file",
-                        type=json_file_arg,
-                        help="Storage config (JSON-formatted file)",
-                    ),
+                    *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
