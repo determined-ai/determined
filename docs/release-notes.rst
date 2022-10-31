@@ -64,9 +64,10 @@ Version 0.19.6
 
 **New Features**
 
--  The custom searcher API allows users to implement their own logic to coordinate across multiple
-   training jobs, enabling easy implementation of custom meta algorithms like hyperparameter tuning
-   and ensembling methods. See :ref:`topic-guides_hp-tuning-det_custom` for more information.
+-  Custom Searcher: users can now define their own logic to coordinate across multiple trials within
+   an experiment. Examples of use cases are custom hyperparameter searching algorithms, ensembling,
+   active learning, neural architecture search, reinforcement learning.
+   See :ref:`topic-guides_hp-tuning-det_custom` for more information.
 
 -  Cluster: The enterprise edition of `HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_
