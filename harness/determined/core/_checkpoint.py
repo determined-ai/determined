@@ -104,7 +104,7 @@ class CheckpointContext:
 
     def upload(
         self,
-        ckpt_dir: Union[str, os.PathLike],
+        ckpt_dir: Optional[Union[str, os.PathLike]],
         metadata: Optional[Dict[str, Any]] = None,
         *,
         shard: bool=False,
