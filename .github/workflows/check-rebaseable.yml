@@ -12,25 +12,25 @@ on:  # yamllint disable-line rule:truthy
       - 'master'
   pull_request_target: {}
 
+env:
+  EE_REPO: determined-ai/determined-ee
+  OSS_REPO: determined-ai/determined
+
 jobs:
   check-rebaseable:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
-      EE_REPO: determined-ai/determined-ee
+    if: github.repository != ${{ env.EE_REPO }}
     steps:
-      - name: get PR
+      - name: get EE
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1  # we only need this branch
+          fetch-depth: 1  # we only need the main branch
           token: ${{ secrets.DETERMINED_TOKEN }}
-      - name: add EE repository remote and get default branch
+          repository: ${{ env.EE_REPO }}
+      - name: add OSS repository remote and get candidate branch
         run: |
-          DEFAULT_BRANCH=$( gh api repos/${{ env.EE_REPO }} -q '.default_branch' )
-          git remote add EE github.com:${{ env.EE_REPO }}
-          git fetch EE
-          git checkout EE/$DEFAULT_BRANCH
+          git remote add OSS github.com:${{ env.OSS_REPO }}
+          git fetch OSS "${{ github.ref }}":proposed_base
       - name: attempt rebase
         run: |
-          git rebase "${{ github.head_ref }}"
+          git rebase proposed_base
