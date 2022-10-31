@@ -30,11 +30,6 @@ def test_experimental_experiment_api_determined_disabled() -> None:
 
     try:
         det_spawn(["user", "deactivate", "determined"])
-        print("in test username")
-        print(user_creds.username)
-        print("password")
-        print(user_creds.password)
-        #log_in_user(user_creds)
         certs.cli_cert = certs.default_load(
             master_url=determined_master,
         )
