@@ -11,7 +11,6 @@ import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
-import useModalGroupRoles from 'hooks/useModal/UserSettings/useModalGroupRoles';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
@@ -50,18 +49,13 @@ const GroupActionDropdown = ({
   };
   const { modalOpen: openEditGroupModal, contextHolder: modalEditGroupContextHolder } =
     useModalCreateGroup({ group, onClose: onFinishEdit, users });
-  const { modalOpen: openEditGroupRolesModal, contextHolder: modalEditGroupRolesContextHolder } =
-    useModalGroupRoles({ group, onClose: onFinishEdit });
   const { modalOpen: openDeleteGroupModal, contextHolder: modalDeleteGroupContextHolder } =
     useModalDeleteGroup({ group, onClose: fetchGroups });
 
   const menuItems = (
     <Menu>
       <Menu.Item key="edit" onClick={() => openEditGroupModal()}>
-        Edit/Add Users
-      </Menu.Item>
-      <Menu.Item key="roles" onClick={() => openEditGroupRolesModal()}>
-        Add Roles
+        Edit
       </Menu.Item>
       <Menu.Item danger key="delete" onClick={() => openDeleteGroupModal()}>
         Delete
@@ -77,7 +71,6 @@ const GroupActionDropdown = ({
         </Button>
       </Dropdown>
       {modalEditGroupContextHolder}
-      {modalEditGroupRolesContextHolder}
       {modalDeleteGroupContextHolder}
     </div>
   );
