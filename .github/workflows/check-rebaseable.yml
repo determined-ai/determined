@@ -32,7 +32,8 @@ jobs:
       - name: add OSS repository remote and get candidate branch
         if: github.repository != env.EE_REPO
         run: |
-          git remote add OSS github.com:${{ env.OSS_REPO }}
+          # ssh checkout of additional remotes fails :/
+          git remote add OSS https://github.com/${{ env.OSS_REPO }}
           git fetch OSS "${{ github.ref }}":proposed_base
       - name: attempt rebase
         if: github.repository != env.EE_REPO
