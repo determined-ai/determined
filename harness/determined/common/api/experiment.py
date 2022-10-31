@@ -128,6 +128,8 @@ def create_experiment(
     activate: bool = True,
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:
+
+    print("in create experiment")
     body = {
         "activate": False,
         "experiment_config": yaml.safe_dump(config),
@@ -140,8 +142,12 @@ def create_experiment(
         body["archived"] = archived
     if additional_body_fields:
         body.update(additional_body_fields)
-
+    print(f"master_url{master_url}")
+    sess = api.Session(master_url, None, None, None)
+    me = bindings.get_GetMe(session=sess).user
+    print(me.username)
     r = req.post(master_url, "experiments", json=body)
+
     if not hasattr(r, "headers"):
         raise Exception(r)
 
