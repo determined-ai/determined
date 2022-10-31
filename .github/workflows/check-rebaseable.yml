@@ -1,6 +1,10 @@
 ---
 name: "Check Rebaseable"
 
+############################################################
+# Understand this security concern before you edit this file:
+# https://securitylab.github.com/research/github-actions-preventing-pwn-requests
+############################################################
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
@@ -11,17 +15,21 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   check-rebaseable:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
+      EE_REPO: determined-ai/determined-ee
     steps:
       - name: get PR
         uses: actions/checkout@v3
         with:
           fetch-depth: 1  # we only need this branch
           token: ${{ secrets.DETERMINED_TOKEN }}
-      - name: add EE repository remote
+      - name: add EE repository remote and get default branch
         run: |
-          git remote add EE github.com:determined-ai/determined-ee
+          DEFAULT_BRANCH=$( gh api repos/${{ EE_REPO }} -q '.default_branch' )
+          git remote add EE github.com:${{ EE_REPO }}
           git fetch EE
-          git checkout EE/master
+          git checkout EE/$DEFAULT_BRANCH
       - name: attempt rebase
         run: |
           git rebase "${{ github.head_ref }}"
