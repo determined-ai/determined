@@ -76,11 +76,12 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return user.AuthZProvider.Get().CanAccessNTSCTask(curUser, taskOwnerID)
+	return user.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
 }
 
 func (a *apiServer) canDoActionsOnTask(
-	ctx context.Context, taskID model.TaskID, actions ...func(model.User, *model.Experiment) error,
+	ctx context.Context, taskID model.TaskID,
+	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
 	t, err := a.m.db.TaskByID(taskID)
@@ -103,14 +104,14 @@ func (a *apiServer) canDoActionsOnTask(
 		}
 
 		var ok bool
-		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
 			return err
 		} else if !ok {
 			return errTaskNotFound
 		}
 
 		for _, action := range actions {
-			if err = action(*curUser, exp); err != nil {
+			if err = action(ctx, *curUser, exp); err != nil {
 				return status.Error(codes.PermissionDenied, err.Error())
 			}
 		}
@@ -147,12 +148,12 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	}
 
 	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
 		return err
 	} else if !ok {
 		return errAllocationNotFound
 	}
-	if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -305,7 +306,7 @@ func (a *apiServer) GetActiveTasksCount(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetActiveTasksCount(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

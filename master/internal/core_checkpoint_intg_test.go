@@ -185,7 +185,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			require.NoError(t, err, "API call returns error")
 			checkTgz(t, rec.Body, id)
 			return err
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func(id string) error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
@@ -200,7 +200,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			require.NoError(t, err, "API call returns error")
 			checkZip(t, rec.Body.String(), id)
 			return err
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 	}
 
 	for _, curCase := range cases {
@@ -222,7 +222,7 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
 			ctx.Request().Header.Set("Accept", MIMEApplicationGZip)
 			return api.m.getCheckpoint(ctx)
-		}, []any{mock.Anything, mock.Anything}},
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func(id string) error {
 			api, ctx, _ := setupCheckpointTestEcho(t)
 			ctx.SetParamNames("checkpoint_uuid")
@@ -266,17 +266,18 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID)
 
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	require.Equal(t, echo.NewHTTPError(http.StatusNotFound,
 		fmt.Sprintf("checkpoint not found: %s", checkpointUUID)), api.m.getCheckpoint(ctx))
 
 	expectedErr := fmt.Errorf("canGetExperimentError")
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(false, expectedErr).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 
 	expectedErr = echo.NewHTTPError(http.StatusForbidden, "canGetArtifactsError")
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", curUser, mock.Anything).
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canGetArtifactsError")).Once()
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 }

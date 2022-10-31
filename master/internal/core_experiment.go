@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/context"
+	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
@@ -78,10 +79,10 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	return &queries, nil
 }
 
-func echoGetExperimentAndCheckCanDoActions(c echo.Context, m *Master,
-	expID int, withConfig bool, actions ...func(model.User, *model.Experiment) error,
+func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, m *Master,
+	expID int, withConfig bool, actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
-	user := c.(*context.DetContext).MustGetUser()
+	user := c.(*detContext.DetContext).MustGetUser()
 	var err error
 	var e *model.Experiment
 	if withConfig {
@@ -96,14 +97,14 @@ func echoGetExperimentAndCheckCanDoActions(c echo.Context, m *Master,
 	} else if err != nil {
 		return nil, model.User{}, err
 	}
-	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(user, e); err != nil {
+	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, user, e); err != nil {
 		return nil, model.User{}, err
 	} else if !ok {
 		return nil, model.User{}, expNotFound
 	}
 
 	for _, action := range actions {
-		if err := action(user, e); err != nil {
+		if err := action(ctx, user, e); err != nil {
 			return nil, model.User{}, echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 	}
@@ -120,8 +121,10 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	if _, _, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
+	); err != nil {
 		return nil, err
 	}
 
@@ -166,8 +169,10 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	if _, _, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
+	); err != nil {
 		return err
 	}
 
@@ -192,8 +197,10 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	if _, _, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, false,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
+	); err != nil {
 		return err
 	}
 
@@ -237,7 +244,8 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(c, m, args.ExperimentID, true)
+	ctx := c.Request().Context()
+	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +283,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		resources := dbExp.Config.Resources()
 		if patch.Resources.MaxSlots.IsPresent {
 			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsMaxSlots(userModel, dbExp, *patch.Resources.MaxSlots.Value); err != nil {
+				CanSetExperimentsMaxSlots(ctx, userModel, dbExp, *patch.Resources.MaxSlots.Value); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
 
@@ -283,7 +291,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Weight != nil {
 			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsWeight(userModel, dbExp, *patch.Resources.Weight); err != nil {
+				CanSetExperimentsWeight(ctx, userModel, dbExp, *patch.Resources.Weight); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
 
@@ -291,7 +299,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Priority != nil {
 			if err = expauth.AuthZProvider.Get().
-				CanSetExperimentsPriority(userModel, dbExp, *patch.Resources.Priority); err != nil {
+				CanSetExperimentsPriority(ctx, userModel, dbExp, *patch.Resources.Priority); err != nil {
 				return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 			}
 
@@ -301,7 +309,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	}
 	if patch.CheckpointStorage != nil {
 		if err = expauth.AuthZProvider.Get().
-			CanSetExperimentsCheckpointGCPolicy(userModel, dbExp); err != nil {
+			CanSetExperimentsCheckpointGCPolicy(ctx, userModel, dbExp); err != nil {
 			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 
@@ -504,7 +512,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		return nil, nil, false, nil, err
 	}
 	var ok bool
-	if ok, err = project.AuthZProvider.Get().CanGetProject(*user, p); err != nil {
+	ctx := context.TODO()
+	if ok, err = project.AuthZProvider.Get().CanGetProject(ctx, *user, p); err != nil {
 		return nil, nil, false, nil, err
 	} else if !ok {
 		return nil, nil, false, nil, errProjectNotFound
@@ -529,14 +538,15 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	user := c.(*context.DetContext).MustGetUser()
+	user := c.(*detContext.DetContext).MustGetUser()
 
 	var params CreateExperimentParams
 	if err = json.Unmarshal(body, &params); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
+	ctx := c.Request().Context()
 	if params.ParentID != nil {
-		if _, _, err = echoGetExperimentAndCheckCanDoActions(c, m, *params.ParentID, false,
+		if _, _, err = echoGetExperimentAndCheckCanDoActions(ctx, c, m, *params.ParentID, false,
 			expauth.AuthZProvider.Get().CanForkFromExperiment); err != nil {
 			return nil, err
 		}
@@ -551,7 +561,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	// Can we create the experiment?
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(user, p, dbExp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, user, p, dbExp); err != nil {
 		return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 	}
 	if validateOnly {
@@ -560,7 +570,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
 	if params.Activate {
-		if err = expauth.AuthZProvider.Get().CanEditExperiment(user, dbExp); err != nil {
+		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, user, dbExp); err != nil {
 			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 	}

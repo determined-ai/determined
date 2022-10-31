@@ -56,7 +56,7 @@ func (a *apiServer) GetShells(
 			return false
 		}
 		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			*curUser, model.UserID(resp.Shells[i].UserId))
+			ctx, *curUser, model.UserID(resp.Shells[i].UserId))
 		if serverError != nil {
 			err = serverError
 		}
@@ -84,7 +84,7 @@ func (a *apiServer) GetShell(
 	}
 
 	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		*curUser, model.UserID(resp.Shell.UserId)); err != nil {
+		ctx, *curUser, model.UserID(resp.Shell.UserId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

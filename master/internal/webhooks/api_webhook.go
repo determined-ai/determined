@@ -32,7 +32,7 @@ func AuthorizeRequest(ctx context.Context) error {
 		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 	authErr := AuthZProvider.Get().
-		CanEditWebhooks(curUser)
+		CanEditWebhooks(ctx, curUser)
 	if authErr != nil {
 		return status.Error(codes.PermissionDenied, authErr.Error())
 	}
