@@ -19,18 +19,22 @@ env:
 jobs:
   check-rebaseable:
     runs-on: ubuntu-latest
-    if: github.repository != ${{ env.EE_REPO }}
     steps:
       - name: get EE
+        # the env context is only available on the runner, so can only be used
+        # in parts of the job which are on the runner. :/
+        if: github.repository != env.EE_REPO
         uses: actions/checkout@v3
         with:
           fetch-depth: 1  # we only need the main branch
           token: ${{ secrets.DETERMINED_TOKEN }}
           repository: ${{ env.EE_REPO }}
       - name: add OSS repository remote and get candidate branch
+        if: github.repository != env.EE_REPO
         run: |
           git remote add OSS github.com:${{ env.OSS_REPO }}
           git fetch OSS "${{ github.ref }}":proposed_base
       - name: attempt rebase
+        if: github.repository != env.EE_REPO
         run: |
           git rebase proposed_base
