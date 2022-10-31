@@ -36,6 +36,8 @@ jobs:
           # ssh checkout of additional remotes fails :/
           git remote add -f OSS https://github.com/${{ env.OSS_REPO }}
           git fetch OSS "${{ github.head_ref || github.ref }}":proposed_base
+          git config --global user.email "autorebase@address.invalid"
+          git config --global user.name  "Automatic rebase check"
       - name: attempt rebase
         if: github.repository != env.EE_REPO
         run: |
