@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.DETERMINED_TOKEN }}
       EE_REPO: determined-ai/determined-ee
     steps:
       - name: get PR
