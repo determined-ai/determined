@@ -76,6 +76,12 @@ release:
     owner: determined-ai
     name: determined
 
+  # be sure to keep this in sync between agent/master/helm
+  # the "include" functionality is only in the pro version
+  header: |
+    ## Release Notes
+    [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
+
 dockers:
   - goos: linux
     goarch: amd64
