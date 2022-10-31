@@ -115,6 +115,7 @@ export const config = {
             history: 'replace',
             refine: number(),
             storeKey: 'projectDetail',
+            syncDefault: true,
           }),
         ],
         key: 'numOfCake',
