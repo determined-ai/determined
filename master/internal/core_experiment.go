@@ -1,7 +1,7 @@
 package internal
 
 import (
-	stdContext "context"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -438,7 +438,7 @@ func getCreateExperimentsProject(
 		return nil, err
 	}
 	var ok bool
-	if ok, err = project.AuthZProvider.Get().CanGetProject(*user, p); err != nil {
+	if ok, err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errProjectNotFound
@@ -492,7 +492,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	if err = db.Bun().NewSelect().Model(w).
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
-		Scan(stdContext.TODO()); err != nil {
+		Scan(context.TODO()); err != nil {
 		return nil, nil, false, nil, err
 	}
 	config.RawCheckpointStorage = schemas.Merge(

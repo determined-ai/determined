@@ -283,8 +283,8 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	// Tried to create with checkpoint storage config.
 	expectedErr = status.Error(codes.PermissionDenied, "storageConfDeny")
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
-	workspaceAuthZ.On("CanCreateWorkspaceWithCheckpointStorageConfig", mock.Anything).Return(
-		fmt.Errorf("storageConfDeny"))
+	workspaceAuthZ.On("CanCreateWorkspaceWithCheckpointStorageConfig",
+		mock.Anything, mock.Anything).Return(fmt.Errorf("storageConfDeny"))
 	resp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
 		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
