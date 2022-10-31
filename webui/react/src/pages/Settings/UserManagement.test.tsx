@@ -38,7 +38,10 @@ jest.mock('services/api', () => ({
 jest.mock('contexts/Store', () => ({
   __esModule: true,
   ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { checked: true, user: { id: 1 } as DetailedUser }, info: { featureSwitches: [], rbacEnabled: false } }),
+  useStore: () => ({
+    auth: { checked: true, user: { id: 1 } as DetailedUser },
+    info: { featureSwitches: [], rbacEnabled: false },
+  }),
 }));
 
 jest.mock('hooks/useTelemetry', () => ({
