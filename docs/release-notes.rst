@@ -66,8 +66,8 @@ Version 0.19.6
 
 -  Custom Searcher: users can now define their own logic to coordinate across multiple trials within
    an experiment. Examples of use cases are custom hyperparameter searching algorithms, ensembling,
-   active learning, neural architecture search, reinforcement learning.
-   See :ref:`topic-guides_hp-tuning-det_custom` for more information.
+   active learning, neural architecture search, reinforcement learning. See
+   :ref:`topic-guides_hp-tuning-det_custom` for more information.
 
 -  Cluster: The enterprise edition of `HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_
