@@ -42,6 +42,11 @@ type RBACAuthZ interface {
 	// SearchRolesAssignableToScope()
 	CanSearchScope(ctx context.Context, curUser model.User, workspaceID *int32) error
 
+	// CanGetWorkspaceMembership checks if a user can get membership on a workspace.
+	CanGetWorkspaceMembership(
+		ctx context.Context, curUser model.User, workspaceID int32,
+	) (canGet bool, serverError error)
+
 	// CanAssignRoles checks if a user has the assign roles permission
 	// POST /api/v1/roles/add-assignments
 	// AssignRoles()

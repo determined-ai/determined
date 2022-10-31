@@ -89,10 +89,11 @@ func (a *RBACAPIServerImpl) GetGroupsAndUsersAssignedToWorkspace(
 	if err != nil {
 		return nil, err
 	}
-
-	err = AuthZProvider.Get().CanSearchScope(ctx, *u, &req.WorkspaceId)
-	if err != nil {
-		return resp, nil
+	var ok bool
+	if ok, err = AuthZProvider.Get().CanGetWorkspaceMembership(ctx, *u, req.WorkspaceId); err != nil {
+		return nil, err
+	} else if !ok {
+		return &apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse{}, nil
 	}
 
 	users, membership, err := GetUsersAndGroupMembershipOnWorkspace(ctx, int(req.WorkspaceId))
