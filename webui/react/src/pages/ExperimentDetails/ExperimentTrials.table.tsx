@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
 import { ColumnDef } from 'components/Table/InteractiveTable';
-import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table/Table';
+import { durationRenderer, expStateRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { TrialItem } from 'types';
 
@@ -19,7 +19,7 @@ export const columns: ColumnDef<TrialItem>[] = [
     dataIndex: 'state',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
     key: V1GetExperimentTrialsRequestSortBy.STATE,
-    render: stateRenderer,
+    render: expStateRenderer,
     sorter: true,
     title: 'State',
   },

@@ -2,9 +2,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 16px;
-    width: 50px;
-    height: 50px;
+    width: 24px;
+    height: 24px;
 }
 
 @keyframes pulse {
@@ -14,7 +13,7 @@
 
   .dots {
     $duration: 1s;
-    $size: 5px;
+    $size: 3px;
     
     &,
     &:before,
@@ -45,11 +44,11 @@
     
     &:before {
       animation-delay: -(2 * $duration) / 3;
-      left: -1rem;
+      left: -0.5rem;
     }
     
     &:after {
       animation-delay: 0s;
-      left: 1rem;
+      left: 0.5rem;
     }
   }

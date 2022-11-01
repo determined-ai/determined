@@ -3,6 +3,7 @@ import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
@@ -22,6 +23,7 @@ import {
   ModelItem,
   ModelVersion,
   Project,
+  RunState,
   StartEndTimes,
   TrialItem,
   Workspace,
@@ -91,6 +93,12 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
 export const stateRenderer: Renderer<{ state: StateOfUnion }> = (_, record) => (
   <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
     <Badge state={record.state} type={BadgeType.State} />
+  </div>
+);
+
+export const expStateRenderer: Renderer<{ state: RunState }> = (_, record) => (
+  <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+    <ExperimentIcons state={record.state} />
   </div>
 );
 

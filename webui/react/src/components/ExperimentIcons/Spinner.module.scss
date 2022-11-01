@@ -2,9 +2,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 16px;
-    width: 50px;
-    height: 50px;
+    width: 24px;
+    height: 24px;
 }
 
 $axes: X Y Z;
@@ -17,7 +16,7 @@ $axes: X Y Z;
 }
 
 .spinner {
-    $size: 2rem;
+    $size: 18px;
     
     animation-duration: 1s;
     animation-iteration-count: infinite;
@@ -30,7 +29,7 @@ $axes: X Y Z;
 
     border-radius: 50%;
     border-style: solid;
-    border-width: 4px;
+    border-width: 2px;
   }
 
 
