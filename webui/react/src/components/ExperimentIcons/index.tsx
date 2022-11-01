@@ -41,14 +41,11 @@ const ExperimentIcons: React.FC<Props> = ({ state }) => {
       case RunState.Deleting:
       case RunState.DeleteFailed:
         return <img src={error} />;
-      case RunState.Canceled:
-      case RunState.StoppingCanceled:
-      case RunState.StoppingCompleted:
-      case RunState.StoppingError:
-      case RunState.StoppingKilled:
-        return <img src={isDark ? cancle_dark : cancle_light} />;
-      default:
+      case RunState.Active:
+      case RunState.Unspecified:
         return <Active />;
+      default:
+        return <img src={isDark ? cancle_dark : cancle_light} />;
     }
   }, [state, isDark]);
   return (
