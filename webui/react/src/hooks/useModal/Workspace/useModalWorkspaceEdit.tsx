@@ -1,15 +1,20 @@
-import { Input } from 'antd';
+import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { patchWorkspace } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { validateLength } from 'shared/utils/string';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalWorkspaceEdit.module.scss';
+
+const FORM_ID = 'edit-workspace-form';
+
+interface FormInputs {
+  workspaceName: string;
+}
 
 interface Props {
   onClose?: () => void;
@@ -17,28 +22,30 @@ interface Props {
 }
 
 const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
-  const [name, setName] = useState(workspace.name);
+  const [form] = Form.useForm<FormInputs>();
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
-  const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  }, []);
-
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
-        <label className={css.label} htmlFor="name">
-          Name
-        </label>
-        <Input id="name" value={name} onChange={handleNameInput} />
-      </div>
+      <Form autoComplete="off" className={css.base} form={form} id={FORM_ID} layout="vertical">
+        <Form.Item
+          initialValue={workspace.name}
+          label="Workspace Name"
+          name="workspaceName"
+          rules={[{ message: 'Workspace name is required ', required: true }]}>
+          <Input maxLength={80} />
+        </Form.Item>
+      </Form>
     );
-  }, [handleNameInput, name]);
+  }, [form, workspace.name]);
 
   const handleOk = useCallback(async () => {
+    const values = await form.validateFields();
+    const name = values.workspaceName;
+
     try {
       await patchWorkspace({ id: workspace.id, name });
     } catch (e) {
@@ -50,29 +57,25 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [name, workspace.id]);
+  }, [form, workspace.id]);
 
-  const getModalProps = useCallback(
-    (name: string): ModalFuncProps => {
-      return {
-        closable: true,
-        content: modalContent,
-        icon: null,
-        okButtonProps: { disabled: !validateLength(name) },
-        okText: 'Save changes',
-        onOk: handleOk,
-        title: 'Edit Workspace',
-      };
-    },
-    [handleOk, modalContent],
-  );
+  const getModalProps = useMemo((): ModalFuncProps => {
+    return {
+      closable: true,
+      content: modalContent,
+      icon: null,
+      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+      okText: 'Save changes',
+      onOk: handleOk,
+      title: 'Edit Workspace',
+    };
+  }, [handleOk, modalContent]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
-      setName(workspace.name);
-      openOrUpdate({ ...getModalProps(workspace.name), ...initialModalProps });
+      openOrUpdate({ ...getModalProps, ...initialModalProps });
     },
-    [getModalProps, openOrUpdate, workspace.name],
+    [getModalProps, openOrUpdate],
   );
 
   /**
@@ -80,8 +83,8 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps(name));
-  }, [getModalProps, modalRef, name, openOrUpdate]);
+    if (modalRef.current) openOrUpdate(getModalProps);
+  }, [getModalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };
