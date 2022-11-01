@@ -72,6 +72,13 @@ func (a *apiServer) getWorkspaceAndCheckCanDoActions(
 func (a *apiServer) GetWorkspace(
 	ctx context.Context, req *apiv1.GetWorkspaceRequest,
 ) (*apiv1.GetWorkspaceResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
+		"method": "get",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -84,6 +91,13 @@ func (a *apiServer) GetWorkspace(
 func (a *apiServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/projects", req.Id),
+		"method": "get",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -154,6 +168,13 @@ func (a *apiServer) GetWorkspaceProjects(
 func (a *apiServer) GetWorkspaces(
 	ctx context.Context, req *apiv1.GetWorkspacesRequest,
 ) (*apiv1.GetWorkspacesResponse, error) {
+	fields := log.Fields{
+		"endpoint": "/api/v1/workspaces",
+		"method": "get",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -220,6 +241,13 @@ func (a *apiServer) GetWorkspaces(
 func (a *apiServer) PostWorkspace(
 	ctx context.Context, req *apiv1.PostWorkspaceRequest,
 ) (*apiv1.PostWorkspaceResponse, error) {
+	fields := log.Fields{
+		"endpoint": "/api/v1/workspaces",
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -291,6 +319,13 @@ func (a *apiServer) PostWorkspace(
 func (a *apiServer) PatchWorkspace(
 	ctx context.Context, req *apiv1.PatchWorkspaceRequest,
 ) (*apiv1.PatchWorkspaceResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
+		"method": "patch",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	currWorkspace, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, true)
 	if err != nil {
 		return nil, err
@@ -379,6 +414,13 @@ func (a *apiServer) DeleteWorkspace(
 	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
+		"method": "delete",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
@@ -421,6 +463,13 @@ func (a *apiServer) ArchiveWorkspace(
 	ctx context.Context, req *apiv1.ArchiveWorkspaceRequest) (*apiv1.ArchiveWorkspaceResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/archive", req.Id),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanArchiveWorkspace)
 	if err != nil {
@@ -442,6 +491,13 @@ func (a *apiServer) UnarchiveWorkspace(
 	ctx context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/unarchive", req.Id),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanUnarchiveWorkspace)
 	if err != nil {
@@ -462,6 +518,13 @@ func (a *apiServer) UnarchiveWorkspace(
 func (a *apiServer) PinWorkspace(
 	ctx context.Context, req *apiv1.PinWorkspaceRequest,
 ) (*apiv1.PinWorkspaceResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/pin", req.Id),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanPinWorkspace)
 	if err != nil {
@@ -477,6 +540,13 @@ func (a *apiServer) PinWorkspace(
 func (a *apiServer) UnpinWorkspace(
 	ctx context.Context, req *apiv1.UnpinWorkspaceRequest,
 ) (*apiv1.UnpinWorkspaceResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/unpin", req.Id),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanUnpinWorkspace)
 	if err != nil {
