@@ -19,12 +19,8 @@ func init() {
 	AuthZProvider.Register("rbac", &WorkspaceAuthZRBAC{})
 }
 
-var (
-	// ErrorAccessDenied is the error returned when a user does not have access to a resource.
-	ErrorAccessDenied = errors.New("access denied")
-	// ErrorLookup is the error returned when a user's permissions couldn't be looked up.
-	ErrorLookup = errors.New("error looking up user's permissions")
-)
+// ErrorLookup is the error returned when a user's permissions couldn't be looked up.
+var ErrorLookup = errors.New("error looking up user's permissions")
 
 // WorkspaceAuthZRBAC is the RBAC implementation of WorkspaceAuthZ.
 type WorkspaceAuthZRBAC struct{}
@@ -90,7 +86,7 @@ func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 
 // CanCreateWorkspace determines whether a user can create workspaces.
 func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(ctx context.Context, curUser model.User) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, nil,
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
 }
 
@@ -98,7 +94,7 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(ctx context.Context, curUser mod
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
@@ -106,7 +102,7 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(
 func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_WORKSPACE)
 }
 
@@ -114,7 +110,7 @@ func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(
 func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
@@ -122,7 +118,7 @@ func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(
 func (r *WorkspaceAuthZRBAC) CanUnarchiveWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
@@ -145,7 +141,7 @@ func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(
 func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(
 	ctx context.Context, curUser model.User,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, nil,
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
 
@@ -153,7 +149,7 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
 
@@ -161,7 +157,7 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesCheckpointStorageConfig(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG)
 }
 
@@ -170,26 +166,8 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesCheckpointStorageConfig(
 func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithCheckpointStorageConfig(
 	ctx context.Context, curUser model.User,
 ) error {
-	return denyAccessWithoutPermission(ctx, curUser.ID, nil,
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
-}
-
-func denyAccessWithoutPermission(
-	ctx context.Context,
-	uid model.UserID,
-	workspace *workspacev1.Workspace,
-	permID rbacv1.PermissionType,
-) error {
-	allowed, err := hasPermissionOnWorkspace(ctx, uid, workspace, permID)
-	if err != nil {
-		return errors.Wrap(err, ErrorLookup.Error())
-	}
-
-	if !allowed {
-		return ErrorAccessDenied
-	}
-
-	return nil
 }
 
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
