@@ -89,6 +89,8 @@ enum PermissionType {
   PERMISSION_TYPE_DELETE_WORKSPACE = 4004;
   // Ability to set workspace agent user group config.
   PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP = 4005;
+  // Ability to set workspace checkpoint storage config.
+  PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG = 4006;
 
   // Ability to create projects.
   PERMISSION_TYPE_CREATE_PROJECT = 5001;

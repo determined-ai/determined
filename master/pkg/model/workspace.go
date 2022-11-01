@@ -5,30 +5,34 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 // Workspace is the bun model of a workspace.
 type Workspace struct {
-	bun.BaseModel `bun:"table:workspaces"`
-	ID            int             `bun:"id,pk,autoincrement"`
-	Name          string          `bun:"name"`
-	Archived      bool            `bun:"archived"`
-	CreatedAt     time.Time       `bun:"created_at,scanonly"`
-	UserID        UserID          `bun:"user_id"`
-	Immutable     bool            `bun:"immutable"`
-	State         *WorkspaceState `bun:"state"`
-	AgentUID      *int32          `bun:"uid"`
-	AgentUser     *string         `bun:"user_"`
-	AgentGID      *int32          `bun:"gid"`
-	AgentGroup    *string         `bun:"group_"`
+	bun.BaseModel           `bun:"table:workspaces"`
+	ID                      int                              `bun:"id,pk,autoincrement"`
+	Name                    string                           `bun:"name"`
+	Archived                bool                             `bun:"archived"`
+	CreatedAt               time.Time                        `bun:"created_at,scanonly"`
+	UserID                  UserID                           `bun:"user_id"`
+	Immutable               bool                             `bun:"immutable"`
+	State                   *WorkspaceState                  `bun:"state"`
+	AgentUID                *int32                           `bun:"uid"`
+	AgentUser               *string                          `bun:"user_"`
+	AgentGID                *int32                           `bun:"gid"`
+	AgentGroup              *string                          `bun:"group_"`
+	CheckpointStorageConfig *expconf.CheckpointStorageConfig `bun:"checkpoint_storage_config"`
 }
 
 // ToProto converts a bun model of a workspace to a proto object.
 // Some fields like username and pinned are not included since they are
 // not on the bun model.
-func (w *Workspace) ToProto() *workspacev1.Workspace {
+func (w *Workspace) ToProto() (*workspacev1.Workspace, error) {
 	var aug *userv1.AgentUserGroup
 
 	if w.AgentUID != nil || w.AgentGID != nil || w.AgentUser != nil || w.AgentGroup != nil {
@@ -40,15 +44,28 @@ func (w *Workspace) ToProto() *workspacev1.Workspace {
 		}
 	}
 
-	return &workspacev1.Workspace{
-		Id:             int32(w.ID),
-		Name:           w.Name,
-		Archived:       w.Archived,
-		UserId:         int32(w.UserID),
-		Immutable:      w.Immutable,
-		State:          w.State.ToProto(),
-		AgentUserGroup: aug,
+	var storageConfig *structpb.Struct
+	if w.CheckpointStorageConfig != nil {
+		bytes, err := w.CheckpointStorageConfig.Printable().MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		storageConfig = &structpb.Struct{}
+		if err = storageConfig.UnmarshalJSON(bytes); err != nil {
+			return nil, err
+		}
 	}
+
+	return &workspacev1.Workspace{
+		Id:                      int32(w.ID),
+		Name:                    w.Name,
+		Archived:                w.Archived,
+		UserId:                  int32(w.UserID),
+		Immutable:               w.Immutable,
+		State:                   w.State.ToProto(),
+		AgentUserGroup:          aug,
+		CheckpointStorageConfig: storageConfig,
+	}, nil
 }
 
 // WorkspaceState is the state of the workspace state with regards to being deleted.

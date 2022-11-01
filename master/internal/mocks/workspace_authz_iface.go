@@ -61,6 +61,20 @@ func (_m *WorkspaceAuthZ) CanCreateWorkspaceWithAgentUserGroup(ctx context.Conte
 	return r0
 }
 
+// CanCreateWorkspaceWithCheckpointStorageConfig provides a mock function with given fields: ctx, curUser
+func (_m *WorkspaceAuthZ) CanCreateWorkspaceWithCheckpointStorageConfig(ctx context.Context, curUser model.User) error {
+	ret := _m.Called(ctx, curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User) error); ok {
+		r0 = rf(ctx, curUser)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanDeleteWorkspace provides a mock function with given fields: ctx, curUser, _a2
 func (_m *WorkspaceAuthZ) CanDeleteWorkspace(ctx context.Context, curUser model.User, _a2 *workspacev1.Workspace) error {
 	ret := _m.Called(ctx, curUser, _a2)
@@ -112,6 +126,20 @@ func (_m *WorkspaceAuthZ) CanPinWorkspace(ctx context.Context, curUser model.Use
 
 // CanSetWorkspacesAgentUserGroup provides a mock function with given fields: ctx, curUser, _a2
 func (_m *WorkspaceAuthZ) CanSetWorkspacesAgentUserGroup(ctx context.Context, curUser model.User, _a2 *workspacev1.Workspace) error {
+	ret := _m.Called(ctx, curUser, _a2)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *workspacev1.Workspace) error); ok {
+		r0 = rf(ctx, curUser, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanSetWorkspacesCheckpointStorageConfig provides a mock function with given fields: ctx, curUser, _a2
+func (_m *WorkspaceAuthZ) CanSetWorkspacesCheckpointStorageConfig(ctx context.Context, curUser model.User, _a2 *workspacev1.Workspace) error {
 	ret := _m.Called(ctx, curUser, _a2)
 
 	var r0 error

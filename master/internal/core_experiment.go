@@ -401,6 +401,51 @@ func (p ErrProjectNotFound) Error() string {
 	return string(p)
 }
 
+func getCreateExperimentsProject(
+	m *Master, params *CreateExperimentParams, user *model.User, config expconf.ExperimentConfig,
+) (*projectv1.Project, error) {
+	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
+	// CreateExperimentParams has highest priority.
+	var err error
+	projectID := 1
+	errProjectNotFound := ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	if params.ProjectID != nil {
+		projectID = *params.ProjectID
+		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
+	} else {
+		if (config.Workspace() == "") != (config.Project() == "") {
+			return nil,
+				errors.New("workspace and project must both be included in config if one is provided")
+		}
+		if config.Workspace() != "" && config.Project() != "" {
+			errProjectNotFound = ErrProjectNotFound(fmt.Sprintf(
+				"workspace '%s' or project '%s' not found",
+				config.Workspace(), config.Project()))
+
+			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
+			if errors.Is(err, db.ErrNotFound) {
+				return nil, errProjectNotFound
+			} else if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	p := &projectv1.Project{}
+	if err = m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
+		return nil, errProjectNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	var ok bool
+	if ok, err = project.AuthZProvider.Get().CanGetProject(context.TODO(), *user, p); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errProjectNotFound
+	}
+	return p, nil
+}
+
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
 	*model.Experiment, *projectv1.Project, bool, *tasks.TaskSpec, error,
 ) {
@@ -424,7 +469,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		config = schemas.Merge(config, tc).(expconf.ExperimentConfig)
 	}
 
-	resources := schemas.WithDefaults(config).(expconf.ExperimentConfig).Resources()
+	defaulted := schemas.WithDefaults(config).(expconf.ExperimentConfig)
+	resources := defaulted.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
 	if err != nil {
@@ -435,6 +481,22 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+
+	project, err := getCreateExperimentsProject(m, params, user, defaulted)
+	if err != nil {
+		return nil, nil, false, nil, err
+	}
+
+	// Merge in workspace's checkpoint storage into the conifg.
+	w := &model.Workspace{}
+	if err = db.Bun().NewSelect().Model(w).
+		Where("id = ?", project.WorkspaceId).
+		Column("checkpoint_storage_config").
+		Scan(context.TODO()); err != nil {
+		return nil, nil, false, nil, err
+	}
+	config.RawCheckpointStorage = schemas.Merge(
+		config.RawCheckpointStorage, w.CheckpointStorageConfig).(*expconf.CheckpointStorageConfig)
 
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(
@@ -479,57 +541,17 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
-	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
-	// CreateExperimentParams has highest priority.
-	projectID := 1
-	errProjectNotFound := ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
-	if params.ProjectID != nil {
-		projectID = *params.ProjectID
-		errProjectNotFound = ErrProjectNotFound(fmt.Sprintf("project (%d) not found", projectID))
-	} else {
-		if (config.Workspace() == "") != (config.Project() == "") {
-			return nil, nil, false, nil,
-				errors.New("workspace and project must both be included in config if one is provided")
-		}
-		if config.Workspace() != "" && config.Project() != "" {
-			errProjectNotFound = ErrProjectNotFound(fmt.Sprintf(
-				"workspace '%s' or project '%s' not found",
-				config.Workspace(), config.Project()))
-
-			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
-			if errors.Is(err, db.ErrNotFound) {
-				return nil, nil, false, nil, errProjectNotFound
-			} else if err != nil {
-				return nil, nil, false, nil, err
-			}
-		}
-	}
-
-	p := &projectv1.Project{}
-	if err = m.db.QueryProto("get_project", p, projectID); errors.Is(err, db.ErrNotFound) {
-		return nil, nil, false, nil, errProjectNotFound
-	} else if err != nil {
-		return nil, nil, false, nil, err
-	}
-	var ok bool
-	ctx := context.TODO()
-	if ok, err = project.AuthZProvider.Get().CanGetProject(ctx, *user, p); err != nil {
-		return nil, nil, false, nil, err
-	} else if !ok {
-		return nil, nil, false, nil, errProjectNotFound
-	}
-
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate,
-		projectID,
+		int(project.Id),
 	)
 	if user != nil {
 		dbExp.OwnerID = &user.ID
 		dbExp.Username = user.Username
 	}
 
-	return dbExp, p, params.ValidateOnly, &taskSpec, err
+	return dbExp, project, params.ValidateOnly, &taskSpec, err
 }
 
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {

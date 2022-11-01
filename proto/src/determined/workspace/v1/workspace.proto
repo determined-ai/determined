@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.workspace.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/workspacev1";
 
+import "google/protobuf/struct.proto";
 import "determined/user/v1/user.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
@@ -64,6 +65,9 @@ message Workspace {
   string error_message = 11;
   // Optional agent host uid and gid override.
   optional determined.user.v1.AgentUserGroup agent_user_group = 12;
+  // Optional checkpoint storage config.
+  // Expects same format as experiment config's checkpoint storage.
+  optional google.protobuf.Struct checkpoint_storage_config = 13;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
@@ -72,4 +76,8 @@ message PatchWorkspace {
   google.protobuf.StringValue name = 1;
   // Optional agent host uid and gid override.
   optional determined.user.v1.AgentUserGroup agent_user_group = 12;
+
+  // Optional checkpoint storage config.
+  // Expects same format as experiment config's checkpoint storage.
+  optional google.protobuf.Struct checkpoint_storage_config = 13;
 }

@@ -38,6 +38,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
+	"github.com/determined-ai/determined/proto/pkg/utilv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 type mockStream[T any] struct {
@@ -142,6 +144,105 @@ func TestGetExperimentLabels(t *testing.T) {
 	resp, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{})
 	require.NoError(t, err)
 	require.Subset(t, resp.Labels, labels)
+}
+
+//nolint: exhaustivestruct
+func TestCreateExperimentCheckpointStorage(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
+	defer func() {
+		api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
+	}()
+
+	conf := `
+entrypoint: test
+searcher:
+  metric: loss
+  name: single
+  max_length: 10
+resources:
+  resource_pool: kubernetes`
+	createReq := &apiv1.CreateExperimentRequest{
+		ModelDefinition: []*utilv1.File{{Content: []byte{1}}},
+		Config:          conf,
+		ParentId:        0,
+		Activate:        false,
+		ProjectId:       1,
+	}
+
+	// No checkpoint specified anywhere.
+	_, err := api.CreateExperiment(ctx, createReq)
+	require.ErrorContains(t, err, "checkpoint_storage: type is a required property")
+
+	// Checkpoint specified in workspace.
+	workspaceLevelKey := "secretz"
+	workspaceID, projectID := createProjectAndWorkspace(ctx, t, api)
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: int32(workspaceID),
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type":       "s3",
+				"bucket":     "bucketz",
+				"secret_key": workspaceLevelKey,
+			}),
+		},
+	})
+	require.NoError(t, err)
+
+	createReq.ProjectId = int32(projectID)
+	resp, err := api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected := map[string]any{
+		"type":                 "s3",
+		"bucket":               "bucketz",
+		"secret_key":           workspaceLevelKey, // Key doesn't get censored.
+		"access_key":           nil,
+		"endpoint_url":         nil,
+		"prefix":               nil,
+		"save_experiment_best": 0.0, // These get filled in from some default.
+		"save_trial_best":      1.0, // Not sure why they are floats.
+		"save_trial_latest":    1.0,
+	}
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+
+	// Checkpoint specified in master config.
+	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{
+		RawS3Config: &expconf.S3Config{
+			RawBucket:    ptrs.Ptr("masterbucket"),
+			RawSecretKey: ptrs.Ptr("mastersecret"),
+		},
+	}
+
+	createReq.ProjectId = 1
+	resp, err = api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected["bucket"] = "masterbucket"
+	expected["secret_key"] = "mastersecret"
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+
+	// Checkpoint specified in master config and workspace gives workspace config.
+	createReq.ProjectId = int32(projectID)
+	resp, err = api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected["bucket"] = "bucketz"
+	expected["secret_key"] = workspaceLevelKey
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+
+	// Checkpoint specified in master config, expconf, and workspace gives expconf.
+	createReq.Config += `
+checkpoint_storage:
+  type: s3
+  bucket: "expconfbucket"
+  `
+	resp, err = api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected["bucket"] = "expconfbucket"
+	expected["secret_key"] = workspaceLevelKey
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
 }
 
 //nolint: exhaustivestruct
