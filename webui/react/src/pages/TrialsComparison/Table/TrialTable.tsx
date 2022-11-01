@@ -143,7 +143,7 @@ const TrialTable: React.FC<Props> = ({
         <TableFilterRank
           {...filterProps}
           column={filters.ranker?.sorter.sortKey}
-          columns={settings.columns.filter((col) => !nonRankableColumns.includes(col)) ?? []}
+          columns={settings.columns.filter((col) => !nonRankableColumns.includes(col))}
           rank={filters.ranker?.rank}
           sortDesc={filters.ranker?.sorter.sortDesc ?? false}
           onReset={() =>

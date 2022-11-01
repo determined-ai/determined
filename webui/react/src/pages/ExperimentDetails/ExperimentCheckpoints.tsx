@@ -24,7 +24,6 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
-import Spinner from 'shared/components/Spinner';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
@@ -108,8 +107,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const stateFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => {
-      if (!settings.state) return <Spinner spinning />;
-
       return (
         <TableFilterDropdown
           {...filterProps}
@@ -340,8 +337,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             loading={isLoading}
             pagination={getFullPaginationConfig(
               {
-                limit: settings.tableLimit ?? 0,
-                offset: settings.tableOffset ?? 0,
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
               },
               total,
             )}

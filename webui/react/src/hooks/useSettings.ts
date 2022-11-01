@@ -254,7 +254,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const resetSettings = useCallback(
-    (settingsArray?: string[]) => {
+    async (settingsArray?: string[]) => {
       if (!settings) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
@@ -279,9 +279,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       update(config.applicableRoutespace, newSettings);
 
-      updateDB(newSettings);
+      await updateDB(newSettings);
+
+      navigate('', { replace: true });
     },
-    [config, update, updateDB, settings],
+    [config, update, updateDB, navigate, settings],
   );
 
   const updateSettings = useCallback(

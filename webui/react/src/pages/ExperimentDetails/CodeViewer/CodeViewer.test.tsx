@@ -132,7 +132,7 @@ describe('CodeViewer', () => {
   afterAll(() => jest.clearAllMocks());
 
   it('should handle the initial render properly', async () => {
-    await waitFor(() => setup());
+    setup();
     const { treeNodes } = await getElements();
 
     expect(treeNodes).toHaveLength(4);
@@ -140,7 +140,7 @@ describe('CodeViewer', () => {
 
   it('should handle clicking in the download icon when opening a file from the tree', async () => {
     const pathBuilderSpy = jest.spyOn(paths, 'experimentFileFromTree').mockReturnValueOnce('');
-    await waitFor(() => setup());
+    setup();
 
     const { treeNodes } = await getElements();
 
@@ -150,6 +150,6 @@ describe('CodeViewer', () => {
 
     await act(() => user.click(button));
 
-    waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
+    await waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
   });
 });

@@ -432,8 +432,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           loading={isLoading}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit ?? 0,
-              offset: settings.tableOffset ?? 0,
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
             },
             total,
           )}

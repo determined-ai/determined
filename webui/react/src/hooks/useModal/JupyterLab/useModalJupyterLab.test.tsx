@@ -67,7 +67,8 @@ const setup = async () => {
     </BrowserRouter>,
   );
 
-  await waitFor(() => user.click(screen.getByRole('button')));
+  const button = await waitFor(() => screen.findByRole('button'));
+  user.click(button);
 
   return user;
 };
@@ -89,8 +90,8 @@ describe('useModalJupyterLab', () => {
     const user = await setup();
 
     await screen.findByText(MODAL_TITLE);
-
-    await user.click(screen.getByRole('button', { name: /Show Full Config/i }));
+    const button = await screen.findByRole('button', { name: /Show Full Config/i });
+    user.click(button);
 
     await waitFor(() => {
       expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();
@@ -101,8 +102,8 @@ describe('useModalJupyterLab', () => {
     const user = await setup();
 
     await screen.findByText(MODAL_TITLE);
-
-    await user.click(screen.getByRole('button', { name: /Launch/i }));
+    const button = await screen.findByRole('button', { name: /Launch/i });
+    user.click(button);
 
     await waitFor(() => {
       expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();

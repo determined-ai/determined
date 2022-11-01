@@ -81,7 +81,7 @@ describe('Experment Details Page', () => {
     });
 
     it('should show invalid experiment page without id', async () => {
-      await waitFor(() => setup());
+      setup();
       const invalidMessage = await screen.findByText(`${INVALID_ID_MESSAGE} ${INVALID_ID}`);
       expect(invalidMessage).toBeInTheDocument();
     });
@@ -96,7 +96,7 @@ describe('Experment Details Page', () => {
     });
 
     it('should show experiment is unfetchable', async () => {
-      await waitFor(() => setup());
+      setup();
       const errorMessage = await screen.findByText(`${ERROR_MESSAGE} ${NON_EXISTING_ID}`);
       expect(errorMessage).toBeInTheDocument();
     });
@@ -118,8 +118,7 @@ describe('Experment Details Page', () => {
     });
 
     it('should show single trial experiment page with id', async () => {
-      const containerView = await waitFor(() => setup());
-      const { container } = containerView.view;
+      const { container } = setup().view;
 
       const experimentId = RESPONSES.singleTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.singleTrial.getExperimentsDetails.name;
@@ -149,8 +148,7 @@ describe('Experment Details Page', () => {
     });
 
     it('should show multi-trial experiment page with id', async () => {
-      const containerView = await waitFor(() => setup());
-      const { container } = containerView.view;
+      const { container } = setup().view;
 
       const experimentId = RESPONSES.multiTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.multiTrial.getExperimentsDetails.name;

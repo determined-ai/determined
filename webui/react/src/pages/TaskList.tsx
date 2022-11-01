@@ -95,7 +95,7 @@ const TaskList: React.FC = () => {
     return filterTasks<CommandType, CommandTask>(
       loadedTasks,
       {
-        limit: settings.tableLimit ?? 0,
+        limit: settings.tableLimit,
         states: settings.state,
         types: settings.type as CommandType[],
         users: settings.user,
@@ -546,8 +546,8 @@ const TaskList: React.FC = () => {
           loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit ?? 0,
-              offset: settings.tableOffset ?? 0,
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
             },
             filteredTasks.length,
           )}

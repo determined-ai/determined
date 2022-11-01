@@ -584,8 +584,8 @@ const ModelRegistry: React.FC = () => {
           loading={isLoading || isLoadingSettings}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit ?? 0,
-              offset: settings.tableOffset ?? 0,
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
             },
             total,
           )}

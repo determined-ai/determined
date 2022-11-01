@@ -107,10 +107,8 @@ describe('UserManagement', () => {
   });
 
   it('should render modal for create user when click the button', async () => {
-    await waitFor(() => setup());
-    await waitFor(() => jest.setTimeout(300));
-    await user.click(screen.getByLabelText(CREAT_USER_LABEL));
-
+    setup();
+    await user.click(await screen.findByLabelText(CREAT_USER_LABEL));
     expect(screen.getAllByText('New User')).toHaveLength(1);
   });
 });

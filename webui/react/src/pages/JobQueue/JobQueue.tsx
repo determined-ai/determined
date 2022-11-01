@@ -342,8 +342,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             loading={pageState.isLoading}
             pagination={getFullPaginationConfig(
               {
-                limit: settings.tableLimit ?? 0,
-                offset: settings.tableOffset ?? 0,
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
               },
               total,
             )}
