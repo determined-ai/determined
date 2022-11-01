@@ -3,6 +3,7 @@ import { Alert, Button, Card, Checkbox, Space } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+import Label from 'components/Label';
 import Logo from 'components/Logo';
 import SelectFilter from 'components/SelectFilter';
 import ThemeToggle from 'components/ThemeToggle';
@@ -40,6 +41,11 @@ const DesignKit: React.FC = () => {
           <li>
             <Link reloadDocument to="#checkboxes_anchor">
               Checkboxes
+            </Link>
+          </li>
+          <li>
+            <Link reloadDocument to="#labels_anchor">
+              Labels
             </Link>
           </li>
         </ul>
@@ -402,6 +408,56 @@ const DesignKit: React.FC = () => {
             <p>Mandatory checkbox - not implemented.</p>
             <p>Mandatory checkbox with info sign - not implemented.</p>
             <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
+          </Card>
+        </section>
+        <section>
+          <h3 id="labels_anchor">Labels</h3>
+          <ReviewAlert />
+          <Card>
+            Labels give a name or title to a control or group of controls, including text fields,
+            check boxes, combo boxes, radio buttons, and drop-down menus.
+          </Card>
+          <Card title="Design audit">
+            <strong>
+              This component is currently under review and will receive updates to address:
+            </strong>
+            <ul>
+              <li>Font inconsistency</li>
+              <li>Internal padding inconsistencies</li>
+              <li>Button states do not meet accessibility requirements.</li>
+            </ul>
+          </Card>
+          <Card title="Best practices">
+            <strong>Layout</strong>
+            <ul>
+              <li>Labels should be close to the control they&apos;re paired with.</li>
+            </ul>
+            <strong>Content</strong>
+            <ul>
+              <li>Labels should describe the purpose of the control.</li>
+              <li>Use sentence-style capitalization—only capitalize the first word.</li>
+              <li>Be short and concise.</li>
+              <li>Use nouns or short noun phrases.</li>
+              <li>
+                Don&apos;t use labels as instructional text. For example, &quot;Click to get
+                started&quot;.
+              </li>
+            </ul>
+          </Card>
+          <Card title="Usage">
+            <strong>Basic labels</strong>
+            <Label>I am a label.</Label>
+            <strong>Guiding principles</strong>
+            <ul>
+              <li>8px right margin from the checkbox.</li>
+              <li>5px vertical margins above and below the checkbox</li>
+              <li>5px padding for mandatory and info icons</li>
+              <li>One style of checkboxes throughout the experience.</li>
+            </ul>
+            <strong>Variations</strong>
+            <p>Bold mandatory label - not implemented</p>
+            <p>Disabled label - not implemented</p>
+            <p>Mandatory label with an explanation - not implemented</p>
           </Card>
         </section>
       </main>
