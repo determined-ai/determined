@@ -1,5 +1,5 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Checkbox, Space } from 'antd';
+import { Alert, Button, Card, Checkbox, Input, Space } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -46,6 +46,11 @@ const DesignKit: React.FC = () => {
           <li>
             <Link reloadDocument to="#labels_anchor">
               Labels
+            </Link>
+          </li>
+          <li>
+            <Link reloadDocument to="#searchboxes_anchor">
+              Searchboxes
             </Link>
           </li>
         </ul>
@@ -458,6 +463,90 @@ const DesignKit: React.FC = () => {
             <p>Bold mandatory label - not implemented</p>
             <p>Disabled label - not implemented</p>
             <p>Mandatory label with an explanation - not implemented</p>
+          </Card>
+        </section>
+        <section>
+          <h3 id="searchboxes_anchor">Search boxes</h3>
+          <ReviewAlert />
+          <Card>
+            A search box (SearchBox) provides an input field for searching content within a site or
+            app to find specific items.
+          </Card>
+          <Card title="Design audit">
+            <strong>
+              This component is currently under review and will receive updates to address:
+            </strong>
+            <ul>
+              <li>Font inconsistency</li>
+              <li>Internal padding inconsistencies</li>
+              <li>Button states do not meet accessibility requirements.</li>
+            </ul>
+          </Card>
+          <Card title="Best practices">
+            <strong>Layout</strong>
+            <ul>
+              <li>
+                Don&apos;t build a custom search control based on the default text box or any other
+                control.
+              </li>
+              <li>
+                Use a search box without a parent container when it&apos;s not restricted to a
+                certain width to accommodate other content. This search box will span the entire
+                width of the space it&apos;s in.
+              </li>
+            </ul>
+            <strong>Content</strong>
+            <ul>
+              <li>
+                Use placeholder text in the search box to describe what people can search for. For
+                example, &quot;Search&quot;, &quot;Search files&quot;, or &quot;Search contacts
+                list&quot;.
+              </li>
+              <li>
+                Although search entry points tend to be similarly visualized, they can provide
+                access to results that range from broad to narrow. By effectively communicating the
+                scope of a search, you can ensure that people&apos;s expectations are met by the
+                capabilities of the search you&apos;re performing, which will reduce the possibility
+                of frustration. The search entry point should be placed near the content being
+                searched.
+              </li>
+            </ul>
+          </Card>
+          <Card title="Usage">
+            <strong>Default Searchbox</strong>
+            <Input.Search placeholder="input search text" style={{ width: 200 }} />
+            <strong>Guiding principles</strong>
+            <ul>
+              <li>A user should always be able to cancel/clear out a search</li>
+              <li>We need to provide feedback when a search is taking longer than expected</li>
+              <li>Input box experience is from input box component</li>
+            </ul>
+            <strong>Variations</strong>
+            <Input.Search allowClear enterButton style={{ width: 200 }} value="Active search box" />
+            <Input.Search disabled placeholder="disabled search box" style={{ width: 200 }} />
+            <hr />
+            <strong>In-table Searchbox</strong>
+            <p>Not implemented</p>
+            <strong>Guiding principles</strong>
+            <ul>
+              <li>Search input box needs to be at least 30 characters long</li>
+              <li>
+                We need to provide feedback when a search is taking longer than expected (&gt;1.5
+                sec) or when its a long running operation
+              </li>
+            </ul>
+            <hr />
+            <strong>Search box with scopes</strong>
+            <p>Not implemented</p>
+            <strong>Guiding principles</strong>
+            <ul>
+              <li>Search input box needs to be at least 30 characters long</li>
+              <li>
+                We need to provide feedback when a search is taking longer than expected (&gt;1.5
+                sec) or when its a long running operation
+              </li>
+              <li>Dropdown component behavior is the same as the dropdown checkmark component</li>
+            </ul>
           </Card>
         </section>
       </main>
